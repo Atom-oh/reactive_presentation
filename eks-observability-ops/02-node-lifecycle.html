@@ -612,11 +612,13 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
 <span class="key">metadata</span>:
   <span class="key">name</span>: general-purpose
 <span class="key">spec</span>:
+  <span class="key">template</span>:
+    <span class="key">spec</span>:
+      <span class="comment"># 프로덕션 권장 값</span>
+      <span class="key">expireAfter</span>: <span class="value">168h</span>  <span class="comment"># 7일</span>
   <span class="key">disruption</span>:
     <span class="key">consolidationPolicy</span>: WhenEmptyOrUnderutilized
-    <span class="key">consolidateAfter</span>: 1m
-    <span class="comment"># 프로덕션 권장 값</span>
-    <span class="key">expireAfter</span>: <span class="value">168h</span>  <span class="comment"># 7일</span></div>
+    <span class="key">consolidateAfter</span>: 1m</div>
           </div>
         </div>
       </div>
@@ -800,13 +802,14 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
               <li><span class="check"></span><div>Spot 인터럽트 알림 구성
                 <div class="check-yaml"><div class="code-block"><span class="comment"># PrometheusRule</span>
 - <span class="key">alert</span>: SpotInterruptionRate
-  <span class="key">expr</span>: increase(karpenter_nodeclaims_terminated
+  <span class="key">expr</span>: increase(karpenter_nodeclaims_terminated_total
     {reason=<span class="string">"SpotInterruption"</span>}[1h]) > 3</div></div></div></li>
               <li><span class="check"></span><div>expireAfter 정책 설정
                 <div class="check-yaml"><div class="code-block"><span class="comment"># NodePool</span>
 <span class="key">spec</span>:
-  <span class="key">disruption</span>:
-    <span class="key">expireAfter</span>: <span class="value">168h</span>  <span class="comment"># 7일</span></div></div></div></li>
+  <span class="key">template</span>:
+    <span class="key">spec</span>:
+      <span class="key">expireAfter</span>: <span class="value">168h</span>  <span class="comment"># 7일</span></div></div></div></li>
               <li><span class="check"></span><div>노드 모니터링 대시보드 구축
                 <div class="check-yaml"><div class="code-block"><span class="comment"># Grafana 대시보드 핵심 패널</span>
 karpenter_cluster_state_node_count
@@ -1757,11 +1760,13 @@ karpenter_nodes_allocatable</div></div></div></li>
 <span class="key">metadata</span>:
   <span class="key">name</span>: general-purpose
 <span class="key">spec</span>:
+  <span class="key">template</span>:
+    <span class="key">spec</span>:
+      <span class="comment"># ${preset.label}</span>
+      <span class="key">expireAfter</span>: <span class="value">${preset.value}</span>
   <span class="key">disruption</span>:
     <span class="key">consolidationPolicy</span>: WhenEmptyOrUnderutilized
-    <span class="key">consolidateAfter</span>: 1m
-    <span class="comment"># ${preset.label}</span>
-    <span class="key">expireAfter</span>: <span class="value">${preset.value}</span>`;
+    <span class="key">consolidateAfter</span>: 1m`;
       }
 
       slider.addEventListener('input', update);
@@ -1836,13 +1841,13 @@ karpenter_nodes_allocatable</div></div></div></li>
       <span class="key">annotations</span>:
         <span class="key">summary</span>: <span class="string">"{{ $value }} pods pending"</span>`,
         'provisioning-failed': `    - <span class="key">alert</span>: NodeProvisioningFailed
-      <span class="key">expr</span>: increase(karpenter_nodeclaims_terminated{reason=<span class="string">"ProvisioningFailed"</span>}[<span class="number">10m</span>]) > <span class="number">0</span>
+      <span class="key">expr</span>: increase(karpenter_nodeclaims_terminated_total{reason=<span class="string">"ProvisioningFailed"</span>}[<span class="number">10m</span>]) > <span class="number">0</span>
       <span class="key">labels</span>:
         <span class="key">severity</span>: critical
       <span class="key">annotations</span>:
         <span class="key">summary</span>: <span class="string">"Node provisioning failed"</span>`,
         'spot-rate': `    - <span class="key">alert</span>: SpotInterruptionRate
-      <span class="key">expr</span>: increase(karpenter_nodeclaims_terminated{reason=<span class="string">"SpotInterruption"</span>}[<span class="number">1h</span>]) > <span class="number">3</span>
+      <span class="key">expr</span>: increase(karpenter_nodeclaims_terminated_total{reason=<span class="string">"SpotInterruption"</span>}[<span class="number">1h</span>]) > <span class="number">3</span>
       <span class="key">labels</span>:
         <span class="key">severity</span>: warning
       <span class="key">annotations</span>:

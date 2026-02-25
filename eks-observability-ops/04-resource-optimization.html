@@ -822,15 +822,15 @@
           <div class="mode-detail">
             <div class="mode-info">
               <h4>Auto 모드</h4>
-              <p>VPA가 자동으로 최적의 방식(Initial 또는 Recreate)을 선택합니다.</p>
+              <p>Recreate와 동일하게 동작합니다. (deprecated — Recreate 사용 권장)</p>
               <div class="pros-cons">
                 <div class="pros">
                   <h5>장점</h5>
-                  <p>최소 개입, 상황에 맞는 자동 선택, 편리한 관리</p>
+                  <p>최소 개입, 자동 리소스 조정, 편리한 관리</p>
                 </div>
                 <div class="cons">
                   <h5>단점</h5>
-                  <p>예측 어려움, 세밀한 제어 불가, 현재는 Recreate와 동일</p>
+                  <p>Deprecated 상태, Recreate와 동일, Pod 재시작 발생</p>
                 </div>
               </div>
               <div class="use-case">
@@ -959,11 +959,84 @@ upperBound: CPU 400m, Memory 700Mi</div>
               </div>
             </div>
           </div>
-          <div style="display:flex;flex-direction:column;gap:16px;">
-            <button class="btn btn-primary" id="play-flow-btn">Play Animation</button>
-            <button class="btn" id="reset-flow-btn">Reset</button>
-            <div class="callout callout-info" style="margin-top:auto;">
-              <strong>Tip:</strong> VPA Off 모드로 먼저 분석한 후, 안정적인 추천값이 나오면 Recreate 또는 Auto 모드로 전환하세요.
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-primary" id="play-flow-btn">▶ Play</button>
+              <button class="btn" id="reset-flow-btn">Reset</button>
+            </div>
+            <div class="card" id="flow-detail-panel" style="flex:1; min-height: 280px; transition: all 0.3s ease;">
+              <div class="flow-detail" data-step="0">
+                <h3 style="color: var(--text-muted);">▶ Play를 눌러 VPA 흐름을 확인하세요</h3>
+              </div>
+              <div class="flow-detail" data-step="1" style="display:none;">
+                <h3 style="color: var(--accent);">📊 리소스 모니터링</h3>
+                <div class="code-block" style="margin-top: 8px; font-size: 0.75rem;">
+<span class="comment"># VPA가 수집하는 메트릭</span>
+CPU 사용량 (14일 P95): <span class="value">280m</span> / 요청: <span class="string">500m</span>
+Memory 사용량 (P95):   <span class="value">420Mi</span> / 요청: <span class="string">1Gi</span>
+
+<span class="comment"># 사용률</span>
+CPU Utilization:    <span class="value">56%</span>  ← 과잉 할당
+Memory Utilization: <span class="value">41%</span>  ← 과잉 할당</div>
+              </div>
+              <div class="flow-detail" data-step="2" style="display:none;">
+                <h3 style="color: var(--yellow);">💡 추천값 생성</h3>
+                <div class="code-block" style="margin-top: 8px; font-size: 0.75rem;">
+<span class="comment"># kubectl describe vpa my-app-vpa</span>
+Recommendation:
+  Container: my-app
+    <span class="key">Lower Bound</span>:  CPU: <span class="value">200m</span>,  Mem: <span class="value">350Mi</span>
+    <span class="key">Target</span>:       CPU: <span class="value">300m</span>,  Mem: <span class="value">512Mi</span>  ← 권장
+    <span class="key">Upper Bound</span>:  CPU: <span class="value">450m</span>,  Mem: <span class="value">700Mi</span>
+    <span class="key">Uncapped</span>:     CPU: <span class="value">300m</span>,  Mem: <span class="value">512Mi</span></div>
+                <p style="font-size: 0.8rem; color: var(--green); margin-top: 8px;">→ CPU 40% 절감, Memory 50% 절감 가능</p>
+              </div>
+              <div class="flow-detail" data-step="3" style="display:none;">
+                <h3 style="color: var(--green);">🔄 Pod Requests 업데이트</h3>
+                <div class="code-block" style="margin-top: 8px; font-size: 0.75rem;">
+<span class="comment"># VPA가 Pod spec 수정</span>
+resources:
+  requests:
+    cpu: <span class="string">500m</span> → <span class="value">300m</span>  <span class="comment"># -40%</span>
+    memory: <span class="string">1Gi</span> → <span class="value">512Mi</span>  <span class="comment"># -50%</span>
+  limits:
+    cpu: <span class="string">1000m</span> → <span class="value">600m</span>
+    memory: <span class="string">2Gi</span> → <span class="value">1Gi</span></div>
+              </div>
+              <div class="flow-detail" data-step="4" style="display:none;">
+                <h3 style="color: var(--blue);">🔍 Auto Mode 변경 감지</h3>
+                <div class="code-block" style="margin-top: 8px; font-size: 0.75rem;">
+<span class="comment"># Karpenter가 Pod 변화 감지</span>
+Node pool capacity:
+  <span class="key">Before</span>: 3x c6g.large  (6 vCPU, 12Gi)
+  <span class="key">After</span>:  리소스 요청 감소 → 잉여 용량 발생
+
+<span class="comment"># Pod가 작아져서 더 작은 노드에 맞춤</span>
+Scheduling: c6g.medium으로 충분</div>
+              </div>
+              <div class="flow-detail" data-step="5" style="display:none;">
+                <h3 style="color: var(--cyan);">📦 최적 인스턴스 선택</h3>
+                <div class="code-block" style="margin-top: 8px; font-size: 0.75rem;">
+<span class="comment"># 인스턴스 다운사이징</span>
+<span class="key">Before</span>: c6g.large   ($0.068/h × 3) = <span class="string">$0.204/h</span>
+<span class="key">After</span>:  c6g.medium  ($0.034/h × 3) = <span class="value">$0.102/h</span>
+
+<span class="comment"># 시간당 절감</span>
+절감액: <span class="value">$0.102/h</span> (<span class="value">50%</span> 절감)
+월간:   <span class="value">~$73/mo</span> 절감</div>
+              </div>
+              <div class="flow-detail" data-step="6" style="display:none;">
+                <h3 style="color: var(--green);">🗑️ Consolidation 수행</h3>
+                <div class="code-block" style="margin-top: 8px; font-size: 0.75rem;">
+<span class="comment"># Karpenter Consolidation</span>
+감지: node-2 utilization < 30%
+행동: Pod를 node-1, node-3로 이동
+결과: node-2 <span class="string">제거</span>
+
+<span class="key">Before</span>: 3 nodes → <span class="value">After</span>: 2 nodes
+비용:   <span class="value">$0.068/h</span> 추가 절감</div>
+                <p style="font-size: 0.8rem; color: var(--green); margin-top: 8px;">→ 총 비용 절감: VPA + Consolidation = <strong>~67%</strong></p>
+              </div>
             </div>
           </div>
         </div>
@@ -1487,7 +1560,7 @@ upperBound: CPU ${cpuUpper}m, Memory ${formatMemory(memUpper)}`;
           return;
         }
         updateFlowSteps();
-      }, 1000);
+      }, 2000);
     }
 
     function resetFlowAnimation() {
@@ -1496,6 +1569,12 @@ upperBound: CPU ${cpuUpper}m, Memory ${formatMemory(memUpper)}`;
       document.querySelectorAll('#flow-timeline .flow-step').forEach(step => {
         step.classList.remove('active', 'done');
       });
+      // Reset detail panel
+      document.querySelectorAll('#flow-detail-panel .flow-detail').forEach(d => {
+        d.style.display = 'none';
+      });
+      const defaultDetail = document.querySelector('#flow-detail-panel .flow-detail[data-step="0"]');
+      if (defaultDetail) defaultDetail.style.display = 'block';
     }
 
     function updateFlowSteps() {
@@ -1508,6 +1587,12 @@ upperBound: CPU ${cpuUpper}m, Memory ${formatMemory(memUpper)}`;
           step.classList.add('active');
         }
       });
+      // Show corresponding detail panel
+      document.querySelectorAll('#flow-detail-panel .flow-detail').forEach(d => {
+        d.style.display = 'none';
+      });
+      const activeDetail = document.querySelector(`#flow-detail-panel .flow-detail[data-step="${flowStep}"]`);
+      if (activeDetail) activeDetail.style.display = 'block';
     }
 
     document.getElementById('play-flow-btn')?.addEventListener('click', playFlowAnimation);

@@ -910,7 +910,10 @@
 <span class="key">topologySpreadConstraints</span>:
   - <span class="key">maxSkew</span>: <span class="value">1</span>
     <span class="key">topologyKey</span>: <span class="string">topology.kubernetes.io/zone</span>
-    <span class="key">whenUnsatisfiable</span>: <span class="value">DoNotSchedule</span></div></div>
+    <span class="key">whenUnsatisfiable</span>: <span class="value">DoNotSchedule</span>
+    <span class="key">labelSelector</span>:
+      <span class="key">matchLabels</span>:
+        <span class="key">app</span>: <span class="string">my-app</span></div></div>
               </div>
             </li>
             <li>

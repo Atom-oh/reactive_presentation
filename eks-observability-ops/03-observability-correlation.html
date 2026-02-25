@@ -207,6 +207,19 @@
     canvas {
       border-radius: 8px;
     }
+
+    /* Fault simulation animation */
+    .metric-card.fault {
+      border-color: var(--red) !important;
+      animation: faultPulse 1s ease-in-out 3;
+    }
+    @keyframes faultPulse {
+      0%, 100% { box-shadow: none; }
+      50% { box-shadow: 0 0 20px rgba(255,85,85,0.3); }
+    }
+    .metric-value.fault-spike {
+      color: var(--red) !important;
+    }
   </style>
 </head>
 <body>
@@ -408,7 +421,7 @@
       <span class="key">maxLines</span>: <span class="number">1000</span>
       <span class="key">derivedFields</span>:
         - <span class="key">name</span>: <span class="string">TraceID</span>
-          <span class="key">matcherRegex</span>: <span class="string">'"traceId":"([a-f0-9]+)"'</span>
+          <span class="key">regex</span>: <span class="string">'"traceId":"([a-f0-9]+)"'</span>
           <span class="key">url</span>: <span class="string">'$${__value.raw}'</span>
           <span class="key">datasourceUid</span>: <span class="string">tempo</span></div>
           </div>
@@ -460,12 +473,13 @@
             <button class="btn" id="btn-reset-lt">Reset</button>
           </div>
         </div>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 12px;">Tempo는 트레이스 저장소, Loki는 로그 저장소 — Grafana가 양쪽을 <strong>조회</strong>하며 연결합니다. 로그의 traceId로 트레이스를 찾거나, 트레이스의 메타데이터로 관련 로그를 필터링합니다.</p>
         <div class="col-2">
           <div class="code-block" style="font-size: 0.78rem;">
             <span class="code-label">Loki → Tempo (Derived Fields)</span>
 <span class="key">derivedFields</span>:
   - <span class="key">name</span>: <span class="string">TraceID</span>
-    <span class="key">matcherRegex</span>: <span class="string">'"traceId":"([a-f0-9]+)"'</span>
+    <span class="key">regex</span>: <span class="string">'"traceId":"([a-f0-9]+)"'</span>
     <span class="key">datasourceUid</span>: <span class="string">tempo</span>
 </div>
           <div class="code-block" style="font-size: 0.78rem;">
@@ -582,6 +596,9 @@
         </div>
 
         <div class="tab-content" data-tab="chained">
+          <div class="callout callout-info" style="margin-bottom: 12px; padding: 10px 14px;">
+            <strong>&gt;&gt;</strong> (descendant) 연산자: 두 span 사이의 호출 경로(parent → child)를 추적합니다. <code>A &gt;&gt; B</code>는 "A span 하위에 B span이 존재하는 트레이스"를 의미합니다.
+          </div>
           <div class="traceql-example">
             <div class="traceql-query">{ resource.service.name = "api-gateway" } >> { resource.service.name = "payment-service" }</div>
             <p class="traceql-desc">api-gateway에서 payment-service로 이어지는 호출 경로를 가진 트레이스를 검색합니다.</p>
@@ -631,26 +648,27 @@
         <h1>RED Method + 4 Golden Signals</h1>
       </div>
       <div class="slide-body">
-        <div class="compare-toggle">
+        <div class="compare-toggle" style="display: flex; align-items: center;">
           <button class="compare-btn active" data-compare="red">RED Method</button>
           <button class="compare-btn" data-compare="golden">4 Golden Signals</button>
+          <button class="btn" id="btn-fault-sim" style="margin-left: auto; border-color: var(--red); color: var(--red); font-size: 0.8rem;">장애 시뮬레이션</button>
         </div>
 
         <div class="compare-content active" data-compare="red">
           <p style="margin-bottom: 16px; color: var(--text-secondary);">서비스 레벨 모니터링에 적합 (마이크로서비스)</p>
           <div class="col-3">
-            <div class="card metric-card">
-              <div class="metric-value" style="color: var(--blue);">1,247</div>
+            <div class="card metric-card" id="red-rate">
+              <div class="metric-value" style="color: var(--blue);" data-normal="1,247" data-fault="342">1,247</div>
               <div class="metric-label">Rate (req/s)</div>
               <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">초당 요청 수</p>
             </div>
-            <div class="card metric-card">
-              <div class="metric-value" style="color: var(--red);">0.12%</div>
+            <div class="card metric-card" id="red-errors">
+              <div class="metric-value" style="color: var(--red);" data-normal="0.12%" data-fault="5.2%">0.12%</div>
               <div class="metric-label">Errors</div>
               <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">에러율</p>
             </div>
-            <div class="card metric-card">
-              <div class="metric-value" style="color: var(--yellow);">45ms</div>
+            <div class="card metric-card" id="red-duration">
+              <div class="metric-value" style="color: var(--yellow);" data-normal="45ms" data-fault="2,340ms">45ms</div>
               <div class="metric-label">Duration (p99)</div>
               <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">응답 시간</p>
             </div>
@@ -660,23 +678,23 @@
         <div class="compare-content" data-compare="golden">
           <p style="margin-bottom: 16px; color: var(--text-secondary);">Google SRE 방법론 - 인프라 + 서비스 모니터링</p>
           <div class="col-2" style="gap: 16px;">
-            <div class="card metric-card">
-              <div class="metric-value" style="color: var(--yellow);">45ms</div>
+            <div class="card metric-card" id="golden-latency">
+              <div class="metric-value" style="color: var(--yellow);" data-normal="45ms" data-fault="2,340ms">45ms</div>
               <div class="metric-label">Latency</div>
               <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">요청 처리 시간</p>
             </div>
-            <div class="card metric-card">
-              <div class="metric-value" style="color: var(--blue);">1,247</div>
+            <div class="card metric-card" id="golden-traffic">
+              <div class="metric-value" style="color: var(--blue);" data-normal="1,247" data-fault="342">1,247</div>
               <div class="metric-label">Traffic</div>
               <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">시스템 부하</p>
             </div>
-            <div class="card metric-card">
-              <div class="metric-value" style="color: var(--red);">0.12%</div>
+            <div class="card metric-card" id="golden-errors">
+              <div class="metric-value" style="color: var(--red);" data-normal="0.12%" data-fault="5.2%">0.12%</div>
               <div class="metric-label">Errors</div>
               <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">실패율</p>
             </div>
-            <div class="card metric-card">
-              <div class="metric-value" style="color: var(--cyan);">72%</div>
+            <div class="card metric-card" id="golden-saturation">
+              <div class="metric-value" style="color: var(--cyan);" data-normal="72%" data-fault="96%">72%</div>
               <div class="metric-label">Saturation</div>
               <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">리소스 포화도</p>
             </div>
@@ -798,7 +816,7 @@ ERROR: Unable to acquire connection within 5s
               <h3>Receivers</h3>
               <p style="margin-bottom: 12px;">텔레메트리 데이터 수신</p>
               <ul>
-                <li><strong>OTLP (gRPC)</strong>: 4317 포트</li>
+                <li><strong>OTLP (gRPC)</strong>: 4317 포트 <span style="color: var(--text-muted); font-size: 0.78rem;">— OpenTelemetry Protocol</span></li>
                 <li><strong>OTLP (HTTP)</strong>: 4318 포트</li>
                 <li><strong>Jaeger</strong>: 14250/14268 포트</li>
                 <li><strong>Zipkin</strong>: 9411 포트</li>
@@ -927,8 +945,8 @@ ERROR: Unable to acquire connection within 5s
                   <td style="color: var(--green);">100%</td>
                 </tr>
                 <tr>
-                  <td>Adaptive</td>
-                  <td>동적</td>
+                  <td><strong>Adaptive</strong></td>
+                  <td>동적 (1~50%)</td>
                   <td style="color: var(--green);">85-95%</td>
                   <td style="color: var(--green);">100%</td>
                 </tr>
@@ -947,6 +965,17 @@ ERROR: Unable to acquire connection within 5s
                 <li><strong>errors:</strong> 모든 에러 100% 수집</li>
                 <li><strong>slow:</strong> 1초 이상 요청 100% 수집</li>
                 <li><strong>default:</strong> 나머지 10% 랜덤 샘플링</li>
+              </ul>
+            </div>
+
+            <div class="card" style="margin-top: 12px; border-color: var(--cyan);">
+              <h3 style="color: var(--cyan);">Adaptive Sampling이란?</h3>
+              <p style="font-size: 0.85rem; margin-top: 8px;">트래픽 양에 따라 <strong>샘플링률을 자동 조절</strong>하는 전략. OTEL Collector의 <code>tail_sampling</code> + <code>probabilistic_sampler</code>를 조합하여 구현합니다.</p>
+              <ul style="font-size: 0.85rem; margin-top: 8px;">
+                <li><strong>Low traffic</strong> (< 100 req/s): 50% 수집 — 데이터 충분</li>
+                <li><strong>Normal</strong> (100-1k req/s): 10% 수집 — 비용 최적화</li>
+                <li><strong>High traffic</strong> (> 1k req/s): 1-5% 수집 — 저장소 보호</li>
+                <li>에러/느린 요청은 항상 100% 수집 (Tail Sampling과 동일)</li>
               </ul>
             </div>
           </div>
@@ -1045,7 +1074,7 @@ ERROR: Unable to acquire connection within 5s
         4: 'Exemplar는 히스토그램 메트릭 버킷에 TraceID를 첨부하는 기술입니다. Prometheus 2.26 버전부터 지원되며, 클라이언트 라이브러리 설정이 필요합니다. 실제 구현 시 샘플링 비율 조절이 중요합니다.',
         5: '탭을 하나씩 클릭하며 각 데이터소스 설정을 보여주세요. 핵심은 세 데이터소스가 서로를 참조하는 설정입니다. 특히 Tempo의 tracesToLogs와 Loki의 derivedFields가 양방향 연동의 핵심입니다.',
         6: 'derivedFields는 로그에서 TraceID를 추출해 Tempo로 연결하고, tracesToLogs는 트레이스에서 로그로 연결합니다. 이 양방향 설정으로 어느 시그널에서 시작해도 나머지를 탐색할 수 있습니다.',
-        7: 'matcherRegex 패턴이 실제로 어떻게 TraceID를 추출하는지 예시를 들어 설명하세요. JSON 로그 형식을 권장하는 이유는 파싱이 정확하고 구조화된 쿼리가 가능하기 때문입니다.',
+        7: 'regex 패턴이 실제로 어떻게 TraceID를 추출하는지 예시를 들어 설명하세요. JSON 로그 형식을 권장하는 이유는 파싱이 정확하고 구조화된 쿼리가 가능하기 때문입니다.',
         8: 'TraceQL은 SQL과 비슷한 직관적인 문법입니다. duration > 1s로 느린 요청 찾기, status = error로 에러 찾기가 기본입니다. >> 연산자로 서비스 간 호출 경로를 추적하는 예시를 보여주세요.',
         9: 'Service Map은 자동 생성됩니다. 빨간색 노드가 에러 발생 서비스, 선의 굵기가 트래픽 양을 나타냅니다. 장애 상황에서 영향 범위와 전파 경로를 한눈에 파악할 수 있어 유용합니다.',
         10: 'RED Method는 마이크로서비스에, 4 Golden Signals는 인프라에 적합합니다. 대시보드 구성 시 이 메트릭들을 기준으로 패널을 배치하면 표준화된 모니터링이 가능합니다.',
@@ -1761,25 +1790,52 @@ ERROR: Unable to acquire connection within 5s
       ctx.fillStyle = Colors.bgSecond;
       ctx.fillRect(0, 0, w, h);
 
-      // Service nodes
+      // Deeper service topology: Gateway → Services → Sub-services → DB
       const services = [
-        { id: 'gateway', name: 'API Gateway', x: 150, y: h/2, color: Colors.green },
-        { id: 'auth', name: 'Auth Service', x: 350, y: 80, color: Colors.green },
-        { id: 'payment', name: 'Payment Service', x: 350, y: h/2, color: smFaultInjected ? Colors.red : Colors.green },
-        { id: 'order', name: 'Order Service', x: 350, y: h - 80, color: Colors.green },
-        { id: 'notification', name: 'Notification', x: 550, y: 80, color: Colors.green },
-        { id: 'database', name: 'Database', x: 550, y: h/2, color: smFaultInjected ? Colors.yellow : Colors.green }
+        { id: 'gateway',   name: 'API Gateway',     x: w/2,       y: 45,  color: Colors.green },
+        { id: 'auth',      name: 'Auth Service',    x: 140,       y: 125, color: Colors.green },
+        { id: 'order',     name: 'Order Service',   x: w/2,       y: 125, color: Colors.green },
+        { id: 'payment',   name: 'Payment Service', x: w - 140,   y: 125, color: Colors.green },
+        { id: 'redis',     name: 'Redis',           x: 100,       y: 215, color: Colors.green },
+        { id: 'inventory', name: 'Inventory',       x: w/2 - 100, y: 215, color: Colors.green },
+        { id: 'billing',   name: 'Billing Service', x: w/2 + 100, y: 215, color: Colors.green },
+        { id: 'postgres',  name: 'PostgreSQL',      x: w/2,       y: h - 45, color: Colors.green }
       ];
 
-      // Edges
+      // Edges representing call dependencies
       const edges = [
         { from: 'gateway', to: 'auth', rate: '500/s' },
-        { from: 'gateway', to: 'payment', rate: '1.2k/s' },
         { from: 'gateway', to: 'order', rate: '800/s' },
-        { from: 'auth', to: 'notification', rate: '100/s' },
-        { from: 'payment', to: 'database', rate: '1k/s' },
-        { from: 'order', to: 'database', rate: '600/s' }
+        { from: 'gateway', to: 'payment', rate: '1.2k/s' },
+        { from: 'auth', to: 'redis', rate: '500/s' },
+        { from: 'order', to: 'inventory', rate: '600/s' },
+        { from: 'payment', to: 'billing', rate: '1k/s' },
+        { from: 'inventory', to: 'postgres', rate: '400/s' },
+        { from: 'billing', to: 'postgres', rate: '800/s' }
       ];
+
+      // Fault propagation: DB failure propagates upward through call chain
+      if (smFaultInjected) {
+        // Depth 0: Root cause - DB down
+        services.find(s => s.id === 'postgres').color = Colors.red;
+
+        // Depth 1: Direct dependents - can't query DB
+        services.find(s => s.id === 'inventory').color = Colors.red;
+        services.find(s => s.id === 'billing').color = Colors.red;
+
+        // Depth 2: Services calling affected services - degraded
+        services.find(s => s.id === 'order').color = Colors.yellow;
+        services.find(s => s.id === 'payment').color = Colors.yellow;
+
+        // Depth 3: Gateway sees errors from downstream - elevated error rate
+        services.find(s => s.id === 'gateway').color = Colors.yellow;
+
+        // Unaffected: auth uses Redis, not DB
+      }
+
+      // Build service color lookup for edge coloring
+      const serviceColorMap = {};
+      services.forEach(s => { serviceColorMap[s.id] = s.color; });
 
       // Draw edges first
       edges.forEach(edge => {
@@ -1787,54 +1843,63 @@ ERROR: Unable to acquire connection within 5s
         const to = services.find(s => s.id === edge.to);
         if (!from || !to) return;
 
+        // Color edges based on connected service states
         let edgeColor = Colors.textMuted;
         if (smFaultInjected) {
-          if ((from.id === 'payment' && to.id === 'database') ||
-              (from.id === 'gateway' && to.id === 'payment')) {
+          const fromColor = serviceColorMap[from.id];
+          const toColor = serviceColorMap[to.id];
+          if (toColor === Colors.red || fromColor === Colors.red) {
+            edgeColor = Colors.red;
+          } else if (toColor === Colors.yellow || fromColor === Colors.yellow) {
             edgeColor = Colors.yellow;
           }
         }
+
+        // Calculate edge endpoints (from right side of source to left side of target)
+        const nodeW = 110;
+        const fromX = from.x + nodeW/2;
+        const fromY = from.y;
+        const toX = to.x - nodeW/2;
+        const toY = to.y;
 
         // Draw edge line
         ctx.beginPath();
         ctx.strokeStyle = edgeColor;
         ctx.lineWidth = 2;
-        ctx.moveTo(from.x + 60, from.y);
-        ctx.lineTo(to.x - 60, to.y);
+        ctx.moveTo(fromX, fromY);
+        ctx.lineTo(toX, toY);
         ctx.stroke();
 
         // Arrowhead
-        const angle = Math.atan2(to.y - from.y, to.x - from.x);
-        const ax = to.x - 60;
-        const ay = to.y;
+        const angle = Math.atan2(toY - fromY, toX - fromX);
         ctx.beginPath();
         ctx.fillStyle = edgeColor;
-        ctx.moveTo(ax, ay);
-        ctx.lineTo(ax - 8 * Math.cos(angle - 0.3), ay - 8 * Math.sin(angle - 0.3));
-        ctx.lineTo(ax - 8 * Math.cos(angle + 0.3), ay - 8 * Math.sin(angle + 0.3));
+        ctx.moveTo(toX, toY);
+        ctx.lineTo(toX - 8 * Math.cos(angle - 0.3), toY - 8 * Math.sin(angle - 0.3));
+        ctx.lineTo(toX - 8 * Math.cos(angle + 0.3), toY - 8 * Math.sin(angle + 0.3));
         ctx.fill();
 
         // Rate label
-        const midX = (from.x + to.x) / 2;
-        const midY = (from.y + to.y) / 2;
+        const midX = (fromX + toX) / 2;
+        const midY = (fromY + toY) / 2;
         ctx.fillStyle = Colors.textMuted;
         ctx.font = '400 10px JetBrains Mono';
         ctx.textAlign = 'center';
-        ctx.fillText(edge.rate, midX, midY - 10);
+        ctx.fillText(edge.rate, midX, midY - 8);
       });
 
       // Draw service nodes
       services.forEach(service => {
-        const nodeW = 120;
-        const nodeH = 50;
+        const nodeW = 110;
+        const nodeH = 44;
         const x = service.x - nodeW/2;
         const y = service.y - nodeH/2;
 
         // Node background
         drawRoundRect(ctx, x, y, nodeW, nodeH, 10, service.color + '25', service.color);
 
-        // Pulsing effect for error service
-        if (smFaultInjected && service.id === 'payment') {
+        // Pulsing effect for root cause (postgres)
+        if (smFaultInjected && service.id === 'postgres') {
           ctx.strokeStyle = Colors.red;
           ctx.lineWidth = 3;
           ctx.stroke();
@@ -1842,7 +1907,7 @@ ERROR: Unable to acquire connection within 5s
 
         // Service name
         ctx.fillStyle = Colors.textPri;
-        ctx.font = '600 12px Pretendard';
+        ctx.font = '600 11px Pretendard';
         ctx.textAlign = 'center';
         ctx.fillText(service.name, service.x, service.y + 4);
       });
@@ -1850,9 +1915,9 @@ ERROR: Unable to acquire connection within 5s
       // Error propagation message
       if (smFaultInjected) {
         ctx.fillStyle = Colors.red;
-        ctx.font = '600 14px Pretendard';
+        ctx.font = '600 13px Pretendard';
         ctx.textAlign = 'center';
-        ctx.fillText('Payment Service 장애 → 상위 경로 지연 전파', w/2, h - 20);
+        ctx.fillText('PostgreSQL 장애 → Billing/Inventory 에러 → Order/Payment 지연 전파', w/2, h - 12);
       }
     }
 
@@ -1959,6 +2024,49 @@ ERROR: Unable to acquire connection within 5s
     }
 
     samplingSlider?.addEventListener('input', updateSamplingCalc);
+
+    // ============================================================
+    // Slide 10: Fault Simulation for RED/Golden Signals
+    // ============================================================
+    let faultSimActive = false;
+
+    function toggleFaultSimulation() {
+      faultSimActive = !faultSimActive;
+      const btn = document.getElementById('btn-fault-sim');
+      const slide10 = document.getElementById('slide-10');
+      const metricCards = slide10.querySelectorAll('.metric-card');
+      const metricValues = slide10.querySelectorAll('.metric-value[data-normal]');
+
+      if (faultSimActive) {
+        btn.textContent = '정상';
+        btn.style.borderColor = 'var(--green)';
+        btn.style.color = 'var(--green)';
+
+        metricValues.forEach(mv => {
+          mv.textContent = mv.dataset.fault;
+          mv.classList.add('fault-spike');
+        });
+
+        metricCards.forEach(card => {
+          card.classList.add('fault');
+        });
+      } else {
+        btn.textContent = '장애 시뮬레이션';
+        btn.style.borderColor = 'var(--red)';
+        btn.style.color = 'var(--red)';
+
+        metricValues.forEach(mv => {
+          mv.textContent = mv.dataset.normal;
+          mv.classList.remove('fault-spike');
+        });
+
+        metricCards.forEach(card => {
+          card.classList.remove('fault');
+        });
+      }
+    }
+
+    document.getElementById('btn-fault-sim')?.addEventListener('click', toggleFaultSimulation);
 
     // Initialize on load
     document.addEventListener('DOMContentLoaded', () => {

@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Block 2: 노드 라이프사이클 & 모니터링 - EKS Auto Mode</title>
+  <link rel="stylesheet" href="../common/theme.css">
+  <style>
+    /* Command Cards */
+    .command-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 12px;
+    }
+    .command-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .command-card:hover {
+      border-color: var(--accent);
+    }
+    .command-card.expanded {
+      grid-column: 1 / -1;
+    }
+    .command-header {
+      padding: 12px 16px;
+      font-family: var(--font-mono);
+      font-size: .82rem;
+      color: var(--accent-light);
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .command-header::before {
+      content: '$';
+      color: var(--green);
+    }
+    .command-output {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .command-card.expanded .command-output {
+      max-height: 300px;
+    }
+    .command-output .code-block {
+      border: none;
+      border-radius: 0;
+      margin: 0;
+      font-size: .75rem;
+    }
+
+    /* PromQL Tabs */
+    .promql-display {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .promql-query {
+      font-family: var(--font-mono);
+      font-size: .88rem;
+      color: var(--cyan);
+      background: #0d1117;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .metric-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 8px 0;
+    }
+    .metric-bar-label {
+      width: 100px;
+      font-size: .82rem;
+      color: var(--text-secondary);
+    }
+    .metric-bar-track {
+      flex: 1;
+      height: 24px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .metric-bar-fill {
+      height: 100%;
+      transition: width 0.5s ease;
+    }
+    .metric-bar-value {
+      width: 60px;
+      text-align: right;
+      font-family: var(--font-mono);
+      font-size: .85rem;
+      color: var(--accent-light);
+    }
+
+    /* Alert Builder */
+    .alert-builder {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .alert-toggle {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .alert-toggle:hover {
+      border-color: var(--accent);
+    }
+    .alert-toggle.active {
+      border-color: var(--green);
+      background: var(--green-bg);
+    }
+    .alert-toggle input {
+      display: none;
+    }
+    .alert-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-fast);
+    }
+    .alert-toggle.active .alert-checkbox {
+      background: var(--green);
+      border-color: var(--green);
+    }
+    .alert-toggle.active .alert-checkbox::after {
+      content: '\2713';
+      color: #fff;
+      font-size: .75rem;
+    }
+    .alert-name {
+      flex: 1;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: .9rem;
+    }
+    .alert-desc {
+      font-size: .78rem;
+      color: var(--text-muted);
+    }
+    .alert-yaml-output {
+      margin-top: 12px;
+    }
+
+    /* Slider with labels */
+    .expire-slider-container {
+      padding: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .expire-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: .72rem;
+      color: var(--text-muted);
+    }
+    .expire-recommendation {
+      margin-top: 20px;
+      padding: 16px;
+      background: var(--bg-tertiary);
+      border-radius: 10px;
+    }
+    .expire-recommendation h4 {
+      color: var(--accent-light);
+      font-size: 1rem;
+      margin-bottom: 8px;
+    }
+    .tradeoff-bars {
+      display: flex;
+      gap: 24px;
+      margin-top: 12px;
+    }
+    .tradeoff-item {
+      flex: 1;
+    }
+    .tradeoff-label {
+      font-size: .78rem;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    .tradeoff-bar {
+      height: 8px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .tradeoff-fill {
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+
+    /* AMI Comparison Table */
+    .ami-comparison {
+      margin-top: 16px;
+    }
+    .ami-comparison table {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="slide-deck">
+
+    <!-- Slide 1: Pain Point -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>노드 가용성 모니터링이 어려운 이유</h1>
+        <p class="subtitle">Block 2: 노드 라이프사이클 & 모니터링</p>
+      </div>
+      <div class="slide-body">
+        <div class="pain-quote">
+          "Auto Mode에서 노드가 갑자기 사라지는데, 왜 사라졌는지 파악하기 어렵습니다"
+        </div>
+        <div class="pain-quote">
+          "Spot 인터럽트인지, Consolidation인지, Drift 교체인지 구분이 안 됩니다"
+        </div>
+        <div style="margin-top: 24px;">
+          <h3>핵심 과제</h3>
+          <ul style="margin-top: 12px;">
+            <li><strong>노드 종료 원인 가시성 부족</strong> — 왜 이 노드가 사라졌는지 로그 추적 필요</li>
+            <li><strong>Karpenter 이벤트 추적 어려움</strong> — Consolidation, Drift, Expiry 구분 필요</li>
+            <li><strong>Spot 인터럽트 사전 감지 필요</strong> — 2분 경고 내에 Pod 안전 이동</li>
+          </ul>
+        </div>
+        <div class="callout callout-info" style="margin-top: 24px;">
+          <strong>이 블록에서 학습할 내용:</strong> 노드 상태 시각화, kubectl 진단, Prometheus 쿼리, Spot 대응, expireAfter 전략, AlertManager 알림 구성
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 2: Node Dashboard Simulator -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>노드 상태 대시보드 시뮬레이터</h1>
+        <p class="subtitle">실시간 노드 상태 모니터링 및 이벤트 추적</p>
+      </div>
+      <div class="slide-body" style="gap: 12px;">
+        <div class="canvas-container" style="flex: 1;">
+          <canvas id="dashboard-canvas"></canvas>
+        </div>
+        <div class="btn-group" style="justify-content: center;">
+          <button class="btn" id="btn-add-node">노드 추가</button>
+          <button class="btn" id="btn-add-workload">워크로드 추가</button>
+          <button class="btn" style="border-color: var(--red); color: var(--red);" id="btn-spot-interrupt">Spot 인터럽트</button>
+          <button class="btn" style="border-color: var(--yellow); color: var(--yellow);" id="btn-consolidation">Consolidation</button>
+          <button class="btn btn-sm" id="btn-reset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: kubectl Diagnostics -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>kubectl 진단 명령어</h1>
+        <p class="subtitle">노드 상태 및 Karpenter 이벤트 확인</p>
+      </div>
+      <div class="slide-body">
+        <div class="command-cards" id="command-cards">
+          <div class="command-card" data-cmd="1">
+            <div class="command-header">kubectl get nodepools</div>
+            <div class="command-output">
+              <div class="code-block">NAME              NODECLASS   NODES   READY   AGE
+general-purpose   default     8       8       5d
+system            default     2       2       5d
+gpu-workload      gpu         0       0       5d</div>
+            </div>
+          </div>
+          <div class="command-card" data-cmd="2">
+            <div class="command-header">kubectl get nodeclaims -o wide</div>
+            <div class="command-output">
+              <div class="code-block">NAME          TYPE          ZONE         CAP-TYPE   NODE          READY   AGE
+nc-abc123     m5.xlarge     ap-ne-2a     on-demand  ip-10-0-1-5   True    2h
+nc-def456     c5.2xlarge    ap-ne-2b     spot       ip-10-0-2-8   True    45m
+nc-ghi789     m5.2xlarge    ap-ne-2c     on-demand  ip-10-0-3-2   True    3h
+nc-jkl012     r5.xlarge     ap-ne-2a     spot       ip-10-0-1-9   True    1h</div>
+            </div>
+          </div>
+          <div class="command-card" data-cmd="3">
+            <div class="command-header">kubectl get nodes -L karpenter.sh/nodepool,karpenter.sh/capacity-type</div>
+            <div class="command-output">
+              <div class="code-block">NAME          STATUS   ROLES    AGE   NODEPOOL          CAPACITY-TYPE
+ip-10-0-1-5   Ready    <none>   2h    general-purpose   on-demand
+ip-10-0-2-8   Ready    <none>   45m   general-purpose   spot
+ip-10-0-3-2   Ready    <none>   3h    general-purpose   on-demand
+ip-10-0-1-9   Ready    <none>   1h    general-purpose   spot</div>
+            </div>
+          </div>
+          <div class="command-card" data-cmd="4">
+            <div class="command-header">kubectl get events --sort-by='.lastTimestamp' | grep karpenter</div>
+            <div class="command-output">
+              <div class="code-block"><span class="timestamp">12m</span>   Normal   <span class="event-ok">Launched</span>         nodeclaim/nc-abc123   Launched node ip-10-0-1-5
+<span class="timestamp">10m</span>   Normal   <span class="event-info">Registered</span>       nodeclaim/nc-abc123   Registered node
+<span class="timestamp">5m</span>    Normal   <span class="event-warn">Consolidating</span>    nodeclaim/nc-xyz789   Consolidating node (underutilized)
+<span class="timestamp">3m</span>    Warning  <span class="event-error">SpotInterrupted</span>  nodeclaim/nc-old123   Spot instance interrupted
+<span class="timestamp">2m</span>    Normal   <span class="event-info">Drifted</span>          nodeclaim/nc-def456   NodeClass changed</div>
+            </div>
+          </div>
+          <div class="command-card" data-cmd="5">
+            <div class="command-header">kubectl get pods -A --field-selector=status.phase=Pending</div>
+            <div class="command-output">
+              <div class="code-block">NAMESPACE     NAME                      READY   STATUS    AGE
+default       web-app-7d9f8b6c5-xyz    0/1     Pending   2m
+production    api-server-5c8d7e-abc    0/1     Pending   1m
+monitoring    prometheus-0             0/1     Pending   30s</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: Prometheus Queries -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>Prometheus 쿼리: 노드 모니터링</h1>
+        <p class="subtitle">핵심 Karpenter 메트릭 쿼리</p>
+      </div>
+      <div class="slide-body">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="prom1">총 노드 수</button>
+          <button class="tab-btn" data-tab="prom2">Pending Pods</button>
+          <button class="tab-btn" data-tab="prom3">Spot 비율</button>
+          <button class="tab-btn" data-tab="prom4">프로비저닝 P99</button>
+        </div>
+        <div class="tab-content active" data-tab="prom1">
+          <div class="promql-display">
+            <div class="promql-query">karpenter_nodes_total</div>
+            <p style="color: var(--text-secondary); font-size: .88rem; margin-bottom: 16px;">NodePool별 총 노드 수 추적</p>
+            <div class="metric-bar">
+              <span class="metric-bar-label">general-purpose</span>
+              <div class="metric-bar-track"><div class="metric-bar-fill" style="width: 80%; background: var(--green);"></div></div>
+              <span class="metric-bar-value">8</span>
+            </div>
+            <div class="metric-bar">
+              <span class="metric-bar-label">system</span>
+              <div class="metric-bar-track"><div class="metric-bar-fill" style="width: 20%; background: var(--blue);"></div></div>
+              <span class="metric-bar-value">2</span>
+            </div>
+            <div class="metric-bar">
+              <span class="metric-bar-label">gpu-workload</span>
+              <div class="metric-bar-track"><div class="metric-bar-fill" style="width: 0%; background: var(--accent);"></div></div>
+              <span class="metric-bar-value">0</span>
+            </div>
+          </div>
+        </div>
+        <div class="tab-content" data-tab="prom2">
+          <div class="promql-display">
+            <div class="promql-query">karpenter_pods_pending</div>
+            <p style="color: var(--text-secondary); font-size: .88rem; margin-bottom: 16px;">스케줄 대기 중인 Pod 수 (프로비저닝 필요 신호)</p>
+            <div class="metric-bar">
+              <span class="metric-bar-label">Current</span>
+              <div class="metric-bar-track"><div class="metric-bar-fill" style="width: 30%; background: var(--yellow);"></div></div>
+              <span class="metric-bar-value">3</span>
+            </div>
+            <div class="callout callout-warning" style="margin-top: 16px;">
+              <strong>Alert 조건:</strong> karpenter_pods_pending > 10 for 5m
+            </div>
+          </div>
+        </div>
+        <div class="tab-content" data-tab="prom3">
+          <div class="promql-display">
+            <div class="promql-query">sum(karpenter_nodes_total{capacity_type="spot"}) / sum(karpenter_nodes_total) * 100</div>
+            <p style="color: var(--text-secondary); font-size: .88rem; margin-bottom: 16px;">전체 노드 중 Spot 인스턴스 비율</p>
+            <div class="metric-bar">
+              <span class="metric-bar-label">Spot 비율</span>
+              <div class="metric-bar-track"><div class="metric-bar-fill" style="width: 40%; background: var(--cyan);"></div></div>
+              <span class="metric-bar-value">40%</span>
+            </div>
+            <div class="col-2" style="margin-top: 16px;">
+              <div class="card">
+                <div class="metric-value" style="color: var(--green);">60%</div>
+                <div class="metric-label">On-Demand</div>
+              </div>
+              <div class="card">
+                <div class="metric-value" style="color: var(--cyan);">40%</div>
+                <div class="metric-label">Spot</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-content" data-tab="prom4">
+          <div class="promql-display">
+            <div class="promql-query">histogram_quantile(0.99, karpenter_nodeclaims_startup_duration_seconds)</div>
+            <p style="color: var(--text-secondary); font-size: .88rem; margin-bottom: 16px;">노드 프로비저닝 P99 지연 시간</p>
+            <div class="metric-bar">
+              <span class="metric-bar-label">P50</span>
+              <div class="metric-bar-track"><div class="metric-bar-fill" style="width: 30%; background: var(--green);"></div></div>
+              <span class="metric-bar-value">45s</span>
+            </div>
+            <div class="metric-bar">
+              <span class="metric-bar-label">P90</span>
+              <div class="metric-bar-track"><div class="metric-bar-fill" style="width: 50%; background: var(--yellow);"></div></div>
+              <span class="metric-bar-value">72s</span>
+            </div>
+            <div class="metric-bar">
+              <span class="metric-bar-label">P99</span>
+              <div class="metric-bar-track"><div class="metric-bar-fill" style="width: 70%; background: var(--red);"></div></div>
+              <span class="metric-bar-value">98s</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5: Spot Interrupt Simulation -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>Spot 인터럽트 시뮬레이션</h1>
+        <p class="subtitle">2분 경고 ~ 안전한 Pod 이동 전체 시퀀스</p>
+      </div>
+      <div class="slide-body" style="gap: 12px;">
+        <div class="canvas-container" style="flex: 1;">
+          <canvas id="spot-canvas"></canvas>
+        </div>
+        <div class="btn-group" style="justify-content: center;">
+          <button class="btn btn-primary" id="btn-start-interrupt">인터럽트 시작</button>
+          <button class="btn btn-sm" id="btn-reset-spot">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6: expireAfter Strategy -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>expireAfter 전략 비교</h1>
+        <p class="subtitle">환경별 노드 최대 수명 설정</p>
+      </div>
+      <div class="slide-body">
+        <div class="columns">
+          <div>
+            <div class="expire-slider-container">
+              <label style="font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 12px;">expireAfter 값 선택</label>
+              <div class="slider-container">
+                <input type="range" id="expire-slider" min="0" max="5" value="3" step="1">
+                <span class="slider-value" id="expire-value">168h</span>
+              </div>
+              <div class="expire-labels">
+                <span>24h</span>
+                <span>48h</span>
+                <span>72h</span>
+                <span>168h</span>
+                <span>240h</span>
+                <span>336h</span>
+              </div>
+            </div>
+            <div class="expire-recommendation" id="expire-recommendation">
+              <h4>프로덕션 권장</h4>
+              <p style="color: var(--text-secondary); font-size: .88rem;">안정성과 보안 패치 속도의 균형</p>
+              <div class="tradeoff-bars">
+                <div class="tradeoff-item">
+                  <div class="tradeoff-label">보안 패치 속도</div>
+                  <div class="tradeoff-bar"><div class="tradeoff-fill" id="security-bar" style="width: 60%; background: var(--green);"></div></div>
+                </div>
+                <div class="tradeoff-item">
+                  <div class="tradeoff-label">안정성</div>
+                  <div class="tradeoff-bar"><div class="tradeoff-fill" id="stability-bar" style="width: 70%; background: var(--blue);"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 style="margin-bottom: 12px;">NodePool YAML</h3>
+            <div class="code-block" id="expire-yaml"><span class="key">apiVersion</span>: karpenter.sh/v1
+<span class="key">kind</span>: NodePool
+<span class="key">metadata</span>:
+  <span class="key">name</span>: general-purpose
+<span class="key">spec</span>:
+  <span class="key">disruption</span>:
+    <span class="key">consolidationPolicy</span>: WhenEmptyOrUnderutilized
+    <span class="key">consolidateAfter</span>: 1m
+    <span class="comment"># 프로덕션 권장 값</span>
+    <span class="key">expireAfter</span>: <span class="value">168h</span>  <span class="comment"># 7일</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7: AMI Update & Drift -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>AMI 업데이트 & Drift 감지</h1>
+        <p class="subtitle">NodeClass 변경 시 자동 노드 교체 흐름</p>
+      </div>
+      <div class="slide-body">
+        <div class="timeline" id="drift-timeline">
+          <div class="timeline-step" data-step="1">
+            <div class="timeline-dot">1</div>
+            <div class="timeline-label">NodeClass 변경<br>(AMI 업데이트)</div>
+          </div>
+          <div class="timeline-connector"></div>
+          <div class="timeline-step" data-step="2">
+            <div class="timeline-dot">2</div>
+            <div class="timeline-label">Drift 감지<br>(자동)</div>
+          </div>
+          <div class="timeline-connector"></div>
+          <div class="timeline-step" data-step="3">
+            <div class="timeline-dot">3</div>
+            <div class="timeline-label">신규 노드<br>프로비저닝</div>
+          </div>
+          <div class="timeline-connector"></div>
+          <div class="timeline-step" data-step="4">
+            <div class="timeline-dot">4</div>
+            <div class="timeline-label">Pod 안전 이동<br>(PDB 준수)</div>
+          </div>
+          <div class="timeline-connector"></div>
+          <div class="timeline-step" data-step="5">
+            <div class="timeline-dot">5</div>
+            <div class="timeline-label">구 노드<br>종료</div>
+          </div>
+        </div>
+        <div style="text-align: center; margin: 16px 0;">
+          <button class="btn btn-primary" id="btn-play-drift">Play</button>
+          <button class="btn btn-sm" id="btn-reset-drift">Reset</button>
+        </div>
+        <div class="ami-comparison">
+          <h3 style="margin-bottom: 12px;">AL2023 vs Bottlerocket 비교</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>특성</th>
+                <th>AL2023</th>
+                <th>Bottlerocket</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>부팅 시간</td>
+                <td><span class="badge badge-yellow">40-60초</span></td>
+                <td><span class="badge badge-green">20-30초</span></td>
+              </tr>
+              <tr>
+                <td>보안</td>
+                <td>표준</td>
+                <td><span class="badge badge-green">강화 (immutable)</span></td>
+              </tr>
+              <tr>
+                <td>SSH 접근</td>
+                <td><span class="badge badge-blue">가능</span></td>
+                <td><span class="badge badge-yellow">제한적</span></td>
+              </tr>
+              <tr>
+                <td>패키지 관리</td>
+                <td>yum/dnf</td>
+                <td>API 기반 업데이트</td>
+              </tr>
+              <tr>
+                <td>권장 사용처</td>
+                <td>디버깅 필요 환경</td>
+                <td>프로덕션, 보안 중요</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 8: AlertManager Rules -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>AlertManager 알림 규칙</h1>
+        <p class="subtitle">Karpenter 및 노드 상태 알림 구성</p>
+      </div>
+      <div class="slide-body">
+        <div class="columns">
+          <div class="alert-builder" id="alert-builder">
+            <label class="alert-toggle" data-alert="high-pending">
+              <input type="checkbox" checked>
+              <div class="alert-checkbox"></div>
+              <div>
+                <div class="alert-name">HighPendingPods</div>
+                <div class="alert-desc">karpenter_pods_pending > 10 for 5m</div>
+              </div>
+            </label>
+            <label class="alert-toggle" data-alert="provisioning-failed">
+              <input type="checkbox" checked>
+              <div class="alert-checkbox"></div>
+              <div>
+                <div class="alert-name">NodeProvisioningFailed</div>
+                <div class="alert-desc">ProvisioningFailed 증가 감지</div>
+              </div>
+            </label>
+            <label class="alert-toggle" data-alert="spot-rate">
+              <input type="checkbox">
+              <div class="alert-checkbox"></div>
+              <div>
+                <div class="alert-name">SpotInterruptionRate</div>
+                <div class="alert-desc">1시간 내 3회 이상 Spot 인터럽트</div>
+              </div>
+            </label>
+            <label class="alert-toggle" data-alert="node-age">
+              <input type="checkbox">
+              <div class="alert-checkbox"></div>
+              <div>
+                <div class="alert-name">NodeAgeExceeded</div>
+                <div class="alert-desc">노드 수명 7일 초과</div>
+              </div>
+            </label>
+            <label class="alert-toggle" data-alert="cpu-over">
+              <input type="checkbox">
+              <div class="alert-checkbox"></div>
+              <div>
+                <div class="alert-name">CPUOverProvisioned</div>
+                <div class="alert-desc">CPU 사용률 70% 이하 지속</div>
+              </div>
+            </label>
+          </div>
+          <div class="alert-yaml-output">
+            <h3 style="margin-bottom: 12px;">PrometheusRule YAML</h3>
+            <div class="code-block" id="alert-yaml" style="font-size: .72rem; max-height: 380px; overflow-y: auto;"><span class="key">apiVersion</span>: monitoring.coreos.com/v1
+<span class="key">kind</span>: PrometheusRule
+<span class="key">metadata</span>:
+  <span class="key">name</span>: karpenter-alerts
+<span class="key">spec</span>:
+  <span class="key">groups</span>:
+  - <span class="key">name</span>: karpenter
+    <span class="key">rules</span>:
+    <span class="comment"># Selected alerts will appear here</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 9: Day-2 Operations Checklist -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>Day-2 운영 체크리스트</h1>
+        <p class="subtitle">EKS Auto Mode 운영 준비 상태 점검</p>
+      </div>
+      <div class="slide-body">
+        <div class="col-2">
+          <div>
+            <h3 style="margin-bottom: 12px;">Disruption & 안정성</h3>
+            <ul class="checklist">
+              <li><span class="check"></span>Disruption Budget 설정 완료</li>
+              <li><span class="check"></span>PodDisruptionBudget 적용</li>
+              <li><span class="check"></span>Spot 인터럽트 알림 구성</li>
+              <li><span class="check"></span>expireAfter 정책 설정</li>
+              <li><span class="check"></span>노드 모니터링 대시보드 구축</li>
+            </ul>
+          </div>
+          <div>
+            <h3 style="margin-bottom: 12px;">최적화 & 비용</h3>
+            <ul class="checklist">
+              <li><span class="check"></span>AMI 업데이트 자동화</li>
+              <li><span class="check"></span>비용 태깅 (CostCenter, Team)</li>
+              <li><span class="check"></span>Multi-AZ 배포 확인</li>
+              <li><span class="check"></span>Topology Spread Constraints 적용</li>
+              <li><span class="check"></span>정기 비용 리뷰 스케줄</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout callout-success" style="margin-top: 24px;">
+          <strong>Tip:</strong> 체크리스트 항목을 클릭하여 완료 표시할 수 있습니다. 모든 항목을 점검 후 프로덕션 배포를 진행하세요.
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 10: Summary & Quiz -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>Block 2 요약 & 퀴즈</h1>
+        <p class="subtitle">노드 라이프사이클 & 모니터링 핵심 내용 정리</p>
+      </div>
+      <div class="slide-body" style="overflow-y: auto;">
+        <div class="col-3" style="margin-bottom: 20px;">
+          <div class="card">
+            <div class="card-title">노드 모니터링</div>
+            <p style="font-size: .85rem;">kubectl, Prometheus 쿼리로 노드 상태 및 이벤트 추적</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Spot 대응</div>
+            <p style="font-size: .85rem;">2분 경고 내 Pod 안전 이동, PDB 준수</p>
+          </div>
+          <div class="card">
+            <div class="card-title">운영 전략</div>
+            <p style="font-size: .85rem;">expireAfter, Drift, AlertManager 알림</p>
+          </div>
+        </div>
+
+        <div class="quiz" data-quiz="q1">
+          <div class="quiz-question">1. Spot 인스턴스 종료 전 경고 시간은?</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-correct="false">A) 30초</button>
+            <button class="quiz-option" data-correct="true">B) 2분</button>
+            <button class="quiz-option" data-correct="false">C) 5분</button>
+            <button class="quiz-option" data-correct="false">D) 10분</button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div class="quiz" data-quiz="q2">
+          <div class="quiz-question">2. 프로덕션 환경의 권장 expireAfter 값은?</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-correct="false">A) 24h</button>
+            <button class="quiz-option" data-correct="false">B) 48h</button>
+            <button class="quiz-option" data-correct="true">C) 168h (7일)</button>
+            <button class="quiz-option" data-correct="false">D) 336h (14일)</button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div class="quiz" data-quiz="q3">
+          <div class="quiz-question">3. 노드 종료 원인을 파악할 수 있는 kubectl 명령은?</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-correct="false">A) kubectl get nodes</button>
+            <button class="quiz-option" data-correct="false">B) kubectl top nodes</button>
+            <button class="quiz-option" data-correct="true">C) kubectl get events --sort-by='.lastTimestamp' | grep karpenter</button>
+            <button class="quiz-option" data-correct="false">D) kubectl describe pod</button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="../common/slide-framework.js"></script>
+  <script src="../common/animation-utils.js"></script>
+  <script src="../common/quiz-component.js"></script>
+  <script>
+    // Initialize slide framework
+    const slides = new SlideFramework();
+
+    // ============================================================
+    // Slide 2: Node Dashboard Simulator
+    // ============================================================
+    (function initDashboard() {
+      const cvs = setupCanvas('dashboard-canvas', 1100, 420);
+      if (!cvs) return;
+      const { ctx, width, height } = cvs;
+
+      // Node state management
+      const GRID_COLS = 4;
+      const GRID_ROWS = 3;
+      const NODE_COUNT = GRID_COLS * GRID_ROWS;
+
+      let nodes = [];
+      let events = [];
+      let animationPhases = {}; // Track animation states per node
+
+      function initNodes() {
+        nodes = [];
+        for (let i = 0; i < NODE_COUNT; i++) {
+          nodes.push({
+            id: i,
+            name: `n${i + 1}`,
+            status: i < 6 ? 'ready' : 'empty',
+            cpu: i < 6 ? Math.floor(Math.random() * 40) + 20 : 0,
+            animOffset: Math.random() * Math.PI * 2
+          });
+        }
+        events = [
+          { time: '10:32:15', type: 'info', msg: 'Dashboard initialized' },
+          { time: '10:32:14', type: 'ok', msg: 'Node n1-n6 Ready' }
+        ];
+        animationPhases = {};
+      }
+      initNodes();
+
+      function getTimestamp() {
+        const now = new Date();
+        return now.toTimeString().slice(0, 8);
+      }
+
+      function addEvent(type, msg) {
+        events.unshift({ time: getTimestamp(), type, msg });
+        if (events.length > 12) events.pop();
+      }
+
+      function getStatusColor(status) {
+        switch (status) {
+          case 'ready': return Colors.green;
+          case 'cordoned': return Colors.yellow;
+          case 'terminating': return Colors.red;
+          default: return Colors.border;
+        }
+      }
+
+      function draw(elapsed) {
+        ctx.fillStyle = Colors.bgSecond;
+        ctx.fillRect(0, 0, width, height);
+
+        // Node grid area (left 60%)
+        const gridX = 30;
+        const gridY = 30;
+        const gridW = 620;
+        const gridH = 320;
+        const nodeW = 140;
+        const nodeH = 95;
+        const gapX = 10;
+        const gapY = 10;
+
+        // Draw grid background
+        drawRoundRect(ctx, gridX - 10, gridY - 10, gridW + 20, gridH + 20, 12, Colors.bg + '80', Colors.border);
+        drawText(ctx, 'Node Grid', gridX + 10, gridY - 25, { size: 12, color: Colors.textMuted, align: 'left' });
+
+        // Draw nodes
+        nodes.forEach((node, i) => {
+          const col = i % GRID_COLS;
+          const row = Math.floor(i / GRID_COLS);
+          const x = gridX + col * (nodeW + gapX);
+          const y = gridY + row * (nodeH + gapY);
+
+          const color = getStatusColor(node.status);
+          const bgAlpha = node.status === 'empty' ? '15' : '25';
+
+          // Pulse effect for terminating
+          let alpha = 1;
+          if (node.status === 'terminating') {
+            alpha = 0.5 + 0.5 * Math.sin(elapsed * 4 + node.animOffset);
+          }
+
+          ctx.globalAlpha = alpha;
+          drawRoundRect(ctx, x, y, nodeW, nodeH, 10, color + bgAlpha, color);
+
+          // Node name
+          drawText(ctx, node.name, x + nodeW / 2, y + 22, { size: 14, weight: '700', color: color });
+
+          // Status
+          const statusLabel = node.status === 'empty' ? '-' : node.status.toUpperCase();
+          drawText(ctx, statusLabel, x + nodeW / 2, y + 45, { size: 11, color: Colors.textMuted });
+
+          // CPU bar
+          if (node.status !== 'empty') {
+            const barX = x + 15;
+            const barY = y + 62;
+            const barW = nodeW - 30;
+            const barH = 12;
+            ctx.fillStyle = Colors.bg;
+            ctx.fillRect(barX, barY, barW, barH);
+            const cpuColor = node.cpu > 80 ? Colors.red : node.cpu > 50 ? Colors.yellow : Colors.green;
+            ctx.fillStyle = cpuColor;
+            ctx.fillRect(barX, barY, barW * (node.cpu / 100), barH);
+            drawText(ctx, `CPU ${node.cpu}%`, x + nodeW / 2, y + 82, { size: 10, color: Colors.textSec });
+          }
+
+          ctx.globalAlpha = 1;
+        });
+
+        // Event log area (right 40%)
+        const logX = 680;
+        const logY = 30;
+        const logW = 390;
+        const logH = 280;
+
+        drawRoundRect(ctx, logX, logY, logW, logH, 12, '#0d1117', Colors.border);
+        drawText(ctx, 'Event Log', logX + 15, logY - 25, { size: 12, color: Colors.textMuted, align: 'left' });
+
+        events.slice(0, 10).forEach((evt, i) => {
+          const ey = logY + 20 + i * 26;
+          const typeColor = evt.type === 'ok' ? Colors.green :
+                           evt.type === 'warn' ? Colors.yellow :
+                           evt.type === 'error' ? Colors.red : Colors.blue;
+          drawText(ctx, evt.time, logX + 15, ey, { size: 11, color: Colors.textMuted, align: 'left', font: 'JetBrains Mono, monospace' });
+          drawText(ctx, evt.msg, logX + 100, ey, { size: 11, color: typeColor, align: 'left' });
+        });
+
+        // Metrics bar (bottom)
+        const metricsY = 365;
+        drawRoundRect(ctx, 30, metricsY, width - 60, 45, 10, Colors.surface, Colors.border);
+
+        const activeNodes = nodes.filter(n => n.status !== 'empty').length;
+        const totalCpu = nodes.reduce((sum, n) => sum + n.cpu, 0);
+        const avgCpu = activeNodes > 0 ? Math.round(totalCpu / activeNodes) : 0;
+        const estCost = (activeNodes * 0.12).toFixed(2);
+
+        drawText(ctx, `Active Nodes: ${activeNodes}`, 120, metricsY + 23, { size: 13, weight: '600', color: Colors.green });
+        drawText(ctx, `Avg CPU: ${avgCpu}%`, 350, metricsY + 23, { size: 13, weight: '600', color: Colors.blue });
+        drawText(ctx, `Est. Cost: $${estCost}/hr`, 580, metricsY + 23, { size: 13, weight: '600', color: Colors.yellow });
+        drawText(ctx, `Spot: ${nodes.filter(n => n.status === 'ready').length > 3 ? '40%' : '0%'}`, 820, metricsY + 23, { size: 13, weight: '600', color: Colors.cyan });
+      }
+
+      const loop = new AnimationLoop(draw);
+      loop.start();
+
+      // Button handlers
+      document.getElementById('btn-add-node').onclick = () => {
+        const emptyIdx = nodes.findIndex(n => n.status === 'empty');
+        if (emptyIdx !== -1) {
+          nodes[emptyIdx].status = 'ready';
+          nodes[emptyIdx].cpu = Math.floor(Math.random() * 30) + 15;
+          addEvent('ok', `Node ${nodes[emptyIdx].name} provisioned`);
+        } else {
+          addEvent('warn', 'No empty slots available');
+        }
+      };
+
+      document.getElementById('btn-add-workload').onclick = () => {
+        const readyNodes = nodes.filter(n => n.status === 'ready');
+        if (readyNodes.length > 0) {
+          readyNodes.forEach(n => {
+            n.cpu = Math.min(95, n.cpu + Math.floor(Math.random() * 20) + 10);
+          });
+          addEvent('info', 'Workload deployed to nodes');
+        }
+      };
+
+      document.getElementById('btn-spot-interrupt').onclick = () => {
+        const readyNodes = nodes.filter(n => n.status === 'ready');
+        if (readyNodes.length > 0) {
+          const target = readyNodes[Math.floor(Math.random() * readyNodes.length)];
+          target.status = 'terminating';
+          addEvent('error', `SpotInterruption: ${target.name}`);
+
+          // Simulate termination after delay
+          setTimeout(() => {
+            target.status = 'empty';
+            target.cpu = 0;
+            addEvent('warn', `Node ${target.name} terminated`);
+          }, 3000);
+        }
+      };
+
+      document.getElementById('btn-consolidation').onclick = () => {
+        const lowCpuNodes = nodes.filter(n => n.status === 'ready' && n.cpu < 30);
+        if (lowCpuNodes.length > 0) {
+          const target = lowCpuNodes[0];
+          target.status = 'cordoned';
+          addEvent('warn', `Consolidating: ${target.name} (low utilization)`);
+
+          setTimeout(() => {
+            target.status = 'empty';
+            target.cpu = 0;
+            addEvent('info', `Node ${target.name} consolidated`);
+          }, 2000);
+        } else {
+          addEvent('info', 'No underutilized nodes to consolidate');
+        }
+      };
+
+      document.getElementById('btn-reset').onclick = () => {
+        initNodes();
+        addEvent('info', 'Dashboard reset');
+      };
+    })();
+
+    // ============================================================
+    // Slide 3: Command Cards
+    // ============================================================
+    document.querySelectorAll('.command-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const wasExpanded = card.classList.contains('expanded');
+        document.querySelectorAll('.command-card').forEach(c => c.classList.remove('expanded'));
+        if (!wasExpanded) {
+          card.classList.add('expanded');
+        }
+      });
+    });
+
+    // ============================================================
+    // Slide 5: Spot Interrupt Simulation
+    // ============================================================
+    (function initSpotSim() {
+      const cvs = setupCanvas('spot-canvas', 1100, 350);
+      if (!cvs) return;
+      const { ctx, width, height } = cvs;
+
+      let phase = 'initial'; // initial, warning, evicting, provisioning, terminated, complete
+      let timer = 0;
+      let animStart = 0;
+      let pods = [
+        { x: 0, y: 0, targetX: 0, targetY: 0, moving: false },
+        { x: 0, y: 0, targetX: 0, targetY: 0, moving: false },
+        { x: 0, y: 0, targetX: 0, targetY: 0, moving: false }
+      ];
+
+      const nodeWidth = 180;
+      const nodeHeight = 200;
+      const nodeGap = 60;
+      const startX = 80;
+      const nodeY = 70;
+
+      // Node positions
+      const node1X = startX;
+      const node2X = startX + nodeWidth + nodeGap;
+      const node3X = startX + 2 * (nodeWidth + nodeGap);
+      const newNodeX = startX + 3 * (nodeWidth + nodeGap);
+
+      function resetState() {
+        phase = 'initial';
+        timer = 0;
+        animStart = 0;
+        pods = [
+          { x: node2X + 20, y: nodeY + 60, targetX: node2X + 20, targetY: nodeY + 60, moving: false },
+          { x: node2X + 70, y: nodeY + 60, targetX: node2X + 70, targetY: nodeY + 60, moving: false },
+          { x: node2X + 120, y: nodeY + 60, targetX: node2X + 120, targetY: nodeY + 60, moving: false }
+        ];
+      }
+      resetState();
+
+      function drawNode(x, y, label, color, status, isSpot) {
+        drawRoundRect(ctx, x, y, nodeWidth, nodeHeight, 12, color + '20', color);
+        drawText(ctx, label, x + nodeWidth / 2, y + 25, { size: 14, weight: '700', color: color });
+        if (isSpot) {
+          ctx.fillStyle = Colors.cyan + '30';
+          ctx.fillRect(x + 10, y + 38, 50, 18);
+          drawText(ctx, 'SPOT', x + 35, y + 47, { size: 10, weight: '700', color: Colors.cyan });
+        }
+        drawText(ctx, status, x + nodeWidth / 2, y + nodeHeight - 20, { size: 11, color: Colors.textMuted });
+      }
+
+      function drawPod(x, y, color) {
+        drawRoundRect(ctx, x, y, 40, 30, 6, color + '40', color);
+        drawText(ctx, 'Pod', x + 20, y + 15, { size: 10, weight: '600', color: color });
+      }
+
+      function draw(elapsed) {
+        ctx.fillStyle = Colors.bgSecond;
+        ctx.fillRect(0, 0, width, height);
+
+        // Timer display
+        const timerX = 900;
+        const timerY = 40;
+        drawRoundRect(ctx, timerX, timerY, 160, 60, 10, Colors.surface, Colors.border);
+        drawText(ctx, 'Timer', timerX + 80, timerY + 18, { size: 11, color: Colors.textMuted });
+        const timerDisplay = phase === 'initial' ? '0s' : `${Math.min(120, Math.floor(timer))}s`;
+        const timerColor = timer > 90 ? Colors.red : timer > 60 ? Colors.yellow : Colors.green;
+        drawText(ctx, timerDisplay, timerX + 80, timerY + 42, { size: 24, weight: '700', color: timerColor, font: 'JetBrains Mono' });
+
+        // Event log panel
+        const logX = 900;
+        const logY = 120;
+        drawRoundRect(ctx, logX, logY, 160, 200, 10, '#0d1117', Colors.border);
+        drawText(ctx, 'Events', logX + 80, logY + 18, { size: 11, color: Colors.textMuted });
+
+        const events = [];
+        if (phase !== 'initial') events.push({ t: 'T+0s', msg: '2-Min Warning', color: Colors.yellow });
+        if (timer >= 30) events.push({ t: 'T+30s', msg: 'Pod Eviction', color: Colors.blue });
+        if (timer >= 60) events.push({ t: 'T+60s', msg: 'New Node Start', color: Colors.cyan });
+        if (timer >= 90) events.push({ t: 'T+90s', msg: 'Spot Terminated', color: Colors.red });
+        if (timer >= 120) events.push({ t: 'T+120s', msg: 'All Pods Ready', color: Colors.green });
+
+        events.forEach((e, i) => {
+          drawText(ctx, e.t, logX + 45, logY + 45 + i * 28, { size: 10, color: Colors.textMuted, align: 'left', font: 'JetBrains Mono' });
+          drawText(ctx, e.msg, logX + 90, logY + 45 + i * 28, { size: 10, color: e.color, align: 'left' });
+        });
+
+        // Draw nodes
+        // Node 1 - On-Demand
+        drawNode(node1X, nodeY, 'Node 1', Colors.green, 'Ready', false);
+        drawPod(node1X + 30, nodeY + 100, Colors.green);
+        drawPod(node1X + 80, nodeY + 100, Colors.green);
+
+        // Node 2 - Spot (main target)
+        let node2Color = Colors.green;
+        let node2Status = 'Ready';
+        if (phase === 'warning') {
+          node2Color = Colors.yellow;
+          node2Status = '2-Min Warning';
+        } else if (phase === 'evicting' || phase === 'provisioning') {
+          node2Color = Colors.yellow;
+          node2Status = 'Draining...';
+        } else if (phase === 'terminated' || phase === 'complete') {
+          node2Color = Colors.red;
+          node2Status = 'Terminated';
+        }
+
+        if (phase !== 'terminated' && phase !== 'complete') {
+          drawNode(node2X, nodeY, 'Node 2', node2Color, node2Status, true);
+
+          // Warning banner
+          if (phase === 'warning' || phase === 'evicting' || phase === 'provisioning') {
+            ctx.fillStyle = Colors.yellow + '30';
+            ctx.fillRect(node2X, nodeY - 30, nodeWidth, 25);
+            drawText(ctx, '2-Minute Warning!', node2X + nodeWidth / 2, nodeY - 18, { size: 11, weight: '700', color: Colors.yellow });
+          }
+        } else {
+          // Terminated node - faded
+          ctx.globalAlpha = 0.3;
+          drawNode(node2X, nodeY, 'Node 2', Colors.red, 'Terminated', true);
+          ctx.globalAlpha = 1;
+        }
+
+        // Node 3 - On-Demand
+        drawNode(node3X, nodeY, 'Node 3', Colors.green, 'Ready', false);
+        drawPod(node3X + 70, nodeY + 100, Colors.green);
+
+        // New Node (appears during provisioning)
+        if (phase === 'provisioning' || phase === 'terminated' || phase === 'complete') {
+          const newNodeColor = phase === 'complete' ? Colors.green : Colors.blue;
+          const newNodeStatus = phase === 'complete' ? 'Ready' : 'Provisioning...';
+          const progress = phase === 'provisioning' ? (timer - 60) / 30 : 1;
+
+          if (phase === 'provisioning') {
+            // Loading animation
+            ctx.globalAlpha = 0.5 + 0.5 * Math.sin(elapsed * 3);
+          }
+          drawNode(newNodeX, nodeY, 'Node 4 (New)', newNodeColor, newNodeStatus, false);
+          ctx.globalAlpha = 1;
+        }
+
+        // Draw moving pods
+        pods.forEach((pod, i) => {
+          if (phase === 'initial' || phase === 'warning') {
+            // Pods on Node 2
+            drawPod(node2X + 20 + i * 50, nodeY + 100, Colors.green);
+          } else if (phase === 'evicting') {
+            // Animate pods moving
+            const progress = Math.min(1, (timer - 30) / 30);
+            const eased = Ease.inOut(progress);
+            const startPodX = node2X + 20 + i * 50;
+            const targetPodX = i < 2 ? (node1X + 30 + i * 50) : (node3X + 30);
+            const currentX = lerp(startPodX, targetPodX, eased);
+            const arcY = nodeY + 100 - 50 * Math.sin(progress * Math.PI);
+            drawPod(currentX, arcY, Colors.blue);
+          } else {
+            // Pods on final positions
+            if (i < 2) {
+              drawPod(node1X + 30 + i * 50, nodeY + 140, Colors.green);
+            } else if (phase === 'complete') {
+              drawPod(newNodeX + 70, nodeY + 100, Colors.green);
+            } else {
+              drawPod(node3X + 30, nodeY + 140, Colors.green);
+            }
+          }
+        });
+
+        // Phase progression
+        if (phase !== 'initial') {
+          timer += 1 / 60; // Assuming 60fps, speed up for demo
+          if (timer < 30 && phase === 'warning') {
+            // Stay in warning
+          } else if (timer >= 30 && timer < 60 && phase !== 'evicting') {
+            phase = 'evicting';
+          } else if (timer >= 60 && timer < 90 && phase !== 'provisioning') {
+            phase = 'provisioning';
+          } else if (timer >= 90 && timer < 120 && phase !== 'terminated') {
+            phase = 'terminated';
+          } else if (timer >= 120 && phase !== 'complete') {
+            phase = 'complete';
+          }
+        }
+      }
+
+      const loop = new AnimationLoop(draw);
+      loop.start();
+
+      document.getElementById('btn-start-interrupt').onclick = () => {
+        if (phase === 'initial') {
+          phase = 'warning';
+          timer = 0;
+        }
+      };
+
+      document.getElementById('btn-reset-spot').onclick = () => {
+        resetState();
+      };
+    })();
+
+    // ============================================================
+    // Slide 6: expireAfter Slider
+    // ============================================================
+    (function initExpireSlider() {
+      const slider = document.getElementById('expire-slider');
+      const valueDisplay = document.getElementById('expire-value');
+      const recommendation = document.getElementById('expire-recommendation');
+      const securityBar = document.getElementById('security-bar');
+      const stabilityBar = document.getElementById('stability-bar');
+      const yamlBlock = document.getElementById('expire-yaml');
+
+      const presets = [
+        { value: '24h', label: '개발/테스트', desc: '빠른 교체, 최신 AMI 적용', security: 100, stability: 30 },
+        { value: '48h', label: '보안 중요 환경', desc: '보안 패치 빠른 적용 우선', security: 90, stability: 45 },
+        { value: '72h', label: '스테이징', desc: '프로덕션 전 테스트 환경', security: 80, stability: 55 },
+        { value: '168h', label: '프로덕션 권장', desc: '안정성과 보안 패치 속도의 균형', security: 60, stability: 70 },
+        { value: '240h', label: '안정성 우선', desc: '장기 실행 워크로드', security: 45, stability: 85 },
+        { value: '336h', label: 'GPU 워크로드', desc: '프로비저닝 비용이 높은 노드', security: 30, stability: 95 }
+      ];
+
+      function update() {
+        const idx = parseInt(slider.value);
+        const preset = presets[idx];
+        valueDisplay.textContent = preset.value;
+        recommendation.querySelector('h4').textContent = preset.label;
+        recommendation.querySelector('p').textContent = preset.desc;
+        securityBar.style.width = preset.security + '%';
+        stabilityBar.style.width = preset.stability + '%';
+
+        yamlBlock.innerHTML = `<span class="key">apiVersion</span>: karpenter.sh/v1
+<span class="key">kind</span>: NodePool
+<span class="key">metadata</span>:
+  <span class="key">name</span>: general-purpose
+<span class="key">spec</span>:
+  <span class="key">disruption</span>:
+    <span class="key">consolidationPolicy</span>: WhenEmptyOrUnderutilized
+    <span class="key">consolidateAfter</span>: 1m
+    <span class="comment"># ${preset.label}</span>
+    <span class="key">expireAfter</span>: <span class="value">${preset.value}</span>`;
+      }
+
+      slider.addEventListener('input', update);
+      update();
+    })();
+
+    // ============================================================
+    // Slide 7: Drift Timeline Animation
+    // ============================================================
+    (function initDriftTimeline() {
+      const timeline = document.getElementById('drift-timeline');
+      const steps = timeline.querySelectorAll('.timeline-step');
+      const connectors = timeline.querySelectorAll('.timeline-connector');
+      let currentStep = 0;
+      let playing = false;
+
+      function reset() {
+        currentStep = 0;
+        playing = false;
+        steps.forEach(s => s.classList.remove('active', 'done'));
+        connectors.forEach(c => c.classList.remove('done'));
+      }
+
+      function advanceStep() {
+        if (currentStep > 0) {
+          steps[currentStep - 1].classList.remove('active');
+          steps[currentStep - 1].classList.add('done');
+          if (connectors[currentStep - 1]) {
+            connectors[currentStep - 1].classList.add('done');
+          }
+        }
+        if (currentStep < steps.length) {
+          steps[currentStep].classList.add('active');
+          currentStep++;
+          if (currentStep < steps.length) {
+            setTimeout(advanceStep, 1200);
+          } else {
+            // Mark last step as done after delay
+            setTimeout(() => {
+              steps[currentStep - 1].classList.remove('active');
+              steps[currentStep - 1].classList.add('done');
+              playing = false;
+            }, 1200);
+          }
+        }
+      }
+
+      document.getElementById('btn-play-drift').onclick = () => {
+        if (!playing) {
+          reset();
+          playing = true;
+          advanceStep();
+        }
+      };
+
+      document.getElementById('btn-reset-drift').onclick = reset;
+    })();
+
+    // ============================================================
+    // Slide 8: Alert Builder
+    // ============================================================
+    (function initAlertBuilder() {
+      const builder = document.getElementById('alert-builder');
+      const yamlOutput = document.getElementById('alert-yaml');
+
+      const alertDefs = {
+        'high-pending': `    - <span class="key">alert</span>: HighPendingPods
+      <span class="key">expr</span>: karpenter_pods_pending > <span class="number">10</span>
+      <span class="key">for</span>: <span class="string">5m</span>
+      <span class="key">labels</span>:
+        <span class="key">severity</span>: warning
+      <span class="key">annotations</span>:
+        <span class="key">summary</span>: <span class="string">"{{ $value }} pods pending"</span>`,
+        'provisioning-failed': `    - <span class="key">alert</span>: NodeProvisioningFailed
+      <span class="key">expr</span>: increase(karpenter_nodeclaims_terminated{reason=<span class="string">"ProvisioningFailed"</span>}[<span class="number">10m</span>]) > <span class="number">0</span>
+      <span class="key">labels</span>:
+        <span class="key">severity</span>: critical
+      <span class="key">annotations</span>:
+        <span class="key">summary</span>: <span class="string">"Node provisioning failed"</span>`,
+        'spot-rate': `    - <span class="key">alert</span>: SpotInterruptionRate
+      <span class="key">expr</span>: increase(karpenter_nodeclaims_terminated{reason=<span class="string">"SpotInterruption"</span>}[<span class="number">1h</span>]) > <span class="number">3</span>
+      <span class="key">labels</span>:
+        <span class="key">severity</span>: warning
+      <span class="key">annotations</span>:
+        <span class="key">summary</span>: <span class="string">"High Spot interruption rate"</span>`,
+        'node-age': `    - <span class="key">alert</span>: NodeAgeExceeded
+      <span class="key">expr</span>: time() - kube_node_created > <span class="number">604800</span>
+      <span class="key">labels</span>:
+        <span class="key">severity</span>: info
+      <span class="key">annotations</span>:
+        <span class="key">summary</span>: <span class="string">"Node older than 7 days"</span>`,
+        'cpu-over': `    - <span class="key">alert</span>: CPUOverProvisioned
+      <span class="key">expr</span>: (sum(kube_pod_container_resource_requests{resource=<span class="string">"cpu"</span>}) / sum(kube_node_status_allocatable{resource=<span class="string">"cpu"</span>})) > <span class="number">0.7</span>
+      <span class="key">for</span>: <span class="string">1h</span>
+      <span class="key">labels</span>:
+        <span class="key">severity</span>: info
+      <span class="key">annotations</span>:
+        <span class="key">summary</span>: <span class="string">"CPU over-provisioned"</span>`
+      };
+
+      function updateYaml() {
+        const selected = [];
+        builder.querySelectorAll('.alert-toggle').forEach(toggle => {
+          const checkbox = toggle.querySelector('input');
+          const alertKey = toggle.dataset.alert;
+          if (checkbox.checked) {
+            toggle.classList.add('active');
+            selected.push(alertDefs[alertKey]);
+          } else {
+            toggle.classList.remove('active');
+          }
+        });
+
+        let yaml = `<span class="key">apiVersion</span>: monitoring.coreos.com/v1
+<span class="key">kind</span>: PrometheusRule
+<span class="key">metadata</span>:
+  <span class="key">name</span>: karpenter-alerts
+<span class="key">spec</span>:
+  <span class="key">groups</span>:
+  - <span class="key">name</span>: karpenter
+    <span class="key">rules</span>:
+`;
+        if (selected.length > 0) {
+          yaml += selected.join('\n');
+        } else {
+          yaml += '    <span class="comment"># No alerts selected</span>';
+        }
+        yamlOutput.innerHTML = yaml;
+      }
+
+      builder.querySelectorAll('.alert-toggle').forEach(toggle => {
+        toggle.addEventListener('click', () => {
+          const checkbox = toggle.querySelector('input');
+          checkbox.checked = !checkbox.checked;
+          updateYaml();
+        });
+      });
+
+      updateYaml();
+    })();
+
+    // ============================================================
+    // Slide 9: Checklist (already handled by slide-framework.js)
+    // ============================================================
+  </script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reactive Presentations</title>
+  <link rel="stylesheet" href="common/theme.css">
+  <style>
+    body {
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .hub-header {
+      text-align: center;
+      padding: 80px 40px 40px;
+    }
+    .hub-header h1 {
+      font-size: 2.8rem;
+      background: linear-gradient(135deg, var(--accent-light), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+    .hub-header p {
+      color: var(--text-secondary);
+      font-size: 1.15rem;
+    }
+    .hub-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 24px;
+      padding: 40px 64px 80px;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .hub-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      transition: all var(--transition-normal);
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .hub-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 8px 32px rgba(108, 92, 231, .2);
+      transform: translateY(-4px);
+    }
+    .hub-card .card-icon {
+      font-size: 2.4rem;
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent-glow);
+      border-radius: 14px;
+      margin-bottom: 4px;
+    }
+    .hub-card h2 {
+      font-size: 1.3rem;
+      color: var(--text-primary);
+    }
+    .hub-card p {
+      color: var(--text-secondary);
+      font-size: .92rem;
+      line-height: 1.6;
+    }
+    .hub-card .card-meta {
+      display: flex;
+      gap: 12px;
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .hub-card .card-meta span {
+      font-size: .8rem;
+      color: var(--text-muted);
+    }
+    .footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-muted);
+      font-size: .82rem;
+      border-top: 1px solid var(--border);
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="hub-header">
+    <h1>Reactive Presentations</h1>
+    <p>Interactive training slides with Canvas animations & live simulations</p>
+  </div>
+
+  <div class="hub-grid">
+    <a href="eks-observability-ops/index.html" class="hub-card">
+      <div class="card-icon">&#9881;</div>
+      <h2>EKS Auto Mode & Observability</h2>
+      <p>EKS Auto Mode 내부 아키텍처, 노드 라이프사이클 모니터링, Grafana 스택 기반 Logs/Metrics/Traces 상관분석, VPA 리소스 최적화 전략</p>
+      <div class="card-meta">
+        <span>2h Training</span>
+        <span>4 Blocks / 50 Slides</span>
+        <span>Korean</span>
+      </div>
+    </a>
+
+    <!-- Future presentations add cards here -->
+  </div>
+
+  <div class="footer">
+    Built with Reactive Presentation Framework
+  </div>
+</body>
+</html>

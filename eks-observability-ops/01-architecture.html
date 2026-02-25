@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Block 1: EKS Auto Mode 아키텍처</title>
+  <link rel="stylesheet" href="../common/theme.css">
+  <style>
+    /* Slide-specific styles */
+    .gradient-title {
+      font-size: 3.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #a29bfe, #00cec9, #74b9ff);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradientShift 4s ease infinite;
+    }
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .compare-content { display: none; }
+    .compare-content.active { display: block; }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .feature-item {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .feature-item strong {
+      color: var(--accent-light);
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .checkbox-item:hover {
+      background: var(--surface);
+    }
+    .checkbox-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+    }
+
+    .instance-box {
+      display: inline-block;
+      padding: 6px 12px;
+      margin: 4px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      transition: all 0.5s ease;
+    }
+    .instance-box.filtered {
+      opacity: 0.2;
+      transform: scale(0.8);
+    }
+    .instance-box.selected {
+      background: var(--green-bg);
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .flow-step {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 16px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 4px;
+      font-size: 0.9rem;
+      transition: all 0.4s ease;
+      opacity: 0.5;
+    }
+    .flow-step.active {
+      opacity: 1;
+      border-color: var(--accent);
+      background: var(--surface);
+    }
+    .flow-step.done {
+      opacity: 1;
+      border-color: var(--green);
+      background: var(--green-bg);
+      color: var(--green);
+    }
+    .flow-arrow {
+      color: var(--text-muted);
+      margin: 0 4px;
+    }
+
+    .sim-node {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 70px;
+      height: 70px;
+      margin: 6px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      transition: all 0.5s ease;
+    }
+    .sim-node.utilized {
+      background: var(--green-bg);
+      border: 2px solid var(--green);
+      color: var(--green);
+    }
+    .sim-node.underutilized {
+      background: var(--yellow-bg);
+      border: 2px solid var(--yellow);
+      color: var(--yellow);
+    }
+    .sim-node.empty {
+      background: var(--red-bg);
+      border: 2px solid var(--red);
+      color: var(--red);
+    }
+    .sim-node.removing {
+      animation: nodeRemove 0.6s ease forwards;
+    }
+    @keyframes nodeRemove {
+      to { opacity: 0; transform: scale(0); }
+    }
+
+    .budget-display {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .budget-metric {
+      text-align: center;
+      padding: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .budget-metric .value {
+      font-size: 2rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--accent-light);
+    }
+    .budget-metric .label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .speed-control label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .speed-btn {
+      padding: 4px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .speed-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .time-display {
+      font-family: var(--font-mono);
+      font-size: 1.2rem;
+      color: var(--accent-light);
+      margin-left: auto;
+    }
+  </style>
+</head>
+<body>
+<div class="slide-deck">
+
+  <!-- Slide 1: Title -->
+  <div class="slide title-slide">
+    <h1 class="gradient-title">EKS Auto Mode Deep Dive</h1>
+    <p class="subtitle">Block 1: 내부 아키텍처 이해 (35분)</p>
+    <div class="meta">
+      <span class="badge badge-blue">Karpenter 기반</span>
+      <span class="badge badge-green">관리형 노드</span>
+      <span class="badge badge-yellow">자동 스케일링</span>
+    </div>
+  </div>
+
+  <!-- Slide 2: Auto Mode란? -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>Auto Mode란?</h1>
+      <p class="subtitle">AWS 관리형 Karpenter로 노드 프로비저닝 자동화</p>
+    </div>
+    <div class="slide-body">
+      <div class="columns">
+        <div>
+          <h3>핵심 특징</h3>
+          <ul>
+            <li>AWS가 Control Plane 내에서 <strong>Karpenter를 관리형으로 운영</strong></li>
+            <li><strong>NodePool/NodeClass</strong>로 노드 프로비저닝 제어</li>
+            <li>Managed Node Group 대비: <strong>노드 관리 오버헤드 제거</strong></li>
+            <li><strong>빠른 스케일링</strong>: 40-90초 내 Pod 실행</li>
+          </ul>
+        </div>
+        <div>
+          <h3>기본 NodePool</h3>
+          <div class="card" style="margin-bottom: 12px;">
+            <div class="card-title">general-purpose</div>
+            <p>범용 워크로드용, amd64/arm64, On-Demand + Spot 지원</p>
+          </div>
+          <div class="card">
+            <div class="card-title">system</div>
+            <p>시스템 컴포넌트 전용, CriticalAddonsOnly taint 적용</p>
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-info" style="margin-top: 16px;">
+        Karpenter를 직접 설치/관리할 필요 없이, EKS가 모든 것을 자동 처리합니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 3: Auto Mode vs MNG vs Fargate -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>Auto Mode vs MNG vs Fargate</h1>
+      <p class="subtitle">노드 관리 방식 비교</p>
+    </div>
+    <div class="slide-body">
+      <div class="compare-toggle">
+        <button class="compare-btn active" data-compare="auto">Auto Mode</button>
+        <button class="compare-btn" data-compare="mng">Managed Node Group</button>
+        <button class="compare-btn" data-compare="fargate">Fargate</button>
+      </div>
+
+      <div class="compare-content active" data-compare="auto">
+        <div class="card highlight">
+          <h3>Auto Mode</h3>
+          <table>
+            <tr><th>특징</th><td>Karpenter 기반, AWS 관리형, 인스턴스 다양화</td></tr>
+            <tr><th>스케일링</th><td>자동 Consolidation, 40-90초 프로비저닝</td></tr>
+            <tr><th>비용</th><td>Spot 인스턴스 자동 활용, 최적화된 bin-packing</td></tr>
+            <tr><th>적합 워크로드</th><td>가변적 워크로드, 다양한 인스턴스 요구사항</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="compare-content" data-compare="mng">
+        <div class="card">
+          <h3>Managed Node Group</h3>
+          <table>
+            <tr><th>특징</th><td>ASG 기반, Launch Template, 수동 설정</td></tr>
+            <tr><th>스케일링</th><td>Cluster Autoscaler 필요, 2-5분 소요</td></tr>
+            <tr><th>비용</th><td>인스턴스 타입 고정, 수동 Spot 설정</td></tr>
+            <tr><th>적합 워크로드</th><td>예측 가능한 워크로드, 특정 인스턴스 요구</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="compare-content" data-compare="fargate">
+        <div class="card">
+          <h3>Fargate</h3>
+          <table>
+            <tr><th>특징</th><td>서버리스, Pod 단위 격리, 노드 관리 없음</td></tr>
+            <tr><th>스케일링</th><td>Pod 단위 자동, 30-60초 소요</td></tr>
+            <tr><th>비용</th><td>vCPU/메모리 기반 과금, 유휴 비용 없음</td></tr>
+            <tr><th>적합 워크로드</th><td>배치 작업, 간헐적 워크로드, 보안 격리</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 4: 내부 아키텍처 Canvas -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>내부 아키텍처</h1>
+      <p class="subtitle">Karpenter가 Control Plane 내에서 동작하는 방식</p>
+    </div>
+    <div class="slide-body">
+      <div class="canvas-container" style="flex: 1;">
+        <canvas id="arch-canvas"></canvas>
+        <div class="canvas-controls">
+          <button class="btn btn-primary" id="arch-play-btn">Play</button>
+          <button class="btn" id="arch-reset-btn">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 5: NodePool 구조 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>NodePool 구조</h1>
+      <p class="subtitle">기본 제공 NodePool 비교</p>
+    </div>
+    <div class="slide-body">
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="gp">general-purpose</button>
+        <button class="tab-btn" data-tab="sys">system</button>
+      </div>
+
+      <div class="tab-content active" data-tab="gp">
+        <div class="columns">
+          <div>
+            <h3>특징</h3>
+            <ul>
+              <li>범용 워크로드용 기본 NodePool</li>
+              <li>amd64 및 arm64 아키텍처 지원</li>
+              <li>On-Demand + Spot 인스턴스 혼합</li>
+              <li>WhenEmptyOrUnderutilized Consolidation</li>
+            </ul>
+          </div>
+          <div>
+            <div class="code-block"><span class="code-label">YAML</span><span class="key">apiVersion</span>: <span class="string">karpenter.sh/v1</span>
+<span class="key">kind</span>: <span class="string">NodePool</span>
+<span class="key">metadata</span>:
+  <span class="key">name</span>: <span class="string">general-purpose</span>
+<span class="key">spec</span>:
+  <span class="key">template</span>:
+    <span class="key">spec</span>:
+      <span class="key">requirements</span>:
+        - <span class="key">key</span>: <span class="string">kubernetes.io/arch</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">amd64</span>, <span class="string">arm64</span>]
+        - <span class="key">key</span>: <span class="string">karpenter.sh/capacity-type</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">on-demand</span>, <span class="string">spot</span>]
+  <span class="key">disruption</span>:
+    <span class="key">consolidationPolicy</span>: <span class="string">WhenEmptyOrUnderutilized</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" data-tab="sys">
+        <div class="columns">
+          <div>
+            <h3>특징</h3>
+            <ul>
+              <li>시스템 컴포넌트 전용 NodePool</li>
+              <li>amd64 아키텍처만 지원</li>
+              <li>On-Demand 인스턴스만 사용 (안정성)</li>
+              <li>CriticalAddonsOnly taint로 일반 워크로드 차단</li>
+            </ul>
+          </div>
+          <div>
+            <div class="code-block"><span class="code-label">YAML</span><span class="key">apiVersion</span>: <span class="string">karpenter.sh/v1</span>
+<span class="key">kind</span>: <span class="string">NodePool</span>
+<span class="key">metadata</span>:
+  <span class="key">name</span>: <span class="string">system</span>
+<span class="key">spec</span>:
+  <span class="key">template</span>:
+    <span class="key">spec</span>:
+      <span class="key">requirements</span>:
+        - <span class="key">key</span>: <span class="string">kubernetes.io/arch</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">amd64</span>]
+        - <span class="key">key</span>: <span class="string">karpenter.sh/capacity-type</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">on-demand</span>]
+      <span class="key">taints</span>:
+        - <span class="key">key</span>: <span class="string">CriticalAddonsOnly</span>
+          <span class="key">effect</span>: <span class="string">NoSchedule</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 6: NodeClass 설정 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>NodeClass 설정</h1>
+      <p class="subtitle">인터랙티브 NodeClass 빌더</p>
+    </div>
+    <div class="slide-body">
+      <div class="columns">
+        <div>
+          <h3>설정 옵션</h3>
+          <div class="checkbox-group" id="nodeclass-options">
+            <label class="checkbox-item">
+              <input type="radio" name="ami" value="AL2023" checked> AMI: AL2023
+            </label>
+            <label class="checkbox-item">
+              <input type="radio" name="ami" value="Bottlerocket"> AMI: Bottlerocket
+            </label>
+            <label class="checkbox-item">
+              <input type="radio" name="subnet" value="private" checked> Subnet: Private
+            </label>
+            <label class="checkbox-item">
+              <input type="radio" name="subnet" value="public"> Subnet: Public
+            </label>
+            <label class="checkbox-item">
+              <input type="radio" name="ebs" value="50" checked> EBS: 50Gi gp3
+            </label>
+            <label class="checkbox-item">
+              <input type="radio" name="ebs" value="100"> EBS: 100Gi gp3
+            </label>
+            <label class="checkbox-item">
+              <input type="radio" name="ebs" value="200"> EBS: 200Gi gp3
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="imdsv2" checked> IMDSv2 Required
+            </label>
+          </div>
+        </div>
+        <div>
+          <h3>생성된 NodeClass</h3>
+          <div class="code-block" id="nodeclass-preview"><span class="code-label">YAML</span><span class="key">apiVersion</span>: <span class="string">karpenter.k8s.aws/v1</span>
+<span class="key">kind</span>: <span class="string">EC2NodeClass</span>
+<span class="key">metadata</span>:
+  <span class="key">name</span>: <span class="string">default</span>
+<span class="key">spec</span>:
+  <span class="key">amiFamily</span>: <span class="string">AL2023</span>
+  <span class="key">subnetSelectorTerms</span>:
+    - <span class="key">tags</span>:
+        <span class="key">karpenter.sh/discovery</span>: <span class="string">my-cluster</span>
+        <span class="key">kubernetes.io/role/internal-elb</span>: <span class="string">"1"</span>
+  <span class="key">blockDeviceMappings</span>:
+    - <span class="key">deviceName</span>: <span class="string">/dev/xvda</span>
+      <span class="key">ebs</span>:
+        <span class="key">volumeSize</span>: <span class="string">50Gi</span>
+        <span class="key">volumeType</span>: <span class="string">gp3</span>
+  <span class="key">metadataOptions</span>:
+    <span class="key">httpTokens</span>: <span class="string">required</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 7: 커스텀 NodePool - Compute/Memory -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>커스텀 NodePool 패턴 (1/2)</h1>
+      <p class="subtitle">Compute-optimized & Memory-optimized</p>
+    </div>
+    <div class="slide-body">
+      <div class="columns">
+        <div>
+          <h3>Compute-optimized</h3>
+          <div class="code-block"><span class="code-label">compute-optimized.yaml</span><span class="key">apiVersion</span>: <span class="string">karpenter.sh/v1</span>
+<span class="key">kind</span>: <span class="string">NodePool</span>
+<span class="key">metadata</span>:
+  <span class="key">name</span>: <span class="string">compute-optimized</span>
+<span class="key">spec</span>:
+  <span class="key">template</span>:
+    <span class="key">spec</span>:
+      <span class="key">requirements</span>:
+        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-category</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">c</span>]
+        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-generation</span>
+          <span class="key">operator</span>: <span class="string">Gt</span>
+          <span class="key">values</span>: [<span class="string">"6"</span>]
+      <span class="key">nodeClassRef</span>:
+        <span class="key">name</span>: <span class="string">default</span>
+  <span class="key">limits</span>:
+    <span class="key">cpu</span>: <span class="number">1000</span></div>
+        </div>
+        <div>
+          <h3>Memory-optimized</h3>
+          <div class="code-block"><span class="code-label">memory-optimized.yaml</span><span class="key">apiVersion</span>: <span class="string">karpenter.sh/v1</span>
+<span class="key">kind</span>: <span class="string">NodePool</span>
+<span class="key">metadata</span>:
+  <span class="key">name</span>: <span class="string">memory-optimized</span>
+<span class="key">spec</span>:
+  <span class="key">template</span>:
+    <span class="key">spec</span>:
+      <span class="key">requirements</span>:
+        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-category</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">r</span>]
+        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-generation</span>
+          <span class="key">operator</span>: <span class="string">Gt</span>
+          <span class="key">values</span>: [<span class="string">"6"</span>]
+      <span class="key">nodeClassRef</span>:
+        <span class="key">name</span>: <span class="string">default</span>
+  <span class="key">limits</span>:
+    <span class="key">memory</span>: <span class="string">2000Gi</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 8: 커스텀 NodePool - GPU -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>커스텀 NodePool 패턴 (2/2)</h1>
+      <p class="subtitle">GPU NodePool for ML/AI Workloads</p>
+    </div>
+    <div class="slide-body">
+      <div class="columns">
+        <div>
+          <div class="code-block"><span class="code-label">gpu-nodepool.yaml</span><span class="key">apiVersion</span>: <span class="string">karpenter.sh/v1</span>
+<span class="key">kind</span>: <span class="string">NodePool</span>
+<span class="key">metadata</span>:
+  <span class="key">name</span>: <span class="string">gpu</span>
+<span class="key">spec</span>:
+  <span class="key">template</span>:
+    <span class="key">spec</span>:
+      <span class="key">requirements</span>:
+        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-category</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">g</span>, <span class="string">p</span>]
+        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-family</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">g5</span>, <span class="string">p5</span>]
+        - <span class="key">key</span>: <span class="string">karpenter.sh/capacity-type</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">on-demand</span>]
+      <span class="key">taints</span>:
+        - <span class="key">key</span>: <span class="string">nvidia.com/gpu</span>
+          <span class="key">effect</span>: <span class="string">NoSchedule</span>
+      <span class="key">nodeClassRef</span>:
+        <span class="key">name</span>: <span class="string">gpu-nodeclass</span>
+  <span class="key">limits</span>:
+    <span class="key">nvidia.com/gpu</span>: <span class="number">100</span>
+  <span class="key">disruption</span>:
+    <span class="key">consolidationPolicy</span>: <span class="string">WhenEmpty</span></div>
+        </div>
+        <div>
+          <h3>GPU NodePool 특징</h3>
+          <div class="feature-grid">
+            <div class="feature-item">
+              <strong>인스턴스</strong><br>g5 (추론), p5 (학습)
+            </div>
+            <div class="feature-item">
+              <strong>Capacity</strong><br>On-Demand만 (Spot 불가)
+            </div>
+            <div class="feature-item">
+              <strong>Taint</strong><br>GPU 워크로드만 스케줄링
+            </div>
+            <div class="feature-item">
+              <strong>Consolidation</strong><br>WhenEmpty (비용 절감)
+            </div>
+          </div>
+          <div class="callout callout-warning" style="margin-top: 16px;">
+            GPU 인스턴스는 비용이 높으므로 limits 설정이 중요합니다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 9: 프로비저닝 타임라인 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>Pod Pending에서 Node Ready까지</h1>
+      <p class="subtitle">프로비저닝 타임라인 시뮬레이션</p>
+    </div>
+    <div class="slide-body">
+      <div class="canvas-container" style="flex: 1;">
+        <canvas id="timeline-canvas"></canvas>
+      </div>
+      <div class="speed-control">
+        <button class="btn btn-primary" id="timeline-start-btn">Start</button>
+        <button class="btn" id="timeline-reset-btn">Reset</button>
+        <label>Speed:</label>
+        <button class="speed-btn" data-speed="0.5">0.5x</button>
+        <button class="speed-btn active" data-speed="1">1x</button>
+        <button class="speed-btn" data-speed="2">2x</button>
+        <div class="time-display" id="timeline-time">0.0s</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 10: 인스턴스 선택 알고리즘 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>인스턴스 선택 알고리즘</h1>
+      <p class="subtitle">필터링 과정 시각화</p>
+    </div>
+    <div class="slide-body">
+      <div class="btn-group" style="margin-bottom: 16px;">
+        <button class="btn" id="filter-reset">Reset</button>
+        <button class="btn" id="filter-category">1. Category (m, c, r)</button>
+        <button class="btn" id="filter-generation">2. Generation (>6)</button>
+        <button class="btn" id="filter-size">3. Size (large+)</button>
+        <button class="btn btn-primary" id="filter-select">4. Select Best</button>
+      </div>
+      <div id="instance-grid" style="background: var(--bg-card); border-radius: 12px; padding: 16px; min-height: 200px;">
+      </div>
+      <div class="callout callout-info" style="margin-top: 12px;">
+        Karpenter는 Pod 요구사항과 NodePool 제약을 기반으로 최적의 인스턴스를 자동 선택합니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 11: Consolidation 동작 원리 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>Consolidation 동작 원리</h1>
+      <p class="subtitle">노드 통합으로 비용 최적화</p>
+    </div>
+    <div class="slide-body">
+      <div class="canvas-container" style="flex: 1;">
+        <canvas id="consolidation-canvas"></canvas>
+        <div class="canvas-controls">
+          <button class="btn btn-primary" id="consolidate-btn">Consolidate</button>
+          <button class="btn" id="consolidate-reset-btn">Reset</button>
+          <span id="cost-counter" style="margin-left: 16px; font-family: var(--font-mono); color: var(--green);">절감: $0.00/hr</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 12: WhenEmpty vs WhenEmptyOrUnderutilized -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>Consolidation 정책 비교</h1>
+      <p class="subtitle">WhenEmpty vs WhenEmptyOrUnderutilized</p>
+    </div>
+    <div class="slide-body">
+      <div class="columns">
+        <div>
+          <div class="btn-group" style="margin-bottom: 16px;">
+            <button class="btn" id="policy-whenempty">WhenEmpty</button>
+            <button class="btn btn-primary" id="policy-underutilized">WhenEmptyOrUnderutilized</button>
+            <button class="btn" id="policy-reset">Reset</button>
+          </div>
+          <div id="policy-grid" style="display: flex; flex-wrap: wrap; gap: 8px;">
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom: 12px;">
+            <div class="card-title">WhenEmpty</div>
+            <ul>
+              <li>Pod가 0개인 노드만 제거</li>
+              <li>안전하지만 비효율적일 수 있음</li>
+              <li>GPU 워크로드에 적합</li>
+            </ul>
+          </div>
+          <div class="card highlight">
+            <div class="card-title">WhenEmptyOrUnderutilized</div>
+            <ul>
+              <li>저사용률 노드도 통합</li>
+              <li>더 공격적인 비용 최적화</li>
+              <li>일반 워크로드에 권장</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 13: Drift 감지 -> 교체 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>Drift 감지와 교체</h1>
+      <p class="subtitle">NodePool/NodeClass 변경 시 자동 롤링 업데이트</p>
+    </div>
+    <div class="slide-body">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin: 24px 0;">
+        <div class="flow-step" id="drift-step-1">NodePool/NodeClass 변경</div>
+        <span class="flow-arrow">&#8594;</span>
+        <div class="flow-step" id="drift-step-2">Drift 감지</div>
+        <span class="flow-arrow">&#8594;</span>
+        <div class="flow-step" id="drift-step-3">신규 노드 프로비저닝</div>
+        <span class="flow-arrow">&#8594;</span>
+        <div class="flow-step" id="drift-step-4">Pod 이동</div>
+        <span class="flow-arrow">&#8594;</span>
+        <div class="flow-step" id="drift-step-5">구 노드 종료</div>
+      </div>
+      <div class="btn-group" style="justify-content: center; margin-bottom: 24px;">
+        <button class="btn btn-primary" id="drift-play">Play Animation</button>
+        <button class="btn" id="drift-reset">Reset</button>
+      </div>
+      <div class="columns">
+        <div class="card">
+          <div class="card-title">Drift 발생 조건</div>
+          <ul>
+            <li>AMI Family 변경</li>
+            <li>인스턴스 타입 요구사항 변경</li>
+            <li>Subnet/SecurityGroup 변경</li>
+            <li>Block Device 설정 변경</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">안전한 교체 보장</div>
+          <ul>
+            <li>PodDisruptionBudget 준수</li>
+            <li>Disruption Budget 적용</li>
+            <li>점진적 롤링 (한 번에 모든 노드 교체하지 않음)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 14: Disruption Budget -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>Disruption Budget</h1>
+      <p class="subtitle">안전한 노드 교체를 위한 제한 설정</p>
+    </div>
+    <div class="slide-body">
+      <div class="columns">
+        <div>
+          <h3>설정 시뮬레이터</h3>
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Total Nodes: <span id="nodes-value">10</span></label>
+            <input type="range" id="nodes-slider" min="5" max="30" value="10" style="width: 100%;">
+          </div>
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Budget Percentage: <span id="pct-value">10%</span></label>
+            <input type="range" id="pct-slider" min="0" max="50" value="10" style="width: 100%;">
+          </div>
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Budget Fixed (minAvailable): <span id="fixed-value">0</span></label>
+            <input type="range" id="fixed-slider" min="0" max="10" value="0" style="width: 100%;">
+          </div>
+          <div class="budget-display">
+            <div class="budget-metric">
+              <div class="value" id="max-disruption">1</div>
+              <div class="label">Max Simultaneous</div>
+            </div>
+            <div class="budget-metric">
+              <div class="value" id="min-available">9</div>
+              <div class="label">Min Available</div>
+            </div>
+            <div class="budget-metric">
+              <div class="value" style="color: var(--green);">ON</div>
+              <div class="label">Business Hours</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3>생성된 설정</h3>
+          <div class="code-block" id="budget-preview"><span class="code-label">YAML</span><span class="key">spec</span>:
+  <span class="key">disruption</span>:
+    <span class="key">consolidationPolicy</span>: <span class="string">WhenEmptyOrUnderutilized</span>
+    <span class="key">budgets</span>:
+      - <span class="key">nodes</span>: <span class="string">"10%"</span>
+    <span class="comment"># Business hours protection</span>
+    <span class="key">schedules</span>:
+      - <span class="key">cron</span>: <span class="string">"0 9 * * 1-5"</span>  <span class="comment"># 09:00 Mon-Fri</span>
+        <span class="key">duration</span>: <span class="string">8h</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 15: 스케일링 속도 최적화 팁 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>스케일링 속도 최적화 팁</h1>
+      <p class="subtitle">프로비저닝 시간 단축을 위한 Best Practices</p>
+    </div>
+    <div class="slide-body">
+      <div class="columns">
+        <div>
+          <ul class="checklist">
+            <li>
+              <span class="check"></span>
+              <div><strong>Bottlerocket AMI 사용</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">부팅 시간 10-20초 단축</span></div>
+            </li>
+            <li>
+              <span class="check"></span>
+              <div><strong>작은 EBS 볼륨</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">볼륨 초기화 5-10초 단축</span></div>
+            </li>
+            <li>
+              <span class="check"></span>
+              <div><strong>다양한 인스턴스 타입 허용</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">가용성 향상, 빠른 프로비저닝</span></div>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <ul class="checklist">
+            <li>
+              <span class="check"></span>
+              <div><strong>Pod Topology Spread 설정</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">워크로드 분산, 안정성 향상</span></div>
+            </li>
+            <li>
+              <span class="check"></span>
+              <div><strong>PriorityClass로 중요 워크로드 우선</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">Preemption 활용</span></div>
+            </li>
+            <li>
+              <span class="check"></span>
+              <div><strong>Disruption Budget으로 안전한 교체</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">서비스 중단 최소화</span></div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 16: Block 1 요약 & 퀴즈 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>Block 1 요약 & 퀴즈</h1>
+      <p class="subtitle">학습 내용 확인</p>
+    </div>
+    <div class="slide-body" style="overflow-y: auto;">
+      <div class="quiz" data-quiz="q1">
+        <div class="quiz-question">1. EKS Auto Mode의 기반 기술은?</div>
+        <div class="quiz-options">
+          <button class="quiz-option" data-correct="true">Karpenter</button>
+          <button class="quiz-option" data-correct="false">Cluster Autoscaler</button>
+          <button class="quiz-option" data-correct="false">AWS Fargate</button>
+          <button class="quiz-option" data-correct="false">Custom Controller</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz" data-quiz="q2">
+        <div class="quiz-question">2. Consolidation 정책 중 저사용률 노드도 통합하는 것은?</div>
+        <div class="quiz-options">
+          <button class="quiz-option" data-correct="true">WhenEmptyOrUnderutilized</button>
+          <button class="quiz-option" data-correct="false">WhenEmpty</button>
+          <button class="quiz-option" data-correct="false">WhenIdle</button>
+          <button class="quiz-option" data-correct="false">WhenUnderutilized</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz" data-quiz="q3">
+        <div class="quiz-question">3. Auto Mode에서 Pod Pending에서 Node Ready까지 일반적 소요 시간은?</div>
+        <div class="quiz-options">
+          <button class="quiz-option" data-correct="false">5-10초</button>
+          <button class="quiz-option" data-correct="true">40-90초</button>
+          <button class="quiz-option" data-correct="false">2-5분</button>
+          <button class="quiz-option" data-correct="false">10분 이상</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="../common/animation-utils.js"></script>
+<script src="../common/slide-framework.js"></script>
+<script src="../common/quiz-component.js"></script>
+<script>
+  const deck = new SlideFramework();
+
+  // ========================================
+  // Slide 4: Architecture Canvas Animation
+  // ========================================
+  (function() {
+    const setup = setupCanvas('arch-canvas', 1100, 400);
+    if (!setup) return;
+    const { ctx, width, height } = setup;
+
+    let step = 0;
+    const maxSteps = 7;
+
+    const components = [
+      { x: 40, y: 60, w: 280, h: 280, label: 'EKS Control Plane', color: Colors.accent },
+      { x: 70, y: 120, w: 220, h: 60, label: 'Karpenter Controller', color: Colors.blue },
+      { x: 70, y: 200, w: 220, h: 60, label: 'Scheduler', color: Colors.cyan },
+      { x: 400, y: 60, w: 660, h: 280, label: 'Data Plane', color: Colors.green },
+      { x: 430, y: 120, w: 140, h: 60, label: 'NodePool', color: Colors.yellow },
+      { x: 600, y: 120, w: 140, h: 60, label: 'NodeClass', color: Colors.orange },
+      { x: 770, y: 120, w: 140, h: 60, label: 'EC2 Instances', color: Colors.pink },
+      { x: 940, y: 120, w: 100, h: 60, label: 'Pods', color: Colors.green },
+    ];
+
+    const arrows = [
+      { from: 2, to: 1, label: 'Pending' },
+      { from: 1, to: 4, label: 'Evaluate' },
+      { from: 4, to: 5, label: '' },
+      { from: 5, to: 6, label: 'RunInstances' },
+      { from: 6, to: 7, label: 'Schedule' },
+    ];
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+
+      // Draw components based on step
+      for (let i = 0; i < Math.min(step, components.length); i++) {
+        const c = components[i];
+        if (i === 0 || i === 3) {
+          // Container boxes
+          drawRoundRect(ctx, c.x, c.y, c.w, c.h, 12, c.color + '15', c.color);
+          ctx.fillStyle = c.color;
+          ctx.font = '600 14px Pretendard, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(c.label, c.x + 12, c.y + 24);
+        } else {
+          drawBox(ctx, c.x, c.y, c.w, c.h, c.label, c.color);
+        }
+      }
+
+      // Draw arrows
+      if (step > 3) {
+        for (let i = 0; i < Math.min(step - 3, arrows.length); i++) {
+          const arr = arrows[i];
+          const from = components[arr.from];
+          const to = components[arr.to];
+          let x1, y1, x2, y2;
+
+          if (arr.from === 2 && arr.to === 1) {
+            x1 = from.x + from.w / 2;
+            y1 = from.y;
+            x2 = to.x + to.w / 2;
+            y2 = to.y + to.h;
+          } else {
+            x1 = from.x + from.w;
+            y1 = from.y + from.h / 2;
+            x2 = to.x;
+            y2 = to.y + to.h / 2;
+          }
+
+          drawArrow(ctx, x1, y1, x2, y2, Colors.accentLt);
+          if (arr.label) {
+            const mx = (x1 + x2) / 2;
+            const my = (y1 + y2) / 2 - 10;
+            drawText(ctx, arr.label, mx, my, { size: 11, color: Colors.textMuted });
+          }
+        }
+      }
+
+      // Flow description
+      if (step >= maxSteps) {
+        drawText(ctx, 'Pod Pending -> Scheduler -> Karpenter -> NodePool -> EC2 API -> Node Register -> Pod Running',
+          width / 2, height - 30, { size: 12, color: Colors.textSec });
+      }
+    }
+
+    draw();
+
+    document.getElementById('arch-play-btn').addEventListener('click', () => {
+      step = 0;
+      const interval = setInterval(() => {
+        step++;
+        draw();
+        if (step >= maxSteps + arrows.length) {
+          clearInterval(interval);
+        }
+      }, 400);
+    });
+
+    document.getElementById('arch-reset-btn').addEventListener('click', () => {
+      step = 0;
+      draw();
+    });
+  })();
+
+  // ========================================
+  // Slide 6: NodeClass Builder
+  // ========================================
+  (function() {
+    const preview = document.getElementById('nodeclass-preview');
+    const options = document.getElementById('nodeclass-options');
+    if (!options || !preview) return;
+
+    function updatePreview() {
+      const ami = document.querySelector('input[name="ami"]:checked')?.value || 'AL2023';
+      const subnet = document.querySelector('input[name="subnet"]:checked')?.value || 'private';
+      const ebs = document.querySelector('input[name="ebs"]:checked')?.value || '50';
+      const imdsv2 = document.querySelector('input[name="imdsv2"]')?.checked;
+
+      const subnetTag = subnet === 'private' ? 'kubernetes.io/role/internal-elb' : 'kubernetes.io/role/elb';
+      const httpTokens = imdsv2 ? 'required' : 'optional';
+
+      preview.innerHTML = `<span class="code-label">YAML</span><span class="key">apiVersion</span>: <span class="string">karpenter.k8s.aws/v1</span>
+<span class="key">kind</span>: <span class="string">EC2NodeClass</span>
+<span class="key">metadata</span>:
+  <span class="key">name</span>: <span class="string">default</span>
+<span class="key">spec</span>:
+  <span class="key">amiFamily</span>: <span class="string">${ami}</span>
+  <span class="key">subnetSelectorTerms</span>:
+    - <span class="key">tags</span>:
+        <span class="key">karpenter.sh/discovery</span>: <span class="string">my-cluster</span>
+        <span class="key">${subnetTag}</span>: <span class="string">"1"</span>
+  <span class="key">blockDeviceMappings</span>:
+    - <span class="key">deviceName</span>: <span class="string">/dev/xvda</span>
+      <span class="key">ebs</span>:
+        <span class="key">volumeSize</span>: <span class="string">${ebs}Gi</span>
+        <span class="key">volumeType</span>: <span class="string">gp3</span>
+  <span class="key">metadataOptions</span>:
+    <span class="key">httpTokens</span>: <span class="string">${httpTokens}</span>`;
+    }
+
+    options.addEventListener('change', updatePreview);
+  })();
+
+  // ========================================
+  // Slide 9: Provisioning Timeline Animation
+  // ========================================
+  (function() {
+    const setup = setupCanvas('timeline-canvas', 1100, 380);
+    if (!setup) return;
+    const { ctx, width, height } = setup;
+
+    const steps = [
+      { name: 'Pod Created', time: 0, duration: 1 },
+      { name: 'Pending Detected', time: 1, duration: 2 },
+      { name: 'NodePool Eval', time: 3, duration: 4 },
+      { name: 'EC2 RunInstances', time: 7, duration: 15 },
+      { name: 'AMI Boot', time: 22, duration: 30 },
+      { name: 'kubelet Register', time: 52, duration: 20 },
+      { name: 'Pod Running', time: 72, duration: 18 },
+    ];
+
+    const totalTime = 90;
+    let currentTime = 0;
+    let playing = false;
+    let speed = 1;
+    let lastFrameTime = 0;
+
+    function getStepState(step, time) {
+      if (time < step.time) return 'pending';
+      if (time < step.time + step.duration) return 'active';
+      return 'done';
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+
+      // Timeline bar background
+      const barY = 50;
+      const barH = 24;
+      const barX = 60;
+      const barW = width - 120;
+
+      drawRoundRect(ctx, barX, barY, barW, barH, 12, Colors.bgSecond, Colors.border);
+
+      // Progress fill
+      const progress = Math.min(currentTime / totalTime, 1);
+      if (progress > 0) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(barX, barY, barW * progress, barH, 12);
+        ctx.clip();
+        const grad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+        grad.addColorStop(0, Colors.accent);
+        grad.addColorStop(1, Colors.cyan);
+        ctx.fillStyle = grad;
+        ctx.fillRect(barX, barY, barW, barH);
+        ctx.restore();
+      }
+
+      // Time labels
+      drawText(ctx, '0s', barX, barY - 12, { size: 11, color: Colors.textMuted });
+      drawText(ctx, '90s', barX + barW, barY - 12, { size: 11, color: Colors.textMuted });
+
+      // Current time marker
+      const markerX = barX + barW * progress;
+      drawCircle(ctx, markerX, barY + barH / 2, 8, Colors.accentLt, '#fff');
+
+      // Step boxes
+      const boxW = 130;
+      const boxH = 70;
+      const boxY = 120;
+      const gap = (width - 60 - steps.length * boxW) / (steps.length + 1);
+
+      steps.forEach((step, i) => {
+        const x = 30 + gap + i * (boxW + gap);
+        const state = getStepState(step, currentTime);
+
+        let bgColor, borderColor, textCol;
+        if (state === 'pending') {
+          bgColor = Colors.bgSecond;
+          borderColor = Colors.border;
+          textCol = Colors.textMuted;
+        } else if (state === 'active') {
+          bgColor = Colors.yellow + '30';
+          borderColor = Colors.yellow;
+          textCol = Colors.yellow;
+        } else {
+          bgColor = Colors.green + '30';
+          borderColor = Colors.green;
+          textCol = Colors.green;
+        }
+
+        drawRoundRect(ctx, x, boxY, boxW, boxH, 10, bgColor, borderColor);
+        drawText(ctx, step.name, x + boxW / 2, boxY + 25, { size: 12, weight: '600', color: textCol });
+        drawText(ctx, `${step.time}s - ${step.time + step.duration}s`, x + boxW / 2, boxY + 48, { size: 10, color: Colors.textMuted });
+
+        // Connection line
+        if (i < steps.length - 1) {
+          const nextState = getStepState(steps[i + 1], currentTime);
+          const lineColor = state === 'done' ? Colors.green : Colors.border;
+          ctx.beginPath();
+          ctx.strokeStyle = lineColor;
+          ctx.lineWidth = 2;
+          ctx.moveTo(x + boxW, boxY + boxH / 2);
+          ctx.lineTo(x + boxW + gap, boxY + boxH / 2);
+          ctx.stroke();
+        }
+      });
+
+      // Status text
+      let statusText = 'Ready to start';
+      let statusColor = Colors.textMuted;
+      if (playing) {
+        statusText = 'Provisioning in progress...';
+        statusColor = Colors.yellow;
+      } else if (currentTime >= totalTime) {
+        statusText = 'Pod is Running!';
+        statusColor = Colors.green;
+      }
+      drawText(ctx, statusText, width / 2, height - 60, { size: 14, weight: '600', color: statusColor });
+
+      // Legend
+      drawRoundRect(ctx, 60, height - 40, 16, 16, 4, Colors.bgSecond, Colors.border);
+      drawText(ctx, 'Pending', 100, height - 32, { size: 11, color: Colors.textMuted, align: 'left' });
+
+      drawRoundRect(ctx, 180, height - 40, 16, 16, 4, Colors.yellow + '30', Colors.yellow);
+      drawText(ctx, 'In Progress', 220, height - 32, { size: 11, color: Colors.textMuted, align: 'left' });
+
+      drawRoundRect(ctx, 320, height - 40, 16, 16, 4, Colors.green + '30', Colors.green);
+      drawText(ctx, 'Done', 360, height - 32, { size: 11, color: Colors.textMuted, align: 'left' });
+    }
+
+    function animate(timestamp) {
+      if (!playing) return;
+
+      if (lastFrameTime === 0) lastFrameTime = timestamp;
+      const delta = (timestamp - lastFrameTime) / 1000;
+      lastFrameTime = timestamp;
+
+      currentTime += delta * speed * 15; // 15x real time for demo
+      if (currentTime >= totalTime) {
+        currentTime = totalTime;
+        playing = false;
+      }
+
+      document.getElementById('timeline-time').textContent = currentTime.toFixed(1) + 's';
+      draw();
+
+      if (playing) requestAnimationFrame(animate);
+    }
+
+    draw();
+
+    document.getElementById('timeline-start-btn').addEventListener('click', () => {
+      if (!playing) {
+        playing = true;
+        lastFrameTime = 0;
+        requestAnimationFrame(animate);
+      }
+    });
+
+    document.getElementById('timeline-reset-btn').addEventListener('click', () => {
+      playing = false;
+      currentTime = 0;
+      document.getElementById('timeline-time').textContent = '0.0s';
+      draw();
+    });
+
+    document.querySelectorAll('.speed-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        speed = parseFloat(btn.dataset.speed);
+      });
+    });
+  })();
+
+  // ========================================
+  // Slide 10: Instance Selection Algorithm
+  // ========================================
+  (function() {
+    const grid = document.getElementById('instance-grid');
+    if (!grid) return;
+
+    const instances = [
+      't3.micro', 't3.small', 't3.medium', 't3.large',
+      'm5.large', 'm5.xlarge', 'm5.2xlarge',
+      'm6i.large', 'm6i.xlarge', 'm6i.2xlarge', 'm6i.4xlarge',
+      'm7i.large', 'm7i.xlarge', 'm7i.2xlarge',
+      'c5.large', 'c5.xlarge', 'c5.2xlarge',
+      'c6i.large', 'c6i.xlarge', 'c6i.2xlarge',
+      'c7i.large', 'c7i.xlarge', 'c7i.2xlarge',
+      'r5.large', 'r5.xlarge', 'r5.2xlarge',
+      'r6i.large', 'r6i.xlarge', 'r6i.2xlarge',
+      'r7i.large', 'r7i.xlarge', 'r7i.2xlarge',
+      'g5.xlarge', 'g5.2xlarge', 'p5.48xlarge'
+    ];
+
+    let filters = { category: false, generation: false, size: false };
+
+    function renderGrid() {
+      grid.innerHTML = instances.map(inst => {
+        let filtered = false;
+        let selected = false;
+
+        const category = inst.charAt(0);
+        const gen = parseInt(inst.match(/\d+/)?.[0] || '0');
+        const size = inst.split('.')[1];
+
+        if (filters.category && !['m', 'c', 'r'].includes(category)) filtered = true;
+        if (filters.generation && gen <= 6) filtered = true;
+        if (filters.size && ['micro', 'small', 'medium'].includes(size)) filtered = true;
+
+        if (filters.category && filters.generation && filters.size) {
+          if (inst === 'm7i.2xlarge') selected = true;
+        }
+
+        let cls = 'instance-box';
+        if (filtered) cls += ' filtered';
+        if (selected) cls += ' selected';
+
+        return `<span class="${cls}">${inst}</span>`;
+      }).join('');
+    }
+
+    renderGrid();
+
+    document.getElementById('filter-reset').addEventListener('click', () => {
+      filters = { category: false, generation: false, size: false };
+      renderGrid();
+    });
+
+    document.getElementById('filter-category').addEventListener('click', () => {
+      filters.category = true;
+      renderGrid();
+    });
+
+    document.getElementById('filter-generation').addEventListener('click', () => {
+      filters.generation = true;
+      renderGrid();
+    });
+
+    document.getElementById('filter-size').addEventListener('click', () => {
+      filters.size = true;
+      renderGrid();
+    });
+
+    document.getElementById('filter-select').addEventListener('click', () => {
+      filters = { category: true, generation: true, size: true };
+      renderGrid();
+    });
+  })();
+
+  // ========================================
+  // Slide 11: Consolidation Canvas Animation
+  // ========================================
+  (function() {
+    const setup = setupCanvas('consolidation-canvas', 1100, 350);
+    if (!setup) return;
+    const { ctx, width, height } = setup;
+
+    let nodes = [
+      { x: 80, y: 80, pods: [1, 2, 3, 4], cost: 0.10, removing: false },
+      { x: 320, y: 80, pods: [5], cost: 0.10, removing: false },
+      { x: 560, y: 80, pods: [6, 7], cost: 0.10, removing: false },
+      { x: 800, y: 80, pods: [], cost: 0.10, removing: false },
+    ];
+
+    let consolidating = false;
+    let savings = 0;
+
+    const podColors = [
+      Colors.blue, Colors.cyan, Colors.pink, Colors.orange,
+      Colors.accentLt, Colors.yellow, Colors.green
+    ];
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+
+      nodes.forEach((node, ni) => {
+        if (node.removing) return;
+
+        const nodeW = 180;
+        const nodeH = 200;
+
+        // Node box
+        let borderColor = Colors.border;
+        if (node.pods.length === 0) borderColor = Colors.red;
+        else if (node.pods.length <= 2) borderColor = Colors.yellow;
+        else borderColor = Colors.green;
+
+        drawRoundRect(ctx, node.x, node.y, nodeW, nodeH, 12, Colors.bgSecond, borderColor);
+        drawText(ctx, `Node ${ni + 1}`, node.x + nodeW / 2, node.y + 20, { size: 13, weight: '600', color: Colors.textPri });
+        drawText(ctx, `$${node.cost.toFixed(2)}/hr`, node.x + nodeW / 2, node.y + nodeH - 15, { size: 11, color: Colors.textMuted });
+
+        // Pods
+        const podW = 35;
+        const podH = 35;
+        const podGap = 8;
+        const podsPerRow = 4;
+
+        node.pods.forEach((podId, pi) => {
+          const row = Math.floor(pi / podsPerRow);
+          const col = pi % podsPerRow;
+          const px = node.x + 15 + col * (podW + podGap);
+          const py = node.y + 50 + row * (podH + podGap);
+
+          drawRoundRect(ctx, px, py, podW, podH, 6, podColors[podId - 1] + '40', podColors[podId - 1]);
+          drawText(ctx, `P${podId}`, px + podW / 2, py + podH / 2, { size: 10, weight: '600', color: podColors[podId - 1] });
+        });
+      });
+
+      // Update counter
+      document.getElementById('cost-counter').textContent = `절감: $${savings.toFixed(2)}/hr`;
+    }
+
+    draw();
+
+    document.getElementById('consolidate-btn').addEventListener('click', () => {
+      if (consolidating) return;
+      consolidating = true;
+
+      // Step 1: Move pods from node 2 to node 1
+      setTimeout(() => {
+        nodes[0].pods.push(5);
+        nodes[1].pods = [];
+        draw();
+      }, 500);
+
+      // Step 2: Remove empty node 2
+      setTimeout(() => {
+        nodes[1].removing = true;
+        savings += 0.10;
+        draw();
+      }, 1000);
+
+      // Step 3: Move pods from node 3 to node 1
+      setTimeout(() => {
+        nodes[0].pods.push(6, 7);
+        nodes[2].pods = [];
+        draw();
+      }, 1500);
+
+      // Step 4: Remove empty node 3
+      setTimeout(() => {
+        nodes[2].removing = true;
+        savings += 0.10;
+        draw();
+      }, 2000);
+
+      // Step 5: Remove already empty node 4
+      setTimeout(() => {
+        nodes[3].removing = true;
+        savings += 0.10;
+        draw();
+        consolidating = false;
+      }, 2500);
+    });
+
+    document.getElementById('consolidate-reset-btn').addEventListener('click', () => {
+      consolidating = false;
+      savings = 0;
+      nodes = [
+        { x: 80, y: 80, pods: [1, 2, 3, 4], cost: 0.10, removing: false },
+        { x: 320, y: 80, pods: [5], cost: 0.10, removing: false },
+        { x: 560, y: 80, pods: [6, 7], cost: 0.10, removing: false },
+        { x: 800, y: 80, pods: [], cost: 0.10, removing: false },
+      ];
+      draw();
+    });
+  })();
+
+  // ========================================
+  // Slide 12: Consolidation Policy Comparison
+  // ========================================
+  (function() {
+    const grid = document.getElementById('policy-grid');
+    if (!grid) return;
+
+    function createNodes() {
+      return [
+        { id: 1, pods: 5, utilization: 80 },
+        { id: 2, pods: 1, utilization: 15 },
+        { id: 3, pods: 3, utilization: 45 },
+        { id: 4, pods: 0, utilization: 0 },
+        { id: 5, pods: 2, utilization: 25 },
+        { id: 6, pods: 4, utilization: 60 },
+      ];
+    }
+
+    let nodes = createNodes();
+
+    function renderNodes() {
+      grid.innerHTML = nodes.map(n => {
+        let cls = 'sim-node ';
+        if (n.utilization >= 50) cls += 'utilized';
+        else if (n.utilization > 0) cls += 'underutilized';
+        else cls += 'empty';
+        if (n.removing) cls += ' removing';
+
+        return `<div class="${cls}">
+          <span>Node ${n.id}</span>
+          <span style="font-size: 0.65rem;">${n.pods} pods</span>
+          <span style="font-size: 0.65rem;">${n.utilization}%</span>
+        </div>`;
+      }).join('');
+    }
+
+    renderNodes();
+
+    document.getElementById('policy-whenempty').addEventListener('click', () => {
+      // Only remove nodes with 0 pods
+      nodes = nodes.map(n => ({ ...n, removing: n.pods === 0 }));
+      renderNodes();
+      setTimeout(() => {
+        nodes = nodes.filter(n => !n.removing);
+        renderNodes();
+      }, 600);
+    });
+
+    document.getElementById('policy-underutilized').addEventListener('click', () => {
+      // Remove empty and consolidate underutilized
+      const sortedByUtil = [...nodes].sort((a, b) => a.utilization - b.utilization);
+
+      // Mark empty for removal
+      nodes = nodes.map(n => ({ ...n, removing: n.pods === 0 }));
+      renderNodes();
+
+      setTimeout(() => {
+        nodes = nodes.filter(n => !n.removing);
+        // Mark very underutilized for consolidation
+        nodes = nodes.map(n => ({ ...n, removing: n.utilization < 30 }));
+        renderNodes();
+
+        setTimeout(() => {
+          // Redistribute pods and remove
+          const remaining = nodes.filter(n => !n.removing);
+          const toRemove = nodes.filter(n => n.removing);
+          let extraPods = toRemove.reduce((sum, n) => sum + n.pods, 0);
+
+          remaining.forEach(n => {
+            const add = Math.min(extraPods, 2);
+            n.pods += add;
+            n.utilization = Math.min(100, n.utilization + add * 15);
+            extraPods -= add;
+          });
+
+          nodes = remaining;
+          renderNodes();
+        }, 600);
+      }, 600);
+    });
+
+    document.getElementById('policy-reset').addEventListener('click', () => {
+      nodes = createNodes();
+      renderNodes();
+    });
+  })();
+
+  // ========================================
+  // Slide 13: Drift Detection Flow
+  // ========================================
+  (function() {
+    let stepIndex = 0;
+    const steps = ['drift-step-1', 'drift-step-2', 'drift-step-3', 'drift-step-4', 'drift-step-5'];
+    let animating = false;
+
+    function resetSteps() {
+      steps.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.classList.remove('active', 'done');
+        }
+      });
+      stepIndex = 0;
+    }
+
+    function animateStep() {
+      if (stepIndex > 0) {
+        const prevEl = document.getElementById(steps[stepIndex - 1]);
+        if (prevEl) {
+          prevEl.classList.remove('active');
+          prevEl.classList.add('done');
+        }
+      }
+
+      if (stepIndex < steps.length) {
+        const el = document.getElementById(steps[stepIndex]);
+        if (el) el.classList.add('active');
+        stepIndex++;
+        setTimeout(animateStep, 800);
+      } else {
+        animating = false;
+      }
+    }
+
+    document.getElementById('drift-play')?.addEventListener('click', () => {
+      if (animating) return;
+      resetSteps();
+      animating = true;
+      animateStep();
+    });
+
+    document.getElementById('drift-reset')?.addEventListener('click', () => {
+      animating = false;
+      resetSteps();
+    });
+  })();
+
+  // ========================================
+  // Slide 14: Disruption Budget Calculator
+  // ========================================
+  (function() {
+    const nodesSlider = document.getElementById('nodes-slider');
+    const pctSlider = document.getElementById('pct-slider');
+    const fixedSlider = document.getElementById('fixed-slider');
+    const preview = document.getElementById('budget-preview');
+
+    if (!nodesSlider || !pctSlider || !fixedSlider || !preview) return;
+
+    function update() {
+      const nodes = parseInt(nodesSlider.value);
+      const pct = parseInt(pctSlider.value);
+      const fixed = parseInt(fixedSlider.value);
+
+      document.getElementById('nodes-value').textContent = nodes;
+      document.getElementById('pct-value').textContent = pct + '%';
+      document.getElementById('fixed-value').textContent = fixed;
+
+      const maxByPct = Math.max(1, Math.floor(nodes * pct / 100));
+      const minAvail = Math.max(0, nodes - maxByPct);
+
+      const maxDisruption = fixed > 0 ? Math.min(maxByPct, nodes - fixed) : maxByPct;
+      const actualMinAvail = fixed > 0 ? Math.max(fixed, minAvail) : minAvail;
+
+      document.getElementById('max-disruption').textContent = Math.max(1, maxDisruption);
+      document.getElementById('min-available').textContent = actualMinAvail;
+
+      let budgetLine = `<span class="key">nodes</span>: <span class="string">"${pct}%"</span>`;
+      if (fixed > 0) {
+        budgetLine = `<span class="key">nodes</span>: <span class="string">"${pct}%"</span>
+      - <span class="key">nodes</span>: <span class="number">${fixed}</span>  <span class="comment"># minAvailable</span>`;
+      }
+
+      preview.innerHTML = `<span class="code-label">YAML</span><span class="key">spec</span>:
+  <span class="key">disruption</span>:
+    <span class="key">consolidationPolicy</span>: <span class="string">WhenEmptyOrUnderutilized</span>
+    <span class="key">budgets</span>:
+      - ${budgetLine}
+    <span class="comment"># Business hours protection</span>
+    <span class="key">schedules</span>:
+      - <span class="key">cron</span>: <span class="string">"0 9 * * 1-5"</span>  <span class="comment"># 09:00 Mon-Fri</span>
+        <span class="key">duration</span>: <span class="string">8h</span>`;
+    }
+
+    nodesSlider.addEventListener('input', update);
+    pctSlider.addEventListener('input', update);
+    fixedSlider.addEventListener('input', update);
+
+    update();
+  })();
+</script>
+</body>
+</html>

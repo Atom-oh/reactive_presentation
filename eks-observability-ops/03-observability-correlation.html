@@ -1,0 +1,1905 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Block 3: Observability Correlation | EKS Observability Ops</title>
+  <link rel="stylesheet" href="../common/theme.css">
+  <style>
+    /* Slide-specific styles */
+    .pillar-card {
+      text-align: center;
+      padding: 24px 16px;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s ease;
+    }
+    .pillar-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .pillar-icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+    }
+    .pillar-card.metrics .pillar-icon { color: var(--blue); }
+    .pillar-card.logs .pillar-icon { color: var(--green); }
+    .pillar-card.traces .pillar-icon { color: var(--yellow); }
+    .pillar-card h3 { margin-bottom: 8px; }
+    .pillar-question {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .grafana-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: all 0.8s ease 0.6s;
+    }
+    .grafana-center.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .grafana-logo {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #f46800, #f9b21a);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+
+    .connection-lines {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s ease 1s;
+    }
+    .connection-lines.visible { opacity: 1; }
+    .connection-lines svg { width: 100%; height: 100%; }
+    .connection-line {
+      stroke: var(--accent);
+      stroke-width: 2;
+      stroke-dasharray: 8 4;
+      fill: none;
+      animation: dash 1s linear infinite;
+    }
+    @keyframes dash {
+      to { stroke-dashoffset: -12; }
+    }
+
+    /* Regex tester */
+    .regex-input-container {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .regex-input-container input {
+      flex: 1;
+      padding: 10px 14px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+    }
+    .regex-input-container input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .log-sample {
+      background: #0d1117;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      line-height: 1.6;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .log-sample .highlight {
+      background: var(--accent);
+      color: #fff;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+    .extracted-value {
+      margin-top: 12px;
+      padding: 10px 16px;
+      background: var(--green-bg);
+      border: 1px solid var(--green);
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: var(--green);
+    }
+
+    /* TraceQL tabs */
+    .traceql-example {
+      margin-bottom: 12px;
+    }
+    .traceql-query {
+      background: #0d1117;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: var(--cyan);
+      margin-bottom: 8px;
+    }
+    .traceql-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    /* Sampling simulator */
+    .sampling-results {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin: 16px 0;
+    }
+    .sampling-metric {
+      text-align: center;
+      padding: 16px;
+      background: var(--bg-card);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .sampling-metric .value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+    .sampling-metric .label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .sampling-metric.cost .value { color: var(--green); }
+    .sampling-metric.traces .value { color: var(--blue); }
+    .sampling-metric.errors .value { color: var(--yellow); }
+
+    /* Pipeline components */
+    .pipeline-flow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .pipeline-stage {
+      padding: 10px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .pipeline-stage:hover, .pipeline-stage.active {
+      border-color: var(--accent);
+      background: var(--surface);
+    }
+    .pipeline-arrow {
+      color: var(--text-muted);
+      font-size: 1.2rem;
+    }
+
+    /* Canvas styling */
+    canvas {
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="slide-deck">
+
+    <!-- Slide 1: Pain Point -->
+    <section class="slide" id="slide-1">
+      <div class="slide-header">
+        <h1>도구 간 데이터 연결이 안 됩니다</h1>
+        <p class="subtitle">Block 3: Observability Correlation (35분)</p>
+      </div>
+      <div class="slide-body">
+        <div class="pain-quote">
+          "Grafana에 Prometheus, Loki, Tempo 다 연결했는데, 에러 발생 시 각각 따로 검색해야 합니다"
+        </div>
+        <div class="pain-quote">
+          "메트릭 스파이크가 보이는데, 관련 로그와 트레이스를 찾는 데 20분 이상 걸립니다"
+        </div>
+        <div class="callout callout-danger" style="margin-top: 24px;">
+          <strong>핵심 문제:</strong> 3가지 시그널(Metrics, Logs, Traces)이 있지만 연결되지 않으면 MTTR(평균 복구 시간)이 늘어남
+        </div>
+        <div class="col-3" style="margin-top: 24px;">
+          <div class="card">
+            <div class="metric-value" style="color: var(--red);">20분+</div>
+            <div class="metric-label">수동 상관관계 분석</div>
+          </div>
+          <div class="card">
+            <div class="metric-value" style="color: var(--yellow);">3개</div>
+            <div class="metric-label">별도 UI 전환 필요</div>
+          </div>
+          <div class="card">
+            <div class="metric-value" style="color: var(--blue);">컨텍스트 손실</div>
+            <div class="metric-label">시그널 간 연결고리 부재</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 2: Three Pillars + Grafana Stack -->
+    <section class="slide" id="slide-2">
+      <div class="slide-header">
+        <h1>관측성 3대 축 + Grafana 스택</h1>
+      </div>
+      <div class="slide-body" style="position: relative;">
+        <div class="col-3" id="pillars-container" style="flex: 1; align-items: stretch;">
+          <div class="card pillar-card metrics" data-delay="0">
+            <div class="pillar-icon">📊</div>
+            <h3 style="color: var(--blue);">Metrics</h3>
+            <p style="font-size: 0.95rem; margin-bottom: 8px;">Prometheus / AMP</p>
+            <p class="pillar-question">"무엇이 문제인가?"</p>
+            <div class="badge badge-blue" style="margin-top: 12px;">수치 기반 이상 탐지</div>
+          </div>
+          <div class="card pillar-card logs" data-delay="200">
+            <div class="pillar-icon">📝</div>
+            <h3 style="color: var(--green);">Logs</h3>
+            <p style="font-size: 0.95rem; margin-bottom: 8px;">Loki</p>
+            <p class="pillar-question">"왜 발생했는가?"</p>
+            <div class="badge badge-green" style="margin-top: 12px;">상세 컨텍스트</div>
+          </div>
+          <div class="card pillar-card traces" data-delay="400">
+            <div class="pillar-icon">🔗</div>
+            <h3 style="color: var(--yellow);">Traces</h3>
+            <p style="font-size: 0.95rem; margin-bottom: 8px;">Tempo</p>
+            <p class="pillar-question">"어디서 발생했는가?"</p>
+            <div class="badge badge-yellow" style="margin-top: 12px;">분산 요청 추적</div>
+          </div>
+        </div>
+        <div class="grafana-center" id="grafana-center" style="margin-top: 24px;">
+          <div class="grafana-logo">G</div>
+          <h3 style="color: var(--text-primary); margin: 0;">Grafana</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">통합 대시보드</p>
+        </div>
+        <svg class="connection-lines" id="connection-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+        </svg>
+      </div>
+    </section>
+
+    <!-- Slide 3: 3-Signal Correlation Simulator -->
+    <section class="slide" id="slide-3">
+      <div class="slide-header">
+        <h1>3-Signal Correlation 시뮬레이터</h1>
+        <p class="subtitle">Exemplar를 통한 메트릭 → 트레이스 → 로그 연결</p>
+      </div>
+      <div class="slide-body">
+        <div class="canvas-container" style="flex: 1; min-height: 400px;">
+          <canvas id="correlation-canvas"></canvas>
+          <div class="canvas-controls">
+            <button class="btn btn-primary" id="btn-simulate">에러 시뮬레이션</button>
+            <button class="btn" id="btn-reset-corr">초기화</button>
+            <div class="btn-group" style="margin-left: 16px;">
+              <button class="btn btn-sm speed-btn active" data-speed="1">1x</button>
+              <button class="btn btn-sm speed-btn" data-speed="2">2x</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 4: Exemplars -->
+    <section class="slide" id="slide-4">
+      <div class="slide-header">
+        <h1>Exemplars: 메트릭 → 트레이스 연결</h1>
+      </div>
+      <div class="slide-body">
+        <div class="columns">
+          <div>
+            <div class="card" style="margin-bottom: 16px;">
+              <h3>Exemplar란?</h3>
+              <p style="margin-bottom: 12px;">히스토그램 메트릭의 특정 데이터 포인트에 <strong>TraceID</strong>를 첨부하여 해당 요청의 트레이스로 바로 이동할 수 있게 해주는 기능</p>
+              <ul>
+                <li>Prometheus 2.26+ 지원</li>
+                <li>히스토그램/Summary 메트릭에 적용</li>
+                <li>OpenMetrics 형식 필요</li>
+              </ul>
+            </div>
+            <div class="callout callout-info">
+              <strong>동작 원리:</strong> 메트릭 그래프에서 특정 데이터 포인트 클릭 → TraceID 확인 → Tempo에서 상세 트레이스 조회
+            </div>
+          </div>
+          <div>
+            <h3 style="margin-bottom: 12px;">Prometheus Datasource 설정</h3>
+            <div class="code-block">
+              <span class="code-label">prometheus-datasource.yaml</span>
+<span class="key">apiVersion</span>: <span class="value">1</span>
+<span class="key">datasources</span>:
+  - <span class="key">name</span>: <span class="string">Prometheus</span>
+    <span class="key">type</span>: <span class="string">prometheus</span>
+    <span class="key">url</span>: <span class="string">http://prometheus:9090</span>
+    <span class="key">jsonData</span>:
+      <span class="key">exemplarTraceIdDestinations</span>:
+        - <span class="key">name</span>: <span class="string">traceID</span>
+          <span class="key">datasourceUid</span>: <span class="string">tempo</span>
+          <span class="key">urlDisplayLabel</span>: <span class="string">"View Trace"</span>
+</div>
+            <div id="exemplar-demo" class="card" style="margin-top: 16px; text-align: center;">
+              <canvas id="exemplar-canvas" width="400" height="150"></canvas>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 8px;">데이터 포인트 위의 ◆ = Exemplar (클릭 가능)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 5: Grafana Datasource Config -->
+    <section class="slide" id="slide-5">
+      <div class="slide-header">
+        <h1>Grafana 데이터소스 설정</h1>
+      </div>
+      <div class="slide-body">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="prometheus">Prometheus</button>
+          <button class="tab-btn" data-tab="loki">Loki</button>
+          <button class="tab-btn" data-tab="tempo">Tempo</button>
+        </div>
+
+        <div class="tab-content active" data-tab="prometheus">
+          <div class="columns">
+            <div>
+              <h3>핵심 설정</h3>
+              <ul>
+                <li><strong>endpoint:</strong> Prometheus/AMP 엔드포인트</li>
+                <li><strong>exemplarTraceIdDestinations:</strong> 트레이스 연결 설정</li>
+                <li><strong>httpMethod:</strong> GET 또는 POST</li>
+              </ul>
+            </div>
+            <div class="code-block" style="font-size: 0.8rem;">
+<span class="key">datasources</span>:
+  - <span class="key">name</span>: <span class="string">Prometheus</span>
+    <span class="key">type</span>: <span class="string">prometheus</span>
+    <span class="key">access</span>: <span class="string">proxy</span>
+    <span class="key">url</span>: <span class="string">http://prometheus:9090</span>
+    <span class="key">jsonData</span>:
+      <span class="key">httpMethod</span>: <span class="string">POST</span>
+      <span class="key">exemplarTraceIdDestinations</span>:
+        - <span class="key">name</span>: <span class="string">traceID</span>
+          <span class="key">datasourceUid</span>: <span class="string">tempo</span>
+          <span class="key">urlDisplayLabel</span>: <span class="string">"View Trace"</span></div>
+          </div>
+        </div>
+
+        <div class="tab-content" data-tab="loki">
+          <div class="columns">
+            <div>
+              <h3>핵심 설정</h3>
+              <ul>
+                <li><strong>endpoint:</strong> Loki 게이트웨이 URL</li>
+                <li><strong>derivedFields:</strong> TraceID 추출 정규식</li>
+                <li><strong>maxLines:</strong> 최대 로그 라인 수</li>
+              </ul>
+            </div>
+            <div class="code-block" style="font-size: 0.8rem;">
+<span class="key">datasources</span>:
+  - <span class="key">name</span>: <span class="string">Loki</span>
+    <span class="key">type</span>: <span class="string">loki</span>
+    <span class="key">access</span>: <span class="string">proxy</span>
+    <span class="key">url</span>: <span class="string">http://loki-gateway:3100</span>
+    <span class="key">jsonData</span>:
+      <span class="key">maxLines</span>: <span class="number">1000</span>
+      <span class="key">derivedFields</span>:
+        - <span class="key">name</span>: <span class="string">TraceID</span>
+          <span class="key">matcherRegex</span>: <span class="string">'"traceId":"([a-f0-9]+)"'</span>
+          <span class="key">url</span>: <span class="string">'$${__value.raw}'</span>
+          <span class="key">datasourceUid</span>: <span class="string">tempo</span></div>
+          </div>
+        </div>
+
+        <div class="tab-content" data-tab="tempo">
+          <div class="columns">
+            <div>
+              <h3>핵심 설정</h3>
+              <ul>
+                <li><strong>tracesToLogs:</strong> 트레이스 → 로그 연결</li>
+                <li><strong>tracesToMetrics:</strong> 트레이스 → 메트릭 연결</li>
+                <li><strong>serviceMap:</strong> 서비스 맵 활성화</li>
+              </ul>
+            </div>
+            <div class="code-block" style="font-size: 0.8rem;">
+<span class="key">datasources</span>:
+  - <span class="key">name</span>: <span class="string">Tempo</span>
+    <span class="key">type</span>: <span class="string">tempo</span>
+    <span class="key">url</span>: <span class="string">http://tempo:3200</span>
+    <span class="key">jsonData</span>:
+      <span class="key">tracesToLogs</span>:
+        <span class="key">datasourceUid</span>: <span class="string">loki</span>
+        <span class="key">tags</span>: [<span class="string">'namespace'</span>, <span class="string">'pod'</span>]
+        <span class="key">filterByTraceID</span>: <span class="value">true</span>
+      <span class="key">tracesToMetrics</span>:
+        <span class="key">datasourceUid</span>: <span class="string">prometheus</span>
+      <span class="key">serviceMap</span>:
+        <span class="key">datasourceUid</span>: <span class="string">prometheus</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 6: Loki <-> Tempo Bidirectional -->
+    <section class="slide" id="slide-6">
+      <div class="slide-header">
+        <h1>Loki ↔ Tempo 양방향 연동</h1>
+      </div>
+      <div class="slide-body">
+        <div class="canvas-container" style="height: 320px; margin-bottom: 16px;">
+          <canvas id="loki-tempo-canvas"></canvas>
+          <div class="canvas-controls">
+            <button class="btn btn-primary" id="btn-loki-tempo">Loki → Tempo</button>
+            <button class="btn" id="btn-tempo-loki">Tempo → Loki</button>
+            <button class="btn" id="btn-reset-lt">Reset</button>
+          </div>
+        </div>
+        <div class="col-2">
+          <div class="code-block" style="font-size: 0.78rem;">
+            <span class="code-label">Loki → Tempo (Derived Fields)</span>
+<span class="key">derivedFields</span>:
+  - <span class="key">name</span>: <span class="string">TraceID</span>
+    <span class="key">matcherRegex</span>: <span class="string">'"traceId":"([a-f0-9]+)"'</span>
+    <span class="key">datasourceUid</span>: <span class="string">tempo</span>
+</div>
+          <div class="code-block" style="font-size: 0.78rem;">
+            <span class="code-label">Tempo → Loki (tracesToLogs)</span>
+<span class="key">tracesToLogs</span>:
+  <span class="key">datasourceUid</span>: <span class="string">loki</span>
+  <span class="key">tags</span>: [<span class="string">'namespace'</span>, <span class="string">'pod'</span>]
+  <span class="key">filterByTraceID</span>: <span class="value">true</span>
+</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 7: Derived Fields & Regex Tester -->
+    <section class="slide" id="slide-7">
+      <div class="slide-header">
+        <h1>Derived Fields & tracesToLogs 설정</h1>
+      </div>
+      <div class="slide-body">
+        <div class="card">
+          <h3>정규식 테스터</h3>
+          <div class="regex-input-container">
+            <input type="text" id="regex-input" value='"traceId":"([a-f0-9]+)"' placeholder="정규식 입력">
+            <button class="btn btn-primary" id="btn-test-regex">테스트</button>
+          </div>
+          <div class="log-sample" id="log-sample">{"timestamp":"2024-01-15T10:30:00Z","level":"ERROR","traceId":"abc123def456789012345678","service":"payment-service","message":"Payment failed: Connection timeout to RDS"}</div>
+          <div class="extracted-value" id="extracted-value" style="display: none;">
+            추출된 값: <span id="extracted-text"></span>
+          </div>
+        </div>
+        <div class="col-2" style="margin-top: 16px;">
+          <div class="card">
+            <h3>일반적인 TraceID 패턴</h3>
+            <table style="font-size: 0.85rem;">
+              <tr><th>형식</th><th>정규식</th></tr>
+              <tr><td>JSON 필드</td><td><code>"traceId":"([a-f0-9]+)"</code></td></tr>
+              <tr><td>W3C Trace Context</td><td><code>traceparent.*-([a-f0-9]{32})-</code></td></tr>
+              <tr><td>Jaeger</td><td><code>uber-trace-id:([a-f0-9]+):</code></td></tr>
+            </table>
+          </div>
+          <div class="card">
+            <h3>주의사항</h3>
+            <ul style="font-size: 0.9rem;">
+              <li>정규식은 <strong>캡처 그룹 ()</strong>이 필수</li>
+              <li>첫 번째 캡처 그룹이 TraceID로 사용됨</li>
+              <li>대소문자 구분에 주의 (보통 소문자)</li>
+              <li>로그 형식 변경 시 정규식도 업데이트 필요</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 8: TraceQL -->
+    <section class="slide" id="slide-8">
+      <div class="slide-header">
+        <h1>TraceQL 소개</h1>
+        <p class="subtitle">Tempo의 강력한 트레이스 쿼리 언어</p>
+      </div>
+      <div class="slide-body">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="basic">기본</button>
+          <button class="tab-btn" data-tab="error">에러</button>
+          <button class="tab-btn" data-tab="duration">지연</button>
+          <button class="tab-btn" data-tab="complex">복합</button>
+          <button class="tab-btn" data-tab="chained">체인</button>
+        </div>
+
+        <div class="tab-content active" data-tab="basic">
+          <div class="traceql-example">
+            <div class="traceql-query">{ resource.service.name = "payment-service" }</div>
+            <p class="traceql-desc">payment-service에서 발생한 모든 트레이스를 검색합니다.</p>
+          </div>
+          <div class="traceql-example">
+            <div class="traceql-query">{ span.http.method = "POST" }</div>
+            <p class="traceql-desc">HTTP POST 요청이 포함된 트레이스를 검색합니다.</p>
+          </div>
+        </div>
+
+        <div class="tab-content" data-tab="error">
+          <div class="traceql-example">
+            <div class="traceql-query">{ status = error }</div>
+            <p class="traceql-desc">에러 상태의 span이 포함된 트레이스를 검색합니다.</p>
+          </div>
+          <div class="traceql-example">
+            <div class="traceql-query">{ span.http.status_code >= 500 }</div>
+            <p class="traceql-desc">HTTP 5xx 에러가 발생한 트레이스를 검색합니다.</p>
+          </div>
+        </div>
+
+        <div class="tab-content" data-tab="duration">
+          <div class="traceql-example">
+            <div class="traceql-query">{ duration > 1s }</div>
+            <p class="traceql-desc">1초 이상 걸린 span이 포함된 트레이스를 검색합니다.</p>
+          </div>
+          <div class="traceql-example">
+            <div class="traceql-query">{ duration > 500ms && duration < 2s }</div>
+            <p class="traceql-desc">500ms ~ 2s 사이의 span을 검색합니다.</p>
+          </div>
+        </div>
+
+        <div class="tab-content" data-tab="complex">
+          <div class="traceql-example">
+            <div class="traceql-query">{ span.http.status_code >= 400 && duration > 500ms }</div>
+            <p class="traceql-desc">HTTP 4xx/5xx 에러이면서 500ms 이상 걸린 트레이스를 검색합니다.</p>
+          </div>
+          <div class="traceql-example">
+            <div class="traceql-query">{ resource.service.name = "api-gateway" && status = error } | count() > 5</div>
+            <p class="traceql-desc">api-gateway에서 에러 span이 5개 이상인 트레이스를 검색합니다.</p>
+          </div>
+        </div>
+
+        <div class="tab-content" data-tab="chained">
+          <div class="traceql-example">
+            <div class="traceql-query">{ resource.service.name = "api-gateway" } >> { resource.service.name = "payment-service" }</div>
+            <p class="traceql-desc">api-gateway에서 payment-service로 이어지는 호출 경로를 가진 트레이스를 검색합니다.</p>
+          </div>
+          <div class="traceql-example">
+            <div class="traceql-query">{ name = "HTTP GET" } >> { name = "SELECT" && duration > 100ms }</div>
+            <p class="traceql-desc">HTTP GET 이후 100ms 이상 걸리는 DB SELECT가 있는 트레이스를 검색합니다.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 9: Service Map -->
+    <section class="slide" id="slide-9">
+      <div class="slide-header">
+        <h1>Service Map 시각화</h1>
+        <p class="subtitle">마이크로서비스 의존성 그래프</p>
+      </div>
+      <div class="slide-body">
+        <div class="canvas-container" style="flex: 1;">
+          <canvas id="servicemap-canvas"></canvas>
+          <div class="canvas-controls">
+            <button class="btn btn-primary" id="btn-inject-fault">장애 주입</button>
+            <button class="btn" id="btn-reset-map">초기화</button>
+          </div>
+        </div>
+        <div class="col-3" style="margin-top: 12px;">
+          <div class="card" style="text-align: center; padding: 12px;">
+            <span style="color: var(--green);">●</span> Healthy
+          </div>
+          <div class="card" style="text-align: center; padding: 12px;">
+            <span style="color: var(--yellow);">●</span> Slow (p99 > 500ms)
+          </div>
+          <div class="card" style="text-align: center; padding: 12px;">
+            <span style="color: var(--red);">●</span> Error (> 1%)
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 10: RED Method + 4 Golden Signals -->
+    <section class="slide" id="slide-10">
+      <div class="slide-header">
+        <h1>RED Method + 4 Golden Signals</h1>
+      </div>
+      <div class="slide-body">
+        <div class="compare-toggle">
+          <button class="compare-btn active" data-compare="red">RED Method</button>
+          <button class="compare-btn" data-compare="golden">4 Golden Signals</button>
+        </div>
+
+        <div class="compare-content active" data-compare="red">
+          <p style="margin-bottom: 16px; color: var(--text-secondary);">서비스 레벨 모니터링에 적합 (마이크로서비스)</p>
+          <div class="col-3">
+            <div class="card metric-card">
+              <div class="metric-value" style="color: var(--blue);">1,247</div>
+              <div class="metric-label">Rate (req/s)</div>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">초당 요청 수</p>
+            </div>
+            <div class="card metric-card">
+              <div class="metric-value" style="color: var(--red);">0.12%</div>
+              <div class="metric-label">Errors</div>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">에러율</p>
+            </div>
+            <div class="card metric-card">
+              <div class="metric-value" style="color: var(--yellow);">45ms</div>
+              <div class="metric-label">Duration (p99)</div>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">응답 시간</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="compare-content" data-compare="golden">
+          <p style="margin-bottom: 16px; color: var(--text-secondary);">Google SRE 방법론 - 인프라 + 서비스 모니터링</p>
+          <div class="col-2" style="gap: 16px;">
+            <div class="card metric-card">
+              <div class="metric-value" style="color: var(--yellow);">45ms</div>
+              <div class="metric-label">Latency</div>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">요청 처리 시간</p>
+            </div>
+            <div class="card metric-card">
+              <div class="metric-value" style="color: var(--blue);">1,247</div>
+              <div class="metric-label">Traffic</div>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">시스템 부하</p>
+            </div>
+            <div class="card metric-card">
+              <div class="metric-value" style="color: var(--red);">0.12%</div>
+              <div class="metric-label">Errors</div>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">실패율</p>
+            </div>
+            <div class="card metric-card">
+              <div class="metric-value" style="color: var(--cyan);">72%</div>
+              <div class="metric-label">Saturation</div>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">리소스 포화도</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 11: Incident Analysis Workflow -->
+    <section class="slide" id="slide-11">
+      <div class="slide-header">
+        <h1>장애 분석 워크플로우</h1>
+      </div>
+      <div class="slide-body">
+        <div class="timeline" id="incident-timeline">
+          <div class="timeline-step" data-step="1">
+            <div class="timeline-dot">1</div>
+            <div class="timeline-label">Alert 수신</div>
+          </div>
+          <div class="timeline-connector"></div>
+          <div class="timeline-step" data-step="2">
+            <div class="timeline-dot">2</div>
+            <div class="timeline-label">Dashboard 확인</div>
+          </div>
+          <div class="timeline-connector"></div>
+          <div class="timeline-step" data-step="3">
+            <div class="timeline-dot">3</div>
+            <div class="timeline-label">Trace 분석</div>
+          </div>
+          <div class="timeline-connector"></div>
+          <div class="timeline-step" data-step="4">
+            <div class="timeline-dot">4</div>
+            <div class="timeline-label">Log 확인</div>
+          </div>
+          <div class="timeline-connector"></div>
+          <div class="timeline-step" data-step="5">
+            <div class="timeline-dot">5</div>
+            <div class="timeline-label">근본 원인 파악</div>
+          </div>
+        </div>
+
+        <div class="card" id="workflow-detail" style="margin-top: 24px; min-height: 200px;">
+          <div id="step-content-1" class="step-content">
+            <h3 style="color: var(--red);">1. Alert 수신 (AlertManager → Slack)</h3>
+            <div class="code-block" style="margin-top: 12px;">
+[FIRING] PaymentService High Error Rate
+- alertname: PaymentServiceErrors
+- severity: critical
+- service: payment-service
+- error_rate: 5.2%
+- threshold: 1%
+</div>
+          </div>
+          <div id="step-content-2" class="step-content" style="display: none;">
+            <h3 style="color: var(--blue);">2. Dashboard 확인 (Grafana → RED metrics)</h3>
+            <p>에러율 급증 시점과 패턴 확인</p>
+            <ul>
+              <li>Rate: 정상 (1,200 req/s)</li>
+              <li>Errors: <span style="color: var(--red);">5.2% (급증)</span></li>
+              <li>Duration: p99 2.5s (증가)</li>
+            </ul>
+          </div>
+          <div id="step-content-3" class="step-content" style="display: none;">
+            <h3 style="color: var(--yellow);">3. Trace 분석 (Tempo → 느린 span 식별)</h3>
+            <p>Exemplar를 통해 에러 트레이스 추적</p>
+            <div class="code-block" style="margin-top: 12px;">
+TraceQL: { resource.service.name = "payment-service" && status = error }
+→ DB Query span: 2.3s (timeout)
+</div>
+          </div>
+          <div id="step-content-4" class="step-content" style="display: none;">
+            <h3 style="color: var(--green);">4. Log 확인 (Loki → 에러 메시지 확인)</h3>
+            <div class="code-block" style="margin-top: 12px;">
+{namespace="payment"} |= "error"
+
+ERROR: Connection timeout to RDS after 2000ms
+ERROR: Max connection pool exhausted (100/100)
+ERROR: Unable to acquire connection within 5s
+</div>
+          </div>
+          <div id="step-content-5" class="step-content" style="display: none;">
+            <h3 style="color: var(--cyan);">5. 근본 원인 파악 & 수정</h3>
+            <div class="callout callout-success" style="margin-top: 12px;">
+              <strong>Root Cause:</strong> RDS 연결 풀 고갈로 인한 타임아웃
+            </div>
+            <p style="margin-top: 12px;"><strong>해결책:</strong></p>
+            <ul>
+              <li>Connection pool 크기 증가 (100 → 200)</li>
+              <li>Connection timeout 설정 조정</li>
+              <li>RDS 인스턴스 스케일업 검토</li>
+            </ul>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 16px;">
+          <button class="btn btn-primary" id="btn-next-step">다음 단계</button>
+          <button class="btn" id="btn-reset-workflow">처음부터</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 12: OpenTelemetry Collector Pipeline -->
+    <section class="slide" id="slide-12">
+      <div class="slide-header">
+        <h1>OpenTelemetry Collector 파이프라인</h1>
+      </div>
+      <div class="slide-body">
+        <div class="pipeline-flow">
+          <div class="pipeline-stage active" data-component="receivers">Receivers</div>
+          <span class="pipeline-arrow">→</span>
+          <div class="pipeline-stage" data-component="processors">Processors</div>
+          <span class="pipeline-arrow">→</span>
+          <div class="pipeline-stage" data-component="exporters">Exporters</div>
+        </div>
+
+        <div class="columns">
+          <div id="component-detail">
+            <div class="card" id="receivers-detail">
+              <h3>Receivers</h3>
+              <p style="margin-bottom: 12px;">텔레메트리 데이터 수신</p>
+              <ul>
+                <li><strong>OTLP (gRPC)</strong>: 4317 포트</li>
+                <li><strong>OTLP (HTTP)</strong>: 4318 포트</li>
+                <li><strong>Jaeger</strong>: 14250/14268 포트</li>
+                <li><strong>Zipkin</strong>: 9411 포트</li>
+              </ul>
+            </div>
+            <div class="card" id="processors-detail" style="display: none;">
+              <h3>Processors</h3>
+              <p style="margin-bottom: 12px;">데이터 변환 및 필터링</p>
+              <ul>
+                <li><strong>batch</strong>: 배치 처리로 효율성 향상</li>
+                <li><strong>tail_sampling</strong>: 에러/느린 요청 우선 샘플링</li>
+                <li><strong>spanmetrics</strong>: span에서 메트릭 생성</li>
+                <li><strong>attributes</strong>: 속성 추가/수정/삭제</li>
+              </ul>
+            </div>
+            <div class="card" id="exporters-detail" style="display: none;">
+              <h3>Exporters</h3>
+              <p style="margin-bottom: 12px;">백엔드로 데이터 전송</p>
+              <ul>
+                <li><strong>otlp/tempo</strong>: Tempo로 트레이스 전송</li>
+                <li><strong>loki</strong>: Loki로 로그 전송</li>
+                <li><strong>prometheusremotewrite</strong>: Prometheus로 메트릭 전송</li>
+              </ul>
+            </div>
+          </div>
+          <div class="code-block" style="font-size: 0.72rem;">
+            <span class="code-label">otel-collector-config.yaml</span>
+<span class="key">receivers</span>:
+  <span class="key">otlp</span>:
+    <span class="key">protocols</span>:
+      <span class="key">grpc</span>: { <span class="key">endpoint</span>: <span class="string">"0.0.0.0:4317"</span> }
+      <span class="key">http</span>: { <span class="key">endpoint</span>: <span class="string">"0.0.0.0:4318"</span> }
+
+<span class="key">processors</span>:
+  <span class="key">batch</span>:
+    <span class="key">timeout</span>: <span class="string">5s</span>
+    <span class="key">send_batch_size</span>: <span class="number">1000</span>
+  <span class="key">tail_sampling</span>:
+    <span class="key">policies</span>:
+      - <span class="key">name</span>: <span class="string">errors</span>
+        <span class="key">type</span>: <span class="string">status_code</span>
+        <span class="key">status_code</span>: { <span class="key">status_codes</span>: [<span class="string">ERROR</span>] }
+      - <span class="key">name</span>: <span class="string">slow</span>
+        <span class="key">type</span>: <span class="string">latency</span>
+        <span class="key">latency</span>: { <span class="key">threshold_ms</span>: <span class="number">1000</span> }
+      - <span class="key">name</span>: <span class="string">default</span>
+        <span class="key">type</span>: <span class="string">probabilistic</span>
+        <span class="key">probabilistic</span>: { <span class="key">sampling_percentage</span>: <span class="number">10</span> }
+
+<span class="key">exporters</span>:
+  <span class="key">otlp/tempo</span>:
+    <span class="key">endpoint</span>: <span class="string">tempo-distributor:4317</span>
+  <span class="key">prometheusremotewrite</span>:
+    <span class="key">endpoint</span>: <span class="string">http://prometheus:9090/api/v1/write</span>
+
+<span class="key">service</span>:
+  <span class="key">pipelines</span>:
+    <span class="key">traces</span>:
+      <span class="key">receivers</span>: [<span class="string">otlp</span>]
+      <span class="key">processors</span>: [<span class="string">batch</span>, <span class="string">tail_sampling</span>]
+      <span class="key">exporters</span>: [<span class="string">otlp/tempo</span>]</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 13: Cost-Effective Sampling -->
+    <section class="slide" id="slide-13">
+      <div class="slide-header">
+        <h1>비용 효율적 샘플링 전략</h1>
+      </div>
+      <div class="slide-body">
+        <div class="columns">
+          <div>
+            <h3>샘플링률 조절</h3>
+            <div class="slider-container" style="margin: 16px 0;">
+              <span style="font-size: 0.85rem;">1%</span>
+              <input type="range" id="sampling-slider" min="1" max="100" value="10">
+              <span style="font-size: 0.85rem;">100%</span>
+              <span class="slider-value" id="sampling-value">10%</span>
+            </div>
+
+            <div class="sampling-results">
+              <div class="sampling-metric traces">
+                <div class="value" id="daily-traces">1M</div>
+                <div class="label">일일 트레이스</div>
+              </div>
+              <div class="sampling-metric cost">
+                <div class="value" id="monthly-cost">$450</div>
+                <div class="label">월 저장 비용</div>
+              </div>
+              <div class="sampling-metric errors">
+                <div class="value" id="error-capture">100%</div>
+                <div class="label">Error 캡처율</div>
+              </div>
+            </div>
+
+            <div class="callout callout-info" style="margin-top: 16px;">
+              <strong>Tip:</strong> Tail Sampling을 사용하면 샘플링률을 낮춰도 모든 에러를 캡처할 수 있습니다.
+            </div>
+          </div>
+          <div>
+            <h3>샘플링 전략 비교</h3>
+            <table style="font-size: 0.85rem;">
+              <thead>
+                <tr>
+                  <th>전략</th>
+                  <th>샘플링률</th>
+                  <th>비용 절감</th>
+                  <th>Error 캡처</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Head Sampling</td>
+                  <td>10%</td>
+                  <td style="color: var(--green);">90%</td>
+                  <td style="color: var(--red);">10%</td>
+                </tr>
+                <tr style="background: var(--green-bg);">
+                  <td><strong>Tail Sampling</strong></td>
+                  <td>10% + errors</td>
+                  <td style="color: var(--green);">80-90%</td>
+                  <td style="color: var(--green);">100%</td>
+                </tr>
+                <tr>
+                  <td>Adaptive</td>
+                  <td>동적</td>
+                  <td style="color: var(--green);">85-95%</td>
+                  <td style="color: var(--green);">100%</td>
+                </tr>
+                <tr>
+                  <td>No Sampling</td>
+                  <td>100%</td>
+                  <td style="color: var(--red);">0%</td>
+                  <td style="color: var(--green);">100%</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="card" style="margin-top: 16px;">
+              <h3>Tail Sampling 권장 정책</h3>
+              <ul style="font-size: 0.9rem;">
+                <li><strong>errors:</strong> 모든 에러 100% 수집</li>
+                <li><strong>slow:</strong> 1초 이상 요청 100% 수집</li>
+                <li><strong>default:</strong> 나머지 10% 랜덤 샘플링</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 14: Summary & Quiz -->
+    <section class="slide" id="slide-14">
+      <div class="slide-header">
+        <h1>Block 3 요약 & 퀴즈</h1>
+      </div>
+      <div class="slide-body">
+        <div class="col-2">
+          <div>
+            <div class="card" style="margin-bottom: 16px;">
+              <h3>핵심 개념 정리</h3>
+              <ul>
+                <li><strong>Exemplars:</strong> 메트릭 → 트레이스 연결</li>
+                <li><strong>Derived Fields:</strong> 로그 → 트레이스 연결</li>
+                <li><strong>tracesToLogs:</strong> 트레이스 → 로그 연결</li>
+                <li><strong>TraceQL:</strong> 강력한 트레이스 쿼리 언어</li>
+                <li><strong>Tail Sampling:</strong> 비용 효율적 샘플링</li>
+              </ul>
+            </div>
+          </div>
+          <div>
+            <div class="quiz" data-quiz="q1">
+              <div class="quiz-question">1. 메트릭에서 트레이스로 연결하는 Grafana 기능은?</div>
+              <div class="quiz-options">
+                <button class="quiz-option" data-correct="true">Exemplars</button>
+                <button class="quiz-option" data-correct="false">Derived Fields</button>
+                <button class="quiz-option" data-correct="false">tracesToLogs</button>
+                <button class="quiz-option" data-correct="false">Annotations</button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz" data-quiz="q2">
+              <div class="quiz-question">2. Loki에서 TraceID를 추출하는 설정은?</div>
+              <div class="quiz-options">
+                <button class="quiz-option" data-correct="false">Exemplars</button>
+                <button class="quiz-option" data-correct="true">Derived Fields</button>
+                <button class="quiz-option" data-correct="false">Labels</button>
+                <button class="quiz-option" data-correct="false">Annotations</button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz" data-quiz="q3">
+              <div class="quiz-question">3. 비용 효율적이면서 모든 에러를 캡처하는 샘플링 전략은?</div>
+              <div class="quiz-options">
+                <button class="quiz-option" data-correct="false">Head Sampling</button>
+                <button class="quiz-option" data-correct="true">Tail Sampling</button>
+                <button class="quiz-option" data-correct="false">Random Sampling</button>
+                <button class="quiz-option" data-correct="false">No Sampling</button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Framework Scripts -->
+  <script src="../common/slide-framework.js"></script>
+  <script src="../common/animation-utils.js"></script>
+  <script src="../common/quiz-component.js"></script>
+
+  <script>
+    // Initialize slide framework
+    const slideFramework = new SlideFramework({
+      onSlideChange: (index, slide) => {
+        // Trigger animations when entering specific slides
+        if (index === 1) initPillarsAnimation();
+        if (index === 2) initCorrelationCanvas();
+        if (index === 3) initExemplarCanvas();
+        if (index === 5) initLokiTempoCanvas();
+        if (index === 8) initServiceMapCanvas();
+      }
+    });
+
+    // ============================================================
+    // Slide 2: Pillars Animation
+    // ============================================================
+    function initPillarsAnimation() {
+      const pillars = document.querySelectorAll('.pillar-card');
+      const grafana = document.getElementById('grafana-center');
+      const svg = document.getElementById('connection-svg');
+
+      pillars.forEach((p, i) => {
+        setTimeout(() => p.classList.add('visible'), i * 200);
+      });
+      setTimeout(() => {
+        grafana.classList.add('visible');
+        svg.classList.add('visible');
+      }, 600);
+    }
+
+    // ============================================================
+    // Slide 3: 3-Signal Correlation Canvas (KEY ANIMATION)
+    // ============================================================
+    let corrCanvas, corrCtx, corrWidth, corrHeight;
+    let corrAnimState = { phase: 0, progress: 0, speed: 1, running: false };
+    let corrAnimLoop = null;
+
+    function initCorrelationCanvas() {
+      const result = setupCanvas('correlation-canvas', 1100, 420);
+      if (!result) return;
+      corrCanvas = result.canvas;
+      corrCtx = result.ctx;
+      corrWidth = result.width;
+      corrHeight = result.height;
+
+      resetCorrelation();
+      drawCorrelationFrame();
+    }
+
+    function resetCorrelation() {
+      corrAnimState = { phase: 0, progress: 0, speed: 1, running: false };
+      if (corrAnimLoop) corrAnimLoop.stop();
+    }
+
+    function drawCorrelationFrame() {
+      if (!corrCtx) return;
+      const ctx = corrCtx;
+      const w = corrWidth, h = corrHeight;
+
+      // Clear
+      ctx.fillStyle = Colors.bgSecond;
+      ctx.fillRect(0, 0, w, h);
+
+      // Column widths
+      const colW = w / 3 - 20;
+      const colX = [30, w/3 + 10, 2*w/3 - 10];
+
+      // Draw column headers
+      ctx.font = '600 16px Pretendard, sans-serif';
+      ctx.textAlign = 'center';
+
+      ctx.fillStyle = Colors.blue;
+      ctx.fillText('Metrics (Prometheus)', colX[0] + colW/2, 30);
+
+      ctx.fillStyle = Colors.yellow;
+      ctx.fillText('Traces (Tempo)', colX[1] + colW/2, 30);
+
+      ctx.fillStyle = Colors.green;
+      ctx.fillText('Logs (Loki)', colX[2] + colW/2, 30);
+
+      // Draw column backgrounds
+      drawRoundRect(ctx, colX[0], 50, colW, h - 70, 8, Colors.surface + '40', Colors.border);
+      drawRoundRect(ctx, colX[1], 50, colW, h - 70, 8, Colors.surface + '40', Colors.border);
+      drawRoundRect(ctx, colX[2], 50, colW, h - 70, 8, Colors.surface + '40', Colors.border);
+
+      const phase = corrAnimState.phase;
+      const progress = corrAnimState.progress;
+
+      // === METRICS COLUMN ===
+      // Draw line chart
+      const chartX = colX[0] + 20;
+      const chartY = 80;
+      const chartW = colW - 40;
+      const chartH = 150;
+
+      // Grid lines
+      ctx.strokeStyle = Colors.border;
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        ctx.beginPath();
+        ctx.moveTo(chartX, chartY + (chartH/4) * i);
+        ctx.lineTo(chartX + chartW, chartY + (chartH/4) * i);
+        ctx.stroke();
+      }
+
+      // Data points - normal line
+      const dataPoints = [];
+      const numPoints = 12;
+      for (let i = 0; i < numPoints; i++) {
+        const x = chartX + (chartW / (numPoints - 1)) * i;
+        let y;
+        if (i === 8 && phase >= 1) {
+          // Spike point
+          y = chartY + 20;
+        } else {
+          y = chartY + chartH - 40 + Math.sin(i * 0.8) * 20;
+        }
+        dataPoints.push({ x, y });
+      }
+
+      // Draw line
+      ctx.beginPath();
+      ctx.strokeStyle = Colors.blue;
+      ctx.lineWidth = 2;
+      ctx.moveTo(dataPoints[0].x, dataPoints[0].y);
+      for (let i = 1; i < dataPoints.length; i++) {
+        ctx.lineTo(dataPoints[i].x, dataPoints[i].y);
+      }
+      ctx.stroke();
+
+      // Draw points
+      dataPoints.forEach((p, i) => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = i === 8 && phase >= 1 ? Colors.red : Colors.blue;
+        ctx.fill();
+      });
+
+      // Draw spike (red) and exemplar
+      if (phase >= 1) {
+        const spikePoint = dataPoints[8];
+
+        // Red spike highlight
+        ctx.beginPath();
+        ctx.arc(spikePoint.x, spikePoint.y, 8, 0, Math.PI * 2);
+        ctx.fillStyle = Colors.red + '40';
+        ctx.fill();
+        ctx.strokeStyle = Colors.red;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Exemplar diamond
+        if (phase >= 2) {
+          const exAlpha = phase === 2 ? Math.min(1, progress * 2) : 1;
+          ctx.save();
+          ctx.globalAlpha = exAlpha;
+          ctx.translate(spikePoint.x, spikePoint.y - 20);
+          ctx.rotate(Math.PI / 4);
+          ctx.fillStyle = Colors.accent;
+          ctx.fillRect(-6, -6, 12, 12);
+          ctx.restore();
+
+          // Label
+          ctx.fillStyle = Colors.accent;
+          ctx.font = '500 11px Pretendard';
+          ctx.fillText('exemplar', spikePoint.x, spikePoint.y - 38);
+        }
+      }
+
+      // Metrics labels
+      ctx.fillStyle = Colors.textMuted;
+      ctx.font = '400 11px Pretendard';
+      ctx.textAlign = 'left';
+      ctx.fillText('http_request_duration_seconds', chartX, chartY + chartH + 20);
+      ctx.fillText('p99 latency', chartX, chartY + chartH + 35);
+
+      // === TRACES COLUMN ===
+      if (phase >= 3) {
+        const traceX = colX[1] + 20;
+        const traceY = 80;
+        const traceW = colW - 40;
+
+        // Span waterfall
+        const spans = [
+          { name: 'API Gateway', start: 0, duration: 100, color: Colors.cyan },
+          { name: 'Payment Service', start: 10, duration: 90, color: Colors.blue },
+          { name: 'DB Query', start: 20, duration: 80, color: phase >= 4 ? Colors.red : Colors.yellow }
+        ];
+
+        const spanProgress = phase === 3 ? progress : 1;
+        const maxDur = 100;
+
+        spans.forEach((span, i) => {
+          const sy = traceY + i * 50;
+          const sxStart = traceX + (span.start / maxDur) * traceW * 0.3;
+          const sWidth = (span.duration / maxDur) * traceW * 0.6 * spanProgress;
+
+          // Span bar
+          drawRoundRect(ctx, sxStart, sy, Math.max(sWidth, 10), 35, 4, span.color + '30', span.color);
+
+          // Span name
+          ctx.fillStyle = Colors.textPri;
+          ctx.font = '500 12px Pretendard';
+          ctx.textAlign = 'left';
+          ctx.fillText(span.name, sxStart + 8, sy + 22);
+        });
+
+        // Error badge on DB Query
+        if (phase >= 4) {
+          const errY = traceY + 2 * 50;
+          ctx.fillStyle = Colors.red;
+          ctx.font = '700 10px Pretendard';
+          ctx.textAlign = 'right';
+          ctx.fillText('ERROR', traceX + traceW - 10, errY + 22);
+        }
+
+        // TraceID
+        ctx.fillStyle = Colors.textMuted;
+        ctx.font = '400 11px JetBrains Mono';
+        ctx.textAlign = 'left';
+        ctx.fillText('TraceID: abc123def456...', traceX, traceY + 175);
+      }
+
+      // === LOGS COLUMN ===
+      if (phase >= 5) {
+        const logX = colX[2] + 15;
+        const logY = 80;
+        const logW = colW - 30;
+
+        const logs = [
+          { time: '10:30:00', level: 'INFO', msg: 'Request received' },
+          { time: '10:30:01', level: 'INFO', msg: 'Processing payment' },
+          { time: '10:30:02', level: 'WARN', msg: 'DB connection slow' },
+          { time: '10:30:03', level: 'ERROR', msg: 'Connection timeout', highlight: phase >= 6 }
+        ];
+
+        const logProgress = phase === 5 ? progress : 1;
+        const visibleLogs = Math.ceil(logs.length * logProgress);
+
+        logs.slice(0, visibleLogs).forEach((log, i) => {
+          const ly = logY + i * 40;
+
+          // Log line background
+          if (log.highlight) {
+            drawRoundRect(ctx, logX - 5, ly - 5, logW + 10, 32, 4, Colors.red + '30', Colors.red);
+          }
+
+          ctx.font = '400 11px JetBrains Mono';
+          ctx.textAlign = 'left';
+
+          // Timestamp
+          ctx.fillStyle = Colors.textMuted;
+          ctx.fillText(log.time, logX, ly + 12);
+
+          // Level
+          ctx.fillStyle = log.level === 'ERROR' ? Colors.red :
+                         log.level === 'WARN' ? Colors.yellow : Colors.cyan;
+          ctx.fillText(log.level, logX + 70, ly + 12);
+
+          // Message
+          ctx.fillStyle = log.highlight ? Colors.red : Colors.textSec;
+          ctx.fillText(log.msg, logX + 120, ly + 12);
+        });
+
+        // Full error message
+        if (phase >= 6) {
+          ctx.fillStyle = Colors.red;
+          ctx.font = '500 12px JetBrains Mono';
+          ctx.fillText('ERROR: Connection', logX, logY + 185);
+          ctx.fillText('timeout to RDS', logX, logY + 200);
+        }
+      }
+
+      // === ARROWS BETWEEN COLUMNS ===
+      if (phase >= 3) {
+        // Arrow from Metrics to Traces
+        const arrowProgress = phase === 3 ? progress : 1;
+        const ax1 = colX[0] + colW;
+        const ay1 = 120;
+        const ax2 = ax1 + (colX[1] - (colX[0] + colW)) * arrowProgress;
+        const ay2 = 100;
+
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.strokeStyle = Colors.accent;
+        ctx.lineWidth = 2;
+        ctx.moveTo(ax1, ay1);
+        ctx.lineTo(ax2, ay2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        if (arrowProgress >= 0.9) {
+          // Arrowhead
+          const angle = Math.atan2(ay2 - ay1, ax2 - ax1);
+          ctx.beginPath();
+          ctx.fillStyle = Colors.accent;
+          ctx.moveTo(ax2, ay2);
+          ctx.lineTo(ax2 - 10 * Math.cos(angle - 0.3), ay2 - 10 * Math.sin(angle - 0.3));
+          ctx.lineTo(ax2 - 10 * Math.cos(angle + 0.3), ay2 - 10 * Math.sin(angle + 0.3));
+          ctx.fill();
+        }
+      }
+
+      if (phase >= 5) {
+        // Arrow from Traces to Logs
+        const arrowProgress = phase === 5 ? progress : 1;
+        const ax1 = colX[1] + colW;
+        const ay1 = 150;
+        const ax2 = ax1 + (colX[2] - (colX[1] + colW)) * arrowProgress;
+        const ay2 = 130;
+
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.strokeStyle = Colors.accent;
+        ctx.lineWidth = 2;
+        ctx.moveTo(ax1, ay1);
+        ctx.lineTo(ax2, ay2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        if (arrowProgress >= 0.9) {
+          const angle = Math.atan2(ay2 - ay1, ax2 - ax1);
+          ctx.beginPath();
+          ctx.fillStyle = Colors.accent;
+          ctx.moveTo(ax2, ay2);
+          ctx.lineTo(ax2 - 10 * Math.cos(angle - 0.3), ay2 - 10 * Math.sin(angle - 0.3));
+          ctx.lineTo(ax2 - 10 * Math.cos(angle + 0.3), ay2 - 10 * Math.sin(angle + 0.3));
+          ctx.fill();
+        }
+      }
+
+      // Phase labels
+      const phaseLabels = [
+        '',
+        '1. 메트릭 스파이크 발생',
+        '2. Exemplar 표시',
+        '3. 트레이스로 이동',
+        '4. 에러 span 식별',
+        '5. 관련 로그 조회',
+        '6. 에러 메시지 확인'
+      ];
+
+      if (phase > 0 && phase < phaseLabels.length) {
+        ctx.fillStyle = Colors.accent;
+        ctx.font = '600 14px Pretendard';
+        ctx.textAlign = 'center';
+        ctx.fillText(phaseLabels[phase], w / 2, h - 20);
+      }
+    }
+
+    function runCorrelationSimulation() {
+      if (corrAnimState.running) return;
+      corrAnimState.running = true;
+      corrAnimState.phase = 0;
+      corrAnimState.progress = 0;
+
+      const phases = [1, 2, 3, 4, 5, 6];
+      let phaseIndex = 0;
+
+      corrAnimLoop = new AnimationLoop((elapsed) => {
+        const phaseDuration = 1.2 / corrAnimState.speed;
+
+        corrAnimState.progress = Math.min(1, (elapsed % phaseDuration) / phaseDuration);
+
+        const currentPhase = Math.floor(elapsed / phaseDuration);
+        if (currentPhase < phases.length) {
+          corrAnimState.phase = phases[currentPhase];
+        } else {
+          corrAnimState.phase = 6;
+          corrAnimState.progress = 1;
+          corrAnimLoop.stop();
+          corrAnimState.running = false;
+        }
+
+        drawCorrelationFrame();
+      });
+
+      corrAnimLoop.start();
+    }
+
+    // Button handlers for correlation
+    document.getElementById('btn-simulate')?.addEventListener('click', runCorrelationSimulation);
+    document.getElementById('btn-reset-corr')?.addEventListener('click', () => {
+      resetCorrelation();
+      drawCorrelationFrame();
+    });
+
+    document.querySelectorAll('.speed-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        corrAnimState.speed = parseFloat(btn.dataset.speed);
+      });
+    });
+
+    // ============================================================
+    // Slide 4: Exemplar Mini Canvas
+    // ============================================================
+    function initExemplarCanvas() {
+      const canvas = document.getElementById('exemplar-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = 400, h = 150;
+
+      ctx.fillStyle = Colors.bgSecond;
+      ctx.fillRect(0, 0, w, h);
+
+      // Draw simple chart with exemplars
+      const points = [];
+      for (let i = 0; i < 10; i++) {
+        points.push({
+          x: 30 + i * 38,
+          y: 100 - Math.sin(i * 0.7) * 30 - Math.random() * 20
+        });
+      }
+
+      // Line
+      ctx.beginPath();
+      ctx.strokeStyle = Colors.blue;
+      ctx.lineWidth = 2;
+      ctx.moveTo(points[0].x, points[0].y);
+      points.forEach(p => ctx.lineTo(p.x, p.y));
+      ctx.stroke();
+
+      // Points and exemplars
+      points.forEach((p, i) => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = Colors.blue;
+        ctx.fill();
+
+        // Exemplar diamonds on some points
+        if (i % 3 === 0) {
+          ctx.save();
+          ctx.translate(p.x, p.y - 15);
+          ctx.rotate(Math.PI / 4);
+          ctx.fillStyle = Colors.accent;
+          ctx.fillRect(-5, -5, 10, 10);
+          ctx.restore();
+        }
+      });
+
+      // Labels
+      ctx.fillStyle = Colors.textMuted;
+      ctx.font = '11px Pretendard';
+      ctx.textAlign = 'left';
+      ctx.fillText('◆ = Exemplar (TraceID 포함)', 20, 140);
+    }
+
+    // ============================================================
+    // Slide 6: Loki <-> Tempo Canvas
+    // ============================================================
+    let ltCanvas, ltCtx, ltWidth, ltHeight;
+    let ltAnimState = { mode: null, progress: 0 };
+    let ltAnimLoop = null;
+
+    function initLokiTempoCanvas() {
+      const result = setupCanvas('loki-tempo-canvas', 1100, 300);
+      if (!result) return;
+      ltCanvas = result.canvas;
+      ltCtx = result.ctx;
+      ltWidth = result.width;
+      ltHeight = result.height;
+
+      drawLokiTempoFrame();
+    }
+
+    function drawLokiTempoFrame() {
+      if (!ltCtx) return;
+      const ctx = ltCtx;
+      const w = ltWidth, h = ltHeight;
+
+      ctx.fillStyle = Colors.bgSecond;
+      ctx.fillRect(0, 0, w, h);
+
+      const boxW = 300;
+      const boxH = 200;
+      const lokiX = 80;
+      const tempoX = w - boxW - 80;
+      const boxY = 50;
+
+      // Loki box
+      drawRoundRect(ctx, lokiX, boxY, boxW, boxH, 12, Colors.green + '20', Colors.green);
+      ctx.fillStyle = Colors.green;
+      ctx.font = '700 18px Pretendard';
+      ctx.textAlign = 'center';
+      ctx.fillText('Loki', lokiX + boxW/2, boxY + 30);
+
+      // Loki content - log lines
+      const logs = [
+        '{"traceId":"abc123..."}',
+        '{"traceId":"def456..."}',
+        '{"traceId":"ghi789..."}'
+      ];
+      ctx.font = '400 11px JetBrains Mono';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = Colors.textSec;
+      logs.forEach((log, i) => {
+        const ly = boxY + 60 + i * 25;
+        ctx.fillText(log, lokiX + 20, ly);
+
+        // Highlight traceId if animating Loki->Tempo
+        if (ltAnimState.mode === 'loki-tempo' && ltAnimState.progress > 0.2) {
+          ctx.fillStyle = Colors.accent;
+          ctx.fillText('abc123...', lokiX + 120, ly);
+          ctx.fillStyle = Colors.textSec;
+        }
+      });
+
+      // Tempo box
+      drawRoundRect(ctx, tempoX, boxY, boxW, boxH, 12, Colors.yellow + '20', Colors.yellow);
+      ctx.fillStyle = Colors.yellow;
+      ctx.font = '700 18px Pretendard';
+      ctx.textAlign = 'center';
+      ctx.fillText('Tempo', tempoX + boxW/2, boxY + 30);
+
+      // Tempo content - spans
+      const spans = [
+        { name: 'API Gateway', w: 200 },
+        { name: 'Service A', w: 150 },
+        { name: 'DB Query', w: 100 }
+      ];
+      spans.forEach((span, i) => {
+        const sy = boxY + 55 + i * 45;
+        drawRoundRect(ctx, tempoX + 20, sy, span.w, 30, 4, Colors.cyan + '30', Colors.cyan);
+        ctx.fillStyle = Colors.textPri;
+        ctx.font = '500 11px Pretendard';
+        ctx.textAlign = 'left';
+        ctx.fillText(span.name, tempoX + 30, sy + 19);
+      });
+
+      // Animated arrows
+      const arrowY1 = boxY + boxH/2 - 30;
+      const arrowY2 = boxY + boxH/2 + 30;
+      const arrowX1 = lokiX + boxW;
+      const arrowX2 = tempoX;
+
+      // Loki -> Tempo arrow (top)
+      if (ltAnimState.mode === 'loki-tempo') {
+        const prog = ltAnimState.progress;
+        const endX = arrowX1 + (arrowX2 - arrowX1) * prog;
+
+        ctx.beginPath();
+        ctx.strokeStyle = Colors.accent;
+        ctx.lineWidth = 3;
+        ctx.moveTo(arrowX1, arrowY1);
+        ctx.lineTo(endX, arrowY1);
+        ctx.stroke();
+
+        if (prog >= 0.95) {
+          drawArrow(ctx, endX - 20, arrowY1, endX, arrowY1, Colors.accent);
+        }
+
+        // Label
+        ctx.fillStyle = Colors.accent;
+        ctx.font = '600 13px Pretendard';
+        ctx.textAlign = 'center';
+        ctx.fillText('Derived Fields', (arrowX1 + arrowX2) / 2, arrowY1 - 15);
+      } else {
+        // Static arrow indicator
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.strokeStyle = Colors.border;
+        ctx.lineWidth = 1;
+        ctx.moveTo(arrowX1, arrowY1);
+        ctx.lineTo(arrowX2, arrowY1);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Tempo -> Loki arrow (bottom)
+      if (ltAnimState.mode === 'tempo-loki') {
+        const prog = ltAnimState.progress;
+        const startX = arrowX2;
+        const endX = arrowX2 - (arrowX2 - arrowX1) * prog;
+
+        ctx.beginPath();
+        ctx.strokeStyle = Colors.cyan;
+        ctx.lineWidth = 3;
+        ctx.moveTo(startX, arrowY2);
+        ctx.lineTo(endX, arrowY2);
+        ctx.stroke();
+
+        if (prog >= 0.95) {
+          drawArrow(ctx, endX + 20, arrowY2, endX, arrowY2, Colors.cyan);
+        }
+
+        // Label
+        ctx.fillStyle = Colors.cyan;
+        ctx.font = '600 13px Pretendard';
+        ctx.textAlign = 'center';
+        ctx.fillText('tracesToLogs', (arrowX1 + arrowX2) / 2, arrowY2 + 25);
+      } else {
+        // Static arrow indicator
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.strokeStyle = Colors.border;
+        ctx.lineWidth = 1;
+        ctx.moveTo(arrowX2, arrowY2);
+        ctx.lineTo(arrowX1, arrowY2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    function animateLokiTempo(mode) {
+      if (ltAnimLoop) ltAnimLoop.stop();
+      ltAnimState = { mode, progress: 0 };
+
+      ltAnimLoop = new AnimationLoop((elapsed) => {
+        ltAnimState.progress = Math.min(1, elapsed / 1.5);
+        drawLokiTempoFrame();
+        if (ltAnimState.progress >= 1) {
+          ltAnimLoop.stop();
+        }
+      });
+      ltAnimLoop.start();
+    }
+
+    document.getElementById('btn-loki-tempo')?.addEventListener('click', () => animateLokiTempo('loki-tempo'));
+    document.getElementById('btn-tempo-loki')?.addEventListener('click', () => animateLokiTempo('tempo-loki'));
+    document.getElementById('btn-reset-lt')?.addEventListener('click', () => {
+      if (ltAnimLoop) ltAnimLoop.stop();
+      ltAnimState = { mode: null, progress: 0 };
+      drawLokiTempoFrame();
+    });
+
+    // ============================================================
+    // Slide 7: Regex Tester
+    // ============================================================
+    document.getElementById('btn-test-regex')?.addEventListener('click', () => {
+      const regexInput = document.getElementById('regex-input').value;
+      const logSample = document.getElementById('log-sample');
+      const extractedValue = document.getElementById('extracted-value');
+      const extractedText = document.getElementById('extracted-text');
+
+      const originalLog = '{"timestamp":"2024-01-15T10:30:00Z","level":"ERROR","traceId":"abc123def456789012345678","service":"payment-service","message":"Payment failed: Connection timeout to RDS"}';
+
+      try {
+        const regex = new RegExp(regexInput);
+        const match = originalLog.match(regex);
+
+        if (match && match[1]) {
+          // Highlight matched portion
+          const highlighted = originalLog.replace(match[1], `<span class="highlight">${match[1]}</span>`);
+          logSample.innerHTML = highlighted;
+
+          extractedText.textContent = match[1];
+          extractedValue.style.display = 'block';
+        } else {
+          logSample.textContent = originalLog;
+          extractedValue.style.display = 'none';
+          alert('매칭되는 캡처 그룹이 없습니다.');
+        }
+      } catch (e) {
+        alert('유효하지 않은 정규식입니다: ' + e.message);
+      }
+    });
+
+    // ============================================================
+    // Slide 9: Service Map Canvas
+    // ============================================================
+    let smCanvas, smCtx, smWidth, smHeight;
+    let smFaultInjected = false;
+
+    function initServiceMapCanvas() {
+      const result = setupCanvas('servicemap-canvas', 1100, 380);
+      if (!result) return;
+      smCanvas = result.canvas;
+      smCtx = result.ctx;
+      smWidth = result.width;
+      smHeight = result.height;
+
+      smFaultInjected = false;
+      drawServiceMap();
+    }
+
+    function drawServiceMap() {
+      if (!smCtx) return;
+      const ctx = smCtx;
+      const w = smWidth, h = smHeight;
+
+      ctx.fillStyle = Colors.bgSecond;
+      ctx.fillRect(0, 0, w, h);
+
+      // Service nodes
+      const services = [
+        { id: 'gateway', name: 'API Gateway', x: 150, y: h/2, color: Colors.green },
+        { id: 'auth', name: 'Auth Service', x: 350, y: 80, color: Colors.green },
+        { id: 'payment', name: 'Payment Service', x: 350, y: h/2, color: smFaultInjected ? Colors.red : Colors.green },
+        { id: 'order', name: 'Order Service', x: 350, y: h - 80, color: Colors.green },
+        { id: 'notification', name: 'Notification', x: 550, y: 80, color: Colors.green },
+        { id: 'database', name: 'Database', x: 550, y: h/2, color: smFaultInjected ? Colors.yellow : Colors.green }
+      ];
+
+      // Edges
+      const edges = [
+        { from: 'gateway', to: 'auth', rate: '500/s' },
+        { from: 'gateway', to: 'payment', rate: '1.2k/s' },
+        { from: 'gateway', to: 'order', rate: '800/s' },
+        { from: 'auth', to: 'notification', rate: '100/s' },
+        { from: 'payment', to: 'database', rate: '1k/s' },
+        { from: 'order', to: 'database', rate: '600/s' }
+      ];
+
+      // Draw edges first
+      edges.forEach(edge => {
+        const from = services.find(s => s.id === edge.from);
+        const to = services.find(s => s.id === edge.to);
+        if (!from || !to) return;
+
+        let edgeColor = Colors.textMuted;
+        if (smFaultInjected) {
+          if ((from.id === 'payment' && to.id === 'database') ||
+              (from.id === 'gateway' && to.id === 'payment')) {
+            edgeColor = Colors.yellow;
+          }
+        }
+
+        // Draw edge line
+        ctx.beginPath();
+        ctx.strokeStyle = edgeColor;
+        ctx.lineWidth = 2;
+        ctx.moveTo(from.x + 60, from.y);
+        ctx.lineTo(to.x - 60, to.y);
+        ctx.stroke();
+
+        // Arrowhead
+        const angle = Math.atan2(to.y - from.y, to.x - from.x);
+        const ax = to.x - 60;
+        const ay = to.y;
+        ctx.beginPath();
+        ctx.fillStyle = edgeColor;
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(ax - 8 * Math.cos(angle - 0.3), ay - 8 * Math.sin(angle - 0.3));
+        ctx.lineTo(ax - 8 * Math.cos(angle + 0.3), ay - 8 * Math.sin(angle + 0.3));
+        ctx.fill();
+
+        // Rate label
+        const midX = (from.x + to.x) / 2;
+        const midY = (from.y + to.y) / 2;
+        ctx.fillStyle = Colors.textMuted;
+        ctx.font = '400 10px JetBrains Mono';
+        ctx.textAlign = 'center';
+        ctx.fillText(edge.rate, midX, midY - 10);
+      });
+
+      // Draw service nodes
+      services.forEach(service => {
+        const nodeW = 120;
+        const nodeH = 50;
+        const x = service.x - nodeW/2;
+        const y = service.y - nodeH/2;
+
+        // Node background
+        drawRoundRect(ctx, x, y, nodeW, nodeH, 10, service.color + '25', service.color);
+
+        // Pulsing effect for error service
+        if (smFaultInjected && service.id === 'payment') {
+          ctx.strokeStyle = Colors.red;
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        }
+
+        // Service name
+        ctx.fillStyle = Colors.textPri;
+        ctx.font = '600 12px Pretendard';
+        ctx.textAlign = 'center';
+        ctx.fillText(service.name, service.x, service.y + 4);
+      });
+
+      // Error propagation message
+      if (smFaultInjected) {
+        ctx.fillStyle = Colors.red;
+        ctx.font = '600 14px Pretendard';
+        ctx.textAlign = 'center';
+        ctx.fillText('Payment Service 장애 → 상위 경로 지연 전파', w/2, h - 20);
+      }
+    }
+
+    document.getElementById('btn-inject-fault')?.addEventListener('click', () => {
+      smFaultInjected = true;
+      drawServiceMap();
+    });
+
+    document.getElementById('btn-reset-map')?.addEventListener('click', () => {
+      smFaultInjected = false;
+      drawServiceMap();
+    });
+
+    // ============================================================
+    // Slide 11: Workflow Timeline
+    // ============================================================
+    let currentWorkflowStep = 0;
+
+    function updateWorkflowTimeline() {
+      const steps = document.querySelectorAll('#incident-timeline .timeline-step');
+      const connectors = document.querySelectorAll('#incident-timeline .timeline-connector');
+      const contents = document.querySelectorAll('.step-content');
+
+      steps.forEach((step, i) => {
+        step.classList.remove('active', 'done');
+        if (i < currentWorkflowStep) {
+          step.classList.add('done');
+        } else if (i === currentWorkflowStep) {
+          step.classList.add('active');
+        }
+      });
+
+      connectors.forEach((conn, i) => {
+        conn.classList.toggle('done', i < currentWorkflowStep);
+      });
+
+      contents.forEach((content, i) => {
+        content.style.display = i === currentWorkflowStep ? 'block' : 'none';
+      });
+    }
+
+    document.getElementById('btn-next-step')?.addEventListener('click', () => {
+      if (currentWorkflowStep < 4) {
+        currentWorkflowStep++;
+        updateWorkflowTimeline();
+      }
+    });
+
+    document.getElementById('btn-reset-workflow')?.addEventListener('click', () => {
+      currentWorkflowStep = 0;
+      updateWorkflowTimeline();
+    });
+
+    // ============================================================
+    // Slide 12: Pipeline Component Toggle
+    // ============================================================
+    document.querySelectorAll('.pipeline-stage').forEach(stage => {
+      stage.addEventListener('click', () => {
+        document.querySelectorAll('.pipeline-stage').forEach(s => s.classList.remove('active'));
+        stage.classList.add('active');
+
+        const component = stage.dataset.component;
+        document.querySelectorAll('#component-detail .card').forEach(card => {
+          card.style.display = card.id === `${component}-detail` ? 'block' : 'none';
+        });
+      });
+    });
+
+    // ============================================================
+    // Slide 13: Sampling Simulator
+    // ============================================================
+    const samplingSlider = document.getElementById('sampling-slider');
+    const samplingValue = document.getElementById('sampling-value');
+    const dailyTraces = document.getElementById('daily-traces');
+    const monthlyCost = document.getElementById('monthly-cost');
+    const errorCapture = document.getElementById('error-capture');
+
+    function updateSamplingCalc() {
+      if (!samplingSlider) return;
+      const rate = parseInt(samplingSlider.value);
+      samplingValue.textContent = rate + '%';
+
+      // Base: 10M daily traces at 100%
+      const baseTraces = 10000000;
+      const actualTraces = Math.round(baseTraces * (rate / 100));
+
+      // Cost: ~$50/million traces/month
+      const costPerMillion = 50;
+      const cost = Math.round(actualTraces * 30 / 1000000 * costPerMillion);
+
+      // Format numbers
+      if (actualTraces >= 1000000) {
+        dailyTraces.textContent = (actualTraces / 1000000).toFixed(1) + 'M';
+      } else if (actualTraces >= 1000) {
+        dailyTraces.textContent = Math.round(actualTraces / 1000) + 'K';
+      } else {
+        dailyTraces.textContent = actualTraces;
+      }
+
+      monthlyCost.textContent = '$' + cost.toLocaleString();
+
+      // Error capture with tail sampling is always 100%
+      errorCapture.textContent = '100%';
+    }
+
+    samplingSlider?.addEventListener('input', updateSamplingCalc);
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+      updateSamplingCalc();
+      updateWorkflowTimeline();
+
+      // Initialize canvases if on those slides
+      setTimeout(() => {
+        initCorrelationCanvas();
+        initExemplarCanvas();
+        initLokiTempoCanvas();
+        initServiceMapCanvas();
+      }, 100);
+    });
+  </script>
+</body>
+</html>

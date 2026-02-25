@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Block 4: VPA & Resource Optimization - EKS Auto Mode</title>
+  <link rel="stylesheet" href="../common/theme.css">
+  <style>
+    /* Slide-specific styles */
+    .synergy-diagram {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 24px;
+    }
+    .synergy-box {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      width: 320px;
+      text-align: center;
+      transition: all var(--transition-normal);
+    }
+    .synergy-box.vpa { border-color: var(--accent); }
+    .synergy-box.auto { border-color: var(--green); }
+    .synergy-box h3 {
+      font-size: 1.3rem;
+      margin-bottom: 12px;
+    }
+    .synergy-box.vpa h3 { color: var(--accent-light); }
+    .synergy-box.auto h3 { color: var(--green); }
+    .synergy-box ul {
+      text-align: left;
+      padding-left: 20px;
+    }
+    .synergy-box li {
+      font-size: .9rem;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .synergy-arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .synergy-arrow-line {
+      width: 80px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--green));
+      position: relative;
+    }
+    .synergy-arrow-line::after {
+      content: '';
+      position: absolute;
+      right: -8px;
+      top: -5px;
+      border: 6px solid transparent;
+      border-left-color: var(--green);
+    }
+    .synergy-arrow-text {
+      font-size: .75rem;
+      color: var(--text-muted);
+      max-width: 100px;
+      text-align: center;
+    }
+    .key-points {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .key-point {
+      background: var(--bg-tertiary);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+    .key-point-icon {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+    }
+    .key-point h4 {
+      font-size: .95rem;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .key-point p {
+      font-size: .82rem;
+      color: var(--text-muted);
+    }
+
+    /* Mode selector */
+    .mode-selector {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .mode-btn {
+      padding: 10px 20px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      font-family: var(--font-main);
+      font-size: .9rem;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .mode-btn:hover {
+      border-color: var(--accent);
+    }
+    .mode-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .mode-content {
+      display: none;
+    }
+    .mode-content.active {
+      display: block;
+    }
+    .mode-detail {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .mode-info h4 {
+      color: var(--text-accent);
+      margin-bottom: 8px;
+    }
+    .mode-info p {
+      font-size: .9rem;
+      margin-bottom: 12px;
+    }
+    .pros-cons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .pros, .cons {
+      padding: 12px;
+      border-radius: 8px;
+      font-size: .85rem;
+    }
+    .pros {
+      background: var(--green-bg);
+      border-left: 3px solid var(--green);
+    }
+    .cons {
+      background: var(--red-bg);
+      border-left: 3px solid var(--red);
+    }
+    .pros h5 { color: var(--green); margin-bottom: 6px; }
+    .cons h5 { color: var(--red); margin-bottom: 6px; }
+    .use-case {
+      background: var(--blue-bg);
+      border-left: 3px solid var(--blue);
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+    .use-case h5 {
+      color: var(--blue);
+      margin-bottom: 4px;
+    }
+
+    /* VPA Simulator */
+    .simulator-layout {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 24px;
+      height: 100%;
+    }
+    .simulator-controls {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .control-group {
+      margin-bottom: 20px;
+    }
+    .control-group label {
+      display: block;
+      font-size: .85rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    .control-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .control-row input[type="range"] {
+      flex: 1;
+    }
+    .control-value {
+      font-family: var(--font-mono);
+      font-size: .85rem;
+      color: var(--accent-light);
+      min-width: 70px;
+      text-align: right;
+    }
+    .savings-display {
+      background: var(--green-bg);
+      border: 1px solid var(--green);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+      margin-top: 16px;
+    }
+    .savings-label {
+      font-size: .8rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .savings-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--green);
+      font-family: var(--font-mono);
+    }
+    .yaml-output {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: var(--font-mono);
+      font-size: .75rem;
+      color: #c9d1d9;
+      margin-top: 16px;
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    /* Timeline flow */
+    .flow-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+    }
+    .flow-step {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      opacity: 0.4;
+      transform: translateX(-20px);
+      transition: all var(--transition-normal);
+    }
+    .flow-step.active {
+      opacity: 1;
+      transform: translateX(0);
+      border-color: var(--accent);
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+    .flow-step.done {
+      opacity: 1;
+      transform: translateX(0);
+      border-color: var(--green);
+    }
+    .flow-step-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: .85rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .flow-step.active .flow-step-num {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .flow-step.done .flow-step-num {
+      background: var(--green);
+      border-color: var(--green);
+      color: #fff;
+    }
+    .flow-step-content h4 {
+      font-size: .95rem;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .flow-step-content p {
+      font-size: .82rem;
+      color: var(--text-muted);
+    }
+
+    /* QoS indicator */
+    .qos-display {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .qos-card {
+      flex: 1;
+      padding: 16px;
+      border-radius: 10px;
+      text-align: center;
+      border: 2px solid var(--border);
+      opacity: 0.4;
+      transition: all var(--transition-fast);
+    }
+    .qos-card.active {
+      opacity: 1;
+    }
+    .qos-card.guaranteed {
+      border-color: var(--green);
+      background: var(--green-bg);
+    }
+    .qos-card.guaranteed.active { box-shadow: 0 0 15px rgba(0, 184, 148, .3); }
+    .qos-card.burstable {
+      border-color: var(--yellow);
+      background: var(--yellow-bg);
+    }
+    .qos-card.burstable.active { box-shadow: 0 0 15px rgba(253, 203, 110, .3); }
+    .qos-card.besteffort {
+      border-color: var(--red);
+      background: var(--red-bg);
+    }
+    .qos-card.besteffort.active { box-shadow: 0 0 15px rgba(225, 112, 85, .3); }
+    .qos-card h4 {
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+    .qos-card.guaranteed h4 { color: var(--green); }
+    .qos-card.burstable h4 { color: var(--yellow); }
+    .qos-card.besteffort h4 { color: var(--red); }
+    .qos-card p {
+      font-size: .78rem;
+      color: var(--text-muted);
+    }
+    .slider-group {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .slider-group h4 {
+      font-size: .9rem;
+      color: var(--text-accent);
+      margin-bottom: 12px;
+    }
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .slider-row label {
+      width: 80px;
+      font-size: .82rem;
+      color: var(--text-secondary);
+    }
+    .slider-row input[type="range"] {
+      flex: 1;
+    }
+    .slider-row .value {
+      font-family: var(--font-mono);
+      font-size: .82rem;
+      color: var(--accent-light);
+      min-width: 60px;
+      text-align: right;
+    }
+    .best-practice-box {
+      background: var(--blue-bg);
+      border-left: 3px solid var(--blue);
+      padding: 14px;
+      border-radius: 0 10px 10px 0;
+      margin-top: 16px;
+    }
+    .best-practice-box h4 {
+      color: var(--blue);
+      font-size: .9rem;
+      margin-bottom: 8px;
+    }
+    .best-practice-box ul {
+      font-size: .85rem;
+      padding-left: 18px;
+    }
+    .best-practice-box li {
+      margin-bottom: 4px;
+      color: var(--text-secondary);
+    }
+
+    /* Cost comparison */
+    .cost-comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+    .cost-panel {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+    }
+    .cost-panel.before { border-color: var(--red); }
+    .cost-panel.after { border-color: var(--green); }
+    .cost-panel h3 {
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .cost-panel.before h3 { color: var(--red); }
+    .cost-panel.after h3 { color: var(--green); }
+    .cost-metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .cost-metric:last-child { border-bottom: none; }
+    .cost-metric-label {
+      font-size: .9rem;
+      color: var(--text-secondary);
+    }
+    .cost-metric-value {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .cost-panel.before .cost-metric-value { color: var(--red); }
+    .cost-panel.after .cost-metric-value { color: var(--green); }
+    .cost-total {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 2px solid var(--border);
+      text-align: center;
+    }
+    .cost-total-label {
+      font-size: .85rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .cost-total-value {
+      font-size: 2rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+    .cost-panel.before .cost-total-value { color: var(--red); }
+    .cost-panel.after .cost-total-value { color: var(--green); }
+    .savings-summary {
+      background: linear-gradient(135deg, var(--green-bg), var(--blue-bg));
+      border: 2px solid var(--green);
+      border-radius: 14px;
+      padding: 24px;
+      text-align: center;
+      margin-top: 20px;
+    }
+    .savings-summary h3 {
+      color: var(--green);
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
+    .savings-pct {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--green);
+      font-family: var(--font-mono);
+    }
+    .savings-breakdown {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .breakdown-item {
+      background: var(--bg-card);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+    .breakdown-item h5 {
+      font-size: .78rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .breakdown-item .value {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--accent-light);
+      font-family: var(--font-mono);
+    }
+
+    /* Checklist grid */
+    .checklist-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .checklist-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .checklist-section h4 {
+      color: var(--text-accent);
+      font-size: .95rem;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Resource cards */
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .resource-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      text-decoration: none;
+      transition: all var(--transition-fast);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .resource-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(108, 92, 231, .2);
+    }
+    .resource-card h4 {
+      color: var(--text-primary);
+      font-size: 1rem;
+    }
+    .resource-card p {
+      font-size: .82rem;
+      color: var(--text-muted);
+      flex: 1;
+    }
+    .resource-card .link-badge {
+      font-size: .75rem;
+      color: var(--accent-light);
+    }
+
+    /* Summary cards */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    .summary-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      transition: all var(--transition-fast);
+    }
+    .summary-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 20px rgba(108, 92, 231, .15);
+    }
+    .summary-card .block-num {
+      font-family: var(--font-mono);
+      font-size: .8rem;
+      font-weight: 700;
+      color: var(--accent-light);
+      margin-bottom: 8px;
+    }
+    .summary-card h4 {
+      font-size: 1.05rem;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+    .summary-card p {
+      font-size: .88rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Q&A slide */
+    .qa-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .qa-title {
+      font-size: 4rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-light), var(--cyan), var(--green));
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradientShift 3s ease infinite;
+      margin-bottom: 16px;
+    }
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .qa-subtitle {
+      font-size: 1.4rem;
+      color: var(--text-secondary);
+      margin-bottom: 40px;
+    }
+    .qa-feedback {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px 40px;
+      max-width: 500px;
+    }
+    .qa-feedback p {
+      font-size: .95rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .qa-feedback .highlight {
+      color: var(--accent-light);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="slide-deck">
+
+    <!-- Slide 1: VPA + Auto Mode Synergy -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>Vertical Pod Autoscaler & Auto Mode</h1>
+        <p class="subtitle">VPA와 Auto Mode의 시너지 효과</p>
+      </div>
+      <div class="slide-body">
+        <div class="synergy-diagram">
+          <div class="synergy-box vpa">
+            <h3>VPA</h3>
+            <ul>
+              <li>Pod 리소스 사용량 분석</li>
+              <li>최적 requests/limits 추천</li>
+              <li>CPU/Memory 자동 조정</li>
+              <li>14일 히스토리 기반 분석</li>
+            </ul>
+          </div>
+          <div class="synergy-arrow">
+            <div class="synergy-arrow-text">VPA 최적화된 requests</div>
+            <div class="synergy-arrow-line"></div>
+            <div class="synergy-arrow-text">Auto Mode가 최적 노드 선택</div>
+          </div>
+          <div class="synergy-box auto">
+            <h3>Auto Mode</h3>
+            <ul>
+              <li>실제 Pod requests 기반 선택</li>
+              <li>최적 인스턴스 타입 매칭</li>
+              <li>Bin-packing 최적화</li>
+              <li>Consolidation 자동 수행</li>
+            </ul>
+          </div>
+        </div>
+        <div class="key-points">
+          <div class="key-point">
+            <div class="key-point-icon" style="color: var(--accent);">&#9881;</div>
+            <h4>VPA</h4>
+            <p>Pod의 CPU/Memory 요청을 자동으로 최적화</p>
+          </div>
+          <div class="key-point">
+            <div class="key-point-icon" style="color: var(--green);">&#9889;</div>
+            <h4>Auto Mode</h4>
+            <p>최적화된 요청 기반으로 적합한 인스턴스 자동 선택</p>
+          </div>
+          <div class="key-point">
+            <div class="key-point-icon" style="color: var(--yellow);">&#10004;</div>
+            <h4>Synergy</h4>
+            <p>리소스 낭비 감소 + 노드 비용 절감</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 2: VPA Mode Comparison -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>VPA 모드 비교</h1>
+        <p class="subtitle">updateMode별 동작 방식과 권장 사용 사례</p>
+      </div>
+      <div class="slide-body">
+        <div class="mode-selector">
+          <button class="mode-btn active" data-mode="off">Off</button>
+          <button class="mode-btn" data-mode="initial">Initial</button>
+          <button class="mode-btn" data-mode="recreate">Recreate</button>
+          <button class="mode-btn" data-mode="auto">Auto</button>
+        </div>
+
+        <div class="mode-content active" data-mode="off">
+          <div class="mode-detail">
+            <div class="mode-info">
+              <h4>Off 모드</h4>
+              <p>추천값만 제공하고, Pod를 변경하지 않습니다. 가장 안전한 분석 모드입니다.</p>
+              <div class="pros-cons">
+                <div class="pros">
+                  <h5>장점</h5>
+                  <p>Pod 재시작 없음, 안전하게 분석 가능, 프로덕션에서 먼저 테스트</p>
+                </div>
+                <div class="cons">
+                  <h5>단점</h5>
+                  <p>자동 적용되지 않음, 수동 업데이트 필요</p>
+                </div>
+              </div>
+              <div class="use-case">
+                <h5>권장 사용 사례</h5>
+                <p>신규 워크로드 분석, 프로덕션 사전 검증, 리소스 패턴 파악</p>
+              </div>
+            </div>
+            <div class="code-block"><span class="code-label">YAML</span><span class="key">apiVersion</span>: <span class="string">autoscaling.k8s.io/v1</span>
+<span class="key">kind</span>: <span class="string">VerticalPodAutoscaler</span>
+<span class="key">metadata</span>:
+  <span class="key">name</span>: <span class="string">my-app-vpa</span>
+<span class="key">spec</span>:
+  <span class="key">targetRef</span>:
+    <span class="key">apiVersion</span>: <span class="string">apps/v1</span>
+    <span class="key">kind</span>: <span class="string">Deployment</span>
+    <span class="key">name</span>: <span class="string">my-app</span>
+  <span class="key">updatePolicy</span>:
+    <span class="key">updateMode</span>: <span class="string">"Off"</span></div>
+          </div>
+        </div>
+
+        <div class="mode-content" data-mode="initial">
+          <div class="mode-detail">
+            <div class="mode-info">
+              <h4>Initial 모드</h4>
+              <p>Pod 생성 시에만 추천값을 적용하고, 실행 중인 Pod는 변경하지 않습니다.</p>
+              <div class="pros-cons">
+                <div class="pros">
+                  <h5>장점</h5>
+                  <p>실행 중 Pod 안정성 보장, 롤링 업데이트 시 자연스럽게 적용</p>
+                </div>
+                <div class="cons">
+                  <h5>단점</h5>
+                  <p>즉시 적용되지 않음, 새 Pod 생성까지 대기 필요</p>
+                </div>
+              </div>
+              <div class="use-case">
+                <h5>권장 사용 사례</h5>
+                <p>Stateful 워크로드, 긴 실행 배치 작업, 재시작에 민감한 서비스</p>
+              </div>
+            </div>
+            <div class="code-block"><span class="code-label">YAML</span><span class="key">apiVersion</span>: <span class="string">autoscaling.k8s.io/v1</span>
+<span class="key">kind</span>: <span class="string">VerticalPodAutoscaler</span>
+<span class="key">metadata</span>:
+  <span class="key">name</span>: <span class="string">my-app-vpa</span>
+<span class="key">spec</span>:
+  <span class="key">targetRef</span>:
+    <span class="key">apiVersion</span>: <span class="string">apps/v1</span>
+    <span class="key">kind</span>: <span class="string">Deployment</span>
+    <span class="key">name</span>: <span class="string">my-app</span>
+  <span class="key">updatePolicy</span>:
+    <span class="key">updateMode</span>: <span class="string">"Initial"</span></div>
+          </div>
+        </div>
+
+        <div class="mode-content" data-mode="recreate">
+          <div class="mode-detail">
+            <div class="mode-info">
+              <h4>Recreate 모드</h4>
+              <p>추천값이 변경되면 Pod를 재생성하여 적용합니다. 잠시 다운타임이 발생할 수 있습니다.</p>
+              <div class="pros-cons">
+                <div class="pros">
+                  <h5>장점</h5>
+                  <p>즉시 최적화 적용, 리소스 효율성 극대화, 자동화된 관리</p>
+                </div>
+                <div class="cons">
+                  <h5>단점</h5>
+                  <p>Pod 재시작 발생, PDB 설정 필요, 잠재적 다운타임</p>
+                </div>
+              </div>
+              <div class="use-case">
+                <h5>권장 사용 사례</h5>
+                <p>Stateless 워크로드, 개발/스테이징 환경, 다중 레플리카 서비스</p>
+              </div>
+            </div>
+            <div class="code-block"><span class="code-label">YAML</span><span class="key">apiVersion</span>: <span class="string">autoscaling.k8s.io/v1</span>
+<span class="key">kind</span>: <span class="string">VerticalPodAutoscaler</span>
+<span class="key">metadata</span>:
+  <span class="key">name</span>: <span class="string">my-app-vpa</span>
+<span class="key">spec</span>:
+  <span class="key">targetRef</span>:
+    <span class="key">apiVersion</span>: <span class="string">apps/v1</span>
+    <span class="key">kind</span>: <span class="string">Deployment</span>
+    <span class="key">name</span>: <span class="string">my-app</span>
+  <span class="key">updatePolicy</span>:
+    <span class="key">updateMode</span>: <span class="string">"Recreate"</span></div>
+          </div>
+        </div>
+
+        <div class="mode-content" data-mode="auto">
+          <div class="mode-detail">
+            <div class="mode-info">
+              <h4>Auto 모드</h4>
+              <p>VPA가 자동으로 최적의 방식(Initial 또는 Recreate)을 선택합니다.</p>
+              <div class="pros-cons">
+                <div class="pros">
+                  <h5>장점</h5>
+                  <p>최소 개입, 상황에 맞는 자동 선택, 편리한 관리</p>
+                </div>
+                <div class="cons">
+                  <h5>단점</h5>
+                  <p>예측 어려움, 세밀한 제어 불가, 현재는 Recreate와 동일</p>
+                </div>
+              </div>
+              <div class="use-case">
+                <h5>권장 사용 사례</h5>
+                <p>일반적인 웹 서비스, 마이크로서비스, 유연한 운영 환경</p>
+              </div>
+            </div>
+            <div class="code-block"><span class="code-label">YAML</span><span class="key">apiVersion</span>: <span class="string">autoscaling.k8s.io/v1</span>
+<span class="key">kind</span>: <span class="string">VerticalPodAutoscaler</span>
+<span class="key">metadata</span>:
+  <span class="key">name</span>: <span class="string">my-app-vpa</span>
+<span class="key">spec</span>:
+  <span class="key">targetRef</span>:
+    <span class="key">apiVersion</span>: <span class="string">apps/v1</span>
+    <span class="key">kind</span>: <span class="string">Deployment</span>
+    <span class="key">name</span>: <span class="string">my-app</span>
+  <span class="key">updatePolicy</span>:
+    <span class="key">updateMode</span>: <span class="string">"Auto"</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: VPA Simulator (KEY Canvas Animation) -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>VPA 추천값 시뮬레이터</h1>
+        <p class="subtitle">리소스 사용량 기반 VPA 추천값 시각화</p>
+      </div>
+      <div class="slide-body">
+        <div class="simulator-layout">
+          <div class="simulator-controls">
+            <div class="control-group">
+              <label>CPU 현재 요청 (Request)</label>
+              <div class="control-row">
+                <input type="range" id="cpu-request" min="100" max="4000" value="1000" step="100">
+                <span class="control-value" id="cpu-request-val">1000m</span>
+              </div>
+            </div>
+            <div class="control-group">
+              <label>CPU 실제 사용량 (Usage)</label>
+              <div class="control-row">
+                <input type="range" id="cpu-usage" min="50" max="4000" value="300" step="50">
+                <span class="control-value" id="cpu-usage-val">300m</span>
+              </div>
+            </div>
+            <div class="control-group">
+              <label>Memory 현재 요청 (Request)</label>
+              <div class="control-row">
+                <input type="range" id="mem-request" min="128" max="8192" value="2048" step="128">
+                <span class="control-value" id="mem-request-val">2Gi</span>
+              </div>
+            </div>
+            <div class="control-group">
+              <label>Memory 실제 사용량 (Usage)</label>
+              <div class="control-row">
+                <input type="range" id="mem-usage" min="64" max="8192" value="512" step="64">
+                <span class="control-value" id="mem-usage-val">512Mi</span>
+              </div>
+            </div>
+            <div class="savings-display">
+              <div class="savings-label">예상 리소스 절감률</div>
+              <div class="savings-value" id="savings-pct">65%</div>
+            </div>
+            <div class="yaml-output" id="vpa-yaml"># VPA Recommendation
+target: CPU 345m, Memory 589Mi
+lowerBound: CPU 300m, Memory 512Mi
+upperBound: CPU 400m, Memory 700Mi</div>
+          </div>
+          <div class="canvas-container" style="flex:1;">
+            <canvas id="vpa-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: VPA + Auto Mode Integration Pattern -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>VPA + Auto Mode 연동 패턴</h1>
+        <p class="subtitle">리소스 최적화에서 노드 비용 절감까지의 자동화 흐름</p>
+      </div>
+      <div class="slide-body">
+        <div class="columns">
+          <div class="flow-timeline" id="flow-timeline">
+            <div class="flow-step" data-step="1">
+              <div class="flow-step-num">1</div>
+              <div class="flow-step-content">
+                <h4>VPA 리소스 모니터링</h4>
+                <p>14일간 Pod CPU/Memory 사용 패턴 분석</p>
+              </div>
+            </div>
+            <div class="flow-step" data-step="2">
+              <div class="flow-step-num">2</div>
+              <div class="flow-step-content">
+                <h4>추천값 생성</h4>
+                <p>분석 결과: CPU 300m, Memory 512Mi 권장</p>
+              </div>
+            </div>
+            <div class="flow-step" data-step="3">
+              <div class="flow-step-num">3</div>
+              <div class="flow-step-content">
+                <h4>Pod Requests 업데이트</h4>
+                <p>VPA가 Pod spec 자동 수정 (Recreate/Auto 모드)</p>
+              </div>
+            </div>
+            <div class="flow-step" data-step="4">
+              <div class="flow-step-num">4</div>
+              <div class="flow-step-content">
+                <h4>Auto Mode 변경 감지</h4>
+                <p>새로운 Pod requests를 기반으로 스케줄링 재평가</p>
+              </div>
+            </div>
+            <div class="flow-step" data-step="5">
+              <div class="flow-step-num">5</div>
+              <div class="flow-step-content">
+                <h4>최적 인스턴스 선택</h4>
+                <p>c6g.large에서 c6g.medium으로 다운사이징</p>
+              </div>
+            </div>
+            <div class="flow-step" data-step="6">
+              <div class="flow-step-num">6</div>
+              <div class="flow-step-content">
+                <h4>Consolidation 수행</h4>
+                <p>오버프로비저닝된 노드 통합, 빈 노드 제거</p>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <button class="btn btn-primary" id="play-flow-btn">Play Animation</button>
+            <button class="btn" id="reset-flow-btn">Reset</button>
+            <div class="callout callout-info" style="margin-top:auto;">
+              <strong>Tip:</strong> VPA Off 모드로 먼저 분석한 후, 안정적인 추천값이 나오면 Recreate 또는 Auto 모드로 전환하세요.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5: Resource Request Optimization Strategy -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>리소스 요청 최적화 전략</h1>
+        <p class="subtitle">QoS Class와 Request/Limit 설정 가이드</p>
+      </div>
+      <div class="slide-body">
+        <div class="columns">
+          <div>
+            <div class="slider-group">
+              <h4>CPU Settings</h4>
+              <div class="slider-row">
+                <label>Request</label>
+                <input type="range" id="qos-cpu-request" min="0" max="2000" value="500" step="100">
+                <span class="value" id="qos-cpu-request-val">500m</span>
+              </div>
+              <div class="slider-row">
+                <label>Limit</label>
+                <input type="range" id="qos-cpu-limit" min="0" max="4000" value="1000" step="100">
+                <span class="value" id="qos-cpu-limit-val">1000m</span>
+              </div>
+            </div>
+            <div class="slider-group">
+              <h4>Memory Settings</h4>
+              <div class="slider-row">
+                <label>Request</label>
+                <input type="range" id="qos-mem-request" min="0" max="4096" value="512" step="128">
+                <span class="value" id="qos-mem-request-val">512Mi</span>
+              </div>
+              <div class="slider-row">
+                <label>Limit</label>
+                <input type="range" id="qos-mem-limit" min="0" max="8192" value="512" step="128">
+                <span class="value" id="qos-mem-limit-val">512Mi</span>
+              </div>
+            </div>
+            <div class="qos-display">
+              <div class="qos-card guaranteed">
+                <h4>Guaranteed</h4>
+                <p>request == limit</p>
+              </div>
+              <div class="qos-card burstable active">
+                <h4>Burstable</h4>
+                <p>request &lt; limit</p>
+              </div>
+              <div class="qos-card besteffort">
+                <h4>BestEffort</h4>
+                <p>no request/limit</p>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="best-practice-box">
+              <h4>Production Best Practices</h4>
+              <ul>
+                <li><strong>CPU:</strong> request만 설정, limit 없음 - Burstable로 CPU throttling 방지</li>
+                <li><strong>Memory:</strong> request == limit - Guaranteed로 OOM 방지</li>
+                <li><strong>권장 패턴:</strong> CPU request only + Memory guaranteed</li>
+              </ul>
+            </div>
+            <div class="code-block" style="margin-top:16px;"><span class="code-label">Recommended Pattern</span><span class="key">resources</span>:
+  <span class="key">requests</span>:
+    <span class="key">cpu</span>: <span class="string">"500m"</span>        <span class="comment"># CPU request only</span>
+    <span class="key">memory</span>: <span class="string">"512Mi"</span>    <span class="comment"># Memory guaranteed</span>
+  <span class="key">limits</span>:
+    <span class="comment"># cpu: (no limit)</span>    <span class="comment"># Allows bursting</span>
+    <span class="key">memory</span>: <span class="string">"512Mi"</span>    <span class="comment"># Same as request</span></div>
+            <div id="qos-recommendation" class="callout callout-success" style="margin-top:16px;">
+              <strong>현재 설정:</strong> CPU Burstable + Memory Guaranteed - 권장 패턴입니다!
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6: Cost Savings Case Study -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>비용 절감 사례 (Before/After)</h1>
+        <p class="subtitle">VPA + Auto Mode 최적화 실제 적용 결과</p>
+      </div>
+      <div class="slide-body">
+        <div class="cost-comparison">
+          <div class="cost-panel before">
+            <h3><span>&#10006;</span> Before (최적화 전)</h3>
+            <div class="cost-metric">
+              <span class="cost-metric-label">Nodes</span>
+              <span class="cost-metric-value">20개 (m5.xlarge)</span>
+            </div>
+            <div class="cost-metric">
+              <span class="cost-metric-label">CPU 활용률</span>
+              <span class="cost-metric-value" id="before-cpu">25%</span>
+            </div>
+            <div class="cost-metric">
+              <span class="cost-metric-label">Memory 활용률</span>
+              <span class="cost-metric-value" id="before-mem">30%</span>
+            </div>
+            <div class="cost-total">
+              <div class="cost-total-label">월 비용</div>
+              <div class="cost-total-value" id="before-cost">$5,840</div>
+            </div>
+          </div>
+          <div class="cost-panel after">
+            <h3><span>&#10004;</span> After (최적화 후)</h3>
+            <div class="cost-metric">
+              <span class="cost-metric-label">Nodes</span>
+              <span class="cost-metric-value">8개 (m6g.large, c6g.xlarge 혼합)</span>
+            </div>
+            <div class="cost-metric">
+              <span class="cost-metric-label">CPU 활용률</span>
+              <span class="cost-metric-value" id="after-cpu">65%</span>
+            </div>
+            <div class="cost-metric">
+              <span class="cost-metric-label">Memory 활용률</span>
+              <span class="cost-metric-value" id="after-mem">70%</span>
+            </div>
+            <div class="cost-total">
+              <div class="cost-total-label">월 비용</div>
+              <div class="cost-total-value" id="after-cost">$1,752</div>
+            </div>
+          </div>
+        </div>
+        <div class="savings-summary">
+          <h3>Total Savings</h3>
+          <div class="savings-pct" id="total-savings">70%</div>
+          <div class="savings-breakdown">
+            <div class="breakdown-item">
+              <h5>VPA 리소스 적정화</h5>
+              <div class="value">20-40%</div>
+            </div>
+            <div class="breakdown-item">
+              <h5>Graviton (ARM) 전환</h5>
+              <div class="value">20%</div>
+            </div>
+            <div class="breakdown-item">
+              <h5>Spot 활용</h5>
+              <div class="value">60-70%</div>
+            </div>
+            <div class="breakdown-item">
+              <h5>Consolidation</h5>
+              <div class="value">10-30%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7: Best Practices Checklist -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>Best Practices 체크리스트</h1>
+        <p class="subtitle">리소스 최적화를 위한 운영 가이드</p>
+      </div>
+      <div class="slide-body">
+        <div class="checklist-grid">
+          <div class="checklist-section">
+            <h4>VPA 설정</h4>
+            <ul class="checklist">
+              <li><span class="check"></span> VPA를 Off 모드로 먼저 분석 (2주)</li>
+              <li><span class="check"></span> 핵심 워크로드부터 VPA 적용</li>
+              <li><span class="check"></span> CPU는 request만, Memory는 request=limit</li>
+              <li><span class="check"></span> Disruption Budget으로 안전한 교체</li>
+            </ul>
+          </div>
+          <div class="checklist-section">
+            <h4>NodePool 전략</h4>
+            <ul class="checklist">
+              <li><span class="check"></span> NodePool 분리: 웹/배치/GPU</li>
+              <li><span class="check"></span> Graviton 인스턴스 허용 (arm64)</li>
+              <li><span class="check"></span> Spot 혼합 전략 (Stateless 워크로드)</li>
+              <li><span class="check"></span> Pod Priority로 중요 워크로드 보호</li>
+            </ul>
+          </div>
+          <div class="checklist-section">
+            <h4>비용 관리</h4>
+            <ul class="checklist">
+              <li><span class="check"></span> 정기적 비용 리뷰 (월 1회)</li>
+              <li><span class="check"></span> Cost Allocation Tags 적용</li>
+            </ul>
+          </div>
+          <div class="checklist-section">
+            <h4>모니터링</h4>
+            <ul class="checklist">
+              <li><span class="check"></span> VPA 추천값 대시보드 구성</li>
+              <li><span class="check"></span> 노드 활용률 알림 설정</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 8: Learning Resources -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>추가 학습 리소스</h1>
+        <p class="subtitle">심화 학습을 위한 참고 자료</p>
+      </div>
+      <div class="slide-body">
+        <div class="resource-grid">
+          <a href="https://atomoh.gitbook.io/kubernetes-docs/" target="_blank" class="resource-card">
+            <h4>GitBook: EKS Auto Mode 가이드</h4>
+            <p>한국어로 작성된 EKS Auto Mode 및 Kubernetes 학습 자료. 실습 예제 포함.</p>
+            <span class="link-badge">atomoh.gitbook.io &#8594;</span>
+          </a>
+          <a href="https://docs.aws.amazon.com/eks/latest/userguide/automode.html" target="_blank" class="resource-card">
+            <h4>AWS 공식 문서: EKS Auto Mode</h4>
+            <p>EKS Auto Mode의 공식 문서. 설정 방법 및 모범 사례 안내.</p>
+            <span class="link-badge">docs.aws.amazon.com &#8594;</span>
+          </a>
+          <a href="https://karpenter.sh/docs/" target="_blank" class="resource-card">
+            <h4>Karpenter 공식 문서</h4>
+            <p>Auto Mode의 기반이 되는 Karpenter의 상세 문서. NodePool, NodeClass 설정.</p>
+            <span class="link-badge">karpenter.sh &#8594;</span>
+          </a>
+          <a href="https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/" target="_blank" class="resource-card">
+            <h4>Grafana 상관분석 가이드</h4>
+            <p>Logs, Metrics, Traces 연동을 위한 Grafana 데이터소스 설정 가이드.</p>
+            <span class="link-badge">grafana.com &#8594;</span>
+          </a>
+          <a href="https://opentelemetry.io/docs/" target="_blank" class="resource-card">
+            <h4>OpenTelemetry 공식 문서</h4>
+            <p>분산 추적 및 관측성 표준. SDK, Collector, 계측 가이드.</p>
+            <span class="link-badge">opentelemetry.io &#8594;</span>
+          </a>
+          <a href="https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler" target="_blank" class="resource-card">
+            <h4>VPA GitHub Repository</h4>
+            <p>Vertical Pod Autoscaler 공식 리포지토리. 설치, 구성, FAQ.</p>
+            <span class="link-badge">github.com &#8594;</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 9: Course Summary -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>전체 과정 요약</h1>
+        <p class="subtitle">Key Takeaways</p>
+      </div>
+      <div class="slide-body">
+        <div class="summary-grid">
+          <div class="summary-card">
+            <div class="block-num">BLOCK 01</div>
+            <h4>EKS Auto Mode 내부 아키텍처</h4>
+            <p>Auto Mode는 Karpenter 기반 - NodePool/NodeClass로 세밀한 제어 가능. 인스턴스 선택, Consolidation, Drift 처리 자동화.</p>
+          </div>
+          <div class="summary-card">
+            <div class="block-num">BLOCK 02</div>
+            <h4>노드 라이프사이클 모니터링</h4>
+            <p>Prometheus 쿼리 + AlertManager로 노드 가시성 확보. Spot 인터럽트 대응, expireAfter 전략으로 Day-2 운영 안정화.</p>
+          </div>
+          <div class="summary-card">
+            <div class="block-num">BLOCK 03</div>
+            <h4>3-Signal Correlation</h4>
+            <p>Exemplars + Derived Fields + tracesToLogs로 Logs/Metrics/Traces 상관분석. MTTR 단축 및 근본 원인 분석 가속화.</p>
+          </div>
+          <div class="summary-card">
+            <div class="block-num">BLOCK 04</div>
+            <h4>VPA + Auto Mode 최적화</h4>
+            <p>VPA로 리소스 requests 최적화, Auto Mode가 최적 노드 선택. 조합하면 70%+ 비용 절감 가능.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 10: Q&A -->
+    <div class="slide">
+      <div class="qa-content">
+        <h1 class="qa-title">Q&A</h1>
+        <p class="qa-subtitle">질문과 답변</p>
+        <div class="qa-feedback">
+          <p>오늘 교육이 도움이 되셨나요?</p>
+          <p class="highlight">피드백은 더 나은 콘텐츠를 만드는 데 큰 힘이 됩니다.</p>
+          <p style="margin-top:16px;font-size:.85rem;">Session: EKS Auto Mode & Observability (2 Hours)</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="../common/slide-framework.js"></script>
+  <script src="../common/animation-utils.js"></script>
+  <script src="../common/quiz-component.js"></script>
+  <script>
+    // Initialize slide framework
+    const slides = new SlideFramework({
+      onSlideChange: (index, slide) => {
+        // Trigger canvas redraw when entering slide 3 (VPA simulator)
+        if (index === 2) {
+          setTimeout(() => drawVpaCanvas(), 100);
+        }
+        // Trigger cost animation when entering slide 6
+        if (index === 5) {
+          setTimeout(() => animateCosts(), 100);
+        }
+      }
+    });
+
+    // ==========================================
+    // Slide 2: VPA Mode Selector
+    // ==========================================
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.mode;
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.mode-content').forEach(c => {
+          c.classList.toggle('active', c.dataset.mode === mode);
+        });
+      });
+    });
+
+    // ==========================================
+    // Slide 3: VPA Simulator (Canvas)
+    // ==========================================
+    let vpaCtx = null;
+    let vpaWidth = 0;
+    let vpaHeight = 0;
+
+    function initVpaCanvas() {
+      const result = setupCanvas('vpa-canvas', 700, 380);
+      if (result) {
+        vpaCtx = result.ctx;
+        vpaWidth = result.width;
+        vpaHeight = result.height;
+        drawVpaCanvas();
+      }
+    }
+
+    function drawVpaCanvas() {
+      if (!vpaCtx) return;
+      const ctx = vpaCtx;
+      const w = vpaWidth;
+      const h = vpaHeight;
+
+      // Get values
+      const cpuReq = parseInt(document.getElementById('cpu-request').value);
+      const cpuUse = parseInt(document.getElementById('cpu-usage').value);
+      const memReq = parseInt(document.getElementById('mem-request').value);
+      const memUse = parseInt(document.getElementById('mem-usage').value);
+
+      // Calculate VPA recommendations (15% headroom, min bounds)
+      const cpuRec = Math.max(100, Math.round(cpuUse * 1.15));
+      const memRec = Math.max(128, Math.round(memUse * 1.15));
+
+      // Calculate savings
+      const cpuSavings = cpuReq > cpuRec ? ((cpuReq - cpuRec) / cpuReq * 100) : 0;
+      const memSavings = memReq > memRec ? ((memReq - memRec) / memReq * 100) : 0;
+      const avgSavings = Math.round((cpuSavings + memSavings) / 2);
+
+      // Update display values
+      document.getElementById('cpu-request-val').textContent = cpuReq + 'm';
+      document.getElementById('cpu-usage-val').textContent = cpuUse + 'm';
+      document.getElementById('mem-request-val').textContent = formatMemory(memReq);
+      document.getElementById('mem-usage-val').textContent = formatMemory(memUse);
+      document.getElementById('savings-pct').textContent = avgSavings + '%';
+
+      // Update YAML output
+      const cpuLower = Math.max(50, Math.round(cpuUse * 0.9));
+      const cpuUpper = Math.round(cpuUse * 1.5);
+      const memLower = Math.max(64, Math.round(memUse * 0.9));
+      const memUpper = Math.round(memUse * 1.5);
+      document.getElementById('vpa-yaml').textContent = `# VPA Recommendation
+target: CPU ${cpuRec}m, Memory ${formatMemory(memRec)}
+lowerBound: CPU ${cpuLower}m, Memory ${formatMemory(memLower)}
+upperBound: CPU ${cpuUpper}m, Memory ${formatMemory(memUpper)}`;
+
+      // Clear canvas
+      ctx.fillStyle = Colors.bgSecond;
+      ctx.fillRect(0, 0, w, h);
+
+      // Draw title
+      drawText(ctx, 'CPU', 60, 30, { size: 16, weight: '600', color: Colors.textPri, align: 'left' });
+      drawText(ctx, 'Memory', 60, 210, { size: 16, weight: '600', color: Colors.textPri, align: 'left' });
+
+      // Bar dimensions
+      const barX = 60;
+      const barWidth = w - 120;
+      const barHeight = 50;
+
+      // CPU bars
+      const cpuMax = 4000;
+      const cpuY = 60;
+      drawResourceBar(ctx, barX, cpuY, barWidth, barHeight, cpuReq, cpuUse, cpuRec, cpuMax, 'm');
+
+      // Memory bars
+      const memMax = 8192;
+      const memY = 240;
+      drawResourceBar(ctx, barX, memY, barWidth, barHeight, memReq, memUse, memRec, memMax, 'Mi');
+
+      // Legend
+      const legendY = h - 40;
+      drawLegend(ctx, barX, legendY);
+    }
+
+    function drawResourceBar(ctx, x, y, w, h, request, usage, recommend, max, unit) {
+      // Background
+      drawRoundRect(ctx, x, y, w, h, 6, Colors.surface, Colors.border);
+
+      // Request bar (blue)
+      const reqWidth = (request / max) * w;
+      drawRoundRect(ctx, x, y, reqWidth, h, 6, Colors.blue + '66', Colors.blue);
+
+      // Usage bar (green, overlay)
+      const useWidth = (usage / max) * w;
+      drawRoundRect(ctx, x, y, useWidth, h, 6, Colors.green + '88', Colors.green);
+
+      // VPA Recommendation line (yellow dashed)
+      const recX = x + (recommend / max) * w;
+      ctx.beginPath();
+      ctx.setLineDash([6, 4]);
+      ctx.strokeStyle = Colors.yellow;
+      ctx.lineWidth = 3;
+      ctx.moveTo(recX, y - 5);
+      ctx.lineTo(recX, y + h + 5);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Labels
+      const labelY = y + h + 25;
+      drawText(ctx, `Request: ${request}${unit}`, x + reqWidth / 2, y - 12,
+        { size: 11, color: Colors.blue, align: 'center' });
+      drawText(ctx, `Usage: ${usage}${unit}`, x + useWidth / 2, y + h / 2,
+        { size: 11, color: '#fff', align: 'center', weight: '600' });
+      drawText(ctx, `VPA: ${recommend}${unit}`, recX, y - 12,
+        { size: 11, color: Colors.yellow, align: 'center', weight: '600' });
+
+      // Savings indicator
+      if (request > recommend) {
+        const savings = Math.round((request - recommend) / request * 100);
+        drawText(ctx, `-${savings}%`, x + w + 10, y + h / 2,
+          { size: 14, color: Colors.green, align: 'left', weight: '700' });
+      }
+    }
+
+    function drawLegend(ctx, x, y) {
+      const items = [
+        { color: Colors.blue, label: 'Current Request' },
+        { color: Colors.green, label: 'Actual Usage' },
+        { color: Colors.yellow, label: 'VPA Recommendation' }
+      ];
+      let offsetX = x;
+      items.forEach(item => {
+        ctx.fillStyle = item.color;
+        ctx.fillRect(offsetX, y, 16, 16);
+        drawText(ctx, item.label, offsetX + 24, y + 8,
+          { size: 11, color: Colors.textSec, align: 'left' });
+        offsetX += 160;
+      });
+    }
+
+    function formatMemory(mi) {
+      if (mi >= 1024) {
+        return (mi / 1024).toFixed(mi % 1024 === 0 ? 0 : 1) + 'Gi';
+      }
+      return mi + 'Mi';
+    }
+
+    // Bind slider events
+    ['cpu-request', 'cpu-usage', 'mem-request', 'mem-usage'].forEach(id => {
+      const slider = document.getElementById(id);
+      if (slider) {
+        slider.addEventListener('input', drawVpaCanvas);
+      }
+    });
+
+    // ==========================================
+    // Slide 4: Flow Timeline Animation
+    // ==========================================
+    let flowStep = 0;
+    let flowInterval = null;
+
+    function playFlowAnimation() {
+      resetFlowAnimation();
+      flowInterval = setInterval(() => {
+        flowStep++;
+        if (flowStep > 6) {
+          clearInterval(flowInterval);
+          return;
+        }
+        updateFlowSteps();
+      }, 1000);
+    }
+
+    function resetFlowAnimation() {
+      if (flowInterval) clearInterval(flowInterval);
+      flowStep = 0;
+      document.querySelectorAll('#flow-timeline .flow-step').forEach(step => {
+        step.classList.remove('active', 'done');
+      });
+    }
+
+    function updateFlowSteps() {
+      document.querySelectorAll('#flow-timeline .flow-step').forEach(step => {
+        const stepNum = parseInt(step.dataset.step);
+        step.classList.remove('active', 'done');
+        if (stepNum < flowStep) {
+          step.classList.add('done');
+        } else if (stepNum === flowStep) {
+          step.classList.add('active');
+        }
+      });
+    }
+
+    document.getElementById('play-flow-btn')?.addEventListener('click', playFlowAnimation);
+    document.getElementById('reset-flow-btn')?.addEventListener('click', resetFlowAnimation);
+
+    // ==========================================
+    // Slide 5: QoS Class Calculator
+    // ==========================================
+    function updateQoS() {
+      const cpuReq = parseInt(document.getElementById('qos-cpu-request').value);
+      const cpuLim = parseInt(document.getElementById('qos-cpu-limit').value);
+      const memReq = parseInt(document.getElementById('qos-mem-request').value);
+      const memLim = parseInt(document.getElementById('qos-mem-limit').value);
+
+      // Update display values
+      document.getElementById('qos-cpu-request-val').textContent = cpuReq === 0 ? '-' : cpuReq + 'm';
+      document.getElementById('qos-cpu-limit-val').textContent = cpuLim === 0 ? '-' : cpuLim + 'm';
+      document.getElementById('qos-mem-request-val').textContent = memReq === 0 ? '-' : formatMemory(memReq);
+      document.getElementById('qos-mem-limit-val').textContent = memLim === 0 ? '-' : formatMemory(memLim);
+
+      // Determine QoS class
+      let qosClass = 'burstable';
+      const hasRequests = cpuReq > 0 || memReq > 0;
+      const hasLimits = cpuLim > 0 || memLim > 0;
+
+      if (!hasRequests && !hasLimits) {
+        qosClass = 'besteffort';
+      } else if (cpuReq === cpuLim && memReq === memLim && cpuReq > 0 && memReq > 0) {
+        qosClass = 'guaranteed';
+      }
+
+      // Update QoS cards
+      document.querySelectorAll('.qos-card').forEach(card => {
+        card.classList.remove('active');
+        if (card.classList.contains(qosClass)) {
+          card.classList.add('active');
+        }
+      });
+
+      // Update recommendation
+      const recEl = document.getElementById('qos-recommendation');
+      if (recEl) {
+        const cpuBurstable = cpuReq > 0 && (cpuLim === 0 || cpuLim > cpuReq);
+        const memGuaranteed = memReq > 0 && memReq === memLim;
+
+        if (cpuBurstable && memGuaranteed) {
+          recEl.className = 'callout callout-success';
+          recEl.innerHTML = '<strong>현재 설정:</strong> CPU Burstable + Memory Guaranteed - 권장 패턴입니다!';
+        } else if (qosClass === 'besteffort') {
+          recEl.className = 'callout callout-danger';
+          recEl.innerHTML = '<strong>경고:</strong> BestEffort는 리소스 경쟁 시 먼저 종료됩니다. Request를 설정하세요.';
+        } else if (qosClass === 'guaranteed') {
+          recEl.className = 'callout callout-info';
+          recEl.innerHTML = '<strong>현재 설정:</strong> Guaranteed - 안정적이지만 CPU에 limit이 있으면 throttling이 발생할 수 있습니다.';
+        } else {
+          recEl.className = 'callout callout-warning';
+          recEl.innerHTML = '<strong>현재 설정:</strong> Burstable - Memory에 limit을 request와 동일하게 설정하면 OOM을 방지할 수 있습니다.';
+        }
+      }
+    }
+
+    ['qos-cpu-request', 'qos-cpu-limit', 'qos-mem-request', 'qos-mem-limit'].forEach(id => {
+      const slider = document.getElementById(id);
+      if (slider) {
+        slider.addEventListener('input', updateQoS);
+      }
+    });
+
+    // ==========================================
+    // Slide 6: Cost Animation
+    // ==========================================
+    let costAnimated = false;
+
+    function animateCosts() {
+      if (costAnimated) return;
+      costAnimated = true;
+
+      const beforeCostEl = document.getElementById('before-cost');
+      const afterCostEl = document.getElementById('after-cost');
+      const savingsEl = document.getElementById('total-savings');
+      const beforeCpuEl = document.getElementById('before-cpu');
+      const afterCpuEl = document.getElementById('after-cpu');
+      const beforeMemEl = document.getElementById('before-mem');
+      const afterMemEl = document.getElementById('after-mem');
+
+      // Animate counters
+      animateValue(beforeCostEl, 0, 5840, 1500, '$');
+      animateValue(afterCostEl, 0, 1752, 1500, '$');
+      animateValue(savingsEl, 0, 70, 2000, '', '%');
+      animateValue(beforeCpuEl, 0, 25, 1200, '', '%');
+      animateValue(afterCpuEl, 0, 65, 1200, '', '%');
+      animateValue(beforeMemEl, 0, 30, 1200, '', '%');
+      animateValue(afterMemEl, 0, 70, 1200, '', '%');
+    }
+
+    function animateValue(el, start, end, duration, prefix = '', suffix = '') {
+      if (!el) return;
+      const startTime = performance.now();
+      const update = (now) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = Ease.out(progress);
+        const current = Math.round(start + (end - start) * eased);
+        el.textContent = prefix + current.toLocaleString() + suffix;
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        }
+      };
+      requestAnimationFrame(update);
+    }
+
+    // ==========================================
+    // Initialize
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', () => {
+      initVpaCanvas();
+      updateQoS();
+
+      // Handle window resize for canvas
+      window.addEventListener('resize', () => {
+        initVpaCanvas();
+      });
+    });
+  </script>
+</body>
+</html>

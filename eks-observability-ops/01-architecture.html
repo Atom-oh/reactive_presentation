@@ -212,6 +212,22 @@
       color: var(--accent-light);
       margin-left: auto;
     }
+    /* Checklist YAML feedback */
+    .check-yaml {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      margin-top: 0;
+    }
+    .checklist li.checked .check-yaml {
+      max-height: 200px;
+      margin-top: 8px;
+    }
+    .check-yaml .code-block {
+      font-size: .72rem;
+      margin: 0;
+      padding: 8px 10px;
+    }
   </style>
 </head>
 <body>
@@ -851,15 +867,37 @@
           <ul class="checklist">
             <li>
               <span class="check"></span>
-              <div><strong>Bottlerocket AMI 사용</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">부팅 시간 10-20초 단축</span></div>
+              <div><strong>Bottlerocket AMI 사용</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">부팅 시간 10-20초 단축</span>
+                <div class="check-yaml"><div class="code-block"><span class="comment"># NodeClass</span>
+<span class="key">spec</span>:
+  <span class="key">amiSelectorTerms</span>:
+    - <span class="key">alias</span>: <span class="string">bottlerocket@latest</span></div></div>
+              </div>
             </li>
             <li>
               <span class="check"></span>
-              <div><strong>작은 EBS 볼륨</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">볼륨 초기화 5-10초 단축</span></div>
+              <div><strong>작은 EBS 볼륨</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">볼륨 초기화 5-10초 단축</span>
+                <div class="check-yaml"><div class="code-block"><span class="comment"># NodeClass</span>
+<span class="key">spec</span>:
+  <span class="key">blockDeviceMappings</span>:
+    - <span class="key">deviceName</span>: <span class="string">/dev/xvda</span>
+      <span class="key">ebs</span>:
+        <span class="key">volumeSize</span>: <span class="value">20Gi</span>
+        <span class="key">volumeType</span>: <span class="value">gp3</span></div></div>
+              </div>
             </li>
             <li>
               <span class="check"></span>
-              <div><strong>다양한 인스턴스 타입 허용</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">가용성 향상, 빠른 프로비저닝</span></div>
+              <div><strong>다양한 인스턴스 타입 허용</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">가용성 향상, 빠른 프로비저닝</span>
+                <div class="check-yaml"><div class="code-block"><span class="comment"># NodePool</span>
+<span class="key">spec</span>:
+  <span class="key">template</span>:
+    <span class="key">spec</span>:
+      <span class="key">requirements</span>:
+        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-family</span>
+          <span class="key">operator</span>: In
+          <span class="key">values</span>: [<span class="value">m7i, m7g, c7i, c7g, r7i</span>]</div></div>
+              </div>
             </li>
           </ul>
         </div>
@@ -867,15 +905,36 @@
           <ul class="checklist">
             <li>
               <span class="check"></span>
-              <div><strong>Pod Topology Spread 설정</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">워크로드 분산, 안정성 향상</span></div>
+              <div><strong>Pod Topology Spread 설정</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">워크로드 분산, 안정성 향상</span>
+                <div class="check-yaml"><div class="code-block"><span class="comment"># Pod spec</span>
+<span class="key">topologySpreadConstraints</span>:
+  - <span class="key">maxSkew</span>: <span class="value">1</span>
+    <span class="key">topologyKey</span>: <span class="string">topology.kubernetes.io/zone</span>
+    <span class="key">whenUnsatisfiable</span>: <span class="value">DoNotSchedule</span></div></div>
+              </div>
             </li>
             <li>
               <span class="check"></span>
-              <div><strong>PriorityClass로 중요 워크로드 우선</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">Preemption 활용</span></div>
+              <div><strong>PriorityClass로 중요 워크로드 우선</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">Preemption 활용</span>
+                <div class="check-yaml"><div class="code-block"><span class="key">apiVersion</span>: scheduling.k8s.io/v1
+<span class="key">kind</span>: PriorityClass
+<span class="key">metadata</span>:
+  <span class="key">name</span>: <span class="value">critical-workload</span>
+<span class="key">value</span>: <span class="value">1000000</span>
+<span class="key">globalDefault</span>: <span class="value">false</span></div></div>
+              </div>
             </li>
             <li>
               <span class="check"></span>
-              <div><strong>Disruption Budget으로 안전한 교체</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">서비스 중단 최소화</span></div>
+              <div><strong>Disruption Budget으로 안전한 교체</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">서비스 중단 최소화</span>
+                <div class="check-yaml"><div class="code-block"><span class="comment"># NodePool</span>
+<span class="key">spec</span>:
+  <span class="key">disruption</span>:
+    <span class="key">budgets</span>:
+      - <span class="key">nodes</span>: <span class="string">"20%"</span>
+        <span class="key">schedule</span>: <span class="string">"0 9 * * *"</span>
+        <span class="key">duration</span>: <span class="value">8h</span></div></div>
+              </div>
             </li>
           </ul>
         </div>
@@ -921,6 +980,18 @@
           <button class="quiz-option" data-correct="false">10분 이상</button>
         </div>
         <div class="quiz-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 17: Thank You -->
+  <div class="slide">
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:24px; text-align:center;">
+      <h1 style="font-size:3rem; background:linear-gradient(135deg, var(--accent-light), var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Thank You</h1>
+      <p style="color:var(--text-secondary); font-size:1.1rem;">Block 1 — EKS Auto Mode 내부 아키텍처 완료</p>
+      <div style="display:flex; gap:16px; margin-top:20px;">
+        <a href="index.html" class="btn btn-sm" style="text-decoration:none;">← 목차로 돌아가기</a>
+        <a href="02-node-lifecycle.html" class="btn btn-primary btn-sm" style="text-decoration:none;">다음: Block 2 →</a>
       </div>
     </div>
   </div>

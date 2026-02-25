@@ -219,6 +219,21 @@
     .ami-comparison table {
       width: 100%;
     }
+
+    /* Overprovisioning Slide */
+    .overprov-flow { display: flex; flex-direction: column; gap: 12px; }
+    .overprov-step { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--bg-tertiary); border-radius: 8px; border-left: 3px solid var(--accent); opacity: 0.4; transition: all 0.4s ease; }
+    .overprov-step.active { opacity: 1; border-left-color: var(--green); }
+    .overprov-nodes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+    .overprov-node { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 8px; min-height: 60px; display: flex; flex-wrap: wrap; gap: 4px; align-content: flex-start; transition: all 0.4s ease; }
+    .overprov-node.new-node { border-color: var(--green); box-shadow: 0 0 12px rgba(0, 206, 201, 0.2); }
+    .overprov-pod { width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: .6rem; transition: all 0.3s ease; }
+    .overprov-pod.dummy { background: rgba(0, 206, 201, 0.15); border: 1px dashed var(--cyan); color: var(--cyan); }
+    .overprov-pod.real { background: rgba(108, 92, 231, 0.3); border: 1px solid var(--accent); color: var(--accent-light); }
+    .overprov-pod.evicted { opacity: 0; transform: scale(0); }
+    .overprov-pod.pending { opacity: 0.4; border-style: dotted; }
+    .overprov-legend { display: flex; gap: 16px; font-size: .75rem; color: var(--text-muted); margin-top: 8px; }
+    .overprov-legend span { display: flex; align-items: center; gap: 4px; }
   </style>
 </head>
 <body>
@@ -251,11 +266,11 @@
       </div>
     </div>
 
-    <!-- Slide 2: Node Dashboard Simulator -->
+    <!-- Slide 2: Grafana-style Node Dashboard Simulator -->
     <div class="slide">
       <div class="slide-header">
-        <h1>노드 상태 대시보드 시뮬레이터</h1>
-        <p class="subtitle">실시간 노드 상태 모니터링 및 이벤트 추적</p>
+        <h1>Grafana: EKS Node Monitoring</h1>
+        <p class="subtitle">CPU Requests vs Usage — Karpenter 판단 기준 시각화</p>
       </div>
       <div class="slide-body" style="gap: 12px;">
         <div class="canvas-container" style="flex: 1;">
@@ -311,11 +326,11 @@ ip-10-0-1-9   Ready    <none>   1h    general-purpose   spot</div>
           <div class="command-card" data-cmd="4">
             <div class="command-header">kubectl get events --sort-by='.lastTimestamp' | grep karpenter</div>
             <div class="command-output">
-              <div class="code-block"><span class="timestamp">12m</span>   Normal   <span class="event-ok">Launched</span>         nodeclaim/nc-abc123   Launched node ip-10-0-1-5
-<span class="timestamp">10m</span>   Normal   <span class="event-info">Registered</span>       nodeclaim/nc-abc123   Registered node
-<span class="timestamp">5m</span>    Normal   <span class="event-warn">Consolidating</span>    nodeclaim/nc-xyz789   Consolidating node (underutilized)
-<span class="timestamp">3m</span>    Warning  <span class="event-error">SpotInterrupted</span>  nodeclaim/nc-old123   Spot instance interrupted
-<span class="timestamp">2m</span>    Normal   <span class="event-info">Drifted</span>          nodeclaim/nc-def456   NodeClass changed</div>
+              <div class="code-block"><span class="timestamp">12m</span>   Normal   <span class="event-ok">Launched</span>         <span class="keyword">karpenter</span>   nodeclaim/nc-abc123   Launched node ip-10-0-1-5
+<span class="timestamp">10m</span>   Normal   <span class="event-info">Registered</span>       <span class="keyword">karpenter</span>   nodeclaim/nc-abc123   Registered node
+<span class="timestamp">5m</span>    Normal   <span class="event-warn">Consolidating</span>    <span class="keyword">karpenter</span>   nodeclaim/nc-xyz789   Consolidating node (underutilized)
+<span class="timestamp">3m</span>    Warning  <span class="event-error">SpotInterrupted</span>  <span class="keyword">karpenter</span>   nodeclaim/nc-old123   Spot instance interrupted
+<span class="timestamp">2m</span>    Normal   <span class="event-info">Drifted</span>          <span class="keyword">karpenter</span>   nodeclaim/nc-def456   NodeClass changed</div>
             </div>
           </div>
           <div class="command-card" data-cmd="5">
@@ -346,8 +361,8 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
         </div>
         <div class="tab-content active" data-tab="prom1">
           <div class="promql-display">
-            <div class="promql-query">karpenter_nodes_total</div>
-            <p style="color: var(--text-secondary); font-size: .88rem; margin-bottom: 16px;">NodePool별 총 노드 수 추적</p>
+            <div class="promql-query">karpenter_cluster_state_node_count</div>
+            <p style="color: var(--text-secondary); font-size: .88rem; margin-bottom: 16px;">클러스터 내 현재 노드 수 추적</p>
             <div class="metric-bar">
               <span class="metric-bar-label">general-purpose</span>
               <div class="metric-bar-track"><div class="metric-bar-fill" style="width: 80%; background: var(--green);"></div></div>
@@ -367,7 +382,7 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
         </div>
         <div class="tab-content" data-tab="prom2">
           <div class="promql-display">
-            <div class="promql-query">karpenter_pods_pending</div>
+            <div class="promql-query">karpenter_pods_state{phase="Pending"}</div>
             <p style="color: var(--text-secondary); font-size: .88rem; margin-bottom: 16px;">스케줄 대기 중인 Pod 수 (프로비저닝 필요 신호)</p>
             <div class="metric-bar">
               <span class="metric-bar-label">Current</span>
@@ -375,14 +390,14 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
               <span class="metric-bar-value">3</span>
             </div>
             <div class="callout callout-warning" style="margin-top: 16px;">
-              <strong>Alert 조건:</strong> karpenter_pods_pending > 10 for 5m
+              <strong>Alert 조건:</strong> karpenter_pods_state{phase="Pending"} > 10 for 5m
             </div>
           </div>
         </div>
         <div class="tab-content" data-tab="prom3">
           <div class="promql-display">
-            <div class="promql-query">sum(karpenter_nodes_total{capacity_type="spot"}) / sum(karpenter_nodes_total) * 100</div>
-            <p style="color: var(--text-secondary); font-size: .88rem; margin-bottom: 16px;">전체 노드 중 Spot 인스턴스 비율</p>
+            <div class="promql-query">count(karpenter_pods_state{capacity_type="spot"}) / count(karpenter_pods_state) * 100</div>
+            <p style="color: var(--text-secondary); font-size: .88rem; margin-bottom: 16px;">전체 중 Spot 인스턴스 비율 (pods_state의 capacity_type 라벨 활용)</p>
             <div class="metric-bar">
               <span class="metric-bar-label">Spot 비율</span>
               <div class="metric-bar-track"><div class="metric-bar-fill" style="width: 40%; background: var(--cyan);"></div></div>
@@ -402,8 +417,8 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
         </div>
         <div class="tab-content" data-tab="prom4">
           <div class="promql-display">
-            <div class="promql-query">histogram_quantile(0.99, karpenter_nodeclaims_startup_duration_seconds)</div>
-            <p style="color: var(--text-secondary); font-size: .88rem; margin-bottom: 16px;">노드 프로비저닝 P99 지연 시간</p>
+            <div class="promql-query">histogram_quantile(0.99, rate(karpenter_pods_startup_duration_seconds_bucket[5m]))</div>
+            <p style="color: var(--text-secondary); font-size: .88rem; margin-bottom: 16px;">Pod 생성~Running까지 P99 지연 시간 (노드 프로비저닝 포함)</p>
             <div class="metric-bar">
               <span class="metric-bar-label">P50</span>
               <div class="metric-bar-track"><div class="metric-bar-fill" style="width: 30%; background: var(--green);"></div></div>
@@ -441,7 +456,94 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
       </div>
     </div>
 
-    <!-- Slide 6: expireAfter Strategy -->
+    <!-- Slide 6: Spot Overprovisioning Strategy -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>Spot Overprovisioning 전략</h1>
+        <p class="subtitle">Pause 컨테이너로 사전 용량 확보 — 즉시 스케줄링</p>
+      </div>
+      <div class="slide-body">
+        <div class="columns">
+          <!-- Left: Visual Flow -->
+          <div>
+            <div class="overprov-flow">
+              <div class="overprov-step" id="op-step1">
+                <span class="badge badge-green">Phase 1</span>
+                <div><strong>Buffer Ready</strong><br><span style="color:var(--text-muted);font-size:.85rem;">Dummy pods가 용량 예약</span></div>
+              </div>
+              <div class="overprov-step" id="op-step2">
+                <span class="badge badge-blue">Phase 2</span>
+                <div><strong>Real Workload 도착</strong><br><span style="color:var(--text-muted);font-size:.85rem;">Preemption → 즉시 스케줄링</span></div>
+              </div>
+              <div class="overprov-step" id="op-step3">
+                <span class="badge badge-yellow">Phase 3</span>
+                <div><strong>Karpenter 보충</strong><br><span style="color:var(--text-muted);font-size:.85rem;">Evicted dummy pods → 새 노드 프로비저닝</span></div>
+              </div>
+            </div>
+            <div class="overprov-nodes" id="op-node-grid"></div>
+            <div class="overprov-legend">
+              <span><span style="display:inline-block;width:14px;height:14px;border-radius:3px;border:1px dashed var(--cyan);background:rgba(0,206,201,0.15);"></span> Dummy</span>
+              <span><span style="display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid var(--accent);background:rgba(108,92,231,0.3);"></span> Real</span>
+              <span><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:var(--bg-card);border:1px solid var(--border);"></span> Node</span>
+            </div>
+            <div class="btn-group" style="margin-top: 12px;">
+              <button class="btn btn-primary btn-sm" id="op-phase1">Phase 1</button>
+              <button class="btn btn-sm" id="op-phase2">Phase 2</button>
+              <button class="btn btn-sm" id="op-phase3">Phase 3</button>
+              <button class="btn btn-sm" id="op-reset">Reset</button>
+            </div>
+          </div>
+          <!-- Right: YAML -->
+          <div>
+            <div class="tab-bar">
+              <button class="tab-btn active" data-tab="op-priority">PriorityClass</button>
+              <button class="tab-btn" data-tab="op-deploy">Deployment</button>
+            </div>
+            <div class="tab-content active" data-tab="op-priority">
+              <div class="code-block" style="font-size:.78rem;"><span class="key">apiVersion</span>: scheduling.k8s.io/v1
+<span class="key">kind</span>: PriorityClass
+<span class="key">metadata</span>:
+  <span class="key">name</span>: overprovisioning
+<span class="key">value</span>: <span class="value">-1</span>            <span class="comment"># 가장 낮은 우선순위</span>
+<span class="key">globalDefault</span>: <span class="value">false</span>
+<span class="key">description</span>: <span class="string">"Overprovisioning placeholder pods"</span></div>
+            </div>
+            <div class="tab-content" data-tab="op-deploy">
+              <div class="code-block" style="font-size:.78rem;"><span class="key">apiVersion</span>: apps/v1
+<span class="key">kind</span>: Deployment
+<span class="key">metadata</span>:
+  <span class="key">name</span>: overprovisioning
+<span class="key">spec</span>:
+  <span class="key">replicas</span>: <span class="value">3</span>
+  <span class="key">selector</span>:
+    <span class="key">matchLabels</span>:
+      <span class="key">app</span>: overprovisioning
+  <span class="key">template</span>:
+    <span class="key">metadata</span>:
+      <span class="key">labels</span>:
+        <span class="key">app</span>: overprovisioning
+    <span class="key">spec</span>:
+      <span class="key">priorityClassName</span>: <span class="value">overprovisioning</span>
+      <span class="key">terminationGracePeriodSeconds</span>: <span class="value">0</span>
+      <span class="key">containers</span>:
+      - <span class="key">name</span>: pause
+        <span class="key">image</span>: <span class="string">registry.k8s.io/pause:3.9</span>
+        <span class="key">resources</span>:
+          <span class="key">requests</span>:
+            <span class="key">cpu</span>: <span class="string">"1"</span>
+            <span class="key">memory</span>: <span class="string">"2Gi"</span></div>
+            </div>
+            <div class="callout-info" style="margin-top: 12px;">
+              <strong>핵심 원리</strong><br>
+              <code>value: -1</code> → 가장 낮은 우선순위<br>
+              실제 워크로드 도착 시 Dummy pod가 <strong>즉시 Preempt</strong> → 노드 대기 없이 스케줄링
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7: expireAfter Strategy -->
     <div class="slide">
       <div class="slide-header">
         <h1>expireAfter 전략 비교</h1>
@@ -497,7 +599,7 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
       </div>
     </div>
 
-    <!-- Slide 7: AMI Update & Drift -->
+    <!-- Slide 8: AMI Update & Drift -->
     <div class="slide">
       <div class="slide-header">
         <h1>AMI 업데이트 & Drift 감지</h1>
@@ -576,7 +678,7 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
       </div>
     </div>
 
-    <!-- Slide 8: AlertManager Rules -->
+    <!-- Slide 9: AlertManager Rules -->
     <div class="slide">
       <div class="slide-header">
         <h1>AlertManager 알림 규칙</h1>
@@ -590,7 +692,7 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
               <div class="alert-checkbox"></div>
               <div>
                 <div class="alert-name">HighPendingPods</div>
-                <div class="alert-desc">karpenter_pods_pending > 10 for 5m</div>
+                <div class="alert-desc">karpenter_pods_state{phase="Pending"} > 10 for 5m</div>
               </div>
             </label>
             <label class="alert-toggle" data-alert="provisioning-failed">
@@ -642,7 +744,7 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
       </div>
     </div>
 
-    <!-- Slide 9: Day-2 Operations Checklist -->
+    <!-- Slide 10: Day-2 Operations Checklist -->
     <div class="slide">
       <div class="slide-header">
         <h1>Day-2 운영 체크리스트</h1>
@@ -677,7 +779,7 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
       </div>
     </div>
 
-    <!-- Slide 10: Summary & Quiz -->
+    <!-- Slide 11: Summary & Quiz -->
     <div class="slide">
       <div class="slide-header">
         <h1>Block 2 요약 & 퀴즈</h1>
@@ -734,6 +836,18 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
       </div>
     </div>
 
+    <!-- Slide 12: Thank You -->
+    <div class="slide">
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:24px; text-align:center;">
+        <h1 style="font-size:3rem; background:linear-gradient(135deg, var(--accent-light), var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Thank You</h1>
+        <p style="color:var(--text-secondary); font-size:1.1rem;">Block 2 — 노드 라이프사이클 & 모니터링 완료</p>
+        <div style="display:flex; gap:16px; margin-top:20px;">
+          <a href="index.html" class="btn btn-sm" style="text-decoration:none;">← 목차로 돌아가기</a>
+          <a href="03-observability-correlation.html" class="btn btn-primary btn-sm" style="text-decoration:none;">다음: Block 3 →</a>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script src="../common/slide-framework.js"></script>
@@ -747,215 +861,455 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
     });
 
     // ============================================================
-    // Slide 2: Node Dashboard Simulator
+    // Slide 2: Grafana-style EKS Node Monitoring Dashboard
     // ============================================================
     (function initDashboard() {
-      const cvs = setupCanvas('dashboard-canvas', 960, 420);
+      const cvs = setupCanvas('dashboard-canvas', 960, 440);
       if (!cvs) return;
       const { ctx, width, height } = cvs;
 
-      // Node state management
-      const GRID_COLS = 4;
-      const GRID_ROWS = 3;
-      const NODE_COUNT = GRID_COLS * GRID_ROWS;
+      const INSTANCE_TYPES = ['m5.xlarge', 'm5.2xlarge', 'c5.xlarge', 'r5.xlarge', 'm6i.xlarge', 'c6g.xlarge'];
+      const MAX_NODES = 8;
 
       let nodes = [];
       let events = [];
-      let animationPhases = {}; // Track animation states per node
+      let timeSeriesData = []; // { avgReq, avgUsage }
+      let tsInterval = null;
 
       function initNodes() {
         nodes = [];
-        for (let i = 0; i < NODE_COUNT; i++) {
+        const initData = [
+          { req: 55, use: 32, cap: 'on-demand', inst: 'm5.xlarge' },
+          { req: 48, use: 28, cap: 'on-demand', inst: 'm5.2xlarge' },
+          { req: 62, use: 40, cap: 'spot',      inst: 'c5.xlarge' },
+          { req: 25, use: 12, cap: 'spot',      inst: 'r5.xlarge' },
+          { req: 70, use: 45, cap: 'on-demand', inst: 'm6i.xlarge' },
+          { req: 38, use: 22, cap: 'spot',      inst: 'c6g.xlarge' }
+        ];
+        initData.forEach((d, i) => {
           nodes.push({
-            id: i,
-            name: `n${i + 1}`,
-            status: i < 6 ? 'ready' : 'empty',
-            cpu: i < 6 ? Math.floor(Math.random() * 40) + 20 : 0,
+            id: i, name: `node-${i + 1}`, status: 'Ready',
+            cpuRequests: d.req, cpuUsage: d.use,
+            capacityType: d.cap, instanceType: d.inst,
             animOffset: Math.random() * Math.PI * 2
           });
-        }
+        });
         events = [
-          { time: '10:32:15', type: 'info', msg: 'Dashboard initialized' },
-          { time: '10:32:14', type: 'ok', msg: 'Node n1-n6 Ready' }
+          { time: '10:32:15', type: 'Provisioned', msg: 'NodeClaim node-1~6 created', color: Colors.green },
+          { time: '10:32:10', type: 'Scheduled',   msg: 'All pods scheduled',          color: Colors.blue }
         ];
-        animationPhases = {};
+        timeSeriesData = [];
+        // Seed 5 initial data points
+        for (let i = 0; i < 5; i++) pushTimeSeriesPoint();
       }
-      initNodes();
+
+      function pushTimeSeriesPoint() {
+        const active = nodes.filter(n => n.status === 'Ready' || n.status === 'Cordoned');
+        if (active.length === 0) {
+          timeSeriesData.push({ avgReq: 0, avgUsage: 0 });
+        } else {
+          const avgReq = Math.round(active.reduce((s, n) => s + n.cpuRequests, 0) / active.length);
+          const avgUsage = Math.round(active.reduce((s, n) => s + n.cpuUsage, 0) / active.length);
+          timeSeriesData.push({ avgReq, avgUsage });
+        }
+        if (timeSeriesData.length > 20) timeSeriesData.shift();
+      }
+
+      function startTimeSeries() {
+        if (tsInterval) clearInterval(tsInterval);
+        // Add small jitter to usage each tick for realism
+        tsInterval = setInterval(() => {
+          nodes.forEach(n => {
+            if (n.status === 'Ready') {
+              n.cpuUsage = clamp(n.cpuUsage + Math.floor(Math.random() * 7) - 3, 5, Math.min(95, n.cpuRequests + 10));
+            }
+          });
+          pushTimeSeriesPoint();
+        }, 5000);
+      }
 
       function getTimestamp() {
         const now = new Date();
         return now.toTimeString().slice(0, 8);
       }
 
-      function addEvent(type, msg) {
-        events.unshift({ time: getTimestamp(), type, msg });
-        if (events.length > 12) events.pop();
+      function addEvent(type, msg, color) {
+        events.unshift({ time: getTimestamp(), type, msg, color: color || Colors.textSec });
+        if (events.length > 8) events.pop();
       }
 
-      function getStatusColor(status) {
-        switch (status) {
-          case 'ready': return Colors.green;
-          case 'cordoned': return Colors.yellow;
-          case 'terminating': return Colors.red;
-          default: return Colors.border;
+      initNodes();
+      startTimeSeries();
+
+      // ── Draw functions ──
+
+      function drawGrafanaHeader() {
+        // Header bar
+        drawRoundRect(ctx, 0, 0, width, 30, 0, '#1a1a2e', null);
+        drawText(ctx, '⬡', 18, 15, { size: 14, color: '#f46800', align: 'left' });
+        drawText(ctx, 'Grafana', 40, 15, { size: 12, weight: '700', color: '#f46800', align: 'left' });
+        drawText(ctx, 'EKS Node Monitoring', 120, 15, { size: 12, color: Colors.textSec, align: 'left' });
+        drawText(ctx, 'Last 5m ▾', width - 80, 15, { size: 10, color: Colors.textMuted, align: 'left' });
+        drawText(ctx, '🔄', width - 15, 15, { size: 11, color: Colors.textMuted });
+      }
+
+      function drawStatPanels() {
+        const active = nodes.filter(n => n.status === 'Ready' || n.status === 'Cordoned');
+        const readyCount = nodes.filter(n => n.status === 'Ready').length;
+        const activeCount = active.length;
+        const avgReq = activeCount > 0 ? Math.round(active.reduce((s, n) => s + n.cpuRequests, 0) / activeCount) : 0;
+        const avgUse = activeCount > 0 ? Math.round(active.reduce((s, n) => s + n.cpuUsage, 0) / activeCount) : 0;
+        const cost = (activeCount * 0.12).toFixed(2);
+
+        const panels = [
+          { label: 'Active Nodes', value: String(activeCount), color: Colors.green },
+          { label: 'Ready',        value: String(readyCount),  color: Colors.green },
+          { label: 'CPU Requests', value: `avg ${avgReq}%`,    color: Colors.blue },
+          { label: 'CPU Usage',    value: `avg ${avgUse}%`,    color: Colors.cyan },
+          { label: 'Cost/hr',      value: `$${cost}`,          color: Colors.yellow }
+        ];
+
+        const panelY = 36;
+        const panelH = 48;
+        const gap = 6;
+        const totalGap = gap * (panels.length - 1);
+        const panelW = (width - 20 - totalGap) / panels.length;
+
+        panels.forEach((p, i) => {
+          const px = 10 + i * (panelW + gap);
+          drawRoundRect(ctx, px, panelY, panelW, panelH, 6, Colors.surface, Colors.border);
+          drawText(ctx, p.label, px + panelW / 2, panelY + 15, { size: 10, color: Colors.textMuted });
+          drawText(ctx, p.value, px + panelW / 2, panelY + 35, { size: 16, weight: '700', color: p.color });
+        });
+      }
+
+      function drawTimeSeriesChart() {
+        const chartX = 10;
+        const chartY = 92;
+        const chartW = width - 20;
+        const chartH = 140;
+
+        // Panel background
+        drawRoundRect(ctx, chartX, chartY, chartW, chartH, 6, Colors.surface, Colors.border);
+
+        // Title
+        drawText(ctx, 'CPU Requests vs Usage (%)', chartX + 15, chartY + 14, { size: 10, color: Colors.textMuted, align: 'left' });
+
+        // Chart area within panel
+        const areaX = chartX + 45;
+        const areaY = chartY + 26;
+        const areaW = chartW - 60;
+        const areaH = chartH - 38;
+
+        // Grid lines + Y-axis labels
+        ctx.strokeStyle = Colors.border + '60';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 4; i++) {
+          const gy = areaY + (areaH / 4) * i;
+          ctx.beginPath();
+          ctx.moveTo(areaX, gy);
+          ctx.lineTo(areaX + areaW, gy);
+          ctx.stroke();
+          const label = `${100 - i * 25}%`;
+          drawText(ctx, label, areaX - 8, gy, { size: 9, color: Colors.textMuted, align: 'right' });
+        }
+
+        if (timeSeriesData.length < 2) return;
+
+        // Helper to map value to y
+        const valToY = (v) => areaY + areaH - (areaH * clamp(v, 0, 100) / 100);
+
+        // Draw filled area between requests and usage (the "gap")
+        ctx.beginPath();
+        timeSeriesData.forEach((d, i) => {
+          const x = areaX + (areaW / (Math.max(timeSeriesData.length - 1, 1))) * i;
+          ctx.lineTo(x, valToY(d.avgReq));
+        });
+        for (let i = timeSeriesData.length - 1; i >= 0; i--) {
+          const x = areaX + (areaW / (Math.max(timeSeriesData.length - 1, 1))) * i;
+          ctx.lineTo(x, valToY(timeSeriesData[i].avgUsage));
+        }
+        ctx.closePath();
+        ctx.fillStyle = Colors.blue + '15';
+        ctx.fill();
+
+        // Draw Requests line (blue)
+        ctx.beginPath();
+        ctx.strokeStyle = Colors.blue;
+        ctx.lineWidth = 2;
+        timeSeriesData.forEach((d, i) => {
+          const x = areaX + (areaW / (Math.max(timeSeriesData.length - 1, 1))) * i;
+          if (i === 0) ctx.moveTo(x, valToY(d.avgReq));
+          else ctx.lineTo(x, valToY(d.avgReq));
+        });
+        ctx.stroke();
+
+        // Draw Usage line (green/cyan)
+        ctx.beginPath();
+        ctx.strokeStyle = Colors.cyan;
+        ctx.lineWidth = 2;
+        timeSeriesData.forEach((d, i) => {
+          const x = areaX + (areaW / (Math.max(timeSeriesData.length - 1, 1))) * i;
+          if (i === 0) ctx.moveTo(x, valToY(d.avgUsage));
+          else ctx.lineTo(x, valToY(d.avgUsage));
+        });
+        ctx.stroke();
+
+        // Data points on last point
+        const lastIdx = timeSeriesData.length - 1;
+        const lastX = areaX + areaW;
+        const lastD = timeSeriesData[lastIdx];
+
+        drawCircle(ctx, lastX, valToY(lastD.avgReq), 4, Colors.blue, null);
+        drawCircle(ctx, lastX, valToY(lastD.avgUsage), 4, Colors.cyan, null);
+
+        // Legend
+        const legX = chartX + chartW - 220;
+        const legY = chartY + 14;
+        ctx.fillStyle = Colors.blue;
+        ctx.fillRect(legX, legY - 4, 16, 3);
+        drawText(ctx, 'Requests', legX + 24, legY, { size: 9, color: Colors.blue, align: 'left' });
+        ctx.fillStyle = Colors.cyan;
+        ctx.fillRect(legX + 85, legY - 4, 16, 3);
+        drawText(ctx, 'Usage', legX + 109, legY, { size: 9, color: Colors.cyan, align: 'left' });
+
+        // Gap annotation
+        if (lastD.avgReq - lastD.avgUsage > 10) {
+          const midY = (valToY(lastD.avgReq) + valToY(lastD.avgUsage)) / 2;
+          drawText(ctx, `gap ${lastD.avgReq - lastD.avgUsage}%`, lastX + 8, midY, { size: 9, weight: '600', color: Colors.yellow, align: 'left' });
         }
       }
 
-      function draw(elapsed) {
-        ctx.fillStyle = Colors.bgSecond;
-        ctx.fillRect(0, 0, width, height);
+      function drawNodeGrid(elapsed) {
+        const gridX = 10;
+        const gridY = 240;
+        const gridW = 530;
+        const gridH = 192;
 
-        // Node grid area (left 60%)
-        const gridX = 30;
-        const gridY = 30;
-        const gridW = 620;
-        const gridH = 320;
-        const nodeW = 140;
-        const nodeH = 95;
+        drawRoundRect(ctx, gridX, gridY, gridW, gridH, 6, Colors.surface, Colors.border);
+        drawText(ctx, 'Node Status', gridX + 15, gridY + 14, { size: 10, color: Colors.textMuted, align: 'left' });
+
+        const startX = gridX + 10;
+        const startY = gridY + 28;
+        const nodeW = 166;
+        const nodeH = 72;
         const gapX = 10;
-        const gapY = 10;
+        const gapY = 8;
+        const cols = 3;
 
-        // Draw grid background
-        drawRoundRect(ctx, gridX - 10, gridY - 10, gridW + 20, gridH + 20, 12, Colors.bg + '80', Colors.border);
-        drawText(ctx, 'Node Grid', gridX + 10, gridY - 25, { size: 12, color: Colors.textMuted, align: 'left' });
-
-        // Draw nodes
         nodes.forEach((node, i) => {
-          const col = i % GRID_COLS;
-          const row = Math.floor(i / GRID_COLS);
-          const x = gridX + col * (nodeW + gapX);
-          const y = gridY + row * (nodeH + gapY);
+          const col = i % cols;
+          const row = Math.floor(i / cols);
+          const nx = startX + col * (nodeW + gapX);
+          const ny = startY + row * (nodeH + gapY);
 
-          const color = getStatusColor(node.status);
-          const bgAlpha = node.status === 'empty' ? '15' : '25';
+          // Node border color based on status
+          let borderColor = Colors.border;
+          let bgColor = Colors.bg;
+          if (node.status === 'Ready') {
+            borderColor = node.cpuRequests < 30 ? Colors.yellow : Colors.green;
+            bgColor = Colors.bg;
+          } else if (node.status === 'Cordoned') {
+            borderColor = Colors.yellow;
+            bgColor = Colors.yellow + '10';
+          } else if (node.status === 'Terminating') {
+            borderColor = Colors.red;
+            bgColor = Colors.red + '10';
+          }
 
-          // Pulse effect for terminating
+          // Pulse for terminating
           let alpha = 1;
-          if (node.status === 'terminating') {
+          if (node.status === 'Terminating') {
             alpha = 0.5 + 0.5 * Math.sin(elapsed * 4 + node.animOffset);
           }
-
           ctx.globalAlpha = alpha;
-          drawRoundRect(ctx, x, y, nodeW, nodeH, 10, color + bgAlpha, color);
 
-          // Node name
-          drawText(ctx, node.name, x + nodeW / 2, y + 22, { size: 14, weight: '700', color: color });
+          drawRoundRect(ctx, nx, ny, nodeW, nodeH, 6, bgColor, borderColor);
 
-          // Status
-          const statusLabel = node.status === 'empty' ? '-' : node.status.toUpperCase();
-          drawText(ctx, statusLabel, x + nodeW / 2, y + 45, { size: 11, color: Colors.textMuted });
+          // Node name + instance type
+          drawText(ctx, node.name, nx + 8, ny + 13, { size: 11, weight: '700', color: Colors.textPri, align: 'left' });
+          drawText(ctx, node.instanceType, nx + nodeW - 8, ny + 13, { size: 9, color: Colors.textMuted, align: 'right' });
 
-          // CPU bar
-          if (node.status !== 'empty') {
-            const barX = x + 15;
-            const barY = y + 62;
-            const barW = nodeW - 30;
-            const barH = 12;
-            ctx.fillStyle = Colors.bg;
-            ctx.fillRect(barX, barY, barW, barH);
-            const cpuColor = node.cpu > 80 ? Colors.red : node.cpu > 50 ? Colors.yellow : Colors.green;
-            ctx.fillStyle = cpuColor;
-            ctx.fillRect(barX, barY, barW * (node.cpu / 100), barH);
-            drawText(ctx, `CPU ${node.cpu}%`, x + nodeW / 2, y + 82, { size: 10, color: Colors.textSec });
+          // Spot badge
+          if (node.capacityType === 'spot') {
+            const badgeX = nx + 8;
+            const badgeY = ny + 23;
+            drawRoundRect(ctx, badgeX, badgeY, 32, 14, 3, Colors.orange + '30', null);
+            drawText(ctx, 'SPOT', badgeX + 16, badgeY + 7, { size: 8, weight: '700', color: Colors.orange });
           }
+
+          // Low Req warning
+          if (node.status === 'Ready' && node.cpuRequests < 30) {
+            const warnX = node.capacityType === 'spot' ? nx + 46 : nx + 8;
+            const warnY = ny + 23;
+            drawRoundRect(ctx, warnX, warnY, 48, 14, 3, Colors.yellow + '30', null);
+            drawText(ctx, 'Low Req', warnX + 24, warnY + 7, { size: 8, weight: '700', color: Colors.yellow });
+          }
+
+          // CPU bars
+          const barX = nx + 8;
+          const barW = nodeW - 16;
+          const barH = 8;
+
+          // Requests bar (blue)
+          const reqBarY = ny + 42;
+          ctx.fillStyle = Colors.bg + 'cc';
+          ctx.fillRect(barX, reqBarY, barW, barH);
+          ctx.fillStyle = Colors.blue;
+          ctx.fillRect(barX, reqBarY, barW * (node.cpuRequests / 100), barH);
+          drawText(ctx, `Req ${node.cpuRequests}%`, nx + nodeW - 8, reqBarY + 4, { size: 8, color: Colors.blue, align: 'right' });
+
+          // Usage bar (cyan)
+          const useBarY = ny + 55;
+          ctx.fillStyle = Colors.bg + 'cc';
+          ctx.fillRect(barX, useBarY, barW, barH);
+          ctx.fillStyle = Colors.cyan;
+          ctx.fillRect(barX, useBarY, barW * (node.cpuUsage / 100), barH);
+          drawText(ctx, `Use ${node.cpuUsage}%`, nx + nodeW - 8, useBarY + 4, { size: 8, color: Colors.cyan, align: 'right' });
 
           ctx.globalAlpha = 1;
         });
 
-        // Event log area (right 40%)
-        const logX = 680;
-        const logY = 30;
-        const logW = 390;
-        const logH = 280;
+        // Empty slots
+        for (let i = nodes.length; i < MAX_NODES; i++) {
+          const col = i % cols;
+          const row = Math.floor(i / cols);
+          const nx = startX + col * (nodeW + gapX);
+          const ny = startY + row * (nodeH + gapY);
+          if (ny + nodeH <= gridY + gridH) {
+            drawRoundRect(ctx, nx, ny, nodeW, nodeH, 6, Colors.bg + '40', Colors.border + '40');
+            drawText(ctx, '— empty —', nx + nodeW / 2, ny + nodeH / 2, { size: 10, color: Colors.textMuted });
+          }
+        }
+      }
 
-        drawRoundRect(ctx, logX, logY, logW, logH, 12, '#0d1117', Colors.border);
-        drawText(ctx, 'Event Log', logX + 15, logY - 25, { size: 12, color: Colors.textMuted, align: 'left' });
+      function drawEventLog() {
+        const logX = 548;
+        const logY = 240;
+        const logW = width - logX - 10;
+        const logH = 192;
 
-        events.slice(0, 10).forEach((evt, i) => {
-          const ey = logY + 20 + i * 26;
-          const typeColor = evt.type === 'ok' ? Colors.green :
-                           evt.type === 'warn' ? Colors.yellow :
-                           evt.type === 'error' ? Colors.red : Colors.blue;
-          drawText(ctx, evt.time, logX + 15, ey, { size: 11, color: Colors.textMuted, align: 'left', font: 'JetBrains Mono, monospace' });
-          drawText(ctx, evt.msg, logX + 100, ey, { size: 11, color: typeColor, align: 'left' });
+        drawRoundRect(ctx, logX, logY, logW, logH, 6, Colors.surface, Colors.border);
+        drawText(ctx, 'Karpenter Events', logX + 15, logY + 14, { size: 10, color: Colors.textMuted, align: 'left' });
+
+        events.slice(0, 7).forEach((evt, i) => {
+          const ey = logY + 32 + i * 22;
+          // Timestamp
+          drawText(ctx, evt.time, logX + 10, ey, { size: 9, color: Colors.textMuted, align: 'left', font: 'JetBrains Mono, monospace' });
+          // Event type badge
+          drawText(ctx, evt.type, logX + 85, ey, { size: 9, weight: '600', color: evt.color, align: 'left' });
+          // Message
+          drawText(ctx, evt.msg, logX + 165, ey, { size: 9, color: Colors.textSec, align: 'left' });
         });
+      }
 
-        // Metrics bar (bottom)
-        const metricsY = 365;
-        drawRoundRect(ctx, 30, metricsY, width - 60, 45, 10, Colors.surface, Colors.border);
+      function draw(elapsed) {
+        ctx.fillStyle = '#0b0e14';
+        ctx.fillRect(0, 0, width, height);
 
-        const activeNodes = nodes.filter(n => n.status !== 'empty').length;
-        const totalCpu = nodes.reduce((sum, n) => sum + n.cpu, 0);
-        const avgCpu = activeNodes > 0 ? Math.round(totalCpu / activeNodes) : 0;
-        const estCost = (activeNodes * 0.12).toFixed(2);
-
-        drawText(ctx, `Active Nodes: ${activeNodes}`, 120, metricsY + 23, { size: 13, weight: '600', color: Colors.green });
-        drawText(ctx, `Avg CPU: ${avgCpu}%`, 350, metricsY + 23, { size: 13, weight: '600', color: Colors.blue });
-        drawText(ctx, `Est. Cost: $${estCost}/hr`, 580, metricsY + 23, { size: 13, weight: '600', color: Colors.yellow });
-        drawText(ctx, `Spot: ${nodes.filter(n => n.status === 'ready').length > 3 ? '40%' : '0%'}`, 820, metricsY + 23, { size: 13, weight: '600', color: Colors.cyan });
+        drawGrafanaHeader();
+        drawStatPanels();
+        drawTimeSeriesChart();
+        drawNodeGrid(elapsed);
+        drawEventLog();
       }
 
       const loop = new AnimationLoop(draw);
       loop.start();
 
-      // Button handlers
+      // ── Button handlers ──
+
       document.getElementById('btn-add-node').onclick = () => {
-        const emptyIdx = nodes.findIndex(n => n.status === 'empty');
-        if (emptyIdx !== -1) {
-          nodes[emptyIdx].status = 'ready';
-          nodes[emptyIdx].cpu = Math.floor(Math.random() * 30) + 15;
-          addEvent('ok', `Node ${nodes[emptyIdx].name} provisioned`);
-        } else {
-          addEvent('warn', 'No empty slots available');
+        if (nodes.length >= MAX_NODES) {
+          addEvent('Warning', 'Max nodes reached', Colors.yellow);
+          return;
         }
+        const inst = INSTANCE_TYPES[Math.floor(Math.random() * INSTANCE_TYPES.length)];
+        const cap = Math.random() > 0.5 ? 'spot' : 'on-demand';
+        const newNode = {
+          id: nodes.length, name: `node-${nodes.length + 1}`, status: 'Ready',
+          cpuRequests: 0, cpuUsage: 0,
+          capacityType: cap, instanceType: inst,
+          animOffset: Math.random() * Math.PI * 2
+        };
+        nodes.push(newNode);
+        addEvent('Provisioned', `NodeClaim ${newNode.name} (${inst}, ${cap})`, Colors.green);
+        pushTimeSeriesPoint();
       };
 
       document.getElementById('btn-add-workload').onclick = () => {
-        const readyNodes = nodes.filter(n => n.status === 'ready');
-        if (readyNodes.length > 0) {
-          readyNodes.forEach(n => {
-            n.cpu = Math.min(95, n.cpu + Math.floor(Math.random() * 20) + 10);
-          });
-          addEvent('info', 'Workload deployed to nodes');
-        }
+        const readyNodes = nodes.filter(n => n.status === 'Ready');
+        if (readyNodes.length === 0) return;
+        readyNodes.forEach(n => {
+          // Requests increase more than Usage — shows over-allocation
+          n.cpuRequests = clamp(n.cpuRequests + Math.floor(Math.random() * 21) + 20, 0, 95);
+          n.cpuUsage = clamp(n.cpuUsage + Math.floor(Math.random() * 11) + 10, 0, Math.min(90, n.cpuRequests));
+        });
+        addEvent('Scheduled', `Pods deployed to ${readyNodes.length} nodes`, Colors.blue);
+        pushTimeSeriesPoint();
       };
 
       document.getElementById('btn-spot-interrupt').onclick = () => {
-        const readyNodes = nodes.filter(n => n.status === 'ready');
-        if (readyNodes.length > 0) {
-          const target = readyNodes[Math.floor(Math.random() * readyNodes.length)];
-          target.status = 'terminating';
-          addEvent('error', `SpotInterruption: ${target.name}`);
+        const spotNodes = nodes.filter(n => n.status === 'Ready' && n.capacityType === 'spot');
+        const target = spotNodes.length > 0 ? spotNodes[Math.floor(Math.random() * spotNodes.length)]
+                                             : nodes.find(n => n.status === 'Ready');
+        if (!target) return;
+        target.status = 'Terminating';
+        addEvent('SpotInterrupt', `2m warning — ${target.name}`, Colors.red);
 
-          // Simulate termination after delay
+        setTimeout(() => {
+          if (target.status !== 'Terminating') return;
+          addEvent('Drained', `Pods evicted from ${target.name}`, Colors.yellow);
           setTimeout(() => {
-            target.status = 'empty';
-            target.cpu = 0;
-            addEvent('warn', `Node ${target.name} terminated`);
-          }, 3000);
-        }
+            const idx = nodes.indexOf(target);
+            if (idx !== -1) nodes.splice(idx, 1);
+            // Renumber
+            nodes.forEach((n, i) => { n.id = i; n.name = `node-${i + 1}`; });
+            addEvent('Terminated', `${target.instanceType} removed`, Colors.red);
+            pushTimeSeriesPoint();
+          }, 1500);
+        }, 2000);
       };
 
       document.getElementById('btn-consolidation').onclick = () => {
-        const lowCpuNodes = nodes.filter(n => n.status === 'ready' && n.cpu < 30);
-        if (lowCpuNodes.length > 0) {
-          const target = lowCpuNodes[0];
-          target.status = 'cordoned';
-          addEvent('warn', `Consolidating: ${target.name} (low utilization)`);
-
-          setTimeout(() => {
-            target.status = 'empty';
-            target.cpu = 0;
-            addEvent('info', `Node ${target.name} consolidated`);
-          }, 2000);
-        } else {
-          addEvent('info', 'No underutilized nodes to consolidate');
+        // Karpenter consolidates based on Requests, not Usage
+        const candidates = nodes.filter(n => n.status === 'Ready' && n.cpuRequests < 30);
+        if (candidates.length === 0) {
+          addEvent('Info', 'No low-request nodes to consolidate', Colors.textMuted);
+          return;
         }
+        // Pick the lowest requests node
+        candidates.sort((a, b) => a.cpuRequests - b.cpuRequests);
+        const target = candidates[0];
+        target.status = 'Cordoned';
+        addEvent('Consolidation', `Cordoning ${target.name} (Req: ${target.cpuRequests}%)`, Colors.yellow);
+
+        setTimeout(() => {
+          if (target.status !== 'Cordoned') return;
+          addEvent('Drained', `Pods rescheduled from ${target.name}`, Colors.yellow);
+          // Redistribute requests to remaining ready nodes
+          const remaining = nodes.filter(n => n.status === 'Ready' && n !== target);
+          if (remaining.length > 0) {
+            const share = Math.ceil(target.cpuRequests / remaining.length);
+            remaining.forEach(n => {
+              n.cpuRequests = clamp(n.cpuRequests + share, 0, 95);
+              n.cpuUsage = clamp(n.cpuUsage + Math.ceil(share * 0.5), 0, 90);
+            });
+          }
+          setTimeout(() => {
+            const idx = nodes.indexOf(target);
+            if (idx !== -1) nodes.splice(idx, 1);
+            nodes.forEach((n, i) => { n.id = i; n.name = `node-${i + 1}`; });
+            addEvent('Consolidated', `${target.instanceType} removed`, Colors.green);
+            pushTimeSeriesPoint();
+          }, 1200);
+        }, 1500);
       };
 
       document.getElementById('btn-reset').onclick = () => {
         initNodes();
-        addEvent('info', 'Dashboard reset');
+        startTimeSeries();
+        addEvent('Info', 'Dashboard reset', Colors.textMuted);
       };
     })();
 
@@ -1278,7 +1632,7 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
 
       const alertDefs = {
         'high-pending': `    - <span class="key">alert</span>: HighPendingPods
-      <span class="key">expr</span>: karpenter_pods_pending > <span class="number">10</span>
+      <span class="key">expr</span>: karpenter_pods_state{phase=<span class="string">"Pending"</span>} > <span class="number">10</span>
       <span class="key">for</span>: <span class="string">5m</span>
       <span class="key">labels</span>:
         <span class="key">severity</span>: warning
@@ -1353,7 +1707,94 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
     })();
 
     // ============================================================
-    // Slide 9: Checklist (already handled by slide-framework.js)
+    // Slide 6: Overprovisioning Strategy
+    // ============================================================
+    (function initOverprovisioning() {
+      const grid = document.getElementById('op-node-grid');
+      if (!grid) return;
+
+      const NODES = 6;
+      const PODS_PER_NODE = 2;
+      let phase = 0;
+
+      function renderGrid() {
+        grid.innerHTML = '';
+        for (let n = 0; n < NODES + (phase === 3 ? 1 : 0); n++) {
+          const node = document.createElement('div');
+          node.className = 'overprov-node' + (phase === 3 && n === NODES ? ' new-node' : '');
+          node.innerHTML = '<div style="width:100%;font-size:.65rem;color:var(--text-muted);margin-bottom:2px;">Node ' + (n + 1) + '</div>';
+
+          for (let p = 0; p < PODS_PER_NODE; p++) {
+            const pod = document.createElement('div');
+            // Phase logic
+            if (phase === 0) {
+              // No pods shown
+              break;
+            } else if (phase === 1) {
+              // All dummy pods
+              pod.className = 'overprov-pod dummy';
+              pod.textContent = 'D';
+            } else if (phase === 2) {
+              if (n < 2) {
+                // First 2 nodes: real pods replace dummies
+                pod.className = 'overprov-pod real';
+                pod.textContent = 'R';
+              } else if (n < NODES) {
+                pod.className = 'overprov-pod dummy';
+                pod.textContent = 'D';
+              }
+            } else if (phase === 3) {
+              if (n < 2) {
+                // First 2 nodes: real pods
+                pod.className = 'overprov-pod real';
+                pod.textContent = 'R';
+              } else if (n < NODES) {
+                pod.className = 'overprov-pod dummy';
+                pod.textContent = 'D';
+              } else {
+                // New node: re-scheduled dummy pods
+                pod.className = 'overprov-pod dummy';
+                pod.textContent = 'D';
+              }
+            }
+            node.appendChild(pod);
+          }
+          grid.appendChild(node);
+        }
+      }
+
+      function setPhase(p) {
+        phase = p;
+        document.getElementById('op-step1').classList.toggle('active', p >= 1);
+        document.getElementById('op-step2').classList.toggle('active', p >= 2);
+        document.getElementById('op-step3').classList.toggle('active', p >= 3);
+        renderGrid();
+      }
+
+      document.getElementById('op-phase1').addEventListener('click', () => setPhase(1));
+      document.getElementById('op-phase2').addEventListener('click', () => setPhase(2));
+      document.getElementById('op-phase3').addEventListener('click', () => setPhase(3));
+      document.getElementById('op-reset').addEventListener('click', () => setPhase(0));
+
+      // Tab handling for this slide
+      const tabBtns = document.querySelectorAll('.slide:nth-child(6) .tab-btn');
+      tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tab = btn.dataset.tab;
+          btn.closest('.slide').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          btn.closest('.slide').querySelectorAll('.tab-content').forEach(c => {
+            c.classList.toggle('active', c.dataset.tab === tab);
+          });
+        });
+      });
+
+      // Init to empty state
+      setPhase(0);
+    })();
+
+    // ============================================================
+    // Slide 10: Checklist (already handled by slide-framework.js)
     // ============================================================
   </script>
 </body>

@@ -951,7 +951,13 @@
           if (arr.label) {
             const mx = (x1 + x2) / 2;
             const my = (y1 + y2) / 2 - 12;
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+            ctx.shadowBlur = 6;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 1;
             drawText(ctx, arr.label, mx, my, { size: 12, color: '#fff' });
+            ctx.restore();
           }
         }
       }

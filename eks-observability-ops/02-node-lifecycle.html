@@ -163,6 +163,23 @@
       margin-top: 12px;
     }
 
+    /* Checklist YAML feedback */
+    .check-yaml {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      margin-top: 0;
+    }
+    .checklist li.checked .check-yaml {
+      max-height: 180px;
+      margin-top: 6px;
+    }
+    .check-yaml .code-block {
+      font-size: .7rem;
+      margin: 0;
+      padding: 6px 8px;
+    }
+
     /* Slider with labels */
     .expire-slider-container {
       padding: 20px;
@@ -686,53 +703,53 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
         <h1>AlertManager 알림 규칙</h1>
         <p class="subtitle">Karpenter 및 노드 상태 알림 구성</p>
       </div>
-      <div class="slide-body">
+      <div class="slide-body" style="gap: 10px;">
         <div class="columns">
-          <div class="alert-builder" id="alert-builder">
-            <label class="alert-toggle" data-alert="high-pending">
+          <div class="alert-builder" id="alert-builder" style="gap: 6px;">
+            <label class="alert-toggle" data-alert="high-pending" style="padding: 6px 10px;">
               <input type="checkbox" checked>
               <div class="alert-checkbox"></div>
               <div>
-                <div class="alert-name">HighPendingPods</div>
+                <div class="alert-name" style="font-size:.82rem;">HighPendingPods</div>
                 <div class="alert-desc">karpenter_pods_state{phase="Pending"} > 10 for 5m</div>
               </div>
             </label>
-            <label class="alert-toggle" data-alert="provisioning-failed">
+            <label class="alert-toggle" data-alert="provisioning-failed" style="padding: 6px 10px;">
               <input type="checkbox" checked>
               <div class="alert-checkbox"></div>
               <div>
-                <div class="alert-name">NodeProvisioningFailed</div>
+                <div class="alert-name" style="font-size:.82rem;">NodeProvisioningFailed</div>
                 <div class="alert-desc">ProvisioningFailed 증가 감지</div>
               </div>
             </label>
-            <label class="alert-toggle" data-alert="spot-rate">
+            <label class="alert-toggle" data-alert="spot-rate" style="padding: 6px 10px;">
               <input type="checkbox">
               <div class="alert-checkbox"></div>
               <div>
-                <div class="alert-name">SpotInterruptionRate</div>
+                <div class="alert-name" style="font-size:.82rem;">SpotInterruptionRate</div>
                 <div class="alert-desc">1시간 내 3회 이상 Spot 인터럽트</div>
               </div>
             </label>
-            <label class="alert-toggle" data-alert="node-age">
+            <label class="alert-toggle" data-alert="node-age" style="padding: 6px 10px;">
               <input type="checkbox">
               <div class="alert-checkbox"></div>
               <div>
-                <div class="alert-name">NodeAgeExceeded</div>
+                <div class="alert-name" style="font-size:.82rem;">NodeAgeExceeded</div>
                 <div class="alert-desc">노드 수명 7일 초과</div>
               </div>
             </label>
-            <label class="alert-toggle" data-alert="cpu-over">
+            <label class="alert-toggle" data-alert="cpu-over" style="padding: 6px 10px;">
               <input type="checkbox">
               <div class="alert-checkbox"></div>
               <div>
-                <div class="alert-name">CPUOverProvisioned</div>
+                <div class="alert-name" style="font-size:.82rem;">CPUOverProvisioned</div>
                 <div class="alert-desc">CPU 사용률 70% 이하 지속</div>
               </div>
             </label>
           </div>
           <div class="alert-yaml-output">
-            <h3 style="margin-bottom: 12px;">PrometheusRule YAML</h3>
-            <div class="code-block" id="alert-yaml" style="font-size: .72rem; max-height: 380px; overflow-y: auto;"><span class="key">apiVersion</span>: monitoring.coreos.com/v1
+            <h3 style="margin-bottom: 8px; font-size:.95rem;">PrometheusRule YAML</h3>
+            <div class="code-block" id="alert-yaml" style="font-size: .68rem; max-height: 300px; overflow-y: auto;"><span class="key">apiVersion</span>: monitoring.coreos.com/v1
 <span class="key">kind</span>: PrometheusRule
 <span class="key">metadata</span>:
   <span class="key">name</span>: karpenter-alerts
@@ -757,26 +774,73 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
           <div>
             <h3 style="margin-bottom: 12px;">Disruption & 안정성</h3>
             <ul class="checklist">
-              <li><span class="check"></span>Disruption Budget 설정 완료</li>
-              <li><span class="check"></span>PodDisruptionBudget 적용</li>
-              <li><span class="check"></span>Spot 인터럽트 알림 구성</li>
-              <li><span class="check"></span>expireAfter 정책 설정</li>
-              <li><span class="check"></span>노드 모니터링 대시보드 구축</li>
+              <li><span class="check"></span><div>Disruption Budget 설정 완료
+                <div class="check-yaml"><div class="code-block"><span class="comment"># NodePool</span>
+<span class="key">spec</span>:
+  <span class="key">disruption</span>:
+    <span class="key">budgets</span>:
+      - <span class="key">nodes</span>: <span class="string">"10%"</span></div></div></div></li>
+              <li><span class="check"></span><div>PodDisruptionBudget 적용
+                <div class="check-yaml"><div class="code-block"><span class="key">apiVersion</span>: policy/v1
+<span class="key">kind</span>: PodDisruptionBudget
+<span class="key">spec</span>:
+  <span class="key">minAvailable</span>: <span class="value">1</span>
+  <span class="key">selector</span>:
+    <span class="key">matchLabels</span>:
+      <span class="key">app</span>: <span class="value">my-app</span></div></div></div></li>
+              <li><span class="check"></span><div>Spot 인터럽트 알림 구성
+                <div class="check-yaml"><div class="code-block"><span class="comment"># PrometheusRule</span>
+- <span class="key">alert</span>: SpotInterruptionRate
+  <span class="key">expr</span>: increase(karpenter_nodeclaims_terminated
+    {reason=<span class="string">"SpotInterruption"</span>}[1h]) > 3</div></div></div></li>
+              <li><span class="check"></span><div>expireAfter 정책 설정
+                <div class="check-yaml"><div class="code-block"><span class="comment"># NodePool</span>
+<span class="key">spec</span>:
+  <span class="key">disruption</span>:
+    <span class="key">expireAfter</span>: <span class="value">168h</span>  <span class="comment"># 7일</span></div></div></div></li>
+              <li><span class="check"></span><div>노드 모니터링 대시보드 구축
+                <div class="check-yaml"><div class="code-block"><span class="comment"># Grafana 대시보드 핵심 패널</span>
+karpenter_cluster_state_node_count
+karpenter_pods_state{phase=<span class="string">"Pending"</span>}
+karpenter_nodes_allocatable</div></div></div></li>
             </ul>
           </div>
           <div>
             <h3 style="margin-bottom: 12px;">최적화 & 비용</h3>
             <ul class="checklist">
-              <li><span class="check"></span>AMI 업데이트 자동화</li>
-              <li><span class="check"></span>비용 태깅 (CostCenter, Team)</li>
-              <li><span class="check"></span>Multi-AZ 배포 확인</li>
-              <li><span class="check"></span>Topology Spread Constraints 적용</li>
-              <li><span class="check"></span>정기 비용 리뷰 스케줄</li>
+              <li><span class="check"></span><div>AMI 업데이트 자동화
+                <div class="check-yaml"><div class="code-block"><span class="comment"># NodeClass</span>
+<span class="key">spec</span>:
+  <span class="key">amiSelectorTerms</span>:
+    - <span class="key">alias</span>: <span class="string">bottlerocket@latest</span></div></div></div></li>
+              <li><span class="check"></span><div>비용 태깅 (CostCenter, Team)
+                <div class="check-yaml"><div class="code-block"><span class="comment"># NodePool</span>
+<span class="key">spec</span>:
+  <span class="key">template</span>:
+    <span class="key">metadata</span>:
+      <span class="key">labels</span>:
+        <span class="key">CostCenter</span>: <span class="string">"engineering"</span>
+        <span class="key">Team</span>: <span class="string">"platform"</span></div></div></div></li>
+              <li><span class="check"></span><div>Multi-AZ 배포 확인
+                <div class="check-yaml"><div class="code-block"><span class="comment"># NodePool requirements</span>
+- <span class="key">key</span>: <span class="string">topology.kubernetes.io/zone</span>
+  <span class="key">operator</span>: In
+  <span class="key">values</span>: [<span class="value">ap-northeast-2a, 2b, 2c</span>]</div></div></div></li>
+              <li><span class="check"></span><div>Topology Spread Constraints 적용
+                <div class="check-yaml"><div class="code-block"><span class="comment"># Pod spec</span>
+<span class="key">topologySpreadConstraints</span>:
+  - <span class="key">maxSkew</span>: <span class="value">1</span>
+    <span class="key">topologyKey</span>: <span class="string">topology.kubernetes.io/zone</span>
+    <span class="key">whenUnsatisfiable</span>: <span class="value">DoNotSchedule</span></div></div></div></li>
+              <li><span class="check"></span><div>정기 비용 리뷰 스케줄
+                <div class="check-yaml"><div class="code-block"><span class="comment"># CronJob으로 비용 리포트 자동화</span>
+<span class="key">schedule</span>: <span class="string">"0 9 * * MON"</span>  <span class="comment"># 매주 월요일</span>
+<span class="key">image</span>: <span class="string">kubecost/cost-analyzer</span></div></div></div></li>
             </ul>
           </div>
         </div>
-        <div class="callout callout-success" style="margin-top: 24px;">
-          <strong>Tip:</strong> 체크리스트 항목을 클릭하여 완료 표시할 수 있습니다. 모든 항목을 점검 후 프로덕션 배포를 진행하세요.
+        <div class="callout callout-success" style="margin-top: 12px;">
+          <strong>Tip:</strong> 항목을 클릭하면 관련 YAML 설정을 확인할 수 있습니다. 모든 항목을 점검 후 프로덕션 배포를 진행하세요.
         </div>
       </div>
     </div>

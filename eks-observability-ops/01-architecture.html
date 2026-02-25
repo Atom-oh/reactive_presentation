@@ -457,7 +457,7 @@
   <span class="key">subnetSelectorTerms</span>:
     - <span class="key">tags</span>:
         <span class="key">karpenter.sh/discovery</span>: <span class="string">my-cluster</span>
-        <span class="key">kubernetes.io/role/internal-elb</span>: <span class="string">"1"</span>
+        <span class="key">network-type</span>: <span class="string">private</span>
   <span class="key">blockDeviceMappings</span>:
     - <span class="key">deviceName</span>: <span class="string">/dev/xvda</span>
       <span class="key">ebs</span>:
@@ -947,15 +947,11 @@
             y2 = to.y + to.h / 2;
           }
 
-          drawArrow(ctx, x1, y1, x2, y2, Colors.cyan);
+          drawArrow(ctx, x1, y1, x2, y2, Colors.accentLt);
           if (arr.label) {
             const mx = (x1 + x2) / 2;
             const my = (y1 + y2) / 2 - 12;
-            // Label background for readability
-            ctx.fillStyle = 'rgba(15, 17, 23, 0.85)';
-            const tw = ctx.measureText(arr.label).width + 10;
-            ctx.fillRect(mx - tw / 2, my - 8, tw, 16);
-            drawText(ctx, arr.label, mx, my, { size: 12, weight: '600', color: '#fff' });
+            drawText(ctx, arr.label, mx, my, { size: 12, color: '#fff' });
           }
         }
       }
@@ -1000,7 +996,7 @@
       const ebs = document.querySelector('input[name="ebs"]:checked')?.value || '50';
       const imdsv2 = document.querySelector('input[name="imdsv2"]')?.checked;
 
-      const subnetTag = subnet === 'private' ? 'kubernetes.io/role/internal-elb' : 'kubernetes.io/role/elb';
+      const subnetTag = subnet === 'private' ? 'private' : 'public';
       const httpTokens = imdsv2 ? 'required' : 'optional';
 
       preview.innerHTML = `<span class="code-label">YAML</span><span class="key">apiVersion</span>: <span class="string">karpenter.k8s.aws/v1</span>
@@ -1012,7 +1008,7 @@
   <span class="key">subnetSelectorTerms</span>:
     - <span class="key">tags</span>:
         <span class="key">karpenter.sh/discovery</span>: <span class="string">my-cluster</span>
-        <span class="key">${subnetTag}</span>: <span class="string">"1"</span>
+        <span class="key">network-type</span>: <span class="string">${subnetTag}</span>
   <span class="key">blockDeviceMappings</span>:
     - <span class="key">deviceName</span>: <span class="string">/dev/xvda</span>
       <span class="key">ebs</span>:

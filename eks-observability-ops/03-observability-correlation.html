@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Block 3: Observability Correlation | EKS Observability Ops</title>
   <link rel="stylesheet" href="../common/theme.css">
+  <link rel="stylesheet" href="../common/theme-override.css">
   <style>
     /* Slide-specific styles */
     .pillar-card {
@@ -1000,12 +1001,14 @@ ERROR: Unable to acquire connection within 5s
 
   <!-- Framework Scripts -->
   <script src="../common/slide-framework.js"></script>
+  <script src="../common/presenter-view.js"></script>
   <script src="../common/animation-utils.js"></script>
   <script src="../common/quiz-component.js"></script>
 
   <script>
     // Initialize slide framework
     const slideFramework = new SlideFramework({
+      logoSrc: '../common/pptx-theme/images/logo_1.png',
       onSlideChange: (index, slide) => {
         // Trigger animations when entering specific slides
         if (index === 1) initPillarsAnimation();
@@ -1041,7 +1044,7 @@ ERROR: Unable to acquire connection within 5s
     let corrAnimLoop = null;
 
     function initCorrelationCanvas() {
-      const result = setupCanvas('correlation-canvas', 1100, 420);
+      const result = setupCanvas('correlation-canvas', 960, 420);
       if (!result) return;
       corrCanvas = result.canvas;
       corrCtx = result.ctx;
@@ -1460,7 +1463,7 @@ ERROR: Unable to acquire connection within 5s
     let ltAnimLoop = null;
 
     function initLokiTempoCanvas() {
-      const result = setupCanvas('loki-tempo-canvas', 1100, 300);
+      const result = setupCanvas('loki-tempo-canvas', 960, 300);
       if (!result) return;
       ltCanvas = result.canvas;
       ltCtx = result.ctx;
@@ -1669,7 +1672,7 @@ ERROR: Unable to acquire connection within 5s
     let smFaultInjected = false;
 
     function initServiceMapCanvas() {
-      const result = setupCanvas('servicemap-canvas', 1100, 380);
+      const result = setupCanvas('servicemap-canvas', 960, 380);
       if (!result) return;
       smCanvas = result.canvas;
       smCtx = result.ctx;

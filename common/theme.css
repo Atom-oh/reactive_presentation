@@ -273,7 +273,8 @@ html, body {
 .canvas-container canvas {
   display: block;
   width: 100%;
-  height: 100%;
+  max-width: 100%;
+  height: auto;
 }
 .canvas-controls {
   position: absolute;
@@ -601,8 +602,95 @@ input[type="range"]::-webkit-slider-thumb {
   .title-slide h1 { font-size: 2.4rem; }
 }
 
+/* --- Logo --- */
+.slide-logo {
+  position: fixed;
+  bottom: 16px;
+  left: 20px;
+  height: 32px;
+  width: auto;
+  z-index: 999;
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+/* --- Footer --- */
+.slide-footer {
+  position: fixed;
+  bottom: 14px;
+  left: 70px;
+  font-size: .75rem;
+  color: var(--text-muted);
+  z-index: 999;
+  pointer-events: none;
+}
+
+/* --- Presenter Layout (in presenter window) --- */
+.presenter-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+.presenter-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+.presenter-timer {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  color: var(--accent);
+}
+.presenter-counter {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+}
+.presenter-main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+.presenter-current {
+  flex: 3;
+  border-right: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.presenter-next {
+  flex: 2;
+  position: relative;
+  overflow: hidden;
+  opacity: 0.75;
+}
+.presenter-notes {
+  height: 200px;
+  padding: 16px 20px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  overflow-y: auto;
+}
+.presenter-notes h3 {
+  font-size: .85rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.presenter-notes .notes-content {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+}
+
 /* --- Print --- */
 @media print {
   .slide { page-break-after: always; position: relative; display: flex !important; opacity: 1 !important; }
-  .progress-bar, .slide-counter, .nav-hint { display: none; }
+  .progress-bar, .slide-counter, .nav-hint, .slide-logo, .slide-footer { display: none; }
 }

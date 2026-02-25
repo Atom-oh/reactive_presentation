@@ -29,8 +29,10 @@ function setupCanvas(canvasId, width, height) {
   const dpr = window.devicePixelRatio || 1;
   canvas.width = width * dpr;
   canvas.height = height * dpr;
-  canvas.style.width = width + 'px';
-  canvas.style.height = height + 'px';
+  canvas.style.width = '100%';
+  canvas.style.maxWidth = width + 'px';
+  canvas.style.height = 'auto';
+  canvas.style.aspectRatio = width + '/' + height;
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
   return { canvas, ctx, width, height };

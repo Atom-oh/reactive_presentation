@@ -1,0 +1,109 @@
+{
+  "source_file": "layout_sample.pptx",
+  "theme_name": "AWS Confidential Dark",
+  "master_index": 0,
+  "master_name": "",
+  "slide_count": 136,
+  "layout_count": 95,
+  "colors": {
+    "dk1": "#000000",
+    "lt1": "#FFFFFF",
+    "dk2": "#161D26",
+    "lt2": "#F3F3F7",
+    "accent1": "#41B3FF",
+    "accent2": "#AD5CFF",
+    "accent3": "#00E500",
+    "accent4": "#FF5C85",
+    "accent5": "#FF693C",
+    "accent6": "#FBD332",
+    "hlink": "#41B1E8",
+    "folHlink": "#41B1E8"
+  },
+  "fonts": {
+    "heading": "Calibri Light",
+    "body": "Calibri"
+  },
+  "backgrounds": {
+    "master": {
+      "type": "inherited"
+    },
+    "layouts": {}
+  },
+  "logos": [
+    {
+      "name": "Picture 14",
+      "filename": "logo_1.png",
+      "content_type": "image/png",
+      "position": {
+        "left_emu": 595295,
+        "top_emu": 6338002,
+        "left_percent": 4.8827,
+        "top_percent": 92.4176
+      },
+      "size": {
+        "width_emu": 365760,
+        "height_emu": 218830,
+        "width_percent": 3.0,
+        "height_percent": 3.1909
+      },
+      "nearby_text": "1/7/26"
+    }
+  ],
+  "footer": {
+    "name": "Footer Placeholder 4",
+    "idx": 3,
+    "type": 15,
+    "type_name": "FOOTER (15)",
+    "position": {
+      "left_emu": 4038600,
+      "top_emu": 6953250,
+      "left_percent": 33.125,
+      "top_percent": 101.3889
+    },
+    "size": {
+      "width_emu": 4114800,
+      "height_emu": 365125,
+      "width_percent": 33.75,
+      "height_percent": 5.3241
+    },
+    "text": ""
+  },
+  "slide_number": {
+    "name": "Slide Number Placeholder 5",
+    "idx": 4,
+    "type": 13,
+    "type_name": "SLIDE_NUMBER (13)",
+    "position": {
+      "left_emu": 8929200,
+      "top_emu": 6289500,
+      "left_percent": 73.2382,
+      "top_percent": 91.7104
+    },
+    "size": {
+      "width_emu": 2743200,
+      "height_emu": 365125,
+      "width_percent": 22.5,
+      "height_percent": 5.3241
+    },
+    "text": "\u2039#\u203a"
+  },
+  "date": {
+    "name": "Date Placeholder 3",
+    "idx": 2,
+    "type": 16,
+    "type_name": "DATE (16)",
+    "position": {
+      "left_emu": 838200,
+      "top_emu": 6953250,
+      "left_percent": 6.875,
+      "top_percent": 101.3889
+    },
+    "size": {
+      "width_emu": 2743200,
+      "height_emu": 365125,
+      "width_percent": 22.5,
+      "height_percent": 5.3241
+    },
+    "text": "1/7/26"
+  }
+}

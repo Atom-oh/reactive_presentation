@@ -9,6 +9,10 @@ class SlideFramework {
     this.totalSlides = 0;
     this.transitioning = false;
     this.onSlideChange = options.onSlideChange || null;
+    this.footer = options.footer || null;
+    this.logoSrc = options.logoSrc || null;
+    this.presenterNotes = options.presenterNotes || {};
+    this.presenterView = null;
     this.init();
   }
 
@@ -24,8 +28,32 @@ class SlideFramework {
       this.bindKeys();
       this.bindTouch();
       this.handleHash();
+      if (this.footer) this.createFooter();
+      if (this.logoSrc) this.createLogo();
       this.showSlide(this.currentSlide, false);
     });
+  }
+
+  createFooter() {
+    const footer = document.createElement('div');
+    footer.className = 'slide-footer';
+    footer.textContent = this.footer;
+    document.body.appendChild(footer);
+  }
+
+  createLogo() {
+    const logo = document.createElement('img');
+    logo.className = 'slide-logo';
+    logo.src = this.logoSrc;
+    logo.alt = 'Logo';
+    document.body.appendChild(logo);
+  }
+
+  openPresenterView() {
+    if (!this.presenterView) {
+      this.presenterView = new PresenterView(this);
+    }
+    this.presenterView.open();
   }
 
   createProgressBar() {
@@ -45,7 +73,7 @@ class SlideFramework {
   createNavHint() {
     const hint = document.createElement('div');
     hint.className = 'nav-hint';
-    hint.textContent = '← → Space  |  F: Fullscreen';
+    hint.textContent = '← → Space  |  F: Fullscreen  |  P: Presenter';
     document.body.appendChild(hint);
     this.navHint = hint;
     // Fade out after 5s
@@ -76,6 +104,11 @@ class SlideFramework {
         case 'End':
           e.preventDefault();
           this.goTo(this.totalSlides - 1);
+          break;
+        case 'p':
+        case 'P':
+          e.preventDefault();
+          this.openPresenterView();
           break;
         case 'f':
         case 'F':
@@ -148,6 +181,12 @@ class SlideFramework {
 
     if (this.onSlideChange) {
       this.onSlideChange(index, next);
+    }
+
+    // Sync with presenter view
+    if (this.presenterView) {
+      this.presenterView.broadcastSlideChange(index);
+      this.presenterView.updatePresenterView();
     }
   }
 

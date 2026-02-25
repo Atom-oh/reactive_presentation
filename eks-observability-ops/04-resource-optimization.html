@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Block 4: VPA & Resource Optimization - EKS Auto Mode</title>
   <link rel="stylesheet" href="../common/theme.css">
+  <link rel="stylesheet" href="../common/theme-override.css">
   <style>
     /* Slide-specific styles */
     .synergy-diagram {
@@ -1246,11 +1247,13 @@ upperBound: CPU 400m, Memory 700Mi</div>
 
   <!-- Scripts -->
   <script src="../common/slide-framework.js"></script>
+  <script src="../common/presenter-view.js"></script>
   <script src="../common/animation-utils.js"></script>
   <script src="../common/quiz-component.js"></script>
   <script>
     // Initialize slide framework
     const slides = new SlideFramework({
+      logoSrc: '../common/pptx-theme/images/logo_1.png',
       onSlideChange: (index, slide) => {
         // Trigger canvas redraw when entering slide 3 (VPA simulator)
         if (index === 2) {

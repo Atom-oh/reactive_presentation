@@ -1,0 +1,9 @@
+# PPTX template files
+*.pptx
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# OMC state
+.omc/

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Block 1: EKS Auto Mode 아키텍처</title>
   <link rel="stylesheet" href="../common/theme.css">
+  <link rel="stylesheet" href="../common/theme-override.css">
   <style>
     /* Slide-specific styles */
     .gradient-title {
@@ -112,6 +113,11 @@
     .flow-arrow {
       color: var(--text-muted);
       margin: 0 4px;
+      flex-shrink: 0;
+    }
+    .flow-step {
+      min-width: 0;
+      white-space: nowrap;
     }
 
     .sim-node {
@@ -866,15 +872,18 @@
 
 <script src="../common/animation-utils.js"></script>
 <script src="../common/slide-framework.js"></script>
+<script src="../common/presenter-view.js"></script>
 <script src="../common/quiz-component.js"></script>
 <script>
-  const deck = new SlideFramework();
+  const deck = new SlideFramework({
+    logoSrc: '../common/pptx-theme/images/logo_1.png'
+  });
 
   // ========================================
   // Slide 4: Architecture Canvas Animation
   // ========================================
   (function() {
-    const setup = setupCanvas('arch-canvas', 1100, 400);
+    const setup = setupCanvas('arch-canvas', 960, 400);
     if (!setup) return;
     const { ctx, width, height } = setup;
 
@@ -882,14 +891,14 @@
     const maxSteps = 7;
 
     const components = [
-      { x: 40, y: 60, w: 280, h: 280, label: 'EKS Control Plane', color: Colors.accent },
-      { x: 70, y: 120, w: 220, h: 60, label: 'Karpenter Controller', color: Colors.blue },
-      { x: 70, y: 200, w: 220, h: 60, label: 'Scheduler', color: Colors.cyan },
-      { x: 400, y: 60, w: 660, h: 280, label: 'Data Plane', color: Colors.green },
-      { x: 430, y: 120, w: 140, h: 60, label: 'NodePool', color: Colors.yellow },
-      { x: 600, y: 120, w: 140, h: 60, label: 'NodeClass', color: Colors.orange },
-      { x: 770, y: 120, w: 140, h: 60, label: 'EC2 Instances', color: Colors.pink },
-      { x: 940, y: 120, w: 100, h: 60, label: 'Pods', color: Colors.green },
+      { x: 20, y: 60, w: 240, h: 280, label: 'EKS Control Plane', color: Colors.accent },
+      { x: 40, y: 120, w: 200, h: 60, label: 'Karpenter Controller', color: Colors.blue },
+      { x: 40, y: 200, w: 200, h: 60, label: 'Scheduler', color: Colors.cyan },
+      { x: 290, y: 60, w: 650, h: 280, label: 'Data Plane', color: Colors.green },
+      { x: 310, y: 120, w: 130, h: 60, label: 'NodePool', color: Colors.yellow },
+      { x: 460, y: 120, w: 130, h: 60, label: 'NodeClass', color: Colors.orange },
+      { x: 610, y: 120, w: 140, h: 60, label: 'EC2 Instances', color: Colors.pink },
+      { x: 770, y: 120, w: 130, h: 60, label: 'Pods', color: Colors.green },
     ];
 
     const arrows = [
@@ -1016,7 +1025,7 @@
   // Slide 9: Provisioning Timeline Animation
   // ========================================
   (function() {
-    const setup = setupCanvas('timeline-canvas', 1100, 380);
+    const setup = setupCanvas('timeline-canvas', 960, 380);
     if (!setup) return;
     const { ctx, width, height } = setup;
 
@@ -1266,15 +1275,15 @@
   // Slide 11: Consolidation Canvas Animation
   // ========================================
   (function() {
-    const setup = setupCanvas('consolidation-canvas', 1100, 350);
+    const setup = setupCanvas('consolidation-canvas', 960, 350);
     if (!setup) return;
     const { ctx, width, height } = setup;
 
     let nodes = [
-      { x: 80, y: 80, pods: [1, 2, 3, 4], cost: 0.10, removing: false },
-      { x: 320, y: 80, pods: [5], cost: 0.10, removing: false },
-      { x: 560, y: 80, pods: [6, 7], cost: 0.10, removing: false },
-      { x: 800, y: 80, pods: [], cost: 0.10, removing: false },
+      { x: 50, y: 80, pods: [1, 2, 3, 4], cost: 0.10, removing: false },
+      { x: 250, y: 80, pods: [5], cost: 0.10, removing: false },
+      { x: 450, y: 80, pods: [6, 7], cost: 0.10, removing: false },
+      { x: 650, y: 80, pods: [], cost: 0.10, removing: false },
     ];
 
     let consolidating = false;

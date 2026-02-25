@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Block 2: 노드 라이프사이클 & 모니터링 - EKS Auto Mode</title>
   <link rel="stylesheet" href="../common/theme.css">
+  <link rel="stylesheet" href="../common/theme-override.css">
   <style>
     /* Command Cards */
     .command-cards {
@@ -735,17 +736,20 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
   </div>
 
   <script src="../common/slide-framework.js"></script>
+  <script src="../common/presenter-view.js"></script>
   <script src="../common/animation-utils.js"></script>
   <script src="../common/quiz-component.js"></script>
   <script>
     // Initialize slide framework
-    const slides = new SlideFramework();
+    const slides = new SlideFramework({
+      logoSrc: '../common/pptx-theme/images/logo_1.png'
+    });
 
     // ============================================================
     // Slide 2: Node Dashboard Simulator
     // ============================================================
     (function initDashboard() {
-      const cvs = setupCanvas('dashboard-canvas', 1100, 420);
+      const cvs = setupCanvas('dashboard-canvas', 960, 420);
       if (!cvs) return;
       const { ctx, width, height } = cvs;
 
@@ -971,7 +975,7 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
     // Slide 5: Spot Interrupt Simulation
     // ============================================================
     (function initSpotSim() {
-      const cvs = setupCanvas('spot-canvas', 1100, 350);
+      const cvs = setupCanvas('spot-canvas', 960, 350);
       if (!cvs) return;
       const { ctx, width, height } = cvs;
 

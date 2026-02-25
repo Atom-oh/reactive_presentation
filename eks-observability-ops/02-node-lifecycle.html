@@ -285,20 +285,20 @@
 
     <!-- Slide 2: Grafana-style Node Dashboard Simulator -->
     <div class="slide">
-      <div class="slide-header">
+      <div class="slide-header" style="margin-bottom: 8px;">
         <h1>Grafana: EKS Node Monitoring</h1>
         <p class="subtitle">CPU Requests vs Usage — Karpenter 판단 기준 시각화</p>
       </div>
-      <div class="slide-body" style="gap: 12px;">
-        <div class="canvas-container" style="flex: 1;">
+      <div class="slide-body" style="gap: 0;">
+        <div class="canvas-container" style="flex: 1; position: relative;">
           <canvas id="dashboard-canvas"></canvas>
-        </div>
-        <div class="btn-group" style="justify-content: center;">
-          <button class="btn" id="btn-add-node">노드 추가</button>
-          <button class="btn" id="btn-add-workload">워크로드 추가</button>
-          <button class="btn" style="border-color: var(--red); color: var(--red);" id="btn-spot-interrupt">Spot 인터럽트</button>
-          <button class="btn" style="border-color: var(--yellow); color: var(--yellow);" id="btn-consolidation">Consolidation</button>
-          <button class="btn btn-sm" id="btn-reset">Reset</button>
+          <div class="btn-group" style="justify-content: center; position: absolute; bottom: 4px; left: 0; right: 0; z-index: 10;">
+            <button class="btn" id="btn-add-node">노드 추가</button>
+            <button class="btn" id="btn-add-workload">워크로드 추가</button>
+            <button class="btn" style="border-color: var(--red); color: var(--red);" id="btn-spot-interrupt">Spot 인터럽트</button>
+            <button class="btn" style="border-color: var(--yellow); color: var(--yellow);" id="btn-consolidation">Consolidation</button>
+            <button class="btn btn-sm" id="btn-reset">Reset</button>
+          </div>
         </div>
       </div>
     </div>
@@ -932,6 +932,20 @@ karpenter_nodes_allocatable</div></div></div></li>
   <script>
     // Initialize slide framework
     const slides = new SlideFramework({
+      presenterNotes: {
+        1: '청중에게 "Spot 인터럽트 경험 있으신 분?" 손들기 유도. CloudWatch, kubectl, Karpenter 로그가 분산되어 있어 전체 그림 파악이 어렵다는 점 강조. 이 블록에서 통합 모니터링 방법을 다룰 것임을 예고.',
+        2: '대시보드 시뮬레이터의 각 패널을 클릭하며 설명. Node Count, Instance Types, Spot vs On-Demand 비율 등 핵심 지표 설명. 실제 Grafana에서 karpenter-dashboard 템플릿을 import하는 방법 언급.',
+        3: '각 탭을 클릭하며 실제 출력 결과 설명. kubectl get nodes가 기본이지만, kubectl events --watch가 실시간 트러블슈팅에 가장 유용. 노드 상태 변화를 즉시 파악할 수 있음을 강조.',
+        4: '4개의 PromQL 쿼리를 하나씩 설명. karpenter_cluster_state_node_count가 가장 기본적인 지표. Spot 노드 비율 모니터링이 비용 최적화와 안정성 밸런스의 핵심임을 강조.',
+        5: 'Play 버튼을 눌러 시뮬레이션 시연. EC2에서 2분 전 경고 → Pod drain → 새 노드 프로비저닝 순서 설명. PDB(PodDisruptionBudget) 설정이 graceful shutdown의 핵심임을 언급.',
+        6: '3단계 버튼을 순서대로 클릭하며 시연. Phase 1: PriorityClass -1인 더미 Pod로 버퍼 노드 확보. Phase 2: 실제 워크로드가 들어오면 더미 Pod가 축출되어 즉시 스케줄링. Phase 3: Karpenter가 축출된 더미 Pod를 위해 새 버퍼 노드 생성.',
+        7: 'expireAfter는 노드 최대 수명을 제한하여 보안 패치와 AMI 업데이트를 보장. 720h(30일)는 안정성 중시, 168h(7일)는 보안 중시. 프로덕션에서는 보통 720h를 권장하며, 보안 요건에 따라 조정.',
+        8: 'Play 버튼으로 타임라인 시연. 새 AMI 배포 → Karpenter가 Drift 감지 → 기존 노드를 하나씩 롤링 교체. 무중단 AMI 업데이트의 핵심 메커니즘. Drift 감지는 기본 활성화되어 있음.',
+        9: '각 알림 규칙 토글을 클릭하며 YAML 확인. SpotInterruptWarning이 가장 중요한 알림. Slack webhook이나 PagerDuty와 연동하면 즉시 대응 가능. for 시간 설정에 따라 노이즈 조절.',
+        10: '체크리스트 항목을 클릭하며 각 YAML 설정 확인. 실무 도입 시 이 순서대로 적용 권장: 1) 모니터링 대시보드 → 2) 알림 규칙 → 3) Spot 전략 → 4) 자동 업데이트. 한 번에 다 하지 말고 단계적으로.',
+        11: '퀴즈로 Block 2 핵심 내용 복습. Spot 인터럽트 관련 문제에 집중. 틀린 항목이 있으면 해당 슬라이드로 돌아가서 재설명. 정답률 확인 후 다음 블록 진행.',
+        12: 'Block 2 마무리. 5분 휴식 안내. 다음 Block 3에서는 관측성 데이터 상관 분석(Logs, Metrics, Traces 연계)을 다룰 예정임을 예고.'
+      },
       logoSrc: '../common/pptx-theme/images/logo_1.png'
     });
 
@@ -939,7 +953,7 @@ karpenter_nodes_allocatable</div></div></div></li>
     // Slide 2: Grafana-style EKS Node Monitoring Dashboard
     // ============================================================
     (function initDashboard() {
-      const cvs = setupCanvas('dashboard-canvas', 960, 440);
+      const cvs = setupCanvas('dashboard-canvas', 960, 380);
       if (!cvs) return;
       const { ctx, width, height } = cvs;
 
@@ -1020,12 +1034,12 @@ karpenter_nodes_allocatable</div></div></div></li>
 
       function drawGrafanaHeader() {
         // Header bar
-        drawRoundRect(ctx, 0, 0, width, 30, 0, '#1a1a2e', null);
-        drawText(ctx, '⬡', 18, 15, { size: 14, color: '#f46800', align: 'left' });
-        drawText(ctx, 'Grafana', 40, 15, { size: 12, weight: '700', color: '#f46800', align: 'left' });
-        drawText(ctx, 'EKS Node Monitoring', 120, 15, { size: 12, color: Colors.textSec, align: 'left' });
-        drawText(ctx, 'Last 5m ▾', width - 80, 15, { size: 10, color: Colors.textMuted, align: 'left' });
-        drawText(ctx, '🔄', width - 15, 15, { size: 11, color: Colors.textMuted });
+        drawRoundRect(ctx, 0, 0, width, 26, 0, '#1a1a2e', null);
+        drawText(ctx, '⬡', 18, 13, { size: 13, color: '#f46800', align: 'left' });
+        drawText(ctx, 'Grafana', 38, 13, { size: 11, weight: '700', color: '#f46800', align: 'left' });
+        drawText(ctx, 'EKS Node Monitoring', 110, 13, { size: 11, color: Colors.textSec, align: 'left' });
+        drawText(ctx, 'Last 5m ▾', width - 80, 13, { size: 9, color: Colors.textMuted, align: 'left' });
+        drawText(ctx, '🔄', width - 15, 13, { size: 10, color: Colors.textMuted });
       }
 
       function drawStatPanels() {
@@ -1044,8 +1058,8 @@ karpenter_nodes_allocatable</div></div></div></li>
           { label: 'Cost/hr',      value: `$${cost}`,          color: Colors.yellow }
         ];
 
-        const panelY = 36;
-        const panelH = 48;
+        const panelY = 30;
+        const panelH = 36;
         const gap = 6;
         const totalGap = gap * (panels.length - 1);
         const panelW = (width - 20 - totalGap) / panels.length;
@@ -1053,16 +1067,16 @@ karpenter_nodes_allocatable</div></div></div></li>
         panels.forEach((p, i) => {
           const px = 10 + i * (panelW + gap);
           drawRoundRect(ctx, px, panelY, panelW, panelH, 6, Colors.surface, Colors.border);
-          drawText(ctx, p.label, px + panelW / 2, panelY + 15, { size: 10, color: Colors.textMuted });
-          drawText(ctx, p.value, px + panelW / 2, panelY + 35, { size: 16, weight: '700', color: p.color });
+          drawText(ctx, p.label, px + panelW / 2, panelY + 12, { size: 9, color: Colors.textMuted });
+          drawText(ctx, p.value, px + panelW / 2, panelY + 28, { size: 14, weight: '700', color: p.color });
         });
       }
 
       function drawTimeSeriesChart() {
         const chartX = 10;
-        const chartY = 92;
+        const chartY = 70;
         const chartW = width - 20;
-        const chartH = 140;
+        const chartH = 100;
 
         // Panel background
         drawRoundRect(ctx, chartX, chartY, chartW, chartH, 6, Colors.surface, Colors.border);
@@ -1157,19 +1171,19 @@ karpenter_nodes_allocatable</div></div></div></li>
 
       function drawNodeGrid(elapsed) {
         const gridX = 10;
-        const gridY = 240;
+        const gridY = 176;
         const gridW = 530;
-        const gridH = 192;
+        const gridH = 198;
 
         drawRoundRect(ctx, gridX, gridY, gridW, gridH, 6, Colors.surface, Colors.border);
         drawText(ctx, 'Node Status', gridX + 15, gridY + 14, { size: 10, color: Colors.textMuted, align: 'left' });
 
         const startX = gridX + 10;
-        const startY = gridY + 28;
+        const startY = gridY + 24;
         const nodeW = 166;
-        const nodeH = 72;
+        const nodeH = 64;
         const gapX = 10;
-        const gapY = 8;
+        const gapY = 6;
         const cols = 3;
 
         nodes.forEach((node, i) => {
@@ -1221,13 +1235,21 @@ karpenter_nodes_allocatable</div></div></div></li>
             drawText(ctx, 'Low Req', warnX + 24, warnY + 7, { size: 8, weight: '700', color: Colors.yellow });
           }
 
+          // Cordon badge
+          if (node.status === 'Cordoned') {
+            const cordonX = nx + nodeW - 50;
+            const cordonY = ny + 23;
+            drawRoundRect(ctx, cordonX, cordonY, 44, 14, 3, Colors.yellow + '30', Colors.yellow + '60');
+            drawText(ctx, 'CORDON', cordonX + 22, cordonY + 7, { size: 8, weight: '700', color: Colors.yellow });
+          }
+
           // CPU bars
           const barX = nx + 8;
           const barW = nodeW - 16;
           const barH = 8;
 
           // Requests bar (blue)
-          const reqBarY = ny + 42;
+          const reqBarY = ny + 38;
           ctx.fillStyle = Colors.bg + 'cc';
           ctx.fillRect(barX, reqBarY, barW, barH);
           ctx.fillStyle = Colors.blue;
@@ -1235,7 +1257,7 @@ karpenter_nodes_allocatable</div></div></div></li>
           drawText(ctx, `Req ${node.cpuRequests}%`, nx + nodeW - 8, reqBarY + 4, { size: 8, color: Colors.blue, align: 'right' });
 
           // Usage bar (cyan)
-          const useBarY = ny + 55;
+          const useBarY = ny + 50;
           ctx.fillStyle = Colors.bg + 'cc';
           ctx.fillRect(barX, useBarY, barW, barH);
           ctx.fillStyle = Colors.cyan;
@@ -1260,14 +1282,14 @@ karpenter_nodes_allocatable</div></div></div></li>
 
       function drawEventLog() {
         const logX = 548;
-        const logY = 240;
+        const logY = 176;
         const logW = width - logX - 10;
-        const logH = 192;
+        const logH = 198;
 
         drawRoundRect(ctx, logX, logY, logW, logH, 6, Colors.surface, Colors.border);
         drawText(ctx, 'Karpenter Events', logX + 15, logY + 14, { size: 10, color: Colors.textMuted, align: 'left' });
 
-        events.slice(0, 7).forEach((evt, i) => {
+        events.slice(0, 9).forEach((evt, i) => {
           const ey = logY + 32 + i * 22;
           // Timestamp
           drawText(ctx, evt.time, logX + 10, ey, { size: 9, color: Colors.textMuted, align: 'left', font: 'JetBrains Mono, monospace' });
@@ -1291,6 +1313,81 @@ karpenter_nodes_allocatable</div></div></div></li>
 
       const loop = new AnimationLoop(draw);
       loop.start();
+
+      // ── Pod redistribution helper (shared by Spot & Consolidation) ──
+
+      function redistributePods(sourceNode, onComplete) {
+        const remaining = nodes.filter(n => n.status === 'Ready' && n !== sourceNode);
+        if (remaining.length === 0 || sourceNode.cpuRequests === 0) {
+          if (sourceNode.cpuRequests > 0) {
+            addEvent('Pending', `${sourceNode.cpuRequests}% requests waiting — provisioning`, Colors.orange);
+            setTimeout(() => {
+              if (nodes.length < MAX_NODES) {
+                const inst = INSTANCE_TYPES[Math.floor(Math.random() * INSTANCE_TYPES.length)];
+                const usageRatio = sourceNode.cpuUsage / Math.max(sourceNode.cpuRequests, 1);
+                const newNode = {
+                  id: nodes.length, name: `node-${nodes.length + 1}`, status: 'Ready',
+                  cpuRequests: sourceNode.cpuRequests,
+                  cpuUsage: Math.ceil(sourceNode.cpuRequests * usageRatio),
+                  capacityType: 'on-demand', instanceType: inst,
+                  animOffset: Math.random() * Math.PI * 2
+                };
+                nodes.push(newNode);
+                addEvent('Provisioned', `New node ${newNode.name} for displaced pods`, Colors.green);
+                pushTimeSeriesPoint();
+              }
+              if (onComplete) onComplete();
+            }, 1500);
+          } else {
+            if (onComplete) onComplete();
+          }
+          return;
+        }
+
+        // Calculate available capacity on remaining Ready nodes
+        let totalCapacity = 0;
+        remaining.forEach(n => { totalCapacity += (95 - n.cpuRequests); });
+
+        if (totalCapacity >= sourceNode.cpuRequests) {
+          // All pods fit on existing nodes
+          const share = Math.ceil(sourceNode.cpuRequests / remaining.length);
+          const usageShare = Math.ceil(sourceNode.cpuUsage / remaining.length);
+          remaining.forEach(n => {
+            n.cpuRequests = clamp(n.cpuRequests + share, 0, 95);
+            n.cpuUsage = clamp(n.cpuUsage + usageShare, 0, Math.min(90, n.cpuRequests));
+          });
+          addEvent('Rescheduled', 'Pods moved to existing nodes', Colors.green);
+          pushTimeSeriesPoint();
+          if (onComplete) onComplete();
+        } else {
+          // Partial fit — fill existing nodes, provision for the rest
+          const overflow = sourceNode.cpuRequests - totalCapacity;
+          const usageRatio = sourceNode.cpuUsage / Math.max(sourceNode.cpuRequests, 1);
+          remaining.forEach(n => {
+            const canTake = 95 - n.cpuRequests;
+            n.cpuRequests = clamp(n.cpuRequests + canTake, 0, 95);
+            n.cpuUsage = clamp(n.cpuUsage + Math.ceil(canTake * usageRatio), 0, 90);
+          });
+          pushTimeSeriesPoint();
+          addEvent('Pending', `${overflow}% requests waiting — provisioning new node`, Colors.orange);
+          setTimeout(() => {
+            if (nodes.length < MAX_NODES) {
+              const inst = INSTANCE_TYPES[Math.floor(Math.random() * INSTANCE_TYPES.length)];
+              const newNode = {
+                id: nodes.length, name: `node-${nodes.length + 1}`, status: 'Ready',
+                cpuRequests: overflow,
+                cpuUsage: Math.ceil(overflow * usageRatio),
+                capacityType: 'on-demand', instanceType: inst,
+                animOffset: Math.random() * Math.PI * 2
+              };
+              nodes.push(newNode);
+              addEvent('Provisioned', `New node ${newNode.name} for displaced pods`, Colors.green);
+              pushTimeSeriesPoint();
+            }
+            if (onComplete) onComplete();
+          }, 1500);
+        }
+      }
 
       // ── Button handlers ──
 
@@ -1329,21 +1426,44 @@ karpenter_nodes_allocatable</div></div></div></li>
         const target = spotNodes.length > 0 ? spotNodes[Math.floor(Math.random() * spotNodes.length)]
                                              : nodes.find(n => n.status === 'Ready');
         if (!target) return;
-        target.status = 'Terminating';
-        addEvent('SpotInterrupt', `2m warning — ${target.name}`, Colors.red);
+        const iid = 'i-' + Math.random().toString(36).slice(2, 9);
 
+        // Phase 1 (0ms): EC2 Spot ITN → EventBridge → SQS
+        addEvent('EventBridge', `Spot ITN → SQS (${iid})`, Colors.orange);
+
+        // Phase 2 (1000ms): Karpenter consumes SQS → Cordon
         setTimeout(() => {
-          if (target.status !== 'Terminating') return;
-          addEvent('Drained', `Pods evicted from ${target.name}`, Colors.yellow);
+          target.status = 'Cordoned';
+          addEvent('Karpenter', `SQS consumed → ${target.name} cordoned`, Colors.yellow);
+
+          // Phase 3 (2000ms): PDB check before eviction
           setTimeout(() => {
-            const idx = nodes.indexOf(target);
-            if (idx !== -1) nodes.splice(idx, 1);
-            // Renumber
-            nodes.forEach((n, i) => { n.id = i; n.name = `node-${i + 1}`; });
-            addEvent('Terminated', `${target.instanceType} removed`, Colors.red);
-            pushTimeSeriesPoint();
-          }, 1500);
-        }, 2000);
+            if (target.status !== 'Cordoned') return;
+            addEvent('PDB Check', 'minAvailable satisfied — eviction allowed', Colors.blue);
+
+            // Phase 4 (3000ms): Pod deletion (graceful termination)
+            setTimeout(() => {
+              if (target.status !== 'Cordoned') return;
+              target.status = 'Terminating';
+              addEvent('Draining', `Deleting pods from ${target.name} (graceful)`, Colors.yellow);
+
+              // Phase 5 (4000ms): ReplicaSet creates replacements → redistribute
+              setTimeout(() => {
+                addEvent('ReplicaSet', 'Replacement pods created — scheduling', Colors.cyan);
+                redistributePods(target, () => {
+                  // Phase 6: Node terminated
+                  setTimeout(() => {
+                    const idx = nodes.indexOf(target);
+                    if (idx !== -1) nodes.splice(idx, 1);
+                    nodes.forEach((n, i) => { n.id = i; n.name = `node-${i + 1}`; });
+                    addEvent('Terminated', `${target.instanceType} (${iid}) removed`, Colors.red);
+                    pushTimeSeriesPoint();
+                  }, 1500);
+                });
+              }, 1000);
+            }, 1000);
+          }, 1000);
+        }, 1000);
       };
 
       document.getElementById('btn-consolidation').onclick = () => {
@@ -1356,28 +1476,30 @@ karpenter_nodes_allocatable</div></div></div></li>
         // Pick the lowest requests node
         candidates.sort((a, b) => a.cpuRequests - b.cpuRequests);
         const target = candidates[0];
+
+        // Phase 1: Cordon — block new scheduling
         target.status = 'Cordoned';
         addEvent('Consolidation', `Cordoning ${target.name} (Req: ${target.cpuRequests}%)`, Colors.yellow);
 
+        // Phase 2: Drain — evict pods
         setTimeout(() => {
           if (target.status !== 'Cordoned') return;
-          addEvent('Drained', `Pods rescheduled from ${target.name}`, Colors.yellow);
-          // Redistribute requests to remaining ready nodes
-          const remaining = nodes.filter(n => n.status === 'Ready' && n !== target);
-          if (remaining.length > 0) {
-            const share = Math.ceil(target.cpuRequests / remaining.length);
-            remaining.forEach(n => {
-              n.cpuRequests = clamp(n.cpuRequests + share, 0, 95);
-              n.cpuUsage = clamp(n.cpuUsage + Math.ceil(share * 0.5), 0, 90);
-            });
-          }
+          target.status = 'Terminating';
+          addEvent('Draining', `Evicting pods from ${target.name}`, Colors.yellow);
+
+          // Phase 3: Redistribute pods
           setTimeout(() => {
-            const idx = nodes.indexOf(target);
-            if (idx !== -1) nodes.splice(idx, 1);
-            nodes.forEach((n, i) => { n.id = i; n.name = `node-${i + 1}`; });
-            addEvent('Consolidated', `${target.instanceType} removed`, Colors.green);
-            pushTimeSeriesPoint();
-          }, 1200);
+            redistributePods(target, () => {
+              // Phase 4: Remove node
+              setTimeout(() => {
+                const idx = nodes.indexOf(target);
+                if (idx !== -1) nodes.splice(idx, 1);
+                nodes.forEach((n, i) => { n.id = i; n.name = `node-${i + 1}`; });
+                addEvent('Consolidated', `${target.instanceType} removed`, Colors.green);
+                pushTimeSeriesPoint();
+              }, 1200);
+            });
+          }, 1500);
         }, 1500);
       };
 

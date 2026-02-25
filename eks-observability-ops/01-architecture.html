@@ -1004,7 +1004,25 @@
 <script src="../common/quiz-component.js"></script>
 <script>
   const deck = new SlideFramework({
-    logoSrc: '../common/pptx-theme/images/logo_1.png'
+    logoSrc: '../common/pptx-theme/images/logo_1.png',
+    presenterNotes: {
+      1: 'Welcome, 이 블록에서는 Auto Mode의 내부 구조와 Karpenter 기반 노드 관리를 다룹니다. 약 35분 소요 예정.',
+      2: 'Auto Mode의 핵심 가치를 설명. 관리형 Karpenter + 관리형 애드온의 결합임을 강조. 기존 MNG 대비 운영 부담 감소가 핵심 메시지.',
+      3: '세 가지 옵션 비교. 청중에게 현재 어떤 방식 사용중인지 질문해보세요. Auto Mode가 MNG의 유연성 + Fargate의 편의성을 결합한 것임을 강조.',
+      4: 'Play 버튼 클릭하여 아키텍처 애니메이션 시연. API Server → Karpenter → EC2 흐름 설명. Webhook과 Leader Election 개념도 언급.',
+      5: 'default NodePool과 system NodePool 비교. requirements 필드가 인스턴스 선택의 핵심. consolidationPolicy 설정의 의미를 설명.',
+      6: 'NodeClass는 AWS 리소스 설정 담당. AMI, 서브넷, 보안그룹, EBS 설정. Bottlerocket AMI 추천 이유(빠른 부팅, 보안 강화) 설명.',
+      7: '탭별로 Compute/Spot/Graviton/GPU 패턴 시연. 각 탭 클릭하며 설명. 실무에서 가장 많이 사용하는 패턴들입니다.',
+      8: 'Pod Pending → Node Ready까지의 시간 흐름 시뮬레이션. Start 버튼으로 시연. 각 단계별 소요 시간 강조, 총 60-90초 목표.',
+      9: 'Karpenter의 인스턴스 선택 로직 시연. 버튼을 순서대로 클릭. 가격, 가용성, 리소스 적합성 고려. 다양한 인스턴스 타입 허용의 중요성 강조.',
+      10: '노드 통합으로 비용 절감하는 과정 시연. Consolidate 버튼 클릭. 빈 노드 제거 → 저활용 노드 통합 순서. 워크로드 중단 최소화 방식.',
+      11: 'WhenEmpty vs WhenEmptyOrUnderutilized 차이 시연. 버튼으로 각 정책 동작 비교. 프로덕션에서는 보수적 접근 권장, Schedule 설정으로 업무 시간 외 통합.',
+      12: 'AMI 업데이트, 설정 변경 시 자동 감지 시연. 롤링 교체 방식으로 안전하게 적용. NodePool 변경 시 기존 노드에 미치는 영향 설명.',
+      13: '동시 교체 노드 수 제한 설정. minAvailable 슬라이더로 시연하며 효과 확인. 프로덕션 안정성의 핵심 설정임을 강조.',
+      14: '체크리스트 항목 하나씩 클릭하며 YAML 확인. 각 최적화 팁의 실무 효과 설명. Bottlerocket + 작은 EBS가 가장 효과적.',
+      15: '퀴즈로 핵심 내용 복습. 청중 참여 유도하세요. 틀린 문제는 해당 슬라이드로 돌아가서 재설명 가능.',
+      16: 'Block 1 마무리. 5분 휴식 안내. 다음 블록은 노드 수명주기 관리 주제입니다.'
+    }
   });
 
   // ========================================

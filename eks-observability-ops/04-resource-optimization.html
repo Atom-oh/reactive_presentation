@@ -697,7 +697,7 @@
           </div>
         </div>
         <div style="margin-top: auto; padding-top: 8px; text-align: right;">
-          <a href="https://atomoh.gitbook.io/kubernetes-docs/operations-guide/ops/06-scaling-strategies#3.-vpa-pod-resize" target="_blank" style="font-size: .75rem; color: var(--text-muted); text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">📖 더 알아보기: VPA Pod Resize 가이드</a>
+          <a href="https://atomoh.gitbook.io/kubernetes-docs/operations-guide/ops/06-scaling-strategies#3-vpa-pod-resize" target="_blank" style="font-size: .75rem; color: var(--text-muted); text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">📖 더 알아보기: VPA Pod Resize 가이드</a>
         </div>
       </div>
     </div>
@@ -1161,7 +1161,7 @@ upperBound: CPU 400m, Memory 700Mi</div>
           </div>
         </div>
         <div style="margin-top: auto; padding-top: 8px; text-align: right;">
-          <a href="https://atomoh.gitbook.io/kubernetes-docs/operations-guide/ops/10-resource-optimization#7.-auto-mode" target="_blank" style="font-size: .75rem; color: var(--text-muted); text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">📖 더 알아보기: Auto Mode 리소스 최적화</a>
+          <a href="https://atomoh.gitbook.io/kubernetes-docs/operations-guide/ops/10-resource-optimization#7-auto-mode에서의-리소스-최적화" target="_blank" style="font-size: .75rem; color: var(--text-muted); text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">📖 더 알아보기: Auto Mode 리소스 최적화</a>
         </div>
       </div>
     </div>
@@ -1279,6 +1279,19 @@ upperBound: CPU 400m, Memory 700Mi</div>
     // Initialize slide framework
     const slides = new SlideFramework({
       logoSrc: '../common/pptx-theme/images/logo_1.png',
+      presenterNotes: {
+        1: 'VPA와 Auto Mode의 시너지를 강조하세요. VPA는 Pod 레벨에서 리소스를 최적화하고, Auto Mode는 노드 레벨에서 최적화합니다. 두 레이어 최적화로 실제 30-50% 비용 절감이 가능합니다.',
+        2: 'Off 모드부터 시작하는 것이 안전합니다. 추천값만 확인하고 수동으로 적용하세요. Auto 모드는 Pod 재시작이 발생하므로 Stateless 워크로드에만 적용하세요.',
+        3: '시뮬레이터로 CPU/Memory 사용량을 조절하며 VPA 추천값 변화를 보여주세요. 실제 VPA recommendation API와 동일한 로직입니다. histogram_quantile 기반 계산임을 언급하세요.',
+        4: 'VPA가 requests를 조정하면 Karpenter가 적합한 노드를 자동 선택합니다. updateMode: Off로 시작해서 추천값 확인 후 점진적으로 Auto로 전환하세요.',
+        5: 'QoS 클래스별 특성을 설명하세요. CPU는 throttling만 발생하므로 Burstable이 유리하고, Memory는 OOMKill 위험이 있어 Guaranteed가 안전합니다.',
+        6: 'Before/After 비용 비교를 보여주세요. 오버프로비저닝된 환경에서 VPA + Auto Mode 적용 후 30-50% 비용 절감 사례입니다. 실제 고객 사례 기반입니다.',
+        7: '체크리스트를 하나씩 클릭하며 확인하세요. 도입 순서가 중요합니다: 모니터링 구축 → 현재 상태 분석 → 리소스 최적화 → 자동화 적용.',
+        8: '추가 학습 리소스를 안내하세요. AWS 공식 문서, Karpenter GitBook, Kubernetes 커뮤니티 자료가 있습니다. 실습 환경은 eksctl로 쉽게 구성 가능합니다.',
+        9: '4개 블록을 복습합니다. Architecture에서 Auto Mode 구조, Lifecycle에서 Provisioner 동작, Observability에서 모니터링, 이 블록에서 최적화를 다뤘습니다.',
+        10: '자주 나오는 질문: Auto Mode 비용은 추가 없음, 기존 MNG에서 전환은 점진적 마이그레이션 권장, VPA 프로덕션 안정성은 Off 모드로 시작하면 안전.',
+        11: '수고하셨습니다. 추가 질문은 Slack 채널(#eks-auto-mode)에서 받습니다. 실습 후 궁금한 점 있으면 언제든 문의하세요.'
+      },
       onSlideChange: (index, slide) => {
         // Trigger canvas redraw when entering slide 3 (VPA simulator)
         if (index === 2) {

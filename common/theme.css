@@ -57,17 +57,24 @@
 html, body {
   width: 100%; height: 100%;
   font-family: var(--font-main);
-  background: var(--bg-primary);
+  background: #000;
   color: var(--text-primary);
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* --- Slide Container --- */
+/* --- Slide Container (16:9 enforced) --- */
 .slide-deck {
   width: 100vw; height: 100vh;
+  max-width: calc(100vh * 16 / 9);
+  max-height: calc(100vw * 9 / 16);
+  margin: auto;
   position: relative;
   overflow: hidden;
+  background: var(--bg-primary);
 }
 
 .slide {
@@ -287,7 +294,7 @@ html, body {
 
 /* --- Progress Bar --- */
 .progress-bar {
-  position: fixed;
+  position: absolute;
   bottom: 0; left: 0;
   height: 3px;
   background: linear-gradient(90deg, var(--accent), var(--accent-light));
@@ -297,7 +304,7 @@ html, body {
 
 /* --- Slide Counter --- */
 .slide-counter {
-  position: fixed;
+  position: absolute;
   bottom: 12px; right: 20px;
   font-size: .8rem;
   color: var(--text-muted);
@@ -307,7 +314,7 @@ html, body {
 
 /* --- Navigation --- */
 .nav-hint {
-  position: fixed;
+  position: absolute;
   bottom: 12px; left: 20px;
   font-size: .75rem;
   color: var(--text-muted);
@@ -583,8 +590,8 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 /* --- Fullscreen --- */
-.slide-deck:-webkit-full-screen { background: var(--bg-primary); }
-.slide-deck:fullscreen          { background: var(--bg-primary); }
+.slide-deck:-webkit-full-screen { background: var(--bg-primary); width: 100vw; height: 100vh; max-width: calc(100vh * 16 / 9); max-height: calc(100vw * 9 / 16); margin: auto; }
+.slide-deck:fullscreen          { background: var(--bg-primary); width: 100vw; height: 100vh; max-width: calc(100vh * 16 / 9); max-height: calc(100vw * 9 / 16); margin: auto; }
 
 /* --- Scrollbar --- */
 ::-webkit-scrollbar { width: 6px; }
@@ -604,7 +611,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* --- Logo --- */
 .slide-logo {
-  position: fixed;
+  position: absolute;
   bottom: 16px;
   left: 20px;
   height: 32px;
@@ -616,7 +623,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* --- Footer --- */
 .slide-footer {
-  position: fixed;
+  position: absolute;
   bottom: 14px;
   left: 70px;
   font-size: .75rem;

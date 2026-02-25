@@ -34,11 +34,15 @@ class SlideFramework {
     });
   }
 
+  getDeck() {
+    return document.querySelector('.slide-deck');
+  }
+
   createFooter() {
     const footer = document.createElement('div');
     footer.className = 'slide-footer';
     footer.textContent = this.footer;
-    document.body.appendChild(footer);
+    (this.getDeck() || document.body).appendChild(footer);
   }
 
   createLogo() {
@@ -46,7 +50,7 @@ class SlideFramework {
     logo.className = 'slide-logo';
     logo.src = this.logoSrc;
     logo.alt = 'Logo';
-    document.body.appendChild(logo);
+    (this.getDeck() || document.body).appendChild(logo);
   }
 
   openPresenterView() {
@@ -59,14 +63,14 @@ class SlideFramework {
   createProgressBar() {
     const bar = document.createElement('div');
     bar.className = 'progress-bar';
-    document.body.appendChild(bar);
+    (this.getDeck() || document.body).appendChild(bar);
     this.progressBar = bar;
   }
 
   createSlideCounter() {
     const counter = document.createElement('div');
     counter.className = 'slide-counter';
-    document.body.appendChild(counter);
+    (this.getDeck() || document.body).appendChild(counter);
     this.counter = counter;
   }
 
@@ -74,7 +78,7 @@ class SlideFramework {
     const hint = document.createElement('div');
     hint.className = 'nav-hint';
     hint.textContent = '← → Space  |  F: Fullscreen  |  P: Presenter';
-    document.body.appendChild(hint);
+    (this.getDeck() || document.body).appendChild(hint);
     this.navHint = hint;
     // Fade out after 5s
     setTimeout(() => { hint.style.opacity = '0'; }, 5000);

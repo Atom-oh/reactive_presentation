@@ -220,7 +220,7 @@
       margin-top: 0;
     }
     .checklist li.checked .check-yaml {
-      max-height: 200px;
+      max-height: 250px;
       margin-top: 8px;
     }
     .check-yaml .code-block {
@@ -895,8 +895,11 @@
     <span class="key">spec</span>:
       <span class="key">requirements</span>:
         - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-family</span>
-          <span class="key">operator</span>: In
-          <span class="key">values</span>: [<span class="value">m7i, m7g, c7i, c7g, r7i</span>]</div></div>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">m7i</span>, <span class="string">m7g</span>, <span class="string">c7i</span>, <span class="string">c7g</span>, <span class="string">r7i</span>]
+        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-size</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">large</span>, <span class="string">xlarge</span>, <span class="string">2xlarge</span>]</div></div>
               </div>
             </li>
           </ul>
@@ -1024,7 +1027,8 @@
       13: '동시 교체 노드 수 제한 설정.\n\nminAvailable 슬라이더로 시연하며 효과 확인.\n\n핵심 메시지:\n- 프로덕션 안정성의 핵심 설정\n- 서비스 가용성과 업데이트 속도의 균형\n- 권장: 최소 50% 이상 유지',
       14: '체크리스트 항목 하나씩 클릭하며 YAML 확인.\n\n실무 효과:\n- Bottlerocket: 부팅 시간 50% 단축\n- 작은 EBS: 비용 절감 + 빠른 프로비저닝\n\n가장 효과적: Bottlerocket + 작은 EBS 조합',
       15: '퀴즈로 핵심 내용 복습.\n\n청중 참여 유도하세요.\n\n팁:\n- 틀린 문제는 해당 슬라이드로 돌아가서 재설명 가능\n- 정답률로 이해도 확인',
-      16: 'Block 1 마무리.\n\n안내 사항:\n- 5분 휴식\n- 다음 블록: 노드 수명주기 관리\n\n질문 있으신가요?'
+      16: 'Block 1 마무리.\n\n안내 사항:\n- 5분 휴식\n- 다음 블록: 노드 수명주기 관리\n\n질문 있으신가요?',
+      17: '이 블록을 마무리합니다.\n\n- 질문이 있으시면 지금 받겠습니다\n- 5분 휴식 후 다음 블록으로 진행합니다\n- 목차 페이지에서 전체 구조를 확인할 수 있습니다'
     }
   });
 

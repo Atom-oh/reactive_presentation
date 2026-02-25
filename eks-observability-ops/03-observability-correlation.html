@@ -291,15 +291,13 @@
         <p class="subtitle">Exemplar를 통한 메트릭 → 트레이스 → 로그 연결</p>
       </div>
       <div class="slide-body">
-        <div class="canvas-container" style="flex: 1; min-height: 400px;">
-          <canvas id="correlation-canvas"></canvas>
+        <div class="canvas-container" style="flex: 1; min-height: 400px; display: flex; flex-direction: column; align-items: center;">
+          <canvas id="correlation-canvas" style="max-width: 960px;"></canvas>
           <div class="canvas-controls">
             <button class="btn btn-primary" id="btn-simulate">에러 시뮬레이션</button>
+            <button class="btn btn-primary" id="btn-corr-next" style="display:none;">다음 →</button>
             <button class="btn" id="btn-reset-corr">초기화</button>
-            <div class="btn-group" style="margin-left: 16px;">
-              <button class="btn btn-sm speed-btn active" data-speed="1">1x</button>
-              <button class="btn btn-sm speed-btn" data-speed="2">2x</button>
-            </div>
+            <span id="corr-phase-label" style="margin-left: 12px; font-size: .85rem; color: var(--text-muted);"></span>
           </div>
         </div>
       </div>
@@ -1369,49 +1367,73 @@ ERROR: Unable to acquire connection within 5s
       }
     }
 
-    function runCorrelationSimulation() {
-      if (corrAnimState.running) return;
+    const phaseLabelsBtn = [
+      '',
+      '1/6: 메트릭 스파이크',
+      '2/6: Exemplar 표시',
+      '3/6: 트레이스로 이동',
+      '4/6: 에러 span 식별',
+      '5/6: 관련 로그 조회',
+      '6/6: 에러 메시지 확인'
+    ];
+
+    function animateToPhase(targetPhase) {
       corrAnimState.running = true;
-      corrAnimState.phase = 0;
-      corrAnimState.progress = 0;
+      const startProgress = 0;
 
-      const phases = [1, 2, 3, 4, 5, 6];
-      let phaseIndex = 0;
-
+      if (corrAnimLoop) corrAnimLoop.stop();
       corrAnimLoop = new AnimationLoop((elapsed) => {
-        const phaseDuration = 1.2 / corrAnimState.speed;
+        const dur = 0.6;
+        corrAnimState.progress = Math.min(1, elapsed / dur);
+        corrAnimState.phase = targetPhase;
+        drawCorrelationFrame();
 
-        corrAnimState.progress = Math.min(1, (elapsed % phaseDuration) / phaseDuration);
-
-        const currentPhase = Math.floor(elapsed / phaseDuration);
-        if (currentPhase < phases.length) {
-          corrAnimState.phase = phases[currentPhase];
-        } else {
-          corrAnimState.phase = 6;
-          corrAnimState.progress = 1;
+        if (corrAnimState.progress >= 1) {
           corrAnimLoop.stop();
           corrAnimState.running = false;
+          updateCorrButtons();
         }
-
-        drawCorrelationFrame();
       });
-
       corrAnimLoop.start();
     }
 
+    function updateCorrButtons() {
+      const btnStart = document.getElementById('btn-simulate');
+      const btnNext = document.getElementById('btn-corr-next');
+      const label = document.getElementById('corr-phase-label');
+      const phase = corrAnimState.phase;
+
+      if (phase === 0) {
+        btnStart.style.display = '';
+        btnNext.style.display = 'none';
+        label.textContent = '';
+      } else if (phase < 6) {
+        btnStart.style.display = 'none';
+        btnNext.style.display = '';
+        label.textContent = phaseLabelsBtn[phase];
+      } else {
+        btnStart.style.display = 'none';
+        btnNext.style.display = 'none';
+        label.textContent = phaseLabelsBtn[6] + ' — 완료!';
+      }
+    }
+
     // Button handlers for correlation
-    document.getElementById('btn-simulate')?.addEventListener('click', runCorrelationSimulation);
+    document.getElementById('btn-simulate')?.addEventListener('click', () => {
+      if (corrAnimState.running) return;
+      animateToPhase(1);
+    });
+
+    document.getElementById('btn-corr-next')?.addEventListener('click', () => {
+      if (corrAnimState.running) return;
+      const next = corrAnimState.phase + 1;
+      if (next <= 6) animateToPhase(next);
+    });
+
     document.getElementById('btn-reset-corr')?.addEventListener('click', () => {
       resetCorrelation();
       drawCorrelationFrame();
-    });
-
-    document.querySelectorAll('.speed-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        corrAnimState.speed = parseFloat(btn.dataset.speed);
-      });
+      updateCorrButtons();
     });
 
     // ============================================================

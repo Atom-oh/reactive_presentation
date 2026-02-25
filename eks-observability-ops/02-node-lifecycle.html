@@ -605,40 +605,42 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
         <h1>AMI 업데이트 & Drift 감지</h1>
         <p class="subtitle">NodeClass 변경 시 자동 노드 교체 흐름</p>
       </div>
-      <div class="slide-body">
-        <div class="timeline" id="drift-timeline">
-          <div class="timeline-step" data-step="1">
-            <div class="timeline-dot">1</div>
-            <div class="timeline-label">NodeClass 변경<br>(AMI 업데이트)</div>
+      <div class="slide-body" style="gap: 10px;">
+        <div style="display: flex; align-items: flex-start; gap: 16px;">
+          <div class="timeline" id="drift-timeline" style="flex: 1;">
+            <div class="timeline-step" data-step="1">
+              <div class="timeline-dot">1</div>
+              <div class="timeline-label">NodeClass 변경<br>(AMI 업데이트)</div>
+            </div>
+            <div class="timeline-connector"></div>
+            <div class="timeline-step" data-step="2">
+              <div class="timeline-dot">2</div>
+              <div class="timeline-label">Drift 감지<br>(자동)</div>
+            </div>
+            <div class="timeline-connector"></div>
+            <div class="timeline-step" data-step="3">
+              <div class="timeline-dot">3</div>
+              <div class="timeline-label">신규 노드<br>프로비저닝</div>
+            </div>
+            <div class="timeline-connector"></div>
+            <div class="timeline-step" data-step="4">
+              <div class="timeline-dot">4</div>
+              <div class="timeline-label">Pod 안전 이동<br>(PDB 준수)</div>
+            </div>
+            <div class="timeline-connector"></div>
+            <div class="timeline-step" data-step="5">
+              <div class="timeline-dot">5</div>
+              <div class="timeline-label">구 노드<br>종료</div>
+            </div>
           </div>
-          <div class="timeline-connector"></div>
-          <div class="timeline-step" data-step="2">
-            <div class="timeline-dot">2</div>
-            <div class="timeline-label">Drift 감지<br>(자동)</div>
-          </div>
-          <div class="timeline-connector"></div>
-          <div class="timeline-step" data-step="3">
-            <div class="timeline-dot">3</div>
-            <div class="timeline-label">신규 노드<br>프로비저닝</div>
-          </div>
-          <div class="timeline-connector"></div>
-          <div class="timeline-step" data-step="4">
-            <div class="timeline-dot">4</div>
-            <div class="timeline-label">Pod 안전 이동<br>(PDB 준수)</div>
-          </div>
-          <div class="timeline-connector"></div>
-          <div class="timeline-step" data-step="5">
-            <div class="timeline-dot">5</div>
-            <div class="timeline-label">구 노드<br>종료</div>
+          <div class="btn-group" style="flex-shrink: 0;">
+            <button class="btn btn-primary btn-sm" id="btn-play-drift">Play</button>
+            <button class="btn btn-sm" id="btn-reset-drift">Reset</button>
           </div>
         </div>
-        <div style="text-align: center; margin: 16px 0;">
-          <button class="btn btn-primary" id="btn-play-drift">Play</button>
-          <button class="btn btn-sm" id="btn-reset-drift">Reset</button>
-        </div>
-        <div class="ami-comparison">
-          <h3 style="margin-bottom: 12px;">AL2023 vs Bottlerocket 비교</h3>
-          <table>
+        <div class="ami-comparison" style="flex: 1; overflow-y: auto;">
+          <h3 style="margin-bottom: 8px; font-size: .95rem;">AL2023 vs Bottlerocket 비교</h3>
+          <table style="font-size: .85rem;">
             <thead>
               <tr>
                 <th>특성</th>
@@ -1343,10 +1345,10 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
         { x: 0, y: 0, targetX: 0, targetY: 0, moving: false }
       ];
 
-      const nodeWidth = 180;
-      const nodeHeight = 200;
-      const nodeGap = 60;
-      const startX = 80;
+      const nodeWidth = 155;
+      const nodeHeight = 180;
+      const nodeGap = 35;
+      const startX = 20;
       const nodeY = 70;
 
       // Node positions
@@ -1360,9 +1362,9 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
         timer = 0;
         animStart = 0;
         pods = [
-          { x: node2X + 20, y: nodeY + 60, targetX: node2X + 20, targetY: nodeY + 60, moving: false },
-          { x: node2X + 70, y: nodeY + 60, targetX: node2X + 70, targetY: nodeY + 60, moving: false },
-          { x: node2X + 120, y: nodeY + 60, targetX: node2X + 120, targetY: nodeY + 60, moving: false }
+          { x: node2X + 15, y: nodeY + 55, targetX: node2X + 15, targetY: nodeY + 55, moving: false },
+          { x: node2X + 58, y: nodeY + 55, targetX: node2X + 58, targetY: nodeY + 55, moving: false },
+          { x: node2X + 101, y: nodeY + 55, targetX: node2X + 101, targetY: nodeY + 55, moving: false }
         ];
       }
       resetState();
@@ -1388,19 +1390,19 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
         ctx.fillRect(0, 0, width, height);
 
         // Timer display
-        const timerX = 900;
+        const timerX = 790;
         const timerY = 40;
-        drawRoundRect(ctx, timerX, timerY, 160, 60, 10, Colors.surface, Colors.border);
-        drawText(ctx, 'Timer', timerX + 80, timerY + 18, { size: 11, color: Colors.textMuted });
+        drawRoundRect(ctx, timerX, timerY, 155, 60, 10, Colors.surface, Colors.border);
+        drawText(ctx, 'Timer', timerX + 78, timerY + 18, { size: 11, color: Colors.textMuted });
         const timerDisplay = phase === 'initial' ? '0s' : `${Math.min(120, Math.floor(timer))}s`;
         const timerColor = timer > 90 ? Colors.red : timer > 60 ? Colors.yellow : Colors.green;
-        drawText(ctx, timerDisplay, timerX + 80, timerY + 42, { size: 24, weight: '700', color: timerColor, font: 'JetBrains Mono' });
+        drawText(ctx, timerDisplay, timerX + 78, timerY + 42, { size: 24, weight: '700', color: timerColor, font: 'JetBrains Mono' });
 
         // Event log panel
-        const logX = 900;
+        const logX = 790;
         const logY = 120;
-        drawRoundRect(ctx, logX, logY, 160, 200, 10, '#0d1117', Colors.border);
-        drawText(ctx, 'Events', logX + 80, logY + 18, { size: 11, color: Colors.textMuted });
+        drawRoundRect(ctx, logX, logY, 155, 200, 10, '#0d1117', Colors.border);
+        drawText(ctx, 'Events', logX + 78, logY + 18, { size: 11, color: Colors.textMuted });
 
         const events = [];
         if (phase !== 'initial') events.push({ t: 'T+0s', msg: '2-Min Warning', color: Colors.yellow });
@@ -1410,15 +1412,15 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
         if (timer >= 120) events.push({ t: 'T+120s', msg: 'All Pods Ready', color: Colors.green });
 
         events.forEach((e, i) => {
-          drawText(ctx, e.t, logX + 45, logY + 45 + i * 28, { size: 10, color: Colors.textMuted, align: 'left', font: 'JetBrains Mono' });
-          drawText(ctx, e.msg, logX + 90, logY + 45 + i * 28, { size: 10, color: e.color, align: 'left' });
+          drawText(ctx, e.t, logX + 8, logY + 45 + i * 28, { size: 9, color: Colors.textMuted, align: 'left', font: 'JetBrains Mono' });
+          drawText(ctx, e.msg, logX + 55, logY + 45 + i * 28, { size: 9, color: e.color, align: 'left' });
         });
 
         // Draw nodes
         // Node 1 - On-Demand
         drawNode(node1X, nodeY, 'Node 1', Colors.green, 'Ready', false);
-        drawPod(node1X + 30, nodeY + 100, Colors.green);
-        drawPod(node1X + 80, nodeY + 100, Colors.green);
+        drawPod(node1X + 20, nodeY + 90, Colors.green);
+        drawPod(node1X + 70, nodeY + 90, Colors.green);
 
         // Node 2 - Spot (main target)
         let node2Color = Colors.green;
@@ -1452,7 +1454,7 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
 
         // Node 3 - On-Demand
         drawNode(node3X, nodeY, 'Node 3', Colors.green, 'Ready', false);
-        drawPod(node3X + 70, nodeY + 100, Colors.green);
+        drawPod(node3X + 58, nodeY + 90, Colors.green);
 
         // New Node (appears during provisioning)
         if (phase === 'provisioning' || phase === 'terminated' || phase === 'complete') {
@@ -1472,24 +1474,24 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
         pods.forEach((pod, i) => {
           if (phase === 'initial' || phase === 'warning') {
             // Pods on Node 2
-            drawPod(node2X + 20 + i * 50, nodeY + 100, Colors.green);
+            drawPod(node2X + 15 + i * 43, nodeY + 90, Colors.green);
           } else if (phase === 'evicting') {
             // Animate pods moving
             const progress = Math.min(1, (timer - 30) / 30);
             const eased = Ease.inOut(progress);
-            const startPodX = node2X + 20 + i * 50;
-            const targetPodX = i < 2 ? (node1X + 30 + i * 50) : (node3X + 30);
+            const startPodX = node2X + 15 + i * 43;
+            const targetPodX = i < 2 ? (node1X + 20 + i * 50) : (node3X + 20);
             const currentX = lerp(startPodX, targetPodX, eased);
-            const arcY = nodeY + 100 - 50 * Math.sin(progress * Math.PI);
+            const arcY = nodeY + 90 - 50 * Math.sin(progress * Math.PI);
             drawPod(currentX, arcY, Colors.blue);
           } else {
             // Pods on final positions
             if (i < 2) {
-              drawPod(node1X + 30 + i * 50, nodeY + 140, Colors.green);
+              drawPod(node1X + 20 + i * 50, nodeY + 130, Colors.green);
             } else if (phase === 'complete') {
-              drawPod(newNodeX + 70, nodeY + 100, Colors.green);
+              drawPod(newNodeX + 58, nodeY + 90, Colors.green);
             } else {
-              drawPod(node3X + 30, nodeY + 140, Colors.green);
+              drawPod(node3X + 20, nodeY + 130, Colors.green);
             }
           }
         });

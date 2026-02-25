@@ -798,9 +798,13 @@
               <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.8rem;">Nodes: <strong id="nodes-value">10</strong></label>
               <input type="range" id="nodes-slider" min="5" max="20" value="10" style="width: 100%;">
             </div>
-            <div style="flex: 1; min-width: 120px;">
+            <div style="flex: 1; min-width: 100px;">
               <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.8rem;">Budget: <strong id="pct-value">10%</strong></label>
               <input type="range" id="pct-slider" min="5" max="50" value="10" style="width: 100%;">
+            </div>
+            <div style="flex: 1; min-width: 100px;">
+              <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.8rem;">minAvailable: <strong id="fixed-value">0</strong></label>
+              <input type="range" id="fixed-slider" min="0" max="10" value="0" style="width: 100%;">
             </div>
             <div style="flex: 0 0 auto;">
               <div class="btn-group">
@@ -1613,10 +1617,11 @@
   (function() {
     const nodesSlider = document.getElementById('nodes-slider');
     const pctSlider = document.getElementById('pct-slider');
+    const fixedSlider = document.getElementById('fixed-slider');
     const preview = document.getElementById('budget-preview');
     const grid = document.getElementById('drift-node-grid');
 
-    if (!nodesSlider || !pctSlider || !preview || !grid) return;
+    if (!nodesSlider || !pctSlider || !fixedSlider || !preview || !grid) return;
 
     // Node states: 'healthy', 'drifted', 'draining', 'new', 'replaced'
     let nodeStates = [];
@@ -1632,7 +1637,12 @@
 
     function getNodeCount() { return parseInt(nodesSlider.value); }
     function getBudget() { return parseInt(pctSlider.value); }
-    function getMaxDisruption() { return Math.max(1, Math.floor(getNodeCount() * getBudget() / 100)); }
+    function getFixed() { return parseInt(fixedSlider.value); }
+    function getMaxDisruption() {
+      const maxByPct = Math.max(1, Math.floor(getNodeCount() * getBudget() / 100));
+      const fixed = getFixed();
+      return fixed > 0 ? Math.min(maxByPct, getNodeCount() - fixed) : maxByPct;
+    }
 
     function renderGrid() {
       const n = getNodeCount();
@@ -1656,17 +1666,23 @@
 
     function updateMetrics() {
       const n = getNodeCount();
+      const fixed = getFixed();
       const maxD = getMaxDisruption();
-      const minA = n - maxD;
+      const minA = fixed > 0 ? Math.max(fixed, n - maxD) : n - maxD;
       document.getElementById('nodes-value').textContent = n;
       document.getElementById('pct-value').textContent = getBudget() + '%';
-      document.getElementById('max-disruption').textContent = maxD;
+      document.getElementById('fixed-value').textContent = fixed;
+      document.getElementById('max-disruption').textContent = Math.max(1, maxD);
       document.getElementById('min-available').textContent = minA;
 
+      let budgetYaml = `- <span class="key">nodes</span>: <span class="string">"${getBudget()}%"</span>`;
+      if (fixed > 0) {
+        budgetYaml += `\n      - <span class="key">nodes</span>: <span class="number">${fixed}</span>  <span class="comment"># minAvailable</span>`;
+      }
       preview.innerHTML = `<span class="code-label">YAML</span><span class="key">spec</span>:
   <span class="key">disruption</span>:
     <span class="key">budgets</span>:
-      - <span class="key">nodes</span>: <span class="string">"${getBudget()}%"</span>`;
+      ${budgetYaml}`;
     }
 
     function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -1726,6 +1742,9 @@
       if (!simRunning) { nodeStates = Array(getNodeCount()).fill('healthy'); updateMetrics(); renderGrid(); }
     });
     pctSlider.addEventListener('input', () => {
+      if (!simRunning) { updateMetrics(); }
+    });
+    fixedSlider.addEventListener('input', () => {
       if (!simRunning) { updateMetrics(); }
     });
 

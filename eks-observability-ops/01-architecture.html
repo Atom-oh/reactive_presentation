@@ -786,51 +786,50 @@
   <div class="slide">
     <div class="slide-header">
       <h1>Disruption Budget</h1>
-      <p class="subtitle">안전한 노드 교체를 위한 제한 설정</p>
+      <p class="subtitle">안전한 노드 교체를 위한 제한 설정 — Drift 시뮬레이션</p>
     </div>
-    <div class="slide-body">
-      <div class="columns">
+    <div class="slide-body" style="gap: 12px;">
+      <!-- Top: Controls + YAML -->
+      <div class="columns" style="flex: 0 0 auto;">
         <div>
-          <h3>설정 시뮬레이터</h3>
-          <div style="margin-bottom: 16px;">
-            <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Total Nodes: <span id="nodes-value">10</span></label>
-            <input type="range" id="nodes-slider" min="5" max="30" value="10" style="width: 100%;">
-          </div>
-          <div style="margin-bottom: 16px;">
-            <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Budget Percentage: <span id="pct-value">10%</span></label>
-            <input type="range" id="pct-slider" min="0" max="50" value="10" style="width: 100%;">
-          </div>
-          <div style="margin-bottom: 16px;">
-            <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Budget Fixed (minAvailable): <span id="fixed-value">0</span></label>
-            <input type="range" id="fixed-slider" min="0" max="10" value="0" style="width: 100%;">
-          </div>
-          <div class="budget-display">
-            <div class="budget-metric">
-              <div class="value" id="max-disruption">1</div>
-              <div class="label">Max Simultaneous</div>
+          <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: end;">
+            <div style="flex: 1; min-width: 120px;">
+              <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.8rem;">Nodes: <strong id="nodes-value">10</strong></label>
+              <input type="range" id="nodes-slider" min="5" max="20" value="10" style="width: 100%;">
             </div>
-            <div class="budget-metric">
-              <div class="value" id="min-available">9</div>
-              <div class="label">Min Available</div>
+            <div style="flex: 1; min-width: 120px;">
+              <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.8rem;">Budget: <strong id="pct-value">10%</strong></label>
+              <input type="range" id="pct-slider" min="5" max="50" value="10" style="width: 100%;">
             </div>
-            <div class="budget-metric">
-              <div class="value" style="color: var(--green);">ON</div>
-              <div class="label">Business Hours</div>
+            <div style="flex: 0 0 auto;">
+              <div class="btn-group">
+                <button class="btn btn-primary" id="drift-sim-btn">Drift 시뮬레이션</button>
+                <button class="btn" id="drift-sim-reset">Reset</button>
+              </div>
             </div>
+          </div>
+          <div style="display: flex; gap: 12px; margin-top: 10px;">
+            <div class="budget-metric"><div class="value" id="max-disruption">1</div><div class="label">Max 동시 교체</div></div>
+            <div class="budget-metric"><div class="value" id="min-available">9</div><div class="label">Min 유지</div></div>
+            <div class="budget-metric"><div class="value" id="drift-progress" style="color: var(--text-muted);">—</div><div class="label">진행</div></div>
           </div>
         </div>
         <div>
-          <h3>생성된 설정</h3>
-          <div class="code-block" id="budget-preview"><span class="code-label">YAML</span><span class="key">spec</span>:
+          <div class="code-block" id="budget-preview" style="font-size: 0.78rem;"><span class="code-label">YAML</span><span class="key">spec</span>:
   <span class="key">disruption</span>:
-    <span class="key">consolidationPolicy</span>: <span class="string">WhenEmptyOrUnderutilized</span>
     <span class="key">budgets</span>:
-      - <span class="key">nodes</span>: <span class="string">"10%"</span>
-    <span class="comment"># Business hours protection</span>
-    <span class="key">schedules</span>:
-      - <span class="key">cron</span>: <span class="string">"0 9 * * 1-5"</span>  <span class="comment"># 09:00 Mon-Fri</span>
-        <span class="key">duration</span>: <span class="string">8h</span></div>
+      - <span class="key">nodes</span>: <span class="string">"10%"</span></div>
         </div>
+      </div>
+      <!-- Bottom: Node Grid Simulation -->
+      <div id="drift-node-grid" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; flex: 1; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 8px;">
+      </div>
+      <div style="display: flex; gap: 16px; font-size: 0.75rem; color: var(--text-muted);">
+        <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--green);opacity:0.6;vertical-align:middle;"></span> Healthy</span>
+        <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--yellow);opacity:0.6;vertical-align:middle;"></span> Drifted</span>
+        <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--orange);opacity:0.6;vertical-align:middle;"></span> Draining</span>
+        <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--accent);opacity:0.6;vertical-align:middle;"></span> New Node</span>
+        <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--green);vertical-align:middle;"></span> Replaced</span>
       </div>
     </div>
   </div>
@@ -1608,56 +1607,139 @@
   })();
 
   // ========================================
-  // Slide 14: Disruption Budget Calculator
+  // Slide 14: Disruption Budget + Drift Simulation
   // ========================================
   (function() {
     const nodesSlider = document.getElementById('nodes-slider');
     const pctSlider = document.getElementById('pct-slider');
-    const fixedSlider = document.getElementById('fixed-slider');
     const preview = document.getElementById('budget-preview');
+    const grid = document.getElementById('drift-node-grid');
 
-    if (!nodesSlider || !pctSlider || !fixedSlider || !preview) return;
+    if (!nodesSlider || !pctSlider || !preview || !grid) return;
 
-    function update() {
-      const nodes = parseInt(nodesSlider.value);
-      const pct = parseInt(pctSlider.value);
-      const fixed = parseInt(fixedSlider.value);
+    // Node states: 'healthy', 'drifted', 'draining', 'new', 'replaced'
+    let nodeStates = [];
+    let simRunning = false;
 
-      document.getElementById('nodes-value').textContent = nodes;
-      document.getElementById('pct-value').textContent = pct + '%';
-      document.getElementById('fixed-value').textContent = fixed;
+    const stateColors = {
+      healthy: { bg: 'var(--green)', border: 'var(--green)', text: '#fff' },
+      drifted: { bg: 'var(--yellow)', border: 'var(--yellow)', text: '#000' },
+      draining: { bg: 'var(--orange)', border: 'var(--orange)', text: '#fff' },
+      new: { bg: 'var(--accent)', border: 'var(--accent)', text: '#fff' },
+      replaced: { bg: 'var(--green)', border: 'var(--green)', text: '#fff' }
+    };
 
-      const maxByPct = Math.max(1, Math.floor(nodes * pct / 100));
-      const minAvail = Math.max(0, nodes - maxByPct);
+    function getNodeCount() { return parseInt(nodesSlider.value); }
+    function getBudget() { return parseInt(pctSlider.value); }
+    function getMaxDisruption() { return Math.max(1, Math.floor(getNodeCount() * getBudget() / 100)); }
 
-      const maxDisruption = fixed > 0 ? Math.min(maxByPct, nodes - fixed) : maxByPct;
-      const actualMinAvail = fixed > 0 ? Math.max(fixed, minAvail) : minAvail;
-
-      document.getElementById('max-disruption').textContent = Math.max(1, maxDisruption);
-      document.getElementById('min-available').textContent = actualMinAvail;
-
-      let budgetLine = `<span class="key">nodes</span>: <span class="string">"${pct}%"</span>`;
-      if (fixed > 0) {
-        budgetLine = `<span class="key">nodes</span>: <span class="string">"${pct}%"</span>
-      - <span class="key">nodes</span>: <span class="number">${fixed}</span>  <span class="comment"># minAvailable</span>`;
+    function renderGrid() {
+      const n = getNodeCount();
+      if (nodeStates.length !== n) {
+        nodeStates = Array(n).fill('healthy');
       }
+      grid.innerHTML = nodeStates.map((state, i) => {
+        const c = stateColors[state];
+        const opacity = state === 'healthy' ? '0.6' : '1';
+        const label = state === 'replaced' ? `N${i+1} ✓` : state === 'new' ? `N${i+1} ↑` : state === 'draining' ? `N${i+1} ↓` : `N${i+1}`;
+        return `<div style="
+          width: 56px; height: 56px; border-radius: 10px;
+          background: ${c.bg}; opacity: ${opacity};
+          border: 2px solid ${c.border};
+          display: flex; align-items: center; justify-content: center;
+          font-size: 0.72rem; font-weight: 700; color: ${c.text};
+          transition: all 0.4s ease;
+        ">${label}</div>`;
+      }).join('');
+    }
+
+    function updateMetrics() {
+      const n = getNodeCount();
+      const maxD = getMaxDisruption();
+      const minA = n - maxD;
+      document.getElementById('nodes-value').textContent = n;
+      document.getElementById('pct-value').textContent = getBudget() + '%';
+      document.getElementById('max-disruption').textContent = maxD;
+      document.getElementById('min-available').textContent = minA;
 
       preview.innerHTML = `<span class="code-label">YAML</span><span class="key">spec</span>:
   <span class="key">disruption</span>:
-    <span class="key">consolidationPolicy</span>: <span class="string">WhenEmptyOrUnderutilized</span>
     <span class="key">budgets</span>:
-      - ${budgetLine}
-    <span class="comment"># Business hours protection</span>
-    <span class="key">schedules</span>:
-      - <span class="key">cron</span>: <span class="string">"0 9 * * 1-5"</span>  <span class="comment"># 09:00 Mon-Fri</span>
-        <span class="key">duration</span>: <span class="string">8h</span>`;
+      - <span class="key">nodes</span>: <span class="string">"${getBudget()}%"</span>`;
     }
 
-    nodesSlider.addEventListener('input', update);
-    pctSlider.addEventListener('input', update);
-    fixedSlider.addEventListener('input', update);
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-    update();
+    async function runDriftSim() {
+      if (simRunning) return;
+      simRunning = true;
+      const n = getNodeCount();
+      const maxD = getMaxDisruption();
+      nodeStates = Array(n).fill('healthy');
+      renderGrid();
+
+      // Step 1: Mark all as drifted
+      document.getElementById('drift-progress').textContent = 'Drift 감지';
+      document.getElementById('drift-progress').style.color = 'var(--yellow)';
+      await sleep(600);
+      nodeStates = Array(n).fill('drifted');
+      renderGrid();
+      await sleep(800);
+
+      // Step 2: Replace in batches respecting budget
+      let replaced = 0;
+      while (replaced < n) {
+        const batch = Math.min(maxD, n - replaced);
+        document.getElementById('drift-progress').textContent = `${replaced}/${n} 교체중`;
+        document.getElementById('drift-progress').style.color = 'var(--orange)';
+
+        // Drain batch
+        for (let i = 0; i < batch; i++) {
+          nodeStates[replaced + i] = 'draining';
+        }
+        renderGrid();
+        await sleep(700);
+
+        // New nodes provisioning
+        for (let i = 0; i < batch; i++) {
+          nodeStates[replaced + i] = 'new';
+        }
+        renderGrid();
+        await sleep(700);
+
+        // Mark replaced
+        for (let i = 0; i < batch; i++) {
+          nodeStates[replaced + i] = 'replaced';
+        }
+        replaced += batch;
+        renderGrid();
+        await sleep(400);
+      }
+
+      document.getElementById('drift-progress').textContent = `${n}/${n} 완료`;
+      document.getElementById('drift-progress').style.color = 'var(--green)';
+      simRunning = false;
+    }
+
+    nodesSlider.addEventListener('input', () => {
+      if (!simRunning) { nodeStates = Array(getNodeCount()).fill('healthy'); updateMetrics(); renderGrid(); }
+    });
+    pctSlider.addEventListener('input', () => {
+      if (!simRunning) { updateMetrics(); }
+    });
+
+    document.getElementById('drift-sim-btn').addEventListener('click', runDriftSim);
+    document.getElementById('drift-sim-reset').addEventListener('click', () => {
+      simRunning = false;
+      nodeStates = Array(getNodeCount()).fill('healthy');
+      document.getElementById('drift-progress').textContent = '—';
+      document.getElementById('drift-progress').style.color = 'var(--text-muted)';
+      updateMetrics();
+      renderGrid();
+    });
+
+    updateMetrics();
+    renderGrid();
   })();
 </script>
 </body>

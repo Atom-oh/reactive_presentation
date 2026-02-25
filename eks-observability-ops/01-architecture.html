@@ -470,17 +470,24 @@
     </div>
   </div>
 
-  <!-- Slide 7: 커스텀 NodePool - Compute/Memory -->
+  <!-- Slide 7: 커스텀 NodePool 패턴 -->
   <div class="slide">
     <div class="slide-header">
-      <h1>커스텀 NodePool 패턴 (1/2)</h1>
-      <p class="subtitle">Compute-optimized & Memory-optimized</p>
+      <h1>커스텀 NodePool 패턴</h1>
+      <p class="subtitle">워크로드 특성에 따른 NodePool 분리 전략</p>
     </div>
     <div class="slide-body">
-      <div class="columns">
-        <div>
-          <h3>Compute-optimized</h3>
-          <div class="code-block"><span class="code-label">compute-optimized.yaml</span><span class="key">apiVersion</span>: <span class="string">karpenter.sh/v1</span>
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="np-compute">Compute</button>
+        <button class="tab-btn" data-tab="np-spot">Spot</button>
+        <button class="tab-btn" data-tab="np-graviton">Graviton</button>
+        <button class="tab-btn" data-tab="np-gpu">GPU</button>
+      </div>
+
+      <div class="tab-content active" data-tab="np-compute">
+        <div class="columns">
+          <div>
+            <div class="code-block"><span class="code-label">compute-optimized.yaml</span><span class="key">apiVersion</span>: <span class="string">karpenter.sh/v1</span>
 <span class="key">kind</span>: <span class="string">NodePool</span>
 <span class="key">metadata</span>:
   <span class="key">name</span>: <span class="string">compute-optimized</span>
@@ -494,46 +501,104 @@
         - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-generation</span>
           <span class="key">operator</span>: <span class="string">Gt</span>
           <span class="key">values</span>: [<span class="string">"6"</span>]
-      <span class="key">nodeClassRef</span>:
-        <span class="key">name</span>: <span class="string">default</span>
+        - <span class="key">key</span>: <span class="string">karpenter.sh/capacity-type</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">on-demand</span>]
   <span class="key">limits</span>:
     <span class="key">cpu</span>: <span class="number">1000</span></div>
+          </div>
+          <div>
+            <h3>Compute-optimized 특징</h3>
+            <ul>
+              <li>C 패밀리 (c7i, c7a) — vCPU 당 비용 최적</li>
+              <li>7세대 이상 최신 인스턴스만 사용</li>
+              <li>배치 처리, 인코딩, 고성능 API 서버에 적합</li>
+              <li>On-Demand로 안정적 운영</li>
+            </ul>
+          </div>
         </div>
-        <div>
-          <h3>Memory-optimized</h3>
-          <div class="code-block"><span class="code-label">memory-optimized.yaml</span><span class="key">apiVersion</span>: <span class="string">karpenter.sh/v1</span>
+      </div>
+
+      <div class="tab-content" data-tab="np-spot">
+        <div class="columns">
+          <div>
+            <div class="code-block"><span class="code-label">spot-mixed.yaml</span><span class="key">apiVersion</span>: <span class="string">karpenter.sh/v1</span>
 <span class="key">kind</span>: <span class="string">NodePool</span>
 <span class="key">metadata</span>:
-  <span class="key">name</span>: <span class="string">memory-optimized</span>
+  <span class="key">name</span>: <span class="string">spot-mixed</span>
 <span class="key">spec</span>:
   <span class="key">template</span>:
     <span class="key">spec</span>:
       <span class="key">requirements</span>:
         - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-category</span>
           <span class="key">operator</span>: <span class="string">In</span>
-          <span class="key">values</span>: [<span class="string">r</span>]
+          <span class="key">values</span>: [<span class="string">m</span>, <span class="string">c</span>, <span class="string">r</span>]
+        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-generation</span>
+          <span class="key">operator</span>: <span class="string">Gt</span>
+          <span class="key">values</span>: [<span class="string">"5"</span>]
+        - <span class="key">key</span>: <span class="string">karpenter.sh/capacity-type</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">spot</span>, <span class="string">on-demand</span>]
+  <span class="key">disruption</span>:
+    <span class="key">consolidationPolicy</span>: <span class="string">WhenEmptyOrUnderutilized</span></div>
+          </div>
+          <div>
+            <h3>Spot Mixed 특징</h3>
+            <ul>
+              <li>Spot + On-Demand 혼합으로 비용 60~70% 절감</li>
+              <li>다양한 카테고리 (m, c, r) 로 Spot 풀 확대</li>
+              <li>6세대 이상으로 Spot 가용성 극대화</li>
+              <li>Stateless 워크로드, 개발/스테이징 환경에 적합</li>
+            </ul>
+            <div class="callout callout-warning" style="margin-top: 12px;">
+              Spot 인터럽트 대비: PDB 설정 + 다중 AZ 분산 필수
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" data-tab="np-graviton">
+        <div class="columns">
+          <div>
+            <div class="code-block"><span class="code-label">graviton.yaml</span><span class="key">apiVersion</span>: <span class="string">karpenter.sh/v1</span>
+<span class="key">kind</span>: <span class="string">NodePool</span>
+<span class="key">metadata</span>:
+  <span class="key">name</span>: <span class="string">graviton</span>
+<span class="key">spec</span>:
+  <span class="key">template</span>:
+    <span class="key">spec</span>:
+      <span class="key">requirements</span>:
+        - <span class="key">key</span>: <span class="string">kubernetes.io/arch</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">arm64</span>]
+        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-category</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">m</span>, <span class="string">c</span>, <span class="string">r</span>]
         - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-generation</span>
           <span class="key">operator</span>: <span class="string">Gt</span>
           <span class="key">values</span>: [<span class="string">"6"</span>]
-      <span class="key">nodeClassRef</span>:
-        <span class="key">name</span>: <span class="string">default</span>
   <span class="key">limits</span>:
-    <span class="key">memory</span>: <span class="string">2000Gi</span></div>
+    <span class="key">cpu</span>: <span class="number">2000</span></div>
+          </div>
+          <div>
+            <h3>Graviton 특징</h3>
+            <ul>
+              <li>ARM64 아키텍처 — 가성비 최대 40% 향상</li>
+              <li>m7g, c7g, r7g 시리즈 자동 선택</li>
+              <li>컨테이너 이미지 multi-arch 빌드 필요</li>
+              <li>대부분의 워크로드에서 x86 대비 성능 동등 이상</li>
+            </ul>
+            <div class="callout callout-info" style="margin-top: 12px;">
+              <code>docker buildx build --platform linux/amd64,linux/arm64</code> 으로 멀티 아키텍처 이미지 빌드
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Slide 8: 커스텀 NodePool - GPU -->
-  <div class="slide">
-    <div class="slide-header">
-      <h1>커스텀 NodePool 패턴 (2/2)</h1>
-      <p class="subtitle">GPU NodePool for ML/AI Workloads</p>
-    </div>
-    <div class="slide-body">
-      <div class="columns">
-        <div>
-          <div class="code-block"><span class="code-label">gpu-nodepool.yaml</span><span class="key">apiVersion</span>: <span class="string">karpenter.sh/v1</span>
+      <div class="tab-content" data-tab="np-gpu">
+        <div class="columns">
+          <div>
+            <div class="code-block"><span class="code-label">gpu-nodepool.yaml</span><span class="key">apiVersion</span>: <span class="string">karpenter.sh/v1</span>
 <span class="key">kind</span>: <span class="string">NodePool</span>
 <span class="key">metadata</span>:
   <span class="key">name</span>: <span class="string">gpu</span>
@@ -544,40 +609,28 @@
         - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-category</span>
           <span class="key">operator</span>: <span class="string">In</span>
           <span class="key">values</span>: [<span class="string">g</span>, <span class="string">p</span>]
-        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-family</span>
-          <span class="key">operator</span>: <span class="string">In</span>
-          <span class="key">values</span>: [<span class="string">g5</span>, <span class="string">p5</span>]
         - <span class="key">key</span>: <span class="string">karpenter.sh/capacity-type</span>
           <span class="key">operator</span>: <span class="string">In</span>
           <span class="key">values</span>: [<span class="string">on-demand</span>]
       <span class="key">taints</span>:
         - <span class="key">key</span>: <span class="string">nvidia.com/gpu</span>
           <span class="key">effect</span>: <span class="string">NoSchedule</span>
-      <span class="key">nodeClassRef</span>:
-        <span class="key">name</span>: <span class="string">gpu-nodeclass</span>
   <span class="key">limits</span>:
     <span class="key">nvidia.com/gpu</span>: <span class="number">100</span>
   <span class="key">disruption</span>:
     <span class="key">consolidationPolicy</span>: <span class="string">WhenEmpty</span></div>
-        </div>
-        <div>
-          <h3>GPU NodePool 특징</h3>
-          <div class="feature-grid">
-            <div class="feature-item">
-              <strong>인스턴스</strong><br>g5 (추론), p5 (학습)
-            </div>
-            <div class="feature-item">
-              <strong>Capacity</strong><br>On-Demand만 (Spot 불가)
-            </div>
-            <div class="feature-item">
-              <strong>Taint</strong><br>GPU 워크로드만 스케줄링
-            </div>
-            <div class="feature-item">
-              <strong>Consolidation</strong><br>WhenEmpty (비용 절감)
-            </div>
           </div>
-          <div class="callout callout-warning" style="margin-top: 16px;">
-            GPU 인스턴스는 비용이 높으므로 limits 설정이 중요합니다.
+          <div>
+            <h3>GPU NodePool 특징</h3>
+            <ul>
+              <li>g5/g6 (추론), p4d/p5 (학습) 자동 선택</li>
+              <li>On-Demand만 사용 (GPU Spot 가용성 제한)</li>
+              <li>Taint로 GPU 워크로드만 스케줄링</li>
+              <li>WhenEmpty — 비싼 GPU 노드 빠르게 회수</li>
+            </ul>
+            <div class="callout callout-warning" style="margin-top: 12px;">
+              GPU 인스턴스는 비용이 높으므로 limits 설정이 중요합니다.
+            </div>
           </div>
         </div>
       </div>

@@ -669,9 +669,9 @@
       <div class="btn-group" style="margin-bottom: 16px;">
         <button class="btn" id="filter-reset">Reset</button>
         <button class="btn" id="filter-category">1. Category (m, c, r, g, p)</button>
-        <button class="btn" id="filter-generation">2. Generation (>6)</button>
+        <button class="btn" id="filter-generation">2. Generation (>7)</button>
         <button class="btn" id="filter-size">3. Size (large+)</button>
-        <button class="btn btn-primary" id="filter-select">4. Select Best</button>
+        <button class="btn btn-primary" id="filter-select">4. Best → Graviton</button>
       </div>
       <div id="instance-grid" style="background: var(--bg-card); border-radius: 12px; padding: 16px; min-height: 200px;">
       </div>
@@ -1268,23 +1268,29 @@
       'm5.large', 'm5.xlarge', 'm5.2xlarge',
       'm6i.large', 'm6i.xlarge', 'm6i.2xlarge',
       'm7i.large', 'm7i.xlarge', 'm7i.2xlarge',
+      'm8i.large', 'm8i.xlarge', 'm8i.2xlarge',
       // M-series Graviton
       'm6g.large', 'm6g.xlarge', 'm6g.2xlarge',
       'm7g.large', 'm7g.xlarge', 'm7g.2xlarge',
+      'm8g.large', 'm8g.xlarge', 'm8g.2xlarge',
       // C-series Intel
       'c5.large', 'c5.xlarge', 'c5.2xlarge',
       'c6i.large', 'c6i.xlarge', 'c6i.2xlarge',
       'c7i.large', 'c7i.xlarge', 'c7i.2xlarge',
+      'c8i.large', 'c8i.xlarge', 'c8i.2xlarge',
       // C-series Graviton
       'c6g.large', 'c6g.xlarge', 'c6g.2xlarge',
       'c7g.large', 'c7g.xlarge', 'c7g.2xlarge',
+      'c8g.large', 'c8g.xlarge', 'c8g.2xlarge',
       // R-series Intel
       'r5.large', 'r5.xlarge', 'r5.2xlarge',
       'r6i.large', 'r6i.xlarge', 'r6i.2xlarge',
       'r7i.large', 'r7i.xlarge',
+      'r8i.large', 'r8i.xlarge',
       // R-series Graviton
       'r6g.large', 'r6g.xlarge',
       'r7g.large', 'r7g.xlarge', 'r7g.2xlarge',
+      'r8g.large', 'r8g.xlarge', 'r8g.2xlarge',
       // GPU
       'g5.xlarge', 'g5.2xlarge', 'g6.xlarge', 'g6.2xlarge',
       'p4d.24xlarge', 'p5.48xlarge'
@@ -1302,11 +1308,11 @@
         const size = inst.split('.')[1];
 
         if (filters.category && !['m', 'c', 'r', 'g', 'p'].includes(category)) filtered = true;
-        if (filters.generation && gen <= 6) filtered = true;
+        if (filters.generation && gen <= 7) filtered = true;
         if (filters.size && ['micro', 'small', 'medium'].includes(size)) filtered = true;
 
         if (filters.category && filters.generation && filters.size) {
-          if (inst === 'm7g.2xlarge') selected = true;
+          if (inst === 'm8g.2xlarge') selected = true;
         }
 
         let cls = 'instance-box';

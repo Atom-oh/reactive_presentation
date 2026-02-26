@@ -305,7 +305,7 @@
       </div>
       <div class="slide-body">
         <div class="canvas-container" style="flex: 1; min-height: 400px; display: flex; flex-direction: column; align-items: center;">
-          <canvas id="correlation-canvas" style="max-width: 960px;"></canvas>
+          <canvas id="correlation-canvas"></canvas>
           <div class="canvas-controls" style="position: relative; bottom: auto; left: auto; transform: none; margin-top: 12px;">
             <button class="btn btn-primary" id="btn-simulate">에러 시뮬레이션</button>
             <button class="btn btn-primary" id="btn-corr-next" style="display:none;">다음 →</button>
@@ -1119,12 +1119,28 @@ ERROR: Unable to acquire connection within 5s
     let corrAnimLoop = null;
 
     function initCorrelationCanvas() {
-      const result = setupCanvas('correlation-canvas', 960, 420);
-      if (!result) return;
-      corrCanvas = result.canvas;
-      corrCtx = result.ctx;
-      corrWidth = result.width;
-      corrHeight = result.height;
+      const canvas = document.getElementById('correlation-canvas');
+      if (!canvas) return;
+      const container = canvas.closest('.canvas-container');
+      const containerW = container ? container.clientWidth : 1200;
+      // Use container width, cap height to leave room for buttons below
+      const containerH = container ? container.clientHeight : 600;
+      const logicalW = Math.max(800, containerW - 40);
+      const maxH = Math.max(300, containerH - 80);
+      const logicalH = Math.min(Math.round(logicalW * 0.38), maxH);
+
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = logicalW * dpr;
+      canvas.height = logicalH * dpr;
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
+      canvas.style.aspectRatio = logicalW + '/' + logicalH;
+
+      corrCtx = canvas.getContext('2d');
+      corrCtx.scale(dpr, dpr);
+      corrCanvas = canvas;
+      corrWidth = logicalW;
+      corrHeight = logicalH;
 
       resetCorrelation();
       drawCorrelationFrame();
@@ -1144,59 +1160,73 @@ ERROR: Unable to acquire connection within 5s
       ctx.fillStyle = Colors.bgSecond;
       ctx.fillRect(0, 0, w, h);
 
-      // Column widths
-      const colW = w / 3 - 20;
-      const colX = [30, w/3 + 10, 2*w/3 - 10];
+      // --- Proportional layout ---
+      const pad = w * 0.025;
+      const colGap = w * 0.015;
+      const colW = (w - pad * 2 - colGap * 2) / 3;
+      const colX = [pad, pad + colW + colGap, pad + 2 * (colW + colGap)];
+
+      // Font sizes proportional to width
+      const fLg  = Math.max(12, Math.round(w * 0.014));
+      const fMd  = Math.max(11, Math.round(w * 0.012));
+      const fSm  = Math.max(10, Math.round(w * 0.0105));
+      const fXs  = Math.max(9,  Math.round(w * 0.009));
+      const fMono = Math.max(9, Math.round(w * 0.0095));
+
+      // Vertical proportions
+      const headerY = h * 0.07;
+      const contentTop = h * 0.13;
+      const contentH = h - contentTop - h * 0.06;
+      const cornerR = w * 0.006;
 
       // Draw column headers
-      ctx.font = '600 16px Pretendard, sans-serif';
       ctx.textAlign = 'center';
+      ctx.font = `600 ${fLg}px Pretendard, sans-serif`;
 
       ctx.fillStyle = Colors.blue;
-      ctx.fillText('Metrics (Prometheus)', colX[0] + colW/2, 30);
+      ctx.fillText('Metrics (Prometheus)', colX[0] + colW / 2, headerY);
 
       ctx.fillStyle = Colors.yellow;
-      ctx.fillText('Traces (Tempo)', colX[1] + colW/2, 30);
+      ctx.fillText('Traces (Tempo)', colX[1] + colW / 2, headerY);
 
       ctx.fillStyle = Colors.green;
-      ctx.fillText('Logs (Loki)', colX[2] + colW/2, 30);
+      ctx.fillText('Logs (Loki)', colX[2] + colW / 2, headerY);
 
       // Draw column backgrounds
-      drawRoundRect(ctx, colX[0], 50, colW, h - 70, 8, Colors.surface + '40', Colors.border);
-      drawRoundRect(ctx, colX[1], 50, colW, h - 70, 8, Colors.surface + '40', Colors.border);
-      drawRoundRect(ctx, colX[2], 50, colW, h - 70, 8, Colors.surface + '40', Colors.border);
+      drawRoundRect(ctx, colX[0], contentTop, colW, contentH, cornerR, Colors.surface + '40', Colors.border);
+      drawRoundRect(ctx, colX[1], contentTop, colW, contentH, cornerR, Colors.surface + '40', Colors.border);
+      drawRoundRect(ctx, colX[2], contentTop, colW, contentH, cornerR, Colors.surface + '40', Colors.border);
 
       const phase = corrAnimState.phase;
       const progress = corrAnimState.progress;
 
       // === METRICS COLUMN ===
-      // Draw line chart
-      const chartX = colX[0] + 20;
-      const chartY = 80;
-      const chartW = colW - 40;
-      const chartH = 150;
+      const chartPadX = colW * 0.08;
+      const chartX = colX[0] + chartPadX;
+      const chartY = contentTop + contentH * 0.07;
+      const chartW = colW - chartPadX * 2;
+      const chartH = contentH * 0.45;
 
       // Grid lines
       ctx.strokeStyle = Colors.border;
       ctx.lineWidth = 1;
       for (let i = 0; i <= 4; i++) {
         ctx.beginPath();
-        ctx.moveTo(chartX, chartY + (chartH/4) * i);
-        ctx.lineTo(chartX + chartW, chartY + (chartH/4) * i);
+        ctx.moveTo(chartX, chartY + (chartH / 4) * i);
+        ctx.lineTo(chartX + chartW, chartY + (chartH / 4) * i);
         ctx.stroke();
       }
 
-      // Data points - normal line
+      // Data points
       const dataPoints = [];
       const numPoints = 12;
       for (let i = 0; i < numPoints; i++) {
         const x = chartX + (chartW / (numPoints - 1)) * i;
         let y;
         if (i === 8 && phase >= 1) {
-          // Spike point
-          y = chartY + 20;
+          y = chartY + chartH * 0.1;
         } else {
-          y = chartY + chartH - 40 + Math.sin(i * 0.8) * 20;
+          y = chartY + chartH * 0.65 + Math.sin(i * 0.8) * chartH * 0.13;
         }
         dataPoints.push({ x, y });
       }
@@ -1204,7 +1234,7 @@ ERROR: Unable to acquire connection within 5s
       // Draw line
       ctx.beginPath();
       ctx.strokeStyle = Colors.blue;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = Math.max(1.5, w * 0.002);
       ctx.moveTo(dataPoints[0].x, dataPoints[0].y);
       for (let i = 1; i < dataPoints.length; i++) {
         ctx.lineTo(dataPoints[i].x, dataPoints[i].y);
@@ -1212,58 +1242,59 @@ ERROR: Unable to acquire connection within 5s
       ctx.stroke();
 
       // Draw points
+      const ptR = Math.max(3, w * 0.0035);
       dataPoints.forEach((p, i) => {
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, ptR, 0, Math.PI * 2);
         ctx.fillStyle = i === 8 && phase >= 1 ? Colors.red : Colors.blue;
         ctx.fill();
       });
 
-      // Draw spike (red) and exemplar
+      // Spike highlight + exemplar
       if (phase >= 1) {
-        const spikePoint = dataPoints[8];
+        const sp = dataPoints[8];
 
-        // Red spike highlight
         ctx.beginPath();
-        ctx.arc(spikePoint.x, spikePoint.y, 8, 0, Math.PI * 2);
+        ctx.arc(sp.x, sp.y, ptR * 2.2, 0, Math.PI * 2);
         ctx.fillStyle = Colors.red + '40';
         ctx.fill();
         ctx.strokeStyle = Colors.red;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = Math.max(1.5, w * 0.002);
         ctx.stroke();
 
-        // Exemplar diamond
         if (phase >= 2) {
           const exAlpha = phase === 2 ? Math.min(1, progress * 2) : 1;
+          const dSize = Math.max(5, w * 0.005);
           ctx.save();
           ctx.globalAlpha = exAlpha;
-          ctx.translate(spikePoint.x, spikePoint.y - 20);
+          ctx.translate(sp.x, sp.y - ptR * 5);
           ctx.rotate(Math.PI / 4);
           ctx.fillStyle = Colors.accent;
-          ctx.fillRect(-6, -6, 12, 12);
+          ctx.fillRect(-dSize, -dSize, dSize * 2, dSize * 2);
           ctx.restore();
 
-          // Label
           ctx.fillStyle = Colors.accent;
-          ctx.font = '500 11px Pretendard';
-          ctx.fillText('exemplar', spikePoint.x, spikePoint.y - 38);
+          ctx.font = `500 ${fXs}px Pretendard`;
+          ctx.textAlign = 'center';
+          ctx.fillText('exemplar', sp.x, sp.y - ptR * 8);
         }
       }
 
       // Metrics labels
       ctx.fillStyle = Colors.textMuted;
-      ctx.font = '400 11px Pretendard';
+      ctx.font = `400 ${fXs}px Pretendard`;
       ctx.textAlign = 'left';
-      ctx.fillText('http_request_duration_seconds', chartX, chartY + chartH + 20);
-      ctx.fillText('p99 latency', chartX, chartY + chartH + 35);
+      const metLabelY = chartY + chartH + chartH * 0.15;
+      ctx.fillText('http_request_duration_seconds', chartX, metLabelY);
+      ctx.fillText('p99 latency', chartX, metLabelY + fXs * 1.5);
 
       // === TRACES COLUMN ===
       if (phase >= 3) {
-        const traceX = colX[1] + 20;
-        const traceY = 80;
-        const traceW = colW - 40;
+        const tracePad = colW * 0.06;
+        const traceX = colX[1] + tracePad;
+        const traceY = contentTop + contentH * 0.07;
+        const traceW = colW - tracePad * 2;
 
-        // Span waterfall
         const spans = [
           { name: 'API Gateway', start: 0, duration: 100, color: Colors.cyan },
           { name: 'Payment Service', start: 10, duration: 90, color: Colors.blue },
@@ -1272,43 +1303,44 @@ ERROR: Unable to acquire connection within 5s
 
         const spanProgress = phase === 3 ? progress : 1;
         const maxDur = 100;
+        const spanH = contentH * 0.1;
+        const spanGap = contentH * 0.14;
 
         spans.forEach((span, i) => {
-          const sy = traceY + i * 50;
+          const sy = traceY + i * spanGap;
           const sxStart = traceX + (span.start / maxDur) * traceW * 0.3;
           const sWidth = (span.duration / maxDur) * traceW * 0.6 * spanProgress;
 
-          // Span bar
-          drawRoundRect(ctx, sxStart, sy, Math.max(sWidth, 10), 35, 4, span.color + '30', span.color);
+          drawRoundRect(ctx, sxStart, sy, Math.max(sWidth, w * 0.01), spanH, cornerR * 0.6, span.color + '30', span.color);
 
-          // Span name
           ctx.fillStyle = Colors.textPri;
-          ctx.font = '500 12px Pretendard';
+          ctx.font = `500 ${fSm}px Pretendard`;
           ctx.textAlign = 'left';
-          ctx.fillText(span.name, sxStart + 8, sy + 22);
+          ctx.fillText(span.name, sxStart + traceW * 0.03, sy + spanH * 0.65);
         });
 
-        // Error badge on DB Query
+        // Error badge
         if (phase >= 4) {
-          const errY = traceY + 2 * 50;
+          const errY = traceY + 2 * spanGap;
           ctx.fillStyle = Colors.red;
-          ctx.font = '700 10px Pretendard';
+          ctx.font = `700 ${fXs}px Pretendard`;
           ctx.textAlign = 'right';
-          ctx.fillText('ERROR', traceX + traceW - 10, errY + 22);
+          ctx.fillText('ERROR', traceX + traceW - tracePad * 0.3, errY + spanH * 0.65);
         }
 
         // TraceID
         ctx.fillStyle = Colors.textMuted;
-        ctx.font = '400 11px JetBrains Mono';
+        ctx.font = `400 ${fMono}px JetBrains Mono`;
         ctx.textAlign = 'left';
-        ctx.fillText('TraceID: abc123def456...', traceX, traceY + 175);
+        ctx.fillText('TraceID: abc123def456...', traceX, traceY + contentH * 0.52);
       }
 
       // === LOGS COLUMN ===
       if (phase >= 5) {
-        const logX = colX[2] + 15;
-        const logY = 80;
-        const logW = colW - 30;
+        const logPad = colW * 0.05;
+        const logX = colX[2] + logPad;
+        const logY = contentTop + contentH * 0.07;
+        const logW = colW - logPad * 2;
 
         const logs = [
           { time: '10:30:00', level: 'INFO', msg: 'Request received' },
@@ -1319,83 +1351,84 @@ ERROR: Unable to acquire connection within 5s
 
         const logProgress = phase === 5 ? progress : 1;
         const visibleLogs = Math.ceil(logs.length * logProgress);
+        const logLineH = contentH * 0.09;
+        const logGap = contentH * 0.115;
 
         logs.slice(0, visibleLogs).forEach((log, i) => {
-          const ly = logY + i * 40;
+          const ly = logY + i * logGap;
 
-          // Log line background
           if (log.highlight) {
-            drawRoundRect(ctx, logX - 5, ly - 5, logW + 10, 32, 4, Colors.red + '30', Colors.red);
+            drawRoundRect(ctx, logX - logPad * 0.3, ly - logLineH * 0.15, logW + logPad * 0.6, logLineH * 1.3, cornerR * 0.6, Colors.red + '30', Colors.red);
           }
 
-          ctx.font = '400 11px JetBrains Mono';
+          ctx.font = `400 ${fMono}px JetBrains Mono`;
           ctx.textAlign = 'left';
 
-          // Timestamp
           ctx.fillStyle = Colors.textMuted;
-          ctx.fillText(log.time, logX, ly + 12);
+          ctx.fillText(log.time, logX, ly + logLineH * 0.55);
 
-          // Level
           ctx.fillStyle = log.level === 'ERROR' ? Colors.red :
                          log.level === 'WARN' ? Colors.yellow : Colors.cyan;
-          ctx.fillText(log.level, logX + 70, ly + 12);
+          ctx.fillText(log.level, logX + logW * 0.28, ly + logLineH * 0.55);
 
-          // Message
           ctx.fillStyle = log.highlight ? Colors.red : Colors.textSec;
-          ctx.fillText(log.msg, logX + 120, ly + 12);
+          ctx.fillText(log.msg, logX + logW * 0.48, ly + logLineH * 0.55);
         });
 
-        // Full error message
+        // Full error detail
         if (phase >= 6) {
           ctx.fillStyle = Colors.red;
-          ctx.font = '500 12px JetBrains Mono';
-          ctx.fillText('ERROR: Connection', logX, logY + 185);
-          ctx.fillText('timeout to RDS', logX, logY + 200);
+          ctx.font = `500 ${fSm}px JetBrains Mono`;
+          ctx.textAlign = 'left';
+          ctx.fillText('ERROR: Connection', logX, logY + contentH * 0.56);
+          ctx.fillText('timeout to RDS', logX, logY + contentH * 0.56 + fSm * 1.5);
         }
       }
 
       // === ARROWS BETWEEN COLUMNS ===
+      const dashLen = w * 0.005;
+      const dashGap = w * 0.003;
+      const lineW = Math.max(1.5, w * 0.0018);
+      const arrSize = w * 0.008;
+
       if (phase >= 3) {
-        // Arrow from Metrics to Traces
         const arrowProgress = phase === 3 ? progress : 1;
         const ax1 = colX[0] + colW;
-        const ay1 = 120;
+        const ay1 = contentTop + contentH * 0.2;
         const ax2 = ax1 + (colX[1] - (colX[0] + colW)) * arrowProgress;
-        const ay2 = 100;
+        const ay2 = contentTop + contentH * 0.14;
 
-        ctx.setLineDash([6, 4]);
+        ctx.setLineDash([dashLen, dashGap]);
         ctx.beginPath();
         ctx.strokeStyle = Colors.accent;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = lineW;
         ctx.moveTo(ax1, ay1);
         ctx.lineTo(ax2, ay2);
         ctx.stroke();
         ctx.setLineDash([]);
 
         if (arrowProgress >= 0.9) {
-          // Arrowhead
           const angle = Math.atan2(ay2 - ay1, ax2 - ax1);
           ctx.beginPath();
           ctx.fillStyle = Colors.accent;
           ctx.moveTo(ax2, ay2);
-          ctx.lineTo(ax2 - 10 * Math.cos(angle - 0.3), ay2 - 10 * Math.sin(angle - 0.3));
-          ctx.lineTo(ax2 - 10 * Math.cos(angle + 0.3), ay2 - 10 * Math.sin(angle + 0.3));
+          ctx.lineTo(ax2 - arrSize * Math.cos(angle - 0.3), ay2 - arrSize * Math.sin(angle - 0.3));
+          ctx.lineTo(ax2 - arrSize * Math.cos(angle + 0.3), ay2 - arrSize * Math.sin(angle + 0.3));
           ctx.fill();
         }
       }
 
       if (phase >= 5) {
-        // Arrow from Traces to Logs
         const arrowProgress = phase === 5 ? progress : 1;
         const ax1 = colX[1] + colW;
-        const ay1 = 150;
+        const ay1 = contentTop + contentH * 0.3;
         const ax2 = ax1 + (colX[2] - (colX[1] + colW)) * arrowProgress;
-        const ay2 = 130;
+        const ay2 = contentTop + contentH * 0.24;
 
-        ctx.setLineDash([6, 4]);
+        ctx.setLineDash([dashLen, dashGap]);
         ctx.beginPath();
         ctx.strokeStyle = Colors.accent;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = lineW;
         ctx.moveTo(ax1, ay1);
         ctx.lineTo(ax2, ay2);
         ctx.stroke();
@@ -1406,8 +1439,8 @@ ERROR: Unable to acquire connection within 5s
           ctx.beginPath();
           ctx.fillStyle = Colors.accent;
           ctx.moveTo(ax2, ay2);
-          ctx.lineTo(ax2 - 10 * Math.cos(angle - 0.3), ay2 - 10 * Math.sin(angle - 0.3));
-          ctx.lineTo(ax2 - 10 * Math.cos(angle + 0.3), ay2 - 10 * Math.sin(angle + 0.3));
+          ctx.lineTo(ax2 - arrSize * Math.cos(angle - 0.3), ay2 - arrSize * Math.sin(angle - 0.3));
+          ctx.lineTo(ax2 - arrSize * Math.cos(angle + 0.3), ay2 - arrSize * Math.sin(angle + 0.3));
           ctx.fill();
         }
       }
@@ -1425,9 +1458,9 @@ ERROR: Unable to acquire connection within 5s
 
       if (phase > 0 && phase < phaseLabels.length) {
         ctx.fillStyle = Colors.accent;
-        ctx.font = '600 14px Pretendard';
+        ctx.font = `600 ${fMd}px Pretendard`;
         ctx.textAlign = 'center';
-        ctx.fillText(phaseLabels[phase], w / 2, h - 20);
+        ctx.fillText(phaseLabels[phase], w / 2, h * 0.95);
       }
     }
 

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EKS Hybrid Nodes - 교육 목차</title>
+  <link rel="icon" type="image/png" href="../favicon.png">
+  <link rel="stylesheet" href="../common/theme.css">
+  <link rel="stylesheet" href="../common/theme-override.css">
+  <style>
+    body {
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .toc-header {
+      text-align: center;
+      padding: 60px 40px 20px;
+    }
+    .toc-header h1 {
+      font-size: 2.4rem;
+      background: linear-gradient(135deg, var(--accent-light), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    .toc-header .subtitle {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+    }
+    .toc-header .duration {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 6px 16px;
+      background: var(--accent-glow);
+      border: 1px solid var(--accent);
+      border-radius: 20px;
+      color: var(--accent-light);
+      font-size: .9rem;
+      font-weight: 600;
+    }
+    .toc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      padding: 40px 64px 80px;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .block-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      transition: all var(--transition-normal);
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+    .block-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 6px 24px rgba(108, 92, 231, .2);
+      transform: translateY(-3px);
+    }
+    .block-number {
+      font-size: .8rem;
+      font-weight: 700;
+      color: var(--accent-light);
+      font-family: var(--font-mono);
+      letter-spacing: .06em;
+    }
+    .block-card h2 {
+      font-size: 1.2rem;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+    .block-card p {
+      color: var(--text-secondary);
+      font-size: .88rem;
+      line-height: 1.55;
+      flex: 1;
+    }
+    .block-meta {
+      display: flex;
+      gap: 10px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .block-meta .badge {
+      font-size: .72rem;
+    }
+    .toc-timeline {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      padding: 0 64px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .toc-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .toc-dot {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: .85rem;
+      color: #fff;
+    }
+    .toc-dot.b1 { background: var(--accent); }
+    .toc-dot.b2 { background: var(--green); }
+    .toc-dot.b3 { background: var(--blue); }
+    .toc-dot.b4 { background: var(--orange); }
+    .toc-line {
+      flex: 1;
+      height: 2px;
+      background: var(--border);
+      min-width: 40px;
+    }
+    .toc-label {
+      margin-top: 6px;
+      font-size: .75rem;
+      color: var(--text-muted);
+    }
+    .break-marker {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .break-marker .toc-dot {
+      background: var(--bg-tertiary);
+      border: 2px dashed var(--border);
+      color: var(--text-muted);
+      font-size: .65rem;
+    }
+    .nav-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: .88rem;
+      padding: 20px 64px 0;
+      transition: color var(--transition-fast);
+    }
+    .nav-back:hover { color: var(--accent-light); }
+  </style>
+</head>
+<body>
+  <a href="../index.html" class="nav-back">&larr; All Presentations</a>
+
+  <div class="toc-header">
+    <h1>EKS Hybrid Nodes</h1>
+    <p class="subtitle">이제는 Amazon EKS를 온프레미스에서도 — 아키텍처, 네트워킹, 노드 운영, 전략적 가치</p>
+    <div class="duration">Total: ~95 min</div>
+    <div class="export-toolbar">
+      <button class="export-btn" onclick="ExportUtils.exportPDF({ title: 'EKS Hybrid Nodes' })">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Export PDF
+      </button>
+      <button class="export-btn" onclick="ExportUtils.downloadZIP()">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download ZIP
+      </button>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="toc-timeline">
+    <div class="toc-step"><div class="toc-dot b1">1</div><div class="toc-label">25min</div></div>
+    <div class="toc-line"></div>
+    <div class="toc-step"><div class="toc-dot b2">2</div><div class="toc-label">25min</div></div>
+    <div class="toc-line"></div>
+    <div class="break-marker"><div class="toc-dot">BRK</div><div class="toc-label">5min</div></div>
+    <div class="toc-line"></div>
+    <div class="toc-step"><div class="toc-dot b3">3</div><div class="toc-label">20min</div></div>
+    <div class="toc-line"></div>
+    <div class="toc-step"><div class="toc-dot b4">4</div><div class="toc-label">20min</div></div>
+  </div>
+
+  <!-- Block Cards -->
+  <div class="toc-grid">
+    <a href="01-overview-architecture.html" class="block-card">
+      <div class="block-number">BLOCK 01</div>
+      <h2>EKS Hybrid Nodes 개요 &amp; 아키텍처</h2>
+      <p>EKS Hybrid Nodes 정의, 아키텍처 개요, 노드 등록 플로우, Managed Services 연계, 책임 공유 모델, 크리덴셜 프로바이더 비교.</p>
+      <div class="block-meta">
+        <span class="badge badge-blue">25분</span>
+        <span class="badge badge-green">12 slides</span>
+        <span class="badge badge-yellow">Canvas Animation</span>
+      </div>
+    </a>
+
+    <a href="02-networking-traffic.html" class="block-card">
+      <div class="block-number">BLOCK 02</div>
+      <h2>네트워킹 &amp; 트래픽 패턴</h2>
+      <p>네트워크 전제 조건, CIDR 설계, 6가지 트래픽 패턴 심층 분석, 방화벽 규칙, VPC 엔드포인트 구성.</p>
+      <div class="block-meta">
+        <span class="badge badge-blue">25분</span>
+        <span class="badge badge-green">12 slides</span>
+        <span class="badge badge-yellow">Animated SVG</span>
+      </div>
+    </a>
+
+    <a href="03-node-setup.html" class="block-card">
+      <div class="block-number">BLOCK 03</div>
+      <h2>노드 구성 &amp; 운영</h2>
+      <p>nodeadm CLI, Bootstrap 워크플로우, NodeConfig YAML, Cilium CNI 설치, 업그레이드 전략, 에어갭 환경, 트러블슈팅.</p>
+      <div class="block-meta">
+        <span class="badge badge-blue">20분</span>
+        <span class="badge badge-green">10 slides</span>
+        <span class="badge badge-yellow">Canvas Animation</span>
+      </div>
+    </a>
+
+    <a href="04-advanced-patterns.html" class="block-card">
+      <div class="block-number">BLOCK 04</div>
+      <h2>고급 패턴 &amp; 전략적 가치</h2>
+      <p>Taint/Toleration, GPU 워크로드, Cloud Bursting, 규제 대응, Managed Services 연계, Agent 개발 가속화, 비용 최적화.</p>
+      <div class="block-meta">
+        <span class="badge badge-blue">20분</span>
+        <span class="badge badge-green">10 slides</span>
+        <span class="badge badge-yellow">Canvas Animation</span>
+      </div>
+    </a>
+  </div>
+<script src="../common/export-utils.js"></script>
+</body>
+</html>

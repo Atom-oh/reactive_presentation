@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Block 4: 고급 패턴 &amp; 전략적 가치 | EKS Hybrid Nodes</title>
+  <link rel="icon" type="image/png" href="../favicon.png">
+  <link rel="stylesheet" href="../common/theme.css">
+  <link rel="stylesheet" href="../common/theme-override.css">
+  <style>
+    /* Slide-specific styles */
+    .gradient-title {
+      font-size: 2.8rem;
+      background: linear-gradient(135deg, var(--accent-light), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Node visualization */
+    .node-viz {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      padding: 16px;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+    }
+    .node-box {
+      padding: 12px;
+      border-radius: 8px;
+      border: 2px solid;
+      text-align: center;
+    }
+    .node-box.hybrid {
+      border-color: var(--green);
+      background: var(--green-bg);
+    }
+    .node-box.cloud {
+      border-color: var(--blue);
+      background: var(--blue-bg);
+    }
+    .node-box h4 {
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+    .pod-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      justify-content: center;
+    }
+    .pod-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 700;
+    }
+    .pod-icon.tolerant {
+      background: var(--green);
+      color: #fff;
+    }
+    .pod-icon.normal {
+      background: var(--blue);
+      color: #fff;
+    }
+    .pod-icon.blocked {
+      background: var(--red-bg);
+      border: 1px dashed var(--red);
+      color: var(--red);
+    }
+
+    /* Deletion cost visualization */
+    .deletion-viz {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 20px;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+    }
+    .deletion-pod {
+      flex: 1;
+      padding: 16px;
+      border-radius: 8px;
+      text-align: center;
+      position: relative;
+    }
+    .deletion-pod.onprem {
+      background: var(--green-bg);
+      border: 2px solid var(--green);
+    }
+    .deletion-pod.cloud {
+      background: var(--blue-bg);
+      border: 2px solid var(--blue);
+    }
+    .deletion-order {
+      position: absolute;
+      top: -12px;
+      right: -12px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+    .deletion-pod.onprem .deletion-order {
+      background: var(--green);
+      color: #fff;
+    }
+    .deletion-pod.cloud .deletion-order {
+      background: var(--red);
+      color: #fff;
+    }
+    .deletion-arrow {
+      font-size: 2rem;
+      color: var(--text-muted);
+    }
+
+    /* Compliance cards */
+    .compliance-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .compliance-card {
+      padding: 16px;
+      background: var(--bg-card);
+      border-radius: 10px;
+      border-left: 4px solid var(--accent);
+    }
+    .compliance-card h4 {
+      color: var(--accent-light);
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+    .compliance-card p {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Before/After comparison */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .compare-card {
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .compare-card.before {
+      background: linear-gradient(135deg, var(--red-bg), transparent);
+      border-color: var(--red);
+    }
+    .compare-card.after {
+      background: linear-gradient(135deg, var(--green-bg), transparent);
+      border-color: var(--green);
+    }
+    .compare-card h3 {
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .compare-card.before h3 { color: var(--red); }
+    .compare-card.after h3 { color: var(--green); }
+    .compare-card ul {
+      list-style: none;
+      padding: 0;
+    }
+    .compare-card li {
+      padding: 6px 0;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .compare-card li::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      margin-top: 8px;
+      flex-shrink: 0;
+    }
+    .compare-card.before li::before { background: var(--red); }
+    .compare-card.after li::before { background: var(--green); }
+
+    /* Cost metrics */
+    .cost-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .cost-card {
+      padding: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      text-align: center;
+    }
+    .cost-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--accent-light);
+      margin-bottom: 4px;
+    }
+    .cost-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .cost-desc {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Takeaway cards */
+    .takeaway-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .takeaway-card {
+      padding: 16px 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .takeaway-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .takeaway-icon {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+    }
+    .takeaway-card p {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Q&A section */
+    .qna-section {
+      text-align: center;
+      padding: 24px;
+      background: linear-gradient(135deg, var(--accent-glow), transparent);
+      border-radius: 12px;
+      border: 1px solid var(--accent);
+    }
+    .qna-section h2 {
+      color: var(--accent-light);
+      margin-bottom: 8px;
+    }
+
+    /* Resource links */
+    .resource-links {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+    .resource-link {
+      padding: 10px 16px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+    }
+    .resource-link:hover {
+      border-color: var(--accent);
+      color: var(--accent-light);
+    }
+
+    /* Canvas container adjustments */
+    .canvas-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .canvas-container canvas {
+      flex: 1;
+      width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+<div class="slide-deck">
+
+  <!-- Slide 1: Block 4 Title -->
+  <div class="slide" style="background: url('../common/pptx-theme/images/Picture_13.png') center/cover no-repeat; padding: 0; overflow: hidden;">
+    <h1 style="position: absolute; left: 5%; top: 48%; font-size: 2.8rem; color: #fff; font-weight: 300; line-height: 1.2; width: 53%; margin: 0;">EKS Hybrid Nodes</h1>
+    <p style="position: absolute; left: 5%; top: 62%; font-size: 1.3rem; color: rgba(255,255,255,0.8); width: 53%; margin: 0;">고급 패턴 &amp; 전략적 가치</p>
+    <div style="position: absolute; left: 5%; top: 76%;">
+      <p style="font-size: 1.05rem; color: #fff; font-weight: 600; margin: 0;">Junseok Oh</p>
+      <p style="font-size: 0.9rem; color: rgba(255,255,255,0.65); margin: 6px 0 0 0;">Sr. Solutions Architect</p>
+      <p style="font-size: 0.9rem; color: rgba(255,255,255,0.65); margin: 2px 0 0 0;">Amazon Web Services</p>
+    </div>
+    <img src="../common/pptx-theme/images/Picture_8.png" alt="" style="position: absolute; right: 5%; bottom: 10%; width: 8%; pointer-events: none;" />
+  </div>
+
+  <!-- Slide 2: Taint/Toleration -->
+  <section class="slide" id="slide-2">
+    <div class="slide-header">
+      <h1>Taint/Toleration으로 워크로드 격리</h1>
+      <p class="subtitle">하이브리드 노드에 특정 Pod만 스케줄링</p>
+    </div>
+    <div class="slide-body">
+      <div class="columns">
+        <div style="flex: 1.2;">
+          <div class="code-block" style="font-size: 0.78rem;">
+            <span class="code-label">YAML</span>
+<span class="comment"># 노드 Taint 설정 (nodeadm flags)</span>
+<span class="key">--register-with-taints</span>=<span class="string">eks.amazonaws.com/compute-type=hybrid:NoSchedule</span>
+
+<span class="comment"># Pod Toleration</span>
+<span class="key">tolerations</span>:
+- <span class="key">key</span>: <span class="string">eks.amazonaws.com/compute-type</span>
+  <span class="key">operator</span>: <span class="string">Equal</span>
+  <span class="key">value</span>: <span class="string">hybrid</span>
+  <span class="key">effect</span>: <span class="string">NoSchedule</span>
+
+<span class="comment"># GPU 노드 추가 Taint</span>
+<span class="key">--register-with-taints</span>=<span class="string">gpu=true:NoSchedule</span>
+          </div>
+          <div class="callout callout-info" style="margin-top: 12px;">
+            <strong>핵심:</strong> NoSchedule Taint가 있는 노드에는 해당 Toleration이 있는 Pod만 스케줄링됨
+          </div>
+        </div>
+        <div style="flex: 0.8;">
+          <h3 style="margin-bottom: 12px; font-size: 0.95rem;">스케줄링 결과</h3>
+          <div class="node-viz">
+            <div class="node-box hybrid">
+              <h4>Hybrid Node 1</h4>
+              <div class="pod-grid">
+                <div class="pod-icon tolerant" title="Toleration 있음">H</div>
+                <div class="pod-icon tolerant" title="Toleration 있음">H</div>
+                <div class="pod-icon blocked" title="Toleration 없음">X</div>
+              </div>
+            </div>
+            <div class="node-box hybrid">
+              <h4>Hybrid Node 2</h4>
+              <div class="pod-grid">
+                <div class="pod-icon tolerant" title="Toleration 있음">H</div>
+                <div class="pod-icon tolerant" title="Toleration 있음">H</div>
+              </div>
+            </div>
+            <div class="node-box cloud">
+              <h4>Cloud Node 1</h4>
+              <div class="pod-grid">
+                <div class="pod-icon normal" title="일반 Pod">C</div>
+                <div class="pod-icon normal" title="일반 Pod">C</div>
+                <div class="pod-icon normal" title="일반 Pod">C</div>
+              </div>
+            </div>
+            <div class="node-box cloud">
+              <h4>Cloud Node 2</h4>
+              <div class="pod-grid">
+                <div class="pod-icon normal" title="일반 Pod">C</div>
+                <div class="pod-icon normal" title="일반 Pod">C</div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top: 12px; display: flex; gap: 12px; font-size: 0.8rem;">
+            <span><span class="pod-icon tolerant" style="display: inline-flex; width: 18px; height: 18px; font-size: 0.6rem;">H</span> Hybrid 전용</span>
+            <span><span class="pod-icon normal" style="display: inline-flex; width: 18px; height: 18px; font-size: 0.6rem;">C</span> 일반 Pod</span>
+            <span><span class="pod-icon blocked" style="display: inline-flex; width: 18px; height: 18px; font-size: 0.6rem;">X</span> 스케줄 거부</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 3: GPU on-prem + CPU cloud (CANVAS) -->
+  <section class="slide" id="slide-3">
+    <div class="slide-header">
+      <h1>GPU 온프레미스 + CPU 클라우드</h1>
+      <p class="subtitle">ML Training은 온프렘 GPU, Inference는 클라우드 CPU</p>
+    </div>
+    <div class="slide-body">
+      <div class="canvas-container" style="flex: 1; min-height: 350px;">
+        <canvas id="gpu-cpu-canvas"></canvas>
+        <div class="canvas-controls">
+          <button class="btn btn-primary" id="btn-gpu-play">Play</button>
+          <button class="btn" id="btn-gpu-reset">Reset</button>
+        </div>
+      </div>
+      <div class="callout callout-success" style="margin-top: 8px;">
+        <strong>패턴:</strong> GPU 투자는 보존하고, 추론/서빙은 클라우드 탄력성 활용 - 모델 아티팩트는 S3 경유
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 4: Cloud Bursting (CANVAS) -->
+  <section class="slide" id="slide-4">
+    <div class="slide-header">
+      <h1>Cloud Bursting with Karpenter</h1>
+      <p class="subtitle">온프레미스 용량 초과 시 클라우드로 자동 확장</p>
+    </div>
+    <div class="slide-body">
+      <div class="canvas-container" style="flex: 1; min-height: 380px;">
+        <canvas id="bursting-canvas"></canvas>
+        <div class="canvas-controls">
+          <button class="btn btn-primary" id="btn-burst-play">Play</button>
+          <button class="btn" id="btn-burst-reset">Reset</button>
+        </div>
+      </div>
+      <div class="col-2" style="margin-top: 8px; gap: 12px;">
+        <div class="callout callout-info" style="margin: 0;">
+          <strong>Scale-up:</strong> 온프렘 가득 차면 Karpenter가 클라우드 노드 프로비저닝
+        </div>
+        <div class="callout callout-warning" style="margin: 0;">
+          <strong>Scale-down:</strong> pod-deletion-cost로 클라우드 Pod 먼저 제거
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 5: Pod Deletion Cost -->
+  <section class="slide" id="slide-5">
+    <div class="slide-header">
+      <h1>Pod Deletion Cost 전략</h1>
+      <p class="subtitle">스케일다운 시 클라우드 Pod 우선 제거</p>
+    </div>
+    <div class="slide-body">
+      <div class="columns">
+        <div style="flex: 1;">
+          <div class="deletion-viz">
+            <div class="deletion-pod onprem">
+              <div class="deletion-order">2</div>
+              <h4 style="color: var(--green); margin-bottom: 8px;">온프렘 Pod</h4>
+              <div style="font-family: var(--font-mono); font-size: 1.2rem; color: var(--green);">cost: 1000</div>
+              <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 8px;">높은 우선순위<br/>마지막에 제거</p>
+            </div>
+            <div class="deletion-arrow">→</div>
+            <div class="deletion-pod cloud">
+              <div class="deletion-order">1</div>
+              <h4 style="color: var(--blue); margin-bottom: 8px;">클라우드 Pod</h4>
+              <div style="font-family: var(--font-mono); font-size: 1.2rem; color: var(--red);">cost: -100</div>
+              <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 8px;">낮은 우선순위<br/>먼저 제거</p>
+            </div>
+          </div>
+          <div class="callout callout-success" style="margin-top: 16px;">
+            <strong>결과:</strong> 스케일다운 시 클라우드 리소스 먼저 반환 → 온프렘 인프라 최대 활용
+          </div>
+        </div>
+        <div style="flex: 1;">
+          <div class="code-block" style="font-size: 0.78rem;">
+            <span class="code-label">pod-deletion-cost.yaml</span>
+<span class="comment"># 온프렘 Pod - 높은 deletion cost</span>
+<span class="key">apiVersion</span>: <span class="value">v1</span>
+<span class="key">kind</span>: <span class="value">Pod</span>
+<span class="key">metadata</span>:
+  <span class="key">annotations</span>:
+    <span class="key">controller.kubernetes.io/pod-deletion-cost</span>: <span class="string">"1000"</span>
+<span class="comment">---</span>
+<span class="comment"># 클라우드 Pod - 낮은 deletion cost</span>
+<span class="key">apiVersion</span>: <span class="value">v1</span>
+<span class="key">kind</span>: <span class="value">Pod</span>
+<span class="key">metadata</span>:
+  <span class="key">annotations</span>:
+    <span class="key">controller.kubernetes.io/pod-deletion-cost</span>: <span class="string">"-100"</span>
+          </div>
+          <div class="card" style="margin-top: 12px;">
+            <h4 style="color: var(--accent-light); margin-bottom: 8px;">적용 방법</h4>
+            <ul style="font-size: 0.85rem;">
+              <li>MutatingWebhook으로 노드 레이블 기반 자동 주입</li>
+              <li>또는 Kyverno/OPA 정책으로 구현</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 6: Compliance -->
+  <section class="slide" id="slide-6">
+    <div class="slide-header">
+      <h1>규제 대응 &amp; 컴플라이언스</h1>
+      <p class="subtitle">데이터 주권 보장과 감사 추적</p>
+    </div>
+    <div class="slide-body">
+      <div class="compliance-grid">
+        <div class="compliance-card">
+          <h4>데이터 주권 보장</h4>
+          <p>민감 데이터는 온프레미스에 유지, Control Plane만 AWS에서 관리 → 금융 규제 충족</p>
+        </div>
+        <div class="compliance-card">
+          <h4>감사 추적</h4>
+          <p>IAM Roles Anywhere의 x509Subject/CN으로 노드별 감사 추적 가능 → 인증서 기반 식별</p>
+        </div>
+        <div class="compliance-card">
+          <h4>네트워크 격리</h4>
+          <p>VPN/Direct Connect + Private Endpoint로 퍼블릭 인터넷 경유 없음 → 보안 경계 유지</p>
+        </div>
+        <div class="compliance-card">
+          <h4>컴플라이언스 자동화</h4>
+          <p>AWS Config, CloudTrail로 Control Plane 관련 컴플라이언스 자동 모니터링</p>
+        </div>
+      </div>
+      <div class="callout callout-success" style="margin-top: 16px;">
+        <strong>핵심 가치:</strong> 데이터는 온프레미스, 관리는 AWS - 규제와 효율성의 균형
+      </div>
+      <div class="col-3" style="margin-top: 12px;">
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 1.5rem; margin-bottom: 4px;">🏦</div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">금융권 클라우드 이용<br/>가이드라인 충족</div>
+        </div>
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 1.5rem; margin-bottom: 4px;">🔐</div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">개인정보보호법<br/>데이터 국외 이전 제한</div>
+        </div>
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 1.5rem; margin-bottom: 4px;">📋</div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">내부 보안 정책<br/>온프렘 데이터 유지</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 7: Managed Services 연계 (CANVAS) -->
+  <section class="slide" id="slide-7">
+    <div class="slide-header">
+      <h1>AWS Managed Services 연계</h1>
+      <p class="subtitle">온프레미스에서 AWS AI/ML 서비스 직접 활용</p>
+    </div>
+    <div class="slide-body">
+      <div class="canvas-container" style="flex: 1; min-height: 380px;">
+        <canvas id="agent-canvas"></canvas>
+        <div class="canvas-controls">
+          <button class="btn btn-primary" id="btn-agent-play">Play</button>
+          <button class="btn" id="btn-agent-reset">Reset</button>
+        </div>
+      </div>
+      <div class="callout callout-info" style="margin-top: 8px;">
+        <strong>핵심:</strong> EKS Hybrid Nodes = 온프렘 인프라에 AWS Managed Services를 연결하는 게이트웨이
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 8: Agent 개발 가속화 -->
+  <section class="slide" id="slide-8">
+    <div class="slide-header">
+      <h1>AI Agent 개발 가속화</h1>
+      <p class="subtitle">온프렘 단독 vs EKS Hybrid + AWS 서비스</p>
+    </div>
+    <div class="slide-body">
+      <div class="compare-grid">
+        <div class="compare-card before">
+          <h3>Before: 온프렘 단독</h3>
+          <ul>
+            <li>LLM 모델 자체 호스팅 필요 (GPU 인프라 구축)</li>
+            <li>모델 업데이트/파인튜닝 직접 수행</li>
+            <li>벡터 DB, 검색 엔진 별도 구축</li>
+            <li>Agent 파이프라인 처음부터 개발</li>
+            <li>보안/접근 제어 직접 구현</li>
+          </ul>
+          <div style="text-align: center; margin-top: 16px;">
+            <span class="badge badge-red" style="font-size: 1rem; padding: 8px 16px;">수개월 소요</span>
+          </div>
+        </div>
+        <div class="compare-card after">
+          <h3>After: EKS Hybrid + AWS</h3>
+          <ul>
+            <li>Bedrock API로 최신 모델 즉시 활용 (Claude, Nova)</li>
+            <li>모델 관리/업데이트는 AWS가 담당</li>
+            <li>Kendra/OpenSearch로 RAG 즉시 구성</li>
+            <li>Bedrock Agent로 파이프라인 자동 구성</li>
+            <li>IAM 기반 세분화된 접근 제어</li>
+          </ul>
+          <div style="text-align: center; margin-top: 16px;">
+            <span class="badge badge-green" style="font-size: 1rem; padding: 8px 16px;">수주 내 PoC 가능</span>
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-success" style="margin-top: 16px;">
+        <strong>ROI:</strong> 인프라 구축 시간을 서비스 개발에 집중 - 비즈니스 가치 창출 가속화
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 9: 비용 최적화 -->
+  <section class="slide" id="slide-9">
+    <div class="slide-header">
+      <h1>비용 최적화 전략</h1>
+      <p class="subtitle">기존 인프라 활용 + 필요 시 클라우드 확장</p>
+    </div>
+    <div class="slide-body">
+      <div class="cost-grid">
+        <div class="cost-card">
+          <div class="cost-value">$0.01</div>
+          <div class="cost-label">vCPU/hr</div>
+          <div class="cost-desc">EKS Hybrid Nodes 추가 비용<br/>(기존 EKS 클러스터 비용 외)</div>
+        </div>
+        <div class="cost-card">
+          <div class="cost-value" style="color: var(--green);">100%</div>
+          <div class="cost-label">기존 HW 활용</div>
+          <div class="cost-desc">온프레미스 서버 자산 최대 활용<br/>GPU 투자 보존</div>
+        </div>
+        <div class="cost-card">
+          <div class="cost-value" style="color: var(--cyan);">0원</div>
+          <div class="cost-label">CP 관리 비용</div>
+          <div class="cost-desc">etcd 백업, 인증서 갱신, HA 구성<br/>모두 AWS가 관리</div>
+        </div>
+        <div class="cost-card">
+          <div class="cost-value" style="color: var(--yellow);">On-Demand</div>
+          <div class="cost-label">클라우드 버스팅</div>
+          <div class="cost-desc">피크 시에만 클라우드 리소스 사용<br/>유휴 비용 최소화</div>
+        </div>
+      </div>
+      <div class="callout callout-info" style="margin-top: 20px;">
+        <strong>비용 철학:</strong> 기존 인프라 투자를 보존하면서 AWS Managed Services의 가치를 더하는 접근 - CapEx는 유지, OpEx는 최적화
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 10: 핵심 요약 & Q&A -->
+  <section class="slide" id="slide-10">
+    <div class="slide-header">
+      <h1>핵심 요약</h1>
+    </div>
+    <div class="slide-body">
+      <div class="takeaway-grid">
+        <div class="takeaway-card">
+          <div class="takeaway-icon">&#9881;</div>
+          <p>EKS CP는 AWS가 관리<br/>온프렘 인프라 활용</p>
+        </div>
+        <div class="takeaway-card">
+          <div class="takeaway-icon">&#128279;</div>
+          <p>VPN/DX로 안전한<br/>하이브리드 네트워킹</p>
+        </div>
+        <div class="takeaway-card">
+          <div class="takeaway-icon">&#128230;</div>
+          <p>nodeadm으로 간편한<br/>노드 부트스트랩</p>
+        </div>
+        <div class="takeaway-card">
+          <div class="takeaway-icon">&#129302;</div>
+          <p>Bedrock/SageMaker 등<br/>AWS AI 서비스 즉시 연동</p>
+        </div>
+        <div class="takeaway-card">
+          <div class="takeaway-icon">&#128737;</div>
+          <p>데이터 주권 유지 +<br/>관리형 서비스 활용</p>
+        </div>
+      </div>
+      <div class="qna-section">
+        <h2>Q&amp;A</h2>
+        <p style="color: var(--text-secondary);">궁금한 점이 있으시면 질문해 주세요</p>
+      </div>
+      <div class="resource-links">
+        <a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html" target="_blank" class="resource-link">EKS Hybrid Nodes 공식 문서</a>
+        <a href="https://www.youtube.com/results?search_query=eks+hybrid+nodes+reinvent+2024" target="_blank" class="resource-link">AWS re:Invent 2024 세션</a>
+        <a href="https://aws.github.io/aws-eks-best-practices/" target="_blank" class="resource-link">EKS Best Practices Guide</a>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script src="../common/animation-utils.js"></script>
+<script src="../common/slide-framework.js"></script>
+<script src="../common/quiz-component.js"></script>
+<script src="../common/presenter-view.js"></script>
+<script>
+  // ============================================================
+  // Canvas Animation Utilities (ResizeObserver pattern)
+  // ============================================================
+  const BASE_W = 1100, BASE_H = 400;
+
+  function initCanvas(canvasId, baseW = BASE_W, baseH = BASE_H) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return null;
+    const ctx = canvas.getContext('2d');
+    const container = canvas.parentElement;
+    const dpr = window.devicePixelRatio || 1;
+
+    let scale = 1;
+
+    function resize() {
+      const rect = container.getBoundingClientRect();
+      scale = Math.min(rect.width / baseW, (rect.height - 50) / baseH);
+      canvas.width = baseW * scale * dpr;
+      canvas.height = baseH * scale * dpr;
+      canvas.style.width = (baseW * scale) + 'px';
+      canvas.style.height = (baseH * scale) + 'px';
+      ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+    }
+
+    new ResizeObserver(resize).observe(container);
+    resize();
+
+    return { canvas, ctx, resize, getScale: () => scale };
+  }
+
+  // ============================================================
+  // Slide 3: GPU on-prem + CPU cloud Canvas
+  // ============================================================
+  let gpuAnim = null;
+  let gpuAnimId = null;
+  let gpuPlaying = false;
+  let gpuParticles = [];
+
+  function initGpuCpuCanvas() {
+    const c = initCanvas('gpu-cpu-canvas', 1100, 400);
+    if (!c) return;
+
+    gpuParticles = [];
+    gpuPlaying = false;
+
+    function draw() {
+      const { ctx } = c;
+      ctx.clearRect(0, 0, 1100, 400);
+
+      // Background zones
+      // On-prem zone
+      ctx.fillStyle = '#1a2636';
+      ctx.fillRect(20, 20, 350, 360);
+      ctx.strokeStyle = Colors.green;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(20, 20, 350, 360);
+
+      // Cloud zone
+      ctx.fillStyle = '#1a2636';
+      ctx.fillRect(730, 20, 350, 360);
+      ctx.strokeStyle = Colors.blue;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(730, 20, 350, 360);
+
+      // Zone labels
+      ctx.fillStyle = Colors.green;
+      ctx.font = '600 14px Pretendard, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('온프레미스 DC', 195, 50);
+
+      ctx.fillStyle = Colors.blue;
+      ctx.fillText('AWS Cloud', 905, 50);
+
+      // GPU nodes (on-prem)
+      drawRoundRect(ctx, 50, 80, 130, 100, 8, Colors.green + '33', Colors.green);
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 12px Pretendard, sans-serif';
+      ctx.fillText('GPU Node (H100)', 115, 115);
+      ctx.font = '400 11px Pretendard, sans-serif';
+      ctx.fillStyle = Colors.textSec;
+      ctx.fillText('ML Training', 115, 135);
+      ctx.fillText('PyTorch / TensorFlow', 115, 150);
+
+      drawRoundRect(ctx, 210, 80, 130, 100, 8, Colors.green + '33', Colors.green);
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 12px Pretendard, sans-serif';
+      ctx.fillText('GPU Node (H100)', 275, 115);
+      ctx.font = '400 11px Pretendard, sans-serif';
+      ctx.fillStyle = Colors.textSec;
+      ctx.fillText('ML Training', 275, 135);
+      ctx.fillText('Data Processing', 275, 150);
+
+      // EKS Hybrid label
+      drawRoundRect(ctx, 80, 200, 210, 50, 8, Colors.accent + '33', Colors.accent);
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 13px Pretendard, sans-serif';
+      ctx.fillText('EKS Hybrid Nodes', 185, 230);
+
+      // S3 bucket (center)
+      ctx.fillStyle = Colors.orange + '33';
+      ctx.beginPath();
+      ctx.arc(550, 200, 50, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = Colors.orange;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 14px Pretendard, sans-serif';
+      ctx.fillText('S3', 550, 195);
+      ctx.font = '400 11px Pretendard, sans-serif';
+      ctx.fillStyle = Colors.textSec;
+      ctx.fillText('Model Artifacts', 550, 215);
+
+      // Cloud services
+      drawRoundRect(ctx, 760, 80, 130, 80, 8, Colors.cyan + '33', Colors.cyan);
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 12px Pretendard, sans-serif';
+      ctx.fillText('SageMaker', 825, 110);
+      ctx.font = '400 11px Pretendard, sans-serif';
+      ctx.fillStyle = Colors.textSec;
+      ctx.fillText('Endpoint', 825, 130);
+
+      drawRoundRect(ctx, 920, 80, 130, 80, 8, Colors.blue + '33', Colors.blue);
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 12px Pretendard, sans-serif';
+      ctx.fillText('EKS Pods', 985, 110);
+      ctx.font = '400 11px Pretendard, sans-serif';
+      ctx.fillStyle = Colors.textSec;
+      ctx.fillText('CPU Inference', 985, 130);
+
+      // API Gateway
+      drawRoundRect(ctx, 840, 180, 130, 60, 8, Colors.pink + '33', Colors.pink);
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 12px Pretendard, sans-serif';
+      ctx.fillText('API Gateway', 905, 215);
+
+      // Bedrock
+      drawRoundRect(ctx, 760, 260, 130, 80, 8, Colors.accentLt + '33', Colors.accentLt);
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 12px Pretendard, sans-serif';
+      ctx.fillText('Bedrock', 825, 290);
+      ctx.font = '400 11px Pretendard, sans-serif';
+      ctx.fillStyle = Colors.textSec;
+      ctx.fillText('Claude / Nova', 825, 310);
+
+      // Static arrows
+      ctx.setLineDash([]);
+
+      // Draw particles
+      gpuParticles.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+      });
+
+      // Update particles
+      if (gpuPlaying) {
+        gpuParticles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.phase === 0 && p.x > 500) {
+            p.phase = 1;
+            p.vx = 3;
+            p.vy = 0;
+          }
+          if (p.phase === 1 && p.x > 730) {
+            p.phase = 2;
+            p.vx = 0;
+            p.vy = (Math.random() - 0.5) * 2;
+          }
+        });
+        gpuParticles = gpuParticles.filter(p => p.x < 1050);
+
+        if (Math.random() < 0.05) {
+          gpuParticles.push({
+            x: 300,
+            y: 200 + (Math.random() - 0.5) * 20,
+            vx: 2,
+            vy: 0,
+            phase: 0,
+            color: Colors.green
+          });
+        }
+      }
+
+      // Draw arrows
+      ctx.strokeStyle = Colors.textMuted;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+
+      // On-prem to S3
+      ctx.beginPath();
+      ctx.moveTo(300, 225);
+      ctx.lineTo(500, 200);
+      ctx.stroke();
+
+      // S3 to Cloud
+      ctx.beginPath();
+      ctx.moveTo(600, 200);
+      ctx.lineTo(730, 120);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(600, 200);
+      ctx.lineTo(730, 210);
+      ctx.stroke();
+
+      ctx.setLineDash([]);
+
+      gpuAnimId = requestAnimationFrame(draw);
+    }
+
+    draw();
+
+    document.getElementById('btn-gpu-play').onclick = () => {
+      gpuPlaying = !gpuPlaying;
+      document.getElementById('btn-gpu-play').textContent = gpuPlaying ? 'Pause' : 'Play';
+    };
+
+    document.getElementById('btn-gpu-reset').onclick = () => {
+      gpuPlaying = false;
+      gpuParticles = [];
+      document.getElementById('btn-gpu-play').textContent = 'Play';
+    };
+  }
+
+  // ============================================================
+  // Slide 4: Cloud Bursting Canvas
+  // ============================================================
+  let burstAnim = null;
+  let burstAnimId = null;
+  let burstPhase = 0;
+  let burstPods = [];
+  let burstCloudNodes = [];
+  let burstPlaying = false;
+  let burstTime = 0;
+
+  function initCloudBurstingCanvas() {
+    const c = initCanvas('bursting-canvas', 1100, 450);
+    if (!c) return;
+
+    burstPhase = 0;
+    burstPods = [];
+    burstCloudNodes = [];
+    burstPlaying = false;
+    burstTime = 0;
+
+    // Initialize on-prem pods
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 4; j++) {
+        burstPods.push({
+          x: 60 + (i % 2) * 150 + j * 30,
+          y: 100 + Math.floor(i / 2) * 140 + 30,
+          type: 'onprem',
+          visible: false,
+          nodeIdx: i
+        });
+      }
+    }
+
+    function draw() {
+      const { ctx } = c;
+      ctx.clearRect(0, 0, 1100, 450);
+
+      // Title
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 14px Pretendard, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('온프레미스 노드 풀 (고정)', 50, 35);
+      ctx.fillText('클라우드 노드 풀 (확장 가능)', 600, 35);
+
+      // On-prem zone
+      ctx.fillStyle = '#1a2636';
+      ctx.fillRect(30, 50, 500, 380);
+      ctx.strokeStyle = Colors.green;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(30, 50, 500, 380);
+
+      // On-prem nodes (4 fixed)
+      for (let i = 0; i < 4; i++) {
+        const x = 50 + (i % 2) * 240;
+        const y = 70 + Math.floor(i / 2) * 180;
+        drawRoundRect(ctx, x, y, 220, 160, 8, Colors.green + '22', Colors.green);
+        ctx.fillStyle = Colors.textSec;
+        ctx.font = '500 11px Pretendard, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`hybrid-node-${i + 1}`, x + 110, y + 20);
+      }
+
+      // Cloud zone
+      ctx.fillStyle = '#1a2636';
+      ctx.fillRect(570, 50, 500, 380);
+      ctx.strokeStyle = Colors.blue;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(570, 50, 500, 380);
+
+      // Cloud nodes (dynamic)
+      burstCloudNodes.forEach((node, i) => {
+        if (node.visible) {
+          const x = 590 + (i % 2) * 240;
+          const y = 70 + Math.floor(i / 2) * 180;
+          ctx.globalAlpha = node.alpha || 1;
+          drawRoundRect(ctx, x, y, 220, 160, 8, Colors.blue + '22', Colors.blue);
+          ctx.fillStyle = Colors.textSec;
+          ctx.font = '500 11px Pretendard, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(`cloud-node-${i + 1}`, x + 110, y + 20);
+          ctx.globalAlpha = 1;
+        }
+      });
+
+      // Draw pods
+      burstPods.forEach(pod => {
+        if (pod.visible) {
+          ctx.fillStyle = pod.type === 'onprem' ? Colors.green : Colors.blue;
+          ctx.fillRect(pod.x, pod.y, 24, 24);
+          ctx.fillStyle = '#fff';
+          ctx.font = '600 10px Pretendard, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('P', pod.x + 12, pod.y + 16);
+        }
+      });
+
+      // Phase indicator
+      const phaseTexts = [
+        'Phase 0: 초기 상태',
+        'Phase 1: 온프렘 노드 채우기',
+        'Phase 2: 온프렘 가득 참! Karpenter 트리거',
+        'Phase 3: 클라우드 노드 확장',
+        'Phase 4: 클라우드에 Pod 배포',
+        'Phase 5: 스케일다운 (클라우드 먼저 제거)'
+      ];
+      ctx.fillStyle = Colors.accent;
+      ctx.font = '600 13px Pretendard, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(phaseTexts[burstPhase] || '', 50, 445);
+
+      // Deletion cost annotation
+      if (burstPhase >= 4) {
+        ctx.fillStyle = Colors.yellow;
+        ctx.font = '500 11px Pretendard, sans-serif';
+        ctx.fillText('온프렘 Pod: deletion-cost=1000  |  클라우드 Pod: deletion-cost=-100', 400, 445);
+      }
+
+      // Animation logic
+      if (burstPlaying) {
+        burstTime++;
+
+        if (burstPhase === 1 && burstTime % 10 === 0) {
+          const nextPod = burstPods.find(p => !p.visible && p.type === 'onprem');
+          if (nextPod) {
+            nextPod.visible = true;
+          } else {
+            burstPhase = 2;
+            burstTime = 0;
+          }
+        }
+
+        if (burstPhase === 2 && burstTime > 60) {
+          burstPhase = 3;
+          burstTime = 0;
+        }
+
+        if (burstPhase === 3 && burstTime % 30 === 0) {
+          if (burstCloudNodes.length < 4) {
+            burstCloudNodes.push({ visible: true, alpha: 0 });
+          }
+          burstCloudNodes.forEach(n => {
+            if (n.alpha < 1) n.alpha = Math.min(1, (n.alpha || 0) + 0.1);
+          });
+          if (burstCloudNodes.length >= 2 && burstCloudNodes[1].alpha >= 1) {
+            burstPhase = 4;
+            burstTime = 0;
+          }
+        }
+
+        if (burstPhase === 4 && burstTime % 15 === 0) {
+          const cloudPodCount = burstPods.filter(p => p.type === 'cloud' && p.visible).length;
+          if (cloudPodCount < 8) {
+            const nodeIdx = Math.floor(cloudPodCount / 4);
+            const podIdx = cloudPodCount % 4;
+            burstPods.push({
+              x: 610 + (nodeIdx % 2) * 240 + podIdx * 30,
+              y: 100 + Math.floor(nodeIdx / 2) * 180 + 30,
+              type: 'cloud',
+              visible: true
+            });
+          } else if (burstTime > 120) {
+            burstPhase = 5;
+            burstTime = 0;
+          }
+        }
+
+        if (burstPhase === 5 && burstTime % 20 === 0) {
+          const cloudPod = burstPods.filter(p => p.type === 'cloud' && p.visible).pop();
+          if (cloudPod) {
+            cloudPod.visible = false;
+          } else {
+            const lastCloudNode = burstCloudNodes.filter(n => n.visible).pop();
+            if (lastCloudNode) {
+              lastCloudNode.visible = false;
+            } else {
+              burstPlaying = false;
+            }
+          }
+        }
+      }
+
+      burstAnimId = requestAnimationFrame(draw);
+    }
+
+    draw();
+
+    document.getElementById('btn-burst-play').onclick = () => {
+      if (!burstPlaying) {
+        if (burstPhase === 0) burstPhase = 1;
+        burstPlaying = true;
+        document.getElementById('btn-burst-play').textContent = 'Pause';
+      } else {
+        burstPlaying = false;
+        document.getElementById('btn-burst-play').textContent = 'Play';
+      }
+    };
+
+    document.getElementById('btn-burst-reset').onclick = () => {
+      burstPlaying = false;
+      burstPhase = 0;
+      burstTime = 0;
+      burstPods = [];
+      burstCloudNodes = [];
+      for (let i = 0; i < 4; i++) {
+        for (let j = 0; j < 4; j++) {
+          burstPods.push({
+            x: 60 + (i % 2) * 150 + j * 30,
+            y: 100 + Math.floor(i / 2) * 140 + 30,
+            type: 'onprem',
+            visible: false,
+            nodeIdx: i
+          });
+        }
+      }
+      document.getElementById('btn-burst-play').textContent = 'Play';
+    };
+  }
+
+  // ============================================================
+  // Slide 7: Agent Architecture Canvas
+  // ============================================================
+  let agentAnimId = null;
+  let agentPlaying = false;
+  let agentParticles = [];
+
+  function initAgentArchCanvas() {
+    const c = initCanvas('agent-canvas', 1100, 420);
+    if (!c) return;
+
+    agentParticles = [];
+    agentPlaying = false;
+
+    function draw() {
+      const { ctx } = c;
+      ctx.clearRect(0, 0, 1100, 420);
+
+      // On-prem zone
+      ctx.fillStyle = '#1a2636';
+      ctx.fillRect(20, 20, 280, 380);
+      ctx.strokeStyle = Colors.green;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(20, 20, 280, 380);
+
+      ctx.fillStyle = Colors.green;
+      ctx.font = '600 13px Pretendard, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('온프레미스', 160, 45);
+
+      // On-prem components
+      drawRoundRect(ctx, 40, 70, 240, 70, 8, Colors.green + '33', Colors.green);
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 12px Pretendard, sans-serif';
+      ctx.fillText('GPU Nodes (EKS Hybrid)', 160, 100);
+      ctx.font = '400 11px Pretendard, sans-serif';
+      ctx.fillStyle = Colors.textSec;
+      ctx.fillText('Data Processing / Embeddings', 160, 120);
+
+      drawRoundRect(ctx, 40, 160, 240, 70, 8, Colors.cyan + '33', Colors.cyan);
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 12px Pretendard, sans-serif';
+      ctx.fillText('Application Pods', 160, 190);
+      ctx.font = '400 11px Pretendard, sans-serif';
+      ctx.fillStyle = Colors.textSec;
+      ctx.fillText('Agent Runtime / API', 160, 210);
+
+      drawRoundRect(ctx, 40, 250, 240, 70, 8, Colors.orange + '33', Colors.orange);
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 12px Pretendard, sans-serif';
+      ctx.fillText('On-prem Database', 160, 280);
+      ctx.font = '400 11px Pretendard, sans-serif';
+      ctx.fillStyle = Colors.textSec;
+      ctx.fillText('Sensitive Data Storage', 160, 300);
+
+      // VPC boundary
+      ctx.fillStyle = '#1e2235';
+      ctx.fillRect(320, 20, 80, 380);
+      ctx.strokeStyle = Colors.accent;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 4]);
+      ctx.strokeRect(320, 20, 80, 380);
+      ctx.setLineDash([]);
+
+      ctx.save();
+      ctx.translate(360, 210);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillStyle = Colors.accent;
+      ctx.font = '600 12px Pretendard, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('VPN / Direct Connect', 0, 5);
+      ctx.restore();
+
+      // AWS Cloud zone
+      ctx.fillStyle = '#1a2636';
+      ctx.fillRect(420, 20, 660, 380);
+      ctx.strokeStyle = Colors.blue;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(420, 20, 660, 380);
+
+      ctx.fillStyle = Colors.blue;
+      ctx.font = '600 13px Pretendard, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('AWS Cloud', 750, 45);
+
+      // AWS Services
+      const services = [
+        { x: 450, y: 70, w: 180, h: 60, name: 'Amazon Bedrock', sub: 'Claude, Nova, Llama', color: Colors.accentLt },
+        { x: 650, y: 70, w: 180, h: 60, name: 'Amazon SageMaker', sub: 'Custom Models', color: Colors.pink },
+        { x: 860, y: 70, w: 180, h: 60, name: 'Amazon Kendra', sub: 'Enterprise Search', color: Colors.cyan },
+        { x: 450, y: 150, w: 180, h: 60, name: 'Amazon OpenSearch', sub: 'Vector Search / RAG', color: Colors.yellow },
+        { x: 650, y: 150, w: 180, h: 60, name: 'Amazon ElastiCache', sub: 'Session / Cache', color: Colors.red },
+        { x: 860, y: 150, w: 180, h: 60, name: 'Amazon S3', sub: 'Model Artifacts', color: Colors.green },
+      ];
+
+      services.forEach(s => {
+        drawRoundRect(ctx, s.x, s.y, s.w, s.h, 8, s.color + '33', s.color);
+        ctx.fillStyle = Colors.textPri;
+        ctx.font = '600 11px Pretendard, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(s.name, s.x + s.w / 2, s.y + 25);
+        ctx.font = '400 10px Pretendard, sans-serif';
+        ctx.fillStyle = Colors.textSec;
+        ctx.fillText(s.sub, s.x + s.w / 2, s.y + 42);
+      });
+
+      // Pipeline
+      drawRoundRect(ctx, 450, 240, 590, 140, 8, Colors.accent + '22', Colors.accent);
+      ctx.fillStyle = Colors.accent;
+      ctx.font = '600 12px Pretendard, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('Agent Pipeline Flow', 470, 265);
+
+      // Pipeline steps
+      const steps = ['Request', 'RAG', 'LLM', 'Response'];
+      steps.forEach((step, i) => {
+        const x = 480 + i * 140;
+        drawRoundRect(ctx, x, 285, 110, 40, 6, Colors.surface, Colors.border);
+        ctx.fillStyle = Colors.textPri;
+        ctx.font = '500 11px Pretendard, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(step, x + 55, 310);
+
+        if (i < steps.length - 1) {
+          ctx.beginPath();
+          ctx.moveTo(x + 115, 305);
+          ctx.lineTo(x + 130, 305);
+          ctx.strokeStyle = Colors.textMuted;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(x + 130, 305);
+          ctx.lineTo(x + 125, 300);
+          ctx.lineTo(x + 125, 310);
+          ctx.closePath();
+          ctx.fillStyle = Colors.textMuted;
+          ctx.fill();
+        }
+      });
+
+      // Latency info
+      ctx.fillStyle = Colors.textMuted;
+      ctx.font = '400 10px Pretendard, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Latency: ~100-500ms (VPN/DX 경유)', 745, 365);
+
+      // Draw particles
+      agentParticles.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+      });
+
+      // Update particles
+      if (agentPlaying) {
+        agentParticles.forEach(p => {
+          p.x += p.vx;
+          if (p.x > 1050) {
+            p.x = 300;
+            p.vx = -p.vx;
+            p.color = Colors.green;
+          }
+          if (p.x < 300) {
+            p.x = 300;
+            p.vx = -p.vx;
+            p.color = Colors.blue;
+          }
+        });
+
+        if (Math.random() < 0.03) {
+          agentParticles.push({
+            x: 300,
+            y: 195 + (Math.random() - 0.5) * 30,
+            vx: 3,
+            color: Colors.blue
+          });
+        }
+
+        if (agentParticles.length > 20) {
+          agentParticles.shift();
+        }
+      }
+
+      agentAnimId = requestAnimationFrame(draw);
+    }
+
+    draw();
+
+    document.getElementById('btn-agent-play').onclick = () => {
+      agentPlaying = !agentPlaying;
+      document.getElementById('btn-agent-play').textContent = agentPlaying ? 'Pause' : 'Play';
+    };
+
+    document.getElementById('btn-agent-reset').onclick = () => {
+      agentPlaying = false;
+      agentParticles = [];
+      document.getElementById('btn-agent-play').textContent = 'Play';
+    };
+  }
+
+  // ============================================================
+  // Cleanup function
+  // ============================================================
+  function cleanupCanvases() {
+    if (gpuAnimId) cancelAnimationFrame(gpuAnimId);
+    if (burstAnimId) cancelAnimationFrame(burstAnimId);
+    if (agentAnimId) cancelAnimationFrame(agentAnimId);
+    gpuPlaying = false;
+    burstPlaying = false;
+    agentPlaying = false;
+  }
+
+  // ============================================================
+  // SlideFramework Init
+  // ============================================================
+  const deck = new SlideFramework({
+    footer: 'EKS Hybrid Nodes - Block 4: 고급 패턴 & 전략적 가치',
+    logoSrc: '../common/pptx-theme/images/logo_1.png',
+    presenterNotes: {
+      1: 'Block 4 시작. 실제 활용 패턴과 전략적 가치를 다룹니다.',
+      2: 'Taint/Toleration으로 워크로드 격리. eks.amazonaws.com/compute-type=hybrid NoSchedule이 핵심. 이 Taint가 있으면 해당 Toleration이 있는 Pod만 스케줄링됩니다.',
+      3: 'GPU는 온프렘, CPU 추론은 클라우드 패턴. 기존 GPU 투자를 활용하면서 추론/서빙은 클라우드의 탄력성을 활용합니다. 모델 아티팩트는 S3를 경유합니다.',
+      4: 'Cloud Bursting 애니메이션. 온프렘 노드가 가득 차면 Karpenter가 클라우드 노드를 자동 프로비저닝합니다. NodePool 설정으로 클라우드 노드의 스펙과 limit을 지정할 수 있습니다.',
+      5: 'Pod Deletion Cost 전략. 스케일다운 시 deletion-cost가 낮은 Pod가 먼저 제거됩니다. 온프렘 Pod는 높은 값(1000), 클라우드 Pod는 낮은 값(-100)을 설정하면 클라우드 리소스가 먼저 반환됩니다.',
+      6: '규제 대응 핵심: 데이터는 온프렘 유지, Control Plane만 AWS. 금융권 클라우드 이용 가이드라인 충족. IAM Roles Anywhere의 x509Subject/CN으로 노드별 감사 추적이 가능합니다.',
+      7: 'AWS Managed Services 연계가 Hybrid Nodes의 핵심 가치입니다. 온프렘 인프라에서 Bedrock, SageMaker, Kendra 등을 직접 호출할 수 있습니다. VPN/DX를 통해 Private 연결로 보안을 유지합니다.',
+      8: 'Before/After 비교. 온프렘 단독으로 Agent를 구축하려면 수개월이 걸리지만, EKS Hybrid + AWS 서비스를 활용하면 수주 내 PoC가 가능합니다. 인프라 구축 시간을 서비스 개발에 집중할 수 있습니다.',
+      9: 'vCPU당 $0.01/hr 추가 비용. 기존 하드웨어를 최대한 활용하면서 AWS Managed Services의 가치를 더하는 접근입니다. CP 관리 비용(etcd 백업, 인증서 갱신, HA)이 0원입니다.',
+      10: 'Q&A 대응 포인트:\n\n1. 규제 적합성: 데이터는 온프렘 유지, CP만 AWS → 금융감독원 클라우드 이용 가이드라인 충족. 데이터 주권 보장.\n\n2. IaaS 이상의 가치: Hybrid Nodes = 온프렘 인프라에 AWS Managed Services를 연결하는 게이트웨이. Bedrock, SageMaker, Kendra 등 즉시 활용 가능.\n\n3. 최신 AI 모델 접근: Bedrock을 통해 Claude, Nova, Llama 등 최신 모델 API 호출. 모델 관리/업데이트는 AWS가 담당.\n\n4. Agent 개발 가속화: 온프렘 단독 대비 → EKS Hybrid 경유 시 AWS AI 서비스 직접 연동으로 개발 기간 대폭 단축. 인프라 구축 없이 API 호출만으로 Agent 파이프라인 구성.\n\n5. 비용 효율성: 기존 HW 투자 보존 + 필요 시에만 클라우드 확장. CapEx 유지, OpEx 최적화.'
+    },
+    onSlideChange: (index, slide) => {
+      cleanupCanvases();
+      if (index === 2) setTimeout(initGpuCpuCanvas, 100);
+      if (index === 3) setTimeout(initCloudBurstingCanvas, 100);
+      if (index === 6) setTimeout(initAgentArchCanvas, 100);
+    }
+  });
+
+  // Initialize first canvas if starting on that slide
+  setTimeout(() => {
+    const currentSlide = document.querySelector('.slide.active');
+    if (currentSlide) {
+      const slideId = currentSlide.id;
+      if (slideId === 'slide-3') initGpuCpuCanvas();
+      if (slideId === 'slide-4') initCloudBurstingCanvas();
+      if (slideId === 'slide-7') initAgentArchCanvas();
+    }
+  }, 200);
+</script>
+</body>
+</html>

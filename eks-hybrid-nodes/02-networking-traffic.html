@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Block 2: 네트워킹 &amp; 트래픽 패턴</title>
+  <link rel="icon" type="image/png" href="../favicon.png">
+  <link rel="stylesheet" href="../common/theme.css">
+  <link rel="stylesheet" href="../common/theme-override.css">
+  <style>
+    /* SVG Architecture Styles */
+    .svg-container {
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .svg-container svg {
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
+    .svg-legend {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .legend-item {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      padding: 4px 10px;
+      border-radius: 6px;
+      transition: all var(--transition-fast);
+    }
+    .legend-item:hover {
+      background: var(--bg-tertiary);
+    }
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* Gradient title */
+    .gradient-title {
+      font-size: 3rem;
+      background: linear-gradient(135deg, var(--accent-light), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Diagram container */
+    .diagram-container {
+      display: flex;
+      justify-content: center;
+      margin: 0.5rem 0;
+    }
+    .diagram-container img {
+      max-width: 85%;
+      border-radius: 12px;
+    }
+
+    /* Key points list */
+    .key-points {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+    .key-point {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 0.5rem 0.75rem;
+      background: var(--bg-card);
+      border-radius: 8px;
+      border-left: 3px solid var(--accent);
+    }
+    .key-point-icon {
+      color: var(--accent);
+      font-weight: bold;
+      min-width: 20px;
+    }
+
+    /* Firewall table styles */
+    .firewall-table {
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+    .firewall-table th {
+      background: var(--bg-tertiary);
+    }
+    .protocol-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+    }
+    .protocol-tcp { background: var(--blue-bg); color: var(--blue); }
+    .protocol-udp { background: var(--green-bg); color: var(--green); }
+
+    /* Endpoint cards */
+    .endpoint-section h3 {
+      margin-bottom: 0.5rem;
+    }
+    .endpoint-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.5rem;
+    }
+    .endpoint-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+    }
+    .endpoint-card code {
+      font-family: var(--font-mono);
+      color: var(--accent-light);
+      font-size: 0.8rem;
+    }
+
+    /* Note box */
+    .note-box {
+      margin-top: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--bg-card);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      border-left: 3px solid var(--accent);
+    }
+  </style>
+</head>
+<body>
+<div class="slide-deck">
+
+  <!-- Slide 1: Block 2 Title -->
+  <div class="slide title-slide">
+    <h1 class="gradient-title">네트워킹 심층 분석</h1>
+    <p class="subtitle">CIDR 설계부터 6가지 트래픽 패턴까지</p>
+    <div class="meta">Block 2 | 25분 | 12 Slides</div>
+  </div>
+
+  <!-- Slide 2: 네트워크 전제 조건 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>네트워크 전제 조건</h2>
+      <p class="subtitle">EKS Hybrid Nodes를 위한 네트워크 아키텍처 요구사항</p>
+    </div>
+    <div class="slide-body">
+      <div class="diagram-container">
+        <img src="diagrams/hybrid-prereq-diagram.png" alt="Hybrid Nodes Prerequisites Diagram">
+      </div>
+      <div class="key-points">
+        <div class="key-point">
+          <span class="key-point-icon">1</span>
+          <span>VPC에 EKS Control Plane ENI가 배치됨</span>
+        </div>
+        <div class="key-point">
+          <span class="key-point-icon">2</span>
+          <span>Transit Gateway 또는 Virtual Private Gateway로 온프렘 연결</span>
+        </div>
+        <div class="key-point">
+          <span class="key-point-icon">3</span>
+          <span>Remote Node/Pod CIDR을 클러스터 생성 시 지정</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 3: CIDR 설계 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>CIDR 설계 체크리스트</h2>
+      <p class="subtitle">IP 충돌 없는 하이브리드 네트워크 설계</p>
+    </div>
+    <div class="slide-body">
+      <ul class="checklist">
+        <li onclick="this.classList.toggle('checked')">
+          <span class="check"></span>
+          <span><strong>Remote Node CIDR:</strong> 온프렘 노드 IP 범위 (예: 10.80.0.0/16)</span>
+        </li>
+        <li onclick="this.classList.toggle('checked')">
+          <span class="check"></span>
+          <span><strong>Remote Pod CIDR:</strong> 온프렘 파드 IP 범위 (예: 10.85.0.0/16)</span>
+        </li>
+        <li onclick="this.classList.toggle('checked')">
+          <span class="check"></span>
+          <span>VPC CIDR과 겹치지 않을 것</span>
+        </li>
+        <li onclick="this.classList.toggle('checked')">
+          <span class="check"></span>
+          <span>Service CIDR과 겹치지 않을 것</span>
+        </li>
+        <li onclick="this.classList.toggle('checked')">
+          <span class="check"></span>
+          <span>RFC-1918 범위 내에 있을 것 (10.x, 172.16-31.x, 192.168.x)</span>
+        </li>
+        <li onclick="this.classList.toggle('checked')">
+          <span class="check"></span>
+          <span>최대 15개 CIDR 블록 제한 준수</span>
+        </li>
+      </ul>
+      <div class="callout callout-info" style="margin-top:1rem;">
+        <strong>권장사항:</strong> Pod CIDR은 라우팅 가능하게 설계 (BGP 사용) — Admission Webhook 등 CP→Pod 통신에 필수
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 4: Pattern 1 - Kubelet → Control Plane -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>Pattern 1: Kubelet → EKS Control Plane</h2>
+      <p class="subtitle">Kubelet이 API 서버에 연결하는 경로</p>
+    </div>
+    <div class="slide-body">
+      <div class="svg-container">
+        <svg viewBox="0 0 1100 420" xmlns="http://www.w3.org/2000/svg">
+          <!-- Background -->
+          <rect width="1100" height="420" fill="#0d1117"/>
+
+          <!-- AWS Cloud Region -->
+          <rect x="30" y="20" width="480" height="380" rx="12" fill="#1e2140" stroke="#6c5ce7" stroke-width="2"/>
+          <text x="50" y="50" fill="#a29bfe" font-size="14" font-weight="600">AWS Cloud Region</text>
+
+          <!-- VPC -->
+          <rect x="50" y="70" width="440" height="160" rx="8" fill="none" stroke="#74b9ff" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <text x="70" y="95" fill="#74b9ff" font-size="12">VPC (10.0.0.0/16)</text>
+
+          <!-- EKS Control Plane -->
+          <rect x="70" y="110" width="200" height="100" rx="6" fill="#1a1a3e" stroke="#74b9ff" stroke-width="1.5"/>
+          <text x="120" y="135" fill="#74b9ff" font-size="11" font-weight="600">EKS Control Plane</text>
+          <rect x="85" y="150" width="55" height="30" rx="4" fill="#232740" stroke="#5b6abf"/>
+          <text x="95" y="170" fill="#e8eaf0" font-size="9">API Server</text>
+          <rect x="150" y="150" width="35" height="30" rx="4" fill="#232740" stroke="#5b6abf"/>
+          <text x="155" y="170" fill="#e8eaf0" font-size="9">etcd</text>
+          <rect x="195" y="150" width="55" height="30" rx="4" fill="#232740" stroke="#5b6abf"/>
+          <text x="200" y="170" fill="#e8eaf0" font-size="9">Controller</text>
+
+          <!-- CP ENI -->
+          <rect x="300" y="130" width="80" height="50" rx="4" fill="#232740" stroke="#74b9ff"/>
+          <text x="315" y="160" fill="#74b9ff" font-size="10">CP ENI</text>
+
+          <!-- Public Endpoint -->
+          <rect x="70" y="250" width="120" height="40" rx="4" fill="#232740" stroke="#f39c12"/>
+          <text x="82" y="275" fill="#f39c12" font-size="10">Public Endpoint</text>
+
+          <!-- Internet Gateway -->
+          <rect x="220" y="310" width="100" height="40" rx="4" fill="#232740" stroke="#f39c12"/>
+          <text x="230" y="335" fill="#f39c12" font-size="10">Internet GW</text>
+
+          <!-- VPC Router -->
+          <rect x="350" y="310" width="80" height="40" rx="4" fill="#232740" stroke="#74b9ff"/>
+          <text x="358" y="335" fill="#74b9ff" font-size="10">VPC Router</text>
+
+          <!-- Transit Gateway -->
+          <rect x="350" y="250" width="120" height="40" rx="4" fill="#232740" stroke="#00b894"/>
+          <text x="358" y="275" fill="#00b894" font-size="10">Transit Gateway</text>
+
+          <!-- VPN/DX Tunnel -->
+          <rect x="520" y="180" width="60" height="60" rx="4" fill="#1a2e1a" stroke="#00b894" stroke-dasharray="4,2"/>
+          <text x="528" y="205" fill="#00b894" font-size="9">VPN</text>
+          <text x="530" y="220" fill="#00b894" font-size="9">/DX</text>
+
+          <!-- On-Premises DC -->
+          <rect x="600" y="20" width="470" height="380" rx="12" fill="#1a2e1a" stroke="#00b894" stroke-width="2"/>
+          <text x="620" y="50" fill="#00b894" font-size="14" font-weight="600">On-Premises Data Center</text>
+
+          <!-- On-prem Router -->
+          <rect x="620" y="180" width="80" height="50" rx="4" fill="#232740" stroke="#00b894"/>
+          <text x="630" y="210" fill="#00b894" font-size="10">Router</text>
+
+          <!-- Hybrid Node -->
+          <rect x="750" y="100" width="300" height="200" rx="8" fill="#0d1117" stroke="#00b894" stroke-width="1.5"/>
+          <text x="770" y="130" fill="#00b894" font-size="12" font-weight="600">Hybrid Node</text>
+
+          <!-- Kubelet -->
+          <rect x="780" y="150" width="100" height="50" rx="4" fill="#232740" stroke="#00cec9"/>
+          <text x="805" y="180" fill="#00cec9" font-size="11">kubelet</text>
+
+          <!-- containerd -->
+          <rect x="900" y="150" width="100" height="50" rx="4" fill="#232740" stroke="#6b7194"/>
+          <text x="915" y="180" fill="#9ba1b8" font-size="11">containerd</text>
+
+          <!-- Pod -->
+          <rect x="830" y="230" width="80" height="40" rx="4" fill="#232740" stroke="#a29bfe"/>
+          <text x="855" y="255" fill="#a29bfe" font-size="10">Pod</text>
+
+          <!-- Internet cloud icon -->
+          <ellipse cx="270" cy="390" rx="40" ry="20" fill="none" stroke="#f39c12" stroke-dasharray="3,2"/>
+          <text x="245" y="395" fill="#f39c12" font-size="10">Internet</text>
+
+          <!-- PUBLIC PATH (orange) -->
+          <path id="public-path" d="M 780 175 L 700 205 L 580 210 L 550 390 L 310 390 L 270 330 L 190 290 L 130 210 L 130 180"
+                fill="none" stroke="#f39c12" stroke-width="2.5" stroke-dasharray="8,4" opacity="0.6"/>
+          <g id="public-dot">
+            <circle cx="0" cy="0" r="8" fill="#f39c12" stroke="#fff" stroke-width="2"/>
+            <circle cx="0" cy="0" r="14" fill="#f39c12" opacity="0.3">
+              <animate attributeName="r" values="12;18;12" dur="1.5s" repeatCount="indefinite"/>
+            </circle>
+            <animateMotion dur="6s" repeatCount="indefinite" calcMode="linear">
+              <mpath href="#public-path"/>
+            </animateMotion>
+          </g>
+          <g id="public-dot-2" opacity="0.5">
+            <circle cx="0" cy="0" r="5" fill="#f39c12" stroke="#fff" stroke-width="1.5"/>
+            <animateMotion dur="6s" begin="3s" repeatCount="indefinite" calcMode="linear">
+              <mpath href="#public-path"/>
+            </animateMotion>
+          </g>
+
+          <!-- PRIVATE PATH (blue) -->
+          <path id="private-path" d="M 780 175 L 700 205 L 620 205 L 550 210 L 470 270 L 410 270 L 380 180 L 340 155 L 270 155 L 170 155"
+                fill="none" stroke="#74b9ff" stroke-width="2.5" stroke-dasharray="8,4" opacity="0.6"/>
+          <g id="private-dot">
+            <circle cx="0" cy="0" r="8" fill="#74b9ff" stroke="#fff" stroke-width="2"/>
+            <circle cx="0" cy="0" r="14" fill="#74b9ff" opacity="0.3">
+              <animate attributeName="r" values="12;18;12" dur="1.5s" repeatCount="indefinite"/>
+            </circle>
+            <animateMotion dur="5s" repeatCount="indefinite" calcMode="linear">
+              <mpath href="#private-path"/>
+            </animateMotion>
+          </g>
+          <g id="private-dot-2" opacity="0.5">
+            <circle cx="0" cy="0" r="5" fill="#74b9ff" stroke="#fff" stroke-width="1.5"/>
+            <animateMotion dur="5s" begin="2.5s" repeatCount="indefinite" calcMode="linear">
+              <mpath href="#private-path"/>
+            </animateMotion>
+          </g>
+        </svg>
+      </div>
+      <div class="svg-legend">
+        <div class="legend-item" onclick="togglePath('public', this)">
+          <span class="legend-dot" style="background:#f39c12;"></span>
+          Public Endpoint Route
+        </div>
+        <div class="legend-item" onclick="togglePath('private', this)">
+          <span class="legend-dot" style="background:#74b9ff;"></span>
+          Private Endpoint Route
+        </div>
+      </div>
+      <div class="note-box">
+        <strong>권장:</strong> 프로덕션 환경에서는 Private 엔드포인트 사용 권장
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 5: Pattern 2 - CP → Kubelet -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>Pattern 2: Control Plane → Kubelet</h2>
+      <p class="subtitle">API Server가 Kubelet에 연결 (port 10250)</p>
+    </div>
+    <div class="slide-body">
+      <div class="svg-container">
+        <svg viewBox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg">
+          <!-- Background -->
+          <rect width="1100" height="400" fill="#0d1117"/>
+
+          <!-- AWS Cloud Region -->
+          <rect x="30" y="20" width="480" height="360" rx="12" fill="#1e2140" stroke="#6c5ce7" stroke-width="2"/>
+          <text x="50" y="50" fill="#a29bfe" font-size="14" font-weight="600">AWS Cloud Region</text>
+
+          <!-- VPC -->
+          <rect x="50" y="70" width="440" height="180" rx="8" fill="none" stroke="#74b9ff" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <text x="70" y="95" fill="#74b9ff" font-size="12">VPC</text>
+
+          <!-- EKS Control Plane -->
+          <rect x="70" y="110" width="200" height="100" rx="6" fill="#1a1a3e" stroke="#74b9ff" stroke-width="1.5"/>
+          <text x="120" y="135" fill="#74b9ff" font-size="11" font-weight="600">EKS Control Plane</text>
+          <rect x="85" y="150" width="55" height="30" rx="4" fill="#232740" stroke="#e17055"/>
+          <text x="95" y="170" fill="#e17055" font-size="9">API Server</text>
+          <rect x="150" y="150" width="35" height="30" rx="4" fill="#232740" stroke="#5b6abf"/>
+          <text x="155" y="170" fill="#e8eaf0" font-size="9">etcd</text>
+          <rect x="195" y="150" width="55" height="30" rx="4" fill="#232740" stroke="#5b6abf"/>
+          <text x="200" y="170" fill="#e8eaf0" font-size="9">Controller</text>
+
+          <!-- CP ENI -->
+          <rect x="300" y="130" width="80" height="50" rx="4" fill="#232740" stroke="#e17055"/>
+          <text x="315" y="160" fill="#e17055" font-size="10">CP ENI</text>
+
+          <!-- VPC Router -->
+          <rect x="350" y="270" width="80" height="40" rx="4" fill="#232740" stroke="#74b9ff"/>
+          <text x="358" y="295" fill="#74b9ff" font-size="10">VPC Router</text>
+
+          <!-- Transit Gateway -->
+          <rect x="200" y="270" width="120" height="40" rx="4" fill="#232740" stroke="#00b894"/>
+          <text x="208" y="295" fill="#00b894" font-size="10">Transit Gateway</text>
+
+          <!-- VPN/DX Tunnel -->
+          <rect x="520" y="170" width="60" height="60" rx="4" fill="#1a2e1a" stroke="#00b894" stroke-dasharray="4,2"/>
+          <text x="528" y="195" fill="#00b894" font-size="9">VPN</text>
+          <text x="530" y="210" fill="#00b894" font-size="9">/DX</text>
+
+          <!-- On-Premises DC -->
+          <rect x="600" y="20" width="470" height="360" rx="12" fill="#1a2e1a" stroke="#00b894" stroke-width="2"/>
+          <text x="620" y="50" fill="#00b894" font-size="14" font-weight="600">On-Premises Data Center</text>
+
+          <!-- On-prem Router -->
+          <rect x="620" y="170" width="80" height="50" rx="4" fill="#232740" stroke="#00b894"/>
+          <text x="630" y="200" fill="#00b894" font-size="10">Router</text>
+
+          <!-- Hybrid Node -->
+          <rect x="750" y="90" width="300" height="200" rx="8" fill="#0d1117" stroke="#00b894" stroke-width="1.5"/>
+          <text x="770" y="120" fill="#00b894" font-size="12" font-weight="600">Hybrid Node</text>
+
+          <!-- Kubelet with port -->
+          <rect x="780" y="140" width="120" height="60" rx="4" fill="#232740" stroke="#e17055" stroke-width="2"/>
+          <text x="810" y="165" fill="#e17055" font-size="11" font-weight="600">kubelet</text>
+          <text x="805" y="185" fill="#e17055" font-size="9">:10250</text>
+
+          <!-- containerd -->
+          <rect x="920" y="150" width="100" height="50" rx="4" fill="#232740" stroke="#6b7194"/>
+          <text x="935" y="180" fill="#9ba1b8" font-size="11">containerd</text>
+
+          <!-- Pod -->
+          <rect x="830" y="220" width="80" height="40" rx="4" fill="#232740" stroke="#a29bfe"/>
+          <text x="855" y="245" fill="#a29bfe" font-size="10">Pod</text>
+
+          <!-- CP → Kubelet PATH (coral) -->
+          <path id="cp-kubelet-path" d="M 140 165 L 300 155 L 340 155 L 390 200 L 390 290 L 330 290 L 260 290 L 260 230 L 520 200 L 550 200 L 620 195 L 700 195 L 780 170"
+                fill="none" stroke="#e17055" stroke-width="2.5" stroke-dasharray="8,4" opacity="0.6"/>
+          <g id="cp-kubelet-dot">
+            <circle cx="0" cy="0" r="8" fill="#e17055" stroke="#fff" stroke-width="2"/>
+            <circle cx="0" cy="0" r="14" fill="#e17055" opacity="0.3">
+              <animate attributeName="r" values="12;18;12" dur="1.5s" repeatCount="indefinite"/>
+            </circle>
+            <animateMotion dur="5s" repeatCount="indefinite" calcMode="linear">
+              <mpath href="#cp-kubelet-path"/>
+            </animateMotion>
+          </g>
+          <g id="cp-kubelet-dot-2" opacity="0.5">
+            <circle cx="0" cy="0" r="5" fill="#e17055" stroke="#fff" stroke-width="1.5"/>
+            <animateMotion dur="5s" begin="2.5s" repeatCount="indefinite" calcMode="linear">
+              <mpath href="#cp-kubelet-path"/>
+            </animateMotion>
+          </g>
+        </svg>
+      </div>
+      <div class="svg-legend">
+        <div class="legend-item">
+          <span class="legend-dot" style="background:#e17055;"></span>
+          CP → Kubelet (port 10250)
+        </div>
+      </div>
+      <div class="note-box">
+        <strong>용도:</strong> Webhook 호출, kubectl exec/logs 명령 처리
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 6: Pattern 3 - Pod → CP -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>Pattern 3: Pod → EKS Control Plane</h2>
+      <p class="subtitle">Pod가 CoreDNS를 경유하여 API Server에 접근</p>
+    </div>
+    <div class="slide-body">
+      <div class="svg-container">
+        <svg viewBox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg">
+          <!-- Background -->
+          <rect width="1100" height="400" fill="#0d1117"/>
+
+          <!-- AWS Cloud Region -->
+          <rect x="30" y="20" width="480" height="360" rx="12" fill="#1e2140" stroke="#6c5ce7" stroke-width="2"/>
+          <text x="50" y="50" fill="#a29bfe" font-size="14" font-weight="600">AWS Cloud Region</text>
+
+          <!-- VPC -->
+          <rect x="50" y="70" width="440" height="180" rx="8" fill="none" stroke="#74b9ff" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <text x="70" y="95" fill="#74b9ff" font-size="12">VPC</text>
+
+          <!-- EKS Control Plane -->
+          <rect x="70" y="110" width="200" height="100" rx="6" fill="#1a1a3e" stroke="#e17055" stroke-width="1.5"/>
+          <text x="120" y="135" fill="#e17055" font-size="11" font-weight="600">EKS Control Plane</text>
+          <rect x="85" y="150" width="55" height="30" rx="4" fill="#232740" stroke="#e17055"/>
+          <text x="95" y="170" fill="#e17055" font-size="9">API Server</text>
+          <rect x="150" y="150" width="35" height="30" rx="4" fill="#232740" stroke="#5b6abf"/>
+          <text x="155" y="170" fill="#e8eaf0" font-size="9">etcd</text>
+          <rect x="195" y="150" width="55" height="30" rx="4" fill="#232740" stroke="#5b6abf"/>
+          <text x="200" y="170" fill="#e8eaf0" font-size="9">Controller</text>
+
+          <!-- CP ENI -->
+          <rect x="300" y="130" width="80" height="50" rx="4" fill="#232740" stroke="#e17055"/>
+          <text x="315" y="160" fill="#e17055" font-size="10">CP ENI</text>
+
+          <!-- VPC Router -->
+          <rect x="350" y="270" width="80" height="40" rx="4" fill="#232740" stroke="#74b9ff"/>
+          <text x="358" y="295" fill="#74b9ff" font-size="10">VPC Router</text>
+
+          <!-- Transit Gateway -->
+          <rect x="200" y="270" width="120" height="40" rx="4" fill="#232740" stroke="#00b894"/>
+          <text x="208" y="295" fill="#00b894" font-size="10">Transit Gateway</text>
+
+          <!-- VPN/DX Tunnel -->
+          <rect x="520" y="170" width="60" height="60" rx="4" fill="#1a2e1a" stroke="#00b894" stroke-dasharray="4,2"/>
+          <text x="528" y="195" fill="#00b894" font-size="9">VPN</text>
+          <text x="530" y="210" fill="#00b894" font-size="9">/DX</text>
+
+          <!-- On-Premises DC -->
+          <rect x="600" y="20" width="470" height="360" rx="12" fill="#1a2e1a" stroke="#00b894" stroke-width="2"/>
+          <text x="620" y="50" fill="#00b894" font-size="14" font-weight="600">On-Premises Data Center</text>
+
+          <!-- On-prem Router -->
+          <rect x="620" y="170" width="80" height="50" rx="4" fill="#232740" stroke="#00b894"/>
+          <text x="630" y="200" fill="#00b894" font-size="10">Router</text>
+
+          <!-- Hybrid Node -->
+          <rect x="750" y="70" width="300" height="240" rx="8" fill="#0d1117" stroke="#00b894" stroke-width="1.5"/>
+          <text x="770" y="100" fill="#00b894" font-size="12" font-weight="600">Hybrid Node</text>
+
+          <!-- Kubelet -->
+          <rect x="780" y="120" width="80" height="40" rx="4" fill="#232740" stroke="#00cec9"/>
+          <text x="798" y="145" fill="#00cec9" font-size="10">kubelet</text>
+
+          <!-- CNI SNAT -->
+          <rect x="880" y="120" width="80" height="40" rx="4" fill="#232740" stroke="#e17055"/>
+          <text x="888" y="138" fill="#e17055" font-size="9">Cilium CNI</text>
+          <text x="896" y="152" fill="#e17055" font-size="8">(SNAT)</text>
+
+          <!-- Pod -->
+          <rect x="830" y="200" width="100" height="60" rx="4" fill="#232740" stroke="#e17055" stroke-width="2"/>
+          <text x="862" y="225" fill="#e17055" font-size="11" font-weight="600">Pod</text>
+          <text x="845" y="245" fill="#9ba1b8" font-size="8">10.85.1.15</text>
+
+          <!-- Node IP label -->
+          <text x="770" y="290" fill="#00b894" font-size="9">Node IP: 10.80.1.10</text>
+
+          <!-- Pod → CP PATH (coral) -->
+          <path id="pod-cp-path" d="M 880 230 L 920 140 L 920 120 L 860 120 L 820 140 L 780 140 L 700 195 L 620 195 L 550 200 L 520 200 L 390 290 L 330 290 L 260 290 L 260 230 L 340 165 L 300 155 L 140 165"
+                fill="none" stroke="#e17055" stroke-width="2.5" stroke-dasharray="8,4" opacity="0.6"/>
+          <g id="pod-cp-dot">
+            <circle cx="0" cy="0" r="8" fill="#e17055" stroke="#fff" stroke-width="2"/>
+            <circle cx="0" cy="0" r="14" fill="#e17055" opacity="0.3">
+              <animate attributeName="r" values="12;18;12" dur="1.5s" repeatCount="indefinite"/>
+            </circle>
+            <animateMotion dur="6s" repeatCount="indefinite" calcMode="linear">
+              <mpath href="#pod-cp-path"/>
+            </animateMotion>
+          </g>
+          <g id="pod-cp-dot-2" opacity="0.5">
+            <circle cx="0" cy="0" r="5" fill="#e17055" stroke="#fff" stroke-width="1.5"/>
+            <animateMotion dur="6s" begin="3s" repeatCount="indefinite" calcMode="linear">
+              <mpath href="#pod-cp-path"/>
+            </animateMotion>
+          </g>
+        </svg>
+      </div>
+      <div class="svg-legend">
+        <div class="legend-item">
+          <span class="legend-dot" style="background:#e17055;"></span>
+          With CNI NAT (SNAT)
+        </div>
+      </div>
+      <div class="note-box">
+        <strong>CNI 동작:</strong> Pod IP (10.85.x.x)를 Node IP (10.80.x.x)로 SNAT 처리 후 전송
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 7: Pattern 4 - CP → Pod -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>Pattern 4: Control Plane → Pod (Webhooks)</h2>
+      <p class="subtitle">Admission Webhook 호출 — Routable Pod CIDR 필수</p>
+    </div>
+    <div class="slide-body">
+      <div class="svg-container">
+        <svg viewBox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg">
+          <!-- Background -->
+          <rect width="1100" height="400" fill="#0d1117"/>
+
+          <!-- AWS Cloud Region -->
+          <rect x="30" y="20" width="480" height="360" rx="12" fill="#1e2140" stroke="#6c5ce7" stroke-width="2"/>
+          <text x="50" y="50" fill="#a29bfe" font-size="14" font-weight="600">AWS Cloud Region</text>
+
+          <!-- VPC -->
+          <rect x="50" y="70" width="440" height="180" rx="8" fill="none" stroke="#74b9ff" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <text x="70" y="95" fill="#74b9ff" font-size="12">VPC</text>
+
+          <!-- EKS Control Plane -->
+          <rect x="70" y="110" width="200" height="100" rx="6" fill="#1a1a3e" stroke="#e17055" stroke-width="1.5"/>
+          <text x="120" y="135" fill="#e17055" font-size="11" font-weight="600">EKS Control Plane</text>
+          <rect x="85" y="150" width="55" height="30" rx="4" fill="#232740" stroke="#e17055"/>
+          <text x="95" y="170" fill="#e17055" font-size="9">API Server</text>
+          <rect x="150" y="150" width="35" height="30" rx="4" fill="#232740" stroke="#5b6abf"/>
+          <text x="155" y="170" fill="#e8eaf0" font-size="9">etcd</text>
+          <rect x="195" y="150" width="55" height="30" rx="4" fill="#232740" stroke="#5b6abf"/>
+          <text x="200" y="170" fill="#e8eaf0" font-size="9">Controller</text>
+
+          <!-- CP ENI -->
+          <rect x="300" y="130" width="80" height="50" rx="4" fill="#232740" stroke="#e17055"/>
+          <text x="315" y="160" fill="#e17055" font-size="10">CP ENI</text>
+
+          <!-- VPC Router -->
+          <rect x="350" y="270" width="80" height="40" rx="4" fill="#232740" stroke="#74b9ff"/>
+          <text x="358" y="295" fill="#74b9ff" font-size="10">VPC Router</text>
+
+          <!-- Transit Gateway -->
+          <rect x="200" y="270" width="120" height="40" rx="4" fill="#232740" stroke="#00b894"/>
+          <text x="208" y="295" fill="#00b894" font-size="10">Transit Gateway</text>
+
+          <!-- VPN/DX Tunnel -->
+          <rect x="520" y="170" width="60" height="60" rx="4" fill="#1a2e1a" stroke="#00b894" stroke-dasharray="4,2"/>
+          <text x="528" y="195" fill="#00b894" font-size="9">VPN</text>
+          <text x="530" y="210" fill="#00b894" font-size="9">/DX</text>
+
+          <!-- On-Premises DC -->
+          <rect x="600" y="20" width="470" height="360" rx="12" fill="#1a2e1a" stroke="#00b894" stroke-width="2"/>
+          <text x="620" y="50" fill="#00b894" font-size="14" font-weight="600">On-Premises Data Center</text>
+
+          <!-- On-prem Router -->
+          <rect x="620" y="170" width="80" height="50" rx="4" fill="#232740" stroke="#00b894"/>
+          <text x="630" y="200" fill="#00b894" font-size="10">Router</text>
+
+          <!-- Hybrid Node -->
+          <rect x="750" y="70" width="300" height="240" rx="8" fill="#0d1117" stroke="#00b894" stroke-width="1.5"/>
+          <text x="770" y="100" fill="#00b894" font-size="12" font-weight="600">Hybrid Node</text>
+
+          <!-- Kubelet -->
+          <rect x="780" y="120" width="80" height="40" rx="4" fill="#232740" stroke="#00cec9"/>
+          <text x="798" y="145" fill="#00cec9" font-size="10">kubelet</text>
+
+          <!-- CNI -->
+          <rect x="880" y="120" width="80" height="40" rx="4" fill="#232740" stroke="#a29bfe"/>
+          <text x="888" y="138" fill="#a29bfe" font-size="9">Cilium CNI</text>
+          <text x="892" y="152" fill="#a29bfe" font-size="8">(routing)</text>
+
+          <!-- Webhook Pod -->
+          <rect x="820" y="190" width="120" height="70" rx="4" fill="#232740" stroke="#e17055" stroke-width="2"/>
+          <text x="840" y="215" fill="#e17055" font-size="11" font-weight="600">Webhook Pod</text>
+          <text x="835" y="235" fill="#9ba1b8" font-size="8">validating-webhook</text>
+          <text x="850" y="250" fill="#9ba1b8" font-size="8">10.85.1.20:443</text>
+
+          <!-- CP → Pod PATH (coral) -->
+          <path id="cp-pod-path" d="M 140 165 L 300 155 L 340 155 L 390 200 L 390 290 L 330 290 L 260 290 L 260 230 L 520 200 L 550 200 L 620 195 L 700 195 L 750 195 L 780 160 L 880 160 L 920 160 L 920 190 L 880 225"
+                fill="none" stroke="#e17055" stroke-width="2.5" stroke-dasharray="8,4" opacity="0.6"/>
+          <g id="cp-pod-dot">
+            <circle cx="0" cy="0" r="8" fill="#e17055" stroke="#fff" stroke-width="2"/>
+            <circle cx="0" cy="0" r="14" fill="#e17055" opacity="0.3">
+              <animate attributeName="r" values="12;18;12" dur="1.5s" repeatCount="indefinite"/>
+            </circle>
+            <animateMotion dur="5.5s" repeatCount="indefinite" calcMode="linear">
+              <mpath href="#cp-pod-path"/>
+            </animateMotion>
+          </g>
+          <g id="cp-pod-dot-2" opacity="0.5">
+            <circle cx="0" cy="0" r="5" fill="#e17055" stroke="#fff" stroke-width="1.5"/>
+            <animateMotion dur="5.5s" begin="2.75s" repeatCount="indefinite" calcMode="linear">
+              <mpath href="#cp-pod-path"/>
+            </animateMotion>
+          </g>
+        </svg>
+      </div>
+      <div class="svg-legend">
+        <div class="legend-item">
+          <span class="legend-dot" style="background:#e17055;"></span>
+          CP → Webhook Pod
+        </div>
+      </div>
+      <div class="callout callout-warning" style="margin-top:0.75rem;">
+        <strong>중요:</strong> Remote Pod CIDR이 라우팅 가능해야만 동작합니다. BGP 또는 Static Route 필수.
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 8: Pattern 5 - Pod ↔ Pod (same DC) -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>Pattern 5: Pod ↔ Pod (Hybrid Nodes 간)</h2>
+      <p class="subtitle">VXLAN 캡슐화를 통한 노드 간 Pod 통신</p>
+    </div>
+    <div class="slide-body">
+      <div class="svg-container">
+        <svg viewBox="0 0 1100 420" xmlns="http://www.w3.org/2000/svg">
+          <!-- Background -->
+          <rect width="1100" height="420" fill="#0d1117"/>
+
+          <!-- On-Premises DC -->
+          <rect x="30" y="20" width="1040" height="380" rx="12" fill="#1a2e1a" stroke="#00b894" stroke-width="2"/>
+          <text x="50" y="50" fill="#00b894" font-size="14" font-weight="600">On-Premises Data Center</text>
+
+          <!-- Router -->
+          <rect x="500" y="310" width="100" height="50" rx="4" fill="#232740" stroke="#00b894"/>
+          <text x="518" y="340" fill="#00b894" font-size="11">Router</text>
+
+          <!-- Hybrid Node 1 -->
+          <rect x="60" y="80" width="400" height="200" rx="8" fill="#0d1117" stroke="#00b894" stroke-width="1.5"/>
+          <text x="80" y="110" fill="#00b894" font-size="12" font-weight="600">Hybrid Node 1</text>
+          <text x="280" y="110" fill="#6b7194" font-size="10">10.80.1.10</text>
+
+          <!-- Node 1: eth0 -->
+          <rect x="350" y="240" width="80" height="30" rx="4" fill="#232740" stroke="#6b7194"/>
+          <text x="375" y="260" fill="#9ba1b8" font-size="9">eth0</text>
+
+          <!-- Node 1: Cilium -->
+          <rect x="250" y="140" width="100" height="50" rx="4" fill="#232740" stroke="#a29bfe"/>
+          <text x="263" y="162" fill="#a29bfe" font-size="10">Cilium CNI</text>
+          <text x="260" y="178" fill="#a29bfe" font-size="8">VXLAN encap</text>
+
+          <!-- Node 1: Pod -->
+          <rect x="100" y="140" width="100" height="60" rx="4" fill="#232740" stroke="#a29bfe" stroke-width="2"/>
+          <text x="130" y="165" fill="#a29bfe" font-size="11" font-weight="600">Pod A</text>
+          <text x="115" y="185" fill="#9ba1b8" font-size="9">10.85.1.15</text>
+
+          <!-- Hybrid Node 2 -->
+          <rect x="640" y="80" width="400" height="200" rx="8" fill="#0d1117" stroke="#00b894" stroke-width="1.5"/>
+          <text x="660" y="110" fill="#00b894" font-size="12" font-weight="600">Hybrid Node 2</text>
+          <text x="860" y="110" fill="#6b7194" font-size="10">10.80.1.11</text>
+
+          <!-- Node 2: eth0 -->
+          <rect x="670" y="240" width="80" height="30" rx="4" fill="#232740" stroke="#6b7194"/>
+          <text x="695" y="260" fill="#9ba1b8" font-size="9">eth0</text>
+
+          <!-- Node 2: Cilium -->
+          <rect x="750" y="140" width="100" height="50" rx="4" fill="#232740" stroke="#74b9ff"/>
+          <text x="763" y="162" fill="#74b9ff" font-size="10">Cilium CNI</text>
+          <text x="763" y="178" fill="#74b9ff" font-size="8">VXLAN decap</text>
+
+          <!-- Node 2: Pod -->
+          <rect x="900" y="140" width="100" height="60" rx="4" fill="#232740" stroke="#74b9ff" stroke-width="2"/>
+          <text x="930" y="165" fill="#74b9ff" font-size="11" font-weight="600">Pod B</text>
+          <text x="915" y="185" fill="#9ba1b8" font-size="9">10.85.2.20</text>
+
+          <!-- VXLAN label -->
+          <rect x="480" y="200" width="140" height="40" rx="4" fill="#232740" stroke="#a29bfe" stroke-dasharray="4,2"/>
+          <text x="495" y="218" fill="#a29bfe" font-size="9">VXLAN Tunnel</text>
+          <text x="498" y="232" fill="#9ba1b8" font-size="8">port 8472/UDP</text>
+
+          <!-- Forward PATH (purple) -->
+          <path id="forward-path" d="M 200 170 L 250 165 L 300 165 L 350 180 L 390 255 L 450 300 L 550 335 L 650 300 L 710 255 L 750 180 L 800 165 L 850 165 L 900 170"
+                fill="none" stroke="#a29bfe" stroke-width="2.5" stroke-dasharray="8,4" opacity="0.6"/>
+          <g id="forward-dot">
+            <circle cx="0" cy="0" r="8" fill="#a29bfe" stroke="#fff" stroke-width="2"/>
+            <circle cx="0" cy="0" r="14" fill="#a29bfe" opacity="0.3">
+              <animate attributeName="r" values="12;18;12" dur="1.5s" repeatCount="indefinite"/>
+            </circle>
+            <animateMotion dur="4s" repeatCount="indefinite" calcMode="linear">
+              <mpath href="#forward-path"/>
+            </animateMotion>
+          </g>
+          <g id="forward-dot-2" opacity="0.5">
+            <circle cx="0" cy="0" r="5" fill="#a29bfe" stroke="#fff" stroke-width="1.5"/>
+            <animateMotion dur="4s" begin="2s" repeatCount="indefinite" calcMode="linear">
+              <mpath href="#forward-path"/>
+            </animateMotion>
+          </g>
+
+          <!-- Reverse PATH (blue) -->
+          <path id="reverse-path" d="M 900 170 L 850 165 L 800 165 L 750 180 L 710 255 L 650 300 L 550 335 L 450 300 L 390 255 L 350 180 L 300 165 L 250 165 L 200 170"
+                fill="none" stroke="#74b9ff" stroke-width="2.5" stroke-dasharray="8,4" opacity="0.6"/>
+          <g id="reverse-dot">
+            <circle cx="0" cy="0" r="8" fill="#74b9ff" stroke="#fff" stroke-width="2"/>
+            <circle cx="0" cy="0" r="14" fill="#74b9ff" opacity="0.3">
+              <animate attributeName="r" values="12;18;12" dur="1.5s" repeatCount="indefinite"/>
+            </circle>
+            <animateMotion dur="4s" repeatCount="indefinite" calcMode="linear">
+              <mpath href="#reverse-path"/>
+            </animateMotion>
+          </g>
+          <g id="reverse-dot-2" opacity="0.5">
+            <circle cx="0" cy="0" r="5" fill="#74b9ff" stroke="#fff" stroke-width="1.5"/>
+            <animateMotion dur="4s" begin="2s" repeatCount="indefinite" calcMode="linear">
+              <mpath href="#reverse-path"/>
+            </animateMotion>
+          </g>
+        </svg>
+      </div>
+      <div class="svg-legend">
+        <div class="legend-item" onclick="togglePath('forward', this)">
+          <span class="legend-dot" style="background:#a29bfe;"></span>
+          Pod A → Pod B (Forward)
+        </div>
+        <div class="legend-item" onclick="togglePath('reverse', this)">
+          <span class="legend-dot" style="background:#74b9ff;"></span>
+          Pod B → Pod A (Reverse)
+        </div>
+      </div>
+      <div class="note-box">
+        <strong>Cilium VXLAN:</strong> Port 8472/UDP 사용 — 방화벽에서 양방향 허용 필요
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 9: Pattern 6 - East-West (Cloud ↔ On-prem) -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>Pattern 6: Cloud Pod ↔ Hybrid Pod</h2>
+      <p class="subtitle">EC2 Pod와 Hybrid Node Pod 간 Cross-boundary 통신</p>
+    </div>
+    <div class="slide-body">
+      <div class="svg-container">
+        <svg viewBox="0 0 1100 420" xmlns="http://www.w3.org/2000/svg">
+          <!-- Background -->
+          <rect width="1100" height="420" fill="#0d1117"/>
+
+          <!-- AWS Cloud Region -->
+          <rect x="30" y="20" width="480" height="380" rx="12" fill="#1e2140" stroke="#6c5ce7" stroke-width="2"/>
+          <text x="50" y="50" fill="#a29bfe" font-size="14" font-weight="600">AWS Cloud Region</text>
+
+          <!-- VPC -->
+          <rect x="50" y="70" width="440" height="250" rx="8" fill="none" stroke="#74b9ff" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <text x="70" y="95" fill="#74b9ff" font-size="12">VPC (10.0.0.0/16)</text>
+
+          <!-- EC2 Node -->
+          <rect x="70" y="110" width="280" height="180" rx="6" fill="#0d1117" stroke="#74b9ff" stroke-width="1.5"/>
+          <text x="90" y="135" fill="#74b9ff" font-size="12" font-weight="600">EC2 Node (EKS Managed)</text>
+          <text x="250" y="135" fill="#6b7194" font-size="9">10.0.1.50</text>
+
+          <!-- EC2 Pod -->
+          <rect x="100" y="160" width="110" height="70" rx="4" fill="#232740" stroke="#e17055" stroke-width="2"/>
+          <text x="120" y="190" fill="#e17055" font-size="11" font-weight="600">Cloud Pod</text>
+          <text x="115" y="215" fill="#9ba1b8" font-size="9">10.0.10.25</text>
+
+          <!-- VPC ENI -->
+          <rect x="240" y="170" width="80" height="40" rx="4" fill="#232740" stroke="#74b9ff"/>
+          <text x="255" y="195" fill="#74b9ff" font-size="10">VPC ENI</text>
+
+          <!-- VPC Router -->
+          <rect x="370" y="170" width="80" height="40" rx="4" fill="#232740" stroke="#74b9ff"/>
+          <text x="378" y="195" fill="#74b9ff" font-size="10">VPC Router</text>
+
+          <!-- Transit Gateway -->
+          <rect x="200" y="340" width="120" height="40" rx="4" fill="#232740" stroke="#00b894"/>
+          <text x="208" y="365" fill="#00b894" font-size="10">Transit Gateway</text>
+
+          <!-- VPN/DX Tunnel -->
+          <rect x="520" y="180" width="60" height="60" rx="4" fill="#1a2e1a" stroke="#00b894" stroke-dasharray="4,2"/>
+          <text x="528" y="205" fill="#00b894" font-size="9">VPN</text>
+          <text x="530" y="220" fill="#00b894" font-size="9">/DX</text>
+
+          <!-- On-Premises DC -->
+          <rect x="600" y="20" width="470" height="380" rx="12" fill="#1a2e1a" stroke="#00b894" stroke-width="2"/>
+          <text x="620" y="50" fill="#00b894" font-size="14" font-weight="600">On-Premises Data Center</text>
+
+          <!-- On-prem Router -->
+          <rect x="620" y="180" width="80" height="50" rx="4" fill="#232740" stroke="#00b894"/>
+          <text x="630" y="210" fill="#00b894" font-size="10">Router</text>
+
+          <!-- Hybrid Node -->
+          <rect x="750" y="90" width="300" height="220" rx="8" fill="#0d1117" stroke="#00b894" stroke-width="1.5"/>
+          <text x="770" y="120" fill="#00b894" font-size="12" font-weight="600">Hybrid Node</text>
+          <text x="920" y="120" fill="#6b7194" font-size="9">10.80.1.10</text>
+
+          <!-- Kubelet -->
+          <rect x="780" y="140" width="80" height="35" rx="4" fill="#232740" stroke="#00cec9"/>
+          <text x="798" y="162" fill="#00cec9" font-size="10">kubelet</text>
+
+          <!-- CNI -->
+          <rect x="880" y="140" width="80" height="35" rx="4" fill="#232740" stroke="#a29bfe"/>
+          <text x="893" y="162" fill="#a29bfe" font-size="9">Cilium</text>
+
+          <!-- Hybrid Pod -->
+          <rect x="830" y="200" width="110" height="70" rx="4" fill="#232740" stroke="#74b9ff" stroke-width="2"/>
+          <text x="845" y="230" fill="#74b9ff" font-size="11" font-weight="600">Hybrid Pod</text>
+          <text x="850" y="255" fill="#9ba1b8" font-size="9">10.85.1.15</text>
+
+          <!-- Route table note -->
+          <rect x="370" y="250" width="100" height="50" rx="4" fill="#232740" stroke="#fdcb6e" stroke-dasharray="3,2"/>
+          <text x="378" y="268" fill="#fdcb6e" font-size="8">Route Table</text>
+          <text x="378" y="282" fill="#9ba1b8" font-size="7">10.80.0.0/16 → TGW</text>
+          <text x="378" y="293" fill="#9ba1b8" font-size="7">10.85.0.0/16 → TGW</text>
+
+          <!-- Cloud → Hybrid PATH (coral) -->
+          <path id="cloud-hybrid-path" d="M 210 195 L 240 190 L 320 190 L 370 190 L 410 210 L 420 290 L 350 360 L 260 360 L 260 290 L 420 240 L 500 210 L 550 210 L 620 205 L 700 205 L 760 200 L 830 235"
+                fill="none" stroke="#e17055" stroke-width="2.5" stroke-dasharray="8,4" opacity="0.6"/>
+          <g id="cloud-hybrid-dot">
+            <circle cx="0" cy="0" r="8" fill="#e17055" stroke="#fff" stroke-width="2"/>
+            <circle cx="0" cy="0" r="14" fill="#e17055" opacity="0.3">
+              <animate attributeName="r" values="12;18;12" dur="1.5s" repeatCount="indefinite"/>
+            </circle>
+            <animateMotion dur="5s" repeatCount="indefinite" calcMode="linear">
+              <mpath href="#cloud-hybrid-path"/>
+            </animateMotion>
+          </g>
+          <g id="cloud-hybrid-dot-2" opacity="0.5">
+            <circle cx="0" cy="0" r="5" fill="#e17055" stroke="#fff" stroke-width="1.5"/>
+            <animateMotion dur="5s" begin="2.5s" repeatCount="indefinite" calcMode="linear">
+              <mpath href="#cloud-hybrid-path"/>
+            </animateMotion>
+          </g>
+
+          <!-- Hybrid → Cloud PATH (blue) -->
+          <path id="hybrid-cloud-path" d="M 830 235 L 760 200 L 700 205 L 620 205 L 550 210 L 500 210 L 420 240 L 260 290 L 260 360 L 350 360 L 420 290 L 410 210 L 370 190 L 320 190 L 240 190 L 210 195"
+                fill="none" stroke="#74b9ff" stroke-width="2.5" stroke-dasharray="8,4" opacity="0.6"/>
+          <g id="hybrid-cloud-dot">
+            <circle cx="0" cy="0" r="8" fill="#74b9ff" stroke="#fff" stroke-width="2"/>
+            <circle cx="0" cy="0" r="14" fill="#74b9ff" opacity="0.3">
+              <animate attributeName="r" values="12;18;12" dur="1.5s" repeatCount="indefinite"/>
+            </circle>
+            <animateMotion dur="5s" repeatCount="indefinite" calcMode="linear">
+              <mpath href="#hybrid-cloud-path"/>
+            </animateMotion>
+          </g>
+          <g id="hybrid-cloud-dot-2" opacity="0.5">
+            <circle cx="0" cy="0" r="5" fill="#74b9ff" stroke="#fff" stroke-width="1.5"/>
+            <animateMotion dur="5s" begin="2.5s" repeatCount="indefinite" calcMode="linear">
+              <mpath href="#hybrid-cloud-path"/>
+            </animateMotion>
+          </g>
+        </svg>
+      </div>
+      <div class="svg-legend">
+        <div class="legend-item" onclick="togglePath('cloud-hybrid', this)">
+          <span class="legend-dot" style="background:#e17055;"></span>
+          Cloud → Hybrid
+        </div>
+        <div class="legend-item" onclick="togglePath('hybrid-cloud', this)">
+          <span class="legend-dot" style="background:#74b9ff;"></span>
+          Hybrid → Cloud
+        </div>
+      </div>
+      <div class="note-box">
+        <strong>필수 설정:</strong> Pod CIDR 라우팅 + VPC 라우트 테이블에 온프렘 CIDR 추가
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 10: 방화벽 규칙 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>방화벽 규칙 요약</h2>
+      <p class="subtitle">네트워크 팀과 사전 조율이 필요한 포트 목록</p>
+    </div>
+    <div class="slide-body">
+      <table class="firewall-table">
+        <thead>
+          <tr>
+            <th>포트</th>
+            <th>프로토콜</th>
+            <th>방향</th>
+            <th>용도</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>443</strong></td>
+            <td><span class="protocol-badge protocol-tcp">TCP</span></td>
+            <td>On-Prem → AWS</td>
+            <td>Kubelet → API Server 통신</td>
+          </tr>
+          <tr>
+            <td><strong>10250</strong></td>
+            <td><span class="protocol-badge protocol-tcp">TCP</span></td>
+            <td>AWS → On-Prem</td>
+            <td>API Server → Kubelet (exec, logs, webhooks)</td>
+          </tr>
+          <tr>
+            <td><strong>8472</strong></td>
+            <td><span class="protocol-badge protocol-udp">UDP</span></td>
+            <td>양방향</td>
+            <td>Cilium VXLAN 터널링</td>
+          </tr>
+          <tr>
+            <td><strong>4240</strong></td>
+            <td><span class="protocol-badge protocol-tcp">TCP</span></td>
+            <td>양방향</td>
+            <td>Cilium Health Check</td>
+          </tr>
+          <tr>
+            <td><strong>53</strong></td>
+            <td><span class="protocol-badge protocol-tcp">TCP</span> <span class="protocol-badge protocol-udp">UDP</span></td>
+            <td>양방향</td>
+            <td>CoreDNS 쿼리</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout callout-info" style="margin-top:1rem;">
+        <strong>Tip:</strong> 초기 테스트 시에는 넓은 범위로 열고, 안정화 후 최소 권한으로 제한
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 11: VPC 엔드포인트 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>VPC 엔드포인트 구성</h2>
+      <p class="subtitle">Private Link를 통한 AWS 서비스 접근</p>
+    </div>
+    <div class="slide-body">
+      <div class="columns">
+        <div class="endpoint-section">
+          <h3><span class="badge badge-red">필수</span> Required Endpoints</h3>
+          <div class="endpoint-grid">
+            <div class="endpoint-card">
+              <strong>EKS</strong><br>
+              <code>eks.&lt;region&gt;</code>
+            </div>
+            <div class="endpoint-card">
+              <strong>ECR API</strong><br>
+              <code>api.ecr.&lt;region&gt;</code>
+            </div>
+            <div class="endpoint-card">
+              <strong>ECR DKR</strong><br>
+              <code>&lt;acct&gt;.dkr.ecr.&lt;region&gt;</code>
+            </div>
+            <div class="endpoint-card">
+              <strong>S3</strong><br>
+              <code>Gateway Endpoint</code>
+            </div>
+            <div class="endpoint-card">
+              <strong>STS</strong><br>
+              <code>sts.&lt;region&gt;</code>
+            </div>
+          </div>
+        </div>
+        <div class="endpoint-section">
+          <h3><span class="badge badge-yellow">선택</span> Optional Endpoints</h3>
+          <div class="endpoint-grid">
+            <div class="endpoint-card">
+              <strong>SSM</strong><br>
+              <code>ssm.&lt;region&gt;</code>
+            </div>
+            <div class="endpoint-card">
+              <strong>CloudWatch Logs</strong><br>
+              <code>logs.&lt;region&gt;</code>
+            </div>
+            <div class="endpoint-card">
+              <strong>EC2</strong><br>
+              <code>ec2.&lt;region&gt;</code>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-warning" style="margin-top:1rem;">
+        <strong>에어갭 환경:</strong> 모든 엔드포인트가 필수이며, ECR 미러링 또는 프라이빗 레지스트리 구성 필요
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 12: Quiz -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>Block 2 Quiz</h2>
+      <p class="subtitle">네트워킹 핵심 개념 점검</p>
+    </div>
+    <div class="slide-body" style="overflow-y:auto;">
+      <div class="col-2">
+        <div class="quiz" data-quiz="q1">
+          <p class="quiz-question"><strong>Q1.</strong> 온프레미스와 AWS 간 네트워크 연결 권장 방법은?</p>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a">공용 인터넷 연결</button>
+            <button class="quiz-option" data-value="b" data-correct>AWS Direct Connect 또는 Site-to-Site VPN</button>
+            <button class="quiz-option" data-value="c">SSH 터널링</button>
+            <button class="quiz-option" data-value="d">HTTP 프록시</button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div class="quiz" data-quiz="q2">
+          <p class="quiz-question"><strong>Q2.</strong> Kubelet → API Server 통신에 필수인 방화벽 포트는?</p>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a">80/TCP</button>
+            <button class="quiz-option" data-value="b" data-correct>443/TCP</button>
+            <button class="quiz-option" data-value="c">8080/TCP</button>
+            <button class="quiz-option" data-value="d">22/TCP</button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div class="quiz" data-quiz="q3">
+          <p class="quiz-question"><strong>Q3.</strong> Pod CIDR 설계 시 고려사항이 <u>아닌</u> 것은?</p>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a">VPC CIDR과 겹치지 않을 것</button>
+            <button class="quiz-option" data-value="b">RFC-1918 범위 내에 있을 것</button>
+            <button class="quiz-option" data-value="c" data-correct>/8 범위로 설정해야 함</button>
+            <button class="quiz-option" data-value="d">Service CIDR과 겹치지 않을 것</button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div class="quiz" data-quiz="q4">
+          <p class="quiz-question"><strong>Q4.</strong> EKS Hybrid Nodes 권장 네트워크 지연시간은?</p>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a">10ms 이하</button>
+            <button class="quiz-option" data-value="b">50ms 이하</button>
+            <button class="quiz-option" data-value="c" data-correct>100ms 이하</button>
+            <button class="quiz-option" data-value="d">제한 없음</button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="../common/animation-utils.js"></script>
+<script src="../common/slide-framework.js"></script>
+<script src="../common/quiz-component.js"></script>
+<script src="../common/presenter-view.js"></script>
+<script>
+  // Toggle path visibility function
+  function togglePath(type, el) {
+    const svg = el.closest('.slide').querySelector('svg');
+    const path = svg.querySelector('#' + type + '-path');
+    const dot1 = svg.querySelector('#' + type + '-dot');
+    const dot2 = svg.querySelector('#' + type + '-dot-2');
+    const isHidden = path.style.display === 'none';
+
+    path.style.display = isHidden ? '' : 'none';
+    if (dot1) dot1.style.display = isHidden ? '' : 'none';
+    if (dot2) dot2.style.display = isHidden ? '' : 'none';
+    el.style.opacity = isHidden ? '1' : '0.35';
+  }
+
+  // Initialize slide framework
+  const deck = new SlideFramework({
+    footer: 'EKS Hybrid Nodes — Block 2: 네트워킹 & 트래픽 패턴',
+    logoSrc: '../common/pptx-theme/images/logo_1.png',
+    presenterNotes: {
+      1: 'Block 2 시작. 네트워킹은 Hybrid Nodes의 핵심.',
+      2: '네트워크 사전 요구 사항 다이어그램 설명. VPC에 CP ENI가 배치되고, TGW/VGW로 연결.',
+      3: 'CIDR 체크리스트 하나씩 확인. 겹침 방지 강조. 클릭하여 체크 가능.',
+      4: 'Pattern 1: Public vs Private 경로 비교. 토글로 각 경로 확인. Private 권장.',
+      5: 'Pattern 2: CP에서 kubelet으로. 10250 포트. exec/logs 명령에 사용.',
+      6: 'Pattern 3: Pod에서 API Server로. CNI SNAT 동작 설명.',
+      7: 'Pattern 4: Webhook 호출. Routable Pod CIDR 필수! BGP 또는 Static Route.',
+      8: 'Pattern 5: Pod-to-Pod VXLAN. 8472/UDP. 양방향 통신 시연.',
+      9: 'Pattern 6: East-West. 클라우드↔온프렘 Pod 통신. VPC 라우트 테이블 설정.',
+      10: '방화벽 포트 정리. 네트워크팀과 사전 조율 필요. 443, 10250, 8472 핵심.',
+      11: 'VPC 엔드포인트. 에어갭 환경에서 특히 중요. 필수 vs 선택 구분.',
+      12: '퀴즈 진행. 4문제 풀이.'
+    },
+    onSlideChange: (index, slide) => {
+      // No additional animations needed - SVGs auto-animate with SMIL
+    }
+  });
+</script>
+</body>
+</html>

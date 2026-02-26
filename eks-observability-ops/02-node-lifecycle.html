@@ -956,9 +956,57 @@ karpenter_nodes_allocatable</div></div></div></li>
     // Slide 2: Grafana-style EKS Node Monitoring Dashboard
     // ============================================================
     (function initDashboard() {
-      const cvs = setupCanvas('dashboard-canvas', 960, 380);
-      if (!cvs) return;
-      const { ctx, width, height } = cvs;
+      // Responsive canvas: fills container, uniform scale from 960-wide logical coords
+      const canvas = document.getElementById('dashboard-canvas');
+      if (!canvas) return;
+      const dashContainer = canvas.parentElement;
+      const BASE_W = 960;
+      let ctx, width, height;
+      let L = {}; // dynamic layout positions
+
+      function resizeDashboard() {
+        const cw = dashContainer.clientWidth;
+        const ch = dashContainer.clientHeight - 38; // reserve for button overlay
+        const dpr = window.devicePixelRatio || 1;
+
+        if (cw <= 0 || ch <= 0) {
+          // Slide hidden: use fixed fallback dimensions
+          canvas.width = BASE_W * dpr;
+          canvas.height = 440 * dpr;
+          canvas.style.width = '100%';
+          canvas.style.height = 'auto';
+          canvas.style.maxWidth = 'none';
+          canvas.style.aspectRatio = BASE_W + '/440';
+          ctx = canvas.getContext('2d');
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          ctx.scale(dpr, dpr);
+          width = BASE_W;
+          height = 440;
+        } else {
+          // Slide visible: fill container
+          canvas.width = Math.round(cw * dpr);
+          canvas.height = Math.round(ch * dpr);
+          canvas.style.width = '100%';
+          canvas.style.height = ch + 'px';
+          canvas.style.maxWidth = 'none';
+          canvas.style.aspectRatio = 'unset';
+          ctx = canvas.getContext('2d');
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          const scale = (cw * dpr) / BASE_W;
+          ctx.scale(scale, scale);
+          width = BASE_W;
+          height = Math.round((ch * dpr) / scale);
+        }
+        // Dynamic vertical layout
+        const statY = 30, statH = 40;
+        const chartY = statY + statH + 4;
+        const chartH = Math.max(80, Math.min(200, Math.round((height - chartY) * 0.28)));
+        const gridY = chartY + chartH + 6;
+        const gridH = height - gridY - 4;
+        L = { statY, statH, chartY, chartH, gridY, gridH };
+        return true;
+      }
+      resizeDashboard();
 
       const INSTANCE_TYPES = ['m5.xlarge', 'm5.2xlarge', 'c5.xlarge', 'r5.xlarge', 'm6i.xlarge', 'c6g.xlarge'];
       const MAX_NODES = 8;
@@ -1027,7 +1075,7 @@ karpenter_nodes_allocatable</div></div></div></li>
 
       function addEvent(type, msg, color) {
         events.unshift({ time: getTimestamp(), type, msg, color: color || Colors.textSec });
-        if (events.length > 8) events.pop();
+        if (events.length > 15) events.pop();
       }
 
       initNodes();
@@ -1061,8 +1109,8 @@ karpenter_nodes_allocatable</div></div></div></li>
           { label: 'Cost/hr',      value: `$${cost}`,          color: Colors.yellow }
         ];
 
-        const panelY = 30;
-        const panelH = 36;
+        const panelY = L.statY;
+        const panelH = L.statH;
         const gap = 6;
         const totalGap = gap * (panels.length - 1);
         const panelW = (width - 20 - totalGap) / panels.length;
@@ -1077,9 +1125,9 @@ karpenter_nodes_allocatable</div></div></div></li>
 
       function drawTimeSeriesChart() {
         const chartX = 10;
-        const chartY = 70;
+        const chartY = L.chartY;
         const chartW = width - 20;
-        const chartH = 100;
+        const chartH = L.chartH;
 
         // Panel background
         drawRoundRect(ctx, chartX, chartY, chartW, chartH, 6, Colors.surface, Colors.border);
@@ -1174,9 +1222,9 @@ karpenter_nodes_allocatable</div></div></div></li>
 
       function drawNodeGrid(elapsed) {
         const gridX = 10;
-        const gridY = 176;
+        const gridY = L.gridY;
         const gridW = 530;
-        const gridH = 198;
+        const gridH = L.gridH;
 
         drawRoundRect(ctx, gridX, gridY, gridW, gridH, 6, Colors.surface, Colors.border);
         drawText(ctx, 'Node Status', gridX + 15, gridY + 14, { size: 10, color: Colors.textMuted, align: 'left' });
@@ -1184,9 +1232,9 @@ karpenter_nodes_allocatable</div></div></div></li>
         const startX = gridX + 10;
         const startY = gridY + 24;
         const nodeW = 166;
-        const nodeH = 64;
         const gapX = 10;
         const gapY = 6;
+        const nodeH = Math.min(86, Math.max(58, Math.round((gridH - 28) / 2 - gapY)));
         const cols = 3;
 
         nodes.forEach((node, i) => {
@@ -1252,7 +1300,7 @@ karpenter_nodes_allocatable</div></div></div></li>
           const barH = 8;
 
           // Requests bar (blue)
-          const reqBarY = ny + 38;
+          const reqBarY = ny + nodeH - 26;
           ctx.fillStyle = Colors.bg + 'cc';
           ctx.fillRect(barX, reqBarY, barW, barH);
           ctx.fillStyle = Colors.blue;
@@ -1260,7 +1308,7 @@ karpenter_nodes_allocatable</div></div></div></li>
           drawText(ctx, `Req ${node.cpuRequests}%`, nx + nodeW - 8, reqBarY + 4, { size: 8, color: Colors.blue, align: 'right' });
 
           // Usage bar (cyan)
-          const useBarY = ny + 50;
+          const useBarY = ny + nodeH - 14;
           ctx.fillStyle = Colors.bg + 'cc';
           ctx.fillRect(barX, useBarY, barW, barH);
           ctx.fillStyle = Colors.cyan;
@@ -1285,14 +1333,15 @@ karpenter_nodes_allocatable</div></div></div></li>
 
       function drawEventLog() {
         const logX = 548;
-        const logY = 176;
+        const logY = L.gridY;
         const logW = width - logX - 10;
-        const logH = 198;
+        const logH = L.gridH;
 
         drawRoundRect(ctx, logX, logY, logW, logH, 6, Colors.surface, Colors.border);
         drawText(ctx, 'Karpenter Events', logX + 15, logY + 14, { size: 10, color: Colors.textMuted, align: 'left' });
 
-        events.slice(0, 9).forEach((evt, i) => {
+        const maxEvents = Math.max(6, Math.floor((logH - 32) / 22));
+        events.slice(0, maxEvents).forEach((evt, i) => {
           const ey = logY + 32 + i * 22;
           // Timestamp
           drawText(ctx, evt.time, logX + 10, ey, { size: 9, color: Colors.textMuted, align: 'left', font: 'JetBrains Mono, monospace' });
@@ -1316,6 +1365,11 @@ karpenter_nodes_allocatable</div></div></div></li>
 
       const loop = new AnimationLoop(draw);
       loop.start();
+
+      // ── Resize handler ──
+      new ResizeObserver(() => {
+        resizeDashboard();
+      }).observe(dashContainer);
 
       // ── Pod redistribution helper (shared by Spot & Consolidation) ──
 

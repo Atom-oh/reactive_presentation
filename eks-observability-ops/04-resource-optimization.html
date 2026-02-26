@@ -642,6 +642,94 @@
       color: var(--accent-light);
       font-weight: 600;
     }
+    /* KEDA Slides */
+    .keda-arch-flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin: 12px 0 8px;
+      flex-wrap: wrap;
+    }
+    .keda-arch-box {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: .82rem;
+      font-weight: 600;
+      text-align: center;
+      min-width: 80px;
+    }
+    .keda-arch-box.highlight {
+      border-color: var(--accent);
+      background: rgba(108,92,231,.15);
+      color: var(--accent-light);
+    }
+    .keda-arch-arrow {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      margin: 0 4px;
+    }
+    .keda-compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .78rem;
+      margin-top: 8px;
+    }
+    .keda-compare-table th {
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      padding: 6px 10px;
+      border-bottom: 1.5px solid var(--border);
+      text-align: left;
+      font-weight: 600;
+    }
+    .keda-compare-table td {
+      padding: 5px 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+    .keda-compare-table tr:last-child td { border-bottom: none; }
+    .keda-benefit-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .keda-benefit-grid .card {
+      padding: 10px;
+      text-align: center;
+      font-size: .78rem;
+    }
+    .keda-benefit-grid .card h5 {
+      margin: 4px 0 2px;
+      font-size: .82rem;
+    }
+    .keda-yaml {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: .72rem;
+      line-height: 1.5;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .keda-pattern-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .keda-pattern-grid .card {
+      padding: 10px;
+      font-size: .75rem;
+    }
+    .keda-pattern-grid .card h5 {
+      margin: 0 0 3px;
+      font-size: .8rem;
+    }
   </style>
 </head>
 <body>
@@ -1192,7 +1280,262 @@ Scheduling: c6g.medium으로 충분</div>
       </div>
     </div>
 
-    <!-- Slide 7: Best Practices Checklist -->
+    <!-- Slide 7: KEDA Overview & Architecture -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>KEDA — Event-Driven Autoscaling</h1>
+        <p class="subtitle">HPA를 넘어서: 이벤트 기반 스케일링과 Scale-to-Zero</p>
+      </div>
+      <div class="slide-body">
+        <div class="keda-arch-flow">
+          <div class="keda-arch-box">Event Sources<br><span style="font-size:.7rem;color:var(--text-muted)">SQS / MSK / Prometheus</span></div>
+          <span class="keda-arch-arrow">→</span>
+          <div class="keda-arch-box highlight">KEDA<br><span style="font-size:.7rem">ScaledObject</span></div>
+          <span class="keda-arch-arrow">→</span>
+          <div class="keda-arch-box">HPA<br><span style="font-size:.7rem;color:var(--text-muted)">자동 생성/관리</span></div>
+          <span class="keda-arch-arrow">→</span>
+          <div class="keda-arch-box">Deployment<br><span style="font-size:.7rem;color:var(--text-muted)">0 ~ N Replicas</span></div>
+        </div>
+        <div class="columns" style="gap:16px;">
+          <div class="col-2">
+            <table class="keda-compare-table">
+              <thead>
+                <tr><th>항목</th><th>HPA</th><th>KEDA</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>메트릭 소스</td><td>CPU / Memory</td><td>60+ 외부 스케일러</td></tr>
+                <tr><td>최소 레플리카</td><td>min: 1</td><td><strong style="color:var(--accent-light)">min: 0</strong> (Scale-to-Zero)</td></tr>
+                <tr><td>설정 방식</td><td>HPA 리소스 직접 관리</td><td>ScaledObject → HPA 자동생성</td></tr>
+                <tr><td>Prometheus</td><td>Adapter 필요</td><td>네이티브 PromQL 지원</td></tr>
+                <tr><td>AWS 통합</td><td>CloudWatch Adapter</td><td>SQS, MSK, CloudWatch 스케일러</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="col-2">
+            <div class="keda-benefit-grid">
+              <div class="card">
+                <div style="font-size:1.5rem">🔄</div>
+                <h5>Scale-to-Zero</h5>
+                <p style="font-size:.72rem;color:var(--text-muted)">트래픽 없을 때 0으로 축소, 비용 절감</p>
+              </div>
+              <div class="card">
+                <div style="font-size:1.5rem">🔌</div>
+                <h5>60+ Scalers</h5>
+                <p style="font-size:.72rem;color:var(--text-muted)">AWS, GCP, Azure, Kafka, Redis 등</p>
+              </div>
+              <div class="card">
+                <div style="font-size:1.5rem">📊</div>
+                <h5>PromQL</h5>
+                <p style="font-size:.72rem;color:var(--text-muted)">기존 Prometheus 인프라 재활용</p>
+              </div>
+              <div class="card">
+                <div style="font-size:1.5rem">⚙️</div>
+                <h5>CRD 기반</h5>
+                <p style="font-size:.72rem;color:var(--text-muted)">GitOps 친화적 선언형 관리</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <a href="https://atomoh.gitbook.io/kubernetes-docs/autoscaling/01-keda" target="_blank" class="resource-link" style="margin-top:6px; display:inline-block; font-size:.8rem; color:var(--accent-light);">📖 더 알아보기: KEDA 실전 가이드</a>
+      </div>
+    </div>
+
+    <!-- Slide 8: KEDA AWS Metrics Scaling -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>AWS 메트릭 기반 스케일링</h1>
+        <p class="subtitle">SQS Queue Depth / MSK Consumer Lag / ALB Request Count</p>
+      </div>
+      <div class="slide-body">
+        <div id="keda-aws-tabs">
+          <div class="tab-bar">
+            <button class="tab-btn active" data-tab="sqs">SQS Queue</button>
+            <button class="tab-btn" data-tab="msk">MSK Kafka</button>
+            <button class="tab-btn" data-tab="alb">ALB</button>
+          </div>
+          <div class="tab-content active" data-tab="sqs">
+            <div class="columns" style="gap:16px">
+              <div class="col-2">
+                <pre class="keda-yaml"><span class="key">apiVersion:</span> keda.sh/v1alpha1
+<span class="key">kind:</span> ScaledObject
+<span class="key">metadata:</span>
+  <span class="key">name:</span> sqs-consumer-scaler
+<span class="key">spec:</span>
+  <span class="key">scaleTargetRef:</span>
+    <span class="key">name:</span> sqs-consumer
+  <span class="key">minReplicaCount:</span> <span class="value">0</span>  <span class="comment"># Scale-to-Zero!</span>
+  <span class="key">maxReplicaCount:</span> <span class="value">20</span>
+  <span class="key">triggers:</span>
+  - <span class="key">type:</span> aws-sqs-queue
+    <span class="key">authenticationRef:</span>
+      <span class="key">name:</span> keda-aws-credentials
+    <span class="key">metadata:</span>
+      <span class="key">queueURL:</span> <span class="string">https://sqs.ap-northeast-2.amazonaws.com/...</span>
+      <span class="key">queueLength:</span> <span class="string">"5"</span>  <span class="comment"># 메시지 5개당 1 Pod</span>
+      <span class="key">awsRegion:</span> <span class="string">ap-northeast-2</span></pre>
+              </div>
+              <div class="col-2">
+                <div class="card highlight" style="margin-bottom:10px">
+                  <h4 style="margin:0 0 6px">🎯 SQS 네이티브 스케일러</h4>
+                  <ul style="font-size:.78rem; margin:0; padding-left:18px; line-height:1.7">
+                    <li><code>aws-sqs-queue</code> — Prometheus 불필요</li>
+                    <li><code>queueLength: "5"</code> — 메시지 5개당 Pod 1개</li>
+                    <li><strong>Scale-to-Zero</strong>: 큐 비어있으면 Pod 0</li>
+                    <li>IRSA 기반 인증 (<code>TriggerAuthentication</code>)</li>
+                  </ul>
+                </div>
+                <div class="callout-info" style="font-size:.75rem; padding:8px 12px">
+                  💡 <strong>IRSA 설정 필수</strong>: TriggerAuthentication CRD로 SQS ReadOnly 권한 부여
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="msk">
+            <div class="columns" style="gap:16px">
+              <div class="col-2">
+                <pre class="keda-yaml"><span class="key">apiVersion:</span> keda.sh/v1alpha1
+<span class="key">kind:</span> ScaledObject
+<span class="key">metadata:</span>
+  <span class="key">name:</span> msk-consumer-scaler
+<span class="key">spec:</span>
+  <span class="key">scaleTargetRef:</span>
+    <span class="key">name:</span> kafka-consumer
+  <span class="key">minReplicaCount:</span> <span class="value">1</span>
+  <span class="key">maxReplicaCount:</span> <span class="value">30</span>
+  <span class="key">triggers:</span>
+  - <span class="key">type:</span> prometheus
+    <span class="key">metadata:</span>
+      <span class="key">serverAddress:</span> <span class="string">http://prometheus:9090</span>
+      <span class="key">query:</span> |
+        <span class="string">sum(kafka_consumergroup_lag{
+          group="my-consumer",
+          topic="orders"
+        })</span>
+      <span class="key">threshold:</span> <span class="string">"1000"</span>  <span class="comment"># Lag 1000당 1 Pod</span></pre>
+              </div>
+              <div class="col-2">
+                <div class="card highlight" style="margin-bottom:10px">
+                  <h4 style="margin:0 0 6px">📊 Prometheus 스케일러 + MSK</h4>
+                  <ul style="font-size:.78rem; margin:0; padding-left:18px; line-height:1.7">
+                    <li><code>prometheus</code> 스케일러로 Consumer Lag 모니터링</li>
+                    <li><code>kafka_consumergroup_lag</code> 메트릭 활용</li>
+                    <li><code>threshold: "1000"</code> — Lag 1000당 Pod 1개</li>
+                    <li>기존 Prometheus 인프라 그대로 재사용</li>
+                  </ul>
+                </div>
+                <div class="callout-warning" style="font-size:.75rem; padding:8px 12px">
+                  ⚠️ <strong>MSK는 Scale-to-Zero 비권장</strong>: Consumer가 0이면 Lag 감지 불가 → minReplicaCount: 1 유지
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="alb">
+            <div class="columns" style="gap:16px">
+              <div class="col-2">
+                <pre class="keda-yaml"><span class="key">apiVersion:</span> keda.sh/v1alpha1
+<span class="key">kind:</span> ScaledObject
+<span class="key">metadata:</span>
+  <span class="key">name:</span> alb-scaler
+<span class="key">spec:</span>
+  <span class="key">scaleTargetRef:</span>
+    <span class="key">name:</span> web-app
+  <span class="key">minReplicaCount:</span> <span class="value">2</span>
+  <span class="key">maxReplicaCount:</span> <span class="value">50</span>
+  <span class="key">triggers:</span>
+  - <span class="key">type:</span> aws-cloudwatch
+    <span class="key">authenticationRef:</span>
+      <span class="key">name:</span> keda-aws-credentials
+    <span class="key">metadata:</span>
+      <span class="key">namespace:</span> <span class="string">AWS/ApplicationELB</span>
+      <span class="key">dimensionName:</span> <span class="string">TargetGroup</span>
+      <span class="key">dimensionValue:</span> <span class="string">targetgroup/my-tg/...</span>
+      <span class="key">metricName:</span> <span class="string">RequestCountPerTarget</span>
+      <span class="key">targetMetricValue:</span> <span class="string">"100"</span>  <span class="comment"># Pod당 100 req</span>
+      <span class="key">metricStatPeriod:</span> <span class="string">"60"</span></pre>
+              </div>
+              <div class="col-2">
+                <div class="card highlight" style="margin-bottom:10px">
+                  <h4 style="margin:0 0 6px">☁️ CloudWatch 직접 쿼리</h4>
+                  <ul style="font-size:.78rem; margin:0; padding-left:18px; line-height:1.7">
+                    <li><code>aws-cloudwatch</code> 스케일러 — Prometheus 불필요</li>
+                    <li><code>RequestCountPerTarget</code> 메트릭</li>
+                    <li>TargetGroup 단위 세밀한 제어</li>
+                    <li>IRSA로 CloudWatch ReadOnly 권한</li>
+                  </ul>
+                </div>
+                <div class="callout-info" style="font-size:.75rem; padding:8px 12px">
+                  💡 <strong>ALB + HPA 대비 장점</strong>: CloudWatch 네이티브 쿼리로 Adapter 오버헤드 제거, 정확도 향상
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 9: KEDA Istio Gateway RPS Scaling -->
+    <div class="slide">
+      <div class="slide-header">
+        <h1>Istio Gateway RPS 기반 스케일링</h1>
+        <p class="subtitle">PromQL + KEDA로 Istio 메트릭 기반 자동 스케일링</p>
+      </div>
+      <div class="slide-body">
+        <div class="columns" style="gap:16px">
+          <div class="col-2">
+            <pre class="keda-yaml"><span class="key">apiVersion:</span> keda.sh/v1alpha1
+<span class="key">kind:</span> ScaledObject
+<span class="key">metadata:</span>
+  <span class="key">name:</span> istio-rps-scaler
+<span class="key">spec:</span>
+  <span class="key">scaleTargetRef:</span>
+    <span class="key">name:</span> my-app
+  <span class="key">minReplicaCount:</span> <span class="value">0</span>
+  <span class="key">maxReplicaCount:</span> <span class="value">10</span>
+  <span class="key">cooldownPeriod:</span> <span class="value">120</span>
+  <span class="key">triggers:</span>
+  - <span class="key">type:</span> prometheus
+    <span class="key">metadata:</span>
+      <span class="key">serverAddress:</span> <span class="string">http://prometheus:9090</span>
+      <span class="key">query:</span> |
+        <span class="string">sum(rate(istio_requests_total{
+          destination_service=~"my-app.*",
+          reporter="destination"
+        }[1m]))</span>
+      <span class="key">threshold:</span> <span class="string">"50"</span>  <span class="comment"># Pod당 50 RPS</span></pre>
+            <div class="keda-pattern-grid">
+              <div class="card">
+                <h5 style="color:var(--red)">🔴 Error Rate</h5>
+                <p style="color:var(--text-muted)">5xx 비율 > 5% → 즉시 스케일아웃</p>
+              </div>
+              <div class="card">
+                <h5 style="color:var(--yellow)">⏱ Latency P99</h5>
+                <p style="color:var(--text-muted)">P99 > 500ms → Pod 추가</p>
+              </div>
+              <div class="card">
+                <h5 style="color:var(--cyan)">🔌 Circuit Breaker</h5>
+                <p style="color:var(--text-muted)">outlierDetection과 연동</p>
+              </div>
+              <div class="card">
+                <h5 style="color:var(--accent-light)">⏰ Cron + RPS</h5>
+                <p style="color:var(--text-muted)">피크타임 사전 확보 + RPS 보정</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-2">
+            <div class="canvas-container" style="background:var(--bg-primary); border-radius:10px; padding:8px;">
+              <canvas id="keda-rps-canvas"></canvas>
+              <div class="canvas-controls" style="margin-top:6px; display:flex; align-items:center; gap:12px;">
+                <label style="font-size:.8rem; color:var(--text-secondary);">RPS:</label>
+                <input type="range" id="rps-slider" min="0" max="500" value="100" step="10" style="flex:1;">
+                <span id="rps-value" style="font-size:.85rem; font-weight:600; color:var(--accent-light); min-width:36px;">100</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 10: Best Practices Checklist -->
     <div class="slide">
       <div class="slide-header">
         <h1>Best Practices 체크리스트</h1>
@@ -1219,15 +1562,19 @@ Scheduling: c6g.medium으로 충분</div>
             </ul>
           </div>
           <div class="checklist-section">
-            <h4>비용 관리</h4>
+            <h4>KEDA 스케일링</h4>
             <ul class="checklist">
-              <li><span class="check"></span> 정기적 비용 리뷰 (월 1회)</li>
-              <li><span class="check"></span> Cost Allocation Tags 적용</li>
+              <li><span class="check"></span> IRSA로 AWS 서비스 인증 구성</li>
+              <li><span class="check"></span> cooldownPeriod로 스케일링 진동 방지</li>
+              <li><span class="check"></span> fallback 설정으로 메트릭 장애 대비</li>
+              <li><span class="check"></span> Scale to Zero는 Stateless만 적용</li>
             </ul>
           </div>
           <div class="checklist-section">
-            <h4>모니터링</h4>
+            <h4>비용 & 모니터링</h4>
             <ul class="checklist">
+              <li><span class="check"></span> 정기적 비용 리뷰 (월 1회)</li>
+              <li><span class="check"></span> Cost Allocation Tags 적용</li>
               <li><span class="check"></span> VPA 추천값 대시보드 구성</li>
               <li><span class="check"></span> 노드 활용률 알림 설정</li>
             </ul>
@@ -1239,7 +1586,7 @@ Scheduling: c6g.medium으로 충분</div>
       </div>
     </div>
 
-    <!-- Slide 8: Learning Resources -->
+    <!-- Slide 11: Learning Resources -->
     <div class="slide">
       <div class="slide-header">
         <h1>추가 학습 리소스</h1>
@@ -1277,6 +1624,16 @@ Scheduling: c6g.medium으로 충분</div>
             <p>Vertical Pod Autoscaler 공식 리포지토리. 설치, 구성, FAQ.</p>
             <span class="link-badge">github.com &#8594;</span>
           </a>
+          <a href="https://keda.sh/docs/" target="_blank" class="resource-card">
+            <h4>KEDA 공식 문서</h4>
+            <p>Event-driven Autoscaling. 60+ 스케일러, ScaledObject/ScaledJob 구성 가이드.</p>
+            <span class="link-badge">keda.sh &#8594;</span>
+          </a>
+          <a href="https://atomoh.gitbook.io/kubernetes-docs/autoscaling/01-keda" target="_blank" class="resource-card">
+            <h4>GitBook: KEDA 실전 가이드</h4>
+            <p>SQS, MSK, Istio RPS 기반 스케일링 예제. 한국어 실습 자료.</p>
+            <span class="link-badge">atomoh.gitbook.io &#8594;</span>
+          </a>
         </div>
         <div style="margin-top: auto; padding-top: 8px; text-align: right;">
           <a href="https://atomoh.gitbook.io/kubernetes-docs/operations-guide/ops/09-observability-stack" target="_blank" style="font-size: .75rem; color: var(--text-muted); text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">📖 더 알아보기: 관측성 스택 전체 가이드</a>
@@ -1284,7 +1641,7 @@ Scheduling: c6g.medium으로 충분</div>
       </div>
     </div>
 
-    <!-- Slide 9: Course Summary -->
+    <!-- Slide 12: Course Summary -->
     <div class="slide">
       <div class="slide-header">
         <h1>전체 과정 요약</h1>
@@ -1309,14 +1666,14 @@ Scheduling: c6g.medium으로 충분</div>
           </div>
           <div class="summary-card">
             <div class="block-num">BLOCK 04</div>
-            <h4>VPA + Auto Mode 최적화</h4>
-            <p>VPA로 리소스 requests 최적화, Auto Mode가 최적 노드 선택. 조합하면 70%+ 비용 절감 가능.</p>
+            <h4>VPA + KEDA + Auto Mode 최적화</h4>
+            <p>VPA로 리소스 최적화, KEDA로 이벤트 기반 스케일링(SQS/MSK/Istio RPS), Auto Mode가 최적 노드 선택.</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Slide 10: Q&A -->
+    <!-- Slide 13: Q&A -->
     <div class="slide">
       <div class="qa-content">
         <h1 class="qa-title">Q&A</h1>
@@ -1329,11 +1686,11 @@ Scheduling: c6g.medium으로 충분</div>
       </div>
     </div>
 
-    <!-- Slide 11: Thank You -->
+    <!-- Slide 14: Thank You -->
     <div class="slide">
       <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:24px; text-align:center;">
         <h1 style="font-size:3rem; background:linear-gradient(135deg, var(--accent-light), var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Thank You</h1>
-        <p style="color:var(--text-secondary); font-size:1.1rem;">Block 4 — VPA & 리소스 최적화 완료</p>
+        <p style="color:var(--text-secondary); font-size:1.1rem;">Block 4 — VPA, KEDA & 리소스 최적화 완료</p>
         <p style="color:var(--text-muted); font-size:1rem; margin-top:8px;">수고하셨습니다! 🎉</p>
         <div style="display:flex; gap:16px; margin-top:20px;">
           <a href="index.html" class="btn btn-primary btn-sm" style="text-decoration:none;">← 목차로 돌아가기</a>
@@ -1359,11 +1716,14 @@ Scheduling: c6g.medium으로 충분</div>
         4: 'VPA가 requests를 조정하면 Karpenter가 적합한 노드를 자동 선택합니다.\n- updateMode: Off로 시작\n- 추천값 확인 후 점진적으로 Auto로 전환',
         5: 'QoS 클래스별 특성을 설명하세요.\n- CPU: throttling만 발생 → Burstable 유리\n- Memory: OOMKill 위험 → Guaranteed 안전',
         6: 'Before/After 비용 비교를 보여주세요.\n- 오버프로비저닝 환경에서 VPA + Auto Mode 적용\n- 30-50% 비용 절감 사례\n\n실제 고객 사례 기반입니다.',
-        7: '체크리스트를 하나씩 클릭하며 확인하세요.\n\n도입 순서가 중요합니다:\n- 모니터링 구축\n- 현재 상태 분석\n- 리소스 최적화\n- 자동화 적용',
-        8: '추가 학습 리소스를 안내하세요.\n- AWS 공식 문서\n- Karpenter GitBook\n- Kubernetes 커뮤니티 자료\n\n실습 환경은 eksctl로 쉽게 구성 가능합니다.',
-        9: '4개 블록을 복습합니다.\n- Architecture: Auto Mode 구조\n- Lifecycle: Provisioner 동작\n- Observability: 모니터링\n- 이 블록: 최적화',
-        10: '자주 나오는 질문:\n- Auto Mode 비용: 추가 없음\n- 기존 MNG 전환: 점진적 마이그레이션 권장\n- VPA 프로덕션 안정성: Off 모드로 시작하면 안전',
-        11: '수고하셨습니다.\n\n추가 질문은 Slack 채널(#eks-auto-mode)에서 받습니다.\n실습 후 궁금한 점 있으면 언제든 문의하세요.'
+        7: 'KEDA가 HPA를 대체하는 것이 아니라 확장한다는 점을 강조하세요.\n- ScaledObject 생성 → KEDA가 자동으로 HPA 생성/관리\n- 60+ 스케일러: SQS, Kafka, Prometheus, CloudWatch 등\n- Scale to Zero: HPA는 min=1이지만 KEDA는 0까지 가능\n\n기존 Prometheus 모니터링 인프라를 그대로 활용할 수 있습니다.',
+        8: '각 AWS 서비스별 탭을 클릭하며 설명하세요.\n\nSQS: 큐 깊이 기반, Scale-to-Zero로 비용 절감\nMSK: Prometheus 스케일러로 Consumer Lag 모니터링\nALB: CloudWatch 직접 쿼리, RequestCountPerTarget 활용\n\nIRSA로 안전한 인증 구성이 핵심입니다.',
+        9: '슬라이더로 RPS를 조절하며 Pod 수 변화를 보여주세요.\n\n- threshold 50 = Pod당 50 RPS 처리\n- 200 RPS → 4 Pods, 500 RPS → 10 Pods (max)\n- 0 RPS → Scale to Zero 가능\n\n고급 패턴: Error Rate, Latency, Circuit Breaker, Cron 조합',
+        10: '체크리스트를 하나씩 클릭하며 확인하세요.\n\n도입 순서가 중요합니다:\n- 모니터링 구축\n- 현재 상태 분석\n- 리소스 최적화\n- 자동화 적용',
+        11: '추가 학습 리소스를 안내하세요.\n- AWS 공식 문서\n- Karpenter GitBook\n- KEDA 공식 문서\n\n실습 환경은 eksctl로 쉽게 구성 가능합니다.',
+        12: '4개 블록을 복습합니다.\n- Architecture: Auto Mode 구조\n- Lifecycle: Provisioner 동작\n- Observability: 모니터링\n- 이 블록: VPA 최적화 + KEDA 이벤트 기반 스케일링',
+        13: '자주 나오는 질문:\n- Auto Mode 비용: 추가 없음\n- 기존 MNG 전환: 점진적 마이그레이션 권장\n- VPA 프로덕션 안정성: Off 모드로 시작하면 안전\n- KEDA vs HPA: KEDA는 HPA 위에 동작, 공존 가능',
+        14: '수고하셨습니다.\n\n추가 질문은 Slack 채널(#eks-auto-mode)에서 받습니다.\n실습 후 궁금한 점 있으면 언제든 문의하세요.'
       },
       onSlideChange: (index, slide) => {
         // Trigger canvas redraw when entering slide 3 (VPA simulator)
@@ -1373,6 +1733,13 @@ Scheduling: c6g.medium으로 충분</div>
         // Trigger cost animation when entering slide 6
         if (index === 5) {
           setTimeout(() => animateCosts(), 100);
+        }
+        // Trigger KEDA RPS canvas when entering slide 9
+        if (index === 8) {
+          setTimeout(() => {
+            if (!kedaCtx) initKedaCanvas();
+            else drawKedaCanvas();
+          }, 100);
         }
       }
     });
@@ -1705,6 +2072,244 @@ upperBound: CPU ${cpuUpper}m, Memory ${formatMemory(memUpper)}`;
     }
 
     // ==========================================
+    // Slide 8: KEDA AWS Metrics Tabs
+    // ==========================================
+    document.querySelectorAll('#keda-aws-tabs .tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        document.querySelectorAll('#keda-aws-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        // Find sibling tab-content elements (within same slide)
+        const slide = btn.closest('.slide');
+        slide.querySelectorAll('.tab-content').forEach(c => {
+          c.classList.toggle('active', c.dataset.tab === tab);
+        });
+      });
+    });
+
+    // ==========================================
+    // Slide 9: KEDA RPS Canvas
+    // ==========================================
+    let kedaCtx = null;
+    let kedaW = 0, kedaH = 0;
+
+    function initKedaCanvas() {
+      const canvas = document.getElementById('keda-rps-canvas');
+      if (!canvas) return;
+      const container = canvas.parentElement;
+      const cw = container.clientWidth - 16; // padding
+      if (cw <= 0) {
+        // Fallback for hidden slide
+        const result = setupCanvas('keda-rps-canvas', 500, 340);
+        if (result) { kedaCtx = result.ctx; kedaW = result.width; kedaH = result.height; drawKedaCanvas(); }
+        return;
+      }
+      const BASE_W = 500, BASE_H = 340;
+      const scale = cw / BASE_W;
+      const ch = Math.round(BASE_H * scale);
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(cw * dpr);
+      canvas.height = Math.round(ch * dpr);
+      canvas.style.width = cw + 'px';
+      canvas.style.height = ch + 'px';
+      canvas.style.maxWidth = 'none';
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(scale * dpr, scale * dpr);
+      kedaCtx = ctx;
+      kedaW = BASE_W;
+      kedaH = BASE_H;
+      drawKedaCanvas();
+    }
+
+    function drawKedaCanvas() {
+      if (!kedaCtx) return;
+      const ctx = kedaCtx;
+      const w = kedaW, h = kedaH;
+
+      const rps = parseInt(document.getElementById('rps-slider').value);
+      const threshold = 50;
+      const podCount = Math.max(rps === 0 ? 0 : 1, Math.min(10, Math.ceil(rps / threshold)));
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Background
+      ctx.fillStyle = Colors.bg;
+      ctx.fillRect(0, 0, w, h);
+
+      // --- Section 1: Gateway Flow (top) ---
+      const flowY = 30;
+      // Gateway box
+      const gwColor = rps > 300 ? Colors.red : rps > 100 ? Colors.yellow : Colors.green;
+      drawBox(ctx, 10, flowY - 16, 80, 32, 'Gateway', gwColor);
+      // Arrow
+      ctx.strokeStyle = Colors.textMuted;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(95, flowY); ctx.lineTo(120, flowY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(115, flowY - 4); ctx.lineTo(120, flowY); ctx.lineTo(115, flowY + 4); ctx.fill();
+      // Prometheus box
+      drawBox(ctx, 125, flowY - 16, 90, 32, 'Prometheus', Colors.orange);
+      // Arrow
+      ctx.beginPath(); ctx.moveTo(220, flowY); ctx.lineTo(245, flowY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(240, flowY - 4); ctx.lineTo(245, flowY); ctx.lineTo(240, flowY + 4); ctx.fill();
+      // KEDA box
+      drawBox(ctx, 250, flowY - 16, 70, 32, 'KEDA', Colors.accent);
+      // Arrow
+      ctx.beginPath(); ctx.moveTo(325, flowY); ctx.lineTo(350, flowY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(345, flowY - 4); ctx.lineTo(350, flowY); ctx.lineTo(345, flowY + 4); ctx.fill();
+      // HPA box
+      drawBox(ctx, 355, flowY - 16, 60, 32, 'HPA', Colors.cyan);
+      // Arrow
+      ctx.beginPath(); ctx.moveTo(420, flowY); ctx.lineTo(445, flowY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(440, flowY - 4); ctx.lineTo(445, flowY); ctx.lineTo(440, flowY + 4); ctx.fill();
+      // Deployment box
+      drawBox(ctx, 450, flowY - 16, 44, 32, 'Pods', Colors.green);
+
+      // --- Section 2: RPS Gauge (left) ---
+      const gaugeX = 70, gaugeY = 110, gaugeR = 42;
+      // Gauge background arc
+      ctx.beginPath();
+      ctx.arc(gaugeX, gaugeY, gaugeR, Math.PI, 2 * Math.PI);
+      ctx.strokeStyle = Colors.border;
+      ctx.lineWidth = 10;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      // Gauge value arc
+      const pct = Math.min(rps / 500, 1);
+      if (pct > 0) {
+        const angle = Math.PI + pct * Math.PI;
+        ctx.beginPath();
+        ctx.arc(gaugeX, gaugeY, gaugeR, Math.PI, angle);
+        ctx.strokeStyle = gwColor;
+        ctx.lineWidth = 10;
+        ctx.stroke();
+      }
+      ctx.lineCap = 'butt';
+      // RPS value text
+      ctx.fillStyle = gwColor;
+      ctx.font = 'bold 22px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(rps, gaugeX, gaugeY + 6);
+      ctx.fillStyle = Colors.textMuted;
+      ctx.font = '10px sans-serif';
+      ctx.fillText('RPS', gaugeX, gaugeY + 20);
+      // Labels
+      ctx.fillStyle = Colors.textMuted;
+      ctx.font = '9px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('0', gaugeX - gaugeR - 4, gaugeY + 14);
+      ctx.textAlign = 'right';
+      ctx.fillText('500', gaugeX + gaugeR + 4, gaugeY + 14);
+
+      // Threshold line label
+      ctx.fillStyle = Colors.yellow;
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('threshold: ' + threshold + ' RPS/pod', gaugeX, gaugeY + 40);
+
+      // --- Section 3: Pod Grid (right) ---
+      const gridX = 165, gridY = 80;
+      const podW = 56, podH = 42, podGapX = 8, podGapY = 6;
+      const cols = 5;
+
+      // Grid title
+      ctx.fillStyle = Colors.text;
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('Pods (' + podCount + '/' + '10)', gridX, gridY - 6);
+
+      for (let i = 0; i < 10; i++) {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const px = gridX + col * (podW + podGapX);
+        const py = gridY + row * (podH + podGapY);
+
+        if (i < podCount) {
+          // Active pod
+          const c = Colors.green;
+          ctx.fillStyle = c + '25';
+          ctx.strokeStyle = c + '90';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.roundRect(px, py, podW, podH, 5);
+          ctx.fill(); ctx.stroke();
+          ctx.fillStyle = Colors.text;
+          ctx.font = 'bold 10px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('Pod ' + (i + 1), px + podW / 2, py + podH / 2 - 3);
+          ctx.fillStyle = Colors.green;
+          ctx.font = '8px sans-serif';
+          ctx.fillText('Running', px + podW / 2, py + podH / 2 + 10);
+        } else {
+          // Empty slot (dashed)
+          ctx.setLineDash([3, 3]);
+          ctx.strokeStyle = Colors.border;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.roundRect(px, py, podW, podH, 5);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = Colors.textMuted + '60';
+          ctx.font = '9px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('empty', px + podW / 2, py + podH / 2 + 3);
+        }
+      }
+
+      // --- Section 4: Status Bar (bottom) ---
+      const barY = h - 70;
+      // Background bar
+      ctx.fillStyle = Colors.bgCard;
+      ctx.strokeStyle = Colors.border;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(10, barY, w - 20, 60, 8);
+      ctx.fill(); ctx.stroke();
+
+      // Metrics line
+      ctx.fillStyle = Colors.textMuted;
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('Current: ' + rps + ' RPS', 24, barY + 22);
+      ctx.fillText('Threshold: ' + threshold + ' RPS/pod', 170, barY + 22);
+      ctx.fillText('Desired: ' + podCount + ' pods', 340, barY + 22);
+
+      // Status line
+      let statusText, statusColor;
+      if (rps === 0) {
+        statusText = 'Scale to Zero — 비용 절감 모드';
+        statusColor = '#8b5cf6';
+      } else if (podCount >= 10) {
+        statusText = 'MAX CAPACITY — maxReplicaCount 도달';
+        statusColor = Colors.red;
+      } else if (podCount > 3) {
+        statusText = 'Scaling Out — 트래픽 증가 대응 중';
+        statusColor = Colors.yellow;
+      } else {
+        statusText = 'Normal — 안정 상태';
+        statusColor = Colors.green;
+      }
+      ctx.fillStyle = statusColor;
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillText(statusText, 24, barY + 44);
+
+      // Formula on right
+      ctx.fillStyle = Colors.textMuted;
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText('ceil(' + rps + ' / ' + threshold + ') = ' + podCount, w - 24, barY + 44);
+    }
+
+    // RPS slider listener
+    const rpsSlider = document.getElementById('rps-slider');
+    if (rpsSlider) {
+      rpsSlider.addEventListener('input', (e) => {
+        document.getElementById('rps-value').textContent = e.target.value;
+        drawKedaCanvas();
+      });
+    }
+
+    // ==========================================
     // Initialize
     // ==========================================
     document.addEventListener('DOMContentLoaded', () => {
@@ -1714,6 +2319,7 @@ upperBound: CPU ${cpuUpper}m, Memory ${formatMemory(memUpper)}`;
       // Handle window resize for canvas
       window.addEventListener('resize', () => {
         initVpaCanvas();
+        if (kedaCtx) initKedaCanvas();
       });
     });
   </script>

@@ -1584,9 +1584,39 @@ karpenter_nodes_allocatable</div></div></div></li>
     // Slide 5: Spot Interrupt Simulation
     // ============================================================
     (function initSpotSim() {
-      const cvs = setupCanvas('spot-canvas', 960, 350);
-      if (!cvs) return;
-      const { ctx, width, height } = cvs;
+      const spotCanvas = document.getElementById('spot-canvas');
+      if (!spotCanvas) return;
+      const spotContainer = spotCanvas.parentElement;
+      const BASE_W = 960, BASE_H = 350;
+
+      function resizeSpotCanvas() {
+        const cw = spotContainer.clientWidth;
+        const ch = spotContainer.clientHeight;
+        if (cw <= 0 || ch <= 0) {
+          // Fallback for hidden slide
+          const r = setupCanvas('spot-canvas', BASE_W, BASE_H);
+          if (r) { Object.assign(spotCanvas, { _ctx: r.ctx }); }
+          return;
+        }
+        const dpr = window.devicePixelRatio || 1;
+        const scale = cw / BASE_W;
+        const scaledH = Math.min(Math.round(BASE_H * scale), ch);
+        spotCanvas.width = Math.round(cw * dpr);
+        spotCanvas.height = Math.round(scaledH * dpr);
+        spotCanvas.style.width = cw + 'px';
+        spotCanvas.style.height = scaledH + 'px';
+        spotCanvas.style.maxWidth = 'none';
+        const c = spotCanvas.getContext('2d');
+        c.setTransform(1, 0, 0, 1, 0, 0);
+        c.scale(scale * dpr, scale * dpr);
+        spotCanvas._ctx = c;
+      }
+      resizeSpotCanvas();
+      new ResizeObserver(() => resizeSpotCanvas()).observe(spotContainer);
+
+      const ctx = spotCanvas.getContext('2d');
+      // Use uniform scaling — logical coords stay at BASE_W x BASE_H
+      const width = BASE_W, height = BASE_H;
 
       let phase = 'initial'; // initial, warning, evicting, provisioning, terminated, complete
       let timer = 0;

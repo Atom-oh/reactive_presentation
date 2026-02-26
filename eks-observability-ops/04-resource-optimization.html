@@ -174,25 +174,28 @@
 
     /* VPA Simulator */
     .simulator-layout {
-      display: grid;
-      grid-template-columns: 350px 1fr;
-      gap: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
       height: 100%;
     }
     .simulator-controls {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 20px;
+      padding: 14px 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 32px;
     }
     .control-group {
-      margin-bottom: 20px;
+      margin-bottom: 0;
     }
     .control-group label {
       display: block;
-      font-size: .85rem;
+      font-size: .8rem;
       color: var(--text-secondary);
-      margin-bottom: 8px;
+      margin-bottom: 4px;
     }
     .control-row {
       display: flex;
@@ -209,13 +212,24 @@
       min-width: 70px;
       text-align: right;
     }
+    .simulator-bottom {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      flex: 1;
+      min-height: 0;
+    }
+    .simulator-results {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
     .savings-display {
       background: var(--green-bg);
       border: 1px solid var(--green);
       border-radius: 10px;
       padding: 16px;
       text-align: center;
-      margin-top: 16px;
     }
     .savings-label {
       font-size: .8rem;
@@ -232,13 +246,14 @@
       background: #0d1117;
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 12px;
+      padding: 14px 16px;
       font-family: var(--font-mono);
-      font-size: .75rem;
+      font-size: .82rem;
       color: #c9d1d9;
-      margin-top: 16px;
       white-space: pre;
       overflow-x: auto;
+      flex: 1;
+      line-height: 1.6;
     }
 
     /* Timeline flow */
@@ -959,17 +974,17 @@
               </div>
             </div>
             <div class="control-group">
-              <label>CPU 실제 사용량 (Usage)</label>
-              <div class="control-row">
-                <input type="range" id="cpu-usage" min="50" max="4000" value="300" step="50">
-                <span class="control-value" id="cpu-usage-val">300m</span>
-              </div>
-            </div>
-            <div class="control-group">
               <label>Memory 현재 요청 (Request)</label>
               <div class="control-row">
                 <input type="range" id="mem-request" min="128" max="8192" value="2048" step="128">
                 <span class="control-value" id="mem-request-val">2Gi</span>
+              </div>
+            </div>
+            <div class="control-group">
+              <label>CPU 실제 사용량 (Usage)</label>
+              <div class="control-row">
+                <input type="range" id="cpu-usage" min="50" max="4000" value="300" step="50">
+                <span class="control-value" id="cpu-usage-val">300m</span>
               </div>
             </div>
             <div class="control-group">
@@ -979,17 +994,31 @@
                 <span class="control-value" id="mem-usage-val">512Mi</span>
               </div>
             </div>
-            <div class="savings-display">
-              <div class="savings-label">예상 리소스 절감률</div>
-              <div class="savings-value" id="savings-pct">65%</div>
-            </div>
-            <div class="yaml-output" id="vpa-yaml"># VPA Recommendation
-target: CPU 345m, Memory 589Mi
-lowerBound: CPU 300m, Memory 512Mi
-upperBound: CPU 400m, Memory 700Mi</div>
           </div>
-          <div class="canvas-container" style="flex:1;">
-            <canvas id="vpa-canvas"></canvas>
+          <div class="simulator-bottom">
+            <div class="canvas-container">
+              <canvas id="vpa-canvas"></canvas>
+            </div>
+            <div class="simulator-results">
+              <div class="savings-display">
+                <div class="savings-label">예상 리소스 절감률</div>
+                <div class="savings-value" id="savings-pct">65%</div>
+              </div>
+              <div class="yaml-output" id="vpa-yaml"># VPA Recommendation Status
+recommendation:
+  containerRecommendations:
+  - containerName: app
+    target:
+      cpu: "345m"
+      memory: "589Mi"
+    lowerBound:
+      cpu: "270m"
+      memory: "461Mi"
+    upperBound:
+      cpu: "450m"
+      memory: "768Mi"
+# Savings: CPU 66% | Mem 75%</div>
+            </div>
           </div>
         </div>
       </div>
@@ -1766,7 +1795,7 @@ Scheduling: c6g.medium으로 충분</div>
     let vpaHeight = 0;
 
     function initVpaCanvas() {
-      const result = setupCanvas('vpa-canvas', 700, 380);
+      const result = setupCanvas('vpa-canvas', 700, 500);
       if (result) {
         vpaCtx = result.ctx;
         vpaWidth = result.width;
@@ -1808,32 +1837,42 @@ Scheduling: c6g.medium으로 충분</div>
       const cpuUpper = Math.round(cpuUse * 1.5);
       const memLower = Math.max(64, Math.round(memUse * 0.9));
       const memUpper = Math.round(memUse * 1.5);
-      document.getElementById('vpa-yaml').textContent = `# VPA Recommendation
-target: CPU ${cpuRec}m, Memory ${formatMemory(memRec)}
-lowerBound: CPU ${cpuLower}m, Memory ${formatMemory(memLower)}
-upperBound: CPU ${cpuUpper}m, Memory ${formatMemory(memUpper)}`;
+      document.getElementById('vpa-yaml').textContent = `# VPA Recommendation Status
+recommendation:
+  containerRecommendations:
+  - containerName: app
+    target:
+      cpu: "${cpuRec}m"
+      memory: "${formatMemory(memRec)}"
+    lowerBound:
+      cpu: "${cpuLower}m"
+      memory: "${formatMemory(memLower)}"
+    upperBound:
+      cpu: "${cpuUpper}m"
+      memory: "${formatMemory(memUpper)}"
+# Savings: CPU ${Math.round(cpuSavings)}% | Mem ${Math.round(memSavings)}%`;
 
       // Clear canvas
       ctx.fillStyle = Colors.bgSecond;
       ctx.fillRect(0, 0, w, h);
 
       // Draw title
-      drawText(ctx, 'CPU', 60, 30, { size: 16, weight: '600', color: Colors.textPri, align: 'left' });
-      drawText(ctx, 'Memory', 60, 210, { size: 16, weight: '600', color: Colors.textPri, align: 'left' });
+      drawText(ctx, 'CPU', 60, 40, { size: 18, weight: '600', color: Colors.textPri, align: 'left' });
+      drawText(ctx, 'Memory', 60, 270, { size: 18, weight: '600', color: Colors.textPri, align: 'left' });
 
       // Bar dimensions
       const barX = 60;
       const barWidth = w - 120;
-      const barHeight = 50;
+      const barHeight = 65;
 
       // CPU bars
       const cpuMax = 4000;
-      const cpuY = 60;
+      const cpuY = 75;
       drawResourceBar(ctx, barX, cpuY, barWidth, barHeight, cpuReq, cpuUse, cpuRec, cpuMax, 'm');
 
       // Memory bars
       const memMax = 8192;
-      const memY = 240;
+      const memY = 305;
       drawResourceBar(ctx, barX, memY, barWidth, barHeight, memReq, memUse, memRec, memMax, 'Mi');
 
       // Legend

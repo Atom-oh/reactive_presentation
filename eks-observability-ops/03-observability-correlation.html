@@ -1595,12 +1595,27 @@ ERROR: Unable to acquire connection within 5s
     let ltAnimLoop = null;
 
     function initLokiTempoCanvas() {
-      const result = setupCanvas('loki-tempo-canvas', 960, 300);
-      if (!result) return;
-      ltCanvas = result.canvas;
-      ltCtx = result.ctx;
-      ltWidth = result.width;
-      ltHeight = result.height;
+      const canvas = document.getElementById('loki-tempo-canvas');
+      if (!canvas) return;
+      const container = canvas.closest('.canvas-container');
+      const containerW = container ? container.clientWidth : 1200;
+      const containerH = container ? container.clientHeight : 400;
+      const logicalW = Math.max(600, containerW - 40);
+      const maxH = Math.max(200, containerH - 60);
+      const logicalH = Math.min(Math.round(logicalW * 0.32), maxH);
+
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = logicalW * dpr;
+      canvas.height = logicalH * dpr;
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
+      canvas.style.aspectRatio = logicalW + '/' + logicalH;
+
+      ltCtx = canvas.getContext('2d');
+      ltCtx.scale(dpr, dpr);
+      ltCanvas = canvas;
+      ltWidth = logicalW;
+      ltHeight = logicalH;
 
       drawLokiTempoFrame();
     }
@@ -1613,18 +1628,27 @@ ERROR: Unable to acquire connection within 5s
       ctx.fillStyle = Colors.bgSecond;
       ctx.fillRect(0, 0, w, h);
 
-      const boxW = 300;
-      const boxH = 200;
-      const lokiX = 80;
-      const tempoX = w - boxW - 80;
-      const boxY = 50;
+      // --- Proportional layout ---
+      const pad = w * 0.06;
+      const gap = w * 0.12;
+      const boxW = (w - pad * 2 - gap) / 2;
+      const boxH = h * 0.7;
+      const lokiX = pad;
+      const tempoX = pad + boxW + gap;
+      const boxY = h * 0.12;
+      const cornerR = w * 0.01;
+
+      // Font sizes
+      const fLg = Math.max(12, Math.round(w * 0.016));
+      const fMd = Math.max(10, Math.round(w * 0.012));
+      const fSm = Math.max(9, Math.round(w * 0.01));
 
       // Loki box
-      drawRoundRect(ctx, lokiX, boxY, boxW, boxH, 12, Colors.green + '20', Colors.green);
+      drawRoundRect(ctx, lokiX, boxY, boxW, boxH, cornerR, Colors.green + '20', Colors.green);
       ctx.fillStyle = Colors.green;
-      ctx.font = '700 18px Pretendard';
+      ctx.font = `700 ${fLg}px Pretendard`;
       ctx.textAlign = 'center';
-      ctx.fillText('Loki', lokiX + boxW/2, boxY + 30);
+      ctx.fillText('Loki', lokiX + boxW / 2, boxY + boxH * 0.14);
 
       // Loki content - log lines
       const logs = [
@@ -1632,48 +1656,56 @@ ERROR: Unable to acquire connection within 5s
         '{"traceId":"def456..."}',
         '{"traceId":"ghi789..."}'
       ];
-      ctx.font = '400 11px JetBrains Mono';
+      ctx.font = `400 ${fSm}px JetBrains Mono`;
       ctx.textAlign = 'left';
       ctx.fillStyle = Colors.textSec;
+      const logStartY = boxY + boxH * 0.28;
+      const logGap = boxH * 0.16;
       logs.forEach((log, i) => {
-        const ly = boxY + 60 + i * 25;
-        ctx.fillText(log, lokiX + 20, ly);
+        const ly = logStartY + i * logGap;
+        ctx.fillStyle = Colors.textSec;
+        ctx.fillText(log, lokiX + boxW * 0.06, ly);
 
-        // Highlight traceId if animating Loki->Tempo
         if (ltAnimState.mode === 'loki-tempo' && ltAnimState.progress > 0.2) {
           ctx.fillStyle = Colors.accent;
-          ctx.fillText('abc123...', lokiX + 120, ly);
+          ctx.fillText('abc123...', lokiX + boxW * 0.38, ly);
           ctx.fillStyle = Colors.textSec;
         }
       });
 
       // Tempo box
-      drawRoundRect(ctx, tempoX, boxY, boxW, boxH, 12, Colors.yellow + '20', Colors.yellow);
+      drawRoundRect(ctx, tempoX, boxY, boxW, boxH, cornerR, Colors.yellow + '20', Colors.yellow);
       ctx.fillStyle = Colors.yellow;
-      ctx.font = '700 18px Pretendard';
+      ctx.font = `700 ${fLg}px Pretendard`;
       ctx.textAlign = 'center';
-      ctx.fillText('Tempo', tempoX + boxW/2, boxY + 30);
+      ctx.fillText('Tempo', tempoX + boxW / 2, boxY + boxH * 0.14);
 
       // Tempo content - spans
       const spans = [
-        { name: 'API Gateway', w: 200 },
-        { name: 'Service A', w: 150 },
-        { name: 'DB Query', w: 100 }
+        { name: 'API Gateway', wRatio: 0.6 },
+        { name: 'Service A', wRatio: 0.45 },
+        { name: 'DB Query', wRatio: 0.3 }
       ];
+      const spanStartY = boxY + boxH * 0.24;
+      const spanGap = boxH * 0.22;
+      const spanH = boxH * 0.14;
       spans.forEach((span, i) => {
-        const sy = boxY + 55 + i * 45;
-        drawRoundRect(ctx, tempoX + 20, sy, span.w, 30, 4, Colors.cyan + '30', Colors.cyan);
+        const sy = spanStartY + i * spanGap;
+        const sw = boxW * span.wRatio;
+        drawRoundRect(ctx, tempoX + boxW * 0.06, sy, sw, spanH, cornerR * 0.5, Colors.cyan + '30', Colors.cyan);
         ctx.fillStyle = Colors.textPri;
-        ctx.font = '500 11px Pretendard';
+        ctx.font = `500 ${fSm}px Pretendard`;
         ctx.textAlign = 'left';
-        ctx.fillText(span.name, tempoX + 30, sy + 19);
+        ctx.fillText(span.name, tempoX + boxW * 0.09, sy + spanH * 0.65);
       });
 
-      // Animated arrows
-      const arrowY1 = boxY + boxH/2 - 30;
-      const arrowY2 = boxY + boxH/2 + 30;
+      // Animated arrows between boxes
+      const arrowY1 = boxY + boxH * 0.35;
+      const arrowY2 = boxY + boxH * 0.65;
       const arrowX1 = lokiX + boxW;
       const arrowX2 = tempoX;
+      const lineW = Math.max(2, w * 0.0025);
+      const dashLen = w * 0.004;
 
       // Loki -> Tempo arrow (top)
       if (ltAnimState.mode === 'loki-tempo') {
@@ -1682,23 +1714,27 @@ ERROR: Unable to acquire connection within 5s
 
         ctx.beginPath();
         ctx.strokeStyle = Colors.accent;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = lineW;
         ctx.moveTo(arrowX1, arrowY1);
         ctx.lineTo(endX, arrowY1);
         ctx.stroke();
 
         if (prog >= 0.95) {
-          drawArrow(ctx, endX - 20, arrowY1, endX, arrowY1, Colors.accent);
+          const arrSize = w * 0.008;
+          ctx.beginPath();
+          ctx.fillStyle = Colors.accent;
+          ctx.moveTo(endX, arrowY1);
+          ctx.lineTo(endX - arrSize, arrowY1 - arrSize * 0.5);
+          ctx.lineTo(endX - arrSize, arrowY1 + arrSize * 0.5);
+          ctx.fill();
         }
 
-        // Label
         ctx.fillStyle = Colors.accent;
-        ctx.font = '600 13px Pretendard';
+        ctx.font = `600 ${fMd}px Pretendard`;
         ctx.textAlign = 'center';
-        ctx.fillText('Derived Fields', (arrowX1 + arrowX2) / 2, arrowY1 - 15);
+        ctx.fillText('Derived Fields', (arrowX1 + arrowX2) / 2, arrowY1 - h * 0.05);
       } else {
-        // Static arrow indicator
-        ctx.setLineDash([4, 4]);
+        ctx.setLineDash([dashLen, dashLen]);
         ctx.beginPath();
         ctx.strokeStyle = Colors.border;
         ctx.lineWidth = 1;
@@ -1716,23 +1752,27 @@ ERROR: Unable to acquire connection within 5s
 
         ctx.beginPath();
         ctx.strokeStyle = Colors.cyan;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = lineW;
         ctx.moveTo(startX, arrowY2);
         ctx.lineTo(endX, arrowY2);
         ctx.stroke();
 
         if (prog >= 0.95) {
-          drawArrow(ctx, endX + 20, arrowY2, endX, arrowY2, Colors.cyan);
+          const arrSize = w * 0.008;
+          ctx.beginPath();
+          ctx.fillStyle = Colors.cyan;
+          ctx.moveTo(endX, arrowY2);
+          ctx.lineTo(endX + arrSize, arrowY2 - arrSize * 0.5);
+          ctx.lineTo(endX + arrSize, arrowY2 + arrSize * 0.5);
+          ctx.fill();
         }
 
-        // Label
         ctx.fillStyle = Colors.cyan;
-        ctx.font = '600 13px Pretendard';
+        ctx.font = `600 ${fMd}px Pretendard`;
         ctx.textAlign = 'center';
-        ctx.fillText('tracesToLogs', (arrowX1 + arrowX2) / 2, arrowY2 + 25);
+        ctx.fillText('tracesToLogs', (arrowX1 + arrowX2) / 2, arrowY2 + h * 0.08);
       } else {
-        // Static arrow indicator
-        ctx.setLineDash([4, 4]);
+        ctx.setLineDash([dashLen, dashLen]);
         ctx.beginPath();
         ctx.strokeStyle = Colors.border;
         ctx.lineWidth = 1;
@@ -1804,12 +1844,27 @@ ERROR: Unable to acquire connection within 5s
     let smFaultInjected = false;
 
     function initServiceMapCanvas() {
-      const result = setupCanvas('servicemap-canvas', 960, 380);
-      if (!result) return;
-      smCanvas = result.canvas;
-      smCtx = result.ctx;
-      smWidth = result.width;
-      smHeight = result.height;
+      const canvas = document.getElementById('servicemap-canvas');
+      if (!canvas) return;
+      const container = canvas.closest('.canvas-container');
+      const containerW = container ? container.clientWidth : 1200;
+      const containerH = container ? container.clientHeight : 500;
+      const logicalW = Math.max(600, containerW - 40);
+      const maxH = Math.max(250, containerH - 60);
+      const logicalH = Math.min(Math.round(logicalW * 0.38), maxH);
+
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = logicalW * dpr;
+      canvas.height = logicalH * dpr;
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
+      canvas.style.aspectRatio = logicalW + '/' + logicalH;
+
+      smCtx = canvas.getContext('2d');
+      smCtx.scale(dpr, dpr);
+      smCanvas = canvas;
+      smWidth = logicalW;
+      smHeight = logicalH;
 
       smFaultInjected = false;
       drawServiceMap();
@@ -1823,16 +1878,37 @@ ERROR: Unable to acquire connection within 5s
       ctx.fillStyle = Colors.bgSecond;
       ctx.fillRect(0, 0, w, h);
 
+      // --- Proportional layout ---
+      const nodeW = Math.max(80, w * 0.11);
+      const nodeH = Math.max(32, h * 0.12);
+      const cornerR = Math.max(4, w * 0.006);
+
+      // Font sizes
+      const fLg = Math.max(10, Math.round(w * 0.013));
+      const fMd = Math.max(9, Math.round(w * 0.011));
+      const fSm = Math.max(8, Math.round(w * 0.009));
+
+      // 4-row vertical layout with proportional Y positions
+      const row1Y = h * 0.10;   // Gateway
+      const row2Y = h * 0.34;   // Auth, Order, Payment
+      const row3Y = h * 0.58;   // Redis, Inventory, Billing
+      const row4Y = h * 0.82;   // PostgreSQL
+
+      // Horizontal positions
+      const col1X = w * 0.18;   // left column
+      const col2X = w * 0.50;   // center column
+      const col3X = w * 0.82;   // right column
+
       // Deeper service topology: Gateway → Services → Sub-services → DB
       const services = [
-        { id: 'gateway',   name: 'API Gateway',     x: w/2,       y: 45,  color: Colors.green },
-        { id: 'auth',      name: 'Auth Service',    x: 140,       y: 125, color: Colors.green },
-        { id: 'order',     name: 'Order Service',   x: w/2,       y: 125, color: Colors.green },
-        { id: 'payment',   name: 'Payment Service', x: w - 140,   y: 125, color: Colors.green },
-        { id: 'redis',     name: 'Redis',           x: 100,       y: 215, color: Colors.green },
-        { id: 'inventory', name: 'Inventory',       x: w/2 - 100, y: 215, color: Colors.green },
-        { id: 'billing',   name: 'Billing Service', x: w/2 + 100, y: 215, color: Colors.green },
-        { id: 'postgres',  name: 'PostgreSQL',      x: w/2,       y: h - 45, color: Colors.green }
+        { id: 'gateway',   name: 'API Gateway',     x: col2X,  y: row1Y, color: Colors.green },
+        { id: 'auth',      name: 'Auth Service',    x: col1X,  y: row2Y, color: Colors.green },
+        { id: 'order',     name: 'Order Service',   x: col2X,  y: row2Y, color: Colors.green },
+        { id: 'payment',   name: 'Payment Service', x: col3X,  y: row2Y, color: Colors.green },
+        { id: 'redis',     name: 'Redis',           x: col1X,  y: row3Y, color: Colors.green },
+        { id: 'inventory', name: 'Inventory',       x: col2X - w * 0.10, y: row3Y, color: Colors.green },
+        { id: 'billing',   name: 'Billing Service', x: col2X + w * 0.10, y: row3Y, color: Colors.green },
+        { id: 'postgres',  name: 'PostgreSQL',      x: col2X,  y: row4Y, color: Colors.green }
       ];
 
       // Edges representing call dependencies
@@ -1849,28 +1925,22 @@ ERROR: Unable to acquire connection within 5s
 
       // Fault propagation: DB failure propagates upward through call chain
       if (smFaultInjected) {
-        // Depth 0: Root cause - DB down
         services.find(s => s.id === 'postgres').color = Colors.red;
-
-        // Depth 1: Direct dependents - can't query DB
         services.find(s => s.id === 'inventory').color = Colors.red;
         services.find(s => s.id === 'billing').color = Colors.red;
-
-        // Depth 2: Services calling affected services - degraded
         services.find(s => s.id === 'order').color = Colors.yellow;
         services.find(s => s.id === 'payment').color = Colors.yellow;
-
-        // Depth 3: Gateway sees errors from downstream - elevated error rate
         services.find(s => s.id === 'gateway').color = Colors.yellow;
-
-        // Unaffected: auth uses Redis, not DB
       }
 
       // Build service color lookup for edge coloring
       const serviceColorMap = {};
       services.forEach(s => { serviceColorMap[s.id] = s.color; });
 
-      // Draw edges first
+      // Draw edges first (bottom of source → top of target)
+      const arrowSize = Math.max(5, w * 0.006);
+      const lineW = Math.max(1.5, w * 0.002);
+
       edges.forEach(edge => {
         const from = services.find(s => s.id === edge.from);
         const to = services.find(s => s.id === edge.to);
@@ -1888,48 +1958,50 @@ ERROR: Unable to acquire connection within 5s
           }
         }
 
-        // Calculate edge endpoints (from right side of source to left side of target)
-        const nodeW = 110;
-        const fromX = from.x + nodeW/2;
-        const fromY = from.y;
-        const toX = to.x - nodeW/2;
-        const toY = to.y;
+        // Anchor: bottom-center of source box → top-center of target box
+        const fromX = from.x;
+        const fromY = from.y + nodeH / 2;
+        const toX = to.x;
+        const toY = to.y - nodeH / 2;
 
         // Draw edge line
         ctx.beginPath();
         ctx.strokeStyle = edgeColor;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = lineW;
         ctx.moveTo(fromX, fromY);
         ctx.lineTo(toX, toY);
         ctx.stroke();
 
-        // Arrowhead
+        // Arrowhead at target
         const angle = Math.atan2(toY - fromY, toX - fromX);
         ctx.beginPath();
         ctx.fillStyle = edgeColor;
         ctx.moveTo(toX, toY);
-        ctx.lineTo(toX - 8 * Math.cos(angle - 0.3), toY - 8 * Math.sin(angle - 0.3));
-        ctx.lineTo(toX - 8 * Math.cos(angle + 0.3), toY - 8 * Math.sin(angle + 0.3));
+        ctx.lineTo(toX - arrowSize * Math.cos(angle - 0.35), toY - arrowSize * Math.sin(angle - 0.35));
+        ctx.lineTo(toX - arrowSize * Math.cos(angle + 0.35), toY - arrowSize * Math.sin(angle + 0.35));
         ctx.fill();
 
-        // Rate label
+        // Rate label at midpoint
         const midX = (fromX + toX) / 2;
         const midY = (fromY + toY) / 2;
         ctx.fillStyle = Colors.textMuted;
-        ctx.font = '400 10px JetBrains Mono';
+        ctx.font = `400 ${fSm}px JetBrains Mono`;
         ctx.textAlign = 'center';
-        ctx.fillText(edge.rate, midX, midY - 8);
+        // Offset label to the right to avoid overlapping the line
+        const perpX = -(toY - fromY);
+        const perpY = (toX - fromX);
+        const perpLen = Math.sqrt(perpX * perpX + perpY * perpY) || 1;
+        const offsetDist = w * 0.025;
+        ctx.fillText(edge.rate, midX + (perpX / perpLen) * offsetDist, midY + (perpY / perpLen) * offsetDist);
       });
 
       // Draw service nodes
       services.forEach(service => {
-        const nodeW = 110;
-        const nodeH = 44;
-        const x = service.x - nodeW/2;
-        const y = service.y - nodeH/2;
+        const x = service.x - nodeW / 2;
+        const y = service.y - nodeH / 2;
 
         // Node background
-        drawRoundRect(ctx, x, y, nodeW, nodeH, 10, service.color + '25', service.color);
+        drawRoundRect(ctx, x, y, nodeW, nodeH, cornerR, service.color + '25', service.color);
 
         // Pulsing effect for root cause (postgres)
         if (smFaultInjected && service.id === 'postgres') {
@@ -1940,17 +2012,17 @@ ERROR: Unable to acquire connection within 5s
 
         // Service name
         ctx.fillStyle = Colors.textPri;
-        ctx.font = '600 11px Pretendard';
+        ctx.font = `600 ${fMd}px Pretendard`;
         ctx.textAlign = 'center';
-        ctx.fillText(service.name, service.x, service.y + 4);
+        ctx.fillText(service.name, service.x, service.y + fMd * 0.35);
       });
 
       // Error propagation message
       if (smFaultInjected) {
         ctx.fillStyle = Colors.red;
-        ctx.font = '600 13px Pretendard';
+        ctx.font = `600 ${fLg}px Pretendard`;
         ctx.textAlign = 'center';
-        ctx.fillText('PostgreSQL 장애 → Billing/Inventory 에러 → Order/Payment 지연 전파', w/2, h - 12);
+        ctx.fillText('PostgreSQL 장애 → Billing/Inventory 에러 → Order/Payment 지연 전파', w / 2, h * 0.97);
       }
     }
 

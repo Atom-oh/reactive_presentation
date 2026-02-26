@@ -644,59 +644,84 @@
 
     <!-- Slide 10: RED Method + 4 Golden Signals -->
     <section class="slide" id="slide-10">
-      <div class="slide-header">
-        <h1>RED Method + 4 Golden Signals</h1>
+      <div class="slide-header" style="margin-bottom: 6px;">
+        <h1>RED Method vs 4 Golden Signals</h1>
+        <p class="subtitle">두 방법론의 관계와 차이 — 메트릭 3개가 겹칩니다</p>
       </div>
-      <div class="slide-body">
-        <div class="compare-toggle" style="display: flex; align-items: center;">
-          <button class="compare-btn active" data-compare="red">RED Method</button>
-          <button class="compare-btn" data-compare="golden">4 Golden Signals</button>
-          <button class="btn" id="btn-fault-sim" style="margin-left: auto; border-color: var(--red); color: var(--red); font-size: 0.8rem;">장애 시뮬레이션</button>
-        </div>
-
-        <div class="compare-content active" data-compare="red">
-          <p style="margin-bottom: 16px; color: var(--text-secondary);">서비스 레벨 모니터링에 적합 (마이크로서비스)</p>
-          <div class="col-3">
-            <div class="card metric-card" id="red-rate">
-              <div class="metric-value" style="color: var(--blue);" data-normal="1,247" data-fault="342">1,247</div>
-              <div class="metric-label">Rate (req/s)</div>
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">초당 요청 수</p>
+      <div class="slide-body" style="gap: 8px;">
+        <div class="columns" style="gap: 14px; flex: 0 0 auto;">
+          <!-- RED Method -->
+          <div class="card" style="padding: 10px 14px; border-color: var(--orange);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <span style="background: var(--orange); color: #000; font-weight: 700; padding: 2px 8px; border-radius: 4px; font-size: .75rem;">RED</span>
+              <span style="color: var(--text-secondary); font-size: .82rem;">Tom Wilkie (Grafana Labs)</span>
             </div>
-            <div class="card metric-card" id="red-errors">
-              <div class="metric-value" style="color: var(--red);" data-normal="0.12%" data-fault="5.2%">0.12%</div>
-              <div class="metric-label">Errors</div>
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">에러율</p>
+            <p style="font-size: .82rem; color: var(--text-muted); margin-bottom: 8px;"><strong style="color: var(--text-primary);">마이크로서비스</strong> 관점 — "내 서비스가 잘 응답하는가?"</p>
+            <div style="display: flex; gap: 8px;">
+              <div class="card metric-card" id="red-rate" style="padding: 6px; flex: 1;">
+                <div class="metric-value" style="color: var(--blue); font-size: 1.4rem;" data-normal="1,247" data-fault="342">1,247</div>
+                <div class="metric-label" style="font-size: .75rem;"><strong>R</strong>ate (req/s)</div>
+              </div>
+              <div class="card metric-card" id="red-errors" style="padding: 6px; flex: 1;">
+                <div class="metric-value" style="color: var(--red); font-size: 1.4rem;" data-normal="0.12%" data-fault="5.2%">0.12%</div>
+                <div class="metric-label" style="font-size: .75rem;"><strong>E</strong>rrors</div>
+              </div>
+              <div class="card metric-card" id="red-duration" style="padding: 6px; flex: 1;">
+                <div class="metric-value" style="color: var(--yellow); font-size: 1.4rem;" data-normal="45ms" data-fault="2,340ms">45ms</div>
+                <div class="metric-label" style="font-size: .75rem;"><strong>D</strong>uration (p99)</div>
+              </div>
             </div>
-            <div class="card metric-card" id="red-duration">
-              <div class="metric-value" style="color: var(--yellow);" data-normal="45ms" data-fault="2,340ms">45ms</div>
-              <div class="metric-label">Duration (p99)</div>
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">응답 시간</p>
+          </div>
+          <!-- 4 Golden Signals -->
+          <div class="card" style="padding: 10px 14px; border-color: var(--cyan);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <span style="background: var(--cyan); color: #000; font-weight: 700; padding: 2px 8px; border-radius: 4px; font-size: .75rem;">4 Golden</span>
+              <span style="color: var(--text-secondary); font-size: .82rem;">Google SRE Book (2016)</span>
+            </div>
+            <p style="font-size: .82rem; color: var(--text-muted); margin-bottom: 8px;"><strong style="color: var(--text-primary);">인프라 + 서비스</strong> 관점 — "시스템 전체가 건강한가?"</p>
+            <div style="display: flex; gap: 8px;">
+              <div class="card metric-card" id="golden-latency" style="padding: 6px; flex: 1;">
+                <div class="metric-value" style="color: var(--yellow); font-size: 1.4rem;" data-normal="45ms" data-fault="2,340ms">45ms</div>
+                <div class="metric-label" style="font-size: .75rem;">Latency</div>
+              </div>
+              <div class="card metric-card" id="golden-traffic" style="padding: 6px; flex: 1;">
+                <div class="metric-value" style="color: var(--blue); font-size: 1.4rem;" data-normal="1,247" data-fault="342">1,247</div>
+                <div class="metric-label" style="font-size: .75rem;">Traffic</div>
+              </div>
+              <div class="card metric-card" id="golden-errors" style="padding: 6px; flex: 1;">
+                <div class="metric-value" style="color: var(--red); font-size: 1.4rem;" data-normal="0.12%" data-fault="5.2%">0.12%</div>
+                <div class="metric-label" style="font-size: .75rem;">Errors</div>
+              </div>
+              <div class="card metric-card highlight" id="golden-saturation" style="padding: 6px; flex: 1;">
+                <div class="metric-value" style="color: var(--cyan); font-size: 1.4rem;" data-normal="72%" data-fault="96%">72%</div>
+                <div class="metric-label" style="font-size: .75rem;">Saturation</div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="compare-content" data-compare="golden">
-          <p style="margin-bottom: 16px; color: var(--text-secondary);">Google SRE 방법론 - 인프라 + 서비스 모니터링</p>
-          <div class="col-2" style="gap: 16px;">
-            <div class="card metric-card" id="golden-latency">
-              <div class="metric-value" style="color: var(--yellow);" data-normal="45ms" data-fault="2,340ms">45ms</div>
-              <div class="metric-label">Latency</div>
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">요청 처리 시간</p>
+        <!-- Mapping table + insight -->
+        <div class="columns" style="gap: 14px;">
+          <div>
+            <table style="font-size: .82rem;">
+              <thead>
+                <tr><th>RED Method</th><th></th><th>4 Golden Signals</th><th>PromQL 예시</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong style="color:var(--blue);">Rate</strong></td><td>=</td><td><strong style="color:var(--blue);">Traffic</strong></td><td style="font-family:var(--font-mono); font-size:.75rem; color:var(--text-muted);">rate(http_requests_total[5m])</td></tr>
+                <tr><td><strong style="color:var(--red);">Errors</strong></td><td>=</td><td><strong style="color:var(--red);">Errors</strong></td><td style="font-family:var(--font-mono); font-size:.75rem; color:var(--text-muted);">rate(http_requests_total{code=~"5.."}[5m])</td></tr>
+                <tr><td><strong style="color:var(--yellow);">Duration</strong></td><td>=</td><td><strong style="color:var(--yellow);">Latency</strong></td><td style="font-family:var(--font-mono); font-size:.75rem; color:var(--text-muted);">histogram_quantile(0.99, ...)</td></tr>
+                <tr><td style="color:var(--text-muted);">—</td><td style="color:var(--accent);">+</td><td><strong style="color:var(--cyan);">Saturation</strong></td><td style="font-family:var(--font-mono); font-size:.75rem; color:var(--text-muted);">container_memory_usage / limits</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="callout callout-info" style="padding: 8px 12px; font-size: .82rem;">
+              <strong>핵심:</strong> Saturation이 유일한 차이. RED는 "서비스가 요청을 잘 처리하는가"에 집중, Golden Signals는 "리소스가 포화되고 있는가"까지 포함합니다.
             </div>
-            <div class="card metric-card" id="golden-traffic">
-              <div class="metric-value" style="color: var(--blue);" data-normal="1,247" data-fault="342">1,247</div>
-              <div class="metric-label">Traffic</div>
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">시스템 부하</p>
-            </div>
-            <div class="card metric-card" id="golden-errors">
-              <div class="metric-value" style="color: var(--red);" data-normal="0.12%" data-fault="5.2%">0.12%</div>
-              <div class="metric-label">Errors</div>
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">실패율</p>
-            </div>
-            <div class="card metric-card" id="golden-saturation">
-              <div class="metric-value" style="color: var(--cyan);" data-normal="72%" data-fault="96%">72%</div>
-              <div class="metric-label">Saturation</div>
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">리소스 포화도</p>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn" id="btn-fault-sim" style="border-color: var(--red); color: var(--red); font-size: 0.78rem; flex: 1;">장애 시뮬레이션</button>
+              <button class="btn btn-sm" id="btn-fault-reset" style="font-size: 0.78rem;">Reset</button>
             </div>
           </div>
         </div>
@@ -2172,6 +2197,9 @@ ERROR: Unable to acquire connection within 5s
     }
 
     document.getElementById('btn-fault-sim')?.addEventListener('click', toggleFaultSimulation);
+    document.getElementById('btn-fault-reset')?.addEventListener('click', () => {
+      if (faultSimActive) toggleFaultSimulation();
+    });
 
     // Initialize on load
     document.addEventListener('DOMContentLoaded', () => {

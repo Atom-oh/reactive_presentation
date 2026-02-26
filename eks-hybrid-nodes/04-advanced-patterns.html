@@ -678,6 +678,20 @@
     </div>
   </section>
 
+  <!-- Slide 11: Thank You -->
+  <div class="slide" style="display:flex;align-items:center;justify-content:center;text-align:center;background:url('../common/pptx-theme/images/Picture_13.png') center/cover no-repeat;">
+    <div style="position:relative;z-index:1;">
+      <h1 style="font-size:3.5rem;font-weight:700;color:#fff;margin-bottom:1rem;text-shadow:0 2px 20px rgba(0,0,0,0.5);">Thank You</h1>
+      <p style="font-size:1.3rem;color:rgba(255,255,255,0.85);margin-bottom:2rem;">감사합니다</p>
+      <div style="display:flex;flex-direction:column;gap:0.5rem;align-items:center;">
+        <p style="font-size:1.1rem;color:rgba(255,255,255,0.9);font-weight:600;">오준석 (Junseok Oh)</p>
+        <p style="font-size:0.95rem;color:rgba(255,255,255,0.7);">Sr. Solutions Architect, AWS</p>
+      </div>
+    </div>
+    <img src="../common/pptx-theme/images/Picture_8.png" alt="" style="position:absolute;top:4%;right:4%;height:2.5rem;">
+    <img src="../common/pptx-theme/images/logo_1.png" alt="" style="position:absolute;bottom:4%;left:8%;height:1.8rem;">
+  </div>
+
 </div>
 
 <script src="../common/animation-utils.js"></script>
@@ -1360,6 +1374,7 @@
       7: 'AWS Managed Services 연계가 Hybrid Nodes의 핵심 가치입니다. 온프렘 인프라에서 Bedrock, SageMaker, Kendra 등을 직접 호출할 수 있습니다. VPN/DX를 통해 Private 연결로 보안을 유지합니다.',
       8: 'Before/After 비교. 온프렘 단독으로 Agent를 구축하려면 수개월이 걸리지만, EKS Hybrid + AWS 서비스를 활용하면 수주 내 PoC가 가능합니다. 인프라 구축 시간을 서비스 개발에 집중할 수 있습니다.',
       9: 'vCPU당 $0.01/hr 추가 비용. 기존 하드웨어를 최대한 활용하면서 AWS Managed Services의 가치를 더하는 접근입니다. CP 관리 비용(etcd 백업, 인증서 갱신, HA)이 0원입니다.',
+      11: 'Thank You 슬라이드. 발표를 마무리합니다.',
       10: 'Q&A 대응 포인트:\n\n1. 규제 적합성: 데이터는 온프렘 유지, CP만 AWS → 금융감독원 클라우드 이용 가이드라인 충족. 데이터 주권 보장.\n\n2. IaaS 이상의 가치: Hybrid Nodes = 온프렘 인프라에 AWS Managed Services를 연결하는 게이트웨이. Bedrock, SageMaker, Kendra 등 즉시 활용 가능.\n\n3. 최신 AI 모델 접근: Bedrock을 통해 Claude, Nova, Llama 등 최신 모델 API 호출. 모델 관리/업데이트는 AWS가 담당.\n\n4. Agent 개발 가속화: 온프렘 단독 대비 → EKS Hybrid 경유 시 AWS AI 서비스 직접 연동으로 개발 기간 대폭 단축. 인프라 구축 없이 API 호출만으로 Agent 파이프라인 구성.\n\n5. 비용 효율성: 기존 HW 투자 보존 + 필요 시에만 클라우드 확장. CapEx 유지, OpEx 최적화.'
     },
     onSlideChange: (index, slide) => {

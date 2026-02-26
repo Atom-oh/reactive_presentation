@@ -238,19 +238,19 @@
     }
 
     /* Overprovisioning Slide */
-    .overprov-flow { display: flex; flex-direction: column; gap: 12px; }
-    .overprov-step { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--bg-tertiary); border-radius: 8px; border-left: 3px solid var(--accent); opacity: 0.4; transition: all 0.4s ease; }
+    .overprov-flow { display: flex; flex-direction: column; gap: .5rem; }
+    .overprov-step { display: flex; align-items: center; gap: .5rem; padding: .42rem .58rem; background: var(--bg-tertiary); border-radius: .33rem; border-left: 3px solid var(--accent); opacity: 0.4; transition: all 0.4s ease; }
     .overprov-step.active { opacity: 1; border-left-color: var(--green); }
-    .overprov-nodes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
-    .overprov-node { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 8px; min-height: 60px; display: flex; flex-wrap: wrap; gap: 4px; align-content: flex-start; transition: all 0.4s ease; }
-    .overprov-node.new-node { border-color: var(--green); box-shadow: 0 0 12px rgba(0, 206, 201, 0.2); }
-    .overprov-pod { width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: .6rem; transition: all 0.3s ease; }
+    .overprov-nodes { display: grid; grid-template-columns: repeat(4, 1fr); gap: .33rem; margin-top: .5rem; }
+    .overprov-node { background: var(--bg-card); border: 1px solid var(--border); border-radius: .33rem; padding: .33rem; min-height: 2.5rem; display: flex; flex-wrap: wrap; gap: .17rem; align-content: flex-start; transition: all 0.4s ease; }
+    .overprov-node.new-node { border-color: var(--green); box-shadow: 0 0 .5rem rgba(0, 206, 201, 0.2); }
+    .overprov-pod { width: 1.17rem; height: 1.17rem; border-radius: .17rem; display: flex; align-items: center; justify-content: center; font-size: .5rem; font-weight: 700; transition: all 0.3s ease; }
     .overprov-pod.dummy { background: rgba(0, 206, 201, 0.15); border: 1px dashed var(--cyan); color: var(--cyan); }
     .overprov-pod.real { background: rgba(108, 92, 231, 0.3); border: 1px solid var(--accent); color: var(--accent-light); }
     .overprov-pod.evicted { opacity: 0; transform: scale(0); }
     .overprov-pod.pending { opacity: 0.4; border-style: dotted; }
-    .overprov-legend { display: flex; gap: 16px; font-size: .75rem; color: var(--text-muted); margin-top: 8px; }
-    .overprov-legend span { display: flex; align-items: center; gap: 4px; }
+    .overprov-legend { display: flex; gap: .67rem; font-size: .75rem; color: var(--text-muted); margin-top: .33rem; }
+    .overprov-legend span { display: flex; align-items: center; gap: .17rem; }
   </style>
 </head>
 <body>
@@ -460,7 +460,7 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
     <div class="slide">
       <div class="slide-header">
         <h1>Spot 인터럽트 시뮬레이션</h1>
-        <p class="subtitle">2분 경고 ~ 안전한 Pod 이동 전체 시퀀스</p>
+        <p class="subtitle">EventBridge → SQS → Karpenter → Pod 퇴거 → 재스케줄링 전체 플로우</p>
       </div>
       <div class="slide-body" style="gap: 12px;">
         <div class="canvas-container" style="flex: 1;">
@@ -493,17 +493,18 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
               </div>
               <div class="overprov-step" id="op-step2">
                 <span class="badge badge-blue">Phase 2</span>
-                <div><strong>Real Workload 도착</strong><br><span style="color:var(--text-muted);font-size:.85rem;">Preemption → 즉시 스케줄링</span></div>
+                <div><strong>Real Workload 도착</strong><br><span style="color:var(--text-muted);font-size:.85rem;">Dummy 삭제 → 워크로드 즉시 스케줄링</span></div>
               </div>
               <div class="overprov-step" id="op-step3">
                 <span class="badge badge-yellow">Phase 3</span>
-                <div><strong>Karpenter 보충</strong><br><span style="color:var(--text-muted);font-size:.85rem;">Evicted dummy pods → 새 노드 프로비저닝</span></div>
+                <div><strong>Karpenter 보충</strong><br><span style="color:var(--text-muted);font-size:.85rem;">Pending dummy → 새 노드 프로비저닝 → 버퍼 복원</span></div>
               </div>
             </div>
             <div class="overprov-nodes" id="op-node-grid"></div>
             <div class="overprov-legend">
               <span><span style="display:inline-block;width:14px;height:14px;border-radius:3px;border:1px dashed var(--cyan);background:rgba(0,206,201,0.15);"></span> Dummy</span>
-              <span><span style="display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid var(--accent);background:rgba(108,92,231,0.3);"></span> Real</span>
+              <span><span style="display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid var(--accent);background:rgba(108,92,231,0.3);"></span> Workload</span>
+              <span><span style="display:inline-block;width:14px;height:14px;border-radius:3px;border:1px dotted var(--yellow);opacity:0.5;"></span> Pending</span>
               <span><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:var(--bg-card);border:1px solid var(--border);"></span> Node</span>
             </div>
             <div class="btn-group" style="margin-top: 12px;">
@@ -534,7 +535,7 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
 <span class="key">metadata</span>:
   <span class="key">name</span>: overprovisioning
 <span class="key">spec</span>:
-  <span class="key">replicas</span>: <span class="value">3</span>
+  <span class="key">replicas</span>: <span class="value">2</span>             <span class="comment"># 노드당 1개, 총 2개 dummy</span>
   <span class="key">selector</span>:
     <span class="key">matchLabels</span>:
       <span class="key">app</span>: overprovisioning
@@ -1593,9 +1594,8 @@ karpenter_nodes_allocatable</div></div></div></li>
         const cw = spotContainer.clientWidth;
         const ch = spotContainer.clientHeight;
         if (cw <= 0 || ch <= 0) {
-          // Fallback for hidden slide
           const r = setupCanvas('spot-canvas', BASE_W, BASE_H);
-          if (r) { Object.assign(spotCanvas, { _ctx: r.ctx }); }
+          if (r) Object.assign(spotCanvas, { _ctx: r.ctx });
           return;
         }
         const dpr = window.devicePixelRatio || 1;
@@ -1615,183 +1615,185 @@ karpenter_nodes_allocatable</div></div></div></li>
       new ResizeObserver(() => resizeSpotCanvas()).observe(spotContainer);
 
       const ctx = spotCanvas.getContext('2d');
-      // Use uniform scaling — logical coords stay at BASE_W x BASE_H
-      const width = BASE_W, height = BASE_H;
+      const W = BASE_W, H = BASE_H;
 
-      let phase = 'initial'; // initial, warning, evicting, provisioning, terminated, complete
-      let timer = 0;
-      let animStart = 0;
-      let pods = [
-        { x: 0, y: 0, targetX: 0, targetY: 0, moving: false },
-        { x: 0, y: 0, targetX: 0, targetY: 0, moving: false },
-        { x: 0, y: 0, targetX: 0, targetY: 0, moving: false }
+      // --- Layout Constants ---
+      const PIPE = [
+        { x: 15, y: 5, w: 145, h: 32, label: 'EventBridge', sub: 'Spot ITN' },
+        { x: 200, y: 5, w: 115, h: 32, label: 'SQS Queue', sub: '2-min warning' },
+        { x: 355, y: 5, w: 145, h: 32, label: 'Karpenter', sub: 'Controller' },
+      ];
+      const NW = 140, NH = 175, NY = 55;
+      const NODES = [
+        { x: 15,  label: 'Node 1', spot: false },
+        { x: 170, label: 'Node 2', spot: true },
+        { x: 325, label: 'Node 3', spot: false },
+        { x: 480, label: 'Node 4 (New)', spot: false },
+      ];
+      const LX = 645, LY = 5, LW = 305, LH = 340;
+      const PW = 38, PH = 26;
+
+      // --- Phase Definitions ---
+      const PHASES = [
+        { at: 0,    key: 'eventbridge', msg: 'EventBridge: Spot ITN \uC218\uC2E0', clr: Colors.yellow },
+        { at: 1.5,  key: 'sqs',         msg: 'SQS: 2\uBD84 \uACBD\uACE0 \uC804\uB2EC', clr: Colors.blue },
+        { at: 3,    key: 'karpenter',    msg: 'Karpenter: \uC778\uD130\uB7FD\uC158 \uAC10\uC9C0', clr: Colors.accent },
+        { at: 4.5,  key: 'cordon',       msg: 'Node Cordon (SchedulingDisabled)', clr: Colors.yellow },
+        { at: 6,    key: 'pdb',          msg: 'PDB \uD655\uC778: minAvailable=1 \u2713', clr: Colors.green },
+        { at: 7.5,  key: 'evicting',     msg: 'Pod \uC0AD\uC81C \uC911 (gracefulTermination)', clr: Colors.red },
+        { at: 10,   key: 'reschedule',   msg: 'ReplicaSet \u2192 \uC0C8 Pod \uC2A4\uCF00\uC904\uB9C1', clr: Colors.blue },
+        { at: 11.5, key: 'pending',      msg: 'Pod Pending \u2192 \uD504\uB85C\uBE44\uC800\uB2DD \uC694\uCCAD', clr: Colors.yellow },
+        { at: 13,   key: 'provision',    msg: 'Karpenter: \uC0C8 \uB178\uB4DC \uD504\uB85C\uBE44\uC800\uB2DD', clr: Colors.cyan },
+        { at: 15,   key: 'complete',     msg: '\u2713 \uBAA8\uB4E0 Pod Ready \u2014 \uC644\uB8CC', clr: Colors.green },
       ];
 
-      const nodeWidth = 155;
-      const nodeHeight = 180;
-      const nodeGap = 35;
-      const startX = 20;
-      const nodeY = 70;
+      let running = false, timer = 0, lastPi = -1, events = [];
 
-      // Node positions
-      const node1X = startX;
-      const node2X = startX + nodeWidth + nodeGap;
-      const node3X = startX + 2 * (nodeWidth + nodeGap);
-      const newNodeX = startX + 3 * (nodeWidth + nodeGap);
+      function reset() { running = false; timer = 0; lastPi = -1; events = []; }
 
-      function resetState() {
-        phase = 'initial';
-        timer = 0;
-        animStart = 0;
-        pods = [
-          { x: node2X + 15, y: nodeY + 55, targetX: node2X + 15, targetY: nodeY + 55, moving: false },
-          { x: node2X + 58, y: nodeY + 55, targetX: node2X + 58, targetY: nodeY + 55, moving: false },
-          { x: node2X + 101, y: nodeY + 55, targetX: node2X + 101, targetY: nodeY + 55, moving: false }
-        ];
-      }
-      resetState();
+      function pi() { for (let i = PHASES.length - 1; i >= 0; i--) if (timer >= PHASES[i].at) return i; return -1; }
+      function pk() { const i = pi(); return i >= 0 ? PHASES[i].key : 'idle'; }
 
-      function drawNode(x, y, label, color, status, isSpot) {
-        drawRoundRect(ctx, x, y, nodeWidth, nodeHeight, 12, color + '20', color);
-        drawText(ctx, label, x + nodeWidth / 2, y + 25, { size: 14, weight: '700', color: color });
-        if (isSpot) {
-          ctx.fillStyle = Colors.cyan + '30';
-          ctx.fillRect(x + 10, y + 38, 50, 18);
-          drawText(ctx, 'SPOT', x + 35, y + 47, { size: 10, weight: '700', color: Colors.cyan });
-        }
-        drawText(ctx, status, x + nodeWidth / 2, y + nodeHeight - 20, { size: 11, color: Colors.textMuted });
-      }
-
-      function drawPod(x, y, color) {
-        drawRoundRect(ctx, x, y, 40, 30, 6, color + '40', color);
-        drawText(ctx, 'Pod', x + 20, y + 15, { size: 10, weight: '600', color: color });
+      function spotPod(x, y, color) {
+        drawRoundRect(ctx, x, y, PW, PH, 5, color + '40', color);
+        drawText(ctx, 'Pod', x + PW / 2, y + PH / 2, { size: 9, weight: '600', color: color });
       }
 
       function draw(elapsed) {
         ctx.fillStyle = Colors.bgSecond;
-        ctx.fillRect(0, 0, width, height);
+        ctx.fillRect(0, 0, W, H);
 
-        // Timer display
-        const timerX = 790;
-        const timerY = 40;
-        drawRoundRect(ctx, timerX, timerY, 155, 60, 10, Colors.surface, Colors.border);
-        drawText(ctx, 'Timer', timerX + 78, timerY + 18, { size: 11, color: Colors.textMuted });
-        const timerDisplay = phase === 'initial' ? '0s' : `${Math.min(120, Math.floor(timer))}s`;
-        const timerColor = timer > 90 ? Colors.red : timer > 60 ? Colors.yellow : Colors.green;
-        drawText(ctx, timerDisplay, timerX + 78, timerY + 42, { size: 24, weight: '700', color: timerColor, font: 'JetBrains Mono' });
+        if (running) {
+          timer += 1 / 60;
+          const i = pi();
+          if (i !== lastPi) {
+            lastPi = i;
+            events.push({ t: timer.toFixed(1), msg: PHASES[i].msg, clr: PHASES[i].clr });
+            if (events.length > 13) events.shift();
+          }
+          if (timer > 17) running = false;
+        }
 
-        // Event log panel
-        const logX = 790;
-        const logY = 120;
-        drawRoundRect(ctx, logX, logY, 155, 200, 10, '#0d1117', Colors.border);
-        drawText(ctx, 'Events', logX + 78, logY + 18, { size: 11, color: Colors.textMuted });
+        const key = pk();
+        const pIdx = pi();
 
-        const events = [];
-        if (phase !== 'initial') events.push({ t: 'T+0s', msg: '2-Min Warning', color: Colors.yellow });
-        if (timer >= 30) events.push({ t: 'T+30s', msg: 'Pod Eviction', color: Colors.blue });
-        if (timer >= 60) events.push({ t: 'T+60s', msg: 'New Node Start', color: Colors.cyan });
-        if (timer >= 90) events.push({ t: 'T+90s', msg: 'Spot Terminated', color: Colors.red });
-        if (timer >= 120) events.push({ t: 'T+120s', msg: 'All Pods Ready', color: Colors.green });
-
-        events.forEach((e, i) => {
-          drawText(ctx, e.t, logX + 8, logY + 45 + i * 28, { size: 9, color: Colors.textMuted, align: 'left', font: 'JetBrains Mono' });
-          drawText(ctx, e.msg, logX + 55, logY + 45 + i * 28, { size: 9, color: e.color, align: 'left' });
+        // === Pipeline ===
+        PIPE.forEach((b, i) => {
+          const active = pIdx >= i;
+          const hi = pIdx === i;
+          const c = active ? (i === 0 ? Colors.yellow : i === 1 ? Colors.blue : Colors.accent) : Colors.border;
+          if (hi) { ctx.shadowColor = c; ctx.shadowBlur = 12; }
+          drawRoundRect(ctx, b.x, b.y, b.w, b.h, 7, active ? c + '25' : Colors.surface, c);
+          ctx.shadowBlur = 0;
+          drawText(ctx, b.label, b.x + b.w / 2, b.y + 12, { size: 11, weight: '700', color: active ? c : Colors.textMuted });
+          drawText(ctx, b.sub, b.x + b.w / 2, b.y + 25, { size: 8, color: Colors.textMuted });
+          if (i < 2) {
+            const nx = PIPE[i + 1];
+            drawArrow(ctx, b.x + b.w + 4, b.y + b.h / 2, nx.x - 4, nx.y + nx.h / 2, pIdx > i ? Colors.green : Colors.border + '50');
+          }
         });
 
-        // Draw nodes
-        // Node 1 - On-Demand
-        drawNode(node1X, nodeY, 'Node 1', Colors.green, 'Ready', false);
-        drawPod(node1X + 20, nodeY + 90, Colors.green);
-        drawPod(node1X + 70, nodeY + 90, Colors.green);
+        // === Nodes ===
+        for (let idx = 0; idx < 4; idx++) {
+          const n = NODES[idx];
+          if (idx === 3 && !['provision', 'complete'].includes(key)) continue;
 
-        // Node 2 - Spot (main target)
-        let node2Color = Colors.green;
-        let node2Status = 'Ready';
-        if (phase === 'warning') {
-          node2Color = Colors.yellow;
-          node2Status = '2-Min Warning';
-        } else if (phase === 'evicting' || phase === 'provisioning') {
-          node2Color = Colors.yellow;
-          node2Status = 'Draining...';
-        } else if (phase === 'terminated' || phase === 'complete') {
-          node2Color = Colors.red;
-          node2Status = 'Terminated';
-        }
-
-        if (phase !== 'terminated' && phase !== 'complete') {
-          drawNode(node2X, nodeY, 'Node 2', node2Color, node2Status, true);
-
-          // Warning banner
-          if (phase === 'warning' || phase === 'evicting' || phase === 'provisioning') {
-            ctx.fillStyle = Colors.yellow + '30';
-            ctx.fillRect(node2X, nodeY - 30, nodeWidth, 25);
-            drawText(ctx, '2-Minute Warning!', node2X + nodeWidth / 2, nodeY - 18, { size: 11, weight: '700', color: Colors.yellow });
+          let c = Colors.green, st = 'Ready';
+          if (idx === 1) {
+            if (['cordon', 'pdb'].includes(key)) { c = Colors.yellow; st = 'Cordoned'; }
+            else if (key === 'evicting') { c = Colors.red; st = 'Draining'; }
+            else if (['reschedule', 'pending', 'provision', 'complete'].includes(key)) { c = Colors.red; st = 'Terminated'; }
           }
-        } else {
-          // Terminated node - faded
-          ctx.globalAlpha = 0.3;
-          drawNode(node2X, nodeY, 'Node 2', Colors.red, 'Terminated', true);
-          ctx.globalAlpha = 1;
-        }
-
-        // Node 3 - On-Demand
-        drawNode(node3X, nodeY, 'Node 3', Colors.green, 'Ready', false);
-        drawPod(node3X + 58, nodeY + 90, Colors.green);
-
-        // New Node (appears during provisioning)
-        if (phase === 'provisioning' || phase === 'terminated' || phase === 'complete') {
-          const newNodeColor = phase === 'complete' ? Colors.green : Colors.blue;
-          const newNodeStatus = phase === 'complete' ? 'Ready' : 'Provisioning...';
-          const progress = phase === 'provisioning' ? (timer - 60) / 30 : 1;
-
-          if (phase === 'provisioning') {
-            // Loading animation
-            ctx.globalAlpha = 0.5 + 0.5 * Math.sin(elapsed * 3);
+          if (idx === 3) {
+            if (key === 'provision') { c = Colors.cyan; st = 'Provisioning...'; }
+            else if (key === 'complete') { c = Colors.green; st = 'Ready'; }
           }
-          drawNode(newNodeX, nodeY, 'Node 4 (New)', newNodeColor, newNodeStatus, false);
-          ctx.globalAlpha = 1;
-        }
 
-        // Draw moving pods
-        pods.forEach((pod, i) => {
-          if (phase === 'initial' || phase === 'warning') {
-            // Pods on Node 2
-            drawPod(node2X + 15 + i * 43, nodeY + 90, Colors.green);
-          } else if (phase === 'evicting') {
-            // Animate pods moving
-            const progress = Math.min(1, (timer - 30) / 30);
-            const eased = Ease.inOut(progress);
-            const startPodX = node2X + 15 + i * 43;
-            const targetPodX = i < 2 ? (node1X + 20 + i * 50) : (node3X + 20);
-            const currentX = lerp(startPodX, targetPodX, eased);
-            const arcY = nodeY + 90 - 50 * Math.sin(progress * Math.PI);
-            drawPod(currentX, arcY, Colors.blue);
+          const faded = idx === 1 && ['reschedule', 'pending', 'provision', 'complete'].includes(key);
+          if (faded) ctx.globalAlpha = 0.25;
+          if (idx === 3 && key === 'provision') ctx.globalAlpha = 0.5 + 0.3 * Math.sin(elapsed * 4);
+
+          drawRoundRect(ctx, n.x, NY, NW, NH, 10, c + '15', c);
+          drawText(ctx, n.label, n.x + NW / 2, NY + 18, { size: 12, weight: '700', color: c });
+          if (n.spot) {
+            drawRoundRect(ctx, n.x + NW / 2 - 28, NY + 30, 56, 14, 4, Colors.cyan + '25', Colors.cyan);
+            drawText(ctx, 'SPOT', n.x + NW / 2, NY + 37, { size: 8, weight: '700', color: Colors.cyan });
           } else {
-            // Pods on final positions
-            if (i < 2) {
-              drawPod(node1X + 20 + i * 50, nodeY + 130, Colors.green);
-            } else if (phase === 'complete') {
-              drawPod(newNodeX + 58, nodeY + 90, Colors.green);
-            } else {
-              drawPod(node3X + 20, nodeY + 130, Colors.green);
-            }
+            drawText(ctx, 'On-Demand', n.x + NW / 2, NY + 35, { size: 8, color: Colors.textMuted });
           }
+          drawText(ctx, st, n.x + NW / 2, NY + NH - 12, { size: 9, color: c });
+          ctx.globalAlpha = 1;
+
+          if (idx === 1 && ['cordon', 'pdb', 'evicting'].includes(key)) {
+            drawRoundRect(ctx, n.x, NY - 20, NW, 17, 4, Colors.yellow + '35', Colors.yellow);
+            drawText(ctx, '\u26A0 SchedulingDisabled', n.x + NW / 2, NY - 11, { size: 8, weight: '700', color: Colors.yellow });
+          }
+          if (idx === 1 && key === 'pdb') {
+            drawRoundRect(ctx, n.x - 5, NY + NH + 4, NW + 10, 18, 5, Colors.green + '20', Colors.green);
+            drawText(ctx, 'PDB: minAvailable=1 \u2713', n.x + NW / 2, NY + NH + 13, { size: 8, weight: '600', color: Colors.green });
+          }
+        }
+
+        // === Pods ===
+        spotPod(NODES[0].x + 10, NY + 55, Colors.green);
+        spotPod(NODES[0].x + 52, NY + 55, Colors.green);
+        spotPod(NODES[2].x + 10, NY + 55, Colors.green);
+
+        const targets = [
+          { sx: NODES[1].x + 10, sy: NY + 55, tx: NODES[0].x + 10, ty: NY + 90 },
+          { sx: NODES[1].x + 52, sy: NY + 55, tx: NODES[2].x + 52, ty: NY + 55 },
+          { sx: NODES[1].x + 94, sy: NY + 55, tx: NODES[2].x + 94, ty: NY + 90 },
+        ];
+
+        if (['idle', 'eventbridge', 'sqs', 'karpenter', 'cordon', 'pdb'].includes(key)) {
+          targets.forEach(p => spotPod(p.sx, p.sy, Colors.green));
+        } else if (key === 'evicting') {
+          const t = Math.min(1, (timer - 7.5) / 2.5);
+          ctx.globalAlpha = 1 - t;
+          targets.forEach(p => spotPod(p.sx, p.sy, Colors.red));
+          ctx.globalAlpha = 1;
+        } else if (key === 'reschedule') {
+          const t = Math.min(1, (timer - 10) / 1.2);
+          ctx.globalAlpha = Ease.out(t);
+          spotPod(targets[0].tx, targets[0].ty, Colors.blue);
+          spotPod(targets[1].tx, targets[1].ty, Colors.blue);
+          ctx.globalAlpha = 1;
+          ctx.globalAlpha = 0.35 + 0.3 * Math.sin(elapsed * 3);
+          spotPod(targets[2].tx, targets[2].ty, Colors.yellow);
+          ctx.globalAlpha = 1;
+          drawText(ctx, 'Pending', targets[2].tx + PW / 2, targets[2].ty + PH + 10, { size: 7, color: Colors.yellow });
+        } else if (['pending', 'provision'].includes(key)) {
+          spotPod(targets[0].tx, targets[0].ty, Colors.green);
+          spotPod(targets[1].tx, targets[1].ty, Colors.green);
+          ctx.globalAlpha = 0.35 + 0.3 * Math.sin(elapsed * 3);
+          spotPod(targets[2].tx, targets[2].ty, Colors.yellow);
+          ctx.globalAlpha = 1;
+          drawText(ctx, 'Pending', targets[2].tx + PW / 2, targets[2].ty + PH + 10, { size: 7, color: Colors.yellow });
+        } else if (key === 'complete') {
+          spotPod(targets[0].tx, targets[0].ty, Colors.green);
+          spotPod(targets[1].tx, targets[1].ty, Colors.green);
+          spotPod(NODES[3].x + 10, NY + 55, Colors.green);
+        }
+
+        if (['reschedule', 'pending'].includes(key)) {
+          const rsY = NY + NH + 8;
+          drawRoundRect(ctx, 15, rsY, 480, 22, 5, Colors.blue + '15', Colors.blue);
+          const rsMsg = key === 'reschedule' ? 'ReplicaSet: desired=3, running=0 \u2192 \uC0C8 Pod \uC0DD\uC131 \uC911' : 'ReplicaSet: desired=3, running=2, pending=1';
+          drawText(ctx, rsMsg, 255, rsY + 11, { size: 9, weight: '600', color: Colors.blue });
+        }
+
+        // === Event Log ===
+        drawRoundRect(ctx, LX, LY, LW, LH, 8, '#0d1117', Colors.border);
+        drawText(ctx, 'Event Log', LX + LW / 2, LY + 16, { size: 11, weight: '600', color: Colors.textMuted });
+        events.forEach((ev, i) => {
+          const y = LY + 36 + i * 23;
+          if (y > LY + LH - 10) return;
+          drawText(ctx, ev.t + 's', LX + 8, y, { size: 8, color: Colors.textMuted, align: 'left', font: 'JetBrains Mono, monospace' });
+          drawText(ctx, ev.msg, LX + 45, y, { size: 8, color: ev.clr, align: 'left' });
         });
 
-        // Phase progression
-        if (phase !== 'initial') {
-          timer += 1 / 60; // Assuming 60fps, speed up for demo
-          if (timer < 30 && phase === 'warning') {
-            // Stay in warning
-          } else if (timer >= 30 && timer < 60 && phase !== 'evicting') {
-            phase = 'evicting';
-          } else if (timer >= 60 && timer < 90 && phase !== 'provisioning') {
-            phase = 'provisioning';
-          } else if (timer >= 90 && timer < 120 && phase !== 'terminated') {
-            phase = 'terminated';
-          } else if (timer >= 120 && phase !== 'complete') {
-            phase = 'complete';
-          }
+        if (pIdx >= 0) {
+          drawText(ctx, '\uD604\uC7AC \uB2E8\uACC4: ' + PHASES[pIdx].key.toUpperCase(), 300, H - 10, { size: 9, color: Colors.textMuted });
         }
       }
 
@@ -1799,15 +1801,9 @@ karpenter_nodes_allocatable</div></div></div></li>
       loop.start();
 
       document.getElementById('btn-start-interrupt').onclick = () => {
-        if (phase === 'initial') {
-          phase = 'warning';
-          timer = 0;
-        }
+        if (!running) { reset(); running = true; }
       };
-
-      document.getElementById('btn-reset-spot').onclick = () => {
-        resetState();
-      };
+      document.getElementById('btn-reset-spot').onclick = reset;
     })();
 
     // ============================================================
@@ -1999,62 +1995,114 @@ karpenter_nodes_allocatable</div></div></div></li>
       const grid = document.getElementById('op-node-grid');
       if (!grid) return;
 
-      const NODES = 6;
-      const PODS_PER_NODE = 2;
       let phase = 0;
+      let animating = false;
 
-      function renderGrid() {
-        grid.innerHTML = '';
-        for (let n = 0; n < NODES + (phase === 3 ? 1 : 0); n++) {
-          const node = document.createElement('div');
-          node.className = 'overprov-node' + (phase === 3 && n === NODES ? ' new-node' : '');
-          node.innerHTML = '<div style="width:100%;font-size:.65rem;color:var(--text-muted);margin-bottom:2px;">Node ' + (n + 1) + '</div>';
-
-          for (let p = 0; p < PODS_PER_NODE; p++) {
-            const pod = document.createElement('div');
-            // Phase logic
-            if (phase === 0) {
-              // No pods shown
-              break;
-            } else if (phase === 1) {
-              // All dummy pods
-              pod.className = 'overprov-pod dummy';
-              pod.textContent = 'D';
-            } else if (phase === 2) {
-              if (n < 2) {
-                // First 2 nodes: real pods replace dummies
-                pod.className = 'overprov-pod real';
-                pod.textContent = 'R';
-              } else if (n < NODES) {
-                pod.className = 'overprov-pod dummy';
-                pod.textContent = 'D';
-              }
-            } else if (phase === 3) {
-              if (n < 2) {
-                // First 2 nodes: real pods
-                pod.className = 'overprov-pod real';
-                pod.textContent = 'R';
-              } else if (n < NODES) {
-                pod.className = 'overprov-pod dummy';
-                pod.textContent = 'D';
-              } else {
-                // New node: re-scheduled dummy pods
-                pod.className = 'overprov-pod dummy';
-                pod.textContent = 'D';
-              }
-            }
-            node.appendChild(pod);
-          }
-          grid.appendChild(node);
-        }
+      function mkPod(type, extra) {
+        const pod = document.createElement('div');
+        pod.className = 'overprov-pod ' + type + (extra ? ' ' + extra : '');
+        pod.textContent = type === 'dummy' ? 'D' : 'W';
+        return pod;
       }
 
-      function setPhase(p) {
-        phase = p;
+      function mkNode(label, pods, opts) {
+        opts = opts || {};
+        const node = document.createElement('div');
+        node.className = 'overprov-node' + (opts.isNew ? ' new-node' : '');
+        if (opts.isPending) {
+          node.style.borderColor = 'var(--yellow)';
+          node.style.borderStyle = 'dashed';
+        }
+        const lbl = document.createElement('div');
+        lbl.style.cssText = 'width:100%;font-size:.65rem;color:' + (opts.isPending ? 'var(--yellow)' : 'var(--text-muted)') + ';margin-bottom:2px;';
+        lbl.textContent = label;
+        node.appendChild(lbl);
+        pods.forEach(p => node.appendChild(p));
+        return node;
+      }
+
+      function setStepHighlight(p) {
         document.getElementById('op-step1').classList.toggle('active', p >= 1);
         document.getElementById('op-step2').classList.toggle('active', p >= 2);
         document.getElementById('op-step3').classList.toggle('active', p >= 3);
-        renderGrid();
+      }
+
+      function phase0() {
+        grid.innerHTML = '';
+        grid.append(mkNode('Node 1', []), mkNode('Node 2', []), mkNode('Node 3', []), mkNode('Node 4', []));
+      }
+
+      function phase1() {
+        grid.innerHTML = '';
+        grid.append(
+          mkNode('Node 1', [mkPod('real'), mkPod('real'), mkPod('real')]),
+          mkNode('Node 2', [mkPod('real'), mkPod('real')]),
+          mkNode('Node 3', [mkPod('dummy')]),
+          mkNode('Node 4', [mkPod('dummy')])
+        );
+      }
+
+      function phase2anim() {
+        if (animating) return;
+        animating = true;
+        grid.innerHTML = '';
+        const d1 = mkPod('dummy');
+        const d2 = mkPod('dummy');
+        grid.append(
+          mkNode('Node 1', [mkPod('real'), mkPod('real'), mkPod('real')]),
+          mkNode('Node 2', [mkPod('real'), mkPod('real')]),
+          mkNode('Node 3', [d1]),
+          mkNode('Node 4', [d2])
+        );
+        setTimeout(() => { d1.classList.add('evicted'); d2.classList.add('evicted'); }, 400);
+        setTimeout(() => {
+          d1.className = 'overprov-pod real'; d1.textContent = 'W';
+          d1.style.opacity = '0'; d1.style.transform = 'scale(0.3)';
+          d2.className = 'overprov-pod real'; d2.textContent = 'W';
+          d2.style.opacity = '0'; d2.style.transform = 'scale(0.3)';
+          requestAnimationFrame(() => {
+            d1.style.opacity = '1'; d1.style.transform = 'scale(1)';
+            d2.style.opacity = '1'; d2.style.transform = 'scale(1)';
+          });
+        }, 1000);
+        setTimeout(() => {
+          grid.appendChild(mkNode('\u23F3 Pending', [mkPod('dummy', 'pending'), mkPod('dummy', 'pending')], { isPending: true }));
+          animating = false;
+        }, 1700);
+      }
+
+      function phase3anim() {
+        if (animating) return;
+        animating = true;
+        grid.innerHTML = '';
+        grid.append(
+          mkNode('Node 1', [mkPod('real'), mkPod('real'), mkPod('real')]),
+          mkNode('Node 2', [mkPod('real'), mkPod('real')]),
+          mkNode('Node 3', [mkPod('real')]),
+          mkNode('Node 4', [mkPod('real')]),
+          mkNode('\u23F3 Pending', [mkPod('dummy', 'pending'), mkPod('dummy', 'pending')], { isPending: true })
+        );
+        setTimeout(() => {
+          grid.innerHTML = '';
+          grid.append(
+            mkNode('Node 1', [mkPod('real'), mkPod('real'), mkPod('real')]),
+            mkNode('Node 2', [mkPod('real'), mkPod('real')]),
+            mkNode('Node 3', [mkPod('real')]),
+            mkNode('Node 4', [mkPod('real')]),
+            mkNode('Node 5 (New)', [mkPod('dummy'), mkPod('dummy')], { isNew: true })
+          );
+          animating = false;
+        }, 1200);
+      }
+
+      function setPhase(p) {
+        if (animating) return;
+        phase = p;
+        setStepHighlight(p);
+        if (p === 0) phase0();
+        else if (p === 1) phase1();
+        else if (p === 2) phase2anim();
+        else if (p === 3) phase3anim();
       }
 
       document.getElementById('op-phase1').addEventListener('click', () => setPhase(1));
@@ -2062,7 +2110,6 @@ karpenter_nodes_allocatable</div></div></div></li>
       document.getElementById('op-phase3').addEventListener('click', () => setPhase(3));
       document.getElementById('op-reset').addEventListener('click', () => setPhase(0));
 
-      // Tab handling for this slide
       const tabBtns = document.querySelectorAll('.slide:nth-child(6) .tab-btn');
       tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -2075,7 +2122,6 @@ karpenter_nodes_allocatable</div></div></div></li>
         });
       });
 
-      // Init to empty state
       setPhase(0);
     })();
 

@@ -1124,22 +1124,22 @@ ERROR: Unable to acquire connection within 5s
     const slideFramework = new SlideFramework({
       logoSrc: '../common/pptx-theme/images/logo_1.png',
       presenterNotes: {
-        1: '세션 시작 슬라이드.\n\n자기소개 후 Block 3 개요 안내.\n관측성 데이터 상관 분석 — Metrics, Traces, Logs 연계를 다룹니다.',
-        2: '청중에게 공감을 이끌어내세요.\n"메트릭에서 이상 징후 발견하고, 로그 검색하고, 트레이스 찾느라 시간 얼마나 쓰셨나요?"\n\n상관 분석이 MTTR을 50% 이상 단축한다는 실제 사례를 언급하면 효과적입니다.',
-        3: 'Metrics는 "무슨 일이 일어났는지", Traces는 "어디서 일어났는지", Logs는 "왜 일어났는지"를 알려준다고 설명하세요.\n\nGrafana가 이 세 가지를 하나의 화면에서 연결해주는 통합 플랫폼임을 강조하세요.',
-        4: '"에러 시뮬레이션" 버튼을 클릭하고 잠시 기다린 후 "다음" 버튼으로 진행하세요.\n\n각 단계에서 시그널이 어떻게 연결되는지 천천히 설명합니다.\nExemplar가 메트릭 포인트에서 트레이스로 바로 점프하는 핵심 기술임을 강조하세요.',
-        5: 'Exemplar는 히스토그램 메트릭 버킷에 TraceID를 첨부하는 기술입니다.\n\n- Prometheus 2.26 버전부터 지원\n- 클라이언트 라이브러리 설정 필요\n- 실제 구현 시 샘플링 비율 조절이 중요',
-        6: '탭을 하나씩 클릭하며 각 데이터소스 설정을 보여주세요.\n\n핵심은 세 데이터소스가 서로를 참조하는 설정입니다.\n- Tempo의 tracesToLogs\n- Loki의 derivedFields\n\n이 두 설정이 양방향 연동의 핵심입니다.',
-        7: '양방향 연결 설명:\n- derivedFields: 로그에서 TraceID를 추출해 Tempo로 연결\n- tracesToLogs: 트레이스에서 로그로 연결\n\n이 양방향 설정으로 어느 시그널에서 시작해도 나머지를 탐색할 수 있습니다.',
-        8: 'regex 패턴이 실제로 어떻게 TraceID를 추출하는지 예시를 들어 설명하세요.\n\nJSON 로그 형식을 권장하는 이유:\n- 파싱이 정확함\n- 구조화된 쿼리가 가능',
-        9: 'TraceQL은 SQL과 비슷한 직관적인 문법입니다.\n\n기본 쿼리 예시:\n- duration > 1s: 느린 요청 찾기\n- status = error: 에러 찾기\n- >> 연산자: 서비스 간 호출 경로 추적',
-        10: 'Service Map은 자동 생성됩니다.\n\n시각적 표현:\n- 빨간색 노드: 에러 발생 서비스\n- 선의 굵기: 트래픽 양\n\n장애 상황에서 영향 범위와 전파 경로를 한눈에 파악할 수 있어 유용합니다.',
-        11: '메트릭 프레임워크 비교:\n- RED Method: 마이크로서비스에 적합\n- 4 Golden Signals: 인프라에 적합\n\n대시보드 구성 시 이 메트릭들을 기준으로 패널을 배치하면 표준화된 모니터링이 가능합니다.',
-        12: '실제 장애 대응 순서를 설명하세요.\n\n1. Alert 확인\n2. Dashboard에서 범위 파악\n3. 문제 시점의 Trace 분석\n4. 상세 Log 확인\n\n이 워크플로우를 팀 전체가 공유하면 MTTR이 크게 단축됩니다.',
-        13: 'OTEL Collector 파이프라인:\n- Receiver: 데이터 수집\n- Processor: 가공/필터링\n- Exporter: 백엔드 전송\n\n중앙 집중식 구조의 장점은 애플리케이션 변경 없이 백엔드를 교체할 수 있다는 점입니다.',
-        14: 'Tail-based sampling은 트레이스 완료 후 샘플링을 결정합니다.\n\n권장 설정:\n- 에러와 느린 요청: 100% 수집\n- 정상 요청: 10%만 수집\n\n비용은 줄이면서 문제 분석 능력은 유지됩니다.',
-        15: '퀴즈를 통해 핵심 개념을 복습합니다.\n\n집중할 주제:\n- Exemplar\n- TraceQL\n- 상관 분석 워크플로우\n\n틀린 항목이 있으면 해당 슬라이드로 돌아가 재설명해도 좋습니다.',
-        16: '수고하셨습니다.\n\n5분 휴식 후 마지막 Block 4에서는 리소스 최적화와 비용 관리를 다룹니다.\n질문이 있으시면 휴식 시간에 받겠습니다.'
+        1: '세션 시작 슬라이드.\n\n자기소개 후 Block 3 개요 안내.\n이번 블록에서는 관측성 데이터의 상관 분석(Correlation)을 다룹니다.\n\n핵심 질문: "메트릭에서 이상을 발견했을 때, 관련 트레이스와 로그를 얼마나 빨리 찾을 수 있나요?"\n\n상관 분석 = Metrics, Traces, Logs 세 가지 시그널을 서로 연결해서 한 화면에서 탐색하는 것.\n이것이 가능해지면 MTTR(Mean Time To Resolution)이 50% 이상 단축됩니다.',
+        2: '청중에게 공감을 이끌어내세요.\n\n"CloudWatch에서 에러율 급증을 봤는데, 어떤 요청이 실패한 건지 찾으려면 로그를 grep 하고, 트레이스를 별도 도구에서 검색하고... 이 과정에 30분이 걸린다면?"\n\n이게 바로 상관 분석이 해결하는 문제입니다.\n- 도구 간 컨텍스트 스위칭 비용\n- 시간대를 수동으로 맞추는 번거로움\n- TraceID를 복사-붙여넣기하는 수작업\n\nGrafana 스택(Prometheus + Loki + Tempo)을 사용하면 클릭 한 번으로 시그널 간 이동이 가능합니다.',
+        3: '관측성 3대 축(Three Pillars)과 각각의 역할:\n\n■ Metrics (Prometheus/AMP)\n- "무슨 일이 일어났는지" — 숫자로 표현\n- 예: CPU 사용률 90%, 에러율 5%, 응답 시간 2초\n- 시계열 데이터, 대시보드와 알림의 기반\n- 저장 비용이 낮고 장기 보관에 적합\n\n■ Traces (Tempo)\n- "어디서 일어났는지" — 요청의 전체 경로 추적\n- 예: API Gateway → Auth → Payment → DB 각 구간의 소요 시간\n- 마이크로서비스 간 호출 관계와 병목 지점 파악\n- 하나의 요청이 여러 서비스를 거치는 과정을 시각화\n\n■ Logs (Loki)\n- "왜 일어났는지" — 상세 컨텍스트\n- 예: "Connection timeout to RDS at 10.0.1.5:3306"\n- 에러 메시지, 스택 트레이스, 변수 값 등 디버깅 정보\n\nGrafana가 이 세 가지를 하나의 UI에서 연결해주는 통합 플랫폼입니다.\n각 도구가 별개로 동작하면 의미가 없고, 서로 연결되어야 진정한 가치가 생깁니다.',
+        4: '★ 핵심 애니메이션 슬라이드 — 천천히 시연하세요.\n\n"에러 시뮬레이션" 버튼을 클릭하면 3-Signal 상관 분석 과정을 보여줍니다.\n\n시연 순서:\n1. 메트릭 그래프에서 에러율 급등 → 빨간 점 (Exemplar) 표시\n2. Exemplar 클릭 → 해당 요청의 TraceID로 Tempo 이동\n3. 트레이스에서 에러 발생 구간 확인 (어느 서비스에서 실패했는지)\n4. 트레이스의 메타데이터(namespace, pod)로 Loki에서 관련 로그 조회\n\n이 전체 흐름이 Grafana에서 클릭만으로 이루어집니다.\n\nExemplar가 핵심 연결 고리입니다 — 메트릭 포인트에 TraceID가 첨부되어 있어서\n메트릭 그래프에서 바로 특정 요청의 트레이스로 점프할 수 있습니다.',
+        5: '★ Exemplar(엑셈플라) 상세 설명:\n\n■ Exemplar란 무엇인가?\n- "대표 샘플"이라는 뜻. 히스토그램 메트릭의 특정 버킷에 속하는 실제 요청 하나를 골라서\n  그 요청의 TraceID를 메트릭 데이터에 첨부하는 기술입니다.\n\n■ 왜 필요한가?\n- 메트릭은 집계 데이터 (평균, p99 등) — "p99 latency가 2초다"는 알지만\n  "어떤 요청이 2초 걸렸는지"는 메트릭만으로 알 수 없음\n- Exemplar가 있으면 "이 2초짜리 요청의 TraceID는 abc123이다"를 알 수 있음\n- Grafana에서 메트릭 그래프의 데이터 포인트 위에 ◆ 다이아몬드 마커로 표시됨\n  → 클릭하면 Tempo에서 해당 트레이스를 바로 열 수 있음\n\n■ 동작 조건:\n- Prometheus 2.26+ (--enable-feature=exemplar-storage 플래그 필요)\n- 앱에서 OpenMetrics 형식으로 메트릭을 노출해야 함\n- 클라이언트 라이브러리가 Exemplar를 지원해야 함 (Go: prometheus/client_golang, Java: Micrometer)\n- 히스토그램 또는 Summary 타입 메트릭에만 적용 가능 (Counter/Gauge에는 안 됨)\n\n■ YAML 설정 포인트 (오른쪽 코드):\n- exemplarTraceIdDestinations: Grafana가 Exemplar의 TraceID를 어디로 보낼지 설정\n- datasourceUid: "tempo" → Tempo 데이터소스로 연결\n- urlDisplayLabel: "View Trace" → Grafana UI에서 보이는 링크 텍스트\n\n■ 주의사항:\n- 모든 요청에 Exemplar를 붙이면 저장 비용 증가 → 샘플링 비율 조절 필요\n- AMP(Amazon Managed Prometheus)에서도 Exemplar 지원 (2023년부터)',
+        6: '★ Grafana 데이터소스 설정 — 탭을 하나씩 클릭하며 설명하세요.\n\n핵심: 세 데이터소스(Prometheus, Loki, Tempo)가 서로를 참조하는 설정을 해야 상관 분석이 작동합니다.\n\n■ Prometheus 탭:\n- exemplarTraceIdDestinations: 메트릭 → 트레이스 연결의 핵심\n- name: "traceID" → Exemplar에 포함된 TraceID 필드명\n- datasourceUid: "tempo" → 이 TraceID를 Tempo에서 조회하라는 의미\n\n■ Loki 탭:\n- derivedFields: Loki에서 가장 중요한 상관 분석 설정!\n- "Derived Field"란? 로그 원문에서 정규식으로 값을 추출해서 클릭 가능한 링크로 만드는 기능\n- 예: JSON 로그에서 "traceId":"abc123"을 정규식으로 추출 → abc123을 Tempo 링크로 변환\n- regex: \'\"traceId\":\"([a-f0-9]+)\"\' → 캡처 그룹 ()이 핵심. 괄호 안의 값이 추출됨\n- datasourceUid: "tempo" → 추출한 TraceID를 Tempo에서 조회\n- url: \'$${__value.raw}\' → 추출한 값을 그대로 URL에 사용\n\n★ derivedFields를 쉽게 설명하면:\n"로그 줄에서 TraceID를 자동으로 찾아서 파란색 클릭 링크로 만들어주는 기능"\n로그를 보다가 TraceID 링크를 클릭하면 → Tempo에서 해당 트레이스가 바로 열립니다.\n\n■ Tempo 탭:\n- tracesToLogs: 트레이스 → 로그 연결 (반대 방향)\n- datasourceUid: "loki" → 로그를 Loki에서 조회\n- tags: [namespace, pod] → 트레이스의 이 태그 값으로 Loki 로그를 필터링\n- filterByTraceID: true → TraceID로도 로그를 필터링 (로그에 traceId가 포함된 경우)\n- tracesToMetrics: 트레이스에서 관련 메트릭 패널로 이동\n- serviceMap: Tempo가 수집한 트레이스 데이터로 서비스 의존성 그래프를 자동 생성\n\n이 세 탭의 설정이 모두 완료되면 Grafana에서 어떤 시그널에서 시작해도\n나머지 두 시그널로 클릭만으로 이동할 수 있습니다.',
+        7: '★ Loki ↔ Tempo 양방향 연동 상세:\n\n이 슬라이드는 앞 슬라이드에서 설명한 설정이 실제로 어떻게 작동하는지 보여줍니다.\n\n■ 방향 1: Loki → Tempo (버튼 클릭하여 시연)\n- 사용하는 설정: Loki의 derivedFields\n- 동작 과정:\n  1. 개발자가 Grafana Explore에서 Loki 로그를 조회\n  2. 로그 줄에서 traceId 필드를 발견\n  3. derivedFields의 정규식이 자동으로 TraceID를 추출\n  4. "TraceID" 라벨이 클릭 가능한 링크로 표시됨\n  5. 클릭하면 Grafana가 Tempo 데이터소스에서 해당 TraceID를 조회\n  6. 트레이스 Waterfall 뷰가 열림\n\n■ 방향 2: Tempo → Loki (두 번째 버튼 클릭)\n- 사용하는 설정: Tempo의 tracesToLogs\n- 동작 과정:\n  1. 개발자가 Tempo에서 트레이스를 보고 있음\n  2. "Logs for this span" 버튼이 자동으로 표시됨\n  3. 클릭하면 Grafana가 Loki에 쿼리를 보냄\n  4. 쿼리 조건: namespace=payment, pod=payment-xyz (tags에서 가져옴)\n  5. + filterByTraceID가 true면 traceId 필터도 추가\n  6. 해당 Pod의 로그가 시간 범위에 맞춰 표시됨\n\n이 양방향 설정이 바로 "상관 분석"의 핵심입니다.\n로그에서 시작해도, 트레이스에서 시작해도, 클릭 한 번으로 서로 이동 가능합니다.',
+        8: '★ Derived Fields & 정규식 테스터 상세:\n\n■ Derived Fields가 뭔가요? (비유로 설명)\n- 로그가 "편지"라면, Derived Fields는 "편지에서 전화번호를 형광펜으로 표시해서 클릭 가능한 링크로 만드는 것"\n- Loki 자체는 로그를 저장만 함 → Grafana의 Derived Fields 설정이 로그 내용을 분석해서 링크를 생성\n\n■ 정규식(regex) 동작 설명:\n- 예시 로그: {"traceId":"abc123def456789012345678","service":"payment"}\n- 정규식: "traceId":"([a-f0-9]+)"\n- 이 정규식이 하는 일:\n  1. "traceId":" 라는 문자열을 찾음\n  2. 그 뒤에 오는 소문자 hex 문자열([a-f0-9]+)을 캡처\n  3. 캡처된 값 = abc123def456789012345678\n  4. 이 값이 Tempo 링크의 TraceID로 사용됨\n\n■ 캡처 그룹 () 이 왜 필수인가?\n- 괄호 없이 "traceId":"[a-f0-9]+" 라고 쓰면 → 매칭은 되지만 값을 추출할 수 없음\n- 괄호 ()로 감싼 부분만 추출됨\n- 첫 번째 캡처 그룹이 자동으로 사용됨\n\n■ 테스터 시연:\n- 기본 정규식으로 테스트 버튼 클릭 → 추출된 TraceID 확인\n- 정규식을 변경해보며 다른 패턴도 시연 가능\n\n■ 주의사항:\n- 로그 형식이 바뀌면 정규식도 업데이트해야 함 (CI/CD에서 검증 추천)\n- JSON 로그를 강력히 권장 — 구조화되어 파싱이 정확함\n- 비구조화 로그(plain text)는 정규식이 깨지기 쉬움\n- W3C Trace Context 형식(traceparent 헤더)을 사용하면 표준화된 패턴 사용 가능',
+        9: '★ TraceQL 소개:\n\n■ TraceQL이란?\n- Tempo 2.0부터 도입된 트레이스 전용 쿼리 언어\n- SQL처럼 조건을 지정해서 원하는 트레이스를 검색\n- 이전에는 TraceID를 알아야만 트레이스를 찾을 수 있었음 → TraceQL로 조건 기반 검색 가능\n\n■ 탭별 설명:\n\n[기본 탭]\n- { resource.service.name = "payment-service" } → 서비스명으로 필터\n- resource.* = 트레이스를 생성한 리소스(서비스, Pod 등)의 속성\n- span.* = 개별 span의 속성 (HTTP method, URL 등)\n\n[에러 탭]\n- { status = error } → 에러 span이 포함된 트레이스\n- status는 OpenTelemetry 표준 필드 (ok, error, unset)\n- span.http.status_code >= 500 → HTTP 5xx 에러\n\n[지연 탭]\n- { duration > 1s } → 1초 이상 걸린 span\n- SLO 위반 트레이스 찾을 때 유용 (예: p99 목표 500ms)\n\n[복합 탭]\n- && 연산자로 여러 조건 조합\n- | count() > 5 → 집계 함수 지원 (Tempo 2.2+)\n\n[체인 탭] ← 가장 강력한 기능\n- >> (descendant) 연산자: "A 서비스에서 B 서비스로 이어지는 호출 경로"\n- 예: { service = "api-gateway" } >> { service = "payment" && status = error }\n  → "API Gateway를 거쳐 Payment에서 에러가 난 요청"을 정확히 찾음\n- 마이크로서비스 디버깅에서 가장 유용한 패턴\n\n■ 실무 팁:\n- Grafana Explore → Tempo → TraceQL 탭에서 직접 작성 가능\n- 자동완성 지원됨\n- 대시보드 변수($service)와 조합하면 동적 필터링 가능',
+        10: 'Service Map 시각화 — 장애 주입 버튼으로 시연하세요.\n\n■ Service Map이란?\n- Tempo가 수집한 트레이스 데이터를 기반으로 자동 생성되는 서비스 의존성 그래프\n- 별도 설정 불필요 — Tempo datasource에서 serviceMap.datasourceUid만 설정하면 됨\n- Prometheus의 span metrics를 사용하여 각 서비스의 상태를 표시\n\n■ 시각적 표현:\n- 초록색 노드: 정상 (에러율 < 1%, p99 < 500ms)\n- 노란색 노드: 느림 (p99 > 500ms)\n- 빨간색 노드: 에러 발생 (에러율 > 1%)\n- 선(edge)의 굵기: 서비스 간 트래픽 양\n\n■ "장애 주입" 버튼 클릭 후:\n- payment-service가 빨간색으로 변하면서 연쇄 영향 확인\n- 장애가 downstream으로 전파되는 과정 시각화\n- 실제 장애 시 어떤 서비스를 먼저 살펴봐야 하는지 파악 가능\n\n■ 실무 활용:\n- 온콜 엔지니어가 가장 먼저 보는 화면\n- 어떤 서비스가 문제인지 1초 만에 파악 가능\n- 노드 클릭 → 해당 서비스의 트레이스 목록으로 이동',
+        11: '★ RED Method vs 4 Golden Signals:\n\n■ RED Method (Tom Wilkie, Grafana Labs 2018)\n- Rate: 초당 요청 수 (처리량)\n- Errors: 에러율 (실패한 요청 비율)\n- Duration: 응답 시간 (보통 p50, p95, p99)\n- "내 서비스가 요청을 잘 처리하고 있는가?"에 초점\n- 마이크로서비스/API 레벨 모니터링에 적합\n\n■ 4 Golden Signals (Google SRE Book 2016)\n- Latency: 응답 시간 (= RED의 Duration)\n- Traffic: 요청량 (= RED의 Rate)\n- Errors: 에러율 (= RED의 Errors)\n- Saturation: 리소스 포화도 ← 유일한 차이!\n  - CPU/Memory/Disk 사용률\n  - "시스템이 얼마나 꽉 차 있는가"\n  - 예: Memory 96% → 곧 OOM 발생 가능\n\n■ 핵심 인사이트:\n- 3개 메트릭(Rate=Traffic, Errors=Errors, Duration=Latency)은 완전히 동일\n- Saturation만 추가된 것 → RED는 Golden Signals의 서브셋\n- 실무에서는 둘 다 씁니다: 서비스 대시보드에 RED, 인프라 대시보드에 Saturation 추가\n\n■ "장애 시뮬레이션" 버튼:\n- 정상 값 → 장애 값으로 변화하는 것을 보여줌\n- Rate 1247 → 342 (급감), Errors 0.12% → 5.2% (급증), Saturation 72% → 96%\n- 이런 패턴이 보이면 즉시 대응해야 함',
+        12: '장애 분석 워크플로우 — 실제 순서대로 설명하세요.\n\n■ 실제 장애 대응 5단계:\n\n1단계: Alert 수신\n- Prometheus Alertmanager → Slack/PagerDuty\n- 예: "payment-service p99 latency > 2s for 5min"\n- 여기서 이미 어떤 서비스인지, 어떤 메트릭인지 정보를 얻음\n\n2단계: Dashboard 확인 (RED/Golden Signals)\n- Grafana 대시보드에서 문제 범위 파악\n- 에러율은 얼마나? 언제부터? 특정 엔드포인트만?\n- Rate 변화로 트래픽 패턴 확인 (트래픽 급증? 아니면 평소와 같은데 에러만 증가?)\n\n3단계: Exemplar → Trace 분석\n- 메트릭 그래프에서 Exemplar(◆) 클릭\n- 또는 TraceQL로 검색: { service = "payment" && status = error && duration > 2s }\n- Waterfall 뷰에서 어느 구간이 느린지, 어디서 에러가 나는지 확인\n- 예: payment → DB 호출에서 5초 timeout 발생 확인\n\n4단계: Trace → Log 확인\n- tracesToLogs 설정으로 해당 Pod의 로그 자동 조회\n- 에러 메시지 확인: "Connection refused to RDS primary endpoint"\n- 이제 root cause 파악: RDS failover 발생\n\n5단계: 조치 및 확인\n- RDS 상태 확인 → primary endpoint 복구 대기 또는 수동 failover\n- Grafana 대시보드에서 복구 확인\n\n이 전체 과정이 Grafana 안에서 클릭만으로 진행됩니다.\n팀 전체가 이 워크플로우를 공유하면 MTTR이 크게 단축됩니다.',
+        13: '★ OpenTelemetry Collector 파이프라인:\n\n■ OTEL Collector란?\n- 벤더 중립적인 텔레메트리 데이터 수집/가공/전송 에이전트\n- 앱에서 보내는 트레이스/메트릭/로그를 받아서 원하는 백엔드로 보내줌\n- "중앙 우체국" 같은 역할\n\n■ 3단계 파이프라인:\n\n1. Receivers (수신)\n- OTLP gRPC (4317 포트): OpenTelemetry 표준 프로토콜\n- OTLP HTTP (4318 포트): REST API 방식\n- Jaeger/Zipkin: 레거시 시스템 호환\n- 여러 수신기를 동시에 활성화 가능\n\n2. Processors (가공) ← 가장 중요!\n- batch: 데이터를 모아서 한 번에 전송 (네트워크 효율성)\n- tail_sampling: ★ 스마트 샘플링 (다음 슬라이드에서 상세 설명)\n- spanmetrics: span 데이터에서 RED 메트릭을 자동 생성 → Service Map에 사용됨\n- attributes: 속성 추가/삭제 (예: 민감 정보 제거)\n\n3. Exporters (전송)\n- otlp/tempo: 트레이스 → Tempo\n- prometheusremotewrite: 메트릭 → Prometheus/AMP\n- loki: 로그 → Loki\n\n■ 핵심 장점:\n- 앱은 OTLP로만 보내면 됨 → 백엔드가 바뀌어도 앱 코드 변경 불필요\n- Collector 설정만 변경하면 Jaeger에서 Tempo로, Datadog에서 Prometheus로 전환 가능\n- EKS에서는 DaemonSet 또는 Deployment로 배포\n\n■ YAML 코드 설명 (오른쪽):\n- service.pipelines.traces: receivers → processors → exporters 순서 정의\n- tail_sampling 정책: errors(에러 100%), slow(1초 이상 100%), default(나머지 10%)',
+        14: '★ 비용 효율적 샘플링 전략:\n\n■ 왜 샘플링이 필요한가?\n- 트레이스 데이터는 매우 큼 (요청 하나당 수십 KB)\n- 하루 수억 요청 × 30KB = 수 TB → 저장 비용 폭발\n- 하지만 정상 요청의 트레이스는 거의 안 봄 → 비용 낭비\n\n■ 두 가지 샘플링 방식:\n\n1. Head-based sampling (헤드 기반)\n- 요청 시작 시점에 샘플링 여부 결정 (예: 10% 확률로 수집)\n- 장점: 간단, SDK 레벨에서 설정\n- 단점: 에러 요청도 90% 확률로 버림! → 장애 분석 불가능\n\n2. Tail-based sampling (테일 기반) ★ 권장\n- 트레이스가 완료된 후에 샘플링 여부 결정\n- "결과를 보고 나서 보관할지 결정"\n- 에러/느린 요청: 100% 보관 (중요한 것은 무조건 수집)\n- 정상 요청: 10%만 보관 (비용 절감)\n\n■ 슬라이더 시연:\n- 샘플링률을 1% → 100%로 조절하며 비용/커버리지 변화 확인\n- 권장 설정: 에러 100%, 느린 요청(>1s) 100%, 나머지 10%\n- 이 설정으로 비용 80% 절감하면서 문제 분석 능력 100% 유지\n\n■ OTEL Collector에서의 설정:\n- tail_sampling processor 사용 (앞 슬라이드 YAML 참조)\n- decision_wait: 10s (트레이스 완료 대기 시간)\n- 정책 우선순위: errors > slow > probabilistic',
+        15: '퀴즈를 통해 핵심 개념을 복습합니다.\n\n정답 설명 준비:\n\n• Exemplar 질문: Exemplar는 히스토그램 메트릭에 TraceID를 첨부하는 기술.\n  메트릭 그래프에서 ◆ 클릭 → 해당 요청의 트레이스로 이동.\n\n• derivedFields 질문: Loki 데이터소스 설정에서 정규식으로 로그의 TraceID를 추출해\n  클릭 가능한 Tempo 링크로 만드는 기능.\n\n• TraceQL 질문: >> 연산자는 descendant(하위) 관계를 의미.\n  A >> B = "A span의 하위에 B span이 있는 트레이스".\n\n• 샘플링 질문: Tail-based sampling은 트레이스 완료 후 결정.\n  에러/느린 요청은 100%, 정상은 10%로 비용 절감.\n\n틀린 항목이 있으면 해당 슬라이드 번호를 안내하세요.',
+        16: '수고하셨습니다.\n\n5분 휴식 후 마지막 Block 4에서는 리소스 최적화와 비용 관리를 다룹니다.\n- VPA (Vertical Pod Autoscaler)\n- KEDA (이벤트 기반 오토스케일링)\n- 비용 최적화 체크리스트\n\n질문이 있으시면 휴식 시간에 받겠습니다.'
       },
       onSlideChange: (index, slide) => {
         // Trigger animations when entering specific slides
@@ -1957,27 +1957,36 @@ ERROR: Unable to acquire connection within 5s
       const col3X = w * 0.82;   // right column
 
       // Deeper service topology: Gateway → Services → Sub-services → DB
+      // Each service has normal and fault metrics (rps, p99 latency)
       const services = [
-        { id: 'gateway',   name: 'API Gateway',     x: col2X,  y: row1Y, color: Colors.green },
-        { id: 'auth',      name: 'Auth Service',    x: col1X,  y: row2Y, color: Colors.green },
-        { id: 'order',     name: 'Order Service',   x: col2X,  y: row2Y, color: Colors.green },
-        { id: 'payment',   name: 'Payment Service', x: col3X,  y: row2Y, color: Colors.green },
-        { id: 'redis',     name: 'Redis',           x: col1X,  y: row3Y, color: Colors.green },
-        { id: 'inventory', name: 'Inventory',       x: col2X - w * 0.10, y: row3Y, color: Colors.green },
-        { id: 'billing',   name: 'Billing Service', x: col2X + w * 0.10, y: row3Y, color: Colors.green },
-        { id: 'postgres',  name: 'PostgreSQL',      x: col2X,  y: row4Y, color: Colors.green }
+        { id: 'gateway',   name: 'API Gateway',     x: col2X,  y: row1Y, color: Colors.green,
+          rps: '2.5k', latency: '12ms', faultRps: '1.8k', faultLatency: '340ms' },
+        { id: 'auth',      name: 'Auth Service',    x: col1X,  y: row2Y, color: Colors.green,
+          rps: '500', latency: '8ms', faultRps: '500', faultLatency: '8ms' },
+        { id: 'order',     name: 'Order Service',   x: col2X,  y: row2Y, color: Colors.green,
+          rps: '800', latency: '25ms', faultRps: '320', faultLatency: '1.2s' },
+        { id: 'payment',   name: 'Payment Service', x: col3X,  y: row2Y, color: Colors.green,
+          rps: '1.2k', latency: '18ms', faultRps: '680', faultLatency: '850ms' },
+        { id: 'redis',     name: 'Redis',           x: col1X,  y: row3Y, color: Colors.green,
+          rps: '500', latency: '2ms', faultRps: '500', faultLatency: '2ms' },
+        { id: 'inventory', name: 'Inventory',       x: col2X - w * 0.10, y: row3Y, color: Colors.green,
+          rps: '600', latency: '15ms', faultRps: '60', faultLatency: '5.0s' },
+        { id: 'billing',   name: 'Billing Service', x: col2X + w * 0.10, y: row3Y, color: Colors.green,
+          rps: '1k', latency: '20ms', faultRps: '120', faultLatency: '4.8s' },
+        { id: 'postgres',  name: 'PostgreSQL',      x: col2X,  y: row4Y, color: Colors.green,
+          rps: '1.2k', latency: '5ms', faultRps: '0', faultLatency: 'N/A' }
       ];
 
-      // Edges representing call dependencies
+      // Edges representing call dependencies (normal and fault rates)
       const edges = [
-        { from: 'gateway', to: 'auth', rate: '500/s' },
-        { from: 'gateway', to: 'order', rate: '800/s' },
-        { from: 'gateway', to: 'payment', rate: '1.2k/s' },
-        { from: 'auth', to: 'redis', rate: '500/s' },
-        { from: 'order', to: 'inventory', rate: '600/s' },
-        { from: 'payment', to: 'billing', rate: '1k/s' },
-        { from: 'inventory', to: 'postgres', rate: '400/s' },
-        { from: 'billing', to: 'postgres', rate: '800/s' }
+        { from: 'gateway', to: 'auth', rate: '500/s', faultRate: '500/s' },
+        { from: 'gateway', to: 'order', rate: '800/s', faultRate: '320/s' },
+        { from: 'gateway', to: 'payment', rate: '1.2k/s', faultRate: '680/s' },
+        { from: 'auth', to: 'redis', rate: '500/s', faultRate: '500/s' },
+        { from: 'order', to: 'inventory', rate: '600/s', faultRate: '60/s' },
+        { from: 'payment', to: 'billing', rate: '1k/s', faultRate: '120/s' },
+        { from: 'inventory', to: 'postgres', rate: '400/s', faultRate: '0/s' },
+        { from: 'billing', to: 'postgres', rate: '800/s', faultRate: '0/s' }
       ];
 
       // Fault propagation: DB failure propagates upward through call chain
@@ -2016,10 +2025,11 @@ ERROR: Unable to acquire connection within 5s
         }
 
         // Anchor: bottom-center of source box → top-center of target box
+        const mNodeH = nodeH * 1.45;
         const fromX = from.x;
-        const fromY = from.y + nodeH / 2;
+        const fromY = from.y + mNodeH / 2;
         const toX = to.x;
-        const toY = to.y - nodeH / 2;
+        const toY = to.y - mNodeH / 2;
 
         // Draw edge line
         ctx.beginPath();
@@ -2049,16 +2059,18 @@ ERROR: Unable to acquire connection within 5s
         const perpY = (toX - fromX);
         const perpLen = Math.sqrt(perpX * perpX + perpY * perpY) || 1;
         const offsetDist = w * 0.025;
-        ctx.fillText(edge.rate, midX + (perpX / perpLen) * offsetDist, midY + (perpY / perpLen) * offsetDist);
+        const displayRate = smFaultInjected ? (edge.faultRate || edge.rate) : edge.rate;
+        ctx.fillText(displayRate, midX + (perpX / perpLen) * offsetDist, midY + (perpY / perpLen) * offsetDist);
       });
 
-      // Draw service nodes
+      // Draw service nodes with RPS/Latency metrics
+      const metricNodeH = nodeH * 1.45; // taller nodes for metrics
       services.forEach(service => {
         const x = service.x - nodeW / 2;
-        const y = service.y - nodeH / 2;
+        const y = service.y - metricNodeH / 2;
 
         // Node background
-        drawRoundRect(ctx, x, y, nodeW, nodeH, cornerR, service.color + '25', service.color);
+        drawRoundRect(ctx, x, y, nodeW, metricNodeH, cornerR, service.color + '25', service.color);
 
         // Pulsing effect for root cause (postgres)
         if (smFaultInjected && service.id === 'postgres') {
@@ -2071,7 +2083,21 @@ ERROR: Unable to acquire connection within 5s
         ctx.fillStyle = Colors.textPri;
         ctx.font = `600 ${fMd}px Pretendard`;
         ctx.textAlign = 'center';
-        ctx.fillText(service.name, service.x, service.y + fMd * 0.35);
+        ctx.fillText(service.name, service.x, service.y - metricNodeH * 0.12);
+
+        // RPS / Latency metrics
+        const curRps = smFaultInjected ? service.faultRps : service.rps;
+        const curLat = smFaultInjected ? service.faultLatency : service.latency;
+        const rpsColor = (smFaultInjected && curRps !== service.rps) ? Colors.yellow : Colors.textMuted;
+        const latColor = (smFaultInjected && curLat !== service.latency)
+          ? (service.color === Colors.red ? Colors.red : Colors.yellow)
+          : Colors.textMuted;
+
+        ctx.font = `400 ${fSm}px JetBrains Mono`;
+        ctx.fillStyle = rpsColor;
+        ctx.fillText(curRps + ' rps', service.x, service.y + metricNodeH * 0.1);
+        ctx.fillStyle = latColor;
+        ctx.fillText('p99 ' + curLat, service.x, service.y + metricNodeH * 0.28);
       });
 
       // Error propagation message

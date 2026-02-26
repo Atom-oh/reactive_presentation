@@ -295,6 +295,7 @@
           <div class="btn-group" style="justify-content: center; position: absolute; bottom: 4px; left: 0; right: 0; z-index: 10;">
             <button class="btn" id="btn-add-node">노드 추가</button>
             <button class="btn" id="btn-add-workload">워크로드 추가</button>
+            <button class="btn" style="border-color: var(--orange); color: var(--orange);" id="btn-remove-workload">워크로드 삭제</button>
             <button class="btn" style="border-color: var(--red); color: var(--red);" id="btn-spot-interrupt">Spot 인터럽트</button>
             <button class="btn" style="border-color: var(--yellow); color: var(--yellow);" id="btn-consolidation">Consolidation</button>
             <button class="btn btn-sm" id="btn-reset">Reset</button>
@@ -1476,6 +1477,29 @@ karpenter_nodes_allocatable</div></div></div></li>
           n.cpuUsage = clamp(n.cpuUsage + Math.floor(Math.random() * 11) + 10, 0, Math.min(90, n.cpuRequests));
         });
         addEvent('Scheduled', `Pods deployed to ${readyNodes.length} nodes`, Colors.blue);
+        pushTimeSeriesPoint();
+      };
+
+      document.getElementById('btn-remove-workload').onclick = () => {
+        const readyNodes = nodes.filter(n => n.status === 'Ready' && n.cpuRequests > 0);
+        if (readyNodes.length === 0) {
+          addEvent('Info', 'No workloads to remove', Colors.textMuted);
+          return;
+        }
+        // Pick 1-2 random nodes and reduce their load significantly
+        const count = Math.min(readyNodes.length, Math.random() > 0.5 ? 2 : 1);
+        const targets = readyNodes.sort(() => Math.random() - 0.5).slice(0, count);
+        let totalRemoved = 0;
+        targets.forEach(n => {
+          const drop = Math.floor(Math.random() * 21) + 20; // 20-40% drop
+          const prevReq = n.cpuRequests;
+          n.cpuRequests = Math.max(0, n.cpuRequests - drop);
+          n.cpuUsage = Math.min(n.cpuUsage, n.cpuRequests);
+          n.cpuUsage = Math.max(0, n.cpuUsage - Math.floor(drop * 0.6));
+          totalRemoved += prevReq - n.cpuRequests;
+        });
+        const names = targets.map(n => n.name).join(', ');
+        addEvent('Deleted', `Pods removed from ${names} (-${totalRemoved}% req)`, Colors.orange);
         pushTimeSeriesPoint();
       };
 

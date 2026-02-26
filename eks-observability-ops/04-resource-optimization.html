@@ -1858,10 +1858,10 @@ Scheduling: c6g.medium으로 충분</div>
   </div>
 
   <!-- Scripts -->
-  <script src="../common/slide-framework.js"></script>
-  <script src="../common/presenter-view.js"></script>
   <script src="../common/animation-utils.js"></script>
+  <script src="../common/slide-framework.js"></script>
   <script src="../common/quiz-component.js"></script>
+  <script src="../common/presenter-view.js"></script>
   <script>
     // Initialize slide framework
     const slides = new SlideFramework({
@@ -1892,12 +1892,11 @@ Scheduling: c6g.medium으로 충분</div>
         if (index === 6) {
           setTimeout(() => animateCosts(), 100);
         }
-        // Trigger KEDA RPS canvas when entering slide 10
-        if (index === 9) {
+        // Trigger KEDA RPS canvas when entering slide 11 (index 10)
+        if (index === 10) {
           setTimeout(() => {
-            if (!kedaCtx) initKedaCanvas();
-            else drawKedaCanvas();
-          }, 100);
+            initKedaCanvas();
+          }, 200);
         }
       }
     });
@@ -1920,24 +1919,34 @@ Scheduling: c6g.medium으로 충분</div>
     // Slide 3: VPA Simulator (Canvas)
     // ==========================================
     let vpaCtx = null;
-    let vpaWidth = 0;
-    let vpaHeight = 0;
+    const VPA_BASE_W = 700, VPA_BASE_H = 400;
 
     function initVpaCanvas() {
-      const result = setupCanvas('vpa-canvas', 700, 400);
-      if (result) {
-        vpaCtx = result.ctx;
-        vpaWidth = result.width;
-        vpaHeight = result.height;
-        drawVpaCanvas();
-      }
+      const canvas = document.getElementById('vpa-canvas');
+      if (!canvas) return;
+      const container = canvas.parentElement;
+      const cw = container.clientWidth;
+      if (cw <= 0) return;
+      const scale = cw / VPA_BASE_W;
+      const ch = Math.round(VPA_BASE_H * scale);
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(cw * dpr);
+      canvas.height = Math.round(ch * dpr);
+      canvas.style.width = cw + 'px';
+      canvas.style.height = ch + 'px';
+      canvas.style.maxWidth = 'none';
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(scale * dpr, scale * dpr);
+      vpaCtx = ctx;
+      drawVpaCanvas();
     }
 
     function drawVpaCanvas() {
       if (!vpaCtx) return;
       const ctx = vpaCtx;
-      const w = vpaWidth;
-      const h = vpaHeight;
+      const w = VPA_BASE_W;
+      const h = VPA_BASE_H;
 
       // Get values
       const cpuReq = parseInt(document.getElementById('cpu-request').value);
@@ -2509,15 +2518,17 @@ recommendation:
     // ==========================================
     // Initialize
     // ==========================================
-    document.addEventListener('DOMContentLoaded', () => {
-      initVpaCanvas();
-      updateQoS();
+    // Initialize immediately (scripts are at end of body, DOM is ready)
+    initVpaCanvas();
+    updateQoS();
 
-      // Handle window resize for canvas
-      window.addEventListener('resize', () => {
-        initVpaCanvas();
-        if (kedaCtx) initKedaCanvas();
-      });
+    // Init KEDA canvas after layout settles (handles hash navigation to #11)
+    setTimeout(() => initKedaCanvas(), 300);
+
+    // Handle window resize for canvas
+    window.addEventListener('resize', () => {
+      initVpaCanvas();
+      initKedaCanvas();
     });
   </script>
 </body>

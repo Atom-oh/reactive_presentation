@@ -7,116 +7,194 @@
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="stylesheet" href="common/theme.css">
   <style>
+    /* Viewport-scaled root: 16px@1920, scales to ~32px@3840 */
+    html { font-size: clamp(14px, 0.85vw, 36px) !important; }
     body {
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
+      width: 100vw;
+      max-width: none;
     }
-    .hub-header {
-      text-align: center;
-      padding: 80px 40px 40px;
-    }
-    .hub-header h1 {
-      font-size: 2.8rem;
-      background: linear-gradient(135deg, var(--accent-light), var(--cyan));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 12px;
-    }
-    .hub-header p {
-      color: var(--text-secondary);
-      font-size: 1.15rem;
-    }
-    .hub-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-      gap: 24px;
-      padding: 40px 64px 80px;
-      max-width: 1200px;
-      margin: 0 auto;
+
+    /* Hero header with PPTX background */
+    .hub-hero {
+      position: relative;
+      background: url('common/pptx-theme/images/Picture_13.png') center/cover no-repeat;
+      padding: 4.5rem 5vw 3.5rem;
+      overflow: hidden;
       width: 100%;
     }
+    .hub-hero h1 {
+      font-size: 3.2rem;
+      color: #fff;
+      font-weight: 300;
+      line-height: 1.2;
+      margin: 0 0 0.6rem 0;
+    }
+    .hub-hero p {
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 1.15rem;
+      margin: 0;
+      max-width: 60%;
+    }
+    .hub-hero .hero-logo {
+      position: absolute;
+      right: 4vw;
+      bottom: 2.5rem;
+      width: 8vw;
+      max-width: 220px;
+      opacity: 0.9;
+      pointer-events: none;
+    }
+    .hub-hero .hero-aws-logo {
+      position: absolute;
+      left: 5vw;
+      bottom: 1.2rem;
+      height: 1.8rem;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    /* Main content area */
+    .hub-main {
+      flex: 1;
+      padding: 3rem 5vw;
+      max-width: 100%;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .hub-section-title {
+      font-size: 1.35rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+      margin: 0 0 2rem 0;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Responsive card grid — cards fill ~25vw at any resolution */
+    .hub-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 25vw), 1fr));
+      gap: 2rem;
+    }
+
+    /* Card design */
     .hub-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 32px;
+      border-radius: 1rem;
+      padding: 2rem;
       transition: all var(--transition-normal);
       text-decoration: none;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 0.8rem;
     }
     .hub-card:hover {
       border-color: var(--accent);
-      box-shadow: 0 8px 32px rgba(108, 92, 231, .2);
+      box-shadow: 0 0.5rem 2rem rgba(108, 92, 231, .2);
       transform: translateY(-4px);
     }
     .hub-card .card-icon {
-      font-size: 2.4rem;
-      width: 56px;
-      height: 56px;
+      font-size: 2rem;
+      width: 3.5rem;
+      height: 3.5rem;
       display: flex;
       align-items: center;
       justify-content: center;
       background: var(--accent-glow);
-      border-radius: 14px;
-      margin-bottom: 4px;
+      border-radius: 0.8rem;
+      margin-bottom: 0.3rem;
     }
     .hub-card h2 {
       font-size: 1.3rem;
       color: var(--text-primary);
+      margin: 0;
     }
-    .hub-card p {
+    .hub-card .card-desc {
       color: var(--text-secondary);
-      font-size: .92rem;
-      line-height: 1.6;
+      font-size: 0.9rem;
+      line-height: 1.65;
+      margin: 0;
     }
+
+    /* Block tags inside card */
+    .card-blocks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.3rem;
+    }
+    .card-blocks .block-tag {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      background: rgba(108, 92, 231, 0.12);
+      color: var(--accent-light);
+      border: 1px solid rgba(108, 92, 231, 0.25);
+      white-space: nowrap;
+    }
+
+    /* Card footer meta */
     .hub-card .card-meta {
       display: flex;
-      gap: 12px;
+      gap: 1rem;
       margin-top: auto;
-      padding-top: 12px;
+      padding-top: 0.8rem;
       border-top: 1px solid var(--border);
     }
     .hub-card .card-meta span {
-      font-size: .8rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
     }
-    .footer {
+
+    /* Page footer */
+    .hub-footer {
       text-align: center;
-      padding: 24px;
+      padding: 1.5rem;
       color: var(--text-muted);
-      font-size: .82rem;
+      font-size: 0.8rem;
       border-top: 1px solid var(--border);
       margin-top: auto;
     }
   </style>
 </head>
 <body>
-  <div class="hub-header">
+  <div class="hub-hero">
     <h1>Reactive Presentations</h1>
-    <p>Interactive training slides with Canvas animations & live simulations</p>
+    <p>Interactive training slides with Canvas animations, live simulations & quizzes</p>
+    <img src="common/pptx-theme/images/Picture_8.png" alt="" class="hero-logo" />
+    <img src="common/pptx-theme/images/logo_1.png" alt="" class="hero-aws-logo" />
   </div>
 
-  <div class="hub-grid">
-    <a href="eks-observability-ops/index.html" class="hub-card">
-      <div class="card-icon">&#9881;</div>
-      <h2>EKS Auto Mode & Observability</h2>
-      <p>EKS Auto Mode 내부 아키텍처, 노드 라이프사이클 모니터링, Grafana 스택 기반 Logs/Metrics/Traces 상관분석, VPA 리소스 최적화 전략</p>
-      <div class="card-meta">
-        <span>2h Training</span>
-        <span>4 Blocks / 50 Slides</span>
-        <span>Korean</span>
-      </div>
-    </a>
+  <div class="hub-main">
+    <h2 class="hub-section-title">Training Sessions</h2>
+    <div class="hub-grid">
+      <a href="eks-observability-ops/index.html" class="hub-card">
+        <div class="card-icon">&#9881;</div>
+        <h2>EKS Auto Mode & Observability</h2>
+        <p class="card-desc">EKS Auto Mode 내부 아키텍처, 노드 라이프사이클 모니터링, Grafana 스택 기반 Logs/Metrics/Traces 상관분석, VPA 리소스 최적화 전략</p>
+        <div class="card-blocks">
+          <span class="block-tag">Architecture</span>
+          <span class="block-tag">Node Lifecycle</span>
+          <span class="block-tag">Observability</span>
+          <span class="block-tag">Resource Optimization</span>
+        </div>
+        <div class="card-meta">
+          <span>2h Training</span>
+          <span>4 Blocks / 50 Slides</span>
+          <span>Korean</span>
+        </div>
+      </a>
 
-    <!-- Future presentations add cards here -->
+      <!-- Future presentations add cards here -->
+    </div>
   </div>
 
-  <div class="footer">
+  <div class="hub-footer">
     Built with Reactive Presentation Framework
   </div>
 </body>

@@ -757,7 +757,6 @@
         <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:2px 0 0 0;">Amazon Web Services</p>
       </div>
       <img src="../common/pptx-theme/images/Picture_8.png" alt="" style="position:absolute; right:5%; bottom:10%; width:8%; pointer-events:none;" />
-      <img src="../common/pptx-theme/images/logo_1.png" alt="" style="position:absolute; left:5%; bottom:5%; height:3.2%; pointer-events:none;" />
     </div>
 
     <!-- Slide 2: VPA + Auto Mode Synergy -->
@@ -1746,7 +1745,7 @@ Scheduling: c6g.medium으로 충분</div>
         1: '세션 시작 슬라이드.\n\n자기소개 후 Block 4 개요 안내.\n리소스 최적화 — VPA, KEDA, 비용 관리를 다룹니다.',
         2: 'VPA와 Auto Mode의 시너지를 강조하세요.\n- VPA: Pod 레벨 리소스 최적화\n- Auto Mode: 노드 레벨 최적화\n\n두 레이어 최적화로 실제 30-50% 비용 절감이 가능합니다.',
         3: 'Off 모드부터 시작하는 것이 안전합니다.\n- 추천값만 확인하고 수동으로 적용\n- Auto 모드는 Pod 재시작 발생\n\nStateless 워크로드에만 Auto 적용하세요.',
-        4: '시뮬레이터로 CPU/Memory 사용량을 조절하며 VPA 추천값 변화를 보여주세요.\n- 실제 VPA recommendation API와 동일한 로직\n- histogram_quantile 기반 계산임을 언급',
+        4: 'VPA 시뮬레이터 시연 — 4개 슬라이더를 조절하며 추천값 변화를 확인.\n\n- CPU Request/Memory Request: 현재 설정값\n- CPU Usage/Memory Usage: 실제 사용량\n\nVPA 알고리즘 핵심:\n- CPU는 15% 헤드룸, Memory는 25% 헤드룸 (OOM 방지)\n- lowerBound: target의 50-60%\n- upperBound: target의 2-2.5배\n\n오른쪽 YAML은 실제 VPA recommendation 출력 형식.\n캔버스 차트로 Request vs Usage vs Target 비교를 시각적으로 확인.',
         5: 'VPA가 requests를 조정하면 Karpenter가 적합한 노드를 자동 선택합니다.\n- updateMode: Off로 시작\n- 추천값 확인 후 점진적으로 Auto로 전환',
         6: 'QoS 클래스별 특성을 설명하세요.\n- CPU: throttling만 발생 → Burstable 유리\n- Memory: OOMKill 위험 → Guaranteed 안전',
         7: 'Before/After 비용 비교를 보여주세요.\n- 오버프로비저닝 환경에서 VPA + Auto Mode 적용\n- 30-50% 비용 절감 사례\n\n실제 고객 사례 기반입니다.',

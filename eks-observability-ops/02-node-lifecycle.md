@@ -31,21 +31,24 @@ paginate: true
 
 <!-- type: canvas -->
 
-# 노드 상태 대시보드 시뮬레이터
+# Grafana: EKS Node Monitoring
 
-**실시간 노드 상태 모니터링 및 이벤트 추적**
+**CPU Requests vs Usage — Karpenter 판단 기준 시각화**
 
 Canvas 애니메이션:
-- 4x3 노드 그리드가 표시됨 (12개 슬롯)
-- 각 노드는 이름, 상태(Ready/Cordoned/Terminating), CPU 사용률을 표시
-- 오른쪽에 실시간 Event Log 패널
-- 하단에 Active Nodes, Avg CPU, Est. Cost, Spot 비율 메트릭 표시
-- "노드 추가" 버튼: 빈 슬롯에 새 노드 프로비저닝
-- "워크로드 추가" 버튼: Ready 노드들의 CPU 사용률 증가
-- "Spot 인터럽트" 버튼: 랜덤 노드가 Terminating 상태로 전환 후 종료
-- "Consolidation" 버튼: 저사용률 노드가 Cordoned 후 통합
+- Grafana 스타일 대시보드 — 상단에 Active Nodes, Ready, CPU Requests avg, CPU Usage avg, Cost/hr 메트릭
+- 시계열 차트: Requests(파란) vs Usage(초록) 트렌드
+- Node Status 패널: 노드별 Requests/Usage 바, SPOT 뱃지, Low Req 뱃지
+- Karpenter Events 패널: 실시간 이벤트 로그
+- **버튼:**
+  - "노드 추가": 빈 슬롯에 새 노드 프로비저닝
+  - "워크로드 추가": Ready 노드들의 CPU Requests/Usage 증가
+  - "워크로드 삭제": 1-2개 랜덤 노드에서 Pods 제거 (20-40% Requests 감소) → Consolidation 대상 생성
+  - "Spot 인터럽트": EventBridge→SQS→Karpenter 흐름 — Cordon→PDB→Drain→Reschedule→Terminate
+  - "Consolidation": Low Req 노드 Cordon→Drain→Redistribute→Remove
+  - "Reset": 초기 상태 복원
 
-<!-- notes: 대시보드 시뮬레이터를 통해 노드 상태 변화와 이벤트 로그를 실시간으로 확인할 수 있습니다. -->
+<!-- notes: 대시보드 시뮬레이터에서 워크로드 추가/삭제로 노드 활용률을 조절하고, Spot 인터럽트와 Consolidation의 전체 흐름을 확인할 수 있습니다. -->
 
 ---
 
@@ -180,22 +183,86 @@ histogram_quantile(0.99, karpenter_nodeclaims_startup_duration_seconds)
 
 # Spot 인터럽트 시뮬레이션
 
-**2분 경고 ~ 안전한 Pod 이동 전체 시퀀스**
+**EventBridge → SQS → Karpenter → Pod 퇴거 → 재스케줄링 전체 플로우**
 
 Canvas 애니메이션:
-- Node 1 (On-Demand, Ready): 2개 Pod 실행 중
-- Node 2 (Spot, Ready): 3개 Pod 실행 중 - 인터럽트 대상
-- Node 3 (On-Demand, Ready): 1개 Pod 실행 중
-- Timer 표시: 0s ~ 120s
+- 상단: EventBridge → SQS → Karpenter 파이프라인 플로우
+- 하단: Node 3개 (On-Demand ×2, Spot ×1) + Pod 이동 시각화
 
-시퀀스:
-1. **T+0s**: 2-Minute Warning 발생, Node 2에 경고 배너 표시
-2. **T+30s**: Pod Eviction 시작, Pod들이 Node 1, Node 3으로 이동 애니메이션
-3. **T+60s**: New Node (Node 4) 프로비저닝 시작
-4. **T+90s**: Node 2 Terminated, 노드가 흐릿하게 표시
-5. **T+120s**: All Pods Ready, Node 4에 Pod 재배치 완료
+시퀀스 (10단계):
+1. **EC2 Spot ITN** — 2분 경고 발생
+2. **EventBridge Rule** 매칭
+3. **SQS 큐** 메시지 전달
+4. **Karpenter** 이벤트 수신
+5. **Node Cordon** — SchedulingDisabled
+6. **PDB 확인** — minAvailable 체크
+7. **Pod Terminating** — gracefulTermination
+8. **Pod 재스케줄링** — 다른 노드로 이동
+9. **새 노드 프로비저닝** (필요 시)
+10. **Node Terminated** — 인스턴스 종료
 
-<!-- notes: Spot 인터럽트 발생 시 2분 내에 Pod를 안전하게 이동시키는 전체 과정을 시뮬레이션합니다. -->
+<!-- notes: AWS EventBridge → SQS → Karpenter 파이프라인을 통해 Spot 인터럽트가 처리되는 전체 흐름을 시뮬레이션합니다. -->
+
+---
+
+<!-- type: compare -->
+
+# Spot Overprovisioning 전략
+
+**Pause 컨테이너로 사전 용량 확보 — 즉시 스케줄링**
+
+### 동작 흐름
+
+| Phase | 단계 | 설명 |
+|-------|------|------|
+| Phase 1 | **Buffer Ready** | Dummy pods가 용량 예약 (PriorityClass: -1) |
+| Phase 2 | **Real Workload 도착** | Dummy 삭제 → 워크로드 즉시 스케줄링 (Preempt) |
+| Phase 3 | **Karpenter 보충** | Pending dummy (AntiAffinity) → 새 노드 프로비저닝 → 버퍼 복원 |
+
+### PriorityClass YAML
+
+```yaml
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: overprovisioning
+value: -1              # 가장 낮은 우선순위
+globalDefault: false
+description: "Overprovisioning placeholder pods"
+```
+
+### Deployment YAML
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: overprovisioning
+spec:
+  replicas: 2
+  template:
+    spec:
+      priorityClassName: overprovisioning
+      terminationGracePeriodSeconds: 0
+      affinity:
+        podAntiAffinity:       # 같은 노드 배치 방지
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: overprovisioning
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - name: pause
+        image: registry.k8s.io/pause:3.9
+        resources:
+          requests:
+            cpu: "1"
+            memory: "2Gi"
+```
+
+> **핵심 원리:** `value: -1` → 가장 낮은 우선순위. 실제 워크로드 도착 시 Dummy pod가 즉시 Preempt → 노드 대기 없이 스케줄링
+
+<!-- notes: Overprovisioning은 Spot 인터럽트 대비 전략입니다. Pause 컨테이너로 사전 용량을 확보하여 워크로드가 노드 프로비저닝을 기다리지 않고 즉시 스케줄링됩니다. -->
 
 ---
 

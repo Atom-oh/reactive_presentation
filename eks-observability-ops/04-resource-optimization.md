@@ -213,6 +213,180 @@ resources:
 
 ---
 
+<!-- type: content -->
+
+# KEDA — Event-Driven Autoscaling
+
+**HPA를 넘어서: 이벤트 기반 스케일링과 Scale-to-Zero**
+
+### 아키텍처 플로우
+
+Event Sources (SQS / MSK / Prometheus) → **KEDA (ScaledObject)** → HPA (자동 생성/관리) → Deployment (0 ~ N Replicas)
+
+### HPA vs KEDA 비교
+
+| 항목 | HPA (기본) | KEDA |
+|------|-----------|------|
+| 메트릭 소스 | CPU / Memory만 | **60+ 외부 스케일러** (SQS, MSK, Prometheus 등) |
+| 최소 레플리카 | min: 1 | **min: 0** (Scale-to-Zero → 비용 절감) |
+| 설정 방식 | HPA 리소스 직접 관리 | ScaledObject → HPA 자동 생성/관리 |
+| Prometheus 연동 | Prometheus Adapter 필요 | 네이티브 PromQL 지원 |
+| AWS 통합 | CloudWatch Adapter 별도 설치 | SQS, MSK, CloudWatch 스케일러 내장 |
+
+### 핵심 장점
+- **Scale-to-Zero**: 트래픽 없을 때 0으로 축소, 비용 절감
+- **60+ Scalers**: AWS, GCP, Azure, Kafka, Redis 등
+- **PromQL Native**: 기존 Prometheus 인프라 재활용
+- **CRD 기반**: GitOps 친화적 선언형 관리
+
+<!-- notes: KEDA는 Kubernetes Event-Driven Autoscaler로, HPA를 감싸서 외부 이벤트 소스 기반 스케일링과 Scale-to-Zero를 지원합니다. -->
+
+---
+
+<!-- type: tabs -->
+
+# AWS 메트릭 기반 스케일링
+
+**SQS Queue Depth / MSK Consumer Lag / ALB Request Count**
+
+### SQS Queue
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: sqs-consumer-scaler
+spec:
+  scaleTargetRef:
+    name: sqs-consumer
+  minReplicaCount: 0    # Scale-to-Zero!
+  maxReplicaCount: 20
+  triggers:
+  - type: aws-sqs-queue
+    authenticationRef:
+      name: keda-aws-credentials
+    metadata:
+      queueURL: https://sqs.ap-northeast-2.amazonaws.com/...
+      queueLength: "5"  # 메시지 5개당 1 Pod
+      awsRegion: ap-northeast-2
+```
+
+- `aws-sqs-queue` — Prometheus 불필요
+- `queueLength: "5"` — 메시지 5개당 Pod 1개
+- **Scale-to-Zero**: 큐 비어있으면 Pod 0
+- IRSA 기반 인증 (`TriggerAuthentication`)
+
+### MSK Kafka
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: msk-consumer-scaler
+spec:
+  scaleTargetRef:
+    name: kafka-consumer
+  minReplicaCount: 1
+  maxReplicaCount: 30
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus:9090
+      query: |
+        sum(kafka_consumergroup_lag{
+          group="my-consumer",
+          topic="orders"
+        })
+      threshold: "1000"  # Lag 1000당 1 Pod
+```
+
+- `prometheus` 스케일러로 Consumer Lag 모니터링
+- `kafka_consumergroup_lag` 메트릭 활용
+
+> **주의:** MSK는 Scale-to-Zero 비권장 — Consumer가 0이면 Lag 감지 불가 → minReplicaCount: 1 유지
+
+### ALB
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: alb-scaler
+spec:
+  scaleTargetRef:
+    name: web-app
+  minReplicaCount: 2
+  maxReplicaCount: 50
+  triggers:
+  - type: aws-cloudwatch
+    authenticationRef:
+      name: keda-aws-credentials
+    metadata:
+      namespace: AWS/ApplicationELB
+      dimensionName: TargetGroup
+      dimensionValue: targetgroup/my-tg/...
+      metricName: RequestCountPerTarget
+      targetMetricValue: "100"  # Pod당 100 req
+      metricStatPeriod: "60"
+```
+
+- `aws-cloudwatch` 스케일러 — Prometheus 불필요
+- `RequestCountPerTarget` 메트릭
+
+<!-- notes: AWS 네이티브 메트릭(SQS, MSK, ALB)을 KEDA 스케일러로 직접 사용하여 Prometheus Adapter 없이 정확한 스케일링이 가능합니다. -->
+
+---
+
+<!-- type: canvas -->
+
+# Istio Gateway RPS 기반 스케일링
+
+**PromQL + KEDA로 Istio 메트릭 기반 자동 스케일링**
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: istio-rps-scaler
+spec:
+  scaleTargetRef:
+    name: my-app
+  minReplicaCount: 0
+  maxReplicaCount: 10
+  cooldownPeriod: 120
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus:9090
+      query: |
+        sum(rate(istio_requests_total{
+          destination_service=~"my-app.*",
+          reporter="destination"
+        }[1m]))
+      threshold: "50"  # Pod당 50 RPS
+```
+
+Canvas 애니메이션:
+- 슬라이더로 RPS 조절 (0 ~ 500)
+- Gateway → Prometheus 화살표: RPS + Latency P99 표시
+- Prometheus → KEDA 화살표: query 레이블
+- KEDA → Deployment 화살표: scale 레이블, Pod 수 표시
+- Gateway 하단 상태 뱃지: Idle / Healthy / Slow / Error
+- RPS 연동 Latency: ≤100 → 5-50ms, 100-300 → 50-200ms, >300 → 200-800ms
+
+### 확장 패턴
+
+| 패턴 | 설명 |
+|------|------|
+| Error Rate | 5xx 비율 > 5% → 즉시 스케일아웃 |
+| Latency P99 | P99 > 500ms → Pod 추가 |
+| Circuit Breaker | outlierDetection과 연동 |
+| Cron + RPS | 피크타임 사전 확보 + RPS 보정 |
+
+<!-- notes: Istio의 istio_requests_total 메트릭을 PromQL로 쿼리하여 RPS 기반 자동 스케일링을 구현합니다. 화살표에 RPS와 Latency P99가 동시에 표시됩니다. -->
+
+---
+
 <!-- type: compare -->
 # 비용 절감 사례 (Before/After)
 ## VPA + Auto Mode 최적화 실제 적용 결과

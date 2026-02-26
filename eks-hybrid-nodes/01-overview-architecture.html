@@ -513,6 +513,24 @@
         </div>
       </div>
       <img src="diagrams/hybrid-nodes-highlevel-network.png" alt="EKS Hybrid Nodes Architecture" class="arch-diagram">
+      <div class="columns" style="margin-top: 1rem; gap: 1rem;">
+        <div class="card" style="flex:1;">
+          <h4 style="color: var(--green); margin-bottom: 0.5rem;">적합한 사용 사례</h4>
+          <ul style="font-size:0.85rem; line-height:1.7;">
+            <li>온프레미스 GPU/특수 하드웨어 활용</li>
+            <li>규제 준수를 위한 데이터 지역성 요구</li>
+            <li>지연 시간에 민감한 Edge 워크로드</li>
+            <li>클라우드 마이그레이션 전환기</li>
+          </ul>
+        </div>
+        <div class="card" style="flex:1;">
+          <h4 style="color: var(--red); margin-bottom: 0.5rem;">부적합한 사용 사례</h4>
+          <ul style="font-size:0.85rem; line-height:1.7;">
+            <li><strong>순수 클라우드 네이티브 워크로드</strong> → EKS managed node group 또는 Fargate 권장</li>
+            <li>온프레미스 인프라가 없는 환경</li>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -688,6 +706,15 @@
           <tr>
             <td><strong>Container Runtime</strong></td>
             <td><span class="badge badge-blue">containerd 1.6+</span></td>
+          </tr>
+          <tr>
+            <td><strong>최소 하드웨어</strong></td>
+            <td>
+              <span class="badge badge-yellow">CPU 1 vCPU</span>
+              <span class="badge badge-yellow">Memory 1 GiB</span>
+              <span class="badge badge-yellow">Disk 50 GB</span>
+              <span style="font-size:0.8rem; color:var(--text-muted); margin-left:0.5rem;">권장: 4코어 / 8GB / 100GB NVMe</span>
+            </td>
           </tr>
         </tbody>
       </table>

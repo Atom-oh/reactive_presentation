@@ -233,7 +233,20 @@
 <body>
 <div class="slide-deck">
 
-  <!-- Slide 1: Title -->
+  <!-- Slide 1: Session Cover (PPTX layout) -->
+  <div class="slide" style="background:url('../common/pptx-theme/images/Picture_13.png') center/cover no-repeat; padding:0; overflow:hidden;">
+    <h1 style="position:absolute; left:5%; top:48%; font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:53%; margin:0;">EKS Auto Mode</h1>
+    <p style="position:absolute; left:5%; top:62%; font-size:1.3rem; color:rgba(255,255,255,0.8); width:53%; margin:0;">Deep Dive Architecture</p>
+    <div style="position:absolute; left:5%; top:76%;">
+      <p style="font-size:1.05rem; color:#fff; font-weight:600; margin:0;">Junseok Oh</p>
+      <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:6px 0 0 0;">Sr. Solutions Architect</p>
+      <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:2px 0 0 0;">Amazon Web Services</p>
+    </div>
+    <img src="../common/pptx-theme/images/Picture_8.png" alt="" style="position:absolute; right:5%; bottom:10%; width:8%; pointer-events:none;" />
+    <img src="../common/pptx-theme/images/logo_1.png" alt="" style="position:absolute; left:5%; bottom:5%; height:3.2%; pointer-events:none;" />
+  </div>
+
+  <!-- Slide 2: Block Title -->
   <div class="slide title-slide">
     <h1 class="gradient-title">EKS Auto Mode Deep Dive</h1>
     <p class="subtitle">Block 1: 내부 아키텍처 이해 (35분)</p>
@@ -1012,23 +1025,24 @@
   const deck = new SlideFramework({
     logoSrc: '../common/pptx-theme/images/logo_1.png',
     presenterNotes: {
-      1: 'Welcome! 이 블록에서는 Auto Mode 내부 구조와 Karpenter 기반 노드 관리를 다룹니다.\n약 35분 소요 예정.\n\n핵심 목표:\n- Auto Mode 아키텍처 이해\n- NodePool/NodeClass 설정 학습',
-      2: 'Auto Mode의 핵심 가치를 설명합니다.\n\n강조 포인트:\n- 관리형 Karpenter + 관리형 애드온의 결합\n- 기존 MNG 대비 운영 부담 대폭 감소\n- AWS가 컨트롤러 업데이트/패치 담당',
-      3: '세 가지 컴퓨팅 옵션 비교.\n\n청중 참여: 현재 어떤 방식 사용중인지 질문해보세요.\n\n핵심 메시지:\n- Auto Mode = MNG의 유연성 + Fargate의 편의성\n- 대부분의 워크로드에 적합한 선택',
-      4: 'Play 버튼 클릭하여 아키텍처 애니메이션 시연.\n\n설명 흐름:\n- API Server → Karpenter → EC2\n- Webhook으로 Pending Pod 감지\n- Leader Election으로 HA 보장',
-      5: 'default NodePool vs system NodePool 비교.\n\n핵심 개념:\n- requirements 필드가 인스턴스 선택의 핵심\n- consolidationPolicy로 비용 최적화\n- system은 애드온 전용, default는 일반 워크로드',
-      6: 'NodeClass는 AWS 리소스 설정 담당.\n\n설정 항목:\n- AMI, 서브넷, 보안그룹, EBS\n\nBottlerocket 추천 이유:\n- 빠른 부팅 (30초 이내)\n- 보안 강화 (read-only 루트 파일시스템)',
-      7: '탭별로 Compute/Spot/Graviton/GPU 패턴 시연.\n\n각 탭 클릭하며 설명:\n- Compute: 범용 워크로드\n- Spot: 비용 절감 (최대 90%)\n- Graviton: 가성비 최적화\n- GPU: ML/AI 워크로드',
-      8: 'Pod Pending → Node Ready 시간 흐름 시뮬레이션.\n\nStart 버튼으로 시연.\n\n단계별 소요 시간:\n- EC2 런칭: ~30초\n- Node 등록: ~15초\n- Pod 스케줄링: ~15초\n- 총 목표: 60-90초',
-      9: 'Karpenter의 인스턴스 선택 로직 시연.\n\n버튼을 순서대로 클릭.\n\n선택 기준:\n- 가격 (비용 효율성)\n- 가용성 (용량 확보)\n- 리소스 적합성 (낭비 최소화)\n\n팁: 다양한 인스턴스 타입 허용이 중요!',
-      10: '노드 통합으로 비용 절감하는 과정 시연.\n\nConsolidate 버튼 클릭.\n\n통합 순서:\n- 빈 노드 먼저 제거\n- 저활용 노드 통합\n- 워크로드 중단 최소화 방식',
-      11: 'WhenEmpty vs WhenEmptyOrUnderutilized 차이 시연.\n\n버튼으로 각 정책 동작 비교.\n\n권장 사항:\n- 프로덕션: 보수적 접근 (WhenEmpty)\n- 비용 최적화: WhenEmptyOrUnderutilized\n- Schedule로 업무 시간 외 통합 설정',
-      12: 'AMI 업데이트, 설정 변경 시 자동 감지 시연.\n\n핵심 포인트:\n- 롤링 교체 방식으로 안전하게 적용\n- NodePool 변경 시 기존 노드 영향\n- Drift 감지 → 자동 교체 트리거',
-      13: '동시 교체 노드 수 제한 설정.\n\nminAvailable 슬라이더로 시연하며 효과 확인.\n\n핵심 메시지:\n- 프로덕션 안정성의 핵심 설정\n- 서비스 가용성과 업데이트 속도의 균형\n- 권장: 최소 50% 이상 유지',
-      14: '체크리스트 항목 하나씩 클릭하며 YAML 확인.\n\n실무 효과:\n- Bottlerocket: 부팅 시간 50% 단축\n- 작은 EBS: 비용 절감 + 빠른 프로비저닝\n\n가장 효과적: Bottlerocket + 작은 EBS 조합',
-      15: '퀴즈로 핵심 내용 복습.\n\n청중 참여 유도하세요.\n\n팁:\n- 틀린 문제는 해당 슬라이드로 돌아가서 재설명 가능\n- 정답률로 이해도 확인',
-      16: 'Block 1 마무리.\n\n안내 사항:\n- 5분 휴식\n- 다음 블록: 노드 수명주기 관리\n\n질문 있으신가요?',
-      17: '이 블록을 마무리합니다.\n\n- 질문이 있으시면 지금 받겠습니다\n- 5분 휴식 후 다음 블록으로 진행합니다\n- 목차 페이지에서 전체 구조를 확인할 수 있습니다'
+      1: '세션 시작 슬라이드.\n\n자기소개와 세션 개요를 간략히 안내하세요.\n오늘 다룰 내용: Auto Mode 아키텍처, 노드 관리, 모니터링, 비용 최적화',
+      2: 'Welcome! 이 블록에서는 Auto Mode 내부 구조와 Karpenter 기반 노드 관리를 다룹니다.\n약 35분 소요 예정.\n\n핵심 목표:\n- Auto Mode 아키텍처 이해\n- NodePool/NodeClass 설정 학습',
+      3: 'Auto Mode의 핵심 가치를 설명합니다.\n\n강조 포인트:\n- 관리형 Karpenter + 관리형 애드온의 결합\n- 기존 MNG 대비 운영 부담 대폭 감소\n- AWS가 컨트롤러 업데이트/패치 담당',
+      4: '세 가지 컴퓨팅 옵션 비교.\n\n청중 참여: 현재 어떤 방식 사용중인지 질문해보세요.\n\n핵심 메시지:\n- Auto Mode = MNG의 유연성 + Fargate의 편의성\n- 대부분의 워크로드에 적합한 선택',
+      5: 'Play 버튼 클릭하여 아키텍처 애니메이션 시연.\n\n설명 흐름:\n- API Server → Karpenter → EC2\n- Webhook으로 Pending Pod 감지\n- Leader Election으로 HA 보장',
+      6: 'default NodePool vs system NodePool 비교.\n\n핵심 개념:\n- requirements 필드가 인스턴스 선택의 핵심\n- consolidationPolicy로 비용 최적화\n- system은 애드온 전용, default는 일반 워크로드',
+      7: 'NodeClass는 AWS 리소스 설정 담당.\n\n설정 항목:\n- AMI, 서브넷, 보안그룹, EBS\n\nBottlerocket 추천 이유:\n- 빠른 부팅 (30초 이내)\n- 보안 강화 (read-only 루트 파일시스템)',
+      8: '탭별로 Compute/Spot/Graviton/GPU 패턴 시연.\n\n각 탭 클릭하며 설명:\n- Compute: 범용 워크로드\n- Spot: 비용 절감 (최대 90%)\n- Graviton: 가성비 최적화\n- GPU: ML/AI 워크로드',
+      9: 'Pod Pending → Node Ready 시간 흐름 시뮬레이션.\n\nStart 버튼으로 시연.\n\n단계별 소요 시간:\n- EC2 런칭: ~30초\n- Node 등록: ~15초\n- Pod 스케줄링: ~15초\n- 총 목표: 60-90초',
+      10: 'Karpenter의 인스턴스 선택 로직 시연.\n\n버튼을 순서대로 클릭.\n\n선택 기준:\n- 가격 (비용 효율성)\n- 가용성 (용량 확보)\n- 리소스 적합성 (낭비 최소화)\n\n팁: 다양한 인스턴스 타입 허용이 중요!',
+      11: '노드 통합으로 비용 절감하는 과정 시연.\n\nConsolidate 버튼 클릭.\n\n통합 순서:\n- 빈 노드 먼저 제거\n- 저활용 노드 통합\n- 워크로드 중단 최소화 방식',
+      12: 'WhenEmpty vs WhenEmptyOrUnderutilized 차이 시연.\n\n버튼으로 각 정책 동작 비교.\n\n권장 사항:\n- 프로덕션: 보수적 접근 (WhenEmpty)\n- 비용 최적화: WhenEmptyOrUnderutilized\n- Schedule로 업무 시간 외 통합 설정',
+      13: 'AMI 업데이트, 설정 변경 시 자동 감지 시연.\n\n핵심 포인트:\n- 롤링 교체 방식으로 안전하게 적용\n- NodePool 변경 시 기존 노드 영향\n- Drift 감지 → 자동 교체 트리거',
+      14: '동시 교체 노드 수 제한 설정.\n\nminAvailable 슬라이더로 시연하며 효과 확인.\n\n핵심 메시지:\n- 프로덕션 안정성의 핵심 설정\n- 서비스 가용성과 업데이트 속도의 균형\n- 권장: 최소 50% 이상 유지',
+      15: '체크리스트 항목 하나씩 클릭하며 YAML 확인.\n\n실무 효과:\n- Bottlerocket: 부팅 시간 50% 단축\n- 작은 EBS: 비용 절감 + 빠른 프로비저닝\n\n가장 효과적: Bottlerocket + 작은 EBS 조합',
+      16: '퀴즈로 핵심 내용 복습.\n\n청중 참여 유도하세요.\n\n팁:\n- 틀린 문제는 해당 슬라이드로 돌아가서 재설명 가능\n- 정답률로 이해도 확인',
+      17: 'Block 1 마무리.\n\n안내 사항:\n- 5분 휴식\n- 다음 블록: 노드 수명주기 관리\n\n질문 있으신가요?',
+      18: '이 블록을 마무리합니다.\n\n- 질문이 있으시면 지금 받겠습니다\n- 5분 휴식 후 다음 블록으로 진행합니다\n- 목차 페이지에서 전체 구조를 확인할 수 있습니다'
     }
   });
 
@@ -1036,9 +1050,34 @@
   // Slide 4: Architecture Canvas Animation
   // ========================================
   (function() {
-    const setup = setupCanvas('arch-canvas', 960, 400);
-    if (!setup) return;
-    const { ctx, width, height } = setup;
+    const archCanvas = document.getElementById('arch-canvas');
+    if (!archCanvas) return;
+    const archContainer = archCanvas.parentElement;
+    const BASE_W = 960, BASE_H = 400;
+
+    function resizeArchCanvas() {
+      const cw = archContainer.clientWidth;
+      const ch = archContainer.clientHeight;
+      if (cw <= 0 || ch <= 0) {
+        setupCanvas('arch-canvas', BASE_W, BASE_H);
+        return;
+      }
+      const dpr = window.devicePixelRatio || 1;
+      const scale = cw / BASE_W;
+      const scaledH = Math.min(Math.round(BASE_H * scale), ch);
+      archCanvas.width = Math.round(cw * dpr);
+      archCanvas.height = Math.round(scaledH * dpr);
+      archCanvas.style.width = cw + 'px';
+      archCanvas.style.height = scaledH + 'px';
+      archCanvas.style.maxWidth = 'none';
+      const c = archCanvas.getContext('2d');
+      c.setTransform(1, 0, 0, 1, 0, 0);
+      c.scale(scale * dpr, scale * dpr);
+    }
+    resizeArchCanvas();
+
+    const ctx = archCanvas.getContext('2d');
+    const width = BASE_W, height = BASE_H;
 
     let step = 0;
     const maxSteps = 7;
@@ -1123,6 +1162,7 @@
     }
 
     draw();
+    new ResizeObserver(() => { resizeArchCanvas(); draw(); }).observe(archContainer);
 
     document.getElementById('arch-play-btn').addEventListener('click', () => {
       step = 0;
@@ -1184,9 +1224,34 @@
   // Slide 9: Provisioning Timeline Animation
   // ========================================
   (function() {
-    const setup = setupCanvas('timeline-canvas', 960, 380);
-    if (!setup) return;
-    const { ctx, width, height } = setup;
+    const tlCanvas = document.getElementById('timeline-canvas');
+    if (!tlCanvas) return;
+    const tlContainer = tlCanvas.parentElement;
+    const BASE_W = 960, BASE_H = 380;
+
+    function resizeTlCanvas() {
+      const cw = tlContainer.clientWidth;
+      const ch = tlContainer.clientHeight;
+      if (cw <= 0 || ch <= 0) {
+        setupCanvas('timeline-canvas', BASE_W, BASE_H);
+        return;
+      }
+      const dpr = window.devicePixelRatio || 1;
+      const scale = cw / BASE_W;
+      const scaledH = Math.min(Math.round(BASE_H * scale), ch);
+      tlCanvas.width = Math.round(cw * dpr);
+      tlCanvas.height = Math.round(scaledH * dpr);
+      tlCanvas.style.width = cw + 'px';
+      tlCanvas.style.height = scaledH + 'px';
+      tlCanvas.style.maxWidth = 'none';
+      const c = tlCanvas.getContext('2d');
+      c.setTransform(1, 0, 0, 1, 0, 0);
+      c.scale(scale * dpr, scale * dpr);
+    }
+    resizeTlCanvas();
+
+    const ctx = tlCanvas.getContext('2d');
+    const width = BASE_W, height = BASE_H;
 
     const steps = [
       { name: 'Pod Created', time: 0, duration: 1 },
@@ -1329,6 +1394,7 @@
     }
 
     draw();
+    new ResizeObserver(() => { resizeTlCanvas(); draw(); }).observe(tlContainer);
 
     document.getElementById('timeline-start-btn').addEventListener('click', () => {
       if (!playing) {
@@ -1455,9 +1521,34 @@
   // Slide 11: Consolidation Canvas Animation
   // ========================================
   (function() {
-    const setup = setupCanvas('consolidation-canvas', 960, 350);
-    if (!setup) return;
-    const { ctx, width, height } = setup;
+    const conCanvas = document.getElementById('consolidation-canvas');
+    if (!conCanvas) return;
+    const conContainer = conCanvas.parentElement;
+    const BASE_W = 960, BASE_H = 350;
+
+    function resizeConCanvas() {
+      const cw = conContainer.clientWidth;
+      const ch = conContainer.clientHeight;
+      if (cw <= 0 || ch <= 0) {
+        setupCanvas('consolidation-canvas', BASE_W, BASE_H);
+        return;
+      }
+      const dpr = window.devicePixelRatio || 1;
+      const scale = cw / BASE_W;
+      const scaledH = Math.min(Math.round(BASE_H * scale), ch);
+      conCanvas.width = Math.round(cw * dpr);
+      conCanvas.height = Math.round(scaledH * dpr);
+      conCanvas.style.width = cw + 'px';
+      conCanvas.style.height = scaledH + 'px';
+      conCanvas.style.maxWidth = 'none';
+      const c = conCanvas.getContext('2d');
+      c.setTransform(1, 0, 0, 1, 0, 0);
+      c.scale(scale * dpr, scale * dpr);
+    }
+    resizeConCanvas();
+
+    const ctx = conCanvas.getContext('2d');
+    const width = BASE_W, height = BASE_H;
 
     let nodes = [
       { x: 50, y: 80, pods: [1, 2, 3, 4], cost: 0.10, removing: false },
@@ -1515,6 +1606,7 @@
     }
 
     draw();
+    new ResizeObserver(() => { resizeConCanvas(); draw(); }).observe(conContainer);
 
     document.getElementById('consolidate-btn').addEventListener('click', () => {
       if (consolidating) return;

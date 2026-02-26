@@ -688,19 +688,18 @@
     .keda-compare-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: .78rem;
-      margin-top: 8px;
+      font-size: .82rem;
     }
     .keda-compare-table th {
       background: var(--bg-card);
       color: var(--text-secondary);
-      padding: 6px 10px;
+      padding: 8px 14px;
       border-bottom: 1.5px solid var(--border);
       text-align: left;
       font-weight: 600;
     }
     .keda-compare-table td {
-      padding: 5px 10px;
+      padding: 7px 14px;
       border-bottom: 1px solid var(--border);
       color: var(--text-primary);
     }
@@ -708,17 +707,16 @@
     .keda-benefit-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      margin-top: 8px;
+      gap: 12px;
     }
     .keda-benefit-grid .card {
-      padding: 10px;
+      padding: 14px 10px;
       text-align: center;
       font-size: .78rem;
     }
     .keda-benefit-grid .card h5 {
-      margin: 4px 0 2px;
-      font-size: .82rem;
+      margin: 6px 0 4px;
+      font-size: .85rem;
     }
     .keda-yaml {
       background: var(--bg-card);
@@ -749,7 +747,20 @@
 <body>
   <div class="slide-deck">
 
-    <!-- Slide 1: VPA + Auto Mode Synergy -->
+    <!-- Slide 1: Session Cover (PPTX layout) -->
+    <div class="slide" style="background:url('../common/pptx-theme/images/Picture_13.png') center/cover no-repeat; padding:0; overflow:hidden;">
+      <h1 style="position:absolute; left:5%; top:48%; font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:53%; margin:0;">EKS Observability</h1>
+      <p style="position:absolute; left:5%; top:62%; font-size:1.3rem; color:rgba(255,255,255,0.8); width:53%; margin:0;">Resource Optimization</p>
+      <div style="position:absolute; left:5%; top:76%;">
+        <p style="font-size:1.05rem; color:#fff; font-weight:600; margin:0;">Junseok Oh</p>
+        <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:6px 0 0 0;">Sr. Solutions Architect</p>
+        <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:2px 0 0 0;">Amazon Web Services</p>
+      </div>
+      <img src="../common/pptx-theme/images/Picture_8.png" alt="" style="position:absolute; right:5%; bottom:10%; width:8%; pointer-events:none;" />
+      <img src="../common/pptx-theme/images/logo_1.png" alt="" style="position:absolute; left:5%; bottom:5%; height:3.2%; pointer-events:none;" />
+    </div>
+
+    <!-- Slide 2: VPA + Auto Mode Synergy -->
     <div class="slide">
       <div class="slide-header">
         <h1>Vertical Pod Autoscaler & Auto Mode</h1>
@@ -1009,14 +1020,14 @@ recommendation:
   - containerName: app
     target:
       cpu: "345m"
-      memory: "589Mi"
+      memory: "640Mi"
     lowerBound:
-      cpu: "270m"
-      memory: "461Mi"
+      cpu: "173m"
+      memory: "384Mi"
     upperBound:
-      cpu: "450m"
-      memory: "768Mi"
-# Savings: CPU 66% | Mem 75%</div>
+      cpu: "863m"
+      memory: "1280Mi"
+# Savings: CPU 66% | Mem 69%</div>
             </div>
           </div>
         </div>
@@ -1324,44 +1335,38 @@ Scheduling: c6g.medium으로 충분</div>
           <span class="keda-arch-arrow">→</span>
           <div class="keda-arch-box">Deployment<br><span style="font-size:.7rem;color:var(--text-muted)">0 ~ N Replicas</span></div>
         </div>
-        <div class="columns" style="gap:16px;">
-          <div class="col-2">
-            <table class="keda-compare-table">
-              <thead>
-                <tr><th>항목</th><th>HPA</th><th>KEDA</th></tr>
-              </thead>
-              <tbody>
-                <tr><td>메트릭 소스</td><td>CPU / Memory</td><td>60+ 외부 스케일러</td></tr>
-                <tr><td>최소 레플리카</td><td>min: 1</td><td><strong style="color:var(--accent-light)">min: 0</strong> (Scale-to-Zero)</td></tr>
-                <tr><td>설정 방식</td><td>HPA 리소스 직접 관리</td><td>ScaledObject → HPA 자동생성</td></tr>
-                <tr><td>Prometheus</td><td>Adapter 필요</td><td>네이티브 PromQL 지원</td></tr>
-                <tr><td>AWS 통합</td><td>CloudWatch Adapter</td><td>SQS, MSK, CloudWatch 스케일러</td></tr>
-              </tbody>
-            </table>
+        <table class="keda-compare-table">
+          <thead>
+            <tr><th>항목</th><th>HPA (기본)</th><th>KEDA</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>메트릭 소스</td><td>CPU / Memory만</td><td><strong>60+ 외부 스케일러</strong> (SQS, MSK, Prometheus 등)</td></tr>
+            <tr><td>최소 레플리카</td><td>min: 1</td><td><strong style="color:var(--accent-light)">min: 0</strong> (Scale-to-Zero → 비용 절감)</td></tr>
+            <tr><td>설정 방식</td><td>HPA 리소스 직접 관리</td><td>ScaledObject → HPA 자동 생성/관리</td></tr>
+            <tr><td>Prometheus 연동</td><td>Prometheus Adapter 필요</td><td>네이티브 PromQL 지원</td></tr>
+            <tr><td>AWS 통합</td><td>CloudWatch Adapter 별도 설치</td><td>SQS, MSK, CloudWatch 스케일러 내장</td></tr>
+          </tbody>
+        </table>
+        <div class="keda-benefit-grid">
+          <div class="card">
+            <div style="font-size:1.5rem">🔄</div>
+            <h5>Scale-to-Zero</h5>
+            <p style="font-size:.75rem;color:var(--text-muted)">트래픽 없을 때 0으로 축소, 비용 절감</p>
           </div>
-          <div class="col-2">
-            <div class="keda-benefit-grid">
-              <div class="card">
-                <div style="font-size:1.5rem">🔄</div>
-                <h5>Scale-to-Zero</h5>
-                <p style="font-size:.72rem;color:var(--text-muted)">트래픽 없을 때 0으로 축소, 비용 절감</p>
-              </div>
-              <div class="card">
-                <div style="font-size:1.5rem">🔌</div>
-                <h5>60+ Scalers</h5>
-                <p style="font-size:.72rem;color:var(--text-muted)">AWS, GCP, Azure, Kafka, Redis 등</p>
-              </div>
-              <div class="card">
-                <div style="font-size:1.5rem">📊</div>
-                <h5>PromQL</h5>
-                <p style="font-size:.72rem;color:var(--text-muted)">기존 Prometheus 인프라 재활용</p>
-              </div>
-              <div class="card">
-                <div style="font-size:1.5rem">⚙️</div>
-                <h5>CRD 기반</h5>
-                <p style="font-size:.72rem;color:var(--text-muted)">GitOps 친화적 선언형 관리</p>
-              </div>
-            </div>
+          <div class="card">
+            <div style="font-size:1.5rem">🔌</div>
+            <h5>60+ Scalers</h5>
+            <p style="font-size:.75rem;color:var(--text-muted)">AWS, GCP, Azure, Kafka, Redis 등</p>
+          </div>
+          <div class="card">
+            <div style="font-size:1.5rem">📊</div>
+            <h5>PromQL Native</h5>
+            <p style="font-size:.75rem;color:var(--text-muted)">기존 Prometheus 인프라 재활용</p>
+          </div>
+          <div class="card">
+            <div style="font-size:1.5rem">⚙️</div>
+            <h5>CRD 기반</h5>
+            <p style="font-size:.75rem;color:var(--text-muted)">GitOps 친화적 선언형 관리</p>
           </div>
         </div>
         <a href="https://atomoh.gitbook.io/kubernetes-docs/autoscaling/01-keda" target="_blank" class="resource-link" style="margin-top:6px; display:inline-block; font-size:.8rem; color:var(--accent-light);">📖 더 알아보기: KEDA 실전 가이드</a>
@@ -1738,32 +1743,33 @@ Scheduling: c6g.medium으로 충분</div>
     const slides = new SlideFramework({
       logoSrc: '../common/pptx-theme/images/logo_1.png',
       presenterNotes: {
-        1: 'VPA와 Auto Mode의 시너지를 강조하세요.\n- VPA: Pod 레벨 리소스 최적화\n- Auto Mode: 노드 레벨 최적화\n\n두 레이어 최적화로 실제 30-50% 비용 절감이 가능합니다.',
-        2: 'Off 모드부터 시작하는 것이 안전합니다.\n- 추천값만 확인하고 수동으로 적용\n- Auto 모드는 Pod 재시작 발생\n\nStateless 워크로드에만 Auto 적용하세요.',
-        3: '시뮬레이터로 CPU/Memory 사용량을 조절하며 VPA 추천값 변화를 보여주세요.\n- 실제 VPA recommendation API와 동일한 로직\n- histogram_quantile 기반 계산임을 언급',
-        4: 'VPA가 requests를 조정하면 Karpenter가 적합한 노드를 자동 선택합니다.\n- updateMode: Off로 시작\n- 추천값 확인 후 점진적으로 Auto로 전환',
-        5: 'QoS 클래스별 특성을 설명하세요.\n- CPU: throttling만 발생 → Burstable 유리\n- Memory: OOMKill 위험 → Guaranteed 안전',
-        6: 'Before/After 비용 비교를 보여주세요.\n- 오버프로비저닝 환경에서 VPA + Auto Mode 적용\n- 30-50% 비용 절감 사례\n\n실제 고객 사례 기반입니다.',
-        7: 'KEDA가 HPA를 대체하는 것이 아니라 확장한다는 점을 강조하세요.\n- ScaledObject 생성 → KEDA가 자동으로 HPA 생성/관리\n- 60+ 스케일러: SQS, Kafka, Prometheus, CloudWatch 등\n- Scale to Zero: HPA는 min=1이지만 KEDA는 0까지 가능\n\n기존 Prometheus 모니터링 인프라를 그대로 활용할 수 있습니다.',
-        8: '각 AWS 서비스별 탭을 클릭하며 설명하세요.\n\nSQS: 큐 깊이 기반, Scale-to-Zero로 비용 절감\nMSK: Prometheus 스케일러로 Consumer Lag 모니터링\nALB: CloudWatch 직접 쿼리, RequestCountPerTarget 활용\n\nIRSA로 안전한 인증 구성이 핵심입니다.',
-        9: '슬라이더로 RPS를 조절하며 Pod 수 변화를 보여주세요.\n\n- threshold 50 = Pod당 50 RPS 처리\n- 200 RPS → 4 Pods, 500 RPS → 10 Pods (max)\n- 0 RPS → Scale to Zero 가능\n\n고급 패턴: Error Rate, Latency, Circuit Breaker, Cron 조합',
-        10: '체크리스트를 하나씩 클릭하며 확인하세요.\n\n도입 순서가 중요합니다:\n- 모니터링 구축\n- 현재 상태 분석\n- 리소스 최적화\n- 자동화 적용',
-        11: '추가 학습 리소스를 안내하세요.\n- AWS 공식 문서\n- Karpenter GitBook\n- KEDA 공식 문서\n\n실습 환경은 eksctl로 쉽게 구성 가능합니다.',
-        12: '4개 블록을 복습합니다.\n- Architecture: Auto Mode 구조\n- Lifecycle: Provisioner 동작\n- Observability: 모니터링\n- 이 블록: VPA 최적화 + KEDA 이벤트 기반 스케일링',
-        13: '자주 나오는 질문:\n- Auto Mode 비용: 추가 없음\n- 기존 MNG 전환: 점진적 마이그레이션 권장\n- VPA 프로덕션 안정성: Off 모드로 시작하면 안전\n- KEDA vs HPA: KEDA는 HPA 위에 동작, 공존 가능',
-        14: '수고하셨습니다.\n\n추가 질문은 Slack 채널(#eks-auto-mode)에서 받습니다.\n실습 후 궁금한 점 있으면 언제든 문의하세요.'
+        1: '세션 시작 슬라이드.\n\n자기소개 후 Block 4 개요 안내.\n리소스 최적화 — VPA, KEDA, 비용 관리를 다룹니다.',
+        2: 'VPA와 Auto Mode의 시너지를 강조하세요.\n- VPA: Pod 레벨 리소스 최적화\n- Auto Mode: 노드 레벨 최적화\n\n두 레이어 최적화로 실제 30-50% 비용 절감이 가능합니다.',
+        3: 'Off 모드부터 시작하는 것이 안전합니다.\n- 추천값만 확인하고 수동으로 적용\n- Auto 모드는 Pod 재시작 발생\n\nStateless 워크로드에만 Auto 적용하세요.',
+        4: '시뮬레이터로 CPU/Memory 사용량을 조절하며 VPA 추천값 변화를 보여주세요.\n- 실제 VPA recommendation API와 동일한 로직\n- histogram_quantile 기반 계산임을 언급',
+        5: 'VPA가 requests를 조정하면 Karpenter가 적합한 노드를 자동 선택합니다.\n- updateMode: Off로 시작\n- 추천값 확인 후 점진적으로 Auto로 전환',
+        6: 'QoS 클래스별 특성을 설명하세요.\n- CPU: throttling만 발생 → Burstable 유리\n- Memory: OOMKill 위험 → Guaranteed 안전',
+        7: 'Before/After 비용 비교를 보여주세요.\n- 오버프로비저닝 환경에서 VPA + Auto Mode 적용\n- 30-50% 비용 절감 사례\n\n실제 고객 사례 기반입니다.',
+        8: 'KEDA가 HPA를 대체하는 것이 아니라 확장한다는 점을 강조하세요.\n- ScaledObject 생성 → KEDA가 자동으로 HPA 생성/관리\n- 60+ 스케일러: SQS, Kafka, Prometheus, CloudWatch 등\n- Scale to Zero: HPA는 min=1이지만 KEDA는 0까지 가능\n\n기존 Prometheus 모니터링 인프라를 그대로 활용할 수 있습니다.',
+        9: '각 AWS 서비스별 탭을 클릭하며 설명하세요.\n\nSQS: 큐 깊이 기반, Scale-to-Zero로 비용 절감\nMSK: Prometheus 스케일러로 Consumer Lag 모니터링\nALB: CloudWatch 직접 쿼리, RequestCountPerTarget 활용\n\nIRSA로 안전한 인증 구성이 핵심입니다.',
+        10: '슬라이더로 RPS를 조절하며 Pod 수 변화를 보여주세요.\n\n- threshold 50 = Pod당 50 RPS 처리\n- 200 RPS → 4 Pods, 500 RPS → 10 Pods (max)\n- 0 RPS → Scale to Zero 가능\n\n고급 패턴: Error Rate, Latency, Circuit Breaker, Cron 조합',
+        11: '체크리스트를 하나씩 클릭하며 확인하세요.\n\n도입 순서가 중요합니다:\n- 모니터링 구축\n- 현재 상태 분석\n- 리소스 최적화\n- 자동화 적용',
+        12: '추가 학습 리소스를 안내하세요.\n- AWS 공식 문서\n- Karpenter GitBook\n- KEDA 공식 문서\n\n실습 환경은 eksctl로 쉽게 구성 가능합니다.',
+        13: '4개 블록을 복습합니다.\n- Architecture: Auto Mode 구조\n- Lifecycle: Provisioner 동작\n- Observability: 모니터링\n- 이 블록: VPA 최적화 + KEDA 이벤트 기반 스케일링',
+        14: '자주 나오는 질문:\n- Auto Mode 비용: 추가 없음\n- 기존 MNG 전환: 점진적 마이그레이션 권장\n- VPA 프로덕션 안정성: Off 모드로 시작하면 안전\n- KEDA vs HPA: KEDA는 HPA 위에 동작, 공존 가능',
+        15: '수고하셨습니다.\n\n추가 질문은 Slack 채널(#eks-auto-mode)에서 받습니다.\n실습 후 궁금한 점 있으면 언제든 문의하세요.'
       },
       onSlideChange: (index, slide) => {
-        // Trigger canvas redraw when entering slide 3 (VPA simulator)
-        if (index === 2) {
+        // Trigger canvas redraw when entering slide 4 (VPA simulator)
+        if (index === 3) {
           setTimeout(() => drawVpaCanvas(), 100);
         }
-        // Trigger cost animation when entering slide 6
-        if (index === 5) {
+        // Trigger cost animation when entering slide 7
+        if (index === 6) {
           setTimeout(() => animateCosts(), 100);
         }
-        // Trigger KEDA RPS canvas when entering slide 9
-        if (index === 8) {
+        // Trigger KEDA RPS canvas when entering slide 10
+        if (index === 9) {
           setTimeout(() => {
             if (!kedaCtx) initKedaCanvas();
             else drawKedaCanvas();
@@ -1815,9 +1821,18 @@ Scheduling: c6g.medium으로 충분</div>
       const memReq = parseInt(document.getElementById('mem-request').value);
       const memUse = parseInt(document.getElementById('mem-usage').value);
 
-      // Calculate VPA recommendations (15% headroom, min bounds)
+      // Calculate VPA recommendations (realistic VPA algorithm approximation)
+      // CPU: P95-based target ≈ usage × 1.15 (CPU throttle is non-fatal)
+      // Memory: peak-based target ≈ usage × 1.25 (OOM kill is destructive)
       const cpuRec = Math.max(100, Math.round(cpuUse * 1.15));
-      const memRec = Math.max(128, Math.round(memUse * 1.15));
+      const memRec = Math.max(128, Math.round(memUse * 1.25));
+
+      // lowerBound: ~50-60% of target (VPA's minimum safe recommendation)
+      // upperBound: ~2-3x of target (VPA's burst ceiling)
+      const cpuLower = Math.max(50, Math.round(cpuRec * 0.5));
+      const cpuUpper = Math.round(cpuRec * 2.5);
+      const memLower = Math.max(64, Math.round(memRec * 0.6));
+      const memUpper = Math.round(memRec * 2.0);
 
       // Calculate savings
       const cpuSavings = cpuReq > cpuRec ? ((cpuReq - cpuRec) / cpuReq * 100) : 0;
@@ -1830,12 +1845,6 @@ Scheduling: c6g.medium으로 충분</div>
       document.getElementById('mem-request-val').textContent = formatMemory(memReq);
       document.getElementById('mem-usage-val').textContent = formatMemory(memUse);
       document.getElementById('savings-pct').textContent = avgSavings + '%';
-
-      // Update YAML output
-      const cpuLower = Math.max(50, Math.round(cpuUse * 0.9));
-      const cpuUpper = Math.round(cpuUse * 1.5);
-      const memLower = Math.max(64, Math.round(memUse * 0.9));
-      const memUpper = Math.round(memUse * 1.5);
       document.getElementById('vpa-yaml').textContent = `# VPA Recommendation Status
 recommendation:
   containerRecommendations:

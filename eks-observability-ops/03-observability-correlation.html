@@ -326,15 +326,13 @@
       <div class="slide-body">
         <div class="canvas-container" style="flex: 1; min-height: 400px; display: flex; flex-direction: column; align-items: center;">
           <canvas id="correlation-canvas"></canvas>
-          <div class="canvas-controls" style="position: relative; bottom: auto; left: auto; transform: none; margin-top: 12px;">
-            <button class="btn btn-primary" id="btn-simulate">에러 시뮬레이션</button>
-            <button class="btn btn-primary" id="btn-corr-next" style="display:none;">다음 →</button>
-            <button class="btn" id="btn-reset-corr">초기화</button>
-            <span id="corr-phase-label" style="margin-left: 12px; font-size: .85rem; color: var(--text-muted);"></span>
-          </div>
         </div>
-        <div style="margin-top: auto; padding-top: 8px; text-align: right;">
-          <a href="https://atomoh.gitbook.io/kubernetes-docs/operations-guide/ops/08-observability-analysis#상관-분석-전략" target="_blank" style="font-size: .75rem; color: var(--text-muted); text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">📖 더 알아보기: 상관 분석 전략</a>
+        <div style="margin-top: auto; display: flex; align-items: center; justify-content: center; gap: 8px; padding-top: 8px;">
+          <button class="btn btn-primary" id="btn-simulate">에러 시뮬레이션</button>
+          <button class="btn btn-primary" id="btn-corr-next" style="display:none;">다음 →</button>
+          <button class="btn" id="btn-reset-corr">초기화</button>
+          <span id="corr-phase-label" style="margin-left: 12px; font-size: .85rem; color: var(--text-muted);"></span>
+          <a href="https://atomoh.gitbook.io/kubernetes-docs/operations-guide/ops/08-observability-analysis#상관-분석-전략" target="_blank" style="margin-left: auto; font-size: .75rem; color: var(--text-muted); text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">📖 더 알아보기: 상관 분석 전략</a>
         </div>
       </div>
     </section>
@@ -843,7 +841,7 @@ ERROR: Unable to acquire connection within 5s
           </div>
         </div>
 
-        <div style="text-align: center; margin-top: 16px;">
+        <div style="text-align: center; margin-top: auto; padding-top: 12px;">
           <button class="btn btn-primary" id="btn-next-step">다음 단계</button>
           <button class="btn" id="btn-reset-workflow">처음부터</button>
         </div>

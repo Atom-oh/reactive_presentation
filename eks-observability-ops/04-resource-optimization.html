@@ -1919,34 +1919,24 @@ Scheduling: c6g.medium으로 충분</div>
     // Slide 3: VPA Simulator (Canvas)
     // ==========================================
     let vpaCtx = null;
-    const VPA_BASE_W = 700, VPA_BASE_H = 400;
+    let vpaWidth = 0;
+    let vpaHeight = 0;
 
     function initVpaCanvas() {
-      const canvas = document.getElementById('vpa-canvas');
-      if (!canvas) return;
-      const container = canvas.parentElement;
-      const cw = container.clientWidth;
-      if (cw <= 0) return;
-      const scale = cw / VPA_BASE_W;
-      const ch = Math.round(VPA_BASE_H * scale);
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = Math.round(cw * dpr);
-      canvas.height = Math.round(ch * dpr);
-      canvas.style.width = cw + 'px';
-      canvas.style.height = ch + 'px';
-      canvas.style.maxWidth = 'none';
-      const ctx = canvas.getContext('2d');
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.scale(scale * dpr, scale * dpr);
-      vpaCtx = ctx;
-      drawVpaCanvas();
+      const result = setupCanvas('vpa-canvas', 700, 400);
+      if (result) {
+        vpaCtx = result.ctx;
+        vpaWidth = result.width;
+        vpaHeight = result.height;
+        drawVpaCanvas();
+      }
     }
 
     function drawVpaCanvas() {
       if (!vpaCtx) return;
       const ctx = vpaCtx;
-      const w = VPA_BASE_W;
-      const h = VPA_BASE_H;
+      const w = vpaWidth;
+      const h = vpaHeight;
 
       // Get values
       const cpuReq = parseInt(document.getElementById('cpu-request').value);

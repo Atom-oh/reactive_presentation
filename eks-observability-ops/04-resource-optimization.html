@@ -421,19 +421,19 @@
     .cost-comparison {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 32px;
+      gap: 20px;
     }
     .cost-panel {
       background: var(--bg-card);
       border: 2px solid var(--border);
       border-radius: 14px;
-      padding: 24px;
+      padding: 16px 20px;
     }
     .cost-panel.before { border-color: var(--red); }
     .cost-panel.after { border-color: var(--green); }
     .cost-panel h3 {
-      font-size: 1.1rem;
-      margin-bottom: 16px;
+      font-size: 1rem;
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -444,7 +444,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 0;
+      padding: 7px 0;
       border-bottom: 1px solid var(--border);
     }
     .cost-metric:last-child { border-bottom: none; }
@@ -460,18 +460,18 @@
     .cost-panel.before .cost-metric-value { color: var(--red); }
     .cost-panel.after .cost-metric-value { color: var(--green); }
     .cost-total {
-      margin-top: 16px;
-      padding-top: 16px;
+      margin-top: 10px;
+      padding-top: 10px;
       border-top: 2px solid var(--border);
       text-align: center;
     }
     .cost-total-label {
-      font-size: .85rem;
+      font-size: .8rem;
       color: var(--text-muted);
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
     .cost-total-value {
-      font-size: 2rem;
+      font-size: 1.6rem;
       font-weight: 700;
       font-family: var(--font-mono);
     }
@@ -481,17 +481,17 @@
       background: linear-gradient(135deg, var(--green-bg), var(--blue-bg));
       border: 2px solid var(--green);
       border-radius: 14px;
-      padding: 24px;
+      padding: 14px 24px;
       text-align: center;
-      margin-top: 20px;
+      margin-top: 12px;
     }
     .savings-summary h3 {
       color: var(--green);
-      font-size: 1.2rem;
-      margin-bottom: 8px;
+      font-size: 1rem;
+      margin-bottom: 4px;
     }
     .savings-pct {
-      font-size: 3rem;
+      font-size: 2.2rem;
       font-weight: 700;
       color: var(--green);
       font-family: var(--font-mono);
@@ -1334,35 +1334,26 @@ Scheduling: c6g.medium으로 충분</div>
                 <button class="tab-btn" data-tab="hpa-limit">한계점</button>
               </div>
               <div class="tab-content active" data-tab="hpa-cpu">
-                <div class="code-block" style="font-size:.78rem;"><span class="key">apiVersion:</span> autoscaling/v2
-<span class="key">kind:</span> HorizontalPodAutoscaler
-<span class="key">metadata:</span>
-  <span class="key">name:</span> my-app-hpa
+                <div class="code-block" style="font-size:.72rem; line-height:1.5;"><span class="comment"># HorizontalPodAutoscaler (autoscaling/v2)</span>
 <span class="key">spec:</span>
-  <span class="key">scaleTargetRef:</span>
-    <span class="key">apiVersion:</span> apps/v1
-    <span class="key">kind:</span> Deployment
-    <span class="key">name:</span> my-app
-  <span class="key">minReplicas:</span> <span class="number">2</span>
-  <span class="key">maxReplicas:</span> <span class="number">20</span>
+  <span class="key">scaleTargetRef:</span> { <span class="key">name:</span> my-app }
+  <span class="key">minReplicas:</span> <span class="number">2</span> / <span class="key">maxReplicas:</span> <span class="number">20</span>
   <span class="key">metrics:</span>
   - <span class="key">type:</span> Resource
     <span class="key">resource:</span>
-      <span class="key">name:</span> cpu
+      <span class="key">name:</span> <span class="value">cpu</span>
       <span class="key">target:</span>
         <span class="key">type:</span> Utilization
-        <span class="key">averageUtilization:</span> <span class="number">70</span>
+        <span class="key">averageUtilization:</span> <span class="number">70</span>  <span class="comment"># CPU 70%</span>
   - <span class="key">type:</span> Resource
     <span class="key">resource:</span>
-      <span class="key">name:</span> memory
+      <span class="key">name:</span> <span class="value">memory</span>
       <span class="key">target:</span>
         <span class="key">type:</span> Utilization
-        <span class="key">averageUtilization:</span> <span class="number">80</span>
+        <span class="key">averageUtilization:</span> <span class="number">80</span>  <span class="comment"># Memory 80%</span>
   <span class="key">behavior:</span>
-    <span class="key">scaleDown:</span>
-      <span class="key">stabilizationWindowSeconds:</span> <span class="number">300</span>  <span class="comment"># 5분 안정화</span>
-    <span class="key">scaleUp:</span>
-      <span class="key">stabilizationWindowSeconds:</span> <span class="number">30</span></div>
+    <span class="key">scaleDown:</span> { <span class="key">stabilizationWindowSeconds:</span> <span class="number">300</span> }
+    <span class="key">scaleUp:</span>:  { <span class="key">stabilizationWindowSeconds:</span> <span class="number">30</span> }</div>
               </div>
               <div class="tab-content" data-tab="hpa-custom">
                 <div class="code-block" style="font-size:.78rem;"><span class="comment"># Prometheus Adapter 설치 필요</span>
@@ -1644,9 +1635,9 @@ Scheduling: c6g.medium으로 충분</div>
         <p class="subtitle">PromQL + KEDA로 Istio 메트릭 기반 자동 스케일링</p>
       </div>
       <div class="slide-body">
-        <div class="columns" style="gap:16px">
-          <div style="flex:0.85; display:grid; grid-template-columns:1.2fr 1fr; gap:10px; align-content:start;">
-            <pre class="keda-yaml" style="grid-row:1/3;"><span class="key">apiVersion:</span> keda.sh/v1alpha1
+        <div class="columns" style="gap:14px">
+          <div style="flex:0.9;">
+            <pre class="keda-yaml" style="font-size:.7rem; line-height:1.45;"><span class="key">apiVersion:</span> keda.sh/v1alpha1
 <span class="key">kind:</span> ScaledObject
 <span class="key">metadata:</span>
   <span class="key">name:</span> istio-rps-scaler
@@ -1662,30 +1653,29 @@ Scheduling: c6g.medium으로 충분</div>
       <span class="key">serverAddress:</span> <span class="string">http://prometheus:9090</span>
       <span class="key">query:</span> |
         <span class="string">sum(rate(istio_requests_total{
-          destination_service=~"my-app.*",
-          reporter="destination"
+          destination_service=~"my-app.*"
         }[1m]))</span>
       <span class="key">threshold:</span> <span class="string">"50"</span>  <span class="comment"># Pod당 50 RPS</span></pre>
-            <div class="keda-pattern-grid">
-              <div class="card">
-                <h5 style="color:var(--red)">🔴 Error Rate</h5>
-                <p style="color:var(--text-muted)">5xx 비율 > 5% → 즉시 스케일아웃</p>
+          </div>
+          <div style="flex:1.1; display:flex; flex-direction:column; gap:8px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+              <div class="card" style="padding:7px 10px;">
+                <h5 style="color:var(--red); font-size:.78rem; margin:0 0 2px;">🔴 Error Rate</h5>
+                <p style="color:var(--text-muted); font-size:.7rem; margin:0;">5xx > 5% → 즉시 스케일아웃</p>
               </div>
-              <div class="card">
-                <h5 style="color:var(--yellow)">⏱ Latency P99</h5>
-                <p style="color:var(--text-muted)">P99 > 500ms → Pod 추가</p>
+              <div class="card" style="padding:7px 10px;">
+                <h5 style="color:var(--yellow); font-size:.78rem; margin:0 0 2px;">⏱ Latency P99</h5>
+                <p style="color:var(--text-muted); font-size:.7rem; margin:0;">P99 > 500ms → Pod 추가</p>
               </div>
-              <div class="card">
-                <h5 style="color:var(--cyan)">🔌 Circuit Breaker</h5>
-                <p style="color:var(--text-muted)">outlierDetection과 연동</p>
+              <div class="card" style="padding:7px 10px;">
+                <h5 style="color:var(--cyan); font-size:.78rem; margin:0 0 2px;">🔌 Circuit Breaker</h5>
+                <p style="color:var(--text-muted); font-size:.7rem; margin:0;">outlierDetection 연동</p>
               </div>
-              <div class="card">
-                <h5 style="color:var(--accent-light)">⏰ Cron + RPS</h5>
-                <p style="color:var(--text-muted)">피크타임 사전 확보 + RPS 보정</p>
+              <div class="card" style="padding:7px 10px;">
+                <h5 style="color:var(--accent-light); font-size:.78rem; margin:0 0 2px;">⏰ Cron + RPS</h5>
+                <p style="color:var(--text-muted); font-size:.7rem; margin:0;">피크타임 사전 확보</p>
               </div>
             </div>
-          </div>
-          <div style="flex:1.1; display:flex; flex-direction:column;">
             <div class="canvas-container" style="background:var(--bg-primary); border-radius:10px; padding:8px; flex:1;">
               <canvas id="keda-rps-canvas"></canvas>
               <div class="canvas-controls" style="margin-top:6px; display:flex; align-items:center; gap:12px;">

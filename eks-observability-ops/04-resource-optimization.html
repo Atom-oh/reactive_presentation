@@ -216,8 +216,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 16px;
-      flex: 1;
-      min-height: 0;
+      align-items: start;
     }
     .simulator-results {
       display: flex;
@@ -1795,7 +1794,7 @@ Scheduling: c6g.medium으로 충분</div>
     let vpaHeight = 0;
 
     function initVpaCanvas() {
-      const result = setupCanvas('vpa-canvas', 700, 500);
+      const result = setupCanvas('vpa-canvas', 700, 400);
       if (result) {
         vpaCtx = result.ctx;
         vpaWidth = result.width;
@@ -1857,22 +1856,22 @@ recommendation:
       ctx.fillRect(0, 0, w, h);
 
       // Draw title
-      drawText(ctx, 'CPU', 60, 40, { size: 18, weight: '600', color: Colors.textPri, align: 'left' });
-      drawText(ctx, 'Memory', 60, 270, { size: 18, weight: '600', color: Colors.textPri, align: 'left' });
+      drawText(ctx, 'CPU', 60, 30, { size: 16, weight: '600', color: Colors.textPri, align: 'left' });
+      drawText(ctx, 'Memory', 60, 210, { size: 16, weight: '600', color: Colors.textPri, align: 'left' });
 
       // Bar dimensions
       const barX = 60;
       const barWidth = w - 120;
-      const barHeight = 65;
+      const barHeight = 55;
 
       // CPU bars
       const cpuMax = 4000;
-      const cpuY = 75;
+      const cpuY = 60;
       drawResourceBar(ctx, barX, cpuY, barWidth, barHeight, cpuReq, cpuUse, cpuRec, cpuMax, 'm');
 
       // Memory bars
       const memMax = 8192;
-      const memY = 305;
+      const memY = 240;
       drawResourceBar(ctx, barX, memY, barWidth, barHeight, memReq, memUse, memRec, memMax, 'Mi');
 
       // Legend

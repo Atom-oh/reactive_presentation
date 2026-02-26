@@ -498,7 +498,7 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
               </div>
               <div class="overprov-step" id="op-step3">
                 <span class="badge badge-yellow">Phase 3</span>
-                <div><strong>Karpenter 보충</strong><br><span style="color:var(--text-muted);font-size:.85rem;">Pending dummy → 새 노드 프로비저닝 → 버퍼 복원</span></div>
+                <div><strong>Karpenter 보충</strong><br><span style="color:var(--text-muted);font-size:.85rem;">Pending dummy (AntiAffinity) → 새 노드 프로비저닝 → 버퍼 복원</span></div>
               </div>
             </div>
             <div class="overprov-nodes" id="op-node-grid"></div>
@@ -531,12 +531,12 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
 <span class="key">description</span>: <span class="string">"Overprovisioning placeholder pods"</span></div>
             </div>
             <div class="tab-content" data-tab="op-deploy">
-              <div class="code-block" style="font-size:.78rem;"><span class="key">apiVersion</span>: apps/v1
+              <div class="code-block" style="font-size:.72rem;"><span class="key">apiVersion</span>: apps/v1
 <span class="key">kind</span>: Deployment
 <span class="key">metadata</span>:
   <span class="key">name</span>: overprovisioning
 <span class="key">spec</span>:
-  <span class="key">replicas</span>: <span class="value">2</span>             <span class="comment"># 노드당 1개, 총 2개 dummy</span>
+  <span class="key">replicas</span>: <span class="value">2</span>             <span class="comment"># 노드당 1개씩 분산 배치</span>
   <span class="key">selector</span>:
     <span class="key">matchLabels</span>:
       <span class="key">app</span>: overprovisioning
@@ -547,6 +547,13 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
     <span class="key">spec</span>:
       <span class="key">priorityClassName</span>: <span class="value">overprovisioning</span>
       <span class="key">terminationGracePeriodSeconds</span>: <span class="value">0</span>
+      <span class="key">affinity</span>:              <span class="comment"># 같은 노드 배치 방지</span>
+        <span class="key">podAntiAffinity</span>:
+          <span class="key">requiredDuringSchedulingIgnoredDuringExecution</span>:
+          - <span class="key">labelSelector</span>:
+              <span class="key">matchLabels</span>:
+                <span class="key">app</span>: overprovisioning
+            <span class="key">topologyKey</span>: <span class="string">kubernetes.io/hostname</span>
       <span class="key">containers</span>:
       - <span class="key">name</span>: pause
         <span class="key">image</span>: <span class="string">registry.k8s.io/pause:3.9</span>

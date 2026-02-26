@@ -1,6 +1,7 @@
 /**
  * Presenter View - Dual window slide presentation with notes, timer, and sync
  * Press 'P' to open presenter view (handled by SlideFramework)
+ * Draggable splitters between slides/notes and current/next slide
  */
 class PresenterView {
   constructor(framework) {
@@ -53,25 +54,38 @@ class PresenterView {
   }
 
   createPresenterHTML() {
+    // Restore saved splitter ratios
+    const hRatio = 'localStorage.getItem("pv-h-ratio") || "0.38"';
+    const vRatio = 'localStorage.getItem("pv-v-ratio") || "0.55"';
+
     return `<!DOCTYPE html>
-<html><head><title>Presenter View - ${document.title}</title>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<title>Presenter View - ${document.title}</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: #1a1a2e;
     color: #e8eaf0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    user-select: none;
   }
+
+  /* Top bar */
   .presenter-topbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 20px;
+    padding: 8px 20px;
     background: #0f0f1a;
     border-bottom: 1px solid #2d3250;
+    flex-shrink: 0;
   }
   .presenter-timer {
     font-family: 'JetBrains Mono', monospace;
@@ -91,29 +105,39 @@ class PresenterView {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .presenter-main {
-    display: flex;
+
+  /* Content wrapper (slides + splitter + notes) */
+  .presenter-content {
     flex: 1;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
+    min-height: 0;
+  }
+
+  /* Slides row (current + vertical splitter + next) */
+  .presenter-slides {
+    display: flex;
+    overflow: hidden;
+    min-height: 80px;
   }
   .presenter-current {
-    flex: 3;
-    border-right: 1px solid #2d3250;
     position: relative;
     background: #0f1117;
     overflow: hidden;
+    min-width: 100px;
   }
   .presenter-next {
-    flex: 2;
     position: relative;
     background: #0a0a12;
     overflow: hidden;
+    min-width: 60px;
   }
   .slide-label {
     position: absolute;
-    top: 8px;
-    left: 12px;
-    font-size: 0.75rem;
+    top: 6px;
+    left: 10px;
+    font-size: 0.7rem;
     color: #6b7194;
     background: rgba(15, 17, 23, 0.9);
     padding: 2px 8px;
@@ -124,44 +148,97 @@ class PresenterView {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    padding: 16px;
+    padding: 12px;
   }
+
+  /* Vertical splitter (between current & next) */
+  .splitter-v {
+    width: 6px;
+    background: #2d3250;
+    cursor: col-resize;
+    flex-shrink: 0;
+    position: relative;
+    transition: background 150ms;
+  }
+  .splitter-v:hover, .splitter-v.dragging {
+    background: #6c5ce7;
+  }
+  .splitter-v::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 1px;
+    width: 4px;
+    height: 32px;
+    transform: translateY(-50%);
+    border-left: 1px solid #6b7194;
+    border-right: 1px solid #6b7194;
+  }
+
+  /* Horizontal splitter (between slides & notes) */
+  .splitter-h {
+    height: 6px;
+    background: #2d3250;
+    cursor: row-resize;
+    flex-shrink: 0;
+    position: relative;
+    transition: background 150ms;
+  }
+  .splitter-h:hover, .splitter-h.dragging {
+    background: #6c5ce7;
+  }
+  .splitter-h::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 1px;
+    height: 4px;
+    width: 32px;
+    transform: translateX(-50%);
+    border-top: 1px solid #6b7194;
+    border-bottom: 1px solid #6b7194;
+  }
+
+  /* Notes area */
   .presenter-notes {
-    height: 200px;
-    padding: 16px 20px;
-    background: #0f0f1a;
-    border-top: 1px solid #2d3250;
     overflow-y: auto;
+    padding: 14px 24px;
+    background: #0f0f1a;
+    min-height: 80px;
   }
   .presenter-notes h3 {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #6b7194;
     margin-bottom: 8px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
   .presenter-notes .notes-content {
-    font-size: 1rem;
-    line-height: 1.6;
-    color: #c8cad0;
+    font-size: 1.3rem;
+    line-height: 1.7;
+    color: #dde0e8;
     white-space: pre-wrap;
+    word-break: keep-all;
   }
+
+  /* Nav bar */
   .presenter-nav {
     display: flex;
     justify-content: center;
     gap: 12px;
-    padding: 10px;
+    padding: 8px;
     background: #0f0f1a;
     border-top: 1px solid #2d3250;
+    flex-shrink: 0;
   }
   .presenter-nav button {
-    padding: 8px 24px;
+    padding: 6px 20px;
     border: 1px solid #2d3250;
     border-radius: 6px;
     background: #232740;
     color: #e8eaf0;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     transition: all 150ms ease;
   }
   .presenter-nav button:hover {
@@ -176,31 +253,134 @@ class PresenterView {
     color: #6b7194;
     font-style: italic;
   }
+
+  /* Dragging overlay to prevent iframe/text selection interference */
+  .drag-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+  }
+  .drag-overlay.active { display: block; }
 </style>
 </head><body>
+
 <div class="presenter-topbar">
   <span class="presenter-title" id="p-title"></span>
   <span class="presenter-timer" id="p-timer">00:00:00</span>
   <span class="presenter-counter" id="p-counter"></span>
 </div>
-<div class="presenter-main">
-  <div class="presenter-current">
-    <span class="slide-label">Current Slide</span>
-    <div class="slide-preview" id="p-current"></div>
+
+<div class="presenter-content" id="p-content">
+  <div class="presenter-slides" id="p-slides">
+    <div class="presenter-current" id="p-current-wrap">
+      <span class="slide-label">Current Slide</span>
+      <div class="slide-preview" id="p-current"></div>
+    </div>
+    <div class="splitter-v" id="splitter-v"></div>
+    <div class="presenter-next" id="p-next-wrap">
+      <span class="slide-label">Next Slide</span>
+      <div class="slide-preview" id="p-next"></div>
+    </div>
   </div>
-  <div class="presenter-next">
-    <span class="slide-label">Next Slide</span>
-    <div class="slide-preview" id="p-next"></div>
+  <div class="splitter-h" id="splitter-h"></div>
+  <div class="presenter-notes" id="p-notes-wrap">
+    <h3>Speaker Notes</h3>
+    <div class="notes-content" id="p-notes">No notes for this slide.</div>
   </div>
 </div>
-<div class="presenter-notes">
-  <h3>Speaker Notes</h3>
-  <div class="notes-content" id="p-notes">No notes for this slide.</div>
-</div>
+
 <div class="presenter-nav">
-  <button id="p-prev">← Previous</button>
-  <button id="p-next-btn">Next →</button>
+  <button id="p-prev">&larr; Previous</button>
+  <button id="p-next-btn">Next &rarr;</button>
 </div>
+
+<div class="drag-overlay" id="drag-overlay"></div>
+
+<script>
+(function() {
+  var overlay = document.getElementById('drag-overlay');
+
+  // --- Horizontal splitter (slides vs notes) ---
+  var hSplitter = document.getElementById('splitter-h');
+  var content = document.getElementById('p-content');
+  var slidesRow = document.getElementById('p-slides');
+  var notesWrap = document.getElementById('p-notes-wrap');
+
+  // Restore saved ratio (slides portion as fraction of total)
+  var hRatio = parseFloat(localStorage.getItem('pv-h-ratio') || '0.38');
+  applyHRatio(hRatio);
+
+  function applyHRatio(r) {
+    r = Math.max(0.15, Math.min(0.75, r));
+    slidesRow.style.flex = '0 0 ' + (r * 100) + '%';
+    notesWrap.style.flex = '1 1 0%';
+  }
+
+  var hDragging = false;
+  hSplitter.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    hDragging = true;
+    hSplitter.classList.add('dragging');
+    overlay.classList.add('active');
+    overlay.style.cursor = 'row-resize';
+  });
+
+  // --- Vertical splitter (current vs next) ---
+  var vSplitter = document.getElementById('splitter-v');
+  var currentWrap = document.getElementById('p-current-wrap');
+  var nextWrap = document.getElementById('p-next-wrap');
+
+  var vRatio = parseFloat(localStorage.getItem('pv-v-ratio') || '0.55');
+  applyVRatio(vRatio);
+
+  function applyVRatio(r) {
+    r = Math.max(0.2, Math.min(0.85, r));
+    currentWrap.style.flex = '0 0 ' + (r * 100) + '%';
+    nextWrap.style.flex = '1 1 0%';
+  }
+
+  var vDragging = false;
+  vSplitter.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    vDragging = true;
+    vSplitter.classList.add('dragging');
+    overlay.classList.add('active');
+    overlay.style.cursor = 'col-resize';
+  });
+
+  // --- Shared mousemove / mouseup ---
+  document.addEventListener('mousemove', function(e) {
+    if (hDragging) {
+      var rect = content.getBoundingClientRect();
+      var y = e.clientY - rect.top;
+      hRatio = y / rect.height;
+      applyHRatio(hRatio);
+    }
+    if (vDragging) {
+      var rect = slidesRow.getBoundingClientRect();
+      var x = e.clientX - rect.left;
+      vRatio = x / rect.width;
+      applyVRatio(vRatio);
+    }
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (hDragging) {
+      hDragging = false;
+      hSplitter.classList.remove('dragging');
+      localStorage.setItem('pv-h-ratio', String(Math.max(0.15, Math.min(0.75, hRatio))));
+    }
+    if (vDragging) {
+      vDragging = false;
+      vSplitter.classList.remove('dragging');
+      localStorage.setItem('pv-v-ratio', String(Math.max(0.2, Math.min(0.85, vRatio))));
+    }
+    overlay.classList.remove('active');
+    overlay.style.cursor = '';
+  });
+})();
+</script>
 </body></html>`;
   }
 
@@ -256,10 +436,10 @@ class PresenterView {
       position: relative;
       display: flex;
       flex-direction: column;
-      padding: 24px 32px;
+      padding: 16px 24px;
       height: 100%;
       opacity: 1;
-      font-size: 0.65em;
+      font-size: 0.55em;
       overflow: hidden;
       background: #0f1117;
       color: #e8eaf0;
@@ -275,10 +455,10 @@ class PresenterView {
         position: relative;
         display: flex;
         flex-direction: column;
-        padding: 16px 24px;
+        padding: 12px 16px;
         height: 100%;
         opacity: 0.7;
-        font-size: 0.5em;
+        font-size: 0.45em;
         overflow: hidden;
         background: #0a0a12;
         color: #e8eaf0;

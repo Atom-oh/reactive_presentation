@@ -2176,31 +2176,57 @@ recommendation:
       ctx.fillRect(0, 0, w, h);
 
       // --- Section 1: Gateway Flow (top) ---
-      const flowY = 30;
-      // Gateway box
+      const flowY = 36;
       const gwColor = rps > 300 ? Colors.red : rps > 100 ? Colors.yellow : Colors.green;
+      // Compute latency correlated with RPS
+      const latency = rps === 0 ? 0 : rps <= 100 ? Math.round(5 + rps * 0.45)
+                     : rps <= 300 ? Math.round(50 + (rps - 100) * 0.75)
+                     : Math.round(200 + (rps - 300) * 3);
+      const latColor = latency <= 50 ? Colors.green : latency <= 200 ? Colors.yellow : Colors.red;
+      const gwStatus = rps === 0 ? 'Idle' : rps <= 100 ? 'Healthy' : rps <= 300 ? 'Slow' : 'Error';
+
+      // Helper: draw labeled arrow with metric
+      function flowArrow(x1, x2, label, labelColor) {
+        ctx.strokeStyle = labelColor || Colors.textMuted;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(x1, flowY); ctx.lineTo(x2, flowY); ctx.stroke();
+        ctx.fillStyle = labelColor || Colors.textMuted;
+        ctx.beginPath(); ctx.moveTo(x2 - 5, flowY - 4); ctx.lineTo(x2, flowY); ctx.lineTo(x2 - 5, flowY + 4); ctx.fill();
+        if (label) {
+          ctx.font = '8px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = labelColor || Colors.textMuted;
+          ctx.fillText(label, (x1 + x2) / 2, flowY - 7);
+        }
+      }
+
+      // Gateway box + status badge
       drawBox(ctx, 10, flowY - 16, 80, 32, 'Gateway', gwColor);
-      // Arrow
-      ctx.strokeStyle = Colors.textMuted;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(95, flowY); ctx.lineTo(120, flowY); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(115, flowY - 4); ctx.lineTo(120, flowY); ctx.lineTo(115, flowY + 4); ctx.fill();
+      ctx.fillStyle = gwColor;
+      ctx.font = 'bold 8px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(gwStatus, 50, flowY + 24);
+
+      // Gateway → Prometheus (show RPS + Latency)
+      flowArrow(95, 120, rps + ' rps', gwColor);
+      ctx.font = '7px sans-serif';
+      ctx.fillStyle = latColor;
+      ctx.textAlign = 'center';
+      ctx.fillText(latency > 0 ? 'P99: ' + latency + 'ms' : '', 107, flowY + 10);
+
       // Prometheus box
       drawBox(ctx, 125, flowY - 16, 90, 32, 'Prometheus', Colors.orange);
-      // Arrow
-      ctx.beginPath(); ctx.moveTo(220, flowY); ctx.lineTo(245, flowY); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(240, flowY - 4); ctx.lineTo(245, flowY); ctx.lineTo(240, flowY + 4); ctx.fill();
+      // Prometheus → KEDA
+      flowArrow(220, 245, 'query', Colors.textMuted);
       // KEDA box
       drawBox(ctx, 250, flowY - 16, 70, 32, 'KEDA', Colors.accent);
-      // Arrow
-      ctx.beginPath(); ctx.moveTo(325, flowY); ctx.lineTo(350, flowY); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(345, flowY - 4); ctx.lineTo(350, flowY); ctx.lineTo(345, flowY + 4); ctx.fill();
+      // KEDA → HPA
+      flowArrow(325, 350, 'scale', Colors.textMuted);
       // HPA box
       drawBox(ctx, 355, flowY - 16, 60, 32, 'HPA', Colors.cyan);
-      // Arrow
-      ctx.beginPath(); ctx.moveTo(420, flowY); ctx.lineTo(445, flowY); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(440, flowY - 4); ctx.lineTo(445, flowY); ctx.lineTo(440, flowY + 4); ctx.fill();
-      // Deployment box
+      // HPA → Pods
+      flowArrow(420, 445, podCount + ' pods', Colors.green);
+      // Pods box
       drawBox(ctx, 450, flowY - 16, 44, 32, 'Pods', Colors.green);
 
       // --- Section 2: RPS Gauge (left) ---

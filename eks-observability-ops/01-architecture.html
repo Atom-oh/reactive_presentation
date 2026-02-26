@@ -122,16 +122,16 @@
     }
 
     .sim-node {
-      display: inline-flex;
+      display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      width: 70px;
-      height: 70px;
-      margin: 6px;
+      min-height: clamp(60px, 7vh, 120px);
       border-radius: 10px;
-      font-size: 0.75rem;
+      font-size: clamp(0.6rem, 0.9vw, 0.95rem);
       font-weight: 600;
+      gap: 2px;
+      padding: 8px 4px;
       transition: all 0.5s ease;
     }
     .sim-node.utilized {
@@ -243,7 +243,6 @@
       <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:2px 0 0 0;">Amazon Web Services</p>
     </div>
     <img src="../common/pptx-theme/images/Picture_8.png" alt="" style="position:absolute; right:5%; bottom:10%; width:8%; pointer-events:none;" />
-    <img src="../common/pptx-theme/images/logo_1.png" alt="" style="position:absolute; left:5%; bottom:5%; height:3.2%; pointer-events:none;" />
   </div>
 
   <!-- Slide 2: Block Title -->
@@ -743,7 +742,7 @@
             <button class="btn btn-primary" id="policy-underutilized">WhenEmptyOrUnderutilized</button>
             <button class="btn" id="policy-reset">Reset</button>
           </div>
-          <div id="policy-grid" style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <div id="policy-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
           </div>
         </div>
         <div>

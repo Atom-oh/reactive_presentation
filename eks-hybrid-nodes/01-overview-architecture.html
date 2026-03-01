@@ -52,6 +52,8 @@
       left: 8%;
       height: 1.8rem;
     }
+    .cover-slide.active ~ .slide-logo,
+    .cover-slide.active ~ .slide-footer { display: none; }
 
     /* Gradient title */
     .gradient-title {
@@ -548,10 +550,6 @@
       <div class="canvas-wrapper">
         <div class="canvas-container">
           <canvas id="archCanvas"></canvas>
-          <div class="canvas-controls">
-            <button class="btn btn-primary btn-sm" id="archPlay">Play</button>
-            <button class="btn btn-sm" id="archReset">Reset</button>
-          </div>
         </div>
       </div>
       <div class="step-indicator" id="archSteps">
@@ -561,7 +559,7 @@
         <div class="step-dot" data-step="3"></div>
       </div>
       <div style="text-align: center; margin-top: 0.5rem;">
-        <span id="archStepLabel" style="font-size: 0.9rem; color: var(--text-muted);">Play를 눌러 시작하세요</span>
+        <span id="archStepLabel" style="font-size: 0.9rem; color: var(--text-muted);">↑↓ 키로 단계를 이동하세요</span>
       </div>
     </div>
   </div>
@@ -576,10 +574,6 @@
       <div class="canvas-wrapper">
         <div class="canvas-container" style="aspect-ratio: 1100 / 400;">
           <canvas id="servicesCanvas"></canvas>
-          <div class="canvas-controls">
-            <button class="btn btn-primary btn-sm" id="servicesPlay">Play</button>
-            <button class="btn btn-sm" id="servicesReset">Reset</button>
-          </div>
         </div>
       </div>
       <div class="col-3" style="margin-top: 0.67rem;">
@@ -738,15 +732,17 @@
         <button class="compare-btn" data-compare="iam">IAM Roles Anywhere</button>
       </div>
       <div class="compare-content active" data-compare="ssm">
-        <div class="card">
-          <h3 style="color: var(--green);">SSM Hybrid Activations</h3>
-          <ul style="margin: 0.67rem 0;">
-            <li>PKI 인프라 불필요 - 빠른 설정</li>
-            <li>Activation Code + ID로 간편 등록</li>
-            <li>자동 자격 증명 갱신</li>
-            <li>세션 지속 시간: 최대 1시간</li>
-          </ul>
-          <div class="code-block" style="font-size: 0.8rem;">
+        <div class="card" style="display:flex; gap:1.5rem; align-items:flex-start;">
+          <div style="flex:1;">
+            <h3 style="color: var(--green);">SSM Hybrid Activations</h3>
+            <ul style="margin: 0.67rem 0;">
+              <li>PKI 인프라 불필요 - 빠른 설정</li>
+              <li>Activation Code + ID로 간편 등록</li>
+              <li>자동 자격 증명 갱신</li>
+              <li>세션 지속 시간: 최대 1시간</li>
+            </ul>
+          </div>
+          <div class="code-block" style="flex:1; font-size: 0.8rem;">
 <span class="comment"># nodeadm 설정 예시 (SSM)</span>
 <span class="key">apiVersion</span>: node.eks.aws/v1alpha1
 <span class="key">kind</span>: NodeConfig
@@ -761,15 +757,17 @@
         </div>
       </div>
       <div class="compare-content" data-compare="iam">
-        <div class="card">
-          <h3 style="color: var(--cyan);">IAM Roles Anywhere</h3>
-          <ul style="margin: 0.67rem 0;">
-            <li>기존 PKI 인프라 활용 가능</li>
-            <li>X.509 인증서 기반 인증</li>
-            <li>세션 지속 시간: 최대 12시간</li>
-            <li>에어갭(Air-gapped) 환경에 적합</li>
-          </ul>
-          <div class="code-block" style="font-size: 0.8rem;">
+        <div class="card" style="display:flex; gap:1.5rem; align-items:flex-start;">
+          <div style="flex:1;">
+            <h3 style="color: var(--cyan);">IAM Roles Anywhere</h3>
+            <ul style="margin: 0.67rem 0;">
+              <li>기존 PKI 인프라 활용 가능</li>
+              <li>X.509 인증서 기반 인증</li>
+              <li>세션 지속 시간: 최대 12시간</li>
+              <li>에어갭(Air-gapped) 환경에 적합</li>
+            </ul>
+          </div>
+          <div class="code-block" style="flex:1; font-size: 0.8rem;">
 <span class="comment"># nodeadm 설정 예시 (IAM Roles Anywhere)</span>
 <span class="key">apiVersion</span>: node.eks.aws/v1alpha1
 <span class="key">kind</span>: NodeConfig
@@ -829,6 +827,18 @@
     </div>
   </div>
 
+  <!-- Slide 13: Thank You -->
+  <div class="slide">
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:24px; text-align:center;">
+      <h1 style="font-size:3rem; background:linear-gradient(135deg, var(--accent-light), var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Thank You</h1>
+      <p style="color:var(--text-secondary); font-size:1.1rem;">Block 1 — EKS Hybrid Nodes 개요 & 아키텍처 완료</p>
+      <div style="display:flex; gap:16px; margin-top:20px;">
+        <a href="index.html" class="btn btn-sm" style="text-decoration:none;">← 목차로 돌아가기</a>
+        <a href="02-networking-traffic.html" class="btn btn-primary btn-sm" style="text-decoration:none;">다음: Block 2 →</a>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script src="../common/animation-utils.js"></script>
@@ -838,8 +848,7 @@
 <script>
   // ===== Architecture Canvas (Slide 6) =====
   const ARCH_BASE_W = 1100, ARCH_BASE_H = 450;
-  let archCtx, archCanvas, archAnimId = null, archStep = 0, archPlaying = false;
-  let archStartTime = 0;
+  let archCtx, archCanvas, archStep = 0;
   const archStepLabels = [
     '1. nodeadm init 실행',
     '2. SSM/IAM 인증',
@@ -951,21 +960,6 @@
     // Step labels
     drawText(ctx, archStepLabels[Math.min(step, 3)], 870, stepY + 35, { size: 12, color: Colors.textPri });
 
-    // Animated data flow particles
-    if (archPlaying && step >= 1 && step < 4) {
-      const elapsed = (performance.now() - archStartTime) / 1000;
-      const particleCount = 5;
-      for (let i = 0; i < particleCount; i++) {
-        const t = ((elapsed * 0.5 + i / particleCount) % 1);
-        const px = lerp(470, 700, t);
-        const py = lerp(175, 162, t) + Math.sin(t * Math.PI * 4) * 5;
-        ctx.beginPath();
-        ctx.arc(px, py, 3, 0, Math.PI * 2);
-        ctx.fillStyle = Colors.accent;
-        ctx.fill();
-      }
-    }
-
     // Update step dots in HTML
     document.querySelectorAll('#archSteps .step-dot').forEach((dot, i) => {
       dot.classList.toggle('active', i === step);
@@ -976,46 +970,9 @@
     if (labelEl) labelEl.textContent = archStepLabels[Math.min(step, 3)];
   }
 
-  function archAnimate() {
-    if (!archPlaying) return;
-    const elapsed = (performance.now() - archStartTime) / 1000;
-
-    // Each step takes 2 seconds
-    const newStep = Math.min(Math.floor(elapsed / 2), 3);
-    if (newStep !== archStep) {
-      archStep = newStep;
-    }
-
-    drawArchFrame(archStep);
-
-    if (elapsed < 8) {
-      archAnimId = requestAnimationFrame(archAnimate);
-    } else {
-      archPlaying = false;
-      archStep = 3;
-      drawArchFrame(archStep);
-    }
-  }
-
-  document.getElementById('archPlay')?.addEventListener('click', () => {
-    if (archPlaying) return;
-    archStep = 0;
-    archPlaying = true;
-    archStartTime = performance.now();
-    archAnimate();
-  });
-
-  document.getElementById('archReset')?.addEventListener('click', () => {
-    archPlaying = false;
-    if (archAnimId) cancelAnimationFrame(archAnimId);
-    archStep = 0;
-    drawArchFrame(0);
-  });
-
   // ===== Services Canvas (Slide 7) =====
   const SVC_BASE_W = 1100, SVC_BASE_H = 400;
-  let svcCtx, svcCanvas, svcAnimId = null, svcPlaying = false, svcStartTime = 0;
-  let svcParticles = [];
+  let svcCtx, svcCanvas;
 
   function initServicesCanvas() {
     const canvas = document.getElementById('servicesCanvas');
@@ -1091,60 +1048,9 @@
     drawArrow(ctx, 250, 200, 320, 200, Colors.orange, true);
     drawArrow(ctx, 520, 200, 590, 200, Colors.accent, true);
 
-    // Animated particles
-    if (svcPlaying) {
-      // On-prem to Hybrid
-      for (let i = 0; i < 8; i++) {
-        const t = ((elapsed * 0.4 + i / 8) % 1);
-        const px = lerp(250, 320, t);
-        const py = 200 + Math.sin(t * Math.PI * 3) * 15;
-        ctx.beginPath();
-        ctx.arc(px, py, 4, 0, Math.PI * 2);
-        ctx.fillStyle = Colors.orange + 'cc';
-        ctx.fill();
-      }
-
-      // Hybrid to AWS
-      for (let i = 0; i < 12; i++) {
-        const t = ((elapsed * 0.5 + i / 12) % 1);
-        const px = lerp(520, 590, t);
-        const baseY = 100 + (i % 3) * 85;
-        const py = baseY + Math.sin(t * Math.PI * 2) * 10;
-        ctx.beginPath();
-        ctx.arc(px, py, 4, 0, Math.PI * 2);
-        ctx.fillStyle = Colors.accent + 'cc';
-        ctx.fill();
-      }
-    }
-
     // Labels
     drawText(ctx, 'Data Processing', 420, 295, { size: 11, color: Colors.textMuted });
   }
-
-  function svcAnimate() {
-    if (!svcPlaying) return;
-    const elapsed = (performance.now() - svcStartTime) / 1000;
-    drawServicesFrame(elapsed);
-
-    if (elapsed < 10) {
-      svcAnimId = requestAnimationFrame(svcAnimate);
-    } else {
-      svcPlaying = false;
-    }
-  }
-
-  document.getElementById('servicesPlay')?.addEventListener('click', () => {
-    if (svcPlaying) return;
-    svcPlaying = true;
-    svcStartTime = performance.now();
-    svcAnimate();
-  });
-
-  document.getElementById('servicesReset')?.addEventListener('click', () => {
-    svcPlaying = false;
-    if (svcAnimId) cancelAnimationFrame(svcAnimId);
-    drawServicesFrame(0);
-  });
 
   // ===== Quiz Handler =====
   function initQuizzes() {
@@ -1192,13 +1098,14 @@
       3: '온프렘 K8s 운영의 현실적 어려움 공감. 특히 AI 서비스 접근 한계 강조.',
       4: '3가지 옵션 비교. Hybrid Nodes는 CP만 AWS 관리하는 경량 옵션.',
       5: '하이레벨 아키텍처 설명. VPN/DX로 연결.',
-      6: '노드 등록 4단계 애니메이션. Play 버튼으로 시연.',
+      6: '노드 등록 4단계 애니메이션. ↑↓ 키로 단계 이동.',
       7: '핵심 메시지: Hybrid Nodes = AWS Managed Services 게이트웨이. Bedrock, SageMaker 등 즉시 활용.',
       8: 'AWS가 CP 전체를 관리. 고객은 노드와 네트워크만.',
       9: '제약사항 솔직하게 공유. IPv4 전용, VPC CNI 미지원 등.',
       10: '지원 OS/아키텍처/리전 확인.',
       11: 'SSM이 간편, IAM RA가 에어갭에 적합.',
-      12: '퀴즈 진행. 참여 유도.'
+      12: '퀴즈 진행. 참여 유도.',
+      13: 'Thank You 슬라이드. Block 2로 안내.'
     },
     onSlideChange: (index, slide) => {
       // Initialize canvases when their slides become active
@@ -1214,6 +1121,18 @@
   // Initialize quizzes on load
   document.addEventListener('DOMContentLoaded', () => {
     initQuizzes();
+  });
+
+  // ===== Slide 6: Arrow key step control =====
+  document.addEventListener('keydown', (e) => {
+    if (deck.currentSlide !== 5) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (archStep < 3) { archStep++; drawArchFrame(archStep); }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (archStep > 0) { archStep--; drawArchFrame(archStep); }
+    }
   });
 </script>
 </body>

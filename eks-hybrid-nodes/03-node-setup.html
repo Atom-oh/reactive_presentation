@@ -8,21 +8,32 @@
   <link rel="stylesheet" href="../common/theme.css">
   <link rel="stylesheet" href="../common/theme-override.css">
   <style>
-    /* Slide-specific styles */
-    .gradient-title {
-      font-size: 3.5rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, #a29bfe, #00cec9, #74b9ff);
-      background-size: 200% 200%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: gradientShift 4s ease infinite;
+    /* Cover slide */
+    .cover-slide {
+      padding: 0 !important;
+      background: url('../common/pptx-theme/images/Picture_13.png') center/cover no-repeat;
     }
-    @keyframes gradientShift {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
+    .cover-content {
+      position: absolute; left: 8%; top: 0; bottom: 0; width: 70%;
     }
+    .cover-title {
+      position: absolute; top: 38%; font-size: 3.2rem; font-weight: 700;
+      color: #fff; text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+    }
+    .cover-subtitle {
+      position: absolute; top: 52%; font-size: 1.5rem; color: rgba(255,255,255,0.9);
+    }
+    .cover-speaker {
+      position: absolute; top: 64%; font-size: 1.1rem; color: rgba(255,255,255,0.8);
+    }
+    .cover-badge {
+      position: absolute; top: 4%; right: 4%; height: 2.5rem;
+    }
+    .cover-logo {
+      position: absolute; bottom: 4%; left: 8%; height: 1.8rem;
+    }
+    .cover-slide.active ~ .slide-logo,
+    .cover-slide.active ~ .slide-footer { display: none; }
 
     .terminal-output {
       background: #0a0a0a;
@@ -118,15 +129,15 @@
 <body>
 <div class="slide-deck">
 
-  <!-- Slide 1: Block Title -->
-  <div class="slide title-slide">
-    <h1 class="gradient-title">노드 부트스트랩 &amp; Day-2 운영</h1>
-    <p class="subtitle">nodeadm CLI부터 트러블슈팅까지</p>
-    <div class="meta">
-      <span class="badge badge-blue">Block 3</span>
-      <span class="badge badge-green">20분</span>
-      <span class="badge badge-yellow">10 slides</span>
+  <!-- Slide 1: Cover -->
+  <div class="slide cover-slide">
+    <img src="../common/pptx-theme/images/Picture_8.png" alt="AWS Badge" class="cover-badge">
+    <div class="cover-content">
+      <h1 class="cover-title">EKS Hybrid Nodes</h1>
+      <p class="cover-subtitle">노드 부트스트랩 &amp; Day-2 운영</p>
+      <p class="cover-speaker">오준석 | Sr. Solutions Architect | AWS</p>
     </div>
+    <img src="../common/pptx-theme/images/logo_1.png" alt="Logo" class="cover-logo">
   </div>
 
   <!-- Slide 2: nodeadm CLI -->
@@ -647,6 +658,18 @@ sudo iptables -L -n | grep 53</div>
     </div>
   </div>
 
+  <!-- Slide 11: Thank You -->
+  <div class="slide">
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:24px; text-align:center;">
+      <h1 style="font-size:3rem; background:linear-gradient(135deg, var(--accent-light), var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Thank You</h1>
+      <p style="color:var(--text-secondary); font-size:1.1rem;">Block 3 — 노드 구성 & 운영 완료</p>
+      <div style="display:flex; gap:16px; margin-top:20px;">
+        <a href="index.html" class="btn btn-sm" style="text-decoration:none;">← 목차로 돌아가기</a>
+        <a href="04-advanced-patterns.html" class="btn btn-primary btn-sm" style="text-decoration:none;">다음: Block 4 →</a>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script src="../common/animation-utils.js"></script>
@@ -667,7 +690,8 @@ sudo iptables -L -n | grep 53</div>
       7: 'Rolling이 기본 전략. Canary로 안전하게 진행.',
       8: '에어갭 환경에서는 S3+PHZ+VPC Endpoint 조합 사용.',
       9: '가장 흔한 3가지 이슈와 해결법. 탭별로 설명.',
-      10: '퀴즈 진행. 정답 확인 후 설명.'
+      10: '퀴즈 진행. 정답 확인 후 설명.',
+      11: 'Thank You 슬라이드. Block 4로 안내.'
     },
     onSlideChange: (index, slide) => {
       if (index === 2) {

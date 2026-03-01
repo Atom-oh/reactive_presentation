@@ -8,15 +8,32 @@
   <link rel="stylesheet" href="../common/theme.css">
   <link rel="stylesheet" href="../common/theme-override.css">
   <style>
-    /* Slide-specific styles */
-    .gradient-title {
-      font-size: 2.8rem;
-      background: linear-gradient(135deg, var(--accent-light), var(--cyan));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 0.5rem;
+    /* Cover slide */
+    .cover-slide {
+      padding: 0 !important;
+      background: url('../common/pptx-theme/images/Picture_13.png') center/cover no-repeat;
     }
+    .cover-content {
+      position: absolute; left: 8%; top: 0; bottom: 0; width: 70%;
+    }
+    .cover-title {
+      position: absolute; top: 38%; font-size: 3.2rem; font-weight: 700;
+      color: #fff; text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+    }
+    .cover-subtitle {
+      position: absolute; top: 52%; font-size: 1.5rem; color: rgba(255,255,255,0.9);
+    }
+    .cover-speaker {
+      position: absolute; top: 64%; font-size: 1.1rem; color: rgba(255,255,255,0.8);
+    }
+    .cover-badge {
+      position: absolute; top: 4%; right: 4%; height: 2.5rem;
+    }
+    .cover-logo {
+      position: absolute; bottom: 4%; left: 8%; height: 1.8rem;
+    }
+    .cover-slide.active ~ .slide-logo,
+    .cover-slide.active ~ .slide-footer { display: none; }
 
     /* Node visualization */
     .node-viz {
@@ -311,16 +328,15 @@
 <body>
 <div class="slide-deck">
 
-  <!-- Slide 1: Block 4 Title -->
-  <div class="slide" style="background: url('../common/pptx-theme/images/Picture_13.png') center/cover no-repeat; padding: 0; overflow: hidden;">
-    <h1 style="position: absolute; left: 5%; top: 48%; font-size: 2.8rem; color: #fff; font-weight: 300; line-height: 1.2; width: 53%; margin: 0;">EKS Hybrid Nodes</h1>
-    <p style="position: absolute; left: 5%; top: 62%; font-size: 1.3rem; color: rgba(255,255,255,0.8); width: 53%; margin: 0;">고급 패턴 &amp; 전략적 가치</p>
-    <div style="position: absolute; left: 5%; top: 76%;">
-      <p style="font-size: 1.05rem; color: #fff; font-weight: 600; margin: 0;">Junseok Oh</p>
-      <p style="font-size: 0.9rem; color: rgba(255,255,255,0.65); margin: 6px 0 0 0;">Sr. Solutions Architect</p>
-      <p style="font-size: 0.9rem; color: rgba(255,255,255,0.65); margin: 2px 0 0 0;">Amazon Web Services</p>
+  <!-- Slide 1: Cover -->
+  <div class="slide cover-slide">
+    <img src="../common/pptx-theme/images/Picture_8.png" alt="AWS Badge" class="cover-badge">
+    <div class="cover-content">
+      <h1 class="cover-title">EKS Hybrid Nodes</h1>
+      <p class="cover-subtitle">고급 패턴 &amp; 전략적 가치</p>
+      <p class="cover-speaker">오준석 | Sr. Solutions Architect | AWS</p>
     </div>
-    <img src="../common/pptx-theme/images/Picture_8.png" alt="" style="position: absolute; right: 5%; bottom: 10%; width: 8%; pointer-events: none;" />
+    <img src="../common/pptx-theme/images/logo_1.png" alt="Logo" class="cover-logo">
   </div>
 
   <!-- Slide 2: Taint/Toleration -->
@@ -686,6 +702,9 @@
       <div style="display:flex;flex-direction:column;gap:0.5rem;align-items:center;">
         <p style="font-size:1.1rem;color:rgba(255,255,255,0.9);font-weight:600;">오준석 (Junseok Oh)</p>
         <p style="font-size:0.95rem;color:rgba(255,255,255,0.7);">Sr. Solutions Architect, AWS</p>
+      </div>
+      <div style="display:flex; gap:16px; margin-top:2rem;">
+        <a href="index.html" class="btn btn-sm" style="text-decoration:none; color:rgba(255,255,255,0.9); border-color:rgba(255,255,255,0.3);">← 목차로 돌아가기</a>
       </div>
     </div>
     <img src="../common/pptx-theme/images/Picture_8.png" alt="" style="position:absolute;top:4%;right:4%;height:2.5rem;">

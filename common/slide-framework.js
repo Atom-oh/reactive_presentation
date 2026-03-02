@@ -84,6 +84,33 @@ class SlideFramework {
     setTimeout(() => { hint.style.opacity = '0'; }, 5000);
   }
 
+  // Returns true if tab was switched, false if slide should navigate
+  _tryTabNavigation(direction) {
+    const currentSlide = this.slides[this.currentSlide];
+    if (!currentSlide) return false;
+    const tabBtns = currentSlide.querySelectorAll('.tab-bar .tab-btn');
+    if (tabBtns.length < 2) return false;
+
+    const activeBtn = currentSlide.querySelector('.tab-bar .tab-btn.active');
+    if (!activeBtn) return false;
+
+    const btnsArray = Array.from(tabBtns);
+    const activeIdx = btnsArray.indexOf(activeBtn);
+
+    let nextIdx;
+    if (direction === 'right') {
+      if (activeIdx >= btnsArray.length - 1) return false; // last tab → navigate slide
+      nextIdx = activeIdx + 1;
+    } else {
+      if (activeIdx <= 0) return false; // first tab → navigate slide
+      nextIdx = activeIdx - 1;
+    }
+
+    // Simulate click on next/prev tab button
+    btnsArray[nextIdx].click();
+    return true;
+  }
+
   bindKeys() {
     document.addEventListener('keydown', (e) => {
       // Don't navigate if user is typing in an input
@@ -91,12 +118,18 @@ class SlideFramework {
 
       switch (e.key) {
         case 'ArrowRight':
+          e.preventDefault();
+          if (!this._tryTabNavigation('right')) this.next();
+          break;
         case ' ':
         case 'PageDown':
           e.preventDefault();
           this.next();
           break;
         case 'ArrowLeft':
+          e.preventDefault();
+          if (!this._tryTabNavigation('left')) this.prev();
+          break;
         case 'PageUp':
           e.preventDefault();
           this.prev();

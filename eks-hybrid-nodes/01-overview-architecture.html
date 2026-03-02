@@ -11,49 +11,38 @@
     /* Cover slide */
     .cover-slide {
       padding: 0 !important;
+      overflow: hidden;
       background: url('../common/pptx-theme/images/Picture_13.png') center/cover no-repeat;
     }
     .cover-content {
-      position: absolute;
-      left: 8%;
-      top: 0;
-      bottom: 0;
-      width: 70%;
+      position: absolute; left: 5%; top: 0; bottom: 0; width: 53%;
     }
     .cover-title {
-      position: absolute;
-      top: 38%;
-      font-size: 3.2rem;
-      font-weight: 700;
-      color: #fff;
-      text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+      position: absolute; top: 48%; font-size: 2.8rem; font-weight: 300;
+      color: #fff; line-height: 1.2; margin: 0;
     }
     .cover-subtitle {
-      position: absolute;
-      top: 52%;
-      font-size: 1.5rem;
-      color: rgba(255,255,255,0.9);
+      position: absolute; top: 62%; font-size: 1.3rem; color: rgba(255,255,255,0.8);
     }
     .cover-speaker {
-      position: absolute;
-      top: 64%;
-      font-size: 1.1rem;
-      color: rgba(255,255,255,0.8);
+      position: absolute; top: 76%;
+    }
+    .cover-speaker-name {
+      font-size: 1.05rem; color: #fff; font-weight: 600; margin: 0;
+    }
+    .cover-speaker-title {
+      font-size: 0.9rem; color: rgba(255,255,255,0.65); margin: 6px 0 0 0;
+    }
+    .cover-speaker-company {
+      font-size: 0.9rem; color: rgba(255,255,255,0.65); margin: 2px 0 0 0;
     }
     .cover-badge {
-      position: absolute;
-      top: 4%;
-      right: 4%;
-      height: 2.5rem;
-    }
-    .cover-logo {
-      position: absolute;
-      bottom: 4%;
-      left: 8%;
-      height: 1.8rem;
+      position: absolute; right: 5%; bottom: 10%; width: 8%; pointer-events: none;
     }
     .cover-slide.active ~ .slide-logo,
-    .cover-slide.active ~ .slide-footer { display: none; }
+    .cover-slide.active ~ .slide-footer,
+    .cover-slide.active ~ .slide-counter,
+    .cover-slide.active ~ .nav-hint { display: none; }
 
     /* Gradient title */
     .gradient-title {
@@ -362,13 +351,16 @@
 
   <!-- Slide 1: Cover -->
   <div class="slide cover-slide">
-    <img src="../common/pptx-theme/images/Picture_8.png" alt="AWS Badge" class="cover-badge">
     <div class="cover-content">
       <h1 class="cover-title">EKS Hybrid Nodes</h1>
       <p class="cover-subtitle">이제는 Amazon EKS를 온프레미스에서도</p>
-      <p class="cover-speaker">오준석 | Sr. Solutions Architect | AWS</p>
+      <div class="cover-speaker">
+        <p class="cover-speaker-name">Junseok Oh</p>
+        <p class="cover-speaker-title">Sr. Solutions Architect</p>
+        <p class="cover-speaker-company">Amazon Web Services</p>
+      </div>
     </div>
-    <img src="../common/pptx-theme/images/logo_1.png" alt="Logo" class="cover-logo">
+    <img src="../common/pptx-theme/images/Picture_8.png" alt="" class="cover-badge">
   </div>
 
   <!-- Slide 2: Agenda -->
@@ -849,6 +841,9 @@
   // ===== Architecture Canvas (Slide 6) =====
   const ARCH_BASE_W = 1100, ARCH_BASE_H = 450;
   let archCtx, archCanvas, archStep = 0;
+  let archAnimating = false;
+  let archAnimStart = 0;
+  const ARCH_ANIM_DURATION = 600; // ms
   const archStepLabels = [
     '1. nodeadm init 실행',
     '2. SSM/IAM 인증',
@@ -968,6 +963,99 @@
 
     const labelEl = document.getElementById('archStepLabel');
     if (labelEl) labelEl.textContent = archStepLabels[Math.min(step, 3)];
+  }
+
+  // ===== Slide 6: Step Transition Animation =====
+  function archTransitionTo(newStep) {
+    if (archAnimating) return;
+    archStep = newStep;
+    archAnimating = true;
+    archAnimStart = performance.now();
+
+    function animate() {
+      const elapsed = performance.now() - archAnimStart;
+      const t = Math.min(elapsed / ARCH_ANIM_DURATION, 1);
+      const eased = Ease.out(t);
+
+      drawArchFrame(archStep);
+      drawArchTransition(archStep, eased);
+
+      if (t < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        archAnimating = false;
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+
+  function drawArchTransition(step, t) {
+    const ctx = archCtx;
+    if (!ctx) return;
+
+    if (step === 0) {
+      // nodeadm box glow pulse
+      const glow = (1 - t) * 20;
+      ctx.save();
+      ctx.shadowColor = Colors.green;
+      ctx.shadowBlur = glow;
+      drawRoundRect(ctx, 720, 145, 80, 35, 8, Colors.green + '44', Colors.green);
+      ctx.restore();
+    }
+
+    if (step === 1) {
+      // Node → Tunnel → AWS CP particle flow (auth request)
+      const path = [{x:760,y:162}, {x:630,y:180}, {x:470,y:175}, {x:230,y:160}];
+      drawFlowParticles(ctx, path, t, Colors.cyan, 5);
+    }
+
+    if (step === 2) {
+      // AWS CP → Tunnel → Node particle flow (bootstrap response)
+      const path = [{x:230,y:200}, {x:470,y:195}, {x:630,y:185}, {x:820,y:162}];
+      drawFlowParticles(ctx, path, t, Colors.accent, 5);
+      // kubelet/containerd glow
+      const glow = (1 - t) * 15;
+      ctx.save();
+      ctx.shadowColor = Colors.green;
+      ctx.shadowBlur = glow;
+      drawRoundRect(ctx, 820, 145, 80, 35, 8, Colors.green + '44', Colors.green);
+      drawRoundRect(ctx, 920, 145, 80, 35, 8, Colors.green + '44', Colors.green);
+      ctx.restore();
+    }
+
+    if (step === 3) {
+      // Hybrid Node area success glow
+      const glow = (1 - t) * 25;
+      ctx.save();
+      ctx.shadowColor = Colors.green;
+      ctx.shadowBlur = glow;
+      drawRoundRect(ctx, 700, 90, 340, 200, 8, Colors.green + '15', Colors.green);
+      ctx.restore();
+    }
+  }
+
+  function drawFlowParticles(ctx, path, progress, color, count) {
+    for (let i = 0; i < count; i++) {
+      const offset = i / count;
+      const p = (progress * 1.2 - offset * 0.4);
+      if (p < 0 || p > 1) continue;
+      const pt = getPointOnPath(path, Ease.out(p));
+      const alpha = p < 0.1 ? p / 0.1 : p > 0.8 ? (1 - p) / 0.2 : 1;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = color + Math.round(alpha * 204).toString(16).padStart(2, '0');
+      ctx.fill();
+    }
+  }
+
+  function getPointOnPath(path, t) {
+    const totalSegs = path.length - 1;
+    const seg = Math.min(Math.floor(t * totalSegs), totalSegs - 1);
+    const localT = (t * totalSegs) - seg;
+    return {
+      x: lerp(path[seg].x, path[seg + 1].x, localT),
+      y: lerp(path[seg].y, path[seg + 1].y, localT)
+    };
   }
 
   // ===== Services Canvas (Slide 7) =====
@@ -1093,7 +1181,7 @@
     footer: 'EKS Hybrid Nodes - Block 1: 개요 & 아키텍처',
     logoSrc: '../common/pptx-theme/images/logo_1.png',
     presenterNotes: {
-      1: '커버 슬라이드. 오준석 Sr. SA 소개.',
+      1: '세션 시작 슬라이드.\n\n자기소개와 세션 개요를 간략히 안내하세요.\n오늘 다룰 내용: EKS Hybrid Nodes 개요, 아키텍처, 네트워킹, 운영, 고급 패턴',
       2: '전체 95분 세션 구조 설명. Block 2 후 5분 휴식.',
       3: '온프렘 K8s 운영의 현실적 어려움 공감. 특히 AI 서비스 접근 한계 강조.',
       4: '3가지 옵션 비교. Hybrid Nodes는 CP만 AWS 관리하는 경량 옵션.',
@@ -1128,10 +1216,10 @@
     if (deck.currentSlide !== 5) return;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      if (archStep < 3) { archStep++; drawArchFrame(archStep); }
+      if (archStep < 3 && !archAnimating) archTransitionTo(archStep + 1);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      if (archStep > 0) { archStep--; drawArchFrame(archStep); }
+      if (archStep > 0 && !archAnimating) archTransitionTo(archStep - 1);
     }
   });
 </script>

@@ -57,29 +57,38 @@
     /* Cover slide */
     .cover-slide {
       padding: 0 !important;
+      overflow: hidden;
       background: url('../common/pptx-theme/images/Picture_13.png') center/cover no-repeat;
     }
     .cover-content {
-      position: absolute; left: 8%; top: 0; bottom: 0; width: 70%;
+      position: absolute; left: 5%; top: 0; bottom: 0; width: 53%;
     }
     .cover-title {
-      position: absolute; top: 38%; font-size: 3.2rem; font-weight: 700;
-      color: #fff; text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+      position: absolute; top: 48%; font-size: 2.8rem; font-weight: 300;
+      color: #fff; line-height: 1.2; margin: 0;
     }
     .cover-subtitle {
-      position: absolute; top: 52%; font-size: 1.5rem; color: rgba(255,255,255,0.9);
+      position: absolute; top: 62%; font-size: 1.3rem; color: rgba(255,255,255,0.8);
     }
     .cover-speaker {
-      position: absolute; top: 64%; font-size: 1.1rem; color: rgba(255,255,255,0.8);
+      position: absolute; top: 76%;
+    }
+    .cover-speaker-name {
+      font-size: 1.05rem; color: #fff; font-weight: 600; margin: 0;
+    }
+    .cover-speaker-title {
+      font-size: 0.9rem; color: rgba(255,255,255,0.65); margin: 6px 0 0 0;
+    }
+    .cover-speaker-company {
+      font-size: 0.9rem; color: rgba(255,255,255,0.65); margin: 2px 0 0 0;
     }
     .cover-badge {
-      position: absolute; top: 4%; right: 4%; height: 2.5rem;
-    }
-    .cover-logo {
-      position: absolute; bottom: 4%; left: 8%; height: 1.8rem;
+      position: absolute; right: 5%; bottom: 10%; width: 8%; pointer-events: none;
     }
     .cover-slide.active ~ .slide-logo,
-    .cover-slide.active ~ .slide-footer { display: none; }
+    .cover-slide.active ~ .slide-footer,
+    .cover-slide.active ~ .slide-counter,
+    .cover-slide.active ~ .nav-hint { display: none; }
 
     /* Diagram container */
     .diagram-container {
@@ -172,13 +181,16 @@
 
   <!-- Slide 1: Cover -->
   <div class="slide cover-slide">
-    <img src="../common/pptx-theme/images/Picture_8.png" alt="AWS Badge" class="cover-badge">
     <div class="cover-content">
       <h1 class="cover-title">EKS Hybrid Nodes</h1>
       <p class="cover-subtitle">네트워킹 심층 분석</p>
-      <p class="cover-speaker">오준석 | Sr. Solutions Architect | AWS</p>
+      <div class="cover-speaker">
+        <p class="cover-speaker-name">Junseok Oh</p>
+        <p class="cover-speaker-title">Sr. Solutions Architect</p>
+        <p class="cover-speaker-company">Amazon Web Services</p>
+      </div>
     </div>
-    <img src="../common/pptx-theme/images/logo_1.png" alt="Logo" class="cover-logo">
+    <img src="../common/pptx-theme/images/Picture_8.png" alt="" class="cover-badge">
   </div>
 
   <!-- Slide 2: 네트워크 전제 조건 -->
@@ -608,7 +620,7 @@
     footer: 'EKS Hybrid Nodes — Block 2: 네트워킹 & 트래픽 패턴',
     logoSrc: '../common/pptx-theme/images/logo_1.png',
     presenterNotes: {
-      1: 'Block 2 시작. 네트워킹은 Hybrid Nodes의 핵심.',
+      1: 'Block 2 시작.\n\n네트워킹은 Hybrid Nodes 구축의 핵심.\nCIDR 설계부터 6가지 트래픽 패턴까지 다룹니다.\n약 25분 소요.',
       2: '네트워크 사전 요구 사항 다이어그램 설명. VPC에 CP ENI가 배치되고, TGW/VGW로 연결.',
       3: 'CIDR 체크리스트 하나씩 확인. 겹침 방지 강조. 클릭하여 체크 가능.',
       4: 'Pattern 1: Public vs Private 경로 비교. 토글로 각 경로 확인. Private 권장.',

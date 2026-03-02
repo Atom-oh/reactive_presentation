@@ -11,29 +11,38 @@
     /* Cover slide */
     .cover-slide {
       padding: 0 !important;
+      overflow: hidden;
       background: url('../common/pptx-theme/images/Picture_13.png') center/cover no-repeat;
     }
     .cover-content {
-      position: absolute; left: 8%; top: 0; bottom: 0; width: 70%;
+      position: absolute; left: 5%; top: 0; bottom: 0; width: 53%;
     }
     .cover-title {
-      position: absolute; top: 38%; font-size: 3.2rem; font-weight: 700;
-      color: #fff; text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+      position: absolute; top: 48%; font-size: 2.8rem; font-weight: 300;
+      color: #fff; line-height: 1.2; margin: 0;
     }
     .cover-subtitle {
-      position: absolute; top: 52%; font-size: 1.5rem; color: rgba(255,255,255,0.9);
+      position: absolute; top: 62%; font-size: 1.3rem; color: rgba(255,255,255,0.8);
     }
     .cover-speaker {
-      position: absolute; top: 64%; font-size: 1.1rem; color: rgba(255,255,255,0.8);
+      position: absolute; top: 76%;
+    }
+    .cover-speaker-name {
+      font-size: 1.05rem; color: #fff; font-weight: 600; margin: 0;
+    }
+    .cover-speaker-title {
+      font-size: 0.9rem; color: rgba(255,255,255,0.65); margin: 6px 0 0 0;
+    }
+    .cover-speaker-company {
+      font-size: 0.9rem; color: rgba(255,255,255,0.65); margin: 2px 0 0 0;
     }
     .cover-badge {
-      position: absolute; top: 4%; right: 4%; height: 2.5rem;
-    }
-    .cover-logo {
-      position: absolute; bottom: 4%; left: 8%; height: 1.8rem;
+      position: absolute; right: 5%; bottom: 10%; width: 8%; pointer-events: none;
     }
     .cover-slide.active ~ .slide-logo,
-    .cover-slide.active ~ .slide-footer { display: none; }
+    .cover-slide.active ~ .slide-footer,
+    .cover-slide.active ~ .slide-counter,
+    .cover-slide.active ~ .nav-hint { display: none; }
 
     .terminal-output {
       background: #0a0a0a;
@@ -45,6 +54,7 @@
       line-height: 1.7;
       color: #00ff88;
       overflow-x: auto;
+      white-space: pre;
     }
     .terminal-output .prompt {
       color: #00b894;
@@ -101,6 +111,8 @@
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 14px;
+      min-width: 0;
+      flex: 1;
     }
     .airgap-box h4 {
       color: var(--accent-light);
@@ -123,6 +135,7 @@
       color: var(--accent);
       font-size: 1.5rem;
       padding: 0 8px;
+      flex: 0 0 auto;
     }
   </style>
 </head>
@@ -131,13 +144,16 @@
 
   <!-- Slide 1: Cover -->
   <div class="slide cover-slide">
-    <img src="../common/pptx-theme/images/Picture_8.png" alt="AWS Badge" class="cover-badge">
     <div class="cover-content">
       <h1 class="cover-title">EKS Hybrid Nodes</h1>
       <p class="cover-subtitle">노드 부트스트랩 &amp; Day-2 운영</p>
-      <p class="cover-speaker">오준석 | Sr. Solutions Architect | AWS</p>
+      <div class="cover-speaker">
+        <p class="cover-speaker-name">Junseok Oh</p>
+        <p class="cover-speaker-title">Sr. Solutions Architect</p>
+        <p class="cover-speaker-company">Amazon Web Services</p>
+      </div>
     </div>
-    <img src="../common/pptx-theme/images/logo_1.png" alt="Logo" class="cover-logo">
+    <img src="../common/pptx-theme/images/Picture_8.png" alt="" class="cover-badge">
   </div>
 
   <!-- Slide 2: nodeadm CLI -->
@@ -326,6 +342,7 @@
   --namespace kube-system \
   --set <span class="key">ipam.mode</span>=<span class="string">cluster-pool</span> \
   --set <span class="key">ipam.operator.clusterPoolIPv4PodCIDRList</span>=<span class="string">"10.85.0.0/16"</span> \
+  --set <span class="key">ipam.operator.clusterPoolIPv4MaskSize</span>=<span class="string">"25"</span> \
   --set <span class="key">tunnel</span>=<span class="string">vxlan</span> \
   --set <span class="key">affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution</span>.\
 <span class="key">nodeSelectorTerms[0].matchExpressions[0].key</span>=<span class="string">eks.amazonaws.com/compute-type</span> \
@@ -336,6 +353,7 @@
           <div class="card-title">주요 설정</div>
           <ul>
             <li><strong>ipam.mode=cluster-pool</strong> - Cilium이 Pod IP 관리</li>
+            <li><strong>clusterPoolIPv4MaskSize=25</strong> - 노드당 Pod CIDR 크기 (/25=126개, /24=254개)</li>
             <li><strong>tunnel=vxlan</strong> - 온프레미스 네트워크 호환성</li>
             <li><strong>nodeAffinity</strong> - Hybrid Nodes에만 배포</li>
           </ul>
@@ -346,6 +364,8 @@
             <li>VPC CIDR과 겹치지 않도록 설정</li>
             <li>온프레미스 네트워크와 분리</li>
             <li>예: <code>10.85.0.0/16</code></li>
+            <li><strong>/25</strong>: 노드당 126 Pod, <strong>/24</strong>: 254 Pod</li>
+            <li>노드별 Pod CIDR → static route 필요</li>
           </ul>
         </div>
       </div>
@@ -382,7 +402,12 @@
 <span class="prompt">$</span> <span class="command">kubectl get pods -n kube-system -l k8s-app=cilium -o wide</span>
 <span class="output">NAME           READY   STATUS    NODE</span>
 <span class="highlight">cilium-xxxxx</span>   1/1     Running   hybrid-node-001
-<span class="highlight">cilium-yyyyy</span>   1/1     Running   hybrid-node-002</div>
+<span class="highlight">cilium-yyyyy</span>   1/1     Running   hybrid-node-002
+
+<span class="prompt">$</span> <span class="command">kubectl get nodes -o custom-columns='NAME:.metadata.name,PODCIDR:.spec.podCIDR'</span>
+<span class="output">NAME              PODCIDR</span>
+<span class="highlight">hybrid-node-001</span>   <span class="label-value">10.85.0.0/25</span>
+<span class="highlight">hybrid-node-002</span>   <span class="label-value">10.85.0.128/25</span></div>
     </div>
   </div>
 
@@ -681,7 +706,7 @@ sudo iptables -L -n | grep 53</div>
     footer: 'EKS Hybrid Nodes - Block 3: 노드 구성 & 운영',
     logoSrc: '../common/pptx-theme/images/logo_1.png',
     presenterNotes: {
-      1: 'Block 3 시작. 실제 노드 설정 과정을 다룹니다.',
+      1: 'Block 3 시작.\n\nnodeadm CLI로 실제 노드를 구성하는 과정을 다룹니다.\n부트스트랩부터 Day-2 운영까지.\n약 20분 소요.',
       2: 'nodeadm 4가지 주요 명령어 소개. install, init, upgrade, debug.',
       3: '8단계 부트스트랩 워크플로우 애니메이션. Play 버튼으로 시연.',
       4: 'NodeConfig YAML 4개 섹션. 탭별로 각 섹션 설명.',
@@ -725,7 +750,7 @@ sudo iptables -L -n | grep 53</div>
     const canvas = document.getElementById('bootstrap-canvas');
     if (!canvas) return;
     const container = canvas.parentElement;
-    const BASE_W = 1100, BASE_H = 350;
+    const BASE_W = 1100, BASE_H = 450;
     const ctx = canvas.getContext('2d');
 
     function resize() {
@@ -755,6 +780,17 @@ sudo iptables -L -n | grep 53</div>
       { label: 'nodeadm init\n실행', icon: '6' },
       { label: 'CNI 설치\n(Cilium)', icon: '7' },
       { label: 'Node Ready', icon: '8' }
+    ];
+
+    const details = [
+      'SSM Hybrid Activation 생성 → activationCode / activationId 획득',
+      'hybrid-assets.eks.amazonaws.com에서 nodeadm 바이너리 다운로드',
+      'kubelet, containerd, iptables 등 컴포넌트 자동 설치',
+      'cluster name, API endpoint, CA cert, Service CIDR 설정',
+      'EKS 클러스터 CA 인증서를 로컬 trust store에 저장',
+      'kubelet 시작 → API Server 연결 → CSR 자동 승인',
+      'Helm으로 Cilium 설치, VXLAN 터널 + Pod CIDR 구성',
+      'kubectl get nodes에서 Ready 상태 확인 완료'
     ];
 
     let currentStep = -1;
@@ -840,13 +876,60 @@ sudo iptables -L -n | grep 53</div>
         });
       });
 
+      // Detail box or status text
+      if (currentStep >= 0 && currentStep < steps.length) {
+        const boxW = 680, boxH = 52;
+        const boxX = (BASE_W - boxW) / 2;
+        const boxY = 275;
+        const accentColor = currentStep < steps.length ? '#a29bfe' : '#00b894';
+
+        // Rounded rect background
+        ctx.beginPath();
+        const r = 10;
+        ctx.moveTo(boxX + r, boxY);
+        ctx.lineTo(boxX + boxW - r, boxY);
+        ctx.quadraticCurveTo(boxX + boxW, boxY, boxX + boxW, boxY + r);
+        ctx.lineTo(boxX + boxW, boxY + boxH - r);
+        ctx.quadraticCurveTo(boxX + boxW, boxY + boxH, boxX + boxW - r, boxY + boxH);
+        ctx.lineTo(boxX + r, boxY + boxH);
+        ctx.quadraticCurveTo(boxX, boxY + boxH, boxX, boxY + boxH - r);
+        ctx.lineTo(boxX, boxY + r);
+        ctx.quadraticCurveTo(boxX, boxY, boxX + r, boxY);
+        ctx.closePath();
+        ctx.fillStyle = '#1a1d2e';
+        ctx.fill();
+        ctx.strokeStyle = '#2d3250';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Left accent bar
+        ctx.beginPath();
+        ctx.moveTo(boxX + 1, boxY + r);
+        ctx.lineTo(boxX + 1, boxY + boxH - r);
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Step label (left side)
+        ctx.font = '700 13px Pretendard, sans-serif';
+        ctx.fillStyle = accentColor;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`단계 ${currentStep + 1}`, boxX + 16, boxY + boxH / 2);
+
+        // Detail text (right of label)
+        ctx.font = '500 13px Pretendard, sans-serif';
+        ctx.fillStyle = '#e8eaf0';
+        ctx.fillText(details[currentStep], boxX + 80, boxY + boxH / 2);
+      }
+
       // Status text at bottom
       let statusText = '';
       let statusColor = '#6b7194';
       if (currentStep < 0) {
-        statusText = 'Play 버튼을 클릭하여 Bootstrap 워크플로우를 시작하세요';
+        statusText = '▲▼ 화살표 또는 Play 버튼으로 시작하세요';
       } else if (currentStep < steps.length) {
-        statusText = `단계 ${currentStep + 1}/${steps.length}: ${steps[currentStep].label.replace('\n', ' ')}`;
+        statusText = `${steps[currentStep].label.replace('\n', ' ')}`;
         statusColor = '#a29bfe';
       } else {
         statusText = 'Bootstrap 완료! 노드가 클러스터에 성공적으로 조인되었습니다.';
@@ -855,7 +938,8 @@ sudo iptables -L -n | grep 53</div>
       ctx.font = '600 14px Pretendard, sans-serif';
       ctx.fillStyle = statusColor;
       ctx.textAlign = 'center';
-      ctx.fillText(statusText, BASE_W / 2, BASE_H - 30);
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(statusText, BASE_W / 2, BASE_H - 20);
     }
 
     draw();
@@ -884,6 +968,19 @@ sudo iptables -L -n | grep 53</div>
 
     document.getElementById('bootstrap-reset-btn').addEventListener('click', () => {
       resetBootstrapCanvas();
+    });
+
+    // ===== Slide 3: Arrow key step control =====
+    document.addEventListener('keydown', (e) => {
+      if (deck.currentSlide !== 2) return;
+      if (animating) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (currentStep < steps.length) { currentStep++; draw(); }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (currentStep > -1) { currentStep--; draw(); }
+      }
     });
   })();
 </script>

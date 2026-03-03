@@ -73,8 +73,9 @@
     }
 
     .strategy-card {
-      background: var(--bg-card);
+      background: #0d0d0d;
       border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
       border-radius: 10px;
       padding: 16px;
       margin-bottom: 12px;
@@ -107,8 +108,8 @@
     }
 
     .airgap-box {
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border);
+      background: #0d0d0d;
+      border: 1px solid var(--blue);
       border-radius: 10px;
       padding: 14px;
       min-width: 0;
@@ -137,6 +138,7 @@
       padding: 0 8px;
       flex: 0 0 auto;
     }
+    .slide-body .card { background: #0d0d0d; }
   </style>
 </head>
 <body>
@@ -327,38 +329,115 @@
     </div>
   </div>
 
-  <!-- Slide 5: Cilium CNI -->
+  <!-- Slide 5: CNI 선택 가이드 -->
   <div class="slide">
     <div class="slide-header">
-      <h1>Cilium CNI 설치</h1>
-      <p class="subtitle">Hybrid Nodes 전용 네트워크 플러그인</p>
+      <h1>CNI 선택 가이드</h1>
+      <p class="subtitle">왜 Cilium인가?</p>
     </div>
     <div class="slide-body">
-      <div class="code-block"><span class="code-label">Helm Install</span><span class="comment"># Cilium Helm repository 추가</span>
-<span class="keyword">helm</span> repo add cilium https://helm.cilium.io/
-
-<span class="comment"># Cilium 설치 - Hybrid Nodes 전용</span>
-<span class="keyword">helm</span> install cilium cilium/cilium --version <span class="number">1.16.x</span> \
-  --namespace kube-system \
-  --set <span class="key">ipam.mode</span>=<span class="string">cluster-pool</span> \
-  --set <span class="key">ipam.operator.clusterPoolIPv4PodCIDRList</span>=<span class="string">"10.85.0.0/16"</span> \
-  --set <span class="key">ipam.operator.clusterPoolIPv4MaskSize</span>=<span class="string">"25"</span> \
-  --set <span class="key">tunnel</span>=<span class="string">vxlan</span> \
-  --set <span class="key">affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution</span>.\
-<span class="key">nodeSelectorTerms[0].matchExpressions[0].key</span>=<span class="string">eks.amazonaws.com/compute-type</span> \
-  --set <span class="key">affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution</span>.\
-<span class="key">nodeSelectorTerms[0].matchExpressions[0].values[0]</span>=<span class="string">hybrid</span></div>
-      <div class="col-2" style="margin-top: 16px;">
-        <div class="card">
-          <div class="card-title">주요 설정</div>
+      <div class="col-2">
+        <div class="card highlight">
+          <div class="card-title"><span class="badge badge-green">공식 지원</span> Cilium</div>
           <ul>
-            <li><strong>ipam.mode=cluster-pool</strong> - Cilium이 Pod IP 관리</li>
-            <li><strong>clusterPoolIPv4MaskSize=25</strong> - 노드당 Pod CIDR 크기 (/25=126개, /24=254개)</li>
-            <li><strong>tunnel=vxlan</strong> - 온프레미스 네트워크 호환성</li>
-            <li><strong>nodeAffinity</strong> - Hybrid Nodes에만 배포</li>
+            <li><strong>eBPF 기반</strong> 데이터 플레인 — iptables 불필요</li>
+            <li><strong>AWS ECR Public</strong>에서 공식 빌드 제공</li>
+            <li><strong>VXLAN 오버레이</strong> 내장 — 온프렘 네트워크 호환</li>
+            <li><strong>Hubble</strong>로 네트워크 observability 내장</li>
+            <li>BGP, Ingress, LB IPAM, kube-proxy replacement 지원</li>
+            <li>지원 버전: <code>v1.17.x</code>, <code>v1.18.x</code></li>
           </ul>
         </div>
         <div class="card">
+          <div class="card-title"><span class="badge badge-red">미지원</span> Calico</div>
+          <ul>
+            <li>iptables 기반 데이터 플레인</li>
+            <li>AWS 공식 문서에서 <strong>제거됨</strong> (examples repo로 이동)</li>
+            <li>별도 IP pool 관리 필요</li>
+            <li>AWS 기술 지원 범위 밖</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout callout-warning" style="margin-top: 12px;">
+        Calico는 더 이상 AWS 공식 지원 대상이 아닙니다. 신규 배포는 반드시 Cilium을 사용하세요.
+      </div>
+      <div class="callout callout-info" style="margin-top: 8px;">
+        Cilium v1.18.x는 Linux kernel &ge; 5.10 필요 — Ubuntu 20.04, RHEL 8 미지원
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 6: Cilium CNI 설치 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>Cilium CNI 설치</h1>
+      <p class="subtitle">AWS ECR Public 공식 빌드 + Helm 배포</p>
+    </div>
+    <div class="slide-body">
+      <div class="code-block"><span class="code-label">Helm Install</span><span class="comment"># Cilium 설치 - AWS ECR Public 공식 빌드</span>
+<span class="keyword">helm</span> install cilium <span class="string">oci://public.ecr.aws/eks/cilium/cilium</span> \
+  --version <span class="number">1.18.3-0</span> \
+  --namespace kube-system \
+  --values <span class="string">cilium-values.yaml</span></div>
+      <div class="col-2" style="margin-top: 20px;">
+        <div class="card" style="background:#0d0d0d;">
+          <div class="card-title">설치 포인트</div>
+          <ul>
+            <li><strong>OCI Registry</strong> — ECR Public에서 공식 빌드 직접 설치</li>
+            <li><strong>values YAML</strong> — 설정을 파일로 분리하여 GitOps 관리</li>
+            <li><strong>namespace</strong> — 반드시 <code>kube-system</code>에 설치</li>
+            <li><strong>nodeAffinity</strong> — Hybrid Nodes에만 배포 제한</li>
+          </ul>
+        </div>
+        <div class="card" style="background:#0d0d0d;">
+          <div class="card-title">설치 후 확인</div>
+          <div class="code-block" style="font-size: 0.78rem; padding: 10px;"><span class="comment"># Cilium 상태 확인</span>
+<span class="keyword">cilium</span> status
+<span class="keyword">kubectl</span> get pods -n kube-system -l k8s-app=cilium
+
+<span class="comment"># 연결 테스트</span>
+<span class="keyword">cilium</span> connectivity test</div>
+        </div>
+      </div>
+      <div class="callout callout-info" style="margin-top: 14px;">
+        Cilium은 Hybrid Nodes 전용입니다. 클라우드 노드의 VPC CNI와 독립 운영됩니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 7: Cilium Values & Pod CIDR -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>Cilium Values & Pod CIDR</h1>
+      <p class="subtitle">cilium-values.yaml 핵심 설정과 Pod CIDR 설계</p>
+    </div>
+    <div class="slide-body">
+      <div class="col-2">
+        <div class="card" style="background:#0d0d0d;">
+          <div class="card-title">cilium-values.yaml</div>
+          <div class="code-block" style="font-size: 0.75rem; padding: 12px;"><span class="key">affinity</span>:                        <span class="comment"># Hybrid Nodes에만 배포</span>
+  <span class="key">nodeAffinity</span>:
+    <span class="key">requiredDuringSchedulingIgnoredDuringExecution</span>:
+      <span class="key">nodeSelectorTerms</span>:
+      - <span class="key">matchExpressions</span>:
+        - <span class="key">key</span>: <span class="string">eks.amazonaws.com/compute-type</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">hybrid</span>]
+<span class="key">ipam</span>:
+  <span class="key">mode</span>: <span class="string">cluster-pool</span>
+  <span class="key">operator</span>:
+    <span class="key">clusterPoolIPv4MaskSize</span>: <span class="number">25</span>
+    <span class="key">clusterPoolIPv4PodCIDRList</span>: [<span class="string">"10.85.0.0/16"</span>]
+<span class="key">loadBalancer</span>:
+  <span class="key">serviceTopology</span>: <span class="number">true</span>
+<span class="key">operator</span>:
+  <span class="key">unmanagedPodWatcher</span>:
+    <span class="key">restart</span>: <span class="number">false</span>
+<span class="key">envoy</span>:
+  <span class="key">enabled</span>: <span class="number">false</span>                 <span class="comment"># L7 정책 필요 시 별도 활성화</span>
+<span class="key">kubeProxyReplacement</span>: <span class="string">"false"</span></div>
+        </div>
+        <div class="card" style="background:#0d0d0d;">
           <div class="card-title">Pod CIDR 설계</div>
           <ul>
             <li>VPC CIDR과 겹치지 않도록 설정</li>
@@ -367,15 +446,15 @@
             <li><strong>/25</strong>: 노드당 126 Pod, <strong>/24</strong>: 254 Pod</li>
             <li>노드별 Pod CIDR → static route 필요</li>
           </ul>
+          <div class="callout callout-warning" style="margin-top: 10px; font-size: 0.85rem;">
+            배포 후 <code>clusterPoolIPv4PodCIDRList</code> 변경 불가 — 초기 설계가 중요합니다.
+          </div>
         </div>
-      </div>
-      <div class="callout callout-info" style="margin-top: 12px;">
-        Cilium은 Hybrid Nodes 전용으로 설치됩니다. 클라우드 노드에는 VPC CNI가 별도 운영됩니다.
       </div>
     </div>
   </div>
 
-  <!-- Slide 6: Node Registration Check -->
+  <!-- Slide 8: Node Registration Check -->
   <div class="slide">
     <div class="slide-header">
       <h1>노드 등록 확인</h1>
@@ -411,7 +490,7 @@
     </div>
   </div>
 
-  <!-- Slide 7: Upgrade Strategy -->
+  <!-- Slide 8: Upgrade Strategy -->
   <div class="slide">
     <div class="slide-header">
       <h1>업그레이드 전략</h1>
@@ -419,7 +498,7 @@
     </div>
     <div class="slide-body">
       <div class="col-3">
-        <div class="strategy-card">
+        <div class="strategy-card" style="border-left-color: var(--green);">
           <span class="badge badge-green">권장</span>
           <h4>Rolling Upgrade</h4>
           <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 10px;">
@@ -438,7 +517,7 @@ sudo nodeadm upgrade 1.32 \
 kubectl uncordon hybrid-node-001</div>
         </div>
 
-        <div class="strategy-card">
+        <div class="strategy-card" style="border-left-color: var(--yellow);">
           <span class="badge badge-yellow">안전</span>
           <h4>Canary Upgrade</h4>
           <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 10px;">
@@ -452,7 +531,7 @@ kubectl uncordon hybrid-node-001</div>
           </ul>
         </div>
 
-        <div class="strategy-card">
+        <div class="strategy-card" style="border-left-color: var(--red);">
           <span class="badge badge-red">비상</span>
           <h4>Rollback</h4>
           <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 10px;">
@@ -474,7 +553,7 @@ sudo nodeadm init \
     </div>
   </div>
 
-  <!-- Slide 8: Air-gapped Environment -->
+  <!-- Slide 9: Air-gapped Environment -->
   <div class="slide">
     <div class="slide-header">
       <h1>에어갭 환경</h1>
@@ -519,7 +598,7 @@ hybrid-assets.eks.amazonaws.com
     </div>
   </div>
 
-  <!-- Slide 9: Troubleshooting -->
+  <!-- Slide 10: Troubleshooting -->
   <div class="slide">
     <div class="slide-header">
       <h1>트러블슈팅</h1>
@@ -641,7 +720,7 @@ sudo iptables -L -n | grep 53</div>
     </div>
   </div>
 
-  <!-- Slide 10: Quiz -->
+  <!-- Slide 11: Quiz -->
   <div class="slide">
     <div class="slide-header">
       <h1>Block 3 퀴즈</h1>
@@ -683,7 +762,55 @@ sudo iptables -L -n | grep 53</div>
     </div>
   </div>
 
-  <!-- Slide 11: Thank You -->
+  <!-- Slide 12: Deep Dive & References -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>Deep Dive & References</h1>
+      <p class="subtitle">더 깊이 공부하기 위한 공식 문서와 리소스</p>
+    </div>
+    <div class="slide-body">
+      <div class="col-2">
+        <div>
+          <h3 style="color:var(--accent-light); margin-bottom:12px;">공식 문서</h3>
+          <div class="card" style="background:#0d0d0d; border-left:3px solid var(--accent); margin-bottom:10px; padding:12px;">
+            <div style="font-size:0.88rem;"><strong style="color:var(--accent-light);">EKS Hybrid Nodes - nodeadm</strong></div>
+            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">nodeadm CLI 레퍼런스 및 부트스트랩 가이드</div>
+            <code style="font-size:0.72rem; color:var(--cyan); display:block; margin-top:6px;">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html</code>
+          </div>
+          <div class="card" style="background:#0d0d0d; border-left:3px solid var(--green); margin-bottom:10px; padding:12px;">
+            <div style="font-size:0.88rem;"><strong style="color:var(--green);">NodeConfig YAML Reference</strong></div>
+            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">cluster, hybrid, kubelet, containerd 4개 섹션 상세 스펙</div>
+            <code style="font-size:0.72rem; color:var(--cyan); display:block; margin-top:6px;">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html#hybrid-nodes-nodeconfig</code>
+          </div>
+          <div class="card" style="background:#0d0d0d; border-left:3px solid var(--blue); margin-bottom:10px; padding:12px;">
+            <div style="font-size:0.88rem;"><strong style="color:var(--blue);">Credential Providers (SSM / IAM RA)</strong></div>
+            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">SSM Hybrid Activations vs IAM Roles Anywhere 비교</div>
+            <code style="font-size:0.72rem; color:var(--cyan); display:block; margin-top:6px;">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html</code>
+          </div>
+        </div>
+        <div>
+          <h3 style="color:var(--accent-light); margin-bottom:12px;">추가 리소스</h3>
+          <div class="card" style="background:#0d0d0d; border-left:3px solid var(--orange); margin-bottom:10px; padding:12px;">
+            <div style="font-size:0.88rem;"><strong style="color:var(--orange);">Cilium Install Guide for EKS</strong></div>
+            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">Helm values, IPAM, VXLAN 설정 심층 가이드</div>
+            <code style="font-size:0.72rem; color:var(--cyan); display:block; margin-top:6px;">docs.cilium.io/en/stable/installation/k8s-install-helm/</code>
+          </div>
+          <div class="card" style="background:#0d0d0d; border-left:3px solid #fdcb6e; margin-bottom:10px; padding:12px;">
+            <div style="font-size:0.88rem;"><strong style="color:#fdcb6e;">Air-Gapped Environment Setup</strong></div>
+            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">오프라인 환경에서의 아티팩트 관리 및 PHZ 설정</div>
+            <code style="font-size:0.72rem; color:var(--cyan); display:block; margin-top:6px;">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-artifacts.html</code>
+          </div>
+          <div class="card" style="background:#0d0d0d; border-left:3px solid #DD344C; margin-bottom:10px; padding:12px;">
+            <div style="font-size:0.88rem;"><strong style="color:#DD344C;">Troubleshooting Hybrid Nodes</strong></div>
+            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">공식 트러블슈팅 가이드 및 nodeadm debug 활용</div>
+            <code style="font-size:0.72rem; color:var(--cyan); display:block; margin-top:6px;">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-troubleshooting.html</code>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 13: Thank You -->
   <div class="slide">
     <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:24px; text-align:center;">
       <h1 style="font-size:3rem; background:linear-gradient(135deg, var(--accent-light), var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Thank You</h1>
@@ -710,13 +837,16 @@ sudo iptables -L -n | grep 53</div>
       2: 'nodeadm 4가지 주요 명령어 소개. install, init, upgrade, debug.',
       3: '8단계 부트스트랩 워크플로우 애니메이션. Play 버튼으로 시연.',
       4: 'NodeConfig YAML 4개 섹션. 탭별로 각 섹션 설명.',
-      5: 'Cilium은 Hybrid Nodes 전용. VPC CNI와 별도 운영됩니다.',
-      6: '노드 등록 후 확인 명령어. Ready 상태와 레이블 확인.',
-      7: 'Rolling이 기본 전략. Canary로 안전하게 진행.',
-      8: '에어갭 환경에서는 S3+PHZ+VPC Endpoint 조합 사용.',
-      9: '가장 흔한 3가지 이슈와 해결법. 탭별로 설명.',
-      10: '퀴즈 진행. 정답 확인 후 설명.',
-      11: 'Thank You 슬라이드. Block 4로 안내.'
+      5: 'Cilium이 유일한 AWS 공식 지원 CNI. Calico는 examples repo로 이동됨.\neBPF 기반, Hubble observability, BGP 등이 핵심 차별점.\nv1.18은 kernel 5.10+ 필요.',
+      6: 'Cilium Helm 설치 명령어. AWS ECR Public 공식 빌드 사용.\n설치 후 cilium status로 확인.',
+      7: 'cilium-values.yaml 상세 설정.\nPod CIDR은 배포 후 변경 불가 — 초기 설계가 중요.\n/25 vs /24 노드당 Pod 수 비교.',
+      8: '노드 등록 후 확인 명령어. Ready 상태와 레이블 확인.',
+      9: 'Rolling이 기본 전략. Canary로 안전하게 진행.',
+      10: '에어갭 환경에서는 S3+PHZ+VPC Endpoint 조합 사용.',
+      11: '가장 흔한 3가지 이슈와 해결법. 탭별로 설명.',
+      12: '퀴즈 진행. 정답 확인 후 설명.',
+      13: 'Deep Dive 슬라이드. 공식 문서 링크와 추가 학습 리소스 안내. 수강생이 사진을 찍도록 잠시 대기.',
+      14: 'Thank You 슬라이드. Block 4로 안내.'
     },
     onSlideChange: (index, slide) => {
       if (index === 2) {
@@ -783,14 +913,14 @@ sudo iptables -L -n | grep 53</div>
     ];
 
     const details = [
-      'SSM Hybrid Activation 생성 → activationCode / activationId 획득',
-      'hybrid-assets.eks.amazonaws.com에서 nodeadm 바이너리 다운로드',
-      'kubelet, containerd, iptables 등 컴포넌트 자동 설치',
-      'cluster name, API endpoint, CA cert, Service CIDR 설정',
-      'EKS 클러스터 CA 인증서를 로컬 trust store에 저장',
-      'kubelet 시작 → API Server 연결 → CSR 자동 승인',
-      'Helm으로 Cilium 설치, VXLAN 터널 + Pod CIDR 구성',
-      'kubectl get nodes에서 Ready 상태 확인 완료'
+      { text: 'SSM Activation 또는 IAM Roles Anywhere로 자격 증명 준비', cmd: 'aws ssm create-activation --iam-role HybridNodeRole' },
+      { text: 'hybrid-assets.eks.amazonaws.com에서 nodeadm 바이너리 다운로드', cmd: 'curl -OL https://hybrid-assets.eks...' },
+      { text: 'kubelet, containerd 등 K8s 컴포넌트 자동 설치', cmd: 'sudo nodeadm install 1.31 --credential-provider ssm' },
+      { text: 'cluster, hybrid, kubelet, containerd 4개 섹션 설정', cmd: 'vi nodeconfig.yaml  # cluster.name, hybrid.ssm' },
+      { text: 'EKS 클러스터 CA 인증서를 로컬 trust store에 저장', cmd: 'sudo nodeadm init --config-source file://nodeconfig.yaml' },
+      { text: 'kubelet 시작 → API Server 연결 → CSR 자동 승인', cmd: 'kubectl get csr  # Approved 확인' },
+      { text: 'Helm으로 Cilium 설치, VXLAN 터널 + Pod CIDR 구성', cmd: 'helm install cilium cilium/cilium --set tunnel=vxlan' },
+      { text: 'kubectl get nodes에서 Ready 상태 확인 완료', cmd: 'kubectl get nodes -l eks.amazonaws.com/compute-type=hybrid' },
     ];
 
     let currentStep = -1;
@@ -801,7 +931,7 @@ sudo iptables -L -n | grep 53</div>
 
       const startX = 60;
       const stepWidth = (BASE_W - 120) / steps.length;
-      const centerY = BASE_H / 2 - 20;
+      const centerY = BASE_H / 2 - 55;
       const circleRadius = 28;
 
       // Draw connecting lines first
@@ -838,7 +968,7 @@ sudo iptables -L -n | grep 53</div>
           ctx.shadowBlur = 20;
         } else {
           // Pending
-          bgColor = '#1a1d2e';
+          bgColor = '#0a0a0a';
           borderColor = '#2d3250';
           textColor = '#6b7194';
         }
@@ -878,7 +1008,7 @@ sudo iptables -L -n | grep 53</div>
 
       // Detail box or status text
       if (currentStep >= 0 && currentStep < steps.length) {
-        const boxW = 680, boxH = 52;
+        const boxW = 680, boxH = 72;
         const boxX = (BASE_W - boxW) / 2;
         const boxY = 275;
         const accentColor = currentStep < steps.length ? '#a29bfe' : '#00b894';
@@ -896,9 +1026,9 @@ sudo iptables -L -n | grep 53</div>
         ctx.lineTo(boxX, boxY + r);
         ctx.quadraticCurveTo(boxX, boxY, boxX + r, boxY);
         ctx.closePath();
-        ctx.fillStyle = '#1a1d2e';
+        ctx.fillStyle = '#0a0a0a';
         ctx.fill();
-        ctx.strokeStyle = '#2d3250';
+        ctx.strokeStyle = accentColor;
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
@@ -917,10 +1047,14 @@ sudo iptables -L -n | grep 53</div>
         ctx.textBaseline = 'middle';
         ctx.fillText(`단계 ${currentStep + 1}`, boxX + 16, boxY + boxH / 2);
 
-        // Detail text (right of label)
+        // Detail text - line 1: description
         ctx.font = '500 13px Pretendard, sans-serif';
         ctx.fillStyle = '#e8eaf0';
-        ctx.fillText(details[currentStep], boxX + 80, boxY + boxH / 2);
+        ctx.fillText(details[currentStep].text, boxX + 80, boxY + 22);
+        // Line 2: command (monospace)
+        ctx.font = '500 12px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#a29bfe';
+        ctx.fillText(details[currentStep].cmd, boxX + 80, boxY + 50);
       }
 
       // Status text at bottom

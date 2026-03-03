@@ -367,7 +367,7 @@
   <div class="slide">
     <div class="slide-header">
       <h2>Agenda</h2>
-      <p class="subtitle">총 95분 세션 (휴식 포함)</p>
+      <p class="subtitle">총 40분 세션</p>
     </div>
     <div class="slide-body">
       <div class="agenda-timeline">
@@ -376,7 +376,7 @@
           <div class="agenda-connector"></div>
           <div class="agenda-label">
             <strong>개요 &amp; 아키텍처</strong>
-            <span>25분</span>
+            <span>10분</span>
           </div>
         </div>
         <div class="agenda-step">
@@ -384,15 +384,7 @@
           <div class="agenda-connector"></div>
           <div class="agenda-label">
             <strong>네트워킹 &amp; 트래픽</strong>
-            <span>25분</span>
-          </div>
-        </div>
-        <div class="agenda-step break">
-          <div class="agenda-dot">B</div>
-          <div class="agenda-connector"></div>
-          <div class="agenda-label">
-            <strong>Break</strong>
-            <span>5분</span>
+            <span>10분</span>
           </div>
         </div>
         <div class="agenda-step">
@@ -400,19 +392,19 @@
           <div class="agenda-connector"></div>
           <div class="agenda-label">
             <strong>노드 구성 &amp; 운영</strong>
-            <span>20분</span>
+            <span>10분</span>
           </div>
         </div>
         <div class="agenda-step">
           <div class="agenda-dot">4</div>
           <div class="agenda-label">
             <strong>고급 패턴 &amp; 전략적 가치</strong>
-            <span>20분</span>
+            <span>10분</span>
           </div>
         </div>
       </div>
       <div class="callout callout-info" style="margin-top: 1.5rem;">
-        Block 2 종료 후 5분 휴식이 있습니다. 질문은 각 Block 종료 시 또는 휴식 시간에 받겠습니다.
+        질문은 각 Block 종료 시에 받겠습니다.
       </div>
     </div>
   </div>
@@ -690,8 +682,8 @@
           <tr>
             <td><strong>CNI</strong></td>
             <td>
-              <span class="badge badge-green">Cilium (권장)</span>
-              <span class="badge badge-yellow">Calico</span>
+              <span class="badge badge-green">Cilium (공식 지원)</span>
+              <span class="badge badge-red">Calico (미지원)</span>
             </td>
           </tr>
           <tr>
@@ -819,7 +811,37 @@
     </div>
   </div>
 
-  <!-- Slide 13: Thank You -->
+  <!-- Slide 13: Q&A -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>Q&amp;A</h1>
+    </div>
+    <div class="slide-body" style="display:flex; flex-direction:column; gap:20px;">
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px;">
+        <div class="card" style="text-align:center; padding:20px;">
+          <div style="font-size:1.8rem; margin-bottom:8px;">&#9881;</div>
+          <p style="font-size:.85rem; line-height:1.4;">EKS CP는 AWS 관리형<br/>온프렘 인프라 활용</p>
+        </div>
+        <div class="card" style="text-align:center; padding:20px;">
+          <div style="font-size:1.8rem; margin-bottom:8px;">&#128279;</div>
+          <p style="font-size:.85rem; line-height:1.4;">VPN/DX로 안전한<br/>하이브리드 네트워킹</p>
+        </div>
+        <div class="card" style="text-align:center; padding:20px;">
+          <div style="font-size:1.8rem; margin-bottom:8px;">&#128230;</div>
+          <p style="font-size:.85rem; line-height:1.4;">nodeadm으로 간편한<br/>노드 부트스트랩</p>
+        </div>
+        <div class="card" style="text-align:center; padding:20px;">
+          <div style="font-size:1.8rem; margin-bottom:8px;">&#128273;</div>
+          <p style="font-size:.85rem; line-height:1.4;">SSM 또는 IAM RA<br/>인증 프로바이더</p>
+        </div>
+      </div>
+      <div style="text-align:center; padding:24px; background:linear-gradient(135deg, var(--accent-glow), transparent); border-radius:12px; border:1px solid var(--accent);">
+        <h2 style="color:var(--accent-light); margin-bottom:8px;">궁금한 점이 있으시면 질문해 주세요</h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 14: Thank You -->
   <div class="slide">
     <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:24px; text-align:center;">
       <h1 style="font-size:3rem; background:linear-gradient(135deg, var(--accent-light), var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Thank You</h1>
@@ -1182,7 +1204,7 @@
     logoSrc: '../common/pptx-theme/images/logo_1.png',
     presenterNotes: {
       1: '세션 시작 슬라이드.\n\n자기소개와 세션 개요를 간략히 안내하세요.\n오늘 다룰 내용: EKS Hybrid Nodes 개요, 아키텍처, 네트워킹, 운영, 고급 패턴',
-      2: '전체 95분 세션 구조 설명. Block 2 후 5분 휴식.',
+      2: '전체 40분 세션 구조 설명. 각 Block 10분씩.',
       3: '온프렘 K8s 운영의 현실적 어려움 공감. 특히 AI 서비스 접근 한계 강조.',
       4: '3가지 옵션 비교. Hybrid Nodes는 CP만 AWS 관리하는 경량 옵션.',
       5: '하이레벨 아키텍처 설명. VPN/DX로 연결.',
@@ -1193,7 +1215,8 @@
       10: '지원 OS/아키텍처/리전 확인.',
       11: 'SSM이 간편, IAM RA가 에어갭에 적합.',
       12: '퀴즈 진행. 참여 유도.',
-      13: 'Thank You 슬라이드. Block 2로 안내.'
+      13: 'Q&A 시간. Block 1 핵심 요약과 함께 질문을 받습니다.',
+      14: 'Thank You 슬라이드. Block 2로 안내.'
     },
     onSlideChange: (index, slide) => {
       // Initialize canvases when their slides become active

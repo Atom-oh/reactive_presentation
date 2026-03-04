@@ -3,239 +3,4440 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EKS Hybrid Nodes - 교육 목차</title>
+  <title>EKS Hybrid Nodes 딥다이브</title>
   <link rel="icon" type="image/png" href="../favicon.png">
   <link rel="stylesheet" href="../common/theme.css">
   <link rel="stylesheet" href="../common/theme-override.css">
   <style>
-    body {
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+    /* Cover slide */
+    .cover-slide {
+      padding: 0 !important;
+      overflow: hidden;
+      background: url('../common/pptx-theme/images/Picture_13.png') center/cover no-repeat;
     }
-    .toc-header {
-      text-align: center;
-      padding: 60px 40px 20px;
+    .cover-content {
+      position: absolute; left: 5%; top: 0; bottom: 0; width: 53%;
     }
-    .toc-header h1 {
-      font-size: 2.4rem;
-      background: linear-gradient(135deg, var(--accent-light), var(--cyan));
+    .cover-title {
+      position: absolute; top: 48%; font-size: 2.8rem; font-weight: 300;
+      color: #fff; line-height: 1.2; margin: 0;
+    }
+    .cover-subtitle {
+      position: absolute; top: 62%; font-size: 1.3rem; color: rgba(255,255,255,0.8);
+    }
+    .cover-speaker {
+      position: absolute; top: 76%;
+    }
+    .cover-speaker-name {
+      font-size: 1.05rem; color: #fff; font-weight: 600; margin: 0;
+    }
+    .cover-speaker-title {
+      font-size: 0.9rem; color: rgba(255,255,255,0.65); margin: 6px 0 0 0;
+    }
+    .cover-speaker-company {
+      font-size: 0.9rem; color: rgba(255,255,255,0.65); margin: 2px 0 0 0;
+    }
+    .cover-badge {
+      position: absolute; right: 5%; bottom: 10%; width: 8%; pointer-events: none;
+    }
+    .cover-slide.active ~ .slide-logo,
+    .cover-slide.active ~ .slide-footer,
+    .cover-slide.active ~ .slide-counter,
+    .cover-slide.active ~ .nav-hint { display: none; }
+
+    /* Gradient title */
+    .gradient-title {
+      font-size: 3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #a29bfe, #00cec9, #74b9ff);
+      background-size: 200% 200%;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      margin-bottom: 8px;
+      animation: gradientShift 4s ease infinite;
     }
-    .toc-header .subtitle {
-      color: var(--text-secondary);
-      font-size: 1.05rem;
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
     }
-    .toc-header .duration {
-      display: inline-block;
-      margin-top: 12px;
-      padding: 6px 16px;
-      background: var(--accent-glow);
-      border: 1px solid var(--accent);
-      border-radius: 20px;
-      color: var(--accent-light);
-      font-size: .9rem;
-      font-weight: 600;
+
+    /* Agenda timeline */
+    .agenda-timeline {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      padding: 1rem 0;
+      margin-top: 1rem;
     }
-    .toc-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
-      padding: 40px 64px 80px;
-      max-width: 1200px;
-      margin: 0 auto;
-      width: 100%;
-    }
-    .block-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 28px;
-      transition: all var(--transition-normal);
-      text-decoration: none;
+    .agenda-step {
+      flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      align-items: center;
       position: relative;
     }
-    .block-card:hover {
-      border-color: var(--accent);
-      box-shadow: 0 6px 24px rgba(108, 92, 231, .2);
-      transform: translateY(-3px);
-    }
-    .block-number {
-      font-size: .8rem;
-      font-weight: 700;
-      color: var(--accent-light);
-      font-family: var(--font-mono);
-      letter-spacing: .06em;
-    }
-    .block-card h2 {
-      font-size: 1.2rem;
-      color: var(--text-primary);
-      line-height: 1.3;
-    }
-    .block-card p {
-      color: var(--text-secondary);
-      font-size: .88rem;
-      line-height: 1.55;
-      flex: 1;
-    }
-    .block-meta {
-      display: flex;
-      gap: 10px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
-      flex-wrap: wrap;
-    }
-    .block-meta .badge {
-      font-size: .72rem;
-    }
-    .toc-timeline {
+    .agenda-dot {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      background: var(--bg-tertiary);
+      border: 3px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0;
-      padding: 0 64px;
-      max-width: 1000px;
-      margin: 0 auto;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      z-index: 2;
+      transition: all 0.3s ease;
     }
-    .toc-step {
+    .agenda-step.active .agenda-dot {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .agenda-step.break .agenda-dot {
+      background: var(--yellow);
+      border-color: var(--yellow);
+      color: #000;
+    }
+    .agenda-label {
+      margin-top: 0.67rem;
+      text-align: center;
+      max-width: 7rem;
+    }
+    .agenda-label strong {
+      display: block;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      margin-bottom: 0.2rem;
+    }
+    .agenda-label span {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .agenda-connector {
+      position: absolute;
+      top: 1.25rem;
+      left: calc(50% + 1.25rem);
+      width: calc(100% - 2.5rem);
+      height: 3px;
+      background: var(--border);
+      z-index: 1;
+    }
+    .agenda-step:last-child .agenda-connector { display: none; }
+
+    /* Pain quote card */
+    .pain-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 0.83rem;
+      border-left: 4px solid var(--yellow);
+    }
+    .pain-card h4 {
+      color: var(--yellow);
+      font-size: 1rem;
+      margin-bottom: 0.4rem;
+    }
+    .pain-card p {
+      font-size: 0.92rem;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    /* Canvas responsive */
+    .canvas-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .canvas-container {
+      width: 100%;
+      max-width: 100%;
+      aspect-ratio: 1100 / 450;
+    }
+    .canvas-container canvas {
+      display: block;
+    }
+
+    /* Architecture diagram image */
+    .arch-diagram {
+      max-width: 90%;
+      max-height: 45vh;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    /* Responsibility grid */
+    .resp-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 0.5rem;
+    }
+    .resp-col h3 {
+      font-size: 1.2rem;
+      margin-bottom: 0.67rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .resp-col ul {
+      list-style: none;
+      padding: 0;
+    }
+    .resp-col li {
+      padding: 0.4rem 0.6rem;
+      margin-bottom: 0.4rem;
+      border-radius: 0.33rem;
+      font-size: 0.95rem;
+    }
+    .resp-col.aws li {
+      background: var(--blue-bg);
+      border-left: 3px solid var(--blue);
+      color: var(--blue);
+    }
+    .resp-col.customer li {
+      background: var(--yellow-bg);
+      border-left: 3px solid var(--yellow);
+      color: var(--yellow);
+    }
+
+    /* Constraints list */
+    .constraint-list {
       display: flex;
       flex-direction: column;
+      gap: 0.6rem;
+    }
+    .constraint-item {
+      padding: 0.6rem 0.83rem;
+      border-radius: 0.42rem;
+      border-left: 4px solid var(--yellow);
+      background: var(--yellow-bg);
+      font-size: 0.95rem;
+      color: var(--text-primary);
+    }
+
+    /* Support table */
+    .support-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .support-table th {
+      text-align: left;
+      padding: 0.5rem 0.67rem;
+      border-bottom: 2px solid var(--border);
+      color: var(--text-accent);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+    }
+    .support-table td {
+      padding: 0.5rem 0.67rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.92rem;
+    }
+    .support-table tr:hover td {
+      background: var(--bg-tertiary);
+    }
+
+    /* Compare toggle content */
+    .compare-content { display: none; }
+    .compare-content.active { display: block; }
+
+    /* Animation step indicator */
+    .step-indicator {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      justify-content: center;
+    }
+    .step-dot {
+      width: 0.6rem;
+      height: 0.6rem;
+      border-radius: 50%;
+      background: var(--border);
+      transition: all 0.3s ease;
+    }
+    .step-dot.active {
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+    .step-dot.done {
+      background: var(--green);
+    }
+
+    /* Service icon grid */
+    .service-grid {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+    .service-badge {
+      padding: 0.25rem 0.6rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 0.25rem;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+
+    /* === Section Dividers === */
+    .section-divider {
+      flex-direction: column;
+      gap: 0;
+    }
+    .section-divider .section-number {
+      display: inline-block;
+      font-size: 0.85rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      background: var(--accent-glow);
+      padding: 0.4rem 1.2rem;
+      border-radius: 20px;
+      border: 1px solid var(--accent);
+      margin-bottom: 1.5rem;
+    }
+    .section-divider.active ~ .slide-logo,
+    .section-divider.active ~ .slide-footer,
+    .section-divider.active ~ .slide-counter,
+    .section-divider.active ~ .nav-hint { display: none; }
+
+
+    /* === Block 2: Networking Styles === */
+    .diagram-wrapper {
+      width: 100%;
+      max-width: 750px;
+      max-height: 52vh;
+      margin: 0 auto;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      background: white;
+      aspect-ratio: 1000 / 560;
+    }
+    .diagram-svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .svg-legend {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .legend-item {
+      cursor: pointer;
+      display: flex;
       align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      padding: 4px 10px;
+      border-radius: 6px;
+      transition: all var(--transition-fast);
+    }
+    .legend-item:hover {
+      background: var(--bg-tertiary);
+    }
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .diagram-container {
+      display: flex;
+      justify-content: center;
+      margin: 0.5rem 0;
+    }
+    .diagram-container img {
+      max-width: 85%;
+      border-radius: 12px;
+    }
+    .key-points {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+    .key-point {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 0.5rem 0.75rem;
+      background: #0d0d0d;
+      border-radius: 8px;
+      border-left: 3px solid var(--accent);
+    }
+    .key-point:nth-child(1) { border-left-color: var(--accent); }
+    .key-point:nth-child(2) { border-left-color: var(--green); }
+    .key-point:nth-child(3) { border-left-color: var(--blue); }
+    .key-point:nth-child(4) { border-left-color: var(--orange); }
+    .key-point-icon {
+      color: var(--accent);
+      font-weight: bold;
+      min-width: 20px;
+    }
+    .firewall-table {
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+    .firewall-table th {
+      background: var(--bg-tertiary);
+    }
+    .protocol-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+    }
+    .protocol-tcp { background: var(--blue-bg); color: var(--blue); }
+    .protocol-udp { background: var(--green-bg); color: var(--green); }
+    .endpoint-section h3 {
+      margin-bottom: 0.5rem;
+    }
+    .endpoint-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.5rem;
+    }
+    .endpoint-card {
+      background: #0d0d0d;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+    }
+    .endpoint-card code {
+      font-family: var(--font-mono);
+      color: var(--accent-light);
+      font-size: 0.8rem;
+    }
+    .note-box {
+      margin-top: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      background: #0d0d0d;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      border-left: 3px solid var(--accent);
+    }
+
+
+    /* === Block 3: Node Setup Styles === */
+    .terminal-output {
+      background: #0a0a0a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      line-height: 1.7;
+      color: #00ff88;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .terminal-output .prompt { color: #00b894; }
+    .terminal-output .command { color: #74b9ff; }
+    .terminal-output .output { color: #b0b0b0; }
+    .terminal-output .highlight { color: #fdcb6e; }
+    .terminal-output .label-value { color: #00cec9; }
+    .strategy-card {
+      background: #0d0d0d;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .strategy-card h4 {
+      color: var(--accent-light);
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+    .strategy-card .badge { margin-right: 8px; }
+    .troubleshoot-item { margin-bottom: 12px; }
+    .troubleshoot-item h4 {
+      color: var(--red);
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+    }
+    .troubleshoot-item .cause {
+      color: var(--yellow);
+      font-size: 0.88rem;
+      margin-bottom: 4px;
+    }
+    .troubleshoot-item .solution {
+      color: var(--green);
+      font-size: 0.88rem;
+    }
+    .airgap-box {
+      background: #0d0d0d;
+      border: 1px solid var(--blue);
+      border-radius: 10px;
+      padding: 14px;
+      min-width: 0;
+      flex: 1;
+    }
+    .airgap-box h4 {
+      color: var(--accent-light);
+      margin-bottom: 10px;
+    }
+    .flow-connector {
+      display: flex;
+      align-items: center;
+      font-size: 2rem;
+      color: var(--accent-light);
+      padding: 0 0.5rem;
+      flex-shrink: 0;
+    }
+    /* Bootstrap canvas: move Play/Reset to top-right to avoid overlapping step labels */
+    #bootstrap-canvas + .canvas-controls {
+      top: 8px;
+      bottom: auto;
+    }
+
+    /* === Block 4: Advanced Patterns Styles === */
+    /* Node visualization */
+    .node-viz {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      padding: 16px;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+    }
+    .node-box {
+      padding: 12px;
+      border-radius: 8px;
+      border: 2px solid;
       text-align: center;
     }
-    .toc-dot {
-      width: 36px;
-      height: 36px;
+    .node-box.hybrid {
+      border-color: var(--green);
+      background: var(--green-bg);
+    }
+    .node-box.cloud {
+      border-color: var(--blue);
+      background: var(--blue-bg);
+    }
+    .node-box h4 {
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+    .pod-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      justify-content: center;
+    }
+    .pod-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 700;
+    }
+    .pod-icon.tolerant {
+      background: var(--green);
+      color: #fff;
+    }
+    .pod-icon.normal {
+      background: var(--blue);
+      color: #fff;
+    }
+    .pod-icon.blocked {
+      background: var(--red-bg);
+      border: 1px dashed var(--red);
+      color: var(--red);
+    }
+
+    /* Deletion cost visualization */
+    .deletion-viz {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 20px;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+    }
+    .deletion-pod {
+      flex: 1;
+      padding: 16px;
+      border-radius: 8px;
+      text-align: center;
+      position: relative;
+    }
+    .deletion-pod.onprem {
+      background: var(--green-bg);
+      border: 2px solid var(--green);
+    }
+    .deletion-pod.cloud {
+      background: var(--blue-bg);
+      border: 2px solid var(--blue);
+    }
+    .deletion-order {
+      position: absolute;
+      top: -12px;
+      right: -12px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: .85rem;
+      font-size: 0.85rem;
+    }
+    .deletion-pod.onprem .deletion-order {
+      background: var(--green);
       color: #fff;
     }
-    .toc-dot.b1 { background: var(--accent); }
-    .toc-dot.b2 { background: var(--green); }
-    .toc-dot.b3 { background: var(--blue); }
-    .toc-dot.b4 { background: var(--orange); }
-    .toc-line {
-      flex: 1;
-      height: 2px;
-      background: var(--border);
-      min-width: 40px;
+    .deletion-pod.cloud .deletion-order {
+      background: var(--red);
+      color: #fff;
     }
-    .toc-label {
-      margin-top: 6px;
-      font-size: .75rem;
+    .deletion-arrow {
+      font-size: 2rem;
       color: var(--text-muted);
     }
-    .break-marker {
+
+    /* Compliance cards */
+    .compliance-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .compliance-card {
+      padding: 16px;
+      background: var(--bg-card);
+      border-radius: 10px;
+      border-left: 4px solid var(--accent);
+    }
+    .compliance-card h4 {
+      color: var(--accent-light);
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+    .compliance-card p {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Before/After comparison */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .compare-card {
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .compare-card.before {
+      background: linear-gradient(135deg, var(--red-bg), transparent);
+      border-color: var(--red);
+    }
+    .compare-card.after {
+      background: linear-gradient(135deg, var(--green-bg), transparent);
+      border-color: var(--green);
+    }
+    .compare-card h3 {
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .compare-card.before h3 { color: var(--red); }
+    .compare-card.after h3 { color: var(--green); }
+    .compare-card ul {
+      list-style: none;
+      padding: 0;
+    }
+    .compare-card li {
+      padding: 6px 0;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .compare-card li::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      margin-top: 8px;
+      flex-shrink: 0;
+    }
+    .compare-card.before li::before { background: var(--red); }
+    .compare-card.after li::before { background: var(--green); }
+
+    /* Cost metrics */
+    .cost-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .cost-card {
+      padding: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      text-align: center;
+    }
+    .cost-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--accent-light);
+      margin-bottom: 4px;
+    }
+    .cost-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .cost-desc {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Takeaway cards */
+    .takeaway-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .takeaway-card {
+      padding: 16px 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .takeaway-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .takeaway-icon {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+    }
+    .takeaway-card p {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Q&A section */
+    .qna-section {
+      text-align: center;
+      padding: 24px;
+      background: linear-gradient(135deg, var(--accent-glow), transparent);
+      border-radius: 12px;
+      border: 1px solid var(--accent);
+    }
+    .qna-section h2 {
+      color: var(--accent-light);
+      margin-bottom: 8px;
+    }
+
+    /* VS comparison grid (slide 10) */
+    .vs-table {
       display: flex;
       flex-direction: column;
-      align-items: center;
+      gap: 8px;
     }
-    .break-marker .toc-dot {
-      background: var(--bg-tertiary);
-      border: 2px dashed var(--border);
+    .vs-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+    .vs-row.vs-header {
+      margin-bottom: 2px;
+    }
+    .vs-header .vs-cell {
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
       color: var(--text-muted);
-      font-size: .65rem;
-    }
-    .nav-back {
-      display: inline-flex;
+      padding: 6px 10px;
+      display: flex;
       align-items: center;
-      gap: 6px;
+    }
+    .vs-cell {
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+    .vs-cell.tanzu {
+      background: var(--red-bg);
+      border: 1px solid rgba(255,75,75,0.25);
+    }
+    .vs-cell.eks {
+      background: var(--green-bg);
+      border: 1px solid rgba(75,255,130,0.25);
+    }
+    .vs-cell.metric {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      text-align: center;
+      font-weight: 600;
+      color: var(--accent-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .vs-cell .vs-label {
+      font-weight: 600;
+      font-size: 0.78rem;
+      margin-bottom: 3px;
+      display: block;
+    }
+    .vs-cell.tanzu .vs-label { color: var(--red); }
+    .vs-cell.eks .vs-label { color: var(--green); }
+    .vs-cell .vs-desc {
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+    }
+
+    /* Resource links */
+    .resource-links {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+    .resource-link {
+      padding: 10px 16px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+    }
+    .resource-link:hover {
+      border-color: var(--accent);
+      color: var(--accent-light);
+    }
+
+    /* GitBook ref link */
+    .ref-link {
+      position: absolute;
+      bottom: 36px;
+      right: 20px;
+      font-size: 0.7rem;
       color: var(--text-muted);
       text-decoration: none;
-      font-size: .88rem;
-      padding: 20px 64px 0;
-      transition: color var(--transition-fast);
+      opacity: 0.6;
+      transition: opacity 0.2s;
     }
-    .nav-back:hover { color: var(--accent-light); }
+    .ref-link:hover { opacity: 1; color: var(--accent-light); }
+
+    /* Canvas container adjustments */
+    .canvas-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .canvas-container canvas {
+      flex: 1;
+      width: 100%;
+      height: auto;
+    }
+
   </style>
 </head>
 <body>
-  <a href="../index.html" class="nav-back">&larr; All Presentations</a>
+<div class="slide-deck">
 
-  <div class="toc-header">
-    <h1>EKS Hybrid Nodes</h1>
-    <p class="subtitle">이제는 Amazon EKS를 온프레미스에서도 — 아키텍처, 네트워킹, 노드 운영, 전략적 가치</p>
-    <div class="duration">Total: ~40 min</div>
-    <div class="export-toolbar">
-      <button class="export-btn" onclick="ExportUtils.exportPDF({ title: 'EKS Hybrid Nodes' })">
-        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        Export PDF
-      </button>
-      <button class="export-btn" onclick="ExportUtils.downloadZIP()">
-        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Download ZIP
-      </button>
+  <!-- =============================== -->
+  <!-- Block 1: 개요 & 아키텍처 (14 slides) -->
+  <!-- =============================== -->
+  <!-- Slide 1: Cover -->
+  <div class="slide cover-slide">
+    <div class="cover-content">
+      <h1 class="cover-title">EKS Hybrid Nodes</h1>
+      <p class="cover-subtitle">이제는 Amazon EKS를 온프레미스에서도</p>
+      <div class="cover-speaker">
+        <p class="cover-speaker-name">Junseok Oh</p>
+        <p class="cover-speaker-title">Sr. Solutions Architect</p>
+        <p class="cover-speaker-company">Amazon Web Services</p>
+      </div>
+    </div>
+    <img src="../common/pptx-theme/images/Picture_8.png" alt="" class="cover-badge">
+  </div>
+
+
+  <!-- Slide 2: Agenda -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>Agenda</h2>
+      <p class="subtitle">총 40분 세션</p>
+    </div>
+    <div class="slide-body">
+      <div class="agenda-timeline">
+        <div class="agenda-step active">
+          <div class="agenda-dot">1</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>개요 &amp; 아키텍처</strong>
+            <span>10분</span>
+          </div>
+        </div>
+        <div class="agenda-step">
+          <div class="agenda-dot">2</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>네트워킹 &amp; 트래픽</strong>
+            <span>10분</span>
+          </div>
+        </div>
+        <div class="agenda-step">
+          <div class="agenda-dot">3</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>노드 구성 &amp; 운영</strong>
+            <span>10분</span>
+          </div>
+        </div>
+        <div class="agenda-step">
+          <div class="agenda-dot">4</div>
+          <div class="agenda-label">
+            <strong>고급 패턴 &amp; 전략적 가치</strong>
+            <span>10분</span>
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-info" style="margin-top: 1.5rem;">
+        질문은 각 Block 종료 시에 받겠습니다.
+      </div>
     </div>
   </div>
 
-  <!-- Timeline -->
-  <div class="toc-timeline">
-    <div class="toc-step"><div class="toc-dot b1">1</div><div class="toc-label">10min</div></div>
-    <div class="toc-line"></div>
-    <div class="toc-step"><div class="toc-dot b2">2</div><div class="toc-label">10min</div></div>
-    <div class="toc-line"></div>
-    <div class="toc-step"><div class="toc-dot b3">3</div><div class="toc-label">10min</div></div>
-    <div class="toc-line"></div>
-    <div class="toc-step"><div class="toc-dot b4">4</div><div class="toc-label">10min</div></div>
+
+  <!-- Slide 3: Pain Points -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>온프레미스 Kubernetes 운영의 현실</h2>
+    </div>
+    <div class="slide-body">
+      <div class="col-2">
+        <div class="pain-card">
+          <h4>Control Plane 관리 부담</h4>
+          <p>"버전 업그레이드, etcd 백업/복구, 인증서 갱신... 운영팀의 야근이 끊이지 않습니다"</p>
+        </div>
+        <div class="pain-card">
+          <h4>보안 패치 &amp; 컴플라이언스</h4>
+          <p>"CVE 대응, CIS 벤치마크 준수, 감사 대응에 수개월이 소요됩니다"</p>
+        </div>
+        <div class="pain-card">
+          <h4>모니터링 사일로</h4>
+          <p>"온프렘과 클라우드 환경 간 통합 관측이 어렵습니다"</p>
+        </div>
+        <div class="pain-card">
+          <h4>최신 AI 서비스 접근의 한계</h4>
+          <p>"온프렘 단독 환경에서 최신 AI 모델 활용과 Agent 개발이 어렵습니다"</p>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Block Cards -->
-  <div class="toc-grid">
-    <a href="01-overview-architecture.html" class="block-card">
-      <div class="block-number">BLOCK 01</div>
-      <h2>EKS Hybrid Nodes 개요 &amp; 아키텍처</h2>
-      <p>EKS Hybrid Nodes 정의, 아키텍처 개요, 노드 등록 플로우, Managed Services 연계, 책임 공유 모델, 크리덴셜 프로바이더 비교.</p>
-      <div class="block-meta">
-        <span class="badge badge-blue">10분</span>
-        <span class="badge badge-green">14 slides</span>
-        <span class="badge badge-yellow">Canvas Animation</span>
-      </div>
-    </a>
 
-    <a href="02-networking-traffic.html" class="block-card">
-      <div class="block-number">BLOCK 02</div>
-      <h2>네트워킹 &amp; 트래픽 패턴</h2>
-      <p>네트워크 전제 조건, CIDR 설계, 6가지 트래픽 패턴 심층 분석, 방화벽 규칙, VPC 엔드포인트 구성.</p>
-      <div class="block-meta">
-        <span class="badge badge-blue">10분</span>
-        <span class="badge badge-green">14 slides</span>
-        <span class="badge badge-yellow">Animated SVG</span>
+  <!-- Slide 4: EKS Portfolio -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>EKS Hybrid/Edge 포트폴리오</h2>
+    </div>
+    <div class="slide-body">
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="anywhere">EKS Anywhere</button>
+        <button class="tab-btn" data-tab="hybrid">EKS Hybrid Nodes</button>
+        <button class="tab-btn" data-tab="outposts">EKS on Outposts</button>
       </div>
-    </a>
-
-    <a href="03-node-setup.html" class="block-card">
-      <div class="block-number">BLOCK 03</div>
-      <h2>노드 구성 &amp; 운영</h2>
-      <p>nodeadm CLI, Bootstrap 워크플로우, NodeConfig YAML, Cilium CNI 설치, 업그레이드 전략, 에어갭 환경, 트러블슈팅.</p>
-      <div class="block-meta">
-        <span class="badge badge-blue">10분</span>
-        <span class="badge badge-green">11 slides</span>
-        <span class="badge badge-yellow">Canvas Animation</span>
+      <div class="tab-content active" data-tab="anywhere">
+        <div class="card">
+          <h3 style="color: var(--cyan);">EKS Anywhere</h3>
+          <p style="margin: 0.5rem 0;">완전한 온프레미스 Kubernetes 배포</p>
+          <ul style="margin-top: 0.67rem;">
+            <li><span class="badge badge-blue">Control Plane</span> + <span class="badge badge-blue">Worker</span> 모두 온프레미스</li>
+            <li>VMware vSphere, Bare Metal, CloudStack 지원</li>
+            <li>AWS와 독립적으로 실행 가능 (Air-gapped 환경)</li>
+            <li>EKS Connector로 콘솔 통합 관리 가능</li>
+          </ul>
+        </div>
       </div>
-    </a>
-
-    <a href="04-advanced-patterns.html" class="block-card">
-      <div class="block-number">BLOCK 04</div>
-      <h2>고급 패턴 &amp; 전략적 가치</h2>
-      <p>Taint/Toleration, GPU 워크로드, Cloud Bursting, 규제 대응, Managed Services 연계, Agent 개발 가속화, 비용 최적화.</p>
-      <div class="block-meta">
-        <span class="badge badge-blue">10분</span>
-        <span class="badge badge-green">12 slides</span>
-        <span class="badge badge-yellow">Canvas Animation</span>
+      <div class="tab-content" data-tab="hybrid">
+        <div class="card highlight">
+          <h3 style="color: var(--accent-light);">EKS Hybrid Nodes</h3>
+          <p style="margin: 0.5rem 0;">Control Plane은 AWS, Worker는 온프레미스</p>
+          <ul style="margin-top: 0.67rem;">
+            <li><span class="badge badge-green">AWS 관리형</span> Control Plane + <span class="badge badge-yellow">고객 관리</span> Worker</li>
+            <li>VPN 또는 Direct Connect 연결 필수</li>
+            <li>AWS 서비스 (Bedrock, SageMaker 등) 즉시 연계 가능</li>
+            <li>온프렘 GPU/특수 하드웨어 활용 + 클라우드 관리 편의성</li>
+          </ul>
+        </div>
       </div>
-    </a>
+      <div class="tab-content" data-tab="outposts">
+        <div class="card">
+          <h3 style="color: var(--orange);">EKS on Outposts</h3>
+          <p style="margin: 0.5rem 0;">AWS 하드웨어를 고객 데이터센터에 설치</p>
+          <ul style="margin-top: 0.67rem;">
+            <li>AWS가 하드웨어까지 관리 (완전 관리형)</li>
+            <li>로컬 Kubernetes + AWS 서비스 일체형</li>
+            <li>최소 지연 시간, 데이터 지역성 보장</li>
+            <li>초기 투자 비용 및 공간 요구사항 있음</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   </div>
-<script src="../common/export-utils.js"></script>
+
+
+  <!-- Slide 5: What is Hybrid Nodes -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>EKS Hybrid Nodes란?</h2>
+    </div>
+    <div class="slide-body" style="align-items: center; overflow-y: auto;">
+      <div class="card" style="max-width: 800px; text-align: center; margin-bottom: 1rem;">
+        <p style="font-size: 1.15rem; color: var(--text-primary); line-height: 1.8;">
+          <strong style="color: var(--accent-light);">EKS Control Plane</strong>(AWS 완전 관리) +
+          <strong style="color: var(--yellow);">Worker Node</strong>(온프레미스) 하이브리드 구성
+        </p>
+        <div class="service-grid" style="justify-content: center; margin-top: 0.67rem;">
+          <span class="service-badge">VPN</span>
+          <span class="service-badge">Direct Connect</span>
+          <span class="service-badge">Private Endpoint</span>
+        </div>
+      </div>
+      <img src="diagrams/hybrid-nodes-highlevel-network.png" alt="EKS Hybrid Nodes Architecture" class="arch-diagram">
+      <div class="columns" style="margin-top: 1rem; gap: 1rem;">
+        <div class="card" style="flex:1;">
+          <h4 style="color: var(--green); margin-bottom: 0.5rem;">적합한 사용 사례</h4>
+          <ul style="font-size:0.85rem; line-height:1.7;">
+            <li>온프레미스 GPU/특수 하드웨어 활용</li>
+            <li>규제 준수를 위한 데이터 지역성 요구</li>
+            <li>지연 시간에 민감한 Edge 워크로드</li>
+            <li>클라우드 마이그레이션 전환기</li>
+          </ul>
+        </div>
+        <div class="card" style="flex:1;">
+          <h4 style="color: var(--red); margin-bottom: 0.5rem;">부적합한 사용 사례</h4>
+          <ul style="font-size:0.85rem; line-height:1.7;">
+            <li><strong>순수 클라우드 네이티브 워크로드</strong> → EKS managed node group 또는 Fargate 권장</li>
+            <li>온프레미스 인프라가 없는 환경</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 6: Architecture Canvas -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>아키텍처 개요: 노드 등록 흐름</h2>
+    </div>
+    <div class="slide-body">
+      <div class="canvas-wrapper">
+        <div class="canvas-container">
+          <canvas id="archCanvas"></canvas>
+        </div>
+      </div>
+      <div class="step-indicator" id="archSteps">
+        <div class="step-dot" data-step="0"></div>
+        <div class="step-dot" data-step="1"></div>
+        <div class="step-dot" data-step="2"></div>
+        <div class="step-dot" data-step="3"></div>
+      </div>
+      <div style="text-align: center; margin-top: 0.5rem;">
+        <span id="archStepLabel" style="font-size: 0.9rem; color: var(--text-muted);">↑↓ 키로 단계를 이동하세요</span>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 7: IaaS Beyond Canvas -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>IaaS를 넘어서는 가치</h2>
+      <p class="subtitle">Hybrid Nodes = AWS Managed Services Gateway</p>
+    </div>
+    <div class="slide-body">
+      <div class="canvas-wrapper">
+        <div class="canvas-container" style="aspect-ratio: 1100 / 400;">
+          <canvas id="servicesCanvas"></canvas>
+        </div>
+      </div>
+      <div class="col-3" style="margin-top: 0.67rem;">
+        <div class="card" style="text-align: center;">
+          <h4 style="color: var(--cyan);">AI/ML</h4>
+          <p style="font-size: 0.85rem;">Bedrock, SageMaker</p>
+        </div>
+        <div class="card" style="text-align: center;">
+          <h4 style="color: var(--green);">Database</h4>
+          <p style="font-size: 0.85rem;">RDS, ElastiCache</p>
+        </div>
+        <div class="card" style="text-align: center;">
+          <h4 style="color: var(--orange);">Analytics</h4>
+          <p style="font-size: 0.85rem;">OpenSearch, Kinesis</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 8: Shared Responsibility -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>책임 공유 모델</h2>
+    </div>
+    <div class="slide-body">
+      <div class="resp-grid">
+        <div class="resp-col aws">
+          <h3><span class="badge badge-blue">AWS</span> AWS 관리 영역</h3>
+          <ul>
+            <li>EKS Control Plane 가용성</li>
+            <li>etcd 백업 및 복구</li>
+            <li>API Server 고가용성</li>
+            <li>Kubernetes 버전 업그레이드</li>
+            <li>Control Plane 보안 패치</li>
+          </ul>
+        </div>
+        <div class="resp-col customer">
+          <h3><span class="badge badge-yellow">Customer</span> 고객 관리 영역</h3>
+          <ul>
+            <li>Worker 노드 (HW, OS, 런타임)</li>
+            <li>온프레미스 네트워크 연결</li>
+            <li>CNI 구성 (Cilium/Calico)</li>
+            <li>모니터링 에이전트 배포</li>
+            <li>워크로드 배포 및 관리</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout callout-info" style="margin-top: 1rem;">
+        Control Plane 운영 부담이 AWS로 이전되어, 팀은 워크로드와 비즈니스 로직에 집중할 수 있습니다.
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 9: Constraints -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>주요 제약 사항</h2>
+      <p class="subtitle">도입 전 반드시 확인해야 할 사항</p>
+    </div>
+    <div class="slide-body">
+      <div class="constraint-list">
+        <div class="constraint-item">
+          <strong>IPv4 전용</strong> - IPv6 네트워크는 현재 미지원
+        </div>
+        <div class="constraint-item">
+          <strong>Remote Network CIDR</strong> - 클러스터당 최대 15개까지 등록 가능
+        </div>
+        <div class="constraint-item">
+          <strong>VPC CNI 미지원</strong> - Cilium 또는 Calico 사용 필수
+        </div>
+        <div class="constraint-item">
+          <strong>vCPU 기반 과금</strong> - Hybrid Node당 $0.01/vCPU/시간
+        </div>
+        <div class="constraint-item">
+          <strong>엔드포인트 모드 제한</strong> - "Public and Private" 동시 사용 불가, 반드시 하나만 선택
+        </div>
+      </div>
+      <div class="callout callout-warning" style="margin-top: 1rem;">
+        네트워크 설계 시 CIDR 제한과 CNI 요구사항을 미리 검토하세요.
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 10: Supported Environments -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>지원 환경</h2>
+    </div>
+    <div class="slide-body">
+      <table class="support-table">
+        <thead>
+          <tr>
+            <th>항목</th>
+            <th>지원 사양</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>운영 체제</strong></td>
+            <td>
+              <span class="badge badge-green">Ubuntu 20.04/22.04/24.04</span>
+              <span class="badge badge-green">RHEL 8/9</span>
+              <span class="badge badge-green">Amazon Linux 2023</span>
+              <span class="badge badge-blue">Bottlerocket (VMware)</span>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>아키텍처</strong></td>
+            <td>
+              <span class="badge badge-blue">x86_64</span>
+              <span class="badge badge-blue">arm64 (ARMv8.2+)</span>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>EKS 버전</strong></td>
+            <td><span class="badge badge-green">1.31+</span></td>
+          </tr>
+          <tr>
+            <td><strong>리전</strong></td>
+            <td>대부분의 AWS 상용 리전 지원</td>
+          </tr>
+          <tr>
+            <td><strong>CNI</strong></td>
+            <td>
+              <span class="badge badge-green">Cilium (공식 지원)</span>
+              <span class="badge badge-red">Calico (미지원)</span>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Container Runtime</strong></td>
+            <td><span class="badge badge-blue">containerd 1.6+</span></td>
+          </tr>
+          <tr>
+            <td><strong>최소 하드웨어</strong></td>
+            <td>
+              <span class="badge badge-yellow">CPU 1 vCPU</span>
+              <span class="badge badge-yellow">Memory 1 GiB</span>
+              <span class="badge badge-yellow">Disk 50 GB</span>
+              <span style="font-size:0.8rem; color:var(--text-muted); margin-left:0.5rem;">권장: 4코어 / 8GB / 100GB NVMe</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- Slide 11: Credential Providers -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>크리덴셜 프로바이더</h2>
+      <p class="subtitle">노드 인증 방식 선택</p>
+    </div>
+    <div class="slide-body">
+      <div class="compare-toggle">
+        <button class="compare-btn active" data-compare="ssm">SSM Hybrid Activations</button>
+        <button class="compare-btn" data-compare="iam">IAM Roles Anywhere</button>
+      </div>
+      <div class="compare-content active" data-compare="ssm">
+        <div class="card" style="display:flex; gap:1.5rem; align-items:flex-start;">
+          <div style="flex:1;">
+            <h3 style="color: var(--green);">SSM Hybrid Activations</h3>
+            <ul style="margin: 0.67rem 0;">
+              <li>PKI 인프라 불필요 - 빠른 설정</li>
+              <li>Activation Code + ID로 간편 등록</li>
+              <li>자동 자격 증명 갱신</li>
+              <li>세션 지속 시간: 최대 1시간</li>
+            </ul>
+          </div>
+          <div class="code-block" style="flex:1; font-size: 0.8rem;">
+<span class="comment"># nodeadm 설정 예시 (SSM)</span>
+<span class="key">apiVersion</span>: node.eks.aws/v1alpha1
+<span class="key">kind</span>: NodeConfig
+<span class="key">spec</span>:
+  <span class="key">cluster</span>:
+    <span class="key">name</span>: <span class="string">my-cluster</span>
+    <span class="key">region</span>: <span class="string">ap-northeast-2</span>
+  <span class="key">hybrid</span>:
+    <span class="key">ssm</span>:
+      <span class="key">activationCode</span>: <span class="string">xxxxxxxx</span>
+      <span class="key">activationId</span>: <span class="string">xxxxxxxx-xxxx-xxxx</span></div>
+        </div>
+      </div>
+      <div class="compare-content" data-compare="iam">
+        <div class="card" style="display:flex; gap:1.5rem; align-items:flex-start;">
+          <div style="flex:1;">
+            <h3 style="color: var(--cyan);">IAM Roles Anywhere</h3>
+            <ul style="margin: 0.67rem 0;">
+              <li>기존 PKI 인프라 활용 가능</li>
+              <li>X.509 인증서 기반 인증</li>
+              <li>세션 지속 시간: 최대 12시간</li>
+              <li>에어갭(Air-gapped) 환경에 적합</li>
+            </ul>
+          </div>
+          <div class="code-block" style="flex:1; font-size: 0.8rem;">
+<span class="comment"># nodeadm 설정 예시 (IAM Roles Anywhere)</span>
+<span class="key">apiVersion</span>: node.eks.aws/v1alpha1
+<span class="key">kind</span>: NodeConfig
+<span class="key">spec</span>:
+  <span class="key">cluster</span>:
+    <span class="key">name</span>: <span class="string">my-cluster</span>
+    <span class="key">region</span>: <span class="string">ap-northeast-2</span>
+  <span class="key">hybrid</span>:
+    <span class="key">iamRolesAnywhere</span>:
+      <span class="key">trustAnchorArn</span>: <span class="string">arn:aws:rolesanywhere:...</span>
+      <span class="key">profileArn</span>: <span class="string">arn:aws:rolesanywhere:...</span>
+      <span class="key">roleArn</span>: <span class="string">arn:aws:iam::...</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 12: Quiz -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>Block 1 Quiz</h2>
+      <p class="subtitle">학습 내용을 확인해 봅시다</p>
+    </div>
+    <div class="slide-body" style="overflow-y: auto;">
+      <div class="quiz" data-quiz="b1-q1">
+        <p class="quiz-question">Q1. EKS Hybrid Nodes에 적합하지 않은 사용 사례는?</p>
+        <div class="quiz-options">
+          <button class="quiz-option" data-correct="false">A. 온프레미스 GPU 서버 활용</button>
+          <button class="quiz-option" data-correct="false">B. 규제 준수를 위한 데이터 지역성</button>
+          <button class="quiz-option" data-correct="true">C. 순수 클라우드 네이티브 워크로드 실행</button>
+          <button class="quiz-option" data-correct="false">D. 지연 시간 민감한 Edge 워크로드</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz" data-quiz="b1-q2">
+        <p class="quiz-question">Q2. EKS Hybrid Nodes가 지원하는 운영 체제 조합은?</p>
+        <div class="quiz-options">
+          <button class="quiz-option" data-correct="false">A. Windows Server 2019, Ubuntu 22.04</button>
+          <button class="quiz-option" data-correct="true">B. Ubuntu 20.04/22.04, Amazon Linux 2023, RHEL 8/9</button>
+          <button class="quiz-option" data-correct="false">C. CentOS 7, Debian 11, Fedora 38</button>
+          <button class="quiz-option" data-correct="false">D. macOS Ventura, Ubuntu 18.04</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz" data-quiz="b1-q3">
+        <p class="quiz-question">Q3. EKS Hybrid Nodes의 최소 하드웨어 요구 사항(AWS 공식)은?</p>
+        <div class="quiz-options">
+          <button class="quiz-option" data-correct="true">A. CPU 1 vCPU, Memory 1 GiB</button>
+          <button class="quiz-option" data-correct="false">B. CPU 2 vCPU, Memory 4 GiB</button>
+          <button class="quiz-option" data-correct="false">C. CPU 4 vCPU, Memory 8 GiB</button>
+          <button class="quiz-option" data-correct="false">D. CPU 8 vCPU, Memory 16 GiB</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 13: Q&A -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>Q&amp;A</h1>
+    </div>
+    <div class="slide-body" style="display:flex; flex-direction:column; gap:20px;">
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px;">
+        <div class="card" style="text-align:center; padding:20px;">
+          <div style="font-size:1.8rem; margin-bottom:8px;">&#9881;</div>
+          <p style="font-size:.85rem; line-height:1.4;">EKS CP는 AWS 관리형<br/>온프렘 인프라 활용</p>
+        </div>
+        <div class="card" style="text-align:center; padding:20px;">
+          <div style="font-size:1.8rem; margin-bottom:8px;">&#128279;</div>
+          <p style="font-size:.85rem; line-height:1.4;">VPN/DX로 안전한<br/>하이브리드 네트워킹</p>
+        </div>
+        <div class="card" style="text-align:center; padding:20px;">
+          <div style="font-size:1.8rem; margin-bottom:8px;">&#128230;</div>
+          <p style="font-size:.85rem; line-height:1.4;">nodeadm으로 간편한<br/>노드 부트스트랩</p>
+        </div>
+        <div class="card" style="text-align:center; padding:20px;">
+          <div style="font-size:1.8rem; margin-bottom:8px;">&#128273;</div>
+          <p style="font-size:.85rem; line-height:1.4;">SSM 또는 IAM RA<br/>인증 프로바이더</p>
+        </div>
+      </div>
+      <div style="text-align:center; padding:24px; background:linear-gradient(135deg, var(--accent-glow), transparent); border-radius:12px; border:1px solid var(--accent);">
+        <h2 style="color:var(--accent-light); margin-bottom:8px;">궁금한 점이 있으시면 질문해 주세요</h2>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Section Divider: Block 2 -->
+  <div class="slide title-slide section-divider">
+    <div class="section-number">BLOCK 02</div>
+    <h1>네트워킹 심층분석</h1>
+    <p class="subtitle">CIDR 설계, 6가지 트래픽 패턴, 방화벽 규칙</p>
+  </div>
+
+  <!-- =============================== -->
+  <!-- Block 2: 네트워킹 & 트래픽 (13 slides) -->
+  <!-- =============================== -->
+  <!-- Slide 2: 네트워크 전제 조건 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>네트워크 전제 조건</h2>
+      <p class="subtitle">EKS Hybrid Nodes를 위한 네트워크 아키텍처 요구사항</p>
+    </div>
+    <div class="slide-body">
+      <div class="diagram-container">
+        <img src="diagrams/hybrid-prereq-diagram.png" alt="Hybrid Nodes Prerequisites Diagram">
+      </div>
+      <div class="key-points">
+        <div class="key-point">
+          <span class="key-point-icon">1</span>
+          <span>VPC에 EKS Control Plane ENI가 배치됨</span>
+        </div>
+        <div class="key-point">
+          <span class="key-point-icon">2</span>
+          <span>Transit Gateway 또는 Virtual Private Gateway로 온프렘 연결</span>
+        </div>
+        <div class="key-point">
+          <span class="key-point-icon">3</span>
+          <span>Remote Node/Pod CIDR을 클러스터 생성 시 지정</span>
+        </div>
+        <div class="key-point">
+          <span class="key-point-icon">4</span>
+          <span>권장 네트워크 지연시간: <strong style="color:var(--green);">100ms 이하</strong> (Direct Connect 시 &lt;10ms 가능, 200ms 초과 시 연결 불안정)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 3: CIDR 설계 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>CIDR 설계 체크리스트</h2>
+      <p class="subtitle">IP 충돌 없는 하이브리드 네트워크 설계</p>
+    </div>
+    <div class="slide-body">
+      <ul class="checklist">
+        <li onclick="this.classList.toggle('checked')">
+          <span class="check"></span>
+          <span><strong>Remote Node CIDR:</strong> 온프렘 노드 IP 범위 (예: 10.80.0.0/16)</span>
+        </li>
+        <li onclick="this.classList.toggle('checked')">
+          <span class="check"></span>
+          <span><strong>Remote Pod CIDR:</strong> 온프렘 파드 IP 범위 (예: 10.85.0.0/16)</span>
+        </li>
+        <li onclick="this.classList.toggle('checked')">
+          <span class="check"></span>
+          <span>VPC CIDR과 겹치지 않을 것</span>
+        </li>
+        <li onclick="this.classList.toggle('checked')">
+          <span class="check"></span>
+          <span>Service CIDR과 겹치지 않을 것</span>
+        </li>
+        <li onclick="this.classList.toggle('checked')">
+          <span class="check"></span>
+          <span>RFC-1918 범위 내에 있을 것 (10.x, 172.16-31.x, 192.168.x)</span>
+        </li>
+        <li onclick="this.classList.toggle('checked')">
+          <span class="check"></span>
+          <span>최대 15개 CIDR 블록 제한 준수</span>
+        </li>
+      </ul>
+      <div class="callout callout-info" style="margin-top:1rem;">
+        <strong>권장사항:</strong> Pod CIDR은 라우팅 가능하게 설계 (BGP 사용) — Admission Webhook 등 CP→Pod 통신에 필수
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 4: Pattern 1 - Kubelet → Control Plane -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>Pattern 1: Kubelet → EKS Control Plane</h2>
+      <p class="subtitle">Kubelet이 API 서버에 연결하는 경로</p>
+    </div>
+    <div class="slide-body">
+      <div class="diagram-wrapper">
+        <object data="images/hybrid-nodes-kubelet-to-cp.svg" type="image/svg+xml" class="diagram-svg"></object>
+      </div>
+      <div class="svg-legend">
+        <div class="legend-item" onclick="togglePath('public', this)">
+          <span class="legend-dot" style="background:#FF9900;"></span>
+          Public Endpoint Route
+        </div>
+        <div class="legend-item" onclick="togglePath('private', this)">
+          <span class="legend-dot" style="background:#00A4EF;"></span>
+          Private Endpoint Route
+        </div>
+      </div>
+      <div class="note-box" style="border-left-color: #FF9900;">
+        <strong>권장:</strong> 프로덕션 환경에서는 Private 엔드포인트 사용 권장
+        <div style="margin-top:6px;"><code style="font-size:0.78rem; color:var(--cyan);">aws eks update-cluster-config --name &lt;cluster&gt; --resources-vpc-config endpointPrivateAccess=true</code></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 5: Pattern 2 - CP → Kubelet -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>Pattern 2: Control Plane → Kubelet</h2>
+      <p class="subtitle">API Server가 Kubelet에 연결 (port 10250)</p>
+    </div>
+    <div class="slide-body">
+      <div class="diagram-wrapper">
+        <object data="images/hybrid-nodes-cp-to-kubelet.svg" type="image/svg+xml" class="diagram-svg"></object>
+      </div>
+      <div class="svg-legend">
+        <div class="legend-item" onclick="togglePath('main', this)">
+          <span class="legend-dot" style="background:#DD344C;"></span>
+          CP → Kubelet (port 10250)
+        </div>
+      </div>
+      <div class="note-box" style="border-left-color: #DD344C;">
+        <strong>용도:</strong> Webhook 호출, kubectl exec/logs 명령 처리
+        <div style="margin-top:6px;"><code style="font-size:0.78rem; color:var(--cyan);"># 방화벽에서 TCP 10250 허용 필요</code></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 6: Pattern 3 - Pod → CP -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>Pattern 3: Pod → EKS Control Plane</h2>
+      <p class="subtitle">Pod가 CoreDNS를 경유하여 API Server에 접근</p>
+    </div>
+    <div class="slide-body">
+      <div class="diagram-wrapper">
+        <object data="images/hybrid-nodes-pod-to-cp.svg" type="image/svg+xml" class="diagram-svg"></object>
+      </div>
+      <div class="svg-legend">
+        <div class="legend-item" onclick="togglePath('direct', this)">
+          <span class="legend-dot" style="background:#DD344C;"></span>
+          Pod → API Server (with CNI NAT)
+        </div>
+      </div>
+      <div class="note-box" style="border-left-color: #00A4EF;">
+        <strong>CNI 동작:</strong> Pod IP (10.85.x.x)를 Node IP (10.80.x.x)로 SNAT 처리 후 전송
+        <div style="margin-top:6px;"><code style="font-size:0.78rem; color:var(--cyan);">cilium status --verbose  # NAT 정책 확인</code></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 7: Pattern 4 - CP → Pod -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>Pattern 4: Control Plane → Pod (Webhooks)</h2>
+      <p class="subtitle">Admission Webhook 호출 — Routable Pod CIDR 필수</p>
+    </div>
+    <div class="slide-body">
+      <div class="diagram-wrapper">
+        <object data="images/hybrid-nodes-cp-to-pod.svg" type="image/svg+xml" class="diagram-svg"></object>
+      </div>
+      <div class="svg-legend">
+        <div class="legend-item" onclick="togglePath('main', this)">
+          <span class="legend-dot" style="background:#DD344C;"></span>
+          CP → Webhook Pod
+        </div>
+      </div>
+      <div class="callout callout-warning" style="margin-top:0.75rem;">
+        <strong>중요:</strong> Remote Pod CIDR이 라우팅 가능해야만 동작합니다. BGP 또는 Static Route 필수.
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 8: Pattern 5 - Pod ↔ Pod (same DC) -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>Pattern 5: Pod ↔ Pod (Hybrid Nodes 간)</h2>
+      <p class="subtitle">VXLAN 캡슐화를 통한 노드 간 Pod 통신</p>
+    </div>
+    <div class="slide-body">
+      <div class="diagram-wrapper">
+        <object data="images/hybrid-nodes-pod-to-pod.svg" type="image/svg+xml" class="diagram-svg"></object>
+      </div>
+      <div class="svg-legend">
+        <div class="legend-item" onclick="togglePath('forward', this)">
+          <span class="legend-dot" style="background:#DD344C;"></span>
+          Node 1 → Node 2 (VXLAN)
+        </div>
+        <div class="legend-item" onclick="togglePath('reverse', this)">
+          <span class="legend-dot" style="background:#147EBA;"></span>
+          Node 2 → Node 1 (VXLAN)
+        </div>
+      </div>
+      <div class="note-box" style="border-left-color: #00b894;">
+        <strong>Cilium VXLAN:</strong> Port 8472/UDP 사용 — 방화벽에서 양방향 허용 필요
+        <div style="margin-top:6px;"><code style="font-size:0.78rem; color:var(--cyan);"># UDP 8472 양방향 허용: iptables -A INPUT -p udp --dport 8472 -j ACCEPT</code></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 9: Pattern 6 - East-West (Cloud ↔ On-prem) -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>Pattern 6: Cloud Pod ↔ Hybrid Pod</h2>
+      <p class="subtitle">EC2 Pod와 Hybrid Node Pod 간 Cross-boundary 통신</p>
+    </div>
+    <div class="slide-body">
+      <div class="diagram-wrapper">
+        <object data="images/hybrid-nodes-east-west.svg" type="image/svg+xml" class="diagram-svg"></object>
+      </div>
+      <div class="svg-legend">
+        <div class="legend-item" onclick="togglePath('cloud', this)">
+          <span class="legend-dot" style="background:#DD344C;"></span>
+          Cloud → Hybrid
+        </div>
+        <div class="legend-item" onclick="togglePath('hybrid', this)">
+          <span class="legend-dot" style="background:#147EBA;"></span>
+          Hybrid → Cloud
+        </div>
+      </div>
+      <div class="note-box" style="border-left-color: #fdcb6e;">
+        <strong>필수 설정:</strong> Pod CIDR 라우팅 + VPC 라우트 테이블에 온프렘 CIDR 추가
+        <div style="margin-top:6px;"><code style="font-size:0.78rem; color:var(--cyan);">aws ec2 create-route --route-table-id rtb-xxx --destination 10.85.0.0/16 --transit-gateway-id tgw-xxx</code></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 10: 방화벽 규칙 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>방화벽 규칙 요약</h2>
+      <p class="subtitle">네트워크 팀과 사전 조율이 필요한 포트 목록</p>
+    </div>
+    <div class="slide-body">
+      <table class="firewall-table">
+        <thead>
+          <tr>
+            <th>포트</th>
+            <th>프로토콜</th>
+            <th>방향</th>
+            <th>용도</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>443</strong></td>
+            <td><span class="protocol-badge protocol-tcp">TCP</span></td>
+            <td>On-Prem → AWS</td>
+            <td>Kubelet → API Server 통신</td>
+          </tr>
+          <tr>
+            <td><strong>10250</strong></td>
+            <td><span class="protocol-badge protocol-tcp">TCP</span></td>
+            <td>AWS → On-Prem</td>
+            <td>API Server → Kubelet (exec, logs, webhooks)</td>
+          </tr>
+          <tr>
+            <td><strong>8472</strong></td>
+            <td><span class="protocol-badge protocol-udp">UDP</span></td>
+            <td>양방향</td>
+            <td>Cilium VXLAN 터널링</td>
+          </tr>
+          <tr>
+            <td><strong>4240</strong></td>
+            <td><span class="protocol-badge protocol-tcp">TCP</span></td>
+            <td>양방향</td>
+            <td>Cilium Health Check</td>
+          </tr>
+          <tr>
+            <td><strong>53</strong></td>
+            <td><span class="protocol-badge protocol-tcp">TCP</span> <span class="protocol-badge protocol-udp">UDP</span></td>
+            <td>양방향</td>
+            <td>CoreDNS 쿼리</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout callout-info" style="margin-top:1rem;">
+        <strong>Tip:</strong> 초기 테스트 시에는 넓은 범위로 열고, 안정화 후 최소 권한으로 제한
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 11: VPC 엔드포인트 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>VPC 엔드포인트 구성</h2>
+      <p class="subtitle">Private Link를 통한 AWS 서비스 접근</p>
+    </div>
+    <div class="slide-body">
+      <div class="columns">
+        <div class="endpoint-section">
+          <h3><span class="badge badge-red">필수</span> Required Endpoints</h3>
+          <div class="endpoint-grid">
+            <div class="endpoint-card">
+              <strong>EKS</strong><br>
+              <code>eks.&lt;region&gt;</code>
+            </div>
+            <div class="endpoint-card">
+              <strong>ECR API</strong><br>
+              <code>api.ecr.&lt;region&gt;</code>
+            </div>
+            <div class="endpoint-card">
+              <strong>ECR DKR</strong><br>
+              <code>&lt;acct&gt;.dkr.ecr.&lt;region&gt;</code>
+            </div>
+            <div class="endpoint-card">
+              <strong>S3</strong><br>
+              <code>Gateway Endpoint</code>
+            </div>
+            <div class="endpoint-card">
+              <strong>STS</strong><br>
+              <code>sts.&lt;region&gt;</code>
+            </div>
+          </div>
+        </div>
+        <div class="endpoint-section">
+          <h3><span class="badge badge-yellow">선택</span> Optional Endpoints</h3>
+          <div class="endpoint-grid">
+            <div class="endpoint-card">
+              <strong>SSM</strong><br>
+              <code>ssm.&lt;region&gt;</code>
+            </div>
+            <div class="endpoint-card">
+              <strong>CloudWatch Logs</strong><br>
+              <code>logs.&lt;region&gt;</code>
+            </div>
+            <div class="endpoint-card">
+              <strong>EC2</strong><br>
+              <code>ec2.&lt;region&gt;</code>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-warning" style="margin-top:1rem;">
+        <strong>에어갭 환경:</strong> 모든 엔드포인트가 필수이며, ECR 미러링 또는 프라이빗 레지스트리 구성 필요
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 12: Quiz -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>Block 2 Quiz</h2>
+      <p class="subtitle">네트워킹 핵심 개념 점검</p>
+    </div>
+    <div class="slide-body" style="overflow-y:auto;">
+      <div class="col-2">
+        <div class="quiz" data-quiz="b2-q1">
+          <p class="quiz-question"><strong>Q1.</strong> 온프레미스와 AWS 간 네트워크 연결 권장 방법은?</p>
+          <div class="quiz-options">
+            <button class="quiz-option" data-correct="false">A. 공용 인터넷 연결</button>
+            <button class="quiz-option" data-correct="true">B. AWS Direct Connect 또는 Site-to-Site VPN</button>
+            <button class="quiz-option" data-correct="false">C. SSH 터널링</button>
+            <button class="quiz-option" data-correct="false">D. HTTP 프록시</button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div class="quiz" data-quiz="b2-q2">
+          <p class="quiz-question"><strong>Q2.</strong> Kubelet → API Server 통신에 필수인 방화벽 포트는?</p>
+          <div class="quiz-options">
+            <button class="quiz-option" data-correct="false">A. 80/TCP</button>
+            <button class="quiz-option" data-correct="true">B. 443/TCP</button>
+            <button class="quiz-option" data-correct="false">C. 8080/TCP</button>
+            <button class="quiz-option" data-correct="false">D. 22/TCP</button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div class="quiz" data-quiz="b2-q3">
+          <p class="quiz-question"><strong>Q3.</strong> Pod CIDR 설계 시 고려사항이 <u>아닌</u> 것은?</p>
+          <div class="quiz-options">
+            <button class="quiz-option" data-correct="false">A. VPC CIDR과 겹치지 않을 것</button>
+            <button class="quiz-option" data-correct="false">B. RFC-1918 범위 내에 있을 것</button>
+            <button class="quiz-option" data-correct="true">C. /8 범위로 설정해야 함</button>
+            <button class="quiz-option" data-correct="false">D. Service CIDR과 겹치지 않을 것</button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div class="quiz" data-quiz="b2-q4">
+          <p class="quiz-question"><strong>Q4.</strong> EKS Hybrid Nodes 권장 네트워크 지연시간은?</p>
+          <div class="quiz-options">
+            <button class="quiz-option" data-correct="false">A. 10ms 이하</button>
+            <button class="quiz-option" data-correct="false">B. 50ms 이하</button>
+            <button class="quiz-option" data-correct="true">C. 100ms 이하</button>
+            <button class="quiz-option" data-correct="false">D. 제한 없음</button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 13: Q&A -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>Q&amp;A</h1>
+    </div>
+    <div class="slide-body" style="display:flex; flex-direction:column; gap:20px;">
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px;">
+        <div class="card" style="text-align:center; padding:20px;">
+          <div style="font-size:1.8rem; margin-bottom:8px;">&#128268;</div>
+          <p style="font-size:.85rem; line-height:1.4;">CIDR 겹침 방지<br/>사전 설계 필수</p>
+        </div>
+        <div class="card" style="text-align:center; padding:20px;">
+          <div style="font-size:1.8rem; margin-bottom:8px;">&#128257;</div>
+          <p style="font-size:.85rem; line-height:1.4;">6가지 트래픽 패턴<br/>이해 &amp; 방화벽 설정</p>
+        </div>
+        <div class="card" style="text-align:center; padding:20px;">
+          <div style="font-size:1.8rem; margin-bottom:8px;">&#128274;</div>
+          <p style="font-size:.85rem; line-height:1.4;">Private Endpoint<br/>권장 (보안 강화)</p>
+        </div>
+        <div class="card" style="text-align:center; padding:20px;">
+          <div style="font-size:1.8rem; margin-bottom:8px;">&#9729;</div>
+          <p style="font-size:.85rem; line-height:1.4;">VPC 엔드포인트<br/>에어갭 환경 핵심</p>
+        </div>
+      </div>
+      <div style="text-align:center; padding:24px; background:linear-gradient(135deg, var(--accent-glow), transparent); border-radius:12px; border:1px solid var(--accent);">
+        <h2 style="color:var(--accent-light); margin-bottom:8px;">궁금한 점이 있으시면 질문해 주세요</h2>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 14: Deep Dive & References -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>Deep Dive & References</h2>
+      <p class="subtitle">더 깊이 공부하기 위한 공식 문서와 리소스</p>
+    </div>
+    <div class="slide-body">
+      <div class="col-2">
+        <div>
+          <h3 style="color:var(--accent-light); margin-bottom:12px;">공식 문서</h3>
+          <div class="card" style="background:#0d0d0d; border-left:3px solid var(--accent); margin-bottom:10px; padding:12px;">
+            <div style="font-size:0.88rem;"><strong style="color:var(--accent-light);">EKS Hybrid Nodes - Networking</strong></div>
+            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">네트워크 전제조건, CIDR 설계, 트래픽 패턴 전체 가이드</div>
+            <code style="font-size:0.72rem; color:var(--cyan); display:block; margin-top:6px;">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html</code>
+          </div>
+          <div class="card" style="background:#0d0d0d; border-left:3px solid var(--green); margin-bottom:10px; padding:12px;">
+            <div style="font-size:0.88rem;"><strong style="color:var(--green);">VPC Endpoints for EKS</strong></div>
+            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">Private 연결을 위한 VPC 엔드포인트 설정 가이드</div>
+            <code style="font-size:0.72rem; color:var(--cyan); display:block; margin-top:6px;">docs.aws.amazon.com/eks/latest/userguide/private-clusters.html</code>
+          </div>
+          <div class="card" style="background:#0d0d0d; border-left:3px solid var(--blue); margin-bottom:10px; padding:12px;">
+            <div style="font-size:0.88rem;"><strong style="color:var(--blue);">EKS Hybrid Nodes - Firewall</strong></div>
+            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">필수 방화벽 포트 및 네트워크 요구사항</div>
+            <code style="font-size:0.72rem; color:var(--cyan); display:block; margin-top:6px;">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html#hybrid-nodes-firewall</code>
+          </div>
+        </div>
+        <div>
+          <h3 style="color:var(--accent-light); margin-bottom:12px;">추가 리소스</h3>
+          <div class="card" style="background:#0d0d0d; border-left:3px solid var(--orange); margin-bottom:10px; padding:12px;">
+            <div style="font-size:0.88rem;"><strong style="color:var(--orange);">Cilium Documentation</strong></div>
+            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">VXLAN 터널링, IPAM, 네트워크 정책 심층 가이드</div>
+            <code style="font-size:0.72rem; color:var(--cyan); display:block; margin-top:6px;">docs.cilium.io/en/stable/network/concepts/routing/#encapsulation</code>
+          </div>
+          <div class="card" style="background:#0d0d0d; border-left:3px solid #fdcb6e; margin-bottom:10px; padding:12px;">
+            <div style="font-size:0.88rem;"><strong style="color:#fdcb6e;">AWS Blog - EKS Hybrid Nodes</strong></div>
+            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">실전 사례와 아키텍처 패턴 블로그</div>
+            <code style="font-size:0.72rem; color:var(--cyan); display:block; margin-top:6px;">aws.amazon.com/blogs/containers/getting-started-with-eks-hybrid-nodes/</code>
+          </div>
+          <div class="card" style="background:#0d0d0d; border-left:3px solid #DD344C; margin-bottom:10px; padding:12px;">
+            <div style="font-size:0.88rem;"><strong style="color:#DD344C;">EKS Hybrid Nodes Workshop</strong></div>
+            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">실습 워크샵으로 직접 구성해보기</div>
+            <code style="font-size:0.72rem; color:var(--cyan); display:block; margin-top:6px;">catalog.workshops.aws/workshops/eks-hybrid-nodes</code>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Section Divider: Block 3 -->
+  <div class="slide title-slide section-divider">
+    <div class="section-number">BLOCK 03</div>
+    <h1>노드 구성 &amp; 운영</h1>
+    <p class="subtitle">nodeadm CLI, Bootstrap, Cilium CNI, 업그레이드</p>
+  </div>
+
+  <!-- =============================== -->
+  <!-- Block 3: 노드 구성 & 운영 (11 slides) -->
+  <!-- =============================== -->
+  <!-- Slide 2: nodeadm CLI -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>nodeadm CLI</h1>
+      <p class="subtitle">Hybrid Node 부트스트랩을 위한 핵심 도구</p>
+    </div>
+    <div class="slide-body">
+      <div class="code-block"><span class="code-label">Shell</span><span class="comment"># nodeadm 다운로드</span>
+<span class="keyword">curl</span> -OL <span class="string">'https://hybrid-assets.eks.amazonaws.com/releases/latest/bin/linux/amd64/nodeadm'</span>
+<span class="keyword">chmod</span> +x nodeadm && <span class="keyword">sudo</span> mv nodeadm /usr/local/bin/
+
+<span class="comment"># 의존성 설치 (kubelet, containerd 등)</span>
+<span class="keyword">sudo</span> nodeadm install <span class="number">1.31</span> --credential-provider ssm
+
+<span class="comment"># 노드 초기화 (클러스터에 조인)</span>
+<span class="keyword">sudo</span> nodeadm init --config-source <span class="string">file://nodeconfig.yaml</span>
+
+<span class="comment"># 노드 업그레이드</span>
+<span class="keyword">sudo</span> nodeadm upgrade <span class="number">1.32</span> --config-source <span class="string">file://nodeconfig.yaml</span>
+
+<span class="comment"># 디버그 정보 수집</span>
+<span class="keyword">sudo</span> nodeadm debug</div>
+      <div class="col-2" style="margin-top: 12px;">
+        <div class="card">
+          <div class="card-title">주요 명령어</div>
+          <ul>
+            <li><strong>install</strong> - kubelet, containerd 등 의존성 설치</li>
+            <li><strong>init</strong> - 클러스터에 노드 등록</li>
+            <li><strong>upgrade</strong> - Kubernetes 버전 업그레이드</li>
+            <li><strong>debug</strong> - 문제 진단 정보 수집</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">Credential Provider 옵션</div>
+          <ul>
+            <li><strong>ssm</strong> - Systems Manager Hybrid Activations</li>
+            <li><strong>iam-ra</strong> - IAM Roles Anywhere</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 3: Bootstrap Workflow Canvas -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>Bootstrap 워크플로우</h1>
+      <p class="subtitle">온프레미스 노드가 EKS 클러스터에 조인되는 8단계</p>
+    </div>
+    <div class="slide-body">
+      <div class="canvas-container" style="flex: 1;">
+        <canvas id="bootstrap-canvas"></canvas>
+        <div class="canvas-controls">
+          <button class="btn btn-primary" id="bootstrap-play-btn">Play</button>
+          <button class="btn" id="bootstrap-reset-btn">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 4: NodeConfig YAML -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>NodeConfig YAML</h1>
+      <p class="subtitle">노드 설정의 핵심 - 4가지 주요 섹션</p>
+    </div>
+    <div class="slide-body">
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="cfg-cluster">cluster</button>
+        <button class="tab-btn" data-tab="cfg-hybrid">hybrid</button>
+        <button class="tab-btn" data-tab="cfg-kubelet">kubelet</button>
+        <button class="tab-btn" data-tab="cfg-containerd">containerd</button>
+      </div>
+
+      <div class="tab-content active" data-tab="cfg-cluster">
+        <div class="columns">
+          <div class="code-block"><span class="code-label">nodeconfig.yaml</span><span class="key">apiVersion</span>: <span class="string">node.eks.aws/v1alpha1</span>
+<span class="key">kind</span>: <span class="string">NodeConfig</span>
+<span class="key">spec</span>:
+  <span class="key">cluster</span>:
+    <span class="key">name</span>: <span class="string">my-hybrid-cluster</span>
+    <span class="key">region</span>: <span class="string">ap-northeast-2</span>
+    <span class="key">apiServerEndpoint</span>: <span class="string">https://XXXXX.gr7.ap-northeast-2.eks.amazonaws.com</span>
+    <span class="key">certificateAuthority</span>: |
+      <span class="comment">-----BEGIN CERTIFICATE-----</span>
+      <span class="comment">MIIDxxxx...</span>
+      <span class="comment">-----END CERTIFICATE-----</span>
+    <span class="key">cidr</span>: <span class="string">10.100.0.0/16</span>  <span class="comment"># Service CIDR</span></div>
+          <div>
+            <h3>cluster 섹션 설명</h3>
+            <ul>
+              <li><strong>name</strong> - EKS 클러스터 이름</li>
+              <li><strong>region</strong> - AWS 리전</li>
+              <li><strong>apiServerEndpoint</strong> - EKS API 서버 엔드포인트</li>
+              <li><strong>certificateAuthority</strong> - 클러스터 CA 인증서</li>
+              <li><strong>cidr</strong> - Kubernetes Service CIDR</li>
+            </ul>
+            <div class="callout callout-info" style="margin-top: 12px;">
+              <code>aws eks describe-cluster</code> 명령으로 필요한 정보를 조회할 수 있습니다.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" data-tab="cfg-hybrid">
+        <div class="columns">
+          <div class="code-block"><span class="code-label">SSM Hybrid Activation</span><span class="key">spec</span>:
+  <span class="key">hybrid</span>:
+    <span class="key">ssm</span>:
+      <span class="key">activationCode</span>: <span class="string">&lt;activation-code&gt;</span>
+      <span class="key">activationId</span>: <span class="string">&lt;activation-id&gt;</span></div>
+          <div>
+            <h3>hybrid 섹션 설명</h3>
+            <ul>
+              <li><strong>ssm</strong> - Systems Manager Hybrid Activation 사용</li>
+              <li><strong>activationCode/Id</strong> - SSM 콘솔에서 생성</li>
+            </ul>
+            <div class="callout callout-warning" style="margin-top: 12px;">
+              activationCode는 일회성입니다. 노드마다 새로운 activation을 생성하거나 registrationLimit을 설정하세요.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" data-tab="cfg-kubelet">
+        <div class="columns">
+          <div class="code-block"><span class="code-label">kubelet 설정</span><span class="key">spec</span>:
+  <span class="key">kubelet</span>:
+    <span class="key">config</span>:
+      <span class="key">maxPods</span>: <span class="number">110</span>
+      <span class="key">shutdownGracePeriod</span>: <span class="string">30s</span>
+      <span class="key">shutdownGracePeriodCriticalPods</span>: <span class="string">10s</span>
+    <span class="key">flags</span>:
+      - <span class="string">--node-labels=eks.amazonaws.com/compute-type=hybrid</span>
+      - <span class="string">--register-with-taints=eks.amazonaws.com/compute-type=hybrid:NoSchedule</span></div>
+          <div>
+            <h3>kubelet 섹션 설명</h3>
+            <ul>
+              <li><strong>maxPods</strong> - 노드당 최대 Pod 수</li>
+              <li><strong>shutdownGracePeriod</strong> - 정상 종료 대기 시간</li>
+              <li><strong>node-labels</strong> - Hybrid Node 식별 레이블</li>
+              <li><strong>taints</strong> - 워크로드 스케줄링 제어</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" data-tab="cfg-containerd">
+        <div class="columns">
+          <div class="code-block"><span class="code-label">containerd 설정</span><span class="key">spec</span>:
+  <span class="key">containerd</span>:
+    <span class="key">config</span>: |
+      <span class="string">version = 2</span>
+      <span class="string">[plugins."io.containerd.grpc.v1.cri".registry]</span>
+        <span class="string">config_path = "/etc/containerd/certs.d"</span></div>
+          <div>
+            <h3>containerd 섹션 설명</h3>
+            <ul>
+              <li><strong>config</strong> - containerd 설정 파일 내용</li>
+              <li>Private Registry mirror 설정 가능</li>
+              <li>에어갭 환경에서 ECR 미러링에 활용</li>
+            </ul>
+            <div class="callout callout-info" style="margin-top: 12px;">
+              <code>/etc/containerd/certs.d</code> 경로에 레지스트리별 설정을 추가합니다.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 5: CNI 선택 가이드 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>CNI 선택 가이드</h1>
+      <p class="subtitle">왜 Cilium인가?</p>
+    </div>
+    <div class="slide-body">
+      <div class="col-2">
+        <div class="card highlight">
+          <div class="card-title"><span class="badge badge-green">공식 지원</span> Cilium</div>
+          <ul>
+            <li><strong>eBPF 기반</strong> 데이터 플레인 — iptables 불필요</li>
+            <li><strong>AWS ECR Public</strong>에서 공식 빌드 제공</li>
+            <li><strong>VXLAN 오버레이</strong> 내장 — 온프렘 네트워크 호환</li>
+            <li><strong>Hubble</strong>로 네트워크 observability 내장</li>
+            <li>BGP, Ingress, LB IPAM, kube-proxy replacement 지원</li>
+            <li>지원 버전: <code>v1.17.x</code>, <code>v1.18.x</code></li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="badge badge-red">미지원</span> Calico</div>
+          <ul>
+            <li>iptables 기반 데이터 플레인</li>
+            <li>AWS 공식 문서에서 <strong>제거됨</strong> (examples repo로 이동)</li>
+            <li>별도 IP pool 관리 필요</li>
+            <li>AWS 기술 지원 범위 밖</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout callout-warning" style="margin-top: 12px;">
+        Calico는 더 이상 AWS 공식 지원 대상이 아닙니다. 신규 배포는 반드시 Cilium을 사용하세요.
+      </div>
+      <div class="callout callout-info" style="margin-top: 8px;">
+        Cilium v1.18.x는 Linux kernel &ge; 5.10 필요 — Ubuntu 20.04, RHEL 8 미지원
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 6: Cilium CNI 설치 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>Cilium CNI 설치</h1>
+      <p class="subtitle">AWS ECR Public 공식 빌드 + Helm 배포</p>
+    </div>
+    <div class="slide-body">
+      <div class="code-block"><span class="code-label">Helm Install</span><span class="comment"># Cilium 설치 - AWS ECR Public 공식 빌드</span>
+<span class="keyword">helm</span> install cilium <span class="string">oci://public.ecr.aws/eks/cilium/cilium</span> \
+  --version <span class="number">1.18.3-0</span> \
+  --namespace kube-system \
+  --values <span class="string">cilium-values.yaml</span></div>
+      <div class="col-2" style="margin-top: 20px;">
+        <div class="card" style="background:#0d0d0d;">
+          <div class="card-title">설치 포인트</div>
+          <ul>
+            <li><strong>OCI Registry</strong> — ECR Public에서 공식 빌드 직접 설치</li>
+            <li><strong>values YAML</strong> — 설정을 파일로 분리하여 GitOps 관리</li>
+            <li><strong>namespace</strong> — 반드시 <code>kube-system</code>에 설치</li>
+            <li><strong>nodeAffinity</strong> — Hybrid Nodes에만 배포 제한</li>
+          </ul>
+        </div>
+        <div class="card" style="background:#0d0d0d;">
+          <div class="card-title">설치 후 확인</div>
+          <div class="code-block" style="font-size: 0.78rem; padding: 10px;"><span class="comment"># Cilium 상태 확인</span>
+<span class="keyword">cilium</span> status
+<span class="keyword">kubectl</span> get pods -n kube-system -l k8s-app=cilium
+
+<span class="comment"># 연결 테스트</span>
+<span class="keyword">cilium</span> connectivity test</div>
+        </div>
+      </div>
+      <div class="callout callout-info" style="margin-top: 14px;">
+        Cilium은 Hybrid Nodes 전용입니다. 클라우드 노드의 VPC CNI와 독립 운영됩니다.
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 7: Cilium Values & Pod CIDR -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>Cilium Values & Pod CIDR</h1>
+      <p class="subtitle">cilium-values.yaml 핵심 설정과 Pod CIDR 설계</p>
+    </div>
+    <div class="slide-body">
+      <div class="col-2">
+        <div class="card" style="background:#0d0d0d;">
+          <div class="card-title">cilium-values.yaml</div>
+          <div class="code-block" style="font-size: 0.75rem; padding: 12px;"><span class="key">affinity</span>:                        <span class="comment"># Hybrid Nodes에만 배포</span>
+  <span class="key">nodeAffinity</span>:
+    <span class="key">requiredDuringSchedulingIgnoredDuringExecution</span>:
+      <span class="key">nodeSelectorTerms</span>:
+      - <span class="key">matchExpressions</span>:
+        - <span class="key">key</span>: <span class="string">eks.amazonaws.com/compute-type</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">hybrid</span>]
+<span class="key">ipam</span>:
+  <span class="key">mode</span>: <span class="string">cluster-pool</span>
+  <span class="key">operator</span>:
+    <span class="key">clusterPoolIPv4MaskSize</span>: <span class="number">25</span>
+    <span class="key">clusterPoolIPv4PodCIDRList</span>: [<span class="string">"10.85.0.0/16"</span>]
+<span class="key">loadBalancer</span>:
+  <span class="key">serviceTopology</span>: <span class="number">true</span>
+<span class="key">operator</span>:
+  <span class="key">unmanagedPodWatcher</span>:
+    <span class="key">restart</span>: <span class="number">false</span>
+<span class="key">envoy</span>:
+  <span class="key">enabled</span>: <span class="number">false</span>                 <span class="comment"># L7 정책 필요 시 별도 활성화</span>
+<span class="key">kubeProxyReplacement</span>: <span class="string">"false"</span></div>
+        </div>
+        <div class="card" style="background:#0d0d0d;">
+          <div class="card-title">Pod CIDR 설계</div>
+          <ul>
+            <li>VPC CIDR과 겹치지 않도록 설정</li>
+            <li>온프레미스 네트워크와 분리</li>
+            <li>예: <code>10.85.0.0/16</code></li>
+            <li><strong>/25</strong>: 노드당 126 Pod, <strong>/24</strong>: 254 Pod</li>
+            <li>노드별 Pod CIDR → static route 필요</li>
+          </ul>
+          <div class="callout callout-warning" style="margin-top: 10px; font-size: 0.85rem;">
+            배포 후 <code>clusterPoolIPv4PodCIDRList</code> 변경 불가 — 초기 설계가 중요합니다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 8: Node Registration Check -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>노드 등록 확인</h1>
+      <p class="subtitle">kubectl 명령으로 Hybrid Node 상태 확인</p>
+    </div>
+    <div class="slide-body">
+      <div class="terminal-output">
+<span class="prompt">$</span> <span class="command">kubectl get nodes</span>
+<span class="output">NAME              STATUS   ROLES    AGE   VERSION</span>
+<span class="highlight">hybrid-node-001</span>   <span style="color:#00ff88;">Ready</span>    &lt;none&gt;   5m    v1.31.2-eks
+<span class="highlight">hybrid-node-002</span>   <span style="color:#00ff88;">Ready</span>    &lt;none&gt;   3m    v1.31.2-eks
+
+<span class="prompt">$</span> <span class="command">kubectl describe node hybrid-node-001 | grep -A5 Labels</span>
+<span class="output">Labels:</span>   <span class="label-value">eks.amazonaws.com/compute-type=hybrid</span>
+          <span class="label-value">kubernetes.io/arch=amd64</span>
+          <span class="label-value">kubernetes.io/os=linux</span>
+          <span class="label-value">node.kubernetes.io/instance-type=on-prem-gpu</span>
+
+<span class="prompt">$</span> <span class="command">kubectl get nodes -l eks.amazonaws.com/compute-type=hybrid</span>
+<span class="output">NAME              STATUS   ROLES    AGE   VERSION</span>
+<span class="highlight">hybrid-node-001</span>   <span style="color:#00ff88;">Ready</span>    &lt;none&gt;   5m    v1.31.2-eks
+<span class="highlight">hybrid-node-002</span>   <span style="color:#00ff88;">Ready</span>    &lt;none&gt;   3m    v1.31.2-eks
+
+<span class="prompt">$</span> <span class="command">kubectl get pods -n kube-system -l k8s-app=cilium -o wide</span>
+<span class="output">NAME           READY   STATUS    NODE</span>
+<span class="highlight">cilium-xxxxx</span>   1/1     Running   hybrid-node-001
+<span class="highlight">cilium-yyyyy</span>   1/1     Running   hybrid-node-002
+
+<span class="prompt">$</span> <span class="command">kubectl get nodes -o custom-columns='NAME:.metadata.name,PODCIDR:.spec.podCIDR'</span>
+<span class="output">NAME              PODCIDR</span>
+<span class="highlight">hybrid-node-001</span>   <span class="label-value">10.85.0.0/25</span>
+<span class="highlight">hybrid-node-002</span>   <span class="label-value">10.85.0.128/25</span></div>
+    </div>
+  </div>
+
+
+  <!-- Slide 8: Upgrade Strategy -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>업그레이드 전략</h1>
+      <p class="subtitle">안전한 Kubernetes 버전 업그레이드</p>
+    </div>
+    <div class="slide-body">
+      <div class="col-3">
+        <div class="strategy-card" style="border-left-color: var(--green);">
+          <span class="badge badge-green">권장</span>
+          <h4>Rolling Upgrade</h4>
+          <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 10px;">
+            노드를 하나씩 순차적으로 업그레이드
+          </p>
+          <div class="code-block" style="font-size: 0.75rem; padding: 10px;">
+<span class="comment"># 1. 노드 drain</span>
+kubectl drain hybrid-node-001 \
+  --ignore-daemonsets
+
+<span class="comment"># 2. 업그레이드</span>
+sudo nodeadm upgrade 1.32 \
+  --config-source file://nodeconfig.yaml
+
+<span class="comment"># 3. uncordon</span>
+kubectl uncordon hybrid-node-001</div>
+        </div>
+
+        <div class="strategy-card" style="border-left-color: var(--yellow);">
+          <span class="badge badge-yellow">안전</span>
+          <h4>Canary Upgrade</h4>
+          <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 10px;">
+            1개 노드만 먼저 업그레이드 후 검증
+          </p>
+          <ul style="font-size: 0.85rem;">
+            <li>새 버전 노드 1개만 업그레이드</li>
+            <li>24시간 모니터링 후 검증</li>
+            <li>문제없으면 나머지 순차 진행</li>
+            <li>프로덕션 환경에 적합</li>
+          </ul>
+        </div>
+
+        <div class="strategy-card" style="border-left-color: var(--red);">
+          <span class="badge badge-red">비상</span>
+          <h4>Rollback</h4>
+          <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 10px;">
+            업그레이드 실패 시 복구 절차
+          </p>
+          <div class="code-block" style="font-size: 0.75rem; padding: 10px;">
+<span class="comment"># 1. 노드 제거</span>
+sudo nodeadm uninstall
+
+<span class="comment"># 2. 이전 버전 재설치</span>
+sudo nodeadm install 1.31 \
+  --credential-provider ssm
+
+<span class="comment"># 3. 다시 조인</span>
+sudo nodeadm init \
+  --config-source file://nodeconfig.yaml</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 9: Air-gapped Environment -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>에어갭 환경</h1>
+      <p class="subtitle">인터넷 연결 없이 Hybrid Nodes 운영하기</p>
+    </div>
+    <div class="slide-body">
+      <div class="columns">
+        <div class="airgap-box">
+          <h4>1. 사전 준비 (인터넷 호스트)</h4>
+          <ul>
+            <li>hybrid-assets.eks.amazonaws.com에서 아티팩트 다운로드</li>
+            <li>nodeadm 바이너리, kubelet, containerd 등</li>
+            <li>Cilium 컨테이너 이미지</li>
+            <li>S3 버킷에 업로드</li>
+          </ul>
+          <div class="code-block" style="font-size: 0.75rem; margin-top: 10px;">
+<span class="comment"># 아티팩트 다운로드 예시</span>
+aws s3 sync s3://hybrid-assets-bucket/ \
+  ./artifacts/ --region ap-northeast-2</div>
+        </div>
+
+        <div class="flow-connector">&#8594;</div>
+
+        <div class="airgap-box">
+          <h4>2. 런타임 (에어갭 환경)</h4>
+          <ul>
+            <li><strong>Route 53 PHZ</strong>: hybrid-assets.eks.amazonaws.com DNS override</li>
+            <li><strong>S3 VPC Endpoint</strong>: Private S3 접근</li>
+            <li><strong>ECR VPC Endpoint</strong>: 컨테이너 이미지 풀</li>
+            <li>모든 트래픽이 VPC 내부에서 처리</li>
+          </ul>
+          <div class="code-block" style="font-size: 0.75rem; margin-top: 10px;">
+<span class="comment"># PHZ 레코드 예시</span>
+hybrid-assets.eks.amazonaws.com
+  -> s3.ap-northeast-2.amazonaws.com
+  -> VPC Endpoint</div>
+        </div>
+      </div>
+      <div class="callout callout-info" style="margin-top: 10px; font-size: 0.85rem; padding: 10px 14px;">
+        Route 53 Private Hosted Zone으로 DNS를 override하여 S3 VPC Endpoint로 리다이렉트합니다. 온프레미스 DNS에서 PHZ를 참조하도록 설정하세요.
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 10: Troubleshooting -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>트러블슈팅</h1>
+      <p class="subtitle">자주 발생하는 문제와 해결 방법</p>
+    </div>
+    <div class="slide-body">
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="ts-notready">NotReady</button>
+        <button class="tab-btn" data-tab="ts-imagepull">ImagePull</button>
+        <button class="tab-btn" data-tab="ts-dns">DNS</button>
+      </div>
+
+      <div class="tab-content active" data-tab="ts-notready">
+        <div class="columns">
+          <div>
+            <div class="troubleshoot-item">
+              <h4>증상: kubectl get nodes에서 NotReady</h4>
+              <p class="cause"><strong>원인:</strong> CNI 미설치, kubelet 설정 오류, 네트워크 연결 실패</p>
+              <p class="solution"><strong>해결:</strong></p>
+            </div>
+            <div class="code-block" style="font-size: 0.8rem;">
+<span class="comment"># kubelet 로그 확인</span>
+sudo journalctl -u kubelet -f
+
+<span class="comment"># nodeadm 디버그 정보</span>
+sudo nodeadm debug
+
+<span class="comment"># Cilium 상태 확인</span>
+kubectl get pods -n kube-system -l k8s-app=cilium
+
+<span class="comment"># 네트워크 연결 테스트</span>
+curl -v https://&lt;api-server-endpoint&gt;/healthz</div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-title">체크리스트</div>
+              <ul>
+                <li>Cilium DaemonSet이 Running 상태인가?</li>
+                <li>kubelet이 API Server에 연결 가능한가?</li>
+                <li>CA 인증서가 올바르게 설정되었나?</li>
+                <li>방화벽에서 443, 10250 포트가 열려있나?</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" data-tab="ts-imagepull">
+        <div class="columns">
+          <div>
+            <div class="troubleshoot-item">
+              <h4>증상: ImagePullBackOff</h4>
+              <p class="cause"><strong>원인:</strong> ECR 접근 불가, VPC Endpoint 미설정, 크리덴셜 만료</p>
+              <p class="solution"><strong>해결:</strong></p>
+            </div>
+            <div class="code-block" style="font-size: 0.8rem;">
+<span class="comment"># ECR 연결 테스트</span>
+curl https://api.ecr.ap-northeast-2.amazonaws.com
+
+<span class="comment"># VPC Endpoint 확인</span>
+aws ec2 describe-vpc-endpoints \
+  --filters "Name=service-name,Values=*ecr*"
+
+<span class="comment"># containerd 로그</span>
+sudo journalctl -u containerd -f
+
+<span class="comment"># 수동 이미지 풀 테스트</span>
+sudo crictl pull &lt;image-url&gt;</div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-title">체크리스트</div>
+              <ul>
+                <li>ECR VPC Endpoint가 설정되어 있나?</li>
+                <li>SSM/IAM RA 크리덴셜이 유효한가?</li>
+                <li>Security Group에서 443 포트가 열려있나?</li>
+                <li>Private Registry mirror가 설정되어 있나?</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" data-tab="ts-dns">
+        <div class="columns">
+          <div>
+            <div class="troubleshoot-item">
+              <h4>증상: DNS 해석 실패</h4>
+              <p class="cause"><strong>원인:</strong> CoreDNS 미배포, clusterDNS 설정 오류, 방화벽 53 포트 차단</p>
+              <p class="solution"><strong>해결:</strong></p>
+            </div>
+            <div class="code-block" style="font-size: 0.8rem;">
+<span class="comment"># CoreDNS Pod 확인</span>
+kubectl get pods -n kube-system -l k8s-app=kube-dns
+
+<span class="comment"># DNS 테스트 Pod 실행</span>
+kubectl run dnstest --image=busybox --rm -it \
+  -- nslookup kubernetes.default
+
+<span class="comment"># kubelet의 clusterDNS 설정 확인</span>
+cat /var/lib/kubelet/kubeadm-flags.env | grep dns
+
+<span class="comment"># 방화벽 포트 확인</span>
+sudo iptables -L -n | grep 53</div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-title">체크리스트</div>
+              <ul>
+                <li>CoreDNS Pod가 Running 상태인가?</li>
+                <li>clusterDNS IP가 올바르게 설정되었나?</li>
+                <li>UDP/TCP 53 포트가 허용되어 있나?</li>
+                <li>Service CIDR 라우팅이 설정되었나?</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 11: Quiz -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>Block 3 퀴즈</h1>
+      <p class="subtitle">학습 내용 확인</p>
+    </div>
+    <div class="slide-body" style="overflow-y: auto;">
+      <div class="quiz" data-quiz="b3-q1">
+        <div class="quiz-question">1. nodeadm의 주요 역할은 무엇인가요?</div>
+        <div class="quiz-options">
+          <button class="quiz-option" data-correct="false">A. EKS 클러스터 생성 및 관리</button>
+          <button class="quiz-option" data-correct="true">B. kubelet, containerd 등 노드 컴포넌트 설치 및 부트스트랩</button>
+          <button class="quiz-option" data-correct="false">C. Pod 스케줄링 및 로드 밸런싱</button>
+          <button class="quiz-option" data-correct="false">D. 모니터링 메트릭 수집</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz" data-quiz="b3-q2">
+        <div class="quiz-question">2. nodeadm init 실행에 필요한 3가지 클러스터 정보는?</div>
+        <div class="quiz-options">
+          <button class="quiz-option" data-correct="false">A. VPC ID, Subnet ID, Security Group ID</button>
+          <button class="quiz-option" data-correct="true">B. 클러스터 이름, API 서버 엔드포인트, CA 인증서</button>
+          <button class="quiz-option" data-correct="false">C. IAM Role ARN, Instance Type, AMI ID</button>
+          <button class="quiz-option" data-correct="false">D. Region, Availability Zone, Instance ID</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz" data-quiz="b3-q3">
+        <div class="quiz-question">3. NodeConfig YAML에서 유효하지 않은 kubelet 설정은?</div>
+        <div class="quiz-options">
+          <button class="quiz-option" data-correct="false">A. maxPods</button>
+          <button class="quiz-option" data-correct="false">B. shutdownGracePeriod</button>
+          <button class="quiz-option" data-correct="false">C. node-labels</button>
+          <button class="quiz-option" data-correct="true">D. podScheduler</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Slide 12: Deep Dive & References -->
+  <div class="slide">
+    <div class="slide-header">
+      <h1>Deep Dive & References</h1>
+      <p class="subtitle">더 깊이 공부하기 위한 공식 문서와 리소스</p>
+    </div>
+    <div class="slide-body">
+      <div class="col-2">
+        <div>
+          <h3 style="color:var(--accent-light); margin-bottom:12px;">공식 문서</h3>
+          <div class="card" style="background:#0d0d0d; border-left:3px solid var(--accent); margin-bottom:10px; padding:12px;">
+            <div style="font-size:0.88rem;"><strong style="color:var(--accent-light);">EKS Hybrid Nodes - nodeadm</strong></div>
+            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">nodeadm CLI 레퍼런스 및 부트스트랩 가이드</div>
+            <code style="font-size:0.72rem; color:var(--cyan); display:block; margin-top:6px;">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html</code>
+          </div>
+          <div class="card" style="background:#0d0d0d; border-left:3px solid var(--green); margin-bottom:10px; padding:12px;">
+            <div style="font-size:0.88rem;"><strong style="color:var(--green);">NodeConfig YAML Reference</strong></div>
+            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">cluster, hybrid, kubelet, containerd 4개 섹션 상세 스펙</div>
+            <code style="font-size:0.72rem; color:var(--cyan); display:block; margin-top:6px;">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html#hybrid-nodes-nodeconfig</code>
+          </div>
+          <div class="card" style="background:#0d0d0d; border-left:3px solid var(--blue); margin-bottom:10px; padding:12px;">
+            <div style="font-size:0.88rem;"><strong style="color:var(--blue);">Credential Providers (SSM / IAM RA)</strong></div>
+            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">SSM Hybrid Activations vs IAM Roles Anywhere 비교</div>
+            <code style="font-size:0.72rem; color:var(--cyan); display:block; margin-top:6px;">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html</code>
+          </div>
+        </div>
+        <div>
+          <h3 style="color:var(--accent-light); margin-bottom:12px;">추가 리소스</h3>
+          <div class="card" style="background:#0d0d0d; border-left:3px solid var(--orange); margin-bottom:10px; padding:12px;">
+            <div style="font-size:0.88rem;"><strong style="color:var(--orange);">Cilium Install Guide for EKS</strong></div>
+            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">Helm values, IPAM, VXLAN 설정 심층 가이드</div>
+            <code style="font-size:0.72rem; color:var(--cyan); display:block; margin-top:6px;">docs.cilium.io/en/stable/installation/k8s-install-helm/</code>
+          </div>
+          <div class="card" style="background:#0d0d0d; border-left:3px solid #fdcb6e; margin-bottom:10px; padding:12px;">
+            <div style="font-size:0.88rem;"><strong style="color:#fdcb6e;">Air-Gapped Environment Setup</strong></div>
+            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">오프라인 환경에서의 아티팩트 관리 및 PHZ 설정</div>
+            <code style="font-size:0.72rem; color:var(--cyan); display:block; margin-top:6px;">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-artifacts.html</code>
+          </div>
+          <div class="card" style="background:#0d0d0d; border-left:3px solid #DD344C; margin-bottom:10px; padding:12px;">
+            <div style="font-size:0.88rem;"><strong style="color:#DD344C;">Troubleshooting Hybrid Nodes</strong></div>
+            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">공식 트러블슈팅 가이드 및 nodeadm debug 활용</div>
+            <code style="font-size:0.72rem; color:var(--cyan); display:block; margin-top:6px;">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-troubleshooting.html</code>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Section Divider: Block 4 -->
+  <div class="slide title-slide section-divider">
+    <div class="section-number">BLOCK 04</div>
+    <h1>고급 패턴 &amp; 전략적 가치</h1>
+    <p class="subtitle">Cloud Bursting, 규제 대응, AI Agent, 비용 최적화</p>
+  </div>
+
+  <!-- =============================== -->
+  <!-- Block 4: 고급 패턴 & 전략적 가치 (11 slides) -->
+  <!-- =============================== -->
+  <!-- Slide 2: Taint/Toleration -->
+  <section class="slide" id="slide-2">
+    <div class="slide-header">
+      <h1>Taint/Toleration으로 워크로드 격리</h1>
+      <p class="subtitle">하이브리드 노드에 특정 Pod만 스케줄링</p>
+    </div>
+    <div class="slide-body">
+      <div class="columns">
+        <div style="flex: 1.2;">
+          <div class="code-block" style="font-size: 0.78rem;">
+            <span class="code-label">YAML</span>
+<span class="comment"># 노드 Taint 설정 (nodeadm flags)</span>
+<span class="key">--register-with-taints</span>=<span class="string">eks.amazonaws.com/compute-type=hybrid:NoSchedule</span>
+
+<span class="comment"># Pod Toleration</span>
+<span class="key">tolerations</span>:
+- <span class="key">key</span>: <span class="string">eks.amazonaws.com/compute-type</span>
+  <span class="key">operator</span>: <span class="string">Equal</span>
+  <span class="key">value</span>: <span class="string">hybrid</span>
+  <span class="key">effect</span>: <span class="string">NoSchedule</span>
+
+<span class="comment"># GPU 노드 추가 Taint</span>
+<span class="key">--register-with-taints</span>=<span class="string">gpu=true:NoSchedule</span>
+          </div>
+          <div class="callout callout-info" style="margin-top: 12px;">
+            <strong>핵심:</strong> NoSchedule Taint가 있는 노드에는 해당 Toleration이 있는 Pod만 스케줄링됨
+          </div>
+        </div>
+        <div style="flex: 0.8;">
+          <h3 style="margin-bottom: 12px; font-size: 0.95rem;">스케줄링 결과</h3>
+          <div class="node-viz">
+            <div class="node-box hybrid">
+              <h4>Hybrid Node 1</h4>
+              <div class="pod-grid">
+                <div class="pod-icon tolerant" title="Toleration 있음">H</div>
+                <div class="pod-icon tolerant" title="Toleration 있음">H</div>
+                <div class="pod-icon blocked" title="Toleration 없음">X</div>
+              </div>
+            </div>
+            <div class="node-box hybrid">
+              <h4>Hybrid Node 2</h4>
+              <div class="pod-grid">
+                <div class="pod-icon tolerant" title="Toleration 있음">H</div>
+                <div class="pod-icon tolerant" title="Toleration 있음">H</div>
+              </div>
+            </div>
+            <div class="node-box cloud">
+              <h4>Cloud Node 1</h4>
+              <div class="pod-grid">
+                <div class="pod-icon normal" title="일반 Pod">C</div>
+                <div class="pod-icon normal" title="일반 Pod">C</div>
+                <div class="pod-icon normal" title="일반 Pod">C</div>
+              </div>
+            </div>
+            <div class="node-box cloud">
+              <h4>Cloud Node 2</h4>
+              <div class="pod-grid">
+                <div class="pod-icon normal" title="일반 Pod">C</div>
+                <div class="pod-icon normal" title="일반 Pod">C</div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top: 12px; display: flex; gap: 12px; font-size: 0.8rem;">
+            <span><span class="pod-icon tolerant" style="display: inline-flex; width: 18px; height: 18px; font-size: 0.6rem;">H</span> Hybrid 전용</span>
+            <span><span class="pod-icon normal" style="display: inline-flex; width: 18px; height: 18px; font-size: 0.6rem;">C</span> 일반 Pod</span>
+            <span><span class="pod-icon blocked" style="display: inline-flex; width: 18px; height: 18px; font-size: 0.6rem;">X</span> 스케줄 거부</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <a href="https://atomoh.gitbook.io/kubernetes-docs/eks-hybrid-nodes/06-workload-placement" target="_blank" class="ref-link">📖 참고 문서</a>
+  </section>
+
+
+  <!-- Slide 3: GPU on-prem + CPU cloud (CANVAS) -->
+  <section class="slide" id="slide-3">
+    <div class="slide-header">
+      <h1>GPU 온프레미스 + CPU 클라우드</h1>
+      <p class="subtitle">ML Training은 온프렘 GPU, Inference는 클라우드 CPU</p>
+    </div>
+    <div class="slide-body">
+      <div class="canvas-container" style="flex: 1; min-height: 350px;">
+        <canvas id="gpu-cpu-canvas"></canvas>
+      </div>
+      <div class="callout callout-success" style="margin-top: 8px; padding-left: 60px;">
+        <strong>패턴:</strong> GPU 투자는 보존하고, 추론/서빙은 클라우드 탄력성 활용 - 모델 아티팩트는 S3 경유
+      </div>
+    </div>
+    <a href="https://atomoh.gitbook.io/kubernetes-docs/eks-hybrid-nodes/05-gpu-integration" target="_blank" class="ref-link">📖 참고 문서</a>
+  </section>
+
+
+  <!-- Slide 4: Cloud Bursting (CANVAS) -->
+  <section class="slide" id="slide-4">
+    <div class="slide-header">
+      <h1>Cloud Bursting with Karpenter</h1>
+      <p class="subtitle">온프레미스 용량 초과 시 클라우드로 자동 확장</p>
+    </div>
+    <div class="slide-body">
+      <div class="canvas-container" style="flex: 1; min-height: 380px;">
+        <canvas id="bursting-canvas"></canvas>
+        <div class="canvas-controls" style="top: 0.5rem; bottom: auto; left: auto; right: 0.5rem; transform: none;">
+          <button class="btn btn-primary" id="btn-burst-scale-out">Scale Out</button>
+          <button class="btn" id="btn-burst-scale-in">Scale In</button>
+          <button class="btn" id="btn-burst-reset">Reset</button>
+        </div>
+      </div>
+      <div class="col-2" style="margin-top: 8px; gap: 12px;">
+        <div class="callout callout-info" style="margin: 0;">
+          <strong>Scale-out:</strong> 온프렘 가득 차면 Karpenter가 클라우드 노드 프로비저닝
+        </div>
+        <div class="callout callout-warning" style="margin: 0;">
+          <strong>Scale-in:</strong> pod-deletion-cost로 클라우드 Pod 먼저 제거
+        </div>
+      </div>
+    </div>
+    <a href="https://atomoh.gitbook.io/kubernetes-docs/eks-hybrid-nodes/06-workload-placement" target="_blank" class="ref-link">📖 참고 문서</a>
+  </section>
+
+
+  <!-- Slide 5: Pod Deletion Cost -->
+  <section class="slide" id="slide-5">
+    <div class="slide-header">
+      <h1>Pod Deletion Cost 전략</h1>
+      <p class="subtitle">스케일다운 시 클라우드 Pod 우선 제거</p>
+    </div>
+    <div class="slide-body">
+      <div class="columns">
+        <div style="flex: 1;">
+          <div class="deletion-viz">
+            <div class="deletion-pod onprem">
+              <div class="deletion-order">2</div>
+              <h4 style="color: var(--green); margin-bottom: 8px;">온프렘 Pod</h4>
+              <div style="font-family: var(--font-mono); font-size: 1.2rem; color: var(--green);">cost: 1000</div>
+              <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 8px;">높은 우선순위<br/>마지막에 제거</p>
+            </div>
+            <div class="deletion-arrow">→</div>
+            <div class="deletion-pod cloud">
+              <div class="deletion-order">1</div>
+              <h4 style="color: var(--blue); margin-bottom: 8px;">클라우드 Pod</h4>
+              <div style="font-family: var(--font-mono); font-size: 1.2rem; color: var(--red);">cost: -100</div>
+              <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 8px;">낮은 우선순위<br/>먼저 제거</p>
+            </div>
+          </div>
+          <div class="callout callout-success" style="margin-top: 10px;">
+            <strong>결과:</strong> 스케일다운 시 클라우드 리소스 먼저 반환 → 온프렘 인프라 최대 활용
+          </div>
+        </div>
+        <div style="flex: 1;">
+          <div class="code-block" style="font-size: 0.72rem;">
+            <span class="code-label">pod-deletion-cost.yaml</span>
+<span class="comment"># 온프렘 Pod - 높은 deletion cost</span>
+<span class="key">apiVersion</span>: <span class="value">v1</span>
+<span class="key">kind</span>: <span class="value">Pod</span>
+<span class="key">metadata</span>:
+  <span class="key">annotations</span>:
+    <span class="key">controller.kubernetes.io/pod-deletion-cost</span>: <span class="string">"1000"</span>
+<span class="comment">---</span>
+<span class="comment"># 클라우드 Pod - 낮은 deletion cost</span>
+<span class="key">apiVersion</span>: <span class="value">v1</span>
+<span class="key">kind</span>: <span class="value">Pod</span>
+<span class="key">metadata</span>:
+  <span class="key">annotations</span>:
+    <span class="key">controller.kubernetes.io/pod-deletion-cost</span>: <span class="string">"-100"</span>
+          </div>
+          <div class="card" style="margin-top: 8px;">
+            <h4 style="color: var(--accent-light); margin-bottom: 8px;">적용 방법</h4>
+            <ul style="font-size: 0.85rem;">
+              <li>MutatingWebhook으로 노드 레이블 기반 자동 주입</li>
+              <li>또는 Kyverno/OPA 정책으로 구현</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <a href="https://atomoh.gitbook.io/kubernetes-docs/eks-hybrid-nodes/06-workload-placement" target="_blank" class="ref-link">📖 참고 문서</a>
+  </section>
+
+
+  <!-- Slide 6: Compliance -->
+  <section class="slide" id="slide-6">
+    <div class="slide-header">
+      <h1>규제 대응 &amp; 컴플라이언스</h1>
+      <p class="subtitle">데이터 주권 보장과 감사 추적</p>
+    </div>
+    <div class="slide-body">
+      <div class="compliance-grid">
+        <div class="compliance-card">
+          <h4>데이터 주권 보장</h4>
+          <p>민감 데이터는 온프레미스에 유지, Control Plane만 AWS에서 관리 → 금융 규제 충족</p>
+        </div>
+        <div class="compliance-card">
+          <h4>감사 추적</h4>
+          <p>IAM Roles Anywhere의 x509Subject/CN으로 노드별 감사 추적 가능 → 인증서 기반 식별</p>
+        </div>
+        <div class="compliance-card">
+          <h4>네트워크 격리</h4>
+          <p>VPN/Direct Connect + Private Endpoint로 퍼블릭 인터넷 경유 없음 → 보안 경계 유지</p>
+        </div>
+        <div class="compliance-card">
+          <h4>컴플라이언스 자동화</h4>
+          <p>AWS Config, CloudTrail로 Control Plane 관련 컴플라이언스 자동 모니터링</p>
+        </div>
+      </div>
+      <div class="callout callout-success" style="margin-top: 16px;">
+        <strong>핵심 가치:</strong> 데이터는 온프레미스, 관리는 AWS - 규제와 효율성의 균형
+      </div>
+      <div class="col-3" style="margin-top: 12px;">
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 1.5rem; margin-bottom: 4px;">🏦</div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">금융권 클라우드 이용<br/>가이드라인 충족</div>
+        </div>
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 1.5rem; margin-bottom: 4px;">🔐</div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">개인정보보호법<br/>데이터 국외 이전 제한</div>
+        </div>
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 1.5rem; margin-bottom: 4px;">📋</div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">내부 보안 정책<br/>온프렘 데이터 유지</div>
+        </div>
+      </div>
+    </div>
+    <a href="https://atomoh.gitbook.io/kubernetes-docs/eks-hybrid-nodes/02-network-configuration" target="_blank" class="ref-link">📖 참고 문서</a>
+  </section>
+
+
+  <!-- Slide 7: Managed Services 연계 (CANVAS) -->
+  <section class="slide" id="slide-7">
+    <div class="slide-header">
+      <h1>AWS Managed Services 연계</h1>
+      <p class="subtitle">온프레미스에서 AWS AI/ML 서비스 직접 활용</p>
+    </div>
+    <div class="slide-body">
+      <div class="canvas-container" style="flex: 1; min-height: 380px;">
+        <canvas id="agent-canvas"></canvas>
+        <div class="canvas-controls">
+          <button class="btn btn-primary" id="btn-agent-play">Play</button>
+          <button class="btn" id="btn-agent-reset">Reset</button>
+        </div>
+      </div>
+      <div class="callout callout-info" style="margin-top: 8px;">
+        <strong>핵심:</strong> Pod Identity를 통해 온프렘 Pod가 AWS IAM Role을 직접 Assume → Managed Services에 안전하게 접근
+      </div>
+    </div>
+    <a href="https://atomoh.gitbook.io/kubernetes-docs/ai-ml/03-agentic-ai-platform" target="_blank" class="ref-link">📖 참고 문서</a>
+  </section>
+
+
+  <!-- Slide 8: Agent 개발 가속화 -->
+  <section class="slide" id="slide-8">
+    <div class="slide-header">
+      <h1>AI Agent 개발 가속화</h1>
+      <p class="subtitle">온프렘 단독 vs EKS Hybrid + AWS 서비스</p>
+    </div>
+    <div class="slide-body">
+      <div class="compare-grid">
+        <div class="compare-card before">
+          <h3>Before: 온프렘 단독</h3>
+          <ul>
+            <li>LLM 모델 자체 호스팅 필요 (GPU 인프라 구축)</li>
+            <li>모델 업데이트/파인튜닝 직접 수행</li>
+            <li>벡터 DB, 검색 엔진 별도 구축</li>
+            <li>Agent 파이프라인 처음부터 개발</li>
+            <li>보안/접근 제어 직접 구현</li>
+          </ul>
+          <div style="text-align: center; margin-top: 16px;">
+            <span class="badge badge-red" style="font-size: 1rem; padding: 8px 16px;">수개월 소요</span>
+          </div>
+        </div>
+        <div class="compare-card after">
+          <h3>After: EKS Hybrid + AWS</h3>
+          <ul>
+            <li>Bedrock API (PrivateLink)로 내부망에서 안전하게 LLM 호출</li>
+            <li>AgentCore로 Agent 오케스트레이션 자동화</li>
+            <li>Knowledge Base + OpenSearch Serverless로 RAG 즉시 구성</li>
+            <li>Neptune Graph DB로 관계 기반 지식 검색</li>
+            <li>Pod Identity 기반 세분화된 IAM 접근 제어</li>
+          </ul>
+          <div style="text-align: center; margin-top: 16px;">
+            <span class="badge badge-green" style="font-size: 1rem; padding: 8px 16px;">수주 내 PoC 가능</span>
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-success" style="margin-top: 16px;">
+        <strong>ROI:</strong> Bedrock PrivateLink로 내부망 보안 유지 + Pod Identity로 세분화된 접근 제어 — 금융권 요건 충족
+      </div>
+    </div>
+    <a href="https://atomoh.gitbook.io/kubernetes-docs/ai-ml/03-agentic-ai-platform" target="_blank" class="ref-link">📖 참고 문서</a>
+  </section>
+
+
+  <!-- Slide 9: 비용 최적화 -->
+  <section class="slide" id="slide-9">
+    <div class="slide-header">
+      <h1>비용 최적화 전략</h1>
+      <p class="subtitle">기존 인프라 활용 + 필요 시 클라우드 확장</p>
+    </div>
+    <div class="slide-body">
+      <div class="cost-grid">
+        <div class="cost-card">
+          <div class="cost-value">$0.01</div>
+          <div class="cost-label">vCPU/hr</div>
+          <div class="cost-desc">EKS Hybrid Nodes 추가 비용<br/>(기존 EKS 클러스터 비용 외)</div>
+        </div>
+        <div class="cost-card">
+          <div class="cost-value" style="color: var(--green);">100%</div>
+          <div class="cost-label">기존 HW 활용</div>
+          <div class="cost-desc">온프레미스 서버 자산 최대 활용<br/>GPU 투자 보존</div>
+        </div>
+        <div class="cost-card">
+          <div class="cost-value" style="color: var(--cyan);">$0.10/hr</div>
+          <div class="cost-label">EKS 클러스터 비용</div>
+          <div class="cost-desc">EKS Control Plane 관리 비용<br/>HA, etcd 백업, 인증서 갱신 포함</div>
+        </div>
+        <div class="cost-card">
+          <div class="cost-value" style="color: var(--yellow);">On-Demand</div>
+          <div class="cost-label">클라우드 버스팅</div>
+          <div class="cost-desc">피크 시에만 클라우드 리소스 사용<br/>유휴 비용 최소화</div>
+        </div>
+      </div>
+      <div class="callout callout-info" style="margin-top: 20px;">
+        <strong>비용 철학:</strong> 기존 인프라 투자를 보존하면서 AWS Managed Services의 가치를 더하는 접근 - CapEx는 유지, OpEx는 최적화
+      </div>
+    </div>
+    <a href="https://atomoh.gitbook.io/kubernetes-docs/eks/07-eks-cost-optimization" target="_blank" class="ref-link">📖 참고 문서</a>
+  </section>
+
+
+  <!-- Slide 10: 왜 EKS Hybrid Nodes인가? (Tanzu 비교) -->
+  <section class="slide" id="slide-10">
+    <div class="slide-header">
+      <h1>왜 EKS Hybrid Nodes인가?</h1>
+      <p class="subtitle">온프레미스 K8s (VMware Tanzu) 대비 5대 장점</p>
+    </div>
+    <div class="slide-body">
+      <div class="vs-table">
+        <div class="vs-row vs-header">
+          <div class="vs-cell" style="color:var(--red);">Tanzu (온프렘)</div>
+          <div class="vs-cell" style="color:var(--green);">EKS Hybrid Nodes</div>
+          <div class="vs-cell" style="color:var(--accent-light);">핵심 수치</div>
+        </div>
+        <div class="vs-row">
+
+          <div class="vs-cell tanzu">
+            <span class="vs-label">성능</span>
+            <span class="vs-desc">vGPU 가상화 오버헤드 10-20%</span>
+          </div>
+          <div class="vs-cell eks">
+            <span class="vs-label">성능</span>
+            <span class="vs-desc">베어메탈 직접 접근, 오버헤드 0-2%</span>
+          </div>
+          <div class="vs-cell metric">처리량 23%↑<br/>레이턴시 26%↓</div>
+        </div>
+        <div class="vs-row">
+
+          <div class="vs-cell tanzu">
+            <span class="vs-label">유연성</span>
+            <span class="vs-desc">온프렘 리소스 고정, 수동 확장</span>
+          </div>
+          <div class="vs-cell eks">
+            <span class="vs-label">유연성</span>
+            <span class="vs-desc">피크 시 AWS GPU/CPU 자동 추가</span>
+          </div>
+          <div class="vs-cell metric">월말 결산 등<br/>자동 대응</div>
+        </div>
+        <div class="vs-row">
+
+          <div class="vs-cell tanzu">
+            <span class="vs-label">운영</span>
+            <span class="vs-desc">etcd, 마스터 노드 직접 운영</span>
+          </div>
+          <div class="vs-cell eks">
+            <span class="vs-label">운영</span>
+            <span class="vs-desc">AWS 관리형 CP, 99.95% SLA</span>
+          </div>
+          <div class="vs-cell metric">운영 인력<br/>60% 절감</div>
+        </div>
+        <div class="vs-row">
+
+          <div class="vs-cell tanzu">
+            <span class="vs-label">비용</span>
+            <span class="vs-desc">vSphere 라이센스 + Over-provisioning</span>
+          </div>
+          <div class="vs-cell eks">
+            <span class="vs-label">비용</span>
+            <span class="vs-desc">사용한 vCPU만 과금 ($0.01/hr)</span>
+          </div>
+          <div class="vs-cell metric">CapEx → OpEx<br/>전환</div>
+        </div>
+        <div class="vs-row">
+
+          <div class="vs-cell tanzu">
+            <span class="vs-label">최신 기술</span>
+            <span class="vs-desc">vSphere 버전 락인, 드라이버 지연</span>
+          </div>
+          <div class="vs-cell eks">
+            <span class="vs-label">최신 기술</span>
+            <span class="vs-desc">최신 NVIDIA 드라이버 즉시 적용</span>
+          </div>
+          <div class="vs-cell metric">Flash Attention<br/>TensorRT-LLM</div>
+        </div>
+      </div>
+      <div class="callout callout-success" style="margin-top: 12px;">
+        <strong>결론:</strong> 기존 온프렘 K8s를 EKS Hybrid Nodes로 전환하면 — 성능·유연성·운영·비용·기술 모든 축에서 개선됩니다
+      </div>
+    </div>
+    <a href="https://atomoh.gitbook.io/kubernetes-docs/eks-hybrid-nodes" target="_blank" class="ref-link">📖 참고 문서</a>
+  </section>
+
+
+  <!-- Slide 11: 핵심 요약 & Q&A -->
+  <section class="slide" id="slide-11">
+    <div class="slide-header">
+      <h1>핵심 요약</h1>
+    </div>
+    <div class="slide-body">
+      <div class="takeaway-grid">
+        <div class="takeaway-card">
+          <div class="takeaway-icon">&#9881;</div>
+          <p>EKS CP는 AWS가 관리<br/>온프렘 인프라 활용</p>
+        </div>
+        <div class="takeaway-card">
+          <div class="takeaway-icon">&#128279;</div>
+          <p>VPN/DX로 안전한<br/>하이브리드 네트워킹</p>
+        </div>
+        <div class="takeaway-card">
+          <div class="takeaway-icon">&#128230;</div>
+          <p>nodeadm으로 간편한<br/>노드 부트스트랩</p>
+        </div>
+        <div class="takeaway-card">
+          <div class="takeaway-icon">&#129302;</div>
+          <p>Bedrock/AgentCore 등<br/>AWS AI 서비스 즉시 연동</p>
+        </div>
+        <div class="takeaway-card">
+          <div class="takeaway-icon">&#128737;</div>
+          <p>데이터 주권 유지 +<br/>관리형 서비스 활용</p>
+        </div>
+      </div>
+      <div class="qna-section">
+        <h2>Q&amp;A</h2>
+        <p style="color: var(--text-secondary);">궁금한 점이 있으시면 질문해 주세요</p>
+      </div>
+      <div class="resource-links">
+        <a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html" target="_blank" class="resource-link">EKS Hybrid Nodes 공식 문서</a>
+        <a href="https://www.youtube.com/results?search_query=eks+hybrid+nodes+reinvent+2024" target="_blank" class="resource-link">AWS re:Invent 2024 세션</a>
+        <a href="https://aws.github.io/aws-eks-best-practices/" target="_blank" class="resource-link">EKS Best Practices Guide</a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- Slide 12: Thank You -->
+  <div class="slide" style="align-items:center;justify-content:center;text-align:center;background:url('../common/pptx-theme/images/Picture_13.png') center/cover no-repeat;">
+    <div style="position:relative;z-index:1;">
+      <h1 style="font-size:3.5rem;font-weight:700;color:#fff;margin-bottom:1rem;text-shadow:0 2px 20px rgba(0,0,0,0.5);">Thank You</h1>
+      <p style="font-size:1.3rem;color:rgba(255,255,255,0.85);margin-bottom:2rem;">감사합니다</p>
+      <div style="display:flex;flex-direction:column;gap:0.5rem;align-items:center;">
+        <p style="font-size:1.1rem;color:rgba(255,255,255,0.9);font-weight:600;">오준석 (Junseok Oh)</p>
+        <p style="font-size:0.95rem;color:rgba(255,255,255,0.7);">Sr. Solutions Architect, AWS</p>
+      </div>
+      <div style="display:flex; gap:16px; margin-top:2rem;">
+        <a href="../index.html" class="btn btn-sm" style="text-decoration:none; color:rgba(255,255,255,0.9); border-color:rgba(255,255,255,0.3);">← All Presentations</a>
+      </div>
+    </div>
+    <img src="../common/pptx-theme/images/Picture_8.png" alt="" style="position:absolute;top:4%;right:4%;height:2.5rem;">
+    <img src="../common/pptx-theme/images/logo_1.png" alt="" style="position:absolute;bottom:4%;left:8%;height:1.8rem;">
+  </div>
+
+
+</div>
+
+<script src="../common/animation-utils.js"></script>
+<script src="../common/slide-framework.js"></script>
+<script src="../common/quiz-component.js"></script>
+<script src="../common/presenter-view.js"></script>
+<script>
+  // ============================================================
+  // Block 1: Architecture Canvas (slide 6, index 5)
+  // ============================================================
+  // ===== Architecture Canvas (Slide 6) =====
+  const ARCH_BASE_W = 1100, ARCH_BASE_H = 450;
+  let archCtx, archCanvas, archStep = 0;
+  let archAnimating = false;
+  let archAnimStart = 0;
+  const ARCH_ANIM_DURATION = 600; // ms
+  const archStepLabels = [
+    '1. nodeadm init 실행',
+    '2. SSM/IAM 인증',
+    '3. kubelet 부트스트랩',
+    '4. Node Ready!'
+  ];
+
+  function initArchCanvas() {
+    const canvas = document.getElementById('archCanvas');
+    if (!canvas) return;
+    const container = canvas.parentElement;
+    const dpr = window.devicePixelRatio || 1;
+
+    function resize() {
+      const rect = container.getBoundingClientRect();
+      const scale = Math.min(rect.width / ARCH_BASE_W, rect.height / ARCH_BASE_H);
+      canvas.width = ARCH_BASE_W * scale * dpr;
+      canvas.height = ARCH_BASE_H * scale * dpr;
+      canvas.style.width = (ARCH_BASE_W * scale) + 'px';
+      canvas.style.height = (ARCH_BASE_H * scale) + 'px';
+      archCtx = canvas.getContext('2d');
+      archCtx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+      drawArchFrame(archStep);
+    }
+
+    new ResizeObserver(resize).observe(container);
+    archCanvas = canvas;
+    resize();
+  }
+
+  function drawArchFrame(step) {
+    if (!archCtx) return;
+    const ctx = archCtx;
+    ctx.clearRect(0, 0, ARCH_BASE_W, ARCH_BASE_H);
+
+    // AWS Cloud Region
+    drawRoundRect(ctx, 30, 30, 400, 390, 12, Colors.blue + '15', Colors.blue);
+    drawText(ctx, 'AWS Cloud Region', 230, 55, { size: 16, weight: '700', color: Colors.blue });
+
+    // EKS CP Box
+    drawRoundRect(ctx, 60, 90, 340, 150, 8, Colors.accent + '20', Colors.accent);
+    drawText(ctx, 'EKS Control Plane', 230, 115, { size: 14, weight: '600', color: Colors.accent });
+
+    // CP Components
+    drawBox(ctx, 80, 140, 90, 40, 'API Server', Colors.accentLt);
+    drawBox(ctx, 185, 140, 90, 40, 'etcd', Colors.accentLt);
+    drawBox(ctx, 290, 140, 90, 40, 'Controllers', Colors.accentLt);
+    drawText(ctx, 'AWS 완전 관리', 230, 210, { size: 11, color: Colors.green });
+
+    // VPN/DX Tunnel
+    drawRoundRect(ctx, 470, 150, 160, 80, 8, Colors.yellow + '20', Colors.yellow);
+    drawText(ctx, 'VPN / Direct Connect', 550, 175, { size: 12, weight: '600', color: Colors.yellow });
+    drawText(ctx, 'Secure Tunnel', 550, 200, { size: 11, color: Colors.textMuted });
+
+    // Arrows from CP to Tunnel
+    drawArrow(ctx, 400, 165, 470, 175, Colors.accent, true);
+    drawArrow(ctx, 470, 195, 400, 205, Colors.accent, true);
+
+    // On-prem DC
+    drawRoundRect(ctx, 670, 30, 400, 390, 12, Colors.orange + '15', Colors.orange);
+    drawText(ctx, 'On-premises DC', 870, 55, { size: 16, weight: '700', color: Colors.orange });
+
+    // Hybrid Node
+    drawRoundRect(ctx, 700, 90, 340, 200, 8, Colors.cyan + '20', Colors.cyan);
+    drawText(ctx, 'Hybrid Node', 870, 115, { size: 14, weight: '600', color: Colors.cyan });
+
+    // Node Components
+    drawBox(ctx, 720, 145, 80, 35, 'nodeadm', step >= 0 ? Colors.green : Colors.border);
+    drawBox(ctx, 820, 145, 80, 35, 'kubelet', step >= 2 ? Colors.green : Colors.border);
+    drawBox(ctx, 920, 145, 80, 35, 'containerd', step >= 2 ? Colors.green : Colors.border);
+    drawText(ctx, '고객 관리', 870, 260, { size: 11, color: Colors.yellow });
+
+    // Arrows from Tunnel to Node
+    drawArrow(ctx, 630, 175, 700, 162, Colors.yellow, true);
+    drawArrow(ctx, 700, 182, 630, 195, Colors.yellow, true);
+
+    // Step indicators
+    const stepY = 330;
+    for (let i = 0; i < 4; i++) {
+      const x = 720 + i * 85;
+      const active = i <= step;
+      const current = i === step;
+
+      ctx.beginPath();
+      ctx.arc(x, stepY, 12, 0, Math.PI * 2);
+      ctx.fillStyle = active ? (current ? Colors.accent : Colors.green) : Colors.border;
+      ctx.fill();
+      if (current) {
+        ctx.strokeStyle = Colors.accentLt;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      drawText(ctx, (i + 1).toString(), x, stepY, { size: 11, weight: '700', color: active ? '#fff' : Colors.textMuted });
+    }
+
+    // Connection lines between steps
+    for (let i = 0; i < 3; i++) {
+      const x1 = 720 + i * 85 + 12;
+      const x2 = 720 + (i + 1) * 85 - 12;
+      ctx.beginPath();
+      ctx.moveTo(x1, stepY);
+      ctx.lineTo(x2, stepY);
+      ctx.strokeStyle = i < step ? Colors.green : Colors.border;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // Step labels
+    drawText(ctx, archStepLabels[Math.min(step, 3)], 870, stepY + 35, { size: 12, color: Colors.textPri });
+
+    // Update step dots in HTML
+    document.querySelectorAll('#archSteps .step-dot').forEach((dot, i) => {
+      dot.classList.toggle('active', i === step);
+      dot.classList.toggle('done', i < step);
+    });
+
+    const labelEl = document.getElementById('archStepLabel');
+    if (labelEl) labelEl.textContent = archStepLabels[Math.min(step, 3)];
+  }
+
+  // ===== Slide 6: Step Transition Animation =====
+  function archTransitionTo(newStep) {
+    if (archAnimating) return;
+    archStep = newStep;
+    archAnimating = true;
+    archAnimStart = performance.now();
+
+    function animate() {
+      const elapsed = performance.now() - archAnimStart;
+      const t = Math.min(elapsed / ARCH_ANIM_DURATION, 1);
+      const eased = Ease.out(t);
+
+      drawArchFrame(archStep);
+      drawArchTransition(archStep, eased);
+
+      if (t < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        archAnimating = false;
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+
+  function drawArchTransition(step, t) {
+    const ctx = archCtx;
+    if (!ctx) return;
+
+    if (step === 0) {
+      // nodeadm box glow pulse
+      const glow = (1 - t) * 20;
+      ctx.save();
+      ctx.shadowColor = Colors.green;
+      ctx.shadowBlur = glow;
+      drawRoundRect(ctx, 720, 145, 80, 35, 8, Colors.green + '44', Colors.green);
+      ctx.restore();
+    }
+
+    if (step === 1) {
+      // Node → Tunnel → AWS CP particle flow (auth request)
+      const path = [{x:760,y:162}, {x:630,y:180}, {x:470,y:175}, {x:230,y:160}];
+      drawFlowParticles(ctx, path, t, Colors.cyan, 5);
+    }
+
+    if (step === 2) {
+      // AWS CP → Tunnel → Node particle flow (bootstrap response)
+      const path = [{x:230,y:200}, {x:470,y:195}, {x:630,y:185}, {x:820,y:162}];
+      drawFlowParticles(ctx, path, t, Colors.accent, 5);
+      // kubelet/containerd glow
+      const glow = (1 - t) * 15;
+      ctx.save();
+      ctx.shadowColor = Colors.green;
+      ctx.shadowBlur = glow;
+      drawRoundRect(ctx, 820, 145, 80, 35, 8, Colors.green + '44', Colors.green);
+      drawRoundRect(ctx, 920, 145, 80, 35, 8, Colors.green + '44', Colors.green);
+      ctx.restore();
+    }
+
+    if (step === 3) {
+      // Hybrid Node area success glow
+      const glow = (1 - t) * 25;
+      ctx.save();
+      ctx.shadowColor = Colors.green;
+      ctx.shadowBlur = glow;
+      drawRoundRect(ctx, 700, 90, 340, 200, 8, Colors.green + '15', Colors.green);
+      ctx.restore();
+    }
+  }
+
+  function drawFlowParticles(ctx, path, progress, color, count) {
+    for (let i = 0; i < count; i++) {
+      const offset = i / count;
+      const p = (progress * 1.2 - offset * 0.4);
+      if (p < 0 || p > 1) continue;
+      const pt = getPointOnPath(path, Ease.out(p));
+      const alpha = p < 0.1 ? p / 0.1 : p > 0.8 ? (1 - p) / 0.2 : 1;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = color + Math.round(alpha * 204).toString(16).padStart(2, '0');
+      ctx.fill();
+    }
+  }
+
+  function getPointOnPath(path, t) {
+    const totalSegs = path.length - 1;
+    const seg = Math.min(Math.floor(t * totalSegs), totalSegs - 1);
+    const localT = (t * totalSegs) - seg;
+    return {
+      x: lerp(path[seg].x, path[seg + 1].x, localT),
+      y: lerp(path[seg].y, path[seg + 1].y, localT)
+    };
+  }
+
+
+  // ============================================================
+  // Block 1: Services Canvas (slide 7, index 6)
+  // ============================================================
+  // ===== Services Canvas (Slide 7) =====
+  const SVC_BASE_W = 1100, SVC_BASE_H = 400;
+  let svcCtx, svcCanvas;
+
+  function initServicesCanvas() {
+    const canvas = document.getElementById('servicesCanvas');
+    if (!canvas) return;
+    const container = canvas.parentElement;
+    const dpr = window.devicePixelRatio || 1;
+
+    function resize() {
+      const rect = container.getBoundingClientRect();
+      const scale = Math.min(rect.width / SVC_BASE_W, rect.height / SVC_BASE_H);
+      canvas.width = SVC_BASE_W * scale * dpr;
+      canvas.height = SVC_BASE_H * scale * dpr;
+      canvas.style.width = (SVC_BASE_W * scale) + 'px';
+      canvas.style.height = (SVC_BASE_H * scale) + 'px';
+      svcCtx = canvas.getContext('2d');
+      svcCtx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+      drawServicesFrame(0);
+    }
+
+    new ResizeObserver(resize).observe(container);
+    svcCanvas = canvas;
+    resize();
+  }
+
+  function drawServicesFrame(elapsed) {
+    if (!svcCtx) return;
+    const ctx = svcCtx;
+    ctx.clearRect(0, 0, SVC_BASE_W, SVC_BASE_H);
+
+    // On-prem DC
+    drawRoundRect(ctx, 30, 50, 220, 300, 12, Colors.orange + '15', Colors.orange);
+    drawText(ctx, 'On-premises DC', 140, 75, { size: 14, weight: '700', color: Colors.orange });
+
+    // Data sources
+    drawBox(ctx, 50, 110, 180, 40, 'Legacy Database', Colors.orange);
+    drawBox(ctx, 50, 165, 180, 40, 'Application Servers', Colors.orange);
+    drawBox(ctx, 50, 220, 180, 40, 'ML Training Data', Colors.orange);
+    drawBox(ctx, 50, 275, 180, 40, 'IoT Sensors', Colors.orange);
+
+    // EKS Hybrid Nodes (center)
+    drawRoundRect(ctx, 320, 80, 200, 240, 12, Colors.accent + '25', Colors.accent);
+    drawText(ctx, 'EKS Hybrid Nodes', 420, 110, { size: 14, weight: '700', color: Colors.accent });
+
+    // Node boxes
+    drawBox(ctx, 340, 140, 160, 35, 'Worker Node 1', Colors.accentLt);
+    drawBox(ctx, 340, 190, 160, 35, 'Worker Node 2', Colors.accentLt);
+    drawBox(ctx, 340, 240, 160, 35, 'Worker Node N', Colors.accentLt);
+
+    // AWS Services (right)
+    drawRoundRect(ctx, 590, 30, 480, 340, 12, Colors.blue + '15', Colors.blue);
+    drawText(ctx, 'AWS Managed Services', 830, 55, { size: 14, weight: '700', color: Colors.blue });
+
+    // Service categories
+    const services = [
+      { x: 610, y: 85, w: 130, h: 70, label: 'Bedrock', sub: 'Claude, Nova', color: Colors.cyan },
+      { x: 755, y: 85, w: 130, h: 70, label: 'SageMaker', sub: 'ML Platform', color: Colors.cyan },
+      { x: 900, y: 85, w: 150, h: 70, label: 'Comprehend', sub: 'NLP', color: Colors.cyan },
+      { x: 610, y: 170, w: 130, h: 70, label: 'RDS', sub: 'PostgreSQL', color: Colors.green },
+      { x: 755, y: 170, w: 130, h: 70, label: 'ElastiCache', sub: 'Redis', color: Colors.green },
+      { x: 900, y: 170, w: 150, h: 70, label: 'DynamoDB', sub: 'NoSQL', color: Colors.green },
+      { x: 610, y: 255, w: 130, h: 70, label: 'OpenSearch', sub: 'Analytics', color: Colors.yellow },
+      { x: 755, y: 255, w: 130, h: 70, label: 'Kinesis', sub: 'Streaming', color: Colors.yellow },
+      { x: 900, y: 255, w: 150, h: 70, label: 'S3', sub: 'Storage', color: Colors.yellow },
+    ];
+
+    services.forEach(svc => {
+      drawRoundRect(ctx, svc.x, svc.y, svc.w, svc.h, 6, svc.color + '20', svc.color);
+      drawText(ctx, svc.label, svc.x + svc.w/2, svc.y + 25, { size: 12, weight: '600', color: svc.color });
+      drawText(ctx, svc.sub, svc.x + svc.w/2, svc.y + 45, { size: 10, color: Colors.textMuted });
+    });
+
+    // Data flow arrows
+    drawArrow(ctx, 250, 200, 320, 200, Colors.orange, true);
+    drawArrow(ctx, 520, 200, 590, 200, Colors.accent, true);
+
+    // Labels
+    drawText(ctx, 'Data Processing', 420, 295, { size: 11, color: Colors.textMuted });
+  }
+
+  // Quiz handling delegated to framework QuizManager (quiz-component.js)
+
+  // ============================================================
+  // Block 2: SVG Toggle
+  // ============================================================
+  // Toggle path visibility inside <object> SVGs
+  function togglePath(type, el) {
+    const slide = el.closest('.slide');
+    const obj = slide.querySelector('object.diagram-svg');
+    if (!obj) return;
+    const svgDoc = obj.contentDocument;
+    if (!svgDoc) return;
+
+    const path = svgDoc.getElementById(type + '-path');
+    const dot = svgDoc.getElementById(type + '-dot');
+    const dot2 = svgDoc.getElementById(type + '-dot-2');
+    const connector = svgDoc.getElementById(type + '-connector');
+
+    if (!path) return;
+    const isHidden = path.style.display === 'none';
+
+    [path, dot, dot2, connector].forEach(function(e) {
+      if (e) e.style.display = isHidden ? '' : 'none';
+    });
+    el.style.opacity = isHidden ? '1' : '0.35';
+  }
+
+  // ============================================================
+  // Block 3: Tab functionality
+  // ============================================================
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tabGroup = btn.closest('.slide');
+      tabGroup.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      tabGroup.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      const tabId = btn.dataset.tab;
+      tabGroup.querySelector(`.tab-content[data-tab="${tabId}"]`).classList.add('active');
+    });
+  });
+
+  // ============================================================
+  // Block 3: Bootstrap Canvas (slide 31, index 30)
+  // ============================================================
+  let resetBootstrapCanvas;
+  (function() {
+    const canvas = document.getElementById('bootstrap-canvas');
+    if (!canvas) return;
+    const container = canvas.parentElement;
+    const B3_BASE_W = 1100, B3_BASE_H = 450;
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      const cw = container.clientWidth;
+      const ch = container.clientHeight;
+      if (cw <= 0 || ch <= 0) return;
+      const dpr = window.devicePixelRatio || 1;
+      const scale = Math.min(cw / B3_BASE_W, ch / B3_BASE_H);
+      canvas.width = Math.round(B3_BASE_W * scale * dpr);
+      canvas.height = Math.round(B3_BASE_H * scale * dpr);
+      canvas.style.width = (B3_BASE_W * scale) + 'px';
+      canvas.style.height = (B3_BASE_H * scale) + 'px';
+      canvas.style.maxWidth = 'none';
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(scale * dpr, scale * dpr);
+    }
+
+    resize();
+    new ResizeObserver(() => { resize(); draw(); }).observe(container);
+
+    const steps = [
+      { label: 'IAM 자격 증명\n준비', icon: '1' },
+      { label: 'nodeadm\n다운로드', icon: '2' },
+      { label: '의존성 설치\n(nodeadm install)', icon: '3' },
+      { label: 'NodeConfig\nYAML 작성', icon: '4' },
+      { label: 'CA 인증서\n설치', icon: '5' },
+      { label: 'nodeadm init\n실행', icon: '6' },
+      { label: 'CNI 설치\n(Cilium)', icon: '7' },
+      { label: 'Node Ready', icon: '8' }
+    ];
+
+    const details = [
+      { text: 'SSM Activation 또는 IAM Roles Anywhere로 자격 증명 준비', cmd: 'aws ssm create-activation --iam-role HybridNodeRole' },
+      { text: 'hybrid-assets.eks.amazonaws.com에서 nodeadm 바이너리 다운로드', cmd: 'curl -OL https://hybrid-assets.eks...' },
+      { text: 'kubelet, containerd 등 K8s 컴포넌트 자동 설치', cmd: 'sudo nodeadm install 1.31 --credential-provider ssm' },
+      { text: 'cluster, hybrid, kubelet, containerd 4개 섹션 설정', cmd: 'vi nodeconfig.yaml  # cluster.name, hybrid.ssm' },
+      { text: 'EKS 클러스터 CA 인증서를 로컬 trust store에 저장', cmd: 'sudo nodeadm init --config-source file://nodeconfig.yaml' },
+      { text: 'kubelet 시작 → API Server 연결 → CSR 자동 승인', cmd: 'kubectl get csr  # Approved 확인' },
+      { text: 'Helm으로 Cilium 설치, VXLAN 터널 + Pod CIDR 구성', cmd: 'helm install cilium cilium/cilium --set tunnel=vxlan' },
+      { text: 'kubectl get nodes에서 Ready 상태 확인 완료', cmd: 'kubectl get nodes -l eks.amazonaws.com/compute-type=hybrid' },
+    ];
+
+    let currentStep = -1;
+    let animating = false;
+
+    function draw() {
+      ctx.clearRect(0, 0, B3_BASE_W, B3_BASE_H);
+      const startX = 60;
+      const stepWidth = (B3_BASE_W - 120) / steps.length;
+      const centerY = B3_BASE_H / 2 - 55;
+      const circleRadius = 28;
+
+      for (let i = 0; i < steps.length - 1; i++) {
+        const x1 = startX + i * stepWidth + circleRadius;
+        const x2 = startX + (i + 1) * stepWidth - circleRadius;
+        ctx.beginPath();
+        ctx.strokeStyle = i < currentStep ? '#00b894' : '#2d3250';
+        ctx.lineWidth = 3;
+        ctx.moveTo(x1 + circleRadius + 5, centerY);
+        ctx.lineTo(x2 - 5, centerY);
+        ctx.stroke();
+      }
+
+      steps.forEach((step, i) => {
+        const x = startX + i * stepWidth;
+        let bgColor, borderColor, textColor;
+        if (i < currentStep) {
+          bgColor = '#00b89430'; borderColor = '#00b894'; textColor = '#00b894';
+        } else if (i === currentStep) {
+          bgColor = '#6c5ce730'; borderColor = '#a29bfe'; textColor = '#a29bfe';
+          ctx.save(); ctx.shadowColor = '#6c5ce7'; ctx.shadowBlur = 20;
+        } else {
+          bgColor = '#0a0a0a'; borderColor = '#2d3250'; textColor = '#6b7194';
+        }
+        ctx.beginPath();
+        ctx.arc(x + circleRadius, centerY, circleRadius, 0, Math.PI * 2);
+        ctx.fillStyle = bgColor; ctx.fill();
+        ctx.strokeStyle = borderColor; ctx.lineWidth = 3; ctx.stroke();
+        if (i === currentStep) ctx.restore();
+
+        ctx.fillStyle = textColor;
+        ctx.font = '700 16px Pretendard, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        if (i < currentStep) ctx.fillText('\u2713', x + circleRadius, centerY);
+        else ctx.fillText(step.icon, x + circleRadius, centerY);
+
+        const lines = step.label.split('\n');
+        ctx.font = '500 12px Pretendard, sans-serif';
+        ctx.fillStyle = i <= currentStep ? '#e8eaf0' : '#6b7194';
+        lines.forEach((line, li) => {
+          ctx.fillText(line, x + circleRadius, centerY + circleRadius + 20 + li * 16);
+        });
+      });
+
+      if (currentStep >= 0 && currentStep < steps.length) {
+        const boxW = 680, boxH = 72;
+        const boxX = (B3_BASE_W - boxW) / 2;
+        const boxY = 275;
+        const accentColor = '#a29bfe';
+        ctx.beginPath();
+        const r = 10;
+        ctx.moveTo(boxX + r, boxY);
+        ctx.lineTo(boxX + boxW - r, boxY);
+        ctx.quadraticCurveTo(boxX + boxW, boxY, boxX + boxW, boxY + r);
+        ctx.lineTo(boxX + boxW, boxY + boxH - r);
+        ctx.quadraticCurveTo(boxX + boxW, boxY + boxH, boxX + boxW - r, boxY + boxH);
+        ctx.lineTo(boxX + r, boxY + boxH);
+        ctx.quadraticCurveTo(boxX, boxY + boxH, boxX, boxY + boxH - r);
+        ctx.lineTo(boxX, boxY + r);
+        ctx.quadraticCurveTo(boxX, boxY, boxX + r, boxY);
+        ctx.closePath();
+        ctx.fillStyle = '#0a0a0a'; ctx.fill();
+        ctx.strokeStyle = accentColor; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(boxX + 1, boxY + r);
+        ctx.lineTo(boxX + 1, boxY + boxH - r);
+        ctx.strokeStyle = accentColor; ctx.lineWidth = 3; ctx.stroke();
+        ctx.font = '700 13px Pretendard, sans-serif';
+        ctx.fillStyle = accentColor; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText(`단계 ${currentStep + 1}`, boxX + 16, boxY + boxH / 2);
+        ctx.font = '500 13px Pretendard, sans-serif';
+        ctx.fillStyle = '#e8eaf0';
+        ctx.fillText(details[currentStep].text, boxX + 80, boxY + 22);
+        ctx.font = '500 12px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#a29bfe';
+        ctx.fillText(details[currentStep].cmd, boxX + 80, boxY + 50);
+      }
+
+      let statusText = '', statusColor = '#6b7194';
+      if (currentStep < 0) {
+        statusText = '▲▼ 화살표 또는 Play 버튼으로 시작하세요';
+      } else if (currentStep < steps.length) {
+        statusText = steps[currentStep].label.replace('\n', ' ');
+        statusColor = '#a29bfe';
+      } else {
+        statusText = 'Bootstrap 완료! 노드가 클러스터에 성공적으로 조인되었습니다.';
+        statusColor = '#00b894';
+      }
+      ctx.font = '600 14px Pretendard, sans-serif';
+      ctx.fillStyle = statusColor; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+      ctx.fillText(statusText, B3_BASE_W / 2, B3_BASE_H - 20);
+    }
+
+    draw();
+
+    document.getElementById('bootstrap-play-btn').addEventListener('click', () => {
+      if (animating) return;
+      animating = true; currentStep = 0; draw();
+      const interval = setInterval(() => {
+        currentStep++; draw();
+        if (currentStep >= steps.length) { clearInterval(interval); animating = false; }
+      }, 600);
+    });
+
+    resetBootstrapCanvas = function() {
+      currentStep = -1; animating = false; draw();
+    };
+
+    document.getElementById('bootstrap-reset-btn').addEventListener('click', () => {
+      resetBootstrapCanvas();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (deck.currentSlide !== 29) return;  // slide 30 = index 29
+      if (animating) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (currentStep < steps.length) { currentStep++; draw(); }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (currentStep > -1) { currentStep--; draw(); }
+      }
+    });
+  })();
+
+  // ============================================================
+  // Block 4: Canvas Utilities
+  // ============================================================
+  // ============================================================
+  // Canvas Animation Utilities (ResizeObserver pattern)
+  // ============================================================
+  const BASE_W = 1100, BASE_H = 400;
+
+  function initCanvas(canvasId, baseW = BASE_W, baseH = BASE_H) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return null;
+    const ctx = canvas.getContext('2d');
+    const container = canvas.parentElement;
+    const dpr = window.devicePixelRatio || 1;
+
+    let scale = 1;
+
+    function resize() {
+      const rect = container.getBoundingClientRect();
+      scale = Math.min(rect.width / baseW, (rect.height - 50) / baseH);
+      canvas.width = baseW * scale * dpr;
+      canvas.height = baseH * scale * dpr;
+      canvas.style.width = (baseW * scale) + 'px';
+      canvas.style.height = (baseH * scale) + 'px';
+      ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+    }
+
+    new ResizeObserver(resize).observe(container);
+    resize();
+
+    return { canvas, ctx, resize, getScale: () => scale };
+  }
+
+  // ============================================================
+  // Shared: AWS Service Icons & Animated Arrows
+  // ============================================================
+  const AwsColors = {
+    compute: '#ED7100', security: '#DD344C', ml: '#01A88D',
+    storage: '#3F8624', network: '#8C4FFF', kubernetes: '#326CE5',
+  };
+
+  function drawServiceIcon(ctx, x, y, size, bgColor, abbr) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+    ctx.fillStyle = bgColor;
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = `700 ${Math.round(size * 0.42)}px Pretendard, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(abbr, x, y + 1);
+    ctx.restore();
+  }
+
+  function drawFlowArrow(ctx, pts, progress, color, ts, label) {
+    if (progress <= 0 || pts.length < 2) return;
+    const ease = t => t < 0.5 ? 2*t*t : -1 + (4-2*t)*t;
+    let totalLen = 0;
+    for (let i = 1; i < pts.length; i++)
+      totalLen += Math.hypot(pts[i].x - pts[i-1].x, pts[i].y - pts[i-1].y);
+    const drawLen = totalLen * ease(Math.min(1, progress));
+    let rem = drawLen, lastX = pts[0].x, lastY = pts[0].y, prevX = lastX, prevY = lastY;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length && rem > 0; i++) {
+      const dx = pts[i].x - pts[i-1].x, dy = pts[i].y - pts[i-1].y;
+      const seg = Math.hypot(dx, dy);
+      prevX = lastX; prevY = lastY;
+      if (rem >= seg) {
+        ctx.lineTo(pts[i].x, pts[i].y);
+        lastX = pts[i].x; lastY = pts[i].y; rem -= seg;
+      } else {
+        const t = rem / seg;
+        lastX = pts[i-1].x + dx*t; lastY = pts[i-1].y + dy*t;
+        ctx.lineTo(lastX, lastY); rem = 0;
+      }
+    }
+    ctx.setLineDash([10, 5]);
+    ctx.lineDashOffset = -(ts || 0) * 0.05;
+    ctx.strokeStyle = color; ctx.lineWidth = 3;
+    ctx.shadowColor = color; ctx.shadowBlur = 8;
+    ctx.stroke();
+    ctx.setLineDash([]); ctx.shadowBlur = 0;
+    if (progress > 0.08) {
+      const a = Math.atan2(lastY - prevY, lastX - prevX);
+      ctx.beginPath(); ctx.moveTo(lastX, lastY);
+      ctx.lineTo(lastX - 12*Math.cos(a-0.35), lastY - 12*Math.sin(a-0.35));
+      ctx.lineTo(lastX - 12*Math.cos(a+0.35), lastY - 12*Math.sin(a+0.35));
+      ctx.closePath(); ctx.fillStyle = color; ctx.fill();
+    }
+    if (progress > 0.5 && label) {
+      let half = drawLen / 2, mx = pts[0].x, my = pts[0].y;
+      for (let i = 1; i < pts.length && half > 0; i++) {
+        const seg = Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y);
+        if (half >= seg) { mx = pts[i].x; my = pts[i].y; half -= seg; }
+        else { const t = half/seg; mx = pts[i-1].x+(pts[i].x-pts[i-1].x)*t; my = pts[i-1].y+(pts[i].y-pts[i-1].y)*t; half = 0; }
+      }
+      ctx.font = '600 10px Pretendard, sans-serif';
+      const tw = ctx.measureText(label).width;
+      ctx.fillStyle = '#0d1117dd';
+      ctx.fillRect(mx-tw/2-5, my-22, tw+10, 16);
+      ctx.fillStyle = color; ctx.textAlign = 'center';
+      ctx.fillText(label, mx, my - 12);
+    }
+    ctx.restore();
+  }
+
+  function drawStaticArrow(ctx, pts, color) {
+    if (pts.length < 2) return;
+    ctx.save(); ctx.globalAlpha = 0.4;
+    ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
+    const last = pts[pts.length-1], prev = pts[pts.length-2];
+    const a = Math.atan2(last.y-prev.y, last.x-prev.x);
+    ctx.beginPath(); ctx.moveTo(last.x, last.y);
+    ctx.lineTo(last.x-10*Math.cos(a-0.35), last.y-10*Math.sin(a-0.35));
+    ctx.lineTo(last.x-10*Math.cos(a+0.35), last.y-10*Math.sin(a+0.35));
+    ctx.closePath(); ctx.fillStyle = color; ctx.fill();
+    ctx.globalAlpha = 1; ctx.restore();
+  }
+
+  // ============================================================
+  // Block 4: GPU on-prem + CPU cloud Canvas (slide 43, index 42)
+  // ============================================================
+  // ============================================================
+  // Slide 3: GPU on-prem + CPU cloud Canvas (static diagram)
+  // ============================================================
+  function initGpuCpuCanvas() {
+    const c = initCanvas('gpu-cpu-canvas', 1100, 400);
+    if (!c) return;
+
+    function draw() {
+      const { ctx } = c;
+      ctx.clearRect(0, 0, 1100, 400);
+
+      // On-prem zone
+      ctx.fillStyle = '#1a2636';
+      ctx.fillRect(20, 20, 350, 360);
+      ctx.strokeStyle = Colors.green;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(20, 20, 350, 360);
+
+      // Cloud zone
+      ctx.fillStyle = '#1a2636';
+      ctx.fillRect(730, 20, 350, 360);
+      ctx.strokeStyle = Colors.blue;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(730, 20, 350, 360);
+
+      // Zone labels
+      ctx.fillStyle = Colors.green;
+      ctx.font = '600 14px Pretendard, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('온프레미스 DC', 195, 50);
+
+      ctx.fillStyle = Colors.blue;
+      ctx.fillText('AWS Cloud', 905, 50);
+
+      // GPU nodes (on-prem)
+      drawRoundRect(ctx, 50, 80, 130, 100, 8, Colors.green + '33', Colors.green);
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 12px Pretendard, sans-serif';
+      ctx.fillText('GPU Node (H100)', 115, 115);
+      ctx.font = '400 11px Pretendard, sans-serif';
+      ctx.fillStyle = Colors.textSec;
+      ctx.fillText('ML Training', 115, 135);
+      ctx.fillText('PyTorch / TensorFlow', 115, 150);
+
+      drawRoundRect(ctx, 210, 80, 130, 100, 8, Colors.green + '33', Colors.green);
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 12px Pretendard, sans-serif';
+      ctx.fillText('GPU Node (H100)', 275, 115);
+      ctx.font = '400 11px Pretendard, sans-serif';
+      ctx.fillStyle = Colors.textSec;
+      ctx.fillText('ML Training', 275, 135);
+      ctx.fillText('Data Processing', 275, 150);
+
+      // EKS Hybrid label
+      drawRoundRect(ctx, 80, 200, 210, 50, 8, Colors.accent + '33', Colors.accent);
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 13px Pretendard, sans-serif';
+      ctx.fillText('EKS Hybrid Nodes', 185, 230);
+
+      // S3 bucket (center)
+      ctx.fillStyle = Colors.orange + '33';
+      ctx.beginPath();
+      ctx.arc(550, 200, 50, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = Colors.orange;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 14px Pretendard, sans-serif';
+      ctx.fillText('S3', 550, 195);
+      ctx.font = '400 11px Pretendard, sans-serif';
+      ctx.fillStyle = Colors.textSec;
+      ctx.fillText('Model Artifacts', 550, 215);
+
+      // Cloud services
+      drawRoundRect(ctx, 760, 80, 130, 80, 8, Colors.cyan + '33', Colors.cyan);
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 12px Pretendard, sans-serif';
+      ctx.fillText('SageMaker', 825, 110);
+      ctx.font = '400 11px Pretendard, sans-serif';
+      ctx.fillStyle = Colors.textSec;
+      ctx.fillText('Endpoint', 825, 130);
+
+      drawRoundRect(ctx, 920, 80, 130, 80, 8, Colors.blue + '33', Colors.blue);
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 12px Pretendard, sans-serif';
+      ctx.fillText('EKS Pods', 985, 110);
+      ctx.font = '400 11px Pretendard, sans-serif';
+      ctx.fillStyle = Colors.textSec;
+      ctx.fillText('CPU Inference', 985, 130);
+
+      // API Gateway
+      drawRoundRect(ctx, 840, 180, 130, 60, 8, Colors.pink + '33', Colors.pink);
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 12px Pretendard, sans-serif';
+      ctx.fillText('API Gateway', 905, 215);
+
+      // Bedrock
+      drawRoundRect(ctx, 760, 260, 130, 80, 8, Colors.accentLt + '33', Colors.accentLt);
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = '600 12px Pretendard, sans-serif';
+      ctx.fillText('Bedrock', 825, 290);
+      ctx.font = '400 11px Pretendard, sans-serif';
+      ctx.fillStyle = Colors.textSec;
+      ctx.fillText('Claude / Nova', 825, 310);
+
+      // Dashed arrows
+      ctx.strokeStyle = Colors.textMuted;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+
+      // On-prem to S3
+      ctx.beginPath();
+      ctx.moveTo(300, 225);
+      ctx.lineTo(500, 200);
+      ctx.stroke();
+
+      // S3 to Cloud
+      ctx.beginPath();
+      ctx.moveTo(600, 200);
+      ctx.lineTo(730, 120);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(600, 200);
+      ctx.lineTo(730, 210);
+      ctx.stroke();
+
+      ctx.setLineDash([]);
+    }
+
+    // Redraw after ResizeObserver clears canvas
+    new ResizeObserver(() => requestAnimationFrame(draw)).observe(c.canvas.parentElement);
+    draw();
+  }
+
+  // ============================================================
+  // Block 4: Cloud Bursting Canvas (slide 44, index 43)
+  // ============================================================
+  // ============================================================
+  // Slide 4: Cloud Bursting Canvas
+  // ============================================================
+  let burstAnimId = null;
+  let burstAnimating = false;
+  let burstCloudNodes = [];  // { alpha: 0-1, pods: 0-4 }
+  let burstKeyHandler = null;
+  const BURST_MAX_CLOUD_NODES = 4;
+  const BURST_PODS_PER_NODE = 4;
+
+  function initCloudBurstingCanvas() {
+    const c = initCanvas('bursting-canvas', 1100, 450);
+    if (!c) return;
+
+    burstCloudNodes = [];
+    burstAnimating = false;
+
+    // Pod layout helper: 2x2 grid centered inside a node box (220x160)
+    const POD_SIZE = 36;
+    const POD_GAP = 12;
+    const POD_GRID_W = POD_SIZE * 2 + POD_GAP; // 84
+    const POD_OFFSET_X = (220 - POD_GRID_W) / 2; // 68
+    const POD_OFFSET_Y = 48;
+    function podPos(nodeX, nodeY, podIdx) {
+      const col = podIdx % 2;
+      const row = Math.floor(podIdx / 2);
+      return { x: nodeX + POD_OFFSET_X + col * (POD_SIZE + POD_GAP), y: nodeY + POD_OFFSET_Y + row * (POD_SIZE + POD_GAP) };
+    }
+
+    // Node position helpers
+    function onpremNodePos(i) {
+      return { x: 50 + (i % 2) * 240, y: 70 + Math.floor(i / 2) * 180 };
+    }
+    function cloudNodePos(i) {
+      return { x: 590 + (i % 2) * 240, y: 70 + Math.floor(i / 2) * 180 };
+    }
+
+    function draw() {
+      const { ctx } = c;
+      ctx.clearRect(0, 0, 1100, 450);
+
+      // Zone labels with AWS icons
+      drawServiceIcon(ctx, 35, 30, 20, AwsColors.compute, 'EKS');
+      ctx.fillStyle = Colors.green;
+      ctx.font = '600 14px Pretendard, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('온프레미스 노드 풀 (고정)', 50, 35);
+      drawServiceIcon(ctx, 585, 30, 20, AwsColors.compute, 'K');
+      ctx.fillStyle = Colors.blue;
+      ctx.fillText('클라우드 노드 풀 (탄력적)', 600, 35);
+
+      // On-prem zone background
+      ctx.fillStyle = '#1a2636';
+      ctx.fillRect(30, 50, 500, 380);
+      ctx.strokeStyle = Colors.green;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(30, 50, 500, 380);
+
+      // On-prem nodes (4 fixed) with pods
+      for (let i = 0; i < 4; i++) {
+        const { x, y } = onpremNodePos(i);
+        drawRoundRect(ctx, x, y, 220, 160, 8, Colors.green + '22', Colors.green);
+        ctx.fillStyle = Colors.textSec;
+        ctx.font = '500 11px Pretendard, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`hybrid-node-${i + 1}`, x + 110, y + 20);
+
+        // 4 pods per on-prem node (always visible)
+        for (let p = 0; p < BURST_PODS_PER_NODE; p++) {
+          const pp = podPos(x, y, p);
+          drawRoundRect(ctx, pp.x, pp.y, POD_SIZE, POD_SIZE, 4, Colors.green + '88', Colors.green);
+          ctx.fillStyle = '#fff';
+          ctx.font = '600 11px Pretendard, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('P', pp.x + POD_SIZE / 2, pp.y + POD_SIZE * 0.6);
+        }
+      }
+
+      // Cloud zone background
+      ctx.fillStyle = '#1a2636';
+      ctx.fillRect(570, 50, 500, 380);
+      ctx.strokeStyle = Colors.blue;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(570, 50, 500, 380);
+
+      // Cloud nodes (dynamic)
+      burstCloudNodes.forEach((node, i) => {
+        const { x, y } = cloudNodePos(i);
+        ctx.globalAlpha = node.alpha;
+        drawRoundRect(ctx, x, y, 220, 160, 8, Colors.blue + '22', Colors.blue);
+        ctx.fillStyle = Colors.textSec;
+        ctx.font = '500 11px Pretendard, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`cloud-node-${i + 1}`, x + 110, y + 20);
+
+        // Cloud pods
+        for (let p = 0; p < node.pods; p++) {
+          const pp = podPos(x, y, p);
+          drawRoundRect(ctx, pp.x, pp.y, POD_SIZE, POD_SIZE, 4, Colors.blue + '88', Colors.blue);
+          ctx.fillStyle = '#fff';
+          ctx.font = '600 11px Pretendard, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('P', pp.x + POD_SIZE / 2, pp.y + POD_SIZE * 0.6);
+        }
+        ctx.globalAlpha = 1;
+      });
+
+      // Empty state hint
+      if (burstCloudNodes.length === 0) {
+        ctx.fillStyle = Colors.textMuted;
+        ctx.font = '400 13px Pretendard, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Scale Out 버튼으로 클라우드 노드를 추가하세요', 820, 240);
+      }
+
+      // Pod count status
+      const onpremPodCount = 4 * BURST_PODS_PER_NODE;
+      const cloudPodCount = burstCloudNodes.reduce((sum, n) => sum + n.pods, 0);
+      const cloudNodeCount = burstCloudNodes.length;
+      ctx.fillStyle = Colors.accent;
+      ctx.font = '600 13px Pretendard, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(`온프렘: ${onpremPodCount} Pods (4 Nodes)  |  클라우드: ${cloudPodCount} Pods (${cloudNodeCount} Nodes)`, 50, 445);
+
+      if (cloudNodeCount > 0) {
+        ctx.fillStyle = Colors.yellow;
+        ctx.font = '500 11px Pretendard, sans-serif';
+        ctx.fillText('온프렘 Pod: deletion-cost=1000  |  클라우드 Pod: deletion-cost=-100', 550, 445);
+      }
+
+      if (burstAnimating) {
+        burstAnimId = requestAnimationFrame(draw);
+      }
+    }
+
+    // --- Scale Out: add 1 pod per click; new node when current is full ---
+    function scaleOut() {
+      if (burstAnimating) return;
+      const lastNode = burstCloudNodes[burstCloudNodes.length - 1];
+
+      if (!lastNode || lastNode.pods >= BURST_PODS_PER_NODE) {
+        // Need a new node first
+        if (burstCloudNodes.length >= BURST_MAX_CLOUD_NODES) return;
+        burstAnimating = true;
+        const node = { alpha: 0, pods: 0 };
+        burstCloudNodes.push(node);
+
+        let fadeStart = null;
+        function fadeIn(ts) {
+          if (!fadeStart) fadeStart = ts;
+          node.alpha = Math.min(1, (ts - fadeStart) / 400);
+          draw();
+          if (node.alpha < 1) {
+            burstAnimId = requestAnimationFrame(fadeIn);
+          } else {
+            node.pods = 1;
+            burstAnimating = false;
+            draw();
+          }
+        }
+        burstAnimId = requestAnimationFrame(fadeIn);
+      } else {
+        // Add 1 pod to existing node
+        lastNode.pods++;
+        draw();
+      }
+    }
+
+    // --- Scale In: remove 1 pod per click; fade out node when empty ---
+    function scaleIn() {
+      if (burstAnimating) return;
+      if (burstCloudNodes.length === 0) return;
+
+      const lastNode = burstCloudNodes[burstCloudNodes.length - 1];
+
+      if (lastNode.pods > 1) {
+        lastNode.pods--;
+        draw();
+      } else {
+        // Last pod — remove it and fade out the node
+        burstAnimating = true;
+        lastNode.pods = 0;
+        draw();
+
+        let fadeStart = null;
+        function fadeOut(ts) {
+          if (!fadeStart) fadeStart = ts;
+          lastNode.alpha = Math.max(0, 1 - (ts - fadeStart) / 400);
+          draw();
+          if (lastNode.alpha > 0) {
+            burstAnimId = requestAnimationFrame(fadeOut);
+          } else {
+            burstCloudNodes.pop();
+            burstAnimating = false;
+            draw();
+          }
+        }
+        burstAnimId = requestAnimationFrame(fadeOut);
+      }
+    }
+
+    // Redraw after ResizeObserver clears canvas
+    new ResizeObserver(() => requestAnimationFrame(draw)).observe(c.canvas.parentElement);
+    draw();
+
+    // Keyboard bindings: ArrowUp = Scale Out, ArrowDown = Scale In
+    burstKeyHandler = (e) => {
+      if (e.key === 'ArrowUp') { e.preventDefault(); scaleOut(); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); scaleIn(); }
+    };
+    document.addEventListener('keydown', burstKeyHandler);
+
+    // Button bindings
+    document.getElementById('btn-burst-scale-out').onclick = scaleOut;
+    document.getElementById('btn-burst-scale-in').onclick = scaleIn;
+    document.getElementById('btn-burst-reset').onclick = () => {
+      if (burstAnimId) cancelAnimationFrame(burstAnimId);
+      burstAnimating = false;
+      burstCloudNodes = [];
+      draw();
+    };
+  }
+
+  // ============================================================
+  // Block 4: Agent Architecture Canvas (slide 48, index 47)
+  // ============================================================
+  // ============================================================
+  // Slide 7: Agent Architecture Canvas
+  // ============================================================
+  let agentAnimId = null;
+  let agentStep = 0;        // 0=idle, 1-5=animation steps
+  let agentStepProgress = 0; // 0→1 within each step
+  let agentStepStart = 0;
+  const AGENT_STEP_DURATION = 1500;
+
+  function initAgentArchCanvas() {
+    const c = initCanvas('agent-canvas', 1100, 420);
+    if (!c) return;
+
+    agentStep = 0;
+    agentStepProgress = 0;
+
+    // Node positions
+    const nodes = {
+      pod:       { x: 70,  y: 120, w: 120, h: 50 },
+      podAgent:  { x: 70,  y: 200, w: 120, h: 50 },
+      vpn:       { x: 330, y: 140, w: 70,  h: 130 },
+      cpAgent:   { x: 540, y: 70,  w: 200, h: 50 },
+      sts:       { x: 570, y: 170, w: 130, h: 50 },
+      iamRole:   { x: 750, y: 170, w: 130, h: 50 },
+      bedrock:   { x: 500, y: 310, w: 140, h: 50 },
+      kb:        { x: 670, y: 310, w: 140, h: 50 },
+      s3:        { x: 840, y: 310, w: 140, h: 50 },
+    };
+
+    const stepTexts = [
+      '',
+      '① Pod가 AWS 자격 증명 요청',
+      '② AssumeRoleForPodIdentity 호출',
+      '③ IAM Role 검증 + 임시 자격 증명 발급',
+      '④ Temporary Credentials 반환',
+      '⑤ STS Token으로 Bedrock/S3 직접 호출',
+    ];
+
+    function cx(n) { return n.x + n.w / 2; }
+    function cy(n) { return n.y + n.h / 2; }
+
+    // Arrow paths per step
+    const vpnMidX = nodes.vpn.x + nodes.vpn.w / 2;
+    // Orthogonal (right-angle) arrow routing for architecture diagram clarity
+    const stepArrows = {
+      1: { points: [{x: cx(nodes.pod), y: nodes.pod.y + nodes.pod.h}, {x: cx(nodes.podAgent), y: nodes.podAgent.y}], color: Colors.cyan, label: '자격 증명 요청' },
+      2: { points: [{x: nodes.podAgent.x + nodes.podAgent.w, y: cy(nodes.podAgent)}, {x: vpnMidX, y: cy(nodes.podAgent)}, {x: vpnMidX, y: cy(nodes.cpAgent)}, {x: nodes.cpAgent.x, y: cy(nodes.cpAgent)}], color: Colors.blue, label: 'AssumeRole' },
+      3: { points: [{x: nodes.sts.x + nodes.sts.w, y: cy(nodes.sts)}, {x: nodes.iamRole.x, y: cy(nodes.iamRole)}], color: Colors.pink, label: 'Role 검증' },
+      4: { points: [{x: nodes.sts.x, y: cy(nodes.sts)}, {x: vpnMidX, y: cy(nodes.sts)}, {x: vpnMidX, y: nodes.pod.y + nodes.pod.h}, {x: cx(nodes.pod), y: nodes.pod.y + nodes.pod.h}], color: Colors.green, label: 'Temp Credentials' },
+      5: [
+        { points: [{x: nodes.pod.x + nodes.pod.w, y: cy(nodes.pod) - 5}, {x: vpnMidX - 15, y: cy(nodes.pod) - 5}, {x: vpnMidX - 15, y: nodes.bedrock.y}, {x: cx(nodes.bedrock), y: nodes.bedrock.y}], color: Colors.accentLt, label: 'LLM' },
+        { points: [{x: nodes.pod.x + nodes.pod.w, y: cy(nodes.pod) + 5}, {x: vpnMidX, y: cy(nodes.pod) + 5}, {x: vpnMidX, y: nodes.kb.y}, {x: cx(nodes.kb), y: nodes.kb.y}], color: Colors.cyan, label: 'RAG' },
+        { points: [{x: nodes.pod.x + nodes.pod.w, y: cy(nodes.pod) + 15}, {x: vpnMidX + 15, y: cy(nodes.pod) + 15}, {x: vpnMidX + 15, y: nodes.s3.y}, {x: cx(nodes.s3), y: nodes.s3.y}], color: Colors.green, label: 'Data' },
+      ]
+    };
+
+    // Draw a node box with AWS service icon
+    function drawNodeWithIcon(ctx, n, name, borderColor, glow, iconColor, iconAbbr) {
+      const bgAlpha = glow ? '44' : '22';
+      const bdr = glow ? borderColor : borderColor + '88';
+      drawRoundRect(ctx, n.x, n.y, n.w, n.h, 6, borderColor + bgAlpha, bdr);
+      if (iconColor && iconAbbr) {
+        drawServiceIcon(ctx, n.x + 18, cy(n), 22, iconColor, iconAbbr);
+        ctx.fillStyle = Colors.textPri;
+        ctx.font = (glow ? '700' : '600') + ' 11px Pretendard, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(name, n.x + 34, cy(n) + 4);
+      } else {
+        ctx.fillStyle = Colors.textPri;
+        ctx.font = (glow ? '700' : '600') + ' 12px Pretendard, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(name, cx(n), cy(n) + 4);
+      }
+    }
+
+    function draw(timestamp) {
+      const { ctx } = c;
+      ctx.clearRect(0, 0, 1100, 420);
+
+      // --- On-prem zone ---
+      ctx.fillStyle = '#1a2636';
+      ctx.fillRect(15, 15, 290, 380);
+      ctx.strokeStyle = Colors.green;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(15, 15, 290, 380);
+      ctx.fillStyle = Colors.green;
+      ctx.font = '600 13px Pretendard, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('온프레미스', 160, 40);
+
+      // EKS Hybrid Node container
+      drawRoundRect(ctx, 35, 60, 240, 210, 8, Colors.green + '15', Colors.green + '55');
+      ctx.fillStyle = Colors.textSec;
+      ctx.font = '500 10px Pretendard, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('EKS Hybrid Node', 45, 80);
+
+      // Pod
+      drawNodeWithIcon(ctx, nodes.pod, 'Pod', Colors.cyan, agentStep === 1 || agentStep >= 5, AwsColors.kubernetes, 'P');
+
+      // Pod Identity Agent
+      drawNodeWithIcon(ctx, nodes.podAgent, 'Pod Id Agent', Colors.accentLt, agentStep >= 1 && agentStep <= 2, AwsColors.compute, 'PI');
+
+      // Temp credentials text
+      if (agentStep >= 4) {
+        ctx.fillStyle = Colors.green;
+        ctx.font = '400 9px Pretendard, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('↑ temp credentials', cx(nodes.pod), nodes.pod.y + nodes.pod.h + 12);
+      }
+
+      // --- VPN/DX zone ---
+      ctx.fillStyle = '#1e2235';
+      ctx.fillRect(nodes.vpn.x, 15, nodes.vpn.w, 380);
+      ctx.strokeStyle = Colors.accent;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 4]);
+      ctx.strokeRect(nodes.vpn.x, 15, nodes.vpn.w, 380);
+      ctx.setLineDash([]);
+      ctx.save();
+      ctx.translate(nodes.vpn.x + nodes.vpn.w / 2, 210);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillStyle = Colors.accent;
+      ctx.font = '600 11px Pretendard, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('VPN / Direct Connect', 0, 4);
+      ctx.restore();
+
+      // --- AWS Cloud zone ---
+      ctx.fillStyle = '#1a2636';
+      ctx.fillRect(420, 15, 665, 380);
+      ctx.strokeStyle = Colors.blue;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(420, 15, 665, 380);
+      ctx.fillStyle = Colors.blue;
+      ctx.font = '600 13px Pretendard, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('AWS Cloud', 750, 40);
+
+      // EKS Control Plane container
+      drawRoundRect(ctx, 440, 55, 640, 80, 8, Colors.blue + '15', Colors.blue + '44');
+      ctx.fillStyle = Colors.textSec;
+      ctx.font = '500 10px Pretendard, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('EKS Control Plane', 450, 72);
+
+      // CP Agent
+      drawNodeWithIcon(ctx, nodes.cpAgent, 'Pod Identity Agent', Colors.blue, agentStep >= 2 && agentStep <= 3, AwsColors.compute, 'PI');
+
+      // STS
+      drawNodeWithIcon(ctx, nodes.sts, 'AWS STS', Colors.yellow, agentStep >= 2 && agentStep <= 4, AwsColors.security, 'ST');
+
+      // IAM Role
+      drawNodeWithIcon(ctx, nodes.iamRole, 'IAM Role', Colors.pink, agentStep === 3, AwsColors.security, 'IA');
+
+      // AWS Services at bottom
+      const svcGlow = agentStep === 5;
+      const svcList = [
+        { key: 'bedrock', name: 'Bedrock', sub: '(PrivateLink)', color: Colors.accentLt, ic: AwsColors.ml, ia: 'BR' },
+        { key: 'kb', name: 'Knowledge Base', sub: '', color: Colors.cyan, ic: AwsColors.ml, ia: 'KB' },
+        { key: 's3', name: 'Amazon S3', sub: '', color: Colors.green, ic: AwsColors.storage, ia: 'S3' },
+      ];
+      svcList.forEach(s => {
+        const n = nodes[s.key];
+        const sc = svcGlow ? s.color : s.color + '88';
+        drawRoundRect(ctx, n.x, n.y, n.w, n.h, 6, svcGlow ? s.color + '44' : s.color + '22', sc);
+        drawServiceIcon(ctx, n.x + 18, cy(n), 22, s.ic, s.ia);
+        ctx.fillStyle = Colors.textPri;
+        ctx.font = '600 11px Pretendard, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(s.name, n.x + 34, cy(n) + (s.sub ? -1 : 4));
+        if (s.sub) {
+          ctx.font = '400 9px Pretendard, sans-serif';
+          ctx.fillStyle = Colors.textSec;
+          ctx.fillText(s.sub, n.x + 34, cy(n) + 12);
+        }
+      });
+
+      // --- Animated arrows ---
+      if (agentStep >= 1 && agentStepStart) {
+        const elapsed = timestamp - agentStepStart;
+        agentStepProgress = Math.min(1, elapsed / AGENT_STEP_DURATION);
+        const t = agentStepProgress;
+
+        // Draw completed step arrows (static, dimmed)
+        for (let s = 1; s < agentStep; s++) {
+          const arrow = stepArrows[s];
+          if (Array.isArray(arrow)) {
+            arrow.forEach(a => drawStaticArrow(ctx, a.points, a.color));
+          } else {
+            drawStaticArrow(ctx, arrow.points, arrow.color);
+          }
+        }
+
+        // Draw current step arrow (animated, flowing)
+        if (agentStep <= 5) {
+          const arrow = stepArrows[agentStep];
+          if (Array.isArray(arrow)) {
+            // Fan-out (step 5)
+            arrow.forEach((a, i) => {
+              const delay = i * 0.15;
+              const at = Math.max(0, Math.min(1, (t - delay) / (1 - 0.3)));
+              drawFlowArrow(ctx, a.points, at, a.color, timestamp, a.label);
+            });
+          } else if (agentStep === 3) {
+            // STS ↔ IAM: pulse highlight + arrow
+            const pulse = 0.5 + 0.5 * Math.sin(t * Math.PI * 4);
+            ctx.save();
+            ctx.shadowColor = Colors.pink;
+            ctx.shadowBlur = 15 * pulse;
+            ctx.strokeStyle = Colors.pink;
+            ctx.lineWidth = 3;
+            ctx.strokeRect(nodes.sts.x - 3, nodes.sts.y - 3,
+              nodes.sts.w + nodes.iamRole.w + (nodes.iamRole.x - nodes.sts.x - nodes.sts.w) + 6,
+              nodes.sts.h + 6);
+            ctx.restore();
+            drawFlowArrow(ctx, arrow.points, t, arrow.color, timestamp, arrow.label);
+          } else {
+            drawFlowArrow(ctx, arrow.points, t, arrow.color, timestamp, arrow.label);
+          }
+        }
+
+        // Auto-advance to next step
+        if (agentStepProgress >= 1 && agentStep < 5) {
+          agentStep++;
+          agentStepStart = timestamp;
+          agentStepProgress = 0;
+        }
+      }
+
+      // --- Step text at bottom ---
+      if (agentStep >= 1) {
+        ctx.fillStyle = Colors.accentLt;
+        ctx.font = '600 12px Pretendard, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(stepTexts[agentStep] || '', 550, 395);
+      }
+
+      agentAnimId = requestAnimationFrame(draw);
+    }
+
+    agentAnimId = requestAnimationFrame(draw);
+
+    document.getElementById('btn-agent-play').onclick = () => {
+      if (agentStep === 0 || (agentStep === 5 && agentStepProgress >= 1)) {
+        agentStep = 1;
+        agentStepProgress = 0;
+        agentStepStart = performance.now();
+      }
+    };
+
+    document.getElementById('btn-agent-reset').onclick = () => {
+      agentStep = 0;
+      agentStepProgress = 0;
+      agentStepStart = 0;
+    };
+  }
+
+  // ============================================================
+  // Cleanup function
+  // ============================================================
+  function cleanupCanvases() {
+    if (burstAnimId) cancelAnimationFrame(burstAnimId);
+    if (agentAnimId) cancelAnimationFrame(agentAnimId);
+    if (burstKeyHandler) {
+      document.removeEventListener('keydown', burstKeyHandler);
+      burstKeyHandler = null;
+    }
+    burstAnimating = false;
+    agentStep = 0;
+    agentStepProgress = 0;
+    agentStepStart = 0;
+  }
+
+  // ============================================================
+  // Slide Framework Init
+  // ============================================================
+  const deck = new SlideFramework({
+    footer: 'EKS Hybrid Nodes 딥다이브',
+    logoSrc: '../common/pptx-theme/images/logo_1.png',
+    presenterNotes: {
+      1: '세션 시작 슬라이드.\n\n자기소개와 세션 개요를 간략히 안내하세요.\n오늘 다룰 내용: EKS Hybrid Nodes 개요, 아키텍처, 네트워킹, 운영, 고급 패턴',
+      2: '전체 세션 구조 설명. 4개 Block으로 구성.',
+      3: '온프렘 K8s 운영의 현실적 어려움 공감. 특히 AI 서비스 접근 한계 강조.',
+      4: '3가지 옵션 비교. Hybrid Nodes는 CP만 AWS 관리하는 경량 옵션.',
+      5: '하이레벨 아키텍처 설명. VPN/DX로 연결.',
+      6: '노드 등록 4단계 애니메이션. ↑↓ 키로 단계 이동.',
+      7: '핵심 메시지: Hybrid Nodes = AWS Managed Services 게이트웨이. Bedrock, SageMaker 등 즉시 활용.',
+      8: 'AWS가 CP 전체를 관리. 고객은 노드와 네트워크만.',
+      9: '제약사항 솔직하게 공유. IPv4 전용, VPC CNI 미지원 등.',
+      10: '지원 OS/아키텍처/리전 확인.',
+      11: 'SSM이 간편, IAM RA가 에어갭에 적합.',
+      12: '퀴즈 진행. 참여 유도.',
+      13: 'Q&A 시간. Block 1 핵심 요약과 함께 질문을 받습니다.',
+      14: '섹션 전환. Block 2: 네트워킹 심층분석으로 넘어갑니다.',
+      15: '네트워크 사전 요구 사항 다이어그램 설명. VPC에 CP ENI가 배치되고, TGW/VGW로 연결.',
+      16: 'CIDR 체크리스트 하나씩 확인. 겹침 방지 강조. 클릭하여 체크 가능.',
+      17: 'Pattern 1: Public vs Private 경로 비교. 토글로 각 경로 확인. Private 권장.',
+      18: 'Pattern 2: CP에서 kubelet으로. 10250 포트. exec/logs 명령에 사용.',
+      19: 'Pattern 3: Pod에서 API Server로. CNI SNAT 동작 설명.',
+      20: 'Pattern 4: Webhook 호출. Routable Pod CIDR 필수! BGP 또는 Static Route.',
+      21: 'Pattern 5: Pod-to-Pod VXLAN. 8472/UDP. 양방향 통신 시연.',
+      22: 'Pattern 6: East-West. 클라우드↔온프렘 Pod 통신. VPC 라우트 테이블 설정.',
+      23: '방화벽 포트 정리. 네트워크팀과 사전 조율 필요. 443, 10250, 8472 핵심.',
+      24: 'VPC 엔드포인트. 에어갭 환경에서 특히 중요. 필수 vs 선택 구분.',
+      25: '퀴즈 진행. 4문제 풀이.',
+      26: 'Q&A 시간. Block 2 핵심 요약과 함께 질문을 받습니다.',
+      27: 'Deep Dive 슬라이드. 공식 문서 링크와 추가 학습 리소스 안내.',
+      28: '섹션 전환. Block 3: 노드 구성 & 운영으로 넘어갑니다.',
+      29: 'nodeadm 4가지 주요 명령어 소개. install, init, upgrade, debug.',
+      30: '8단계 부트스트랩 워크플로우 애니메이션. Play 버튼으로 시연.',
+      31: 'NodeConfig YAML 4개 섹션. 탭별로 각 섹션 설명.',
+      32: 'Cilium이 유일한 AWS 공식 지원 CNI. eBPF 기반, Hubble observability, BGP 등이 핵심.',
+      33: 'Cilium Helm 설치 명령어. AWS ECR Public 공식 빌드 사용.',
+      34: 'cilium-values.yaml 상세 설정. Pod CIDR은 배포 후 변경 불가.',
+      35: '노드 등록 후 확인 명령어. Ready 상태와 레이블 확인.',
+      36: 'Rolling이 기본 전략. Canary로 안전하게 진행.',
+      37: '에어갭 환경에서는 S3+PHZ+VPC Endpoint 조합 사용.',
+      38: '가장 흔한 3가지 이슈와 해결법. 탭별로 설명.',
+      39: '퀴즈 진행. 정답 확인 후 설명.',
+      40: '섹션 전환. Block 4: 고급 패턴 & 전략적 가치로 넘어갑니다.',
+      41: 'Taint/Toleration으로 워크로드 격리. eks.amazonaws.com/compute-type=hybrid 자동 부여.',
+      42: 'GPU 온프렘 + CPU 클라우드 패턴. 트레이닝은 GPU, 추론은 CPU.',
+      43: 'Cloud Bursting 패턴. Scale Out/In 버튼으로 시연. ↑↓ 키로도 조작 가능.',
+      44: 'Pod Deletion Cost로 축소 시 클라우드 Pod 먼저 제거.',
+      45: '규제 대응. 데이터는 온프렘 유지, CP만 AWS. 금융감독원 가이드라인 충족.',
+      46: 'Pod Identity → STS → Bedrock/S3 연동 플로우. Play로 5단계 애니메이션.',
+      47: 'AI Agent 개발 가속화. Before/After 비교. Bedrock PrivateLink 핵심.',
+      48: '비용 최적화. vCPU당 $0.01/hr. 기존 하드웨어 투자 보존.',
+      49: '종합 비교. 성능/유연성/운영/비용/최신기술 5개 축.',
+      50: '핵심 요약 & Q&A. 자주 나오는 질문 패턴 정리.',
+      51: '감사합니다. 추가 질문이나 PoC 논의가 필요하시면 언제든 연락 주세요.'
+    },
+    onSlideChange: (index, slide) => {
+      // Block 1 canvases
+      if (index === 5) setTimeout(initArchCanvas, 100);     // slide 6: Architecture
+      if (index === 6) setTimeout(initServicesCanvas, 100);  // slide 7: Services
+
+      // Block 3 canvas
+      if (index === 29) {                                    // slide 30: Bootstrap
+        if (typeof resetBootstrapCanvas === 'function') resetBootstrapCanvas();
+      }
+
+      // Block 4 canvases
+      cleanupCanvases();
+      if (index === 41) setTimeout(initGpuCpuCanvas, 100);          // slide 42: GPU+CPU
+      if (index === 42) setTimeout(initCloudBurstingCanvas, 100);   // slide 43: Cloud Bursting
+      if (index === 46) setTimeout(initAgentArchCanvas, 100);       // slide 47: Managed Services
+    }
+  });
+
+  // Quizzes initialized by framework QuizManager automatically
+
+  // Block 1 Slide 6: Arrow key step control
+  document.addEventListener('keydown', (e) => {
+    if (deck.currentSlide !== 5) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (archStep < 3 && !archAnimating) archTransitionTo(archStep + 1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (archStep > 0 && !archAnimating) archTransitionTo(archStep - 1);
+    }
+  });
+
+  // Initialize canvas if starting on specific slide
+  setTimeout(() => {
+    const idx = deck.currentSlide;
+    if (idx === 5) initArchCanvas();
+    if (idx === 6) initServicesCanvas();
+    if (idx === 42) initGpuCpuCanvas();
+    if (idx === 43) initCloudBurstingCanvas();
+    if (idx === 47) initAgentArchCanvas();
+  }, 200);
+</script>
 </body>
 </html>

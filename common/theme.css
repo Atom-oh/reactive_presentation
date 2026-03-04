@@ -95,6 +95,9 @@ body {
   display: flex;
   opacity: 1;
 }
+.slide:not(.active) {
+  pointer-events: none;
+}
 .slide.entering { display: flex; animation: fadeSlideIn .4s ease forwards; }
 .slide.leaving  { display: flex; animation: fadeSlideOut .3s ease forwards; }
 
@@ -145,6 +148,7 @@ body {
   flex-direction: column;
   gap: .67rem;
   overflow-y: auto;
+  min-height: 0;
 }
 .columns { display: flex; gap: 1.33rem; flex: 1; }
 .columns > * { flex: 1; }

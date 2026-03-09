@@ -150,18 +150,12 @@
     .canvas-wrapper {
       flex: 1;
       display: flex;
-      align-items: center;
+      align-items: stretch;
       justify-content: center;
       position: relative;
+      min-height: 0;
     }
-    .canvas-container {
-      width: 100%;
-      max-width: 100%;
-      aspect-ratio: 1100 / 450;
-    }
-    .canvas-container canvas {
-      display: block;
-    }
+
 
     /* Architecture diagram image */
     .arch-diagram {
@@ -292,19 +286,6 @@
       flex-direction: column;
       gap: 0;
     }
-    .section-divider .section-number {
-      display: inline-block;
-      font-size: 0.85rem;
-      font-weight: 700;
-      font-family: var(--font-mono);
-      letter-spacing: 0.15em;
-      color: var(--accent);
-      background: var(--accent-glow);
-      padding: 0.4rem 1.2rem;
-      border-radius: 20px;
-      border: 1px solid var(--accent);
-      margin-bottom: 1.5rem;
-    }
     .section-divider.active ~ .slide-logo,
     .section-divider.active ~ .slide-footer,
     .section-divider.active ~ .slide-counter,
@@ -314,8 +295,8 @@
     /* === Block 2: Networking Styles === */
     .diagram-wrapper {
       width: 100%;
-      max-width: 750px;
-      max-height: 52vh;
+      max-width: 900px;
+      max-height: 62vh;
       margin: 0 auto;
       border-radius: 8px;
       overflow: hidden;
@@ -499,9 +480,9 @@
     .flow-connector {
       display: flex;
       align-items: center;
-      font-size: 2rem;
+      font-size: 1.2rem;
       color: var(--accent-light);
-      padding: 0 0.5rem;
+      padding: 0 0.2rem;
       flex-shrink: 0;
     }
     /* Bootstrap canvas: move Play/Reset to top-right to avoid overlapping step labels */
@@ -1071,7 +1052,7 @@
     </div>
     <div class="slide-body">
       <div class="canvas-wrapper">
-        <div class="canvas-container">
+        <div class="canvas-container" style="aspect-ratio: 1100 / 450;">
           <canvas id="archCanvas"></canvas>
         </div>
       </div>
@@ -1171,7 +1152,7 @@
           <strong>VPC CNI 미지원</strong> - Cilium 또는 Calico 사용 필수
         </div>
         <div class="constraint-item">
-          <strong>vCPU 기반 과금</strong> - Hybrid Node당 $0.01/vCPU/시간
+          <strong>vCPU 기반 과금</strong> - Hybrid Node당 $0.02/vCPU/시간
         </div>
         <div class="constraint-item">
           <strong>엔드포인트 모드 제한</strong> - "Public and Private" 동시 사용 불가, 반드시 하나만 선택
@@ -1226,7 +1207,7 @@
             <td><strong>CNI</strong></td>
             <td>
               <span class="badge badge-green">Cilium (공식 지원)</span>
-              <span class="badge badge-red">Calico (미지원)</span>
+              <span class="badge badge-yellow">Calico (공식 미지원)</span>
             </td>
           </tr>
           <tr>
@@ -1360,7 +1341,7 @@
   <!-- Slide 13: Q&A -->
   <div class="slide">
     <div class="slide-header">
-      <h1>Q&amp;A</h1>
+      <h2>Q&amp;A</h2>
     </div>
     <div class="slide-body" style="display:flex; flex-direction:column; gap:20px;">
       <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px;">
@@ -1390,7 +1371,6 @@
 
   <!-- Section Divider: Block 2 -->
   <div class="slide title-slide section-divider">
-    <div class="section-number">BLOCK 02</div>
     <h1>네트워킹 심층분석</h1>
     <p class="subtitle">CIDR 설계, 6가지 트래픽 패턴, 방화벽 규칙</p>
   </div>
@@ -1798,7 +1778,7 @@
   <!-- Slide 13: Q&A -->
   <div class="slide">
     <div class="slide-header">
-      <h1>Q&amp;A</h1>
+      <h2>Q&amp;A</h2>
     </div>
     <div class="slide-body" style="display:flex; flex-direction:column; gap:20px;">
       <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px;">
@@ -1878,7 +1858,6 @@
 
   <!-- Section Divider: Block 3 -->
   <div class="slide title-slide section-divider">
-    <div class="section-number">BLOCK 03</div>
     <h1>노드 구성 &amp; 운영</h1>
     <p class="subtitle">nodeadm CLI, Bootstrap, Cilium CNI, 업그레이드</p>
   </div>
@@ -1889,7 +1868,7 @@
   <!-- Slide 2: nodeadm CLI -->
   <div class="slide">
     <div class="slide-header">
-      <h1>nodeadm CLI</h1>
+      <h2>nodeadm CLI</h2>
       <p class="subtitle">Hybrid Node 부트스트랩을 위한 핵심 도구</p>
     </div>
     <div class="slide-body">
@@ -1933,7 +1912,7 @@
   <!-- Slide 3: Bootstrap Workflow Canvas -->
   <div class="slide">
     <div class="slide-header">
-      <h1>Bootstrap 워크플로우</h1>
+      <h2>Bootstrap 워크플로우</h2>
       <p class="subtitle">온프레미스 노드가 EKS 클러스터에 조인되는 8단계</p>
     </div>
     <div class="slide-body">
@@ -1951,7 +1930,7 @@
   <!-- Slide 4: NodeConfig YAML -->
   <div class="slide">
     <div class="slide-header">
-      <h1>NodeConfig YAML</h1>
+      <h2>NodeConfig YAML</h2>
       <p class="subtitle">노드 설정의 핵심 - 4가지 주요 섹션</p>
     </div>
     <div class="slide-body">
@@ -1970,20 +1949,20 @@
   <span class="key">cluster</span>:
     <span class="key">name</span>: <span class="string">my-hybrid-cluster</span>
     <span class="key">region</span>: <span class="string">ap-northeast-2</span>
-    <span class="key">apiServerEndpoint</span>: <span class="string">https://XXXXX.gr7.ap-northeast-2.eks.amazonaws.com</span>
-    <span class="key">certificateAuthority</span>: |
+    <span class="key">apiServerEndpoint</span>: <span class="string">https://XXXXX.gr7.ap-northeast-2.eks.amazonaws.com</span>  <span class="comment"># 자동 조회 가능</span>
+    <span class="key">certificateAuthority</span>: |  <span class="comment"># 자동 조회 가능 (선택)</span>
       <span class="comment">-----BEGIN CERTIFICATE-----</span>
       <span class="comment">MIIDxxxx...</span>
       <span class="comment">-----END CERTIFICATE-----</span>
-    <span class="key">cidr</span>: <span class="string">10.100.0.0/16</span>  <span class="comment"># Service CIDR</span></div>
+    <span class="key">cidr</span>: <span class="string">10.100.0.0/16</span>  <span class="comment"># Service CIDR, 자동 조회 가능</span></div>
           <div>
             <h3>cluster 섹션 설명</h3>
             <ul>
               <li><strong>name</strong> - EKS 클러스터 이름</li>
               <li><strong>region</strong> - AWS 리전</li>
-              <li><strong>apiServerEndpoint</strong> - EKS API 서버 엔드포인트</li>
-              <li><strong>certificateAuthority</strong> - 클러스터 CA 인증서</li>
-              <li><strong>cidr</strong> - Kubernetes Service CIDR</li>
+              <li><strong>apiServerEndpoint</strong> - EKS API 서버 엔드포인트 <span class="badge badge-blue" style="font-size:0.7rem;">자동 조회</span></li>
+              <li><strong>certificateAuthority</strong> - 클러스터 CA 인증서 <span class="badge badge-blue" style="font-size:0.7rem;">자동 조회</span></li>
+              <li><strong>cidr</strong> - Kubernetes Service CIDR <span class="badge badge-blue" style="font-size:0.7rem;">자동 조회</span></li>
             </ul>
             <div class="callout callout-info" style="margin-top: 12px;">
               <code>aws eks describe-cluster</code> 명령으로 필요한 정보를 조회할 수 있습니다.
@@ -1994,7 +1973,9 @@
 
       <div class="tab-content" data-tab="cfg-hybrid">
         <div class="columns">
-          <div class="code-block"><span class="code-label">SSM Hybrid Activation</span><span class="key">spec</span>:
+          <div class="code-block"><span class="code-label">SSM Hybrid Activation</span><span class="key">apiVersion</span>: <span class="string">node.eks.aws/v1alpha1</span>
+<span class="key">kind</span>: <span class="string">NodeConfig</span>
+<span class="key">spec</span>:
   <span class="key">hybrid</span>:
     <span class="key">ssm</span>:
       <span class="key">activationCode</span>: <span class="string">&lt;activation-code&gt;</span>
@@ -2006,7 +1987,7 @@
               <li><strong>activationCode/Id</strong> - SSM 콘솔에서 생성</li>
             </ul>
             <div class="callout callout-warning" style="margin-top: 12px;">
-              activationCode는 일회성입니다. 노드마다 새로운 activation을 생성하거나 registrationLimit을 설정하세요.
+              activationCode는 만료 시간이 있습니다 (기본 24시간, 최대 30일). registrationLimit으로 하나의 activation에 등록 가능한 노드 수를 설정하세요.
             </div>
           </div>
         </div>
@@ -2014,7 +1995,9 @@
 
       <div class="tab-content" data-tab="cfg-kubelet">
         <div class="columns">
-          <div class="code-block"><span class="code-label">kubelet 설정</span><span class="key">spec</span>:
+          <div class="code-block"><span class="code-label">kubelet 설정</span><span class="key">apiVersion</span>: <span class="string">node.eks.aws/v1alpha1</span>
+<span class="key">kind</span>: <span class="string">NodeConfig</span>
+<span class="key">spec</span>:
   <span class="key">kubelet</span>:
     <span class="key">config</span>:
       <span class="key">maxPods</span>: <span class="number">110</span>
@@ -2029,15 +2012,20 @@
               <li><strong>maxPods</strong> - 노드당 최대 Pod 수</li>
               <li><strong>shutdownGracePeriod</strong> - 정상 종료 대기 시간</li>
               <li><strong>node-labels</strong> - Hybrid Node 식별 레이블</li>
-              <li><strong>taints</strong> - 워크로드 스케줄링 제어</li>
+              <li><strong>taints</strong> - <code>NoSchedule</code> effect로 Toleration 없는 Pod 스케줄링 차단 → Hybrid Node 전용 워크로드 격리</li>
             </ul>
+            <div class="callout callout-info" style="margin-top:8px;font-size:0.8rem;">
+              💡 이 Taint는 Block 4 Slide 41의 Taint/Toleration 패턴과 연결됩니다
+            </div>
           </div>
         </div>
       </div>
 
       <div class="tab-content" data-tab="cfg-containerd">
         <div class="columns">
-          <div class="code-block"><span class="code-label">containerd 설정</span><span class="key">spec</span>:
+          <div class="code-block"><span class="code-label">containerd 설정</span><span class="key">apiVersion</span>: <span class="string">node.eks.aws/v1alpha1</span>
+<span class="key">kind</span>: <span class="string">NodeConfig</span>
+<span class="key">spec</span>:
   <span class="key">containerd</span>:
     <span class="key">config</span>: |
       <span class="string">version = 2</span>
@@ -2063,7 +2051,7 @@
   <!-- Slide 5: CNI 선택 가이드 -->
   <div class="slide">
     <div class="slide-header">
-      <h1>CNI 선택 가이드</h1>
+      <h2>CNI 선택 가이드</h2>
       <p class="subtitle">왜 Cilium인가?</p>
     </div>
     <div class="slide-body">
@@ -2080,12 +2068,12 @@
           </ul>
         </div>
         <div class="card">
-          <div class="card-title"><span class="badge badge-red">미지원</span> Calico</div>
+          <div class="card-title"><span class="badge badge-yellow">공식 미지원</span> Calico</div>
           <ul>
             <li>iptables 기반 데이터 플레인</li>
-            <li>AWS 공식 문서에서 <strong>제거됨</strong> (examples repo로 이동)</li>
+            <li>AWS 공식 문서에서 <strong>제거됨</strong> (examples repo에 설정 존재)</li>
             <li>별도 IP pool 관리 필요</li>
-            <li>AWS 기술 지원 범위 밖</li>
+            <li>AWS 기술 지원 범위 밖 (커뮤니티 지원)</li>
           </ul>
         </div>
       </div>
@@ -2102,7 +2090,7 @@
   <!-- Slide 6: Cilium CNI 설치 -->
   <div class="slide">
     <div class="slide-header">
-      <h1>Cilium CNI 설치</h1>
+      <h2>Cilium CNI 설치</h2>
       <p class="subtitle">AWS ECR Public 공식 빌드 + Helm 배포</p>
     </div>
     <div class="slide-body">
@@ -2141,7 +2129,7 @@
   <!-- Slide 7: Cilium Values & Pod CIDR -->
   <div class="slide">
     <div class="slide-header">
-      <h1>Cilium Values & Pod CIDR</h1>
+      <h2>Cilium Values & Pod CIDR</h2>
       <p class="subtitle">cilium-values.yaml 핵심 설정과 Pod CIDR 설계</p>
     </div>
     <div class="slide-body">
@@ -2155,7 +2143,7 @@
       - <span class="key">matchExpressions</span>:
         - <span class="key">key</span>: <span class="string">eks.amazonaws.com/compute-type</span>
           <span class="key">operator</span>: <span class="string">In</span>
-          <span class="key">values</span>: [<span class="string">hybrid</span>]
+          <span class="key">values</span>: [<span class="string">"hybrid"</span>]
 <span class="key">ipam</span>:
   <span class="key">mode</span>: <span class="string">cluster-pool</span>
   <span class="key">operator</span>:
@@ -2177,10 +2165,18 @@
             <li>온프레미스 네트워크와 분리</li>
             <li>예: <code>10.85.0.0/16</code></li>
             <li><strong>/25</strong>: 노드당 126 Pod, <strong>/24</strong>: 254 Pod</li>
-            <li>노드별 Pod CIDR → static route 필요</li>
+            <li>Pod CIDR → 노드 IP 라우팅 필수 (Static 또는 BGP)</li>
           </ul>
-          <div class="callout callout-warning" style="margin-top: 10px; font-size: 0.85rem;">
-            배포 후 <code>clusterPoolIPv4PodCIDRList</code> 변경 불가 — 초기 설계가 중요합니다.
+          <div class="col-2" style="gap:8px; margin-top:8px;">
+            <div class="code-block" style="font-size:0.68rem; padding:8px;">
+<span class="comment"># Static Route (각 노드마다)</span>
+ip route add 10.85.0.0/25 via 192.168.1.101
+ip route add 10.85.0.128/25 via 192.168.1.102</div>
+            <div class="code-block" style="font-size:0.68rem; padding:8px;">
+<span class="comment"># Cilium BGP (자동 광고)</span>
+<span class="key">bgpControlPlane</span>:
+  <span class="key">enabled</span>: <span class="number">true</span>
+<span class="comment"># + CiliumBGPPeeringPolicy 적용</span></div>
           </div>
         </div>
       </div>
@@ -2191,7 +2187,7 @@
   <!-- Slide 8: Node Registration Check -->
   <div class="slide">
     <div class="slide-header">
-      <h1>노드 등록 확인</h1>
+      <h2>노드 등록 확인</h2>
       <p class="subtitle">kubectl 명령으로 Hybrid Node 상태 확인</p>
     </div>
     <div class="slide-body">
@@ -2228,7 +2224,7 @@
   <!-- Slide 8: Upgrade Strategy -->
   <div class="slide">
     <div class="slide-header">
-      <h1>업그레이드 전략</h1>
+      <h2>업그레이드 전략</h2>
       <p class="subtitle">안전한 Kubernetes 버전 업그레이드</p>
     </div>
     <div class="slide-body">
@@ -2292,44 +2288,63 @@ sudo nodeadm init \
   <!-- Slide 9: Air-gapped Environment -->
   <div class="slide">
     <div class="slide-header">
-      <h1>에어갭 환경</h1>
+      <h2>에어갭 환경</h2>
       <p class="subtitle">인터넷 연결 없이 Hybrid Nodes 운영하기</p>
     </div>
     <div class="slide-body">
-      <div class="columns">
-        <div class="airgap-box">
-          <h4>1. 사전 준비 (인터넷 호스트)</h4>
-          <ul>
+      <div class="col-2" style="gap: 24px; align-items: stretch;">
+        <div class="airgap-box" style="padding: 18px 20px;">
+          <h4 style="display:flex; align-items:center; gap:8px;">
+            <span class="badge badge-blue" style="font-size:0.75rem;">Step 1</span>
+            사전 준비 (인터넷 호스트)
+          </h4>
+          <ul style="font-size: 0.88rem; margin-bottom: 10px;">
             <li>hybrid-assets.eks.amazonaws.com에서 아티팩트 다운로드</li>
-            <li>nodeadm 바이너리, kubelet, containerd 등</li>
-            <li>Cilium 컨테이너 이미지</li>
-            <li>S3 버킷에 업로드</li>
+            <li>nodeadm, kubelet, containerd 바이너리</li>
+            <li>Cilium 컨테이너 이미지 + S3 업로드</li>
           </ul>
-          <div class="code-block" style="font-size: 0.75rem; margin-top: 10px;">
-<span class="comment"># 아티팩트 다운로드 예시</span>
-aws s3 sync s3://hybrid-assets-bucket/ \
-  ./artifacts/ --region ap-northeast-2</div>
+          <div class="code-block" style="font-size: 0.72rem; padding: 10px;">
+<span class="comment"># 아티팩트 다운로드 &amp; S3 업로드</span>
+nodeadm install 1.31 --credential-provider ssm
+aws s3 sync ./artifacts/ \
+  s3://hybrid-assets-bucket/</div>
+          <div class="code-block" style="font-size: 0.72rem; padding: 10px; margin-top: 8px;">
+<span class="comment"># containerd mirror 설정</span>
+<span class="comment"># /etc/containerd/certs.d/docker.io/hosts.toml</span>
+server = <span class="string">"https://registry-mirror.local"</span></div>
         </div>
 
-        <div class="flow-connector">&#8594;</div>
-
-        <div class="airgap-box">
-          <h4>2. 런타임 (에어갭 환경)</h4>
-          <ul>
-            <li><strong>Route 53 PHZ</strong>: hybrid-assets.eks.amazonaws.com DNS override</li>
-            <li><strong>S3 VPC Endpoint</strong>: Private S3 접근</li>
-            <li><strong>ECR VPC Endpoint</strong>: 컨테이너 이미지 풀</li>
-            <li>모든 트래픽이 VPC 내부에서 처리</li>
+        <div class="airgap-box" style="padding: 18px 20px;">
+          <h4 style="display:flex; align-items:center; gap:8px;">
+            <span class="badge badge-green" style="font-size:0.75rem;">Step 2</span>
+            런타임 (에어갭 환경)
+          </h4>
+          <ul style="font-size: 0.88rem; margin-bottom: 10px;">
+            <li><strong>Route 53 PHZ</strong> — hybrid-assets DNS override</li>
+            <li><strong>S3 VPC Endpoint</strong> — Private S3 접근</li>
+            <li><strong>ECR VPC Endpoint</strong> — 컨테이너 이미지 풀</li>
           </ul>
-          <div class="code-block" style="font-size: 0.75rem; margin-top: 10px;">
-<span class="comment"># PHZ 레코드 예시</span>
+          <div class="code-block" style="font-size: 0.72rem; padding: 10px;">
+<span class="comment"># nodeadm init (에어갭)</span>
+sudo nodeadm init \
+  --config-source \
+  s3://hybrid-assets-bucket/nodeconfig.yaml</div>
+          <div class="code-block" style="font-size: 0.72rem; padding: 10px; margin-top: 8px;">
+<span class="comment"># PHZ 레코드 (DNS override)</span>
 hybrid-assets.eks.amazonaws.com
-  -> s3.ap-northeast-2.amazonaws.com
-  -> VPC Endpoint</div>
+  CNAME <span class="value">s3.ap-northeast-2.amazonaws.com</span>
+  <span class="comment"># → S3 VPC Gateway Endpoint로 라우팅</span></div>
         </div>
       </div>
-      <div class="callout callout-info" style="margin-top: 10px; font-size: 0.85rem; padding: 10px 14px;">
-        Route 53 Private Hosted Zone으로 DNS를 override하여 S3 VPC Endpoint로 리다이렉트합니다. 온프레미스 DNS에서 PHZ를 참조하도록 설정하세요.
+      <div class="callout callout-info" style="margin-top: 12px; font-size: 0.82rem;">
+        <strong>핵심 흐름:</strong> Route 53 PHZ로 DNS override → S3 VPC Endpoint 리다이렉트 — 온프레미스 DNS에서 PHZ 참조 설정 필요
+      </div>
+      <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; justify-content:center;">
+        <span class="badge-blue" style="font-size:0.72rem;">eks.*.amazonaws.com</span>
+        <span class="badge-blue" style="font-size:0.72rem;">ecr.*.amazonaws.com</span>
+        <span class="badge-blue" style="font-size:0.72rem;">s3.*.amazonaws.com</span>
+        <span class="badge-blue" style="font-size:0.72rem;">ssm.*.amazonaws.com</span>
+        <span class="badge-blue" style="font-size:0.72rem;">sts.*.amazonaws.com</span>
       </div>
     </div>
   </div>
@@ -2338,7 +2353,7 @@ hybrid-assets.eks.amazonaws.com
   <!-- Slide 10: Troubleshooting -->
   <div class="slide">
     <div class="slide-header">
-      <h1>트러블슈팅</h1>
+      <h2>트러블슈팅</h2>
       <p class="subtitle">자주 발생하는 문제와 해결 방법</p>
     </div>
     <div class="slide-body">
@@ -2449,7 +2464,21 @@ sudo iptables -L -n | grep 53</div>
                 <li>clusterDNS IP가 올바르게 설정되었나?</li>
                 <li>UDP/TCP 53 포트가 허용되어 있나?</li>
                 <li>Service CIDR 라우팅이 설정되었나?</li>
+                <li>CoreDNS가 Hybrid Nodes에도 스케줄링되어 있나?</li>
               </ul>
+            </div>
+            <div class="card" style="margin-top: 8px;">
+              <div class="card-title">CoreDNS Hybrid 배포 설정</div>
+              <div class="code-block" style="font-size: 0.75rem; padding: 8px;"><span class="comment"># tolerations — Hybrid Node에 스케줄링 허용</span>
+<span class="key">tolerations</span>:
+- <span class="key">key</span>: <span class="string">eks.amazonaws.com/compute-type</span>
+  <span class="key">value</span>: <span class="string">"hybrid"</span>
+  <span class="key">effect</span>: <span class="string">NoSchedule</span>
+<span class="comment"># topologySpreadConstraints — Cloud/Hybrid 균등 분산</span>
+<span class="key">topologySpreadConstraints</span>:
+- <span class="key">maxSkew</span>: <span class="value">1</span>
+  <span class="key">topologyKey</span>: <span class="string">eks.amazonaws.com/compute-type</span>
+  <span class="key">whenUnsatisfiable</span>: <span class="string">ScheduleAnyway</span></div>
             </div>
           </div>
         </div>
@@ -2461,7 +2490,7 @@ sudo iptables -L -n | grep 53</div>
   <!-- Slide 11: Quiz -->
   <div class="slide">
     <div class="slide-header">
-      <h1>Block 3 퀴즈</h1>
+      <h2>Block 3 퀴즈</h2>
       <p class="subtitle">학습 내용 확인</p>
     </div>
     <div class="slide-body" style="overflow-y: auto;">
@@ -2504,7 +2533,7 @@ sudo iptables -L -n | grep 53</div>
   <!-- Slide 12: Deep Dive & References -->
   <div class="slide">
     <div class="slide-header">
-      <h1>Deep Dive & References</h1>
+      <h2>Deep Dive & References</h2>
       <p class="subtitle">더 깊이 공부하기 위한 공식 문서와 리소스</p>
     </div>
     <div class="slide-body">
@@ -2553,7 +2582,6 @@ sudo iptables -L -n | grep 53</div>
 
   <!-- Section Divider: Block 4 -->
   <div class="slide title-slide section-divider">
-    <div class="section-number">BLOCK 04</div>
     <h1>고급 패턴 &amp; 전략적 가치</h1>
     <p class="subtitle">Cloud Bursting, 규제 대응, AI Agent, 비용 최적화</p>
   </div>
@@ -2562,9 +2590,9 @@ sudo iptables -L -n | grep 53</div>
   <!-- Block 4: 고급 패턴 & 전략적 가치 (11 slides) -->
   <!-- =============================== -->
   <!-- Slide 2: Taint/Toleration -->
-  <section class="slide" id="slide-2">
+  <div class="slide">
     <div class="slide-header">
-      <h1>Taint/Toleration으로 워크로드 격리</h1>
+      <h2>Taint/Toleration으로 워크로드 격리</h2>
       <p class="subtitle">하이브리드 노드에 특정 Pod만 스케줄링</p>
     </div>
     <div class="slide-body">
@@ -2575,18 +2603,25 @@ sudo iptables -L -n | grep 53</div>
 <span class="comment"># 노드 Taint 설정 (nodeadm flags)</span>
 <span class="key">--register-with-taints</span>=<span class="string">eks.amazonaws.com/compute-type=hybrid:NoSchedule</span>
 
-<span class="comment"># Pod Toleration</span>
+<span class="comment"># Pod Toleration + NodeAffinity (둘 다 필요!)</span>
 <span class="key">tolerations</span>:
 - <span class="key">key</span>: <span class="string">eks.amazonaws.com/compute-type</span>
   <span class="key">operator</span>: <span class="string">Equal</span>
   <span class="key">value</span>: <span class="string">hybrid</span>
   <span class="key">effect</span>: <span class="string">NoSchedule</span>
-
-<span class="comment"># GPU 노드 추가 Taint</span>
-<span class="key">--register-with-taints</span>=<span class="string">gpu=true:NoSchedule</span>
+<span class="key">affinity</span>:
+  <span class="key">nodeAffinity</span>:
+    <span class="key">requiredDuringSchedulingIgnoredDuringExecution</span>:
+      <span class="key">nodeSelectorTerms</span>:
+      - <span class="key">matchExpressions</span>:
+        - <span class="key">key</span>: <span class="string">eks.amazonaws.com/compute-type</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">"hybrid"</span>]
           </div>
           <div class="callout callout-info" style="margin-top: 12px;">
-            <strong>핵심:</strong> NoSchedule Taint가 있는 노드에는 해당 Toleration이 있는 Pod만 스케줄링됨
+            <strong>Toleration:</strong> Taint가 있는 노드에 스케줄링을 <em>허용</em> &nbsp;|&nbsp;
+            <strong>NodeAffinity:</strong> 해당 노드에 <em>반드시</em> 배치되도록 강제<br/>
+            둘 다 설정해야 완전한 워크로드 격리
           </div>
         </div>
         <div style="flex: 0.8;">
@@ -2632,31 +2667,14 @@ sudo iptables -L -n | grep 53</div>
       </div>
     </div>
     <a href="https://atomoh.gitbook.io/kubernetes-docs/eks-hybrid-nodes/06-workload-placement" target="_blank" class="ref-link">📖 참고 문서</a>
-  </section>
+  </div>
 
-
-  <!-- Slide 3: GPU on-prem + CPU cloud (CANVAS) -->
-  <section class="slide" id="slide-3">
-    <div class="slide-header">
-      <h1>GPU 온프레미스 + CPU 클라우드</h1>
-      <p class="subtitle">ML Training은 온프렘 GPU, Inference는 클라우드 CPU</p>
-    </div>
-    <div class="slide-body">
-      <div class="canvas-container" style="flex: 1; min-height: 350px;">
-        <canvas id="gpu-cpu-canvas"></canvas>
-      </div>
-      <div class="callout callout-success" style="margin-top: 8px; padding-left: 60px;">
-        <strong>패턴:</strong> GPU 투자는 보존하고, 추론/서빙은 클라우드 탄력성 활용 - 모델 아티팩트는 S3 경유
-      </div>
-    </div>
-    <a href="https://atomoh.gitbook.io/kubernetes-docs/eks-hybrid-nodes/05-gpu-integration" target="_blank" class="ref-link">📖 참고 문서</a>
-  </section>
 
 
   <!-- Slide 4: Cloud Bursting (CANVAS) -->
-  <section class="slide" id="slide-4">
+  <div class="slide">
     <div class="slide-header">
-      <h1>Cloud Bursting with Karpenter</h1>
+      <h2>Cloud Bursting with Karpenter</h2>
       <p class="subtitle">온프레미스 용량 초과 시 클라우드로 자동 확장</p>
     </div>
     <div class="slide-body">
@@ -2678,13 +2696,13 @@ sudo iptables -L -n | grep 53</div>
       </div>
     </div>
     <a href="https://atomoh.gitbook.io/kubernetes-docs/eks-hybrid-nodes/06-workload-placement" target="_blank" class="ref-link">📖 참고 문서</a>
-  </section>
+  </div>
 
 
   <!-- Slide 5: Pod Deletion Cost -->
-  <section class="slide" id="slide-5">
+  <div class="slide">
     <div class="slide-header">
-      <h1>Pod Deletion Cost 전략</h1>
+      <h2>Pod Deletion Cost 전략</h2>
       <p class="subtitle">스케일다운 시 클라우드 Pod 우선 제거</p>
     </div>
     <div class="slide-body">
@@ -2737,20 +2755,78 @@ sudo iptables -L -n | grep 53</div>
       </div>
     </div>
     <a href="https://atomoh.gitbook.io/kubernetes-docs/eks-hybrid-nodes/06-workload-placement" target="_blank" class="ref-link">📖 참고 문서</a>
-  </section>
+  </div>
+
+
+  <!-- Slide 5.5: MutatingAdmissionWebhook 자동 주입 -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>MutatingAdmissionWebhook 자동 주입</h2>
+      <p class="subtitle">Pod Deletion Cost · Tolerations 자동 설정</p>
+    </div>
+    <div class="slide-body">
+      <div class="col-2">
+        <div class="card">
+          <div class="card-title" style="color: var(--accent-light);">WebhookConfiguration</div>
+          <div class="code-block" style="font-size: 0.78rem;"><span class="key">apiVersion</span>: <span class="string">admissionregistration.k8s.io/v1</span>
+<span class="key">kind</span>: <span class="string">MutatingWebhookConfiguration</span>
+<span class="key">metadata</span>:
+  <span class="key">name</span>: <span class="string">hybrid-pod-mutator</span>
+<span class="key">webhooks</span>:
+- <span class="key">name</span>: <span class="string">hybrid.mutate.pods</span>
+  <span class="key">namespaceSelector</span>:
+    <span class="key">matchLabels</span>:
+      <span class="key">hybrid-inject</span>: <span class="string">"enabled"</span>
+  <span class="key">rules</span>:
+  - <span class="key">apiGroups</span>: [<span class="string">""</span>]
+    <span class="key">resources</span>: [<span class="string">"pods"</span>]
+    <span class="key">operations</span>: [<span class="string">"CREATE"</span>]
+  <span class="key">clientConfig</span>:
+    <span class="key">service</span>:
+      <span class="key">name</span>: <span class="string">hybrid-mutator-svc</span>
+      <span class="key">namespace</span>: <span class="string">hybrid-system</span>
+      <span class="key">path</span>: <span class="string">"/mutate"</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="color: var(--green);">주입 결과 (Pod Spec)</div>
+          <div class="code-block" style="font-size: 0.78rem;"><span class="key">metadata</span>:
+  <span class="key">annotations</span>:
+    <span class="comment"># Cloud Pod 우선 축소</span>
+    <span class="key">controller.kubernetes.io/</span>
+      <span class="key">pod-deletion-cost</span>: <span class="string">"-100"</span>
+<span class="key">spec</span>:
+  <span class="key">tolerations</span>:
+  - <span class="key">key</span>: <span class="string">eks.amazonaws.com/compute-type</span>
+    <span class="key">value</span>: <span class="string">"hybrid"</span>
+    <span class="key">effect</span>: <span class="string">NoSchedule</span>
+  <span class="key">nodeAffinity</span>:
+    <span class="key">preferredDuringScheduling</span>:
+    - <span class="key">weight</span>: <span class="value">80</span>
+      <span class="key">preference</span>:
+        <span class="key">matchExpressions</span>:
+        - <span class="key">key</span>: <span class="string">eks.amazonaws.com/compute-type</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">"hybrid"</span>]</div>
+        </div>
+      </div>
+      <div class="callout callout-warning" style="margin-top: 12px;">
+        <strong>Namespace Label 필수:</strong> <code>hybrid-inject: "enabled"</code> 레이블이 있는 네임스페이스에만 자동 주입됩니다. 시스템 네임스페이스(kube-system 등)에는 적용하지 마세요.
+      </div>
+    </div>
+  </div>
 
 
   <!-- Slide 6: Compliance -->
-  <section class="slide" id="slide-6">
+  <div class="slide">
     <div class="slide-header">
-      <h1>규제 대응 &amp; 컴플라이언스</h1>
+      <h2>규제 대응 &amp; 컴플라이언스</h2>
       <p class="subtitle">데이터 주권 보장과 감사 추적</p>
     </div>
     <div class="slide-body">
       <div class="compliance-grid">
         <div class="compliance-card">
-          <h4>데이터 주권 보장</h4>
-          <p>민감 데이터는 온프레미스에 유지, Control Plane만 AWS에서 관리 → 금융 규제 충족</p>
+          <h4>데이터 위치 선택권</h4>
+          <p>데이터 위치를 자유롭게 선택 — 클라우드도 규제 충족 가능하지만, 온프레미스 유지가 필요한 조직에 최적</p>
         </div>
         <div class="compliance-card">
           <h4>감사 추적</h4>
@@ -2766,7 +2842,7 @@ sudo iptables -L -n | grep 53</div>
         </div>
       </div>
       <div class="callout callout-success" style="margin-top: 16px;">
-        <strong>핵심 가치:</strong> 데이터는 온프레미스, 관리는 AWS - 규제와 효율성의 균형
+        <strong>핵심 가치:</strong> 클라우드와 온프레미스 모두 규제 충족 가능 — Hybrid Nodes는 데이터 위치 선택의 유연성 제공
       </div>
       <div class="col-3" style="margin-top: 12px;">
         <div class="card" style="text-align: center;">
@@ -2775,30 +2851,30 @@ sudo iptables -L -n | grep 53</div>
         </div>
         <div class="card" style="text-align: center;">
           <div style="font-size: 1.5rem; margin-bottom: 4px;">🔐</div>
-          <div style="font-size: 0.85rem; color: var(--text-secondary);">개인정보보호법<br/>데이터 국외 이전 제한</div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">개인정보보호법<br/>데이터 위치 선택권</div>
         </div>
         <div class="card" style="text-align: center;">
           <div style="font-size: 1.5rem; margin-bottom: 4px;">📋</div>
-          <div style="font-size: 0.85rem; color: var(--text-secondary);">내부 보안 정책<br/>온프렘 데이터 유지</div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">내부 보안 정책<br/>유연한 배치 선택</div>
         </div>
       </div>
     </div>
     <a href="https://atomoh.gitbook.io/kubernetes-docs/eks-hybrid-nodes/02-network-configuration" target="_blank" class="ref-link">📖 참고 문서</a>
-  </section>
+  </div>
 
 
   <!-- Slide 7: Managed Services 연계 (CANVAS) -->
-  <section class="slide" id="slide-7">
+  <div class="slide">
     <div class="slide-header">
-      <h1>AWS Managed Services 연계</h1>
+      <h2>AWS Managed Services 연계</h2>
       <p class="subtitle">온프레미스에서 AWS AI/ML 서비스 직접 활용</p>
     </div>
     <div class="slide-body">
       <div class="canvas-container" style="flex: 1; min-height: 380px;">
         <canvas id="agent-canvas"></canvas>
-        <div class="canvas-controls">
-          <button class="btn btn-primary" id="btn-agent-play">Play</button>
+        <div class="canvas-controls" style="top: 0.5rem; bottom: auto; left: auto; right: 0.5rem; transform: none;">
           <button class="btn" id="btn-agent-reset">Reset</button>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">▲▼ 화살표로 진행</span>
         </div>
       </div>
       <div class="callout callout-info" style="margin-top: 8px;">
@@ -2806,62 +2882,177 @@ sudo iptables -L -n | grep 53</div>
       </div>
     </div>
     <a href="https://atomoh.gitbook.io/kubernetes-docs/ai-ml/03-agentic-ai-platform" target="_blank" class="ref-link">📖 참고 문서</a>
-  </section>
+  </div>
 
 
-  <!-- Slide 8: Agent 개발 가속화 -->
-  <section class="slide" id="slide-8">
+  <!-- Slide 8: AI Agent 개발 가속화 — LLM Gateway 3 Use Cases -->
+  <div class="slide">
     <div class="slide-header">
-      <h1>AI Agent 개발 가속화</h1>
-      <p class="subtitle">온프렘 단독 vs EKS Hybrid + AWS 서비스</p>
+      <h2>AI Agent 개발 가속화</h2>
+      <p class="subtitle">LLM Gateway: 모델 실험 · GPU Bursting · PII 라우팅</p>
     </div>
-    <div class="slide-body">
-      <div class="compare-grid">
-        <div class="compare-card before">
-          <h3>Before: 온프렘 단독</h3>
-          <ul>
-            <li>LLM 모델 자체 호스팅 필요 (GPU 인프라 구축)</li>
-            <li>모델 업데이트/파인튜닝 직접 수행</li>
-            <li>벡터 DB, 검색 엔진 별도 구축</li>
-            <li>Agent 파이프라인 처음부터 개발</li>
-            <li>보안/접근 제어 직접 구현</li>
-          </ul>
-          <div style="text-align: center; margin-top: 16px;">
-            <span class="badge badge-red" style="font-size: 1rem; padding: 8px 16px;">수개월 소요</span>
-          </div>
-        </div>
-        <div class="compare-card after">
-          <h3>After: EKS Hybrid + AWS</h3>
-          <ul>
-            <li>Bedrock API (PrivateLink)로 내부망에서 안전하게 LLM 호출</li>
-            <li>AgentCore로 Agent 오케스트레이션 자동화</li>
-            <li>Knowledge Base + OpenSearch Serverless로 RAG 즉시 구성</li>
-            <li>Neptune Graph DB로 관계 기반 지식 검색</li>
-            <li>Pod Identity 기반 세분화된 IAM 접근 제어</li>
-          </ul>
-          <div style="text-align: center; margin-top: 16px;">
-            <span class="badge badge-green" style="font-size: 1rem; padding: 8px 16px;">수주 내 PoC 가능</span>
-          </div>
-        </div>
-      </div>
-      <div class="callout callout-success" style="margin-top: 16px;">
-        <strong>ROI:</strong> Bedrock PrivateLink로 내부망 보안 유지 + Pod Identity로 세분화된 접근 제어 — 금융권 요건 충족
-      </div>
+    <div class="slide-body" style="display:flex; flex-direction:column; align-items:center;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 480" width="100%" style="max-height: 62vh;">
+        <defs>
+          <linearGradient id="gw-onprem" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#2A3A4E"/><stop offset="100%" stop-color="#1A2636"/>
+          </linearGradient>
+          <linearGradient id="gw-aws" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#1E2E3E"/><stop offset="100%" stop-color="#141E2E"/>
+          </linearGradient>
+          <filter id="gw-glow-g"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#01A88D" flood-opacity="0.5"/></filter>
+          <filter id="gw-glow-o"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#FF9900" flood-opacity="0.5"/></filter>
+          <filter id="gw-glow-c"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#527FFF" flood-opacity="0.5"/></filter>
+          <filter id="gw-shadow"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.3"/></filter>
+          <marker id="gw-arr-g" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><polygon points="0,0 8,4 0,8" fill="#01A88D"/></marker>
+          <marker id="gw-arr-o" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><polygon points="0,0 8,4 0,8" fill="#FF9900"/></marker>
+          <marker id="gw-arr-b" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><polygon points="0,0 8,4 0,8" fill="#527FFF"/></marker>
+          <marker id="gw-arr-p" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><polygon points="0,0 8,4 0,8" fill="#8C4FFF"/></marker>
+        </defs>
+
+        <!-- Background -->
+        <rect width="1100" height="480" rx="10" fill="#0F1923"/>
+
+        <!-- ON-PREMISES ZONE -->
+        <rect x="20" y="16" width="460" height="448" rx="8" fill="url(#gw-onprem)" stroke="#5A6A7A" stroke-width="1.5" filter="url(#gw-shadow)"/>
+        <text x="250" y="40" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="12" font-weight="700" fill="#8899AA">ON-PREMISES (EKS Hybrid Nodes)</text>
+
+        <!-- AWS CLOUD ZONE -->
+        <rect x="500" y="16" width="580" height="448" rx="8" fill="url(#gw-aws)" stroke="#FF9900" stroke-width="2" filter="url(#gw-shadow)"/>
+        <text x="790" y="40" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="12" font-weight="700" fill="#FF9900">AWS Cloud</text>
+
+        <!-- LLM Gateway (on-prem, left) -->
+        <rect x="40" y="56" width="150" height="70" rx="10" fill="#1A2E2A" stroke="#01A88D" stroke-width="2.5" filter="url(#gw-glow-g)"/>
+        <text x="115" y="82" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="14" font-weight="800" fill="#01A88D">LLM Gateway</text>
+        <text x="115" y="100" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="9" fill="#6BAA8D">PII 분류 · 모델 라우팅</text>
+
+        <!-- AgentCore Runtime (cloud, right) -->
+        <rect x="720" y="56" width="200" height="70" rx="10" fill="#1E2A3E" stroke="#FF9900" stroke-width="2.5" filter="url(#gw-glow-o)"/>
+        <text x="820" y="78" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="13" font-weight="800" fill="#FF9900">AgentCore Runtime</text>
+        <text x="820" y="96" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="9" fill="#CCB080">MCP Servers · Tool Registry</text>
+
+        <!-- MCP Server boxes inside AgentCore -->
+        <rect x="540" y="56" width="155" height="70" rx="8" fill="#1E2E3E" stroke="#8C4FFF" stroke-width="1.5"/>
+        <text x="618" y="78" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="11" font-weight="700" fill="#8C4FFF">MCP Servers</text>
+        <text x="618" y="94" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="8" fill="#6B7B8B">Bedrock · KB · S3 · SageMaker</text>
+        <!-- Arrow: AgentCore ↔ MCP -->
+        <line x1="695" y1="91" x2="718" y2="91" stroke="#8C4FFF" stroke-width="1.5" marker-end="url(#gw-arr-p)"/>
+
+        <!-- ═══ UC1: 모델 실험 → GPU 선정 → On-Prem 도입 (SPANS zones) ═══ -->
+        <rect x="40" y="142" width="880" height="86" rx="8" fill="#1E2E3E" stroke="#527FFF" stroke-width="1.5" filter="url(#gw-glow-c)"/>
+        <rect x="46" y="144" width="74" height="16" rx="4" fill="#527FFF"/>
+        <text x="83" y="156" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="9" font-weight="700" fill="#FFF">UC1 실험</text>
+
+        <!-- UC1 flow: AWS GPU → benchmark → select → buy → Hybrid -->
+        <rect x="540" y="152" width="130" height="36" rx="6" fill="#2A3A5A" stroke="#527FFF" stroke-width="1"/>
+        <text x="605" y="167" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="9" font-weight="600" fill="#527FFF">AWS GPU (p5/g6)</text>
+        <text x="605" y="180" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="8" fill="#6B8BAA">vLLM 벤치마크</text>
+
+        <path d="M670,170 L700,170" stroke="#527FFF" stroke-width="1.5" marker-end="url(#gw-arr-b)"/>
+
+        <rect x="702" y="152" width="100" height="36" rx="6" fill="#2A3A5A" stroke="#527FFF" stroke-width="1"/>
+        <text x="752" y="167" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="9" font-weight="600" fill="#527FFF">GPU 선정</text>
+        <text x="752" y="180" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="8" fill="#6B8BAA">A100 / L40S</text>
+
+        <path d="M802,170 L830,170" stroke="#527FFF" stroke-width="1.5" marker-end="url(#gw-arr-b)"/>
+
+        <rect x="832" y="152" width="80" height="36" rx="6" fill="#1A2A4E" stroke="#527FFF" stroke-width="1"/>
+        <text x="872" y="167" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="9" font-weight="600" fill="#527FFF">장비 구매</text>
+        <text x="872" y="180" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="8" fill="#6B8BAA">On-Prem 도입</text>
+
+        <!-- Arrow back to on-prem side -->
+        <path d="M832,188 L300,188 L300,206" stroke="#527FFF" stroke-width="1.5" stroke-dasharray="6 3" marker-end="url(#gw-arr-b)"/>
+
+        <rect x="200" y="152" width="140" height="66" rx="6" fill="#1E2E3E" stroke="#527FFF" stroke-width="1"/>
+        <text x="270" y="170" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="10" font-weight="600" fill="#FFF">Hybrid Node 등록</text>
+        <text x="270" y="186" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="9" fill="#6B8BAA">GPU 노드 → EKS 클러스터</text>
+        <text x="270" y="202" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="8" fill="#527FFF">nodeadm init</text>
+
+        <!-- Arrow: Gateway → UC1 -->
+        <path d="M190,91 L210,91 L210,152" stroke="#527FFF" stroke-width="2" marker-end="url(#gw-arr-b)"/>
+
+        <!-- ═══ UC2: GPU Bursting (SPANS zones) ═══ -->
+        <rect x="40" y="242" width="880" height="76" rx="8" fill="#1E2E3E" stroke="#FF9900" stroke-width="1.5"/>
+        <rect x="46" y="244" width="90" height="16" rx="4" fill="#FF9900"/>
+        <text x="91" y="256" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="9" font-weight="700" fill="#232F3E">UC2 Bursting</text>
+
+        <!-- On-prem GPU -->
+        <rect x="200" y="252" width="140" height="56" rx="6" fill="#1E2E3E" stroke="#FF9900" stroke-width="1"/>
+        <text x="270" y="272" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="10" font-weight="600" fill="#FFF">On-Prem GPU</text>
+        <text x="270" y="288" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="9" fill="#6B8BAA">vLLM Inference</text>
+        <rect x="290" y="292" width="46" height="16" rx="4" fill="#DD3522" opacity="0.2" stroke="#DD3522" stroke-width="1"/>
+        <text x="313" y="303" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="7" font-weight="600" fill="#DD3522">포화!</text>
+
+        <!-- Burst arrow to cloud -->
+        <path d="M340,280 L538,280" stroke="#FF9900" stroke-width="2.5" stroke-dasharray="6 3" marker-end="url(#gw-arr-o)"/>
+        <text x="440" y="272" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="9" font-weight="600" fill="#FF9900">GPU Bursting →</text>
+
+        <!-- Cloud GPU targets -->
+        <rect x="540" y="250" width="170" height="60" rx="6" fill="#2A3A5A" stroke="#FF9900" stroke-width="1.5"/>
+        <text x="625" y="272" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="10" font-weight="700" fill="#FF9900">Amazon Bedrock</text>
+        <text x="625" y="288" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="9" fill="#CCB080">Claude · Nova</text>
+        <text x="625" y="302" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="8" fill="#6B8BAA">오버플로우 확장</text>
+
+        <rect x="730" y="250" width="180" height="60" rx="6" fill="#2A3A5A" stroke="#FF9900" stroke-width="1"/>
+        <text x="820" y="272" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="10" font-weight="700" fill="#FF9900">SageMaker / EC2</text>
+        <text x="820" y="288" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="9" fill="#6B8BAA">p5 · g6 인스턴스</text>
+        <text x="820" y="302" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="8" fill="#CCB080">전용 GPU 확장</text>
+
+        <!-- Arrow: Gateway → UC2 -->
+        <path d="M190,100 L198,100 L198,280 L200,280" stroke="#FF9900" stroke-width="2" marker-end="url(#gw-arr-o)"/>
+
+        <!-- ═══ UC3: PII 라우팅 (SPANS zones) ═══ -->
+        <rect x="40" y="332" width="880" height="76" rx="8" fill="#1A2E2A" stroke="#01A88D" stroke-width="1.5" filter="url(#gw-glow-g)"/>
+        <rect x="46" y="334" width="100" height="16" rx="4" fill="#01A88D"/>
+        <text x="96" y="346" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="9" font-weight="700" fill="#1A2636">UC3 PII 라우팅</text>
+
+        <!-- PII → On-Prem -->
+        <rect x="200" y="340" width="140" height="56" rx="6" fill="#1A2E2A" stroke="#01A88D" stroke-width="1"/>
+        <text x="270" y="358" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="10" font-weight="600" fill="#FFF">PII → On-Prem GPU</text>
+        <text x="270" y="374" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="9" fill="#8CCCB0">Qwen3 32B · vLLM</text>
+        <rect x="290" y="380" width="46" height="16" rx="4" fill="#1E3A2E" stroke="#3F8624" stroke-width="1"/>
+        <text x="313" y="391" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="7" font-weight="600" fill="#3F8624">주권</text>
+
+        <!-- No PII → Cloud Bedrock -->
+        <path d="M340,368 L538,368" stroke="#FF9900" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#gw-arr-o)"/>
+        <text x="440" y="360" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="9" font-weight="600" fill="#FF9900">No PII →</text>
+
+        <rect x="540" y="340" width="170" height="56" rx="6" fill="#2A3A5A" stroke="#FF9900" stroke-width="1.5"/>
+        <text x="625" y="360" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="10" font-weight="700" fill="#FF9900">Bedrock Claude</text>
+        <text x="625" y="376" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="9" fill="#CCB080">SOTA 모델 | 비PII 처리</text>
+        <text x="625" y="390" text-anchor="middle" font-family="Amazon Ember,Arial,sans-serif" font-size="8" fill="#6B8BAA">Guardrails 적용</text>
+
+        <!-- Arrow: Gateway → UC3 -->
+        <path d="M190,108 L206,108 L206,368 L200,368" stroke="#01A88D" stroke-width="2" marker-end="url(#gw-arr-g)"/>
+
+        <!-- Routing summary box -->
+        <rect x="40" y="420" width="440" height="40" rx="6" fill="#0F1923" stroke="#3A4A5A" stroke-width="1"/>
+        <text x="50" y="436" font-family="Amazon Ember,Arial,sans-serif" font-size="9" font-weight="700" fill="#527FFF">UC1</text>
+        <text x="72" y="436" font-family="Amazon Ember,Arial,sans-serif" font-size="8" fill="#6B8BAA">AWS GPU 실험 → GPU 선정 → On-Prem 도입 → Hybrid Node</text>
+        <text x="50" y="452" font-family="Amazon Ember,Arial,sans-serif" font-size="9" font-weight="700" fill="#FF9900">UC2</text>
+        <text x="72" y="452" font-family="Amazon Ember,Arial,sans-serif" font-size="8" fill="#6B8BAA">On-Prem GPU 포화 → Bedrock/SageMaker 버스팅</text>
+
+        <rect x="500" y="420" width="420" height="40" rx="6" fill="#0F1923" stroke="#3A4A5A" stroke-width="1"/>
+        <text x="510" y="436" font-family="Amazon Ember,Arial,sans-serif" font-size="9" font-weight="700" fill="#01A88D">UC3</text>
+        <text x="532" y="436" font-family="Amazon Ember,Arial,sans-serif" font-size="8" fill="#6B8BAA">PII → On-Prem GPU (데이터 주권), No PII → Bedrock</text>
+        <text x="510" y="452" font-family="Amazon Ember,Arial,sans-serif" font-size="9" font-weight="700" fill="#FF9900">$</text>
+        <text x="532" y="452" font-family="Amazon Ember,Arial,sans-serif" font-size="8" fill="#6B8BAA">Hybrid Node $0.02/vCPU·hr | 기존 GPU 자산 100% 활용</text>
+      </svg>
     </div>
     <a href="https://atomoh.gitbook.io/kubernetes-docs/ai-ml/03-agentic-ai-platform" target="_blank" class="ref-link">📖 참고 문서</a>
-  </section>
+  </div>
 
 
   <!-- Slide 9: 비용 최적화 -->
-  <section class="slide" id="slide-9">
+  <div class="slide">
     <div class="slide-header">
-      <h1>비용 최적화 전략</h1>
+      <h2>비용 최적화 전략</h2>
       <p class="subtitle">기존 인프라 활용 + 필요 시 클라우드 확장</p>
     </div>
     <div class="slide-body">
       <div class="cost-grid">
         <div class="cost-card">
-          <div class="cost-value">$0.01</div>
+          <div class="cost-value">$0.02</div>
           <div class="cost-label">vCPU/hr</div>
           <div class="cost-desc">EKS Hybrid Nodes 추가 비용<br/>(기존 EKS 클러스터 비용 외)</div>
         </div>
@@ -2886,95 +3077,111 @@ sudo iptables -L -n | grep 53</div>
       </div>
     </div>
     <a href="https://atomoh.gitbook.io/kubernetes-docs/eks/07-eks-cost-optimization" target="_blank" class="ref-link">📖 참고 문서</a>
-  </section>
+  </div>
 
 
-  <!-- Slide 10: 왜 EKS Hybrid Nodes인가? (Tanzu 비교) -->
-  <section class="slide" id="slide-10">
+  <!-- Slide 10: 왜 EKS Hybrid Nodes인가? (Tanzu/OpenShift 비교) -->
+  <div class="slide">
     <div class="slide-header">
-      <h1>왜 EKS Hybrid Nodes인가?</h1>
-      <p class="subtitle">온프레미스 K8s (VMware Tanzu) 대비 5대 장점</p>
+      <h2>왜 EKS Hybrid Nodes인가?</h2>
+      <p class="subtitle">Tanzu(VKS) · OpenShift 대비 전략적 장점</p>
     </div>
-    <div class="slide-body">
-      <div class="vs-table">
+    <div class="slide-body" style="overflow-y: auto;">
+      <div class="vs-table" style="font-size: 0.82rem;">
         <div class="vs-row vs-header">
-          <div class="vs-cell" style="color:var(--red);">Tanzu (온프렘)</div>
-          <div class="vs-cell" style="color:var(--green);">EKS Hybrid Nodes</div>
-          <div class="vs-cell" style="color:var(--accent-light);">핵심 수치</div>
+          <div class="vs-cell" style="color:var(--red); flex:1.1;">Tanzu / VKS</div>
+          <div class="vs-cell" style="color:var(--red); flex:1.1;">OpenShift</div>
+          <div class="vs-cell" style="color:var(--green); flex:1.1;">EKS Hybrid Nodes</div>
+          <div class="vs-cell" style="color:var(--accent-light); flex:0.7;">핵심 수치</div>
         </div>
         <div class="vs-row">
-
-          <div class="vs-cell tanzu">
+          <div class="vs-cell tanzu" style="flex:1.1;">
             <span class="vs-label">성능</span>
             <span class="vs-desc">vGPU 가상화 오버헤드 10-20%</span>
           </div>
-          <div class="vs-cell eks">
+          <div class="vs-cell tanzu" style="flex:1.1;">
+            <span class="vs-label">성능</span>
+            <span class="vs-desc">CRI-O + SELinux 오버헤드 5-10%</span>
+          </div>
+          <div class="vs-cell eks" style="flex:1.1;">
             <span class="vs-label">성능</span>
             <span class="vs-desc">베어메탈 직접 접근, 오버헤드 0-2%</span>
           </div>
-          <div class="vs-cell metric">처리량 23%↑<br/>레이턴시 26%↓</div>
+          <div class="vs-cell metric" style="flex:0.7;">처리량 23%↑<br/>레이턴시 26%↓</div>
         </div>
         <div class="vs-row">
-
-          <div class="vs-cell tanzu">
+          <div class="vs-cell tanzu" style="flex:1.1;">
             <span class="vs-label">유연성</span>
-            <span class="vs-desc">온프렘 리소스 고정, 수동 확장</span>
+            <span class="vs-desc">온프렘 고정, 수동 확장</span>
           </div>
-          <div class="vs-cell eks">
+          <div class="vs-cell tanzu" style="flex:1.1;">
+            <span class="vs-label">유연성</span>
+            <span class="vs-desc">ROSA 연동 가능하나 별도 구독</span>
+          </div>
+          <div class="vs-cell eks" style="flex:1.1;">
             <span class="vs-label">유연성</span>
             <span class="vs-desc">피크 시 AWS GPU/CPU 자동 추가</span>
           </div>
-          <div class="vs-cell metric">월말 결산 등<br/>자동 대응</div>
+          <div class="vs-cell metric" style="flex:0.7;">Cloud Burst<br/>자동 대응</div>
         </div>
         <div class="vs-row">
-
-          <div class="vs-cell tanzu">
+          <div class="vs-cell tanzu" style="flex:1.1;">
             <span class="vs-label">운영</span>
-            <span class="vs-desc">etcd, 마스터 노드 직접 운영</span>
+            <span class="vs-desc">etcd·마스터 직접 운영</span>
           </div>
-          <div class="vs-cell eks">
+          <div class="vs-cell tanzu" style="flex:1.1;">
+            <span class="vs-label">운영</span>
+            <span class="vs-desc">CP 자체 관리, 업그레이드 복잡</span>
+          </div>
+          <div class="vs-cell eks" style="flex:1.1;">
             <span class="vs-label">운영</span>
             <span class="vs-desc">AWS 관리형 CP, 99.95% SLA</span>
           </div>
-          <div class="vs-cell metric">운영 인력<br/>60% 절감</div>
+          <div class="vs-cell metric" style="flex:0.7;">운영 인력<br/>60% 절감</div>
         </div>
         <div class="vs-row">
-
-          <div class="vs-cell tanzu">
+          <div class="vs-cell tanzu" style="flex:1.1;">
             <span class="vs-label">비용</span>
             <span class="vs-desc">vSphere 라이센스 + Over-provisioning</span>
           </div>
-          <div class="vs-cell eks">
+          <div class="vs-cell tanzu" style="flex:1.1;">
             <span class="vs-label">비용</span>
-            <span class="vs-desc">사용한 vCPU만 과금 ($0.01/hr)</span>
+            <span class="vs-desc">서브스크립션 $13K+/yr per node</span>
           </div>
-          <div class="vs-cell metric">CapEx → OpEx<br/>전환</div>
+          <div class="vs-cell eks" style="flex:1.1;">
+            <span class="vs-label">비용</span>
+            <span class="vs-desc">사용한 vCPU만 과금 ($0.02/hr)</span>
+          </div>
+          <div class="vs-cell metric" style="flex:0.7;">CapEx → OpEx<br/>전환</div>
         </div>
         <div class="vs-row">
-
-          <div class="vs-cell tanzu">
+          <div class="vs-cell tanzu" style="flex:1.1;">
             <span class="vs-label">최신 기술</span>
             <span class="vs-desc">vSphere 버전 락인, 드라이버 지연</span>
           </div>
-          <div class="vs-cell eks">
+          <div class="vs-cell tanzu" style="flex:1.1;">
+            <span class="vs-label">최신 기술</span>
+            <span class="vs-desc">K8s 릴리스 3-6개월 지연</span>
+          </div>
+          <div class="vs-cell eks" style="flex:1.1;">
             <span class="vs-label">최신 기술</span>
             <span class="vs-desc">최신 NVIDIA 드라이버 즉시 적용</span>
           </div>
-          <div class="vs-cell metric">Flash Attention<br/>TensorRT-LLM</div>
+          <div class="vs-cell metric" style="flex:0.7;">Flash Attention<br/>TensorRT-LLM</div>
         </div>
       </div>
       <div class="callout callout-success" style="margin-top: 12px;">
-        <strong>결론:</strong> 기존 온프렘 K8s를 EKS Hybrid Nodes로 전환하면 — 성능·유연성·운영·비용·기술 모든 축에서 개선됩니다
+        <strong>결론:</strong> Tanzu는 vSphere 락인, OpenShift는 높은 구독 비용과 업그레이드 복잡성 — EKS Hybrid Nodes는 성능·유연성·운영·비용·기술 모든 축에서 개선
       </div>
     </div>
     <a href="https://atomoh.gitbook.io/kubernetes-docs/eks-hybrid-nodes" target="_blank" class="ref-link">📖 참고 문서</a>
-  </section>
+  </div>
 
 
   <!-- Slide 11: 핵심 요약 & Q&A -->
-  <section class="slide" id="slide-11">
+  <div class="slide">
     <div class="slide-header">
-      <h1>핵심 요약</h1>
+      <h2>핵심 요약</h2>
     </div>
     <div class="slide-body">
       <div class="takeaway-grid">
@@ -3009,7 +3216,7 @@ sudo iptables -L -n | grep 53</div>
         <a href="https://aws.github.io/aws-eks-best-practices/" target="_blank" class="resource-link">EKS Best Practices Guide</a>
       </div>
     </div>
-  </section>
+  </div>
 
 
   <!-- Slide 12: Thank You -->
@@ -3037,6 +3244,8 @@ sudo iptables -L -n | grep 53</div>
 <script src="../common/quiz-component.js"></script>
 <script src="../common/presenter-view.js"></script>
 <script>
+  const slideDeck = document.querySelector('.slide-deck');
+
   // ============================================================
   // Block 1: Architecture Canvas (slide 6, index 5)
   // ============================================================
@@ -3054,13 +3263,14 @@ sudo iptables -L -n | grep 53</div>
   ];
 
   function initArchCanvas() {
-    const canvas = document.getElementById('archCanvas');
+    const canvas = slideDeck.querySelector('#archCanvas');
     if (!canvas) return;
     const container = canvas.parentElement;
     const dpr = window.devicePixelRatio || 1;
 
     function resize() {
       const rect = container.getBoundingClientRect();
+      if (rect.width < 10 || rect.height < 10) return;
       const scale = Math.min(rect.width / ARCH_BASE_W, rect.height / ARCH_BASE_H);
       canvas.width = ARCH_BASE_W * scale * dpr;
       canvas.height = ARCH_BASE_H * scale * dpr;
@@ -3158,12 +3368,12 @@ sudo iptables -L -n | grep 53</div>
     drawText(ctx, archStepLabels[Math.min(step, 3)], 870, stepY + 35, { size: 12, color: Colors.textPri });
 
     // Update step dots in HTML
-    document.querySelectorAll('#archSteps .step-dot').forEach((dot, i) => {
+    slideDeck.querySelectorAll('#archSteps .step-dot').forEach((dot, i) => {
       dot.classList.toggle('active', i === step);
       dot.classList.toggle('done', i < step);
     });
 
-    const labelEl = document.getElementById('archStepLabel');
+    const labelEl = slideDeck.querySelector('#archStepLabel');
     if (labelEl) labelEl.textContent = archStepLabels[Math.min(step, 3)];
   }
 
@@ -3269,13 +3479,14 @@ sudo iptables -L -n | grep 53</div>
   let svcCtx, svcCanvas;
 
   function initServicesCanvas() {
-    const canvas = document.getElementById('servicesCanvas');
+    const canvas = slideDeck.querySelector('#servicesCanvas');
     if (!canvas) return;
     const container = canvas.parentElement;
     const dpr = window.devicePixelRatio || 1;
 
     function resize() {
       const rect = container.getBoundingClientRect();
+      if (rect.width < 10 || rect.height < 10) return;
       const scale = Math.min(rect.width / SVC_BASE_W, rect.height / SVC_BASE_H);
       canvas.width = SVC_BASE_W * scale * dpr;
       canvas.height = SVC_BASE_H * scale * dpr;
@@ -3373,26 +3584,15 @@ sudo iptables -L -n | grep 53</div>
     el.style.opacity = isHidden ? '1' : '0.35';
   }
 
-  // ============================================================
-  // Block 3: Tab functionality
-  // ============================================================
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tabGroup = btn.closest('.slide');
-      tabGroup.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      tabGroup.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      btn.classList.add('active');
-      const tabId = btn.dataset.tab;
-      tabGroup.querySelector(`.tab-content[data-tab="${tabId}"]`).classList.add('active');
-    });
-  });
+  // Tab functionality handled by slide-framework.js initTabs()
 
   // ============================================================
   // Block 3: Bootstrap Canvas (slide 31, index 30)
   // ============================================================
   let resetBootstrapCanvas;
+  let bootstrapStepDown, bootstrapStepUp;
   (function() {
-    const canvas = document.getElementById('bootstrap-canvas');
+    const canvas = slideDeck.querySelector('#bootstrap-canvas');
     if (!canvas) return;
     const container = canvas.parentElement;
     const B3_BASE_W = 1100, B3_BASE_H = 450;
@@ -3401,7 +3601,7 @@ sudo iptables -L -n | grep 53</div>
     function resize() {
       const cw = container.clientWidth;
       const ch = container.clientHeight;
-      if (cw <= 0 || ch <= 0) return;
+      if (cw < 10 || ch < 10) return;
       const dpr = window.devicePixelRatio || 1;
       const scale = Math.min(cw / B3_BASE_W, ch / B3_BASE_H);
       canvas.width = Math.round(B3_BASE_W * scale * dpr);
@@ -3541,7 +3741,7 @@ sudo iptables -L -n | grep 53</div>
 
     draw();
 
-    document.getElementById('bootstrap-play-btn').addEventListener('click', () => {
+    slideDeck.querySelector('#bootstrap-play-btn').addEventListener('click', () => {
       if (animating) return;
       animating = true; currentStep = 0; draw();
       const interval = setInterval(() => {
@@ -3554,33 +3754,27 @@ sudo iptables -L -n | grep 53</div>
       currentStep = -1; animating = false; draw();
     };
 
-    document.getElementById('bootstrap-reset-btn').addEventListener('click', () => {
+    slideDeck.querySelector('#bootstrap-reset-btn').addEventListener('click', () => {
       resetBootstrapCanvas();
     });
 
-    document.addEventListener('keydown', (e) => {
-      if (deck.currentSlide !== 29) return;  // slide 30 = index 29
-      if (animating) return;
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        if (currentStep < steps.length) { currentStep++; draw(); }
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        if (currentStep > -1) { currentStep--; draw(); }
-      }
-    });
+    bootstrapStepDown = function() {
+      if (currentStep < steps.length && !animating) { currentStep++; draw(); return true; }
+      return false;
+    };
+    bootstrapStepUp = function() {
+      if (currentStep > -1 && !animating) { currentStep--; draw(); return true; }
+      return false;
+    };
   })();
 
   // ============================================================
-  // Block 4: Canvas Utilities
-  // ============================================================
-  // ============================================================
-  // Canvas Animation Utilities (ResizeObserver pattern)
+  // Block 4: Canvas Utilities (ResizeObserver pattern)
   // ============================================================
   const BASE_W = 1100, BASE_H = 400;
 
   function initCanvas(canvasId, baseW = BASE_W, baseH = BASE_H) {
-    const canvas = document.getElementById(canvasId);
+    const canvas = slideDeck.querySelector('#' + canvasId);
     if (!canvas) return null;
     const ctx = canvas.getContext('2d');
     const container = canvas.parentElement;
@@ -3590,6 +3784,7 @@ sudo iptables -L -n | grep 53</div>
 
     function resize() {
       const rect = container.getBoundingClientRect();
+      if (rect.width < 10 || rect.height < 10) return;
       scale = Math.min(rect.width / baseW, (rect.height - 50) / baseH);
       canvas.width = baseW * scale * dpr;
       canvas.height = baseH * scale * dpr;
@@ -3696,149 +3891,7 @@ sudo iptables -L -n | grep 53</div>
   }
 
   // ============================================================
-  // Block 4: GPU on-prem + CPU cloud Canvas (slide 43, index 42)
-  // ============================================================
-  // ============================================================
-  // Slide 3: GPU on-prem + CPU cloud Canvas (static diagram)
-  // ============================================================
-  function initGpuCpuCanvas() {
-    const c = initCanvas('gpu-cpu-canvas', 1100, 400);
-    if (!c) return;
-
-    function draw() {
-      const { ctx } = c;
-      ctx.clearRect(0, 0, 1100, 400);
-
-      // On-prem zone
-      ctx.fillStyle = '#1a2636';
-      ctx.fillRect(20, 20, 350, 360);
-      ctx.strokeStyle = Colors.green;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(20, 20, 350, 360);
-
-      // Cloud zone
-      ctx.fillStyle = '#1a2636';
-      ctx.fillRect(730, 20, 350, 360);
-      ctx.strokeStyle = Colors.blue;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(730, 20, 350, 360);
-
-      // Zone labels
-      ctx.fillStyle = Colors.green;
-      ctx.font = '600 14px Pretendard, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('온프레미스 DC', 195, 50);
-
-      ctx.fillStyle = Colors.blue;
-      ctx.fillText('AWS Cloud', 905, 50);
-
-      // GPU nodes (on-prem)
-      drawRoundRect(ctx, 50, 80, 130, 100, 8, Colors.green + '33', Colors.green);
-      ctx.fillStyle = Colors.textPri;
-      ctx.font = '600 12px Pretendard, sans-serif';
-      ctx.fillText('GPU Node (H100)', 115, 115);
-      ctx.font = '400 11px Pretendard, sans-serif';
-      ctx.fillStyle = Colors.textSec;
-      ctx.fillText('ML Training', 115, 135);
-      ctx.fillText('PyTorch / TensorFlow', 115, 150);
-
-      drawRoundRect(ctx, 210, 80, 130, 100, 8, Colors.green + '33', Colors.green);
-      ctx.fillStyle = Colors.textPri;
-      ctx.font = '600 12px Pretendard, sans-serif';
-      ctx.fillText('GPU Node (H100)', 275, 115);
-      ctx.font = '400 11px Pretendard, sans-serif';
-      ctx.fillStyle = Colors.textSec;
-      ctx.fillText('ML Training', 275, 135);
-      ctx.fillText('Data Processing', 275, 150);
-
-      // EKS Hybrid label
-      drawRoundRect(ctx, 80, 200, 210, 50, 8, Colors.accent + '33', Colors.accent);
-      ctx.fillStyle = Colors.textPri;
-      ctx.font = '600 13px Pretendard, sans-serif';
-      ctx.fillText('EKS Hybrid Nodes', 185, 230);
-
-      // S3 bucket (center)
-      ctx.fillStyle = Colors.orange + '33';
-      ctx.beginPath();
-      ctx.arc(550, 200, 50, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = Colors.orange;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.fillStyle = Colors.textPri;
-      ctx.font = '600 14px Pretendard, sans-serif';
-      ctx.fillText('S3', 550, 195);
-      ctx.font = '400 11px Pretendard, sans-serif';
-      ctx.fillStyle = Colors.textSec;
-      ctx.fillText('Model Artifacts', 550, 215);
-
-      // Cloud services
-      drawRoundRect(ctx, 760, 80, 130, 80, 8, Colors.cyan + '33', Colors.cyan);
-      ctx.fillStyle = Colors.textPri;
-      ctx.font = '600 12px Pretendard, sans-serif';
-      ctx.fillText('SageMaker', 825, 110);
-      ctx.font = '400 11px Pretendard, sans-serif';
-      ctx.fillStyle = Colors.textSec;
-      ctx.fillText('Endpoint', 825, 130);
-
-      drawRoundRect(ctx, 920, 80, 130, 80, 8, Colors.blue + '33', Colors.blue);
-      ctx.fillStyle = Colors.textPri;
-      ctx.font = '600 12px Pretendard, sans-serif';
-      ctx.fillText('EKS Pods', 985, 110);
-      ctx.font = '400 11px Pretendard, sans-serif';
-      ctx.fillStyle = Colors.textSec;
-      ctx.fillText('CPU Inference', 985, 130);
-
-      // API Gateway
-      drawRoundRect(ctx, 840, 180, 130, 60, 8, Colors.pink + '33', Colors.pink);
-      ctx.fillStyle = Colors.textPri;
-      ctx.font = '600 12px Pretendard, sans-serif';
-      ctx.fillText('API Gateway', 905, 215);
-
-      // Bedrock
-      drawRoundRect(ctx, 760, 260, 130, 80, 8, Colors.accentLt + '33', Colors.accentLt);
-      ctx.fillStyle = Colors.textPri;
-      ctx.font = '600 12px Pretendard, sans-serif';
-      ctx.fillText('Bedrock', 825, 290);
-      ctx.font = '400 11px Pretendard, sans-serif';
-      ctx.fillStyle = Colors.textSec;
-      ctx.fillText('Claude / Nova', 825, 310);
-
-      // Dashed arrows
-      ctx.strokeStyle = Colors.textMuted;
-      ctx.lineWidth = 2;
-      ctx.setLineDash([6, 4]);
-
-      // On-prem to S3
-      ctx.beginPath();
-      ctx.moveTo(300, 225);
-      ctx.lineTo(500, 200);
-      ctx.stroke();
-
-      // S3 to Cloud
-      ctx.beginPath();
-      ctx.moveTo(600, 200);
-      ctx.lineTo(730, 120);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(600, 200);
-      ctx.lineTo(730, 210);
-      ctx.stroke();
-
-      ctx.setLineDash([]);
-    }
-
-    // Redraw after ResizeObserver clears canvas
-    new ResizeObserver(() => requestAnimationFrame(draw)).observe(c.canvas.parentElement);
-    draw();
-  }
-
-  // ============================================================
-  // Block 4: Cloud Bursting Canvas (slide 44, index 43)
-  // ============================================================
-  // ============================================================
-  // Slide 4: Cloud Bursting Canvas
+  // Block 4: Cloud Bursting Canvas (slide 43, index 42)
   // ============================================================
   let burstAnimId = null;
   let burstAnimating = false;
@@ -4042,17 +4095,16 @@ sudo iptables -L -n | grep 53</div>
     new ResizeObserver(() => requestAnimationFrame(draw)).observe(c.canvas.parentElement);
     draw();
 
-    // Keyboard bindings: ArrowUp = Scale Out, ArrowDown = Scale In
-    burstKeyHandler = (e) => {
-      if (e.key === 'ArrowUp') { e.preventDefault(); scaleOut(); }
-      else if (e.key === 'ArrowDown') { e.preventDefault(); scaleIn(); }
-    };
-    document.addEventListener('keydown', burstKeyHandler);
+    deck.registerSlideAction(42, {
+      down: () => { scaleOut(); return true; },
+      up: () => { scaleIn(); return true; }
+    });
 
     // Button bindings
-    document.getElementById('btn-burst-scale-out').onclick = scaleOut;
-    document.getElementById('btn-burst-scale-in').onclick = scaleIn;
-    document.getElementById('btn-burst-reset').onclick = () => {
+    const sd = document.querySelector('.slide-deck');
+    sd.querySelector('#btn-burst-scale-out').onclick = scaleOut;
+    sd.querySelector('#btn-burst-scale-in').onclick = scaleIn;
+    sd.querySelector('#btn-burst-reset').onclick = () => {
       if (burstAnimId) cancelAnimationFrame(burstAnimId);
       burstAnimating = false;
       burstCloudNodes = [];
@@ -4061,16 +4113,11 @@ sudo iptables -L -n | grep 53</div>
   }
 
   // ============================================================
-  // Block 4: Agent Architecture Canvas (slide 48, index 47)
-  // ============================================================
-  // ============================================================
-  // Slide 7: Agent Architecture Canvas
+  // Block 4: Agent Architecture Canvas (slide 46, index 45)
   // ============================================================
   let agentAnimId = null;
-  let agentStep = 0;        // 0=idle, 1-5=animation steps
-  let agentStepProgress = 0; // 0→1 within each step
-  let agentStepStart = 0;
-  const AGENT_STEP_DURATION = 1500;
+  let agentStep = 0;        // 0=idle, 1-5=steps
+  let agentKeyHandler = null;
 
   function initAgentArchCanvas() {
     const c = initCanvas('agent-canvas', 1100, 420);
@@ -4113,9 +4160,9 @@ sudo iptables -L -n | grep 53</div>
       3: { points: [{x: nodes.sts.x + nodes.sts.w, y: cy(nodes.sts)}, {x: nodes.iamRole.x, y: cy(nodes.iamRole)}], color: Colors.pink, label: 'Role 검증' },
       4: { points: [{x: nodes.sts.x, y: cy(nodes.sts)}, {x: vpnMidX, y: cy(nodes.sts)}, {x: vpnMidX, y: nodes.pod.y + nodes.pod.h}, {x: cx(nodes.pod), y: nodes.pod.y + nodes.pod.h}], color: Colors.green, label: 'Temp Credentials' },
       5: [
-        { points: [{x: nodes.pod.x + nodes.pod.w, y: cy(nodes.pod) - 5}, {x: vpnMidX - 15, y: cy(nodes.pod) - 5}, {x: vpnMidX - 15, y: nodes.bedrock.y}, {x: cx(nodes.bedrock), y: nodes.bedrock.y}], color: Colors.accentLt, label: 'LLM' },
-        { points: [{x: nodes.pod.x + nodes.pod.w, y: cy(nodes.pod) + 5}, {x: vpnMidX, y: cy(nodes.pod) + 5}, {x: vpnMidX, y: nodes.kb.y}, {x: cx(nodes.kb), y: nodes.kb.y}], color: Colors.cyan, label: 'RAG' },
-        { points: [{x: nodes.pod.x + nodes.pod.w, y: cy(nodes.pod) + 15}, {x: vpnMidX + 15, y: cy(nodes.pod) + 15}, {x: vpnMidX + 15, y: nodes.s3.y}, {x: cx(nodes.s3), y: nodes.s3.y}], color: Colors.green, label: 'Data' },
+        { points: [{x: nodes.pod.x + nodes.pod.w, y: cy(nodes.pod) - 5}, {x: 435, y: cy(nodes.pod) - 5}, {x: 435, y: 270}, {x: cx(nodes.bedrock), y: 270}, {x: cx(nodes.bedrock), y: nodes.bedrock.y}], color: Colors.accentLt, label: 'LLM' },
+        { points: [{x: nodes.pod.x + nodes.pod.w, y: cy(nodes.pod) + 5}, {x: 445, y: cy(nodes.pod) + 5}, {x: 445, y: 270}, {x: cx(nodes.kb), y: 270}, {x: cx(nodes.kb), y: nodes.kb.y}], color: Colors.cyan, label: 'RAG' },
+        { points: [{x: nodes.pod.x + nodes.pod.w, y: cy(nodes.pod) + 15}, {x: 455, y: cy(nodes.pod) + 15}, {x: 455, y: 270}, {x: cx(nodes.s3), y: 270}, {x: cx(nodes.s3), y: nodes.s3.y}], color: Colors.green, label: 'Data' },
       ]
     };
 
@@ -4241,55 +4288,34 @@ sudo iptables -L -n | grep 53</div>
         }
       });
 
-      // --- Animated arrows ---
-      if (agentStep >= 1 && agentStepStart) {
-        const elapsed = timestamp - agentStepStart;
-        agentStepProgress = Math.min(1, elapsed / AGENT_STEP_DURATION);
-        const t = agentStepProgress;
-
-        // Draw completed step arrows (static, dimmed)
-        for (let s = 1; s < agentStep; s++) {
-          const arrow = stepArrows[s];
-          if (Array.isArray(arrow)) {
-            arrow.forEach(a => drawStaticArrow(ctx, a.points, a.color));
-          } else {
-            drawStaticArrow(ctx, arrow.points, arrow.color);
-          }
-        }
-
-        // Draw current step arrow (animated, flowing)
-        if (agentStep <= 5) {
-          const arrow = stepArrows[agentStep];
-          if (Array.isArray(arrow)) {
-            // Fan-out (step 5)
-            arrow.forEach((a, i) => {
-              const delay = i * 0.15;
-              const at = Math.max(0, Math.min(1, (t - delay) / (1 - 0.3)));
-              drawFlowArrow(ctx, a.points, at, a.color, timestamp, a.label);
-            });
-          } else if (agentStep === 3) {
-            // STS ↔ IAM: pulse highlight + arrow
-            const pulse = 0.5 + 0.5 * Math.sin(t * Math.PI * 4);
-            ctx.save();
-            ctx.shadowColor = Colors.pink;
-            ctx.shadowBlur = 15 * pulse;
-            ctx.strokeStyle = Colors.pink;
-            ctx.lineWidth = 3;
-            ctx.strokeRect(nodes.sts.x - 3, nodes.sts.y - 3,
-              nodes.sts.w + nodes.iamRole.w + (nodes.iamRole.x - nodes.sts.x - nodes.sts.w) + 6,
-              nodes.sts.h + 6);
-            ctx.restore();
-            drawFlowArrow(ctx, arrow.points, t, arrow.color, timestamp, arrow.label);
-          } else {
-            drawFlowArrow(ctx, arrow.points, t, arrow.color, timestamp, arrow.label);
-          }
-        }
-
-        // Auto-advance to next step
-        if (agentStepProgress >= 1 && agentStep < 5) {
-          agentStep++;
-          agentStepStart = timestamp;
-          agentStepProgress = 0;
+      // --- Static arrows for completed and current steps ---
+      for (let s = 1; s <= agentStep; s++) {
+        const arrow = stepArrows[s];
+        const isCurrent = s === agentStep;
+        if (Array.isArray(arrow)) {
+          arrow.forEach(a => {
+            if (isCurrent) {
+              drawFlowArrow(ctx, a.points, 1, a.color, 0, a.label);
+            } else {
+              drawStaticArrow(ctx, a.points, a.color);
+            }
+          });
+        } else if (s === 3 && isCurrent) {
+          // STS ↔ IAM: highlight box
+          ctx.save();
+          ctx.shadowColor = Colors.pink;
+          ctx.shadowBlur = 12;
+          ctx.strokeStyle = Colors.pink;
+          ctx.lineWidth = 3;
+          ctx.strokeRect(nodes.sts.x - 3, nodes.sts.y - 3,
+            nodes.sts.w + nodes.iamRole.w + (nodes.iamRole.x - nodes.sts.x - nodes.sts.w) + 6,
+            nodes.sts.h + 6);
+          ctx.restore();
+          drawFlowArrow(ctx, arrow.points, 1, arrow.color, 0, arrow.label);
+        } else if (isCurrent) {
+          drawFlowArrow(ctx, arrow.points, 1, arrow.color, 0, arrow.label);
+        } else {
+          drawStaticArrow(ctx, arrow.points, arrow.color);
         }
       }
 
@@ -4299,25 +4325,33 @@ sudo iptables -L -n | grep 53</div>
         ctx.font = '600 12px Pretendard, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(stepTexts[agentStep] || '', 550, 395);
+      } else {
+        ctx.fillStyle = Colors.textMuted;
+        ctx.font = '500 13px Pretendard, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('▲▼ 화살표로 단계별 진행', 550, 395);
       }
-
-      agentAnimId = requestAnimationFrame(draw);
     }
 
-    agentAnimId = requestAnimationFrame(draw);
+    draw(0);
 
-    document.getElementById('btn-agent-play').onclick = () => {
-      if (agentStep === 0 || (agentStep === 5 && agentStepProgress >= 1)) {
-        agentStep = 1;
-        agentStepProgress = 0;
-        agentStepStart = performance.now();
+    // Redraw after resize
+    new ResizeObserver(() => requestAnimationFrame(() => draw(0))).observe(c.canvas.parentElement);
+
+    deck.registerSlideAction(46, {
+      down: () => {
+        if (agentStep < 5) { agentStep++; draw(0); return true; }
+        return false;
+      },
+      up: () => {
+        if (agentStep > 0) { agentStep--; draw(0); return true; }
+        return false;
       }
-    };
+    });
 
-    document.getElementById('btn-agent-reset').onclick = () => {
+    document.querySelector('.slide-deck').querySelector('#btn-agent-reset').onclick = () => {
       agentStep = 0;
-      agentStepProgress = 0;
-      agentStepStart = 0;
+      draw(0);
     };
   }
 
@@ -4331,10 +4365,12 @@ sudo iptables -L -n | grep 53</div>
       document.removeEventListener('keydown', burstKeyHandler);
       burstKeyHandler = null;
     }
+    if (agentKeyHandler) {
+      document.removeEventListener('keydown', agentKeyHandler);
+      agentKeyHandler = null;
+    }
     burstAnimating = false;
     agentStep = 0;
-    agentStepProgress = 0;
-    agentStepStart = 0;
   }
 
   // ============================================================
@@ -4344,57 +4380,65 @@ sudo iptables -L -n | grep 53</div>
     footer: 'EKS Hybrid Nodes 딥다이브',
     logoSrc: '../common/pptx-theme/images/logo_1.png',
     presenterNotes: {
-      1: '세션 시작 슬라이드.\n\n자기소개와 세션 개요를 간략히 안내하세요.\n오늘 다룰 내용: EKS Hybrid Nodes 개요, 아키텍처, 네트워킹, 운영, 고급 패턴',
-      2: '전체 세션 구조 설명. 4개 Block으로 구성.',
-      3: '온프렘 K8s 운영의 현실적 어려움 공감. 특히 AI 서비스 접근 한계 강조.',
-      4: '3가지 옵션 비교. Hybrid Nodes는 CP만 AWS 관리하는 경량 옵션.',
-      5: '하이레벨 아키텍처 설명. VPN/DX로 연결.',
-      6: '노드 등록 4단계 애니메이션. ↑↓ 키로 단계 이동.',
-      7: '핵심 메시지: Hybrid Nodes = AWS Managed Services 게이트웨이. Bedrock, SageMaker 등 즉시 활용.',
-      8: 'AWS가 CP 전체를 관리. 고객은 노드와 네트워크만.',
-      9: '제약사항 솔직하게 공유. IPv4 전용, VPC CNI 미지원 등.',
-      10: '지원 OS/아키텍처/리전 확인.',
-      11: 'SSM이 간편, IAM RA가 에어갭에 적합.',
-      12: '퀴즈 진행. 참여 유도.',
-      13: 'Q&A 시간. Block 1 핵심 요약과 함께 질문을 받습니다.',
-      14: '섹션 전환. Block 2: 네트워킹 심층분석으로 넘어갑니다.',
-      15: '네트워크 사전 요구 사항 다이어그램 설명. VPC에 CP ENI가 배치되고, TGW/VGW로 연결.',
-      16: 'CIDR 체크리스트 하나씩 확인. 겹침 방지 강조. 클릭하여 체크 가능.\n\n💡 Admission Webhook 포트 참고:\n- 443/TCP: API Server → Webhook Service 기본 HTTPS 포트\n- 8443/TCP: 많은 webhook 구현체(ALB Controller, cert-manager 등)가 사용하는 실제 리스닝 포트\n- Hybrid 환경에서는 API Server(AWS) → 온프렘 노드 방향으로 이 포트들이 방화벽에서 열려 있어야 함\n- Pod CIDR이 라우팅 가능해야 CP에서 webhook Pod에 도달 가능',
-      17: 'Pattern 1: Public vs Private 경로 비교. 토글로 각 경로 확인. Private 권장.',
-      18: 'Pattern 2: CP에서 kubelet으로. 10250 포트. exec/logs 명령에 사용.',
-      19: 'Pattern 3: Pod에서 API Server로. CNI SNAT 동작 설명.',
-      20: 'Pattern 4: Webhook 호출. Routable Pod CIDR 필수! BGP 또는 Static Route.',
-      21: 'Pattern 5: Pod-to-Pod VXLAN. 8472/UDP. 양방향 통신 시연.',
-      22: 'Pattern 6: East-West. 클라우드↔온프렘 Pod 통신. VPC 라우트 테이블 설정.',
-      23: '방화벽 포트 정리. 네트워크팀과 사전 조율 필요. 443, 10250, 8472 핵심.',
-      24: 'VPC 엔드포인트 구성 슬라이드. 에어갭 환경에서 특히 중요.\n\n📌 필수 엔드포인트 — 왜 필요한가:\n- EKS (eks.<region>): kubelet이 API Server와 통신하여 노드 등록, Pod 스케줄링, 상태 보고에 사용\n- ECR API (api.ecr.<region>): 컨테이너 이미지 메타데이터 조회 (매니페스트, 태그 목록)\n- ECR DKR (dkr.ecr.<region>): 실제 컨테이너 이미지 레이어 pull — 없으면 Pod가 ImagePullBackOff\n- S3 (Gateway): ECR 이미지 레이어가 S3에 저장됨. ECR DKR과 함께 반드시 필요\n- STS (sts.<region>): IAM 인증 토큰 발급. IRSA/Pod Identity 및 노드 인증에 필수\n\n📎 선택 엔드포인트 — 용도와 판단 기준:\n- SSM (ssm.<region>): SSM Hybrid Activation 크리덴셜 방식 사용 시 필수. IAM Roles Anywhere 사용 시에는 불필요\n- CloudWatch Logs (logs.<region>): 컨테이너 로그를 CloudWatch로 전송할 때 필요. Fluent Bit/CloudWatch Agent 사용 시 필수\n- EC2 (ec2.<region>): ENI 관련 메타데이터 조회. VPC CNI 미사용이므로 대부분 불필요하나, 일부 AWS 서비스 연동 시 필요할 수 있음\n\n⚠️ 에어갭 환경에서는 선택 엔드포인트도 모두 필수가 됩니다. 또한 ECR 대신 프라이빗 레지스트리(Harbor 등) 미러링을 고려하세요.',
-      25: '퀴즈 진행. 4문제 풀이.',
-      26: 'Q&A 시간. Block 2 핵심 요약과 함께 질문을 받습니다.',
-      27: 'Deep Dive 슬라이드. 공식 문서 링크와 추가 학습 리소스 안내.',
-      28: '섹션 전환. Block 3: 노드 구성 & 운영으로 넘어갑니다.',
-      29: 'nodeadm 4가지 주요 명령어 소개. install, init, upgrade, debug.',
-      30: '8단계 부트스트랩 워크플로우 애니메이션. Play 버튼으로 시연.',
-      31: 'NodeConfig YAML 4개 섹션. 탭별로 각 섹션 설명.',
-      32: 'Cilium이 유일한 AWS 공식 지원 CNI. eBPF 기반, Hubble observability, BGP 등이 핵심.',
-      33: 'Cilium Helm 설치 명령어. AWS ECR Public 공식 빌드 사용.',
-      34: 'cilium-values.yaml 상세 설정. Pod CIDR은 배포 후 변경 불가.',
-      35: '노드 등록 후 확인 명령어. Ready 상태와 레이블 확인.',
-      36: 'Rolling이 기본 전략. Canary로 안전하게 진행.',
-      37: '에어갭 환경에서는 S3+PHZ+VPC Endpoint 조합 사용.',
-      38: '가장 흔한 3가지 이슈와 해결법. 탭별로 설명.',
-      39: '퀴즈 진행. 정답 확인 후 설명.',
-      40: '섹션 전환. Block 4: 고급 패턴 & 전략적 가치로 넘어갑니다.',
-      41: 'Taint/Toleration으로 워크로드 격리. eks.amazonaws.com/compute-type=hybrid 자동 부여.',
-      42: 'GPU 온프렘 + CPU 클라우드 패턴. 트레이닝은 GPU, 추론은 CPU.',
-      43: 'Cloud Bursting 패턴. Scale Out/In 버튼으로 시연. ↑↓ 키로도 조작 가능.',
-      44: 'Pod Deletion Cost로 축소 시 클라우드 Pod 먼저 제거.',
-      45: '규제 대응. 데이터는 온프렘 유지, CP만 AWS. 금융감독원 가이드라인 충족.',
-      46: 'Pod Identity → STS → Bedrock/S3 연동 플로우. Play로 5단계 애니메이션.',
-      47: 'AI Agent 개발 가속화. Before/After 비교. Bedrock PrivateLink 핵심.',
-      48: '비용 최적화. vCPU당 $0.01/hr. 기존 하드웨어 투자 보존.',
-      49: '종합 비교. 성능/유연성/운영/비용/최신기술 5개 축.',
-      50: '핵심 요약 & Q&A. 자주 나오는 질문 패턴 정리.',
-      51: '감사합니다. 추가 질문이나 PoC 논의가 필요하시면 언제든 연락 주세요.'
+      // ── Block 1: 개요 & 아키텍처 (슬라이드 1-13) ──
+      1: '[커버] 자기소개 후 세션 목적 안내.\n\n"안녕하세요, AWS Solutions Architect 오준석입니다. 오늘은 EKS Hybrid Nodes를 깊이 있게 다루겠습니다."\n\n핵심 메시지: EKS Control Plane을 AWS에서 관리하면서 온프렘 서버를 Worker Node로 등록하는 방식.\n기존 인프라 투자를 보존하면서 AWS 매니지드 서비스까지 활용할 수 있는 실질적 하이브리드 전략입니다.',
+      2: '[Agenda] 4개 Block 구조 설명.\n\nBlock 1: 개요 & 아키텍처 (10분) — 왜 필요한지, 어떤 구조인지\nBlock 2: 네트워킹 심층분석 (10분) — 6가지 트래픽 패턴, 방화벽 규칙\nBlock 3: 노드 구성 & 운영 (10분) — nodeadm, Bootstrap, Cilium, 업그레이드\nBlock 4: 고급 패턴 & 전략적 가치 (10분) — Cloud Bursting, 규제 대응, AI Agent\n\n"각 Block 끝에 퀴즈와 Q&A 시간이 있습니다. 질문은 그때 받겠습니다."',
+      3: '[Pain Points] 청중의 공감을 이끌어내는 슬라이드.\n\n각 카드를 하나씩 짚으며 "이런 경험 있으시죠?" 식으로 진행.\n- CP 관리 부담: etcd 백업, 인증서 갱신, 버전 업그레이드의 야근\n- 네트워크 복잡성: 온프렘↔클라우드 연동 시 CIDR 충돌, 방화벽 설정\n- AI 서비스 접근 한계: GPU 서버는 있지만 Bedrock, SageMaker 연동이 어려움\n\n💡 특히 AI 서비스 접근 한계를 강조하면 Block 4의 AI Agent 패턴과 자연스럽게 연결됩니다.',
+      4: '[포트폴리오] EKS Anywhere vs Outposts vs Hybrid Nodes 비교.\n\n"세 가지 옵션 중 Hybrid Nodes가 가장 경량입니다."\n- EKS Anywhere: CP+Worker 모두 온프렘. 완전한 독립 운영이 필요할 때\n- Outposts: AWS 하드웨어를 온프렘에 설치. 일관된 AWS 경험\n- Hybrid Nodes: CP만 AWS, Worker는 기존 온프렘 서버. 최소 변경으로 시작\n\nHybrid Nodes의 차별점: 추가 하드웨어 불필요, 기존 서버 그대로 활용, vCPU당 $0.01/hr.',
+      5: '[아키텍처] ↑↓ 키로 4단계 애니메이션 진행.\n\n단계별 설명:\n0단계: 기본 구성 — AWS VPC에 EKS CP, 온프렘에 서버\n1단계: VPN/Direct Connect로 네트워크 연결\n2단계: nodeadm init으로 노드 등록 (kubelet + SSM/IAM RA)\n3단계: 등록 완료 — kubectl get nodes에 Hybrid Node 표시\n\n"핵심은 VPN 또는 Direct Connect만 있으면 시작할 수 있다는 것입니다."',
+      6: '[노드 등록 흐름] 캔버스 애니메이션.\n\n↑↓ 키로 단계를 이동하며 설명하세요.\n- nodeadm이 kubelet, containerd를 설치하고 인증서를 설정\n- SSM 또는 IAM Roles Anywhere로 임시 자격증명 획득\n- kubelet이 EKS API Server에 CSR 제출 → 자동 승인\n- Node 객체 생성, Ready 상태 전환\n\n💡 "이 과정이 약 2-3분이면 완료됩니다. 수동으로 kubeadm join하던 것과 비교해 보세요."',
+      7: '[IaaS를 넘어서는 가치] 핵심 차별화 메시지.\n\n"Hybrid Nodes의 진짜 가치는 단순히 노드를 등록하는 게 아닙니다.\n온프렘에서 AWS Managed Services에 직접 접근할 수 있는 게이트웨이가 되는 겁니다."\n\nPod Identity로 IAM Role을 받아서:\n- Bedrock: LLM 추론\n- SageMaker: ML 학습/배포\n- S3: 데이터 레이크\n- CloudWatch: 통합 모니터링\n\n이 슬라이드가 Block 4의 AI Agent 패턴의 복선입니다.',
+      8: '[책임 공유 모델] AWS vs 고객 책임 경계.\n\nAWS 책임 (파란색):\n- Control Plane (API Server, etcd, scheduler, controller-manager)\n- 자동 패치, HA, 백업\n\n고객 책임 (주황색):\n- Worker Node 하드웨어/OS\n- 네트워크 연결 (VPN/DX)\n- CNI (Cilium) 설치/관리\n- 애플리케이션 배포\n\n"etcd 백업 걱정이 사라집니다. 가장 큰 운영 부담이 줄어드는 거죠."',
+      9: '[제약 사항] 솔직하게 공유하는 것이 신뢰를 높입니다.\n\n주요 제약:\n- IPv4 전용 (IPv6 미지원)\n- VPC CNI 미지원 → Cilium 사용 필수\n- Windows 노드 미지원\n- 노드당 최대 110 Pod (kubelet 기본값)\n- CP와 노드 간 레이턴시 200ms 이내 권장\n\n"이 제약사항들을 미리 확인하고 시작하는 것이 중요합니다.\n특히 IPv6 환경이라면 현재는 사용이 어렵습니다."',
+      10: '[지원 환경] OS, 아키텍처, 리전 확인.\n\n지원 OS: Ubuntu 20.04/22.04, RHEL 8/9, Amazon Linux 2023\n아키텍처: x86_64, ARM64 (Graviton 포함)\n리전: 대부분의 상용 리전 지원. 서울 리전 포함.\n\n💡 "ARM64 지원이 중요한 이유 — Graviton 기반 온프렘 서버(예: Ampere)를 사용하는 경우에도 가능합니다."',
+      11: '[크리덴셜 프로바이더] 두 가지 인증 방식 비교.\n\nSSM Hybrid Activation:\n- 설정이 간편, Activation Code/ID만 있으면 됨\n- 인터넷 또는 SSM VPC Endpoint 필요\n- 대부분의 환경에 권장\n\nIAM Roles Anywhere:\n- X.509 인증서 기반, 에어갭 환경에 적합\n- 자체 PKI/CA 인프라 필요\n- 보안 요구사항이 높은 금융/공공 환경\n\n"일반적으로 SSM으로 시작하고, 에어갭이 필요하면 IAM RA로 전환을 권장합니다."',
+      12: '[Quiz] 참여를 유도하세요.\n\n"간단한 퀴즈로 지금까지 내용을 정리해 보겠습니다."\n클릭하면 정답이 표시됩니다.\n\n오답이 나올 경우 해당 슬라이드로 돌아가서 간단히 복습.',
+      13: '[Q&A] Block 1 마무리.\n\n핵심 요약 3줄:\n① EKS CP는 AWS 관리형 — etcd, 패치, HA 걱정 없음\n② 온프렘 기존 인프라를 그대로 활용\n③ AWS Managed Services 게이트웨이 역할\n\n자주 나오는 질문:\n- "기존 kubeadm 클러스터에서 마이그레이션 가능한가요?" → 워크로드 단위로 점진적 이전 가능\n- "레이턴시 요구사항은?" → 200ms 이내 권장, 실제로는 50ms 이내가 이상적',
+
+      // ── Block 2: 네트워킹 심층분석 (슬라이드 14-27) ──
+      14: '[섹션 전환] Block 2: 네트워킹 심층분석.\n\n"네트워킹은 Hybrid Nodes 도입의 가장 큰 기술적 허들입니다.\n이 섹션에서 6가지 트래픽 패턴을 모두 다루겠습니다.\n이것만 이해하면 네트워크 설계의 80%는 끝납니다."',
+      15: '[네트워크 전제 조건] 다이어그램으로 전체 구조 파악.\n\n핵심 포인트:\n- VPC 내 EKS CP의 ENI가 프라이빗 서브넷에 배치됨\n- Transit Gateway 또는 Virtual Private Gateway로 온프렘 연결\n- Remote Node CIDR, Remote Pod CIDR을 EKS 클러스터에 등록\n\n"이 다이어그램을 머릿속에 그려두세요. 이후 6가지 패턴 모두 이 구조 위에서 동작합니다."',
+      16: '[CIDR 체크리스트] 항목을 하나씩 클릭하며 확인.\n\n① VPC CIDR ≠ 온프렘 Node CIDR (겹치면 라우팅 불가)\n② Pod CIDR은 VPC CIDR과도, Node CIDR과도 겹치면 안 됨\n③ Service CIDR은 기본 10.100.0.0/16\n④ Pod CIDR은 Routable해야 함 (Webhook 때문)\n\n💡 Admission Webhook 포트:\n- 443/TCP: Webhook Service 기본 포트\n- 8443/TCP: ALB Controller, cert-manager 등의 실제 리스닝 포트\n- API Server(AWS) → 온프렘 Pod 방향이므로 방화벽 인바운드 필요',
+      17: '[Pattern 1] Kubelet → EKS CP. 토글로 Public/Private 비교.\n\nPublic 경로: kubelet → 인터넷 → EKS Public Endpoint\n- 간단하지만 보안상 비권장\n\nPrivate 경로: kubelet → VPN/DX → VPC ENI → EKS Private Endpoint\n- 프로덕션 권장. EKS Public Endpoint 비활성화 가능\n\n"Private 경로를 강력히 권장합니다. Public Endpoint는 테스트 환경에서만 사용하세요."',
+      18: '[Pattern 2] CP → Kubelet. Port 10250.\n\n용도: kubectl exec, kubectl logs, kubectl port-forward\n- API Server가 kubelet의 10250 포트로 연결\n- VPC ENI → VPN/DX → 온프렘 노드\n\n"이 포트가 막혀 있으면 exec/logs 명령이 동작하지 않습니다.\n트러블슈팅 시 가장 먼저 확인하세요."',
+      19: '[Pattern 3] Pod → API Server. CNI SNAT 동작.\n\nPod → (Cilium SNAT → Node IP) → VPN/DX → VPC ENI → API Server\n- Pod IP가 아닌 Node IP로 SNAT되어 나감\n- 이래서 Node CIDR만 라우팅 가능하면 기본 동작\n\n"SNAT 덕분에 Pod CIDR을 라우팅하지 않아도 API Server 통신은 됩니다.\n하지만 Webhook 때문에 Pod CIDR 라우팅은 결국 필요합니다."',
+      20: '[Pattern 4] CP → Pod (Webhooks). Routable Pod CIDR 필수!\n\nAPI Server → VPN/DX → 온프렘 → Pod IP 직접 접근\n- Admission Webhook은 Pod IP로 직접 호출\n- BGP (Cilium 내장) 또는 Static Route로 Pod CIDR 광고 필요\n\n⚠️ "이 패턴이 가장 많이 놓치는 부분입니다.\nPod CIDR이 라우팅 불가하면 Webhook이 타임아웃되고,\nPod 생성 자체가 실패합니다."',
+      21: '[Pattern 5] Pod ↔ Pod (VXLAN). 8472/UDP.\n\nCilium이 VXLAN 터널로 노드 간 Pod 통신 처리.\n- Node A의 Pod → VXLAN 캡슐화 → Node B → 역캡슐화 → Pod\n- 8472/UDP 양방향 허용 필수\n\n"VXLAN은 오버헤드가 약 50바이트입니다.\nMTU 1500 환경에서 실효 MTU는 1450이 됩니다.\nJumbo Frame(9000) 환경이면 오버헤드 무시 가능."',
+      22: '[Pattern 6] Cloud Pod ↔ Hybrid Pod. East-West 트래픽.\n\n클라우드 EC2의 Pod ↔ 온프렘 Hybrid Node의 Pod\n- VPC Route Table에 Pod CIDR → TGW/VGW 라우트 추가 필요\n- 양방향이므로 온프렘 라우터에도 VPC CIDR 라우트 필요\n\n"마이크로서비스가 클라우드와 온프렘에 분산 배포된 경우 필수.\nService Mesh(Istio, Linkerd) 사용 시에도 이 라우팅이 선행되어야 합니다."',
+      23: '[방화벽 규칙] 네트워크팀과의 사전 조율용.\n\n필수 포트 요약:\n- 443/TCP: API Server 통신 (양방향)\n- 10250/TCP: kubelet (CP → Node)\n- 8472/UDP: VXLAN (Node ↔ Node)\n- 4240/TCP: Cilium Health\n- 4244/TCP: Hubble (선택)\n\n"이 표를 네트워크팀에 전달하세요. 사전 방화벽 오픈이 프로젝트 일정의 병목이 되는 경우가 많습니다."',
+      24: '[VPC 엔드포인트] 에어갭 환경에서 특히 중요.\n\n📌 필수 엔드포인트:\n- EKS: kubelet-API Server 통신, 노드 등록\n- ECR API + ECR DKR: 컨테이너 이미지 pull\n- S3 (Gateway): ECR 이미지 레이어 저장소\n- STS: IAM 인증 토큰 발급\n\n📎 선택 엔드포인트:\n- SSM: SSM 인증 방식 사용 시\n- CloudWatch Logs: 로그 전송 시\n\n⚠️ "에어갭에서는 선택도 사실상 필수입니다.\n또한 ECR 대신 Harbor 같은 프라이빗 레지스트리 미러링도 고려하세요."',
+      25: '[Quiz] Block 2 퀴즈.\n\n네트워킹 핵심 개념 4문제.\n"방금 다룬 6가지 패턴 중에서 출제됩니다."\n\n특히 Pattern 4 (Webhook)와 VXLAN 포트 번호가 자주 헷갈리는 포인트.',
+      26: '[Q&A] Block 2 마무리.\n\n핵심 요약:\n① 6가지 트래픽 패턴 — 특히 Pattern 4 (Webhook)가 핵심\n② Pod CIDR은 반드시 Routable하게 설계\n③ 방화벽 규칙은 프로젝트 초기에 네트워크팀과 협의\n\n자주 나오는 질문:\n- "BGP 대신 Static Route만 써도 되나요?" → 노드 수가 적으면 가능, 10대 이상이면 BGP 권장\n- "MTU 설정은?" → VXLAN 오버헤드 50B 감안하여 1450 권장',
+      27: '[Deep Dive] 추가 학습 리소스 안내.\n\n"더 깊이 공부하실 분들을 위해 공식 문서와 블로그 링크를 정리했습니다.\nQR 코드나 URL을 사진 찍어두세요."\n\n특히 네트워킹 관련 AWS 블로그 포스트와 Cilium 공식 문서를 추천.',
+
+      // ── Block 3: 노드 구성 & 운영 (슬라이드 28-40) ──
+      28: '[섹션 전환] Block 3: 노드 구성 & 운영.\n\n"이제 실제로 노드를 구성하고 운영하는 방법을 다루겠습니다.\nnodeadm CLI부터 Cilium 설치, 업그레이드 전략까지.\n핸즈온에 가장 가까운 섹션입니다."',
+      29: '[nodeadm CLI] 4가지 주요 명령어.\n\n- nodeadm install: kubelet, containerd 등 의존성 설치\n- nodeadm init: NodeConfig.yaml 기반으로 노드 초기화 및 클러스터 조인\n- nodeadm upgrade: K8s 버전 업그레이드 (kubelet 재시작)\n- nodeadm debug: 연결 상태, 인증서, 네트워크 진단\n\n"nodeadm은 AWS가 제공하는 오픈소스 CLI입니다. kubeadm의 하이브리드 버전이라고 생각하시면 됩니다."',
+      30: '[Bootstrap 워크플로우] ▶ Play 버튼으로 8단계 애니메이션 시연.\n\n↑↓ 키로도 단계별 이동 가능.\n1. nodeadm install → 2. NodeConfig 로드 → 3. 크리덴셜 획득 (SSM/IAM RA)\n4. kubelet 설정 생성 → 5. containerd 시작 → 6. kubelet 시작\n7. CSR 제출 → 8. Node Ready\n\n💡 "3번 크리덴셜 획득 단계에서 Bootstrap CA가 핵심입니다.\nSSM은 Activation Code, IAM RA는 X.509 인증서로 첫 번째 토큰을 받습니다."',
+      31: '[NodeConfig YAML] 탭을 클릭하며 4개 섹션 설명.\n\n① cluster: 클러스터 이름, 리전, API Server endpoint\n② hybrid: 크리덴셜 프로바이더 설정 (SSM 또는 IAM RA)\n③ kubelet: 리소스 예약, max-pods, feature gates\n④ containerd: 프라이빗 레지스트리 미러, sandbox 이미지\n\n"이 YAML 하나로 노드의 모든 설정이 결정됩니다. GitOps로 관리하면 일관성을 유지할 수 있습니다."',
+      32: '[CNI 선택] Cilium이 유일한 AWS 공식 지원 CNI.\n\n왜 Cilium인가?\n- eBPF 기반: iptables 없이 고성능 네트워킹\n- Hubble: 네트워크 트래픽 관측성 (L3/L4/L7)\n- BGP: Pod CIDR 광고 내장 (Pattern 4 해결)\n- Network Policy: L3-L7 정책 지원\n- VXLAN: 노드 간 오버레이 네트워크\n\n"Calico, Flannel은 공식 지원이 아닙니다. 문제 발생 시 AWS 기술 지원을 받으려면 Cilium을 사용하세요."',
+      33: '[Cilium 설치] Helm 명령어 실습 안내.\n\nAWS ECR Public에서 공식 빌드를 pull합니다.\n- helm repo: public.ecr.aws/isovalent\n- 에어갭이면 사전에 이미지를 Harbor 등에 미러링\n\n"helm install 한 줄이면 끝나지만, values.yaml 설정이 중요합니다. 다음 슬라이드에서 상세히 보겠습니다."',
+      34: '[Cilium Values] cilium-values.yaml 핵심 설정.\n\n⚠️ 가장 중요한 설정:\n- clusterPoolIPv4PodCIDRList: Pod CIDR 범위\n- clusterPoolIPv4MaskSize: 노드당 Pod CIDR 크기 (/24 = 256 IP)\n\n"Pod CIDR은 배포 후 변경이 불가합니다! 충분히 크게 잡으세요.\n/16이면 약 65,000개 Pod IP. 노드 100대 × /24면 25,600개."',
+      35: '[노드 등록 확인] kubectl 명령어 데모.\n\nkubectl get nodes -o wide:\n- STATUS: Ready 확인\n- ROLES: <none> (Hybrid Node는 role이 없음)\n- VERSION: EKS 클러스터 버전과 일치\n\nkubectl describe node:\n- Labels: eks.amazonaws.com/compute-type=hybrid\n- Conditions: Ready=True, MemoryPressure=False\n- Capacity: CPU, Memory 확인\n\n"Ready가 되지 않으면 nodeadm debug로 진단하세요."',
+      36: '[업그레이드 전략] Rolling vs Canary.\n\nRolling (기본):\n- 한 번에 하나씩 drain → upgrade → uncordon\n- 안전하지만 느림\n\nCanary (권장):\n- 1대만 먼저 업그레이드 → 검증 → 나머지 진행\n- kubectl drain → nodeadm upgrade → kubectl uncordon\n\n"Canary로 1대 먼저 해보고 문제 없으면 나머지를 Rolling으로 진행하는 것이 가장 안전합니다.\nRollback은 nodeadm upgrade --rollback으로 가능합니다."',
+      37: '[에어갭 환경] 인터넷 없이 운영하는 방법.\n\n3가지 조합:\n① S3 + VPC Endpoint: 컨테이너 이미지/바이너리 저장\n② Private Hosted Zone: 내부 DNS 설정\n③ VPC Endpoint: AWS 서비스 접근\n\n서비스 엔드포인트 뱃지를 확인하며 설명.\n"금융, 공공, 국방 등 인터넷 격리가 필수인 환경에서 이 구성을 사용합니다."',
+      38: '[트러블슈팅] 탭별로 3가지 주요 이슈 설명.\n\n① 노드 미등록: SSM/IAM RA 크리덴셜 확인, nodeadm debug 실행\n② CNI 장애: Cilium Pod 상태, VXLAN 포트 확인, hubble observe\n③ DNS 이슈: CoreDNS Pod 위치 확인, tolerations/topologySpreadConstraints 점검\n\n💡 CoreDNS 관련:\n- CoreDNS가 Hybrid Node에 스케줄링되는지 확인 (toleration 필요)\n- topologySpreadConstraints로 Cloud/Hybrid 양쪽에 분산 배치 권장\n\n"80%의 문제가 네트워크(방화벽)와 크리덴셜에서 발생합니다."',
+      39: '[Quiz] Block 3 퀴즈.\n\n"nodeadm 명령어와 Cilium 설정 관련 문제입니다."\n실습 전에 개념을 한번 더 정리하는 시간.',
+      40: '[Deep Dive] Block 3 참고 자료 안내.\n\n공식 문서:\n- nodeadm GitHub 저장소\n- Cilium 공식 문서 (Hybrid Nodes 가이드)\n- EKS Best Practices Guide\n\n"Block 3까지 기술적 기초를 다졌습니다. 마지막 Block에서는 실전 패턴을 다루겠습니다."',
+
+      // ── Block 4: 고급 패턴 & 전략적 가치 (슬라이드 41-52) ──
+      41: '[섹션 전환] Block 4: 고급 패턴 & 전략적 가치.\n\n"지금부터가 실전입니다. Cloud Bursting, 규제 대응, AI Agent 연동 등\n실제 프로젝트에서 바로 적용할 수 있는 패턴들을 다루겠습니다."',
+      42: '[Taint/Toleration] 워크로드 격리 패턴.\n\nHybrid Node에는 자동으로 taint가 부여됩니다:\n- eks.amazonaws.com/compute-type=hybrid:NoSchedule\n\n이 taint를 tolerate하는 Pod만 Hybrid Node에 스케줄링.\n- GPU 워크로드는 온프렘(toleration 있음)\n- 일반 웹 서비스는 클라우드(toleration 없음)\n\n"이 자동 taint 덕분에 별도 설정 없이도 워크로드가 분리됩니다.\n추가 taint를 넣어 더 세밀한 격리도 가능합니다."',
+      43: '[Cloud Bursting] Scale Out/In 버튼 또는 ↑↓ 키로 시연.\n\nKarpenter가 온프렘 용량 초과를 감지하면 자동으로 EC2 노드 프로비저닝.\n\nScale Out 시나리오:\n- 온프렘 GPU 서버 포화 → Pending Pod 발생\n- Karpenter가 EC2 인스턴스 자동 생성\n- Pod가 클라우드에 스케줄링\n\nScale In:\n- 부하 감소 → Karpenter가 EC2 인스턴스 자동 회수\n- Pod Deletion Cost로 클라우드 Pod 우선 제거\n\n"블랙프라이데이 같은 피크 시즌에 매우 유용합니다."',
+      44: '[Pod Deletion Cost] 스케일다운 시 우선순위 제어.\n\nannotation: controller.kubernetes.io/pod-deletion-cost\n- 값이 낮을수록 먼저 삭제\n- 클라우드 Pod: -100 (먼저 제거)\n- 온프렘 Pod: 100 (보존)\n\n"이 전략으로 스케일다운 시 항상 클라우드 Pod가 먼저 사라집니다.\n온프렘 워크로드는 안정적으로 유지됩니다."',
+      45: '[MutatingWebhook] Pod Deletion Cost와 Tolerations 자동 주입.\n\n왼쪽: WebhookConfiguration YAML\n- namespace selector로 대상 제한\n- CREATE 시 Pod에 자동 적용\n\n오른쪽: 주입 결과\n- pod-deletion-cost annotation 자동 추가\n- hybrid toleration 자동 추가\n\n"개발자가 매번 annotation을 넣을 필요 없이, Webhook이 자동으로 주입합니다.\nPlatform 팀이 한번 세팅하면 모든 팀이 혜택을 받습니다."',
+      46: '[규제 대응] 데이터 주권과 감사 추적.\n\n핵심 메시지: 데이터는 온프렘에 머무르고, CP만 AWS.\n\n금융감독원 클라우드 가이드라인 충족:\n- 개인정보/금융데이터: 온프렘 노드에서만 처리\n- 감사 로그: CloudTrail + 온프렘 감사 시스템 이중화\n- 암호화: 전송 중(TLS) + 저장 시(온프렘 KMS)\n\n"규제 산업에서 하이브리드 전략을 채택할 때 가장 많이 받는 질문입니다.\n데이터가 AWS로 나가지 않는다는 것을 명확히 설명하세요."',
+      47: '[AWS Managed Services 연계] 캔버스 애니메이션.\n\nPod Identity → STS → Bedrock/S3 연동 5단계 플로우.\n\n1. Pod에 ServiceAccount 연결\n2. EKS Pod Identity Agent가 임시 자격증명 발급\n3. STS AssumeRole\n4. Bedrock/S3/SageMaker API 호출\n5. 응답 수신\n\n"온프렘 Pod가 마치 EC2에서 실행되는 것처럼 AWS 서비스를 호출할 수 있습니다.\nIRSA보다 Pod Identity가 더 간단하고 권장됩니다."',
+      48: '[AI Agent 개발 가속화] LLM Gateway 패턴 — 3가지 Use Case.\n\nUC1 (모델 실험 → 온프렘 전환):\n- AWS GPU로 모델 실험 → 적절한 GPU 선정 → 온프렘 장비 구매 → Hybrid Node로 등록\n\nUC2 (GPU Bursting):\n- 온프렘 GPU 부족 시 Bedrock/SageMaker로 버스팅 (확장, NOT fallback)\n\nUC3 (PII 라우팅):\n- 개인정보 포함 → 온프렘 GPU에서 처리\n- 개인정보 미포함 → Bedrock Claude로 처리\n\nAgentCore Runtime + MCP Servers가 클라우드에서 오케스트레이션.\n"각 UC 박스가 온프렘과 클라우드를 가로지르는 것이 핵심입니다. 하이브리드의 본질이죠."',
+      49: '[비용 최적화] 숫자로 보여주는 가치.\n\nvCPU당 $0.01/hr — EC2 대비 60-80% 절약\n\n비용 공식:\n- 기존 온프렘 서버 100대 × 8 vCPU = 800 vCPU\n- Hybrid Nodes 비용: 800 × $0.01 × 730시간 = $5,840/월\n- 동일 EC2(m5.2xlarge): $2,336/월 × 100대 = $23,360/월 (비교 불가, 서버 이미 보유)\n\n실질 비용:\n- 기존 하드웨어 투자 보존 (sunk cost 활용)\n- 추가 비용은 vCPU 사용료 + 네트워크(VPN/DX)만\n\n"이미 보유한 서버를 활용하면서 AWS CP 관리를 받는 것이 핵심 가치입니다."',
+      50: '[왜 EKS Hybrid Nodes인가?] 4열 비교표: Tanzu/VKS vs OpenShift vs EKS Hybrid.\n\n5개 축으로 비교:\n① 성능/유연성: CRI-O 오버헤드(OpenShift) vs containerd(EKS)\n② 운영: CP 자체관리(OpenShift) vs AWS 완전관리(EKS)\n③ 비용: $13K+/yr 구독료(OpenShift) vs vCPU당 $0.01/hr\n④ 최신기술: K8s 릴리스 3-6개월 지연(OpenShift) vs EKS 빠른 지원\n⑤ AWS 연동: Native Pod Identity, Bedrock, SageMaker 즉시 사용\n\n"OpenShift 사용 중인 고객에게 마이그레이션 제안 시 이 비교표가 유용합니다."',
+      51: '[핵심 요약] 전체 세션 정리.\n\n3가지 핵심 메시지:\n① EKS CP는 AWS가 관리 — 운영 부담 대폭 감소\n② 온프렘 기존 인프라 활용 — 추가 하드웨어 불필요\n③ AWS Managed Services 게이트웨이 — AI/ML 서비스 즉시 활용\n\n"오늘 다룬 내용이 많았습니다. 핵심만 기억하세요:\nHybrid Nodes = 기존 인프라 + AWS 관리 + AWS AI 서비스.\n이 세 가지가 EKS Hybrid Nodes의 전부입니다."',
+      52: '[Thank You] 마무리.\n\n"감사합니다. 추가 질문이나 PoC 논의가 필요하시면 언제든 연락 주세요."\n\n명함/연락처 안내.\nPoC 지원: SA 팀에서 초기 설계부터 구축까지 동반 지원 가능.\n\n💡 후속 액션 제안:\n- 네트워크 아키텍처 리뷰 (방화벽, CIDR)\n- 1대 노드로 PoC 시작\n- 기존 워크로드 마이그레이션 계획 수립'
     },
     onSlideChange: (index, slide) => {
       // Block 1 canvases
@@ -4408,7 +4452,6 @@ sudo iptables -L -n | grep 53</div>
 
       // Block 4 canvases
       cleanupCanvases();
-      if (index === 41) setTimeout(initGpuCpuCanvas, 100);          // slide 42: GPU+CPU
       if (index === 42) setTimeout(initCloudBurstingCanvas, 100);   // slide 43: Cloud Bursting
       if (index === 46) setTimeout(initAgentArchCanvas, 100);       // slide 47: Managed Services
     }
@@ -4416,16 +4459,23 @@ sudo iptables -L -n | grep 53</div>
 
   // Quizzes initialized by framework QuizManager automatically
 
-  // Block 1 Slide 6: Arrow key step control
-  document.addEventListener('keydown', (e) => {
-    if (deck.currentSlide !== 5) return;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (archStep < 3 && !archAnimating) archTransitionTo(archStep + 1);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (archStep > 0 && !archAnimating) archTransitionTo(archStep - 1);
+  // Register ↑↓ slide actions for all interactive canvas slides
+  // Slide 6 (index 5): Architecture canvas
+  deck.registerSlideAction(5, {
+    down: () => {
+      if (archStep < 3 && !archAnimating) { archTransitionTo(archStep + 1); return true; }
+      return false;
+    },
+    up: () => {
+      if (archStep > 0 && !archAnimating) { archTransitionTo(archStep - 1); return true; }
+      return false;
     }
+  });
+
+  // Slide 30 (index 29): Bootstrap canvas
+  deck.registerSlideAction(29, {
+    down: () => bootstrapStepDown ? bootstrapStepDown() : false,
+    up: () => bootstrapStepUp ? bootstrapStepUp() : false
   });
 
   // Initialize canvas if starting on specific slide
@@ -4433,9 +4483,8 @@ sudo iptables -L -n | grep 53</div>
     const idx = deck.currentSlide;
     if (idx === 5) initArchCanvas();
     if (idx === 6) initServicesCanvas();
-    if (idx === 42) initGpuCpuCanvas();
-    if (idx === 43) initCloudBurstingCanvas();
-    if (idx === 47) initAgentArchCanvas();
+    if (idx === 42) initCloudBurstingCanvas();
+    if (idx === 46) initAgentArchCanvas();
   }, 200);
 </script>
 </body>

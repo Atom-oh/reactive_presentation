@@ -30,35 +30,35 @@ class QuizManager {
       options.forEach(opt => {
         opt.addEventListener('click', () => {
           if (state.answered) return;
-          state.answered = true;
+          if (opt.classList.contains('wrong')) return; // already tried this option
           const isCorrect = opt.dataset.correct === 'true';
-          state.correct = isCorrect;
 
-          // Mark all options
-          options.forEach(o => {
-            o.classList.add('disabled');
-            if (o.dataset.correct === 'true') {
-              o.classList.add('correct');
-            } else if (o === opt && !isCorrect) {
-              o.classList.add('wrong');
-            }
-          });
-
-          // Show feedback
-          if (feedback) {
-            const explanation = opt.dataset.explain || quiz.dataset.explain || '';
-            if (isCorrect) {
+          if (isCorrect) {
+            state.answered = true;
+            state.correct = true;
+            // Mark all options disabled, highlight correct
+            options.forEach(o => {
+              o.classList.add('disabled');
+              if (o.dataset.correct === 'true') o.classList.add('correct');
+            });
+            // Show success feedback
+            if (feedback) {
+              const explanation = opt.dataset.explain || quiz.dataset.explain || '';
               feedback.innerHTML = `<div class="quiz-result correct">
                 <span class="quiz-icon">&#10003;</span> 정답입니다!
                 ${explanation ? `<div class="quiz-explain">${explanation}</div>` : ''}
               </div>`;
-            } else {
-              feedback.innerHTML = `<div class="quiz-result wrong">
-                <span class="quiz-icon">&#10007;</span> 오답입니다. 다시 생각해보세요.
-                ${explanation ? `<div class="quiz-explain">${explanation}</div>` : ''}
-              </div>`;
+              feedback.classList.add('show');
             }
-            feedback.classList.add('show');
+          } else {
+            // Mark this option as wrong but keep quiz open
+            opt.classList.add('wrong', 'disabled');
+            if (feedback) {
+              feedback.innerHTML = `<div class="quiz-result wrong">
+                <span class="quiz-icon">&#10007;</span> 다시 생각해보세요.
+              </div>`;
+              feedback.classList.add('show');
+            }
           }
         });
       });

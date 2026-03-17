@@ -1,0 +1,326 @@
+<mxfile host="65bd71144e">
+    <diagram id="hybrid-ai-main" name="Hybrid AI Architecture">
+        <mxGraphModel dx="126" dy="78" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1600" pageHeight="900" background="none" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="onprem-private" value="On-Premises Private Cloud" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8E8E8;strokeColor=#999999;fontColor=#232F3E;fontSize=14;fontStyle=1;verticalAlign=top;align=center;spacingTop=5;arcSize=8;container=1;collapsible=0;dashed=0;" parent="1" vertex="1">
+                    <mxGeometry x="20" y="20" width="420" height="440" as="geometry"/>
+                </mxCell>
+                <mxCell id="subsidiaries-group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#CCCCCC;container=1;collapsible=0;" parent="onprem-private" vertex="1">
+                    <mxGeometry x="20" y="50" width="380" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="sub-icon" value="" style="shape=mxgraph.aws4.corporate_data_center;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;aspect=fixed;" parent="subsidiaries-group" vertex="1">
+                    <mxGeometry x="15" y="15" width="48" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="sub-label" value="&lt;b&gt;계열사 A ~ J&lt;/b&gt;&lt;br&gt;(FTP / File Server)&lt;br&gt;&lt;font color=&quot;#666666&quot; style=&quot;font-size:11px&quot;&gt;비정형 데이터 소스&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontColor=#232F3E;" parent="subsidiaries-group" vertex="1">
+                    <mxGeometry x="75" y="10" width="290" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="sub-servers" value="" style="shape=mxgraph.aws4.traditional_server;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;aspect=fixed;" parent="subsidiaries-group" vertex="1">
+                    <mxGeometry x="80" y="70" width="30" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="sub-servers2" value="" style="shape=mxgraph.aws4.traditional_server;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;aspect=fixed;" parent="subsidiaries-group" vertex="1">
+                    <mxGeometry x="120" y="70" width="30" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="sub-servers3" value="" style="shape=mxgraph.aws4.traditional_server;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;aspect=fixed;" parent="subsidiaries-group" vertex="1">
+                    <mxGeometry x="160" y="70" width="30" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="sub-servers4" value="" style="shape=mxgraph.aws4.traditional_server;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;aspect=fixed;" parent="subsidiaries-group" vertex="1">
+                    <mxGeometry x="240" y="70" width="30" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="crawler-icon" value="" style="shape=mxgraph.aws4.traditional_server;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;aspect=fixed;" parent="onprem-private" vertex="1">
+                    <mxGeometry x="60" y="220" width="40" height="64" as="geometry"/>
+                </mxCell>
+                <mxCell id="crawler-label" value="&lt;b&gt;Crawler&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot; color=&quot;#666666&quot;&gt;계열사 데이터 수집&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontColor=#232F3E;" parent="onprem-private" vertex="1">
+                    <mxGeometry x="110" y="230" width="140" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="nas-icon" value="" style="shape=mxgraph.aws4.traditional_server;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#3F8624;strokeColor=none;aspect=fixed;" parent="onprem-private" vertex="1">
+                    <mxGeometry x="60" y="320" width="40" height="64" as="geometry"/>
+                </mxCell>
+                <mxCell id="nas-label" value="&lt;b&gt;NAS&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot; color=&quot;#666666&quot;&gt;비정형 데이터 저장소&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontColor=#232F3E;" parent="onprem-private" vertex="1">
+                    <mxGeometry x="110" y="330" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-sub-crawler" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;strokeColor=#666666;strokeWidth=2;fontSize=11;fontColor=#666666;" parent="onprem-private" source="subsidiaries-group" target="crawler-icon" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-sub-crawler-label" value="FTP/File" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;labelBackgroundColor=none;" parent="arrow-sub-crawler" vertex="1" connectable="0">
+                    <mxGeometry x="-0.2" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="arrow-crawler-nas" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#666666;strokeWidth=2;fontSize=11;fontColor=#666666;" parent="onprem-private" source="crawler-icon" target="nas-icon" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-crawler-nas-label" value="수집" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;labelBackgroundColor=none;" parent="arrow-crawler-nas" vertex="1" connectable="0">
+                    <mxGeometry x="-0.2" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="onprem-dmz" value="DMZ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2E0;strokeColor=#ED7100;fontColor=#232F3E;fontSize=14;fontStyle=1;verticalAlign=top;align=center;spacingTop=5;arcSize=8;container=1;collapsible=0;" parent="1" vertex="1">
+                    <mxGeometry x="20" y="480" width="420" height="400" as="geometry"/>
+                </mxCell>
+                <mxCell id="pub-crawler-icon" value="" style="shape=mxgraph.aws4.traditional_server;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;aspect=fixed;" parent="onprem-dmz" vertex="1">
+                    <mxGeometry x="30" y="50" width="40" height="64" as="geometry"/>
+                </mxCell>
+                <mxCell id="pub-crawler-label" value="&lt;b&gt;Public Crawler&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot; color=&quot;#666666&quot;&gt;외부 데이터 수집&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontColor=#232F3E;" parent="onprem-dmz" vertex="1">
+                    <mxGeometry x="80" y="55" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="portal-icon" value="" style="shape=mxgraph.aws4.traditional_server;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#147EBA;strokeColor=none;aspect=fixed;" parent="onprem-dmz" vertex="1">
+                    <mxGeometry x="30" y="150" width="40" height="64" as="geometry"/>
+                </mxCell>
+                <mxCell id="portal-label" value="&lt;b&gt;Web Portal&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot; color=&quot;#666666&quot;&gt;사용자 접점 / AI Proxy&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontColor=#232F3E;" parent="onprem-dmz" vertex="1">
+                    <mxGeometry x="80" y="155" width="170" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="users-icon" value="" style="shape=mxgraph.aws4.users;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#BF0816;strokeColor=none;aspect=fixed;" parent="onprem-dmz" vertex="1">
+                    <mxGeometry x="120" y="280" width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="users-label" value="&lt;b&gt;사용자&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot; color=&quot;#666666&quot;&gt;계열사 A, B, C ...&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;whiteSpace=wrap;fontSize=12;fontColor=#232F3E;" parent="onprem-dmz" vertex="1">
+                    <mxGeometry x="90" y="340" width="120" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-users-portal" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#147EBA;strokeWidth=2;" parent="onprem-dmz" source="users-icon" target="portal-icon" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-users-portal-label" value="질의" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#147EBA;labelBackgroundColor=none;" parent="arrow-users-portal" vertex="1" connectable="0">
+                    <mxGeometry x="-0.2" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="dx-line" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.direct_connect;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="480" y="400" width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="dx-label" value="&lt;b&gt;AWS Direct Connect&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#8C4FFF;" parent="1" vertex="1">
+                    <mxGeometry x="455" y="465" width="110" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="dx-vline" value="" style="endArrow=none;dashed=1;dashPattern=8 8;strokeColor=#8C4FFF;strokeWidth=3;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="510" y="120" as="sourcePoint"/>
+                        <mxPoint x="510" y="850" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="arrow-nas-dx" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#3F8624;strokeWidth=2;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="nas-icon" target="dx-line" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-nas-dx-label" value="데이터 전송" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#3F8624;labelBackgroundColor=none;" parent="arrow-nas-dx" vertex="1" connectable="0">
+                    <mxGeometry x="-0.2" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="arrow-portal-dx" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#147EBA;strokeWidth=2;entryX=0;entryY=0.8;entryDx=0;entryDy=0;" parent="1" source="portal-icon" target="dx-line" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-portal-dx-label" value="AI Proxy" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#147EBA;labelBackgroundColor=none;" parent="arrow-portal-dx" vertex="1" connectable="0">
+                    <mxGeometry x="-0.2" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="aws-cloud" value="AWS Cloud" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#232F3E;strokeColor=#FF9900;fontColor=#FFFFFF;fontSize=16;fontStyle=1;verticalAlign=top;align=center;spacingTop=8;arcSize=6;container=1;collapsible=0;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="580" y="20" width="1000" height="860" as="geometry"/>
+                </mxCell>
+                <mxCell id="vpc" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#37475A;strokeColor=#527FFF;fontColor=#FFFFFF;fontSize=13;fontStyle=1;verticalAlign=top;align=left;spacingTop=5;spacingLeft=10;arcSize=6;container=1;collapsible=0;strokeWidth=2;dashed=1;" parent="aws-cloud" vertex="1">
+                    <mxGeometry x="20" y="50" width="960" height="790" as="geometry"/>
+                </mxCell>
+                <mxCell id="vpc-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.vpc;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;aspect=fixed;" parent="vpc" vertex="1">
+                    <mxGeometry x="10" y="10" width="30" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="vpc-label" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;VPC&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=13;fontColor=#FFFFFF;" parent="vpc" vertex="1">
+                    <mxGeometry x="45" y="10" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="data-zone" value="Data Pipeline" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2A3A4E;strokeColor=#527FFF;fontColor=#AABBCC;fontSize=11;fontStyle=1;verticalAlign=top;align=left;spacingTop=3;spacingLeft=10;arcSize=8;container=1;collapsible=0;dashed=1;dashPattern=4 4;" parent="vpc" vertex="1">
+                    <mxGeometry x="20" y="55" width="440" height="340" as="geometry"/>
+                </mxCell>
+                <mxCell id="s3-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#3F8624;strokeColor=none;aspect=fixed;" parent="data-zone" vertex="1">
+                    <mxGeometry x="30" y="50" width="48" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="s3-label" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;Amazon S3&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot; color=&quot;#AABBCC&quot;&gt;ETL 데이터 랜딩&lt;/font&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;whiteSpace=wrap;fontSize=11;fontColor=#FFFFFF;" parent="data-zone" vertex="1">
+                    <mxGeometry x="10" y="100" width="90" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="glue-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.glue;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;aspect=fixed;" parent="data-zone" vertex="1">
+                    <mxGeometry x="180" y="50" width="48" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="glue-label" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;AWS Glue&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot; color=&quot;#AABBCC&quot;&gt;ETL 파이프라인&lt;/font&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;whiteSpace=wrap;fontSize=11;fontColor=#FFFFFF;" parent="data-zone" vertex="1">
+                    <mxGeometry x="160" y="100" width="90" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="sfn-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.step_functions;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;aspect=fixed;" parent="data-zone" vertex="1">
+                    <mxGeometry x="180" y="170" width="48" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="sfn-label" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;Step Functions&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot; color=&quot;#AABBCC&quot;&gt;워크플로우 오케스트레이션&lt;/font&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;whiteSpace=wrap;fontSize=11;fontColor=#FFFFFF;" parent="data-zone" vertex="1">
+                    <mxGeometry x="140" y="220" width="140" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="bedrock-kb-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#01A88D;strokeColor=none;aspect=fixed;" parent="data-zone" vertex="1">
+                    <mxGeometry x="340" y="50" width="48" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="bedrock-kb-label" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;Bedrock&lt;br&gt;Knowledge Base&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot; color=&quot;#AABBCC&quot;&gt;임베딩 생성&lt;/font&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;whiteSpace=wrap;fontSize=11;fontColor=#FFFFFF;" parent="data-zone" vertex="1">
+                    <mxGeometry x="310" y="100" width="110" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="oss-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.opensearch_service;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;aspect=fixed;" parent="data-zone" vertex="1">
+                    <mxGeometry x="340" y="200" width="48" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="oss-label" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;OpenSearch&lt;br&gt;Serverless&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot; color=&quot;#AABBCC&quot;&gt;Vector Store&lt;/font&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;whiteSpace=wrap;fontSize=11;fontColor=#FFFFFF;" parent="data-zone" vertex="1">
+                    <mxGeometry x="310" y="250" width="110" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-s3-glue" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;strokeColor=#FF9900;strokeWidth=2;" parent="data-zone" source="s3-icon" target="glue-icon" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-glue-bedrock" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;strokeColor=#FF9900;strokeWidth=2;" parent="data-zone" source="glue-icon" target="bedrock-kb-icon" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-bedrock-oss" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;strokeColor=#FF9900;strokeWidth=2;" parent="data-zone" source="bedrock-kb-icon" target="oss-icon" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-bedrock-oss-label" value="벡터 저장" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#FF9900;labelBackgroundColor=none;" parent="arrow-bedrock-oss" vertex="1" connectable="0">
+                    <mxGeometry x="-0.2" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="arrow-sfn-glue" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;strokeColor=#E7157B;strokeWidth=1;dashed=1;" parent="data-zone" source="sfn-icon" target="glue-icon" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="eks-zone" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2A3A4E;strokeColor=#FF9900;fontColor=#FFFFFF;fontSize=11;fontStyle=1;verticalAlign=top;align=left;spacingTop=3;spacingLeft=50;arcSize=8;container=1;collapsible=0;strokeWidth=2;" parent="vpc" vertex="1">
+                    <mxGeometry x="490" y="55" width="450" height="720" as="geometry"/>
+                </mxCell>
+                <mxCell id="eks-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eks;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;aspect=fixed;" parent="eks-zone" vertex="1">
+                    <mxGeometry x="10" y="10" width="36" height="36" as="geometry"/>
+                </mxCell>
+                <mxCell id="eks-label" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;Amazon EKS Cluster&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=13;fontColor=#FFFFFF;" parent="eks-zone" vertex="1">
+                    <mxGeometry x="50" y="10" width="200" height="36" as="geometry"/>
+                </mxCell>
+                <mxCell id="web-ng" value="Web/WAS Node Group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3D5068;strokeColor=#527FFF;fontColor=#AABBCC;fontSize=11;fontStyle=1;verticalAlign=top;align=center;spacingTop=5;arcSize=8;container=1;collapsible=0;" parent="eks-zone" vertex="1">
+                    <mxGeometry x="25" y="60" width="400" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="web-pod1" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;Web Frontend&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot; color=&quot;#AABBCC&quot;&gt;React / Next.js&lt;/font&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4A6080;strokeColor=#527FFF;fontSize=11;arcSize=12;" parent="web-ng" vertex="1">
+                    <mxGeometry x="15" y="35" width="120" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="web-pod2" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;WAS Backend&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot; color=&quot;#AABBCC&quot;&gt;API Server&lt;/font&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4A6080;strokeColor=#527FFF;fontSize=11;arcSize=12;" parent="web-ng" vertex="1">
+                    <mxGeometry x="150" y="35" width="120" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="web-pod3" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;LLM Gateway&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot; color=&quot;#AABBCC&quot;&gt;PII 라우팅&lt;/font&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4A6080;strokeColor=#01A88D;fontSize=11;arcSize=12;strokeWidth=2;" parent="web-ng" vertex="1">
+                    <mxGeometry x="285" y="35" width="100" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="web-arrow1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#527FFF;strokeWidth=1;" parent="web-ng" source="web-pod1" target="web-pod2" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="web-arrow2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#527FFF;strokeWidth=1;" parent="web-ng" source="web-pod2" target="web-pod3" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="web-ng-note" value="&lt;font style=&quot;font-size:10px&quot; color=&quot;#AABBCC&quot;&gt;Managed Node Group (m5.xlarge)&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=10;" parent="web-ng" vertex="1">
+                    <mxGeometry x="60" y="110" width="280" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="hpa-badge" value="&lt;font style=&quot;font-size:9px&quot; color=&quot;#FF9900&quot;&gt;HPA&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3D5068;strokeColor=#FF9900;fontSize=9;arcSize=20;strokeWidth=1;" parent="web-ng" vertex="1">
+                    <mxGeometry x="130" y="140" width="40" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="gpu-ng" value="GPU Node Group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3D5068;strokeColor=#01A88D;fontColor=#AABBCC;fontSize=11;fontStyle=1;verticalAlign=top;align=center;spacingTop=5;arcSize=8;container=1;collapsible=0;strokeWidth=2;" parent="eks-zone" vertex="1">
+                    <mxGeometry x="25" y="270" width="400" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="gpu-pod1" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;Qwen3 32B&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot; color=&quot;#AABBCC&quot;&gt;LLM Inference&lt;br&gt;(vLLM / TGI)&lt;/font&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4A6080;strokeColor=#01A88D;fontSize=11;arcSize=12;strokeWidth=2;" parent="gpu-ng" vertex="1">
+                    <mxGeometry x="25" y="40" width="160" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="gpu-badge" value="&lt;font style=&quot;font-size:9px&quot; color=&quot;#01A88D&quot;&gt;NVIDIA GPU&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3D5068;strokeColor=#01A88D;fontSize=9;arcSize=20;strokeWidth=1;" parent="gpu-ng" vertex="1">
+                    <mxGeometry x="25" y="120" width="80" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="gpu-note" value="&lt;font style=&quot;font-size:10px&quot; color=&quot;#AABBCC&quot;&gt;GPU Node Group (p4d.24xlarge / g5.12xlarge)&lt;br&gt;데이터 외부 미전송 — Data Sovereignty 보장&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=10;" parent="gpu-ng" vertex="1">
+                    <mxGeometry x="20" y="150" width="360" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="gpu-pod2" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;Embedding&lt;br&gt;Model&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot; color=&quot;#AABBCC&quot;&gt;(Optional)&lt;/font&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4A6080;strokeColor=#527FFF;fontSize=11;arcSize=12;" parent="gpu-ng" vertex="1">
+                    <mxGeometry x="220" y="40" width="140" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="bedrock-inf" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2A3A4E;strokeColor=#01A88D;fontColor=#FFFFFF;fontSize=11;arcSize=12;container=1;collapsible=0;dashed=1;" parent="eks-zone" vertex="1">
+                    <mxGeometry x="25" y="500" width="400" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="bedrock-inf-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#01A88D;strokeColor=none;aspect=fixed;" parent="bedrock-inf" vertex="1">
+                    <mxGeometry x="15" y="15" width="36" height="36" as="geometry"/>
+                </mxCell>
+                <mxCell id="bedrock-inf-label" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;Amazon Bedrock&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#FFFFFF;" parent="bedrock-inf" vertex="1">
+                    <mxGeometry x="55" y="15" width="160" height="36" as="geometry"/>
+                </mxCell>
+                <mxCell id="bedrock-claude" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;Claude&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot; color=&quot;#AABBCC&quot;&gt;일반 쿼리 처리&lt;br&gt;관리형 · 고성능&lt;/font&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4A6080;strokeColor=#01A88D;fontSize=11;arcSize=12;strokeWidth=2;" parent="bedrock-inf" vertex="1">
+                    <mxGeometry x="25" y="65" width="140" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="bedrock-titan" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;Titan Embedding&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot; color=&quot;#AABBCC&quot;&gt;벡터 임베딩 생성&lt;/font&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4A6080;strokeColor=#01A88D;fontSize=11;arcSize=12;" parent="bedrock-inf" vertex="1">
+                    <mxGeometry x="200" y="65" width="140" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="bedrock-inf-note" value="&lt;font style=&quot;font-size:10px&quot; color=&quot;#AABBCC&quot;&gt;AWS 관리형 서비스 — No PII 쿼리 라우팅&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=10;" parent="bedrock-inf" vertex="1">
+                    <mxGeometry x="60" y="145" width="280" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-gw-qwen" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;strokeColor=#01A88D;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="eks-zone" source="web-pod3" target="gpu-pod1" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-gw-qwen-label" value="&lt;font color=&quot;#01A88D&quot;&gt;&lt;b&gt;PII 포함&lt;/b&gt;&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;labelBackgroundColor=none;" parent="arrow-gw-qwen" vertex="1" connectable="0">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="arrow-gw-bedrock" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;strokeColor=#FF9900;strokeWidth=2;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="eks-zone" source="web-pod3" target="bedrock-claude" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="360" y="485"/>
+                            <mxPoint x="95" y="485"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="arrow-gw-bedrock-label" value="&lt;font color=&quot;#FF9900&quot;&gt;&lt;b&gt;No PII&lt;/b&gt;&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;labelBackgroundColor=none;" parent="arrow-gw-bedrock" vertex="1" connectable="0">
+                    <mxGeometry x="-0.5" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="arrow-oss-qwen" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;strokeColor=#8C4FFF;strokeWidth=2;dashed=1;startArrow=classic;endArrow=classic;" parent="vpc" source="oss-icon" target="gpu-pod1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="460" y="305"/>
+                            <mxPoint x="460" y="405"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="arrow-oss-qwen-label" value="&lt;font color=&quot;#8C4FFF&quot;&gt;RAG 검색&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;labelBackgroundColor=none;" parent="arrow-oss-qwen" vertex="1" connectable="0">
+                    <mxGeometry x="-0.2" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="legend" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2A3A4E;strokeColor=#527FFF;container=1;collapsible=0;arcSize=10;" parent="vpc" vertex="1">
+                    <mxGeometry x="20" y="420" width="440" height="170" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend-title" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;Data Flow&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#FFFFFF;" parent="legend" vertex="1">
+                    <mxGeometry x="10" y="5" width="120" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="flow1" value="&lt;font style=&quot;font-size:10px&quot; color=&quot;#FFFFFF&quot;&gt;① Crawler → NAS (계열사 비정형 데이터 수집)&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" parent="legend" vertex="1">
+                    <mxGeometry x="10" y="30" width="420" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="flow2" value="&lt;font style=&quot;font-size:10px&quot; color=&quot;#FFFFFF&quot;&gt;② NAS → DX → S3 (데이터 전송)&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" parent="legend" vertex="1">
+                    <mxGeometry x="10" y="50" width="420" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="flow3" value="&lt;font style=&quot;font-size:10px&quot; color=&quot;#FFFFFF&quot;&gt;③ S3 → Glue ETL → Bedrock KB → OpenSearch (임베딩 + 벡터 저장)&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" parent="legend" vertex="1">
+                    <mxGeometry x="10" y="70" width="420" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="flow4" value="&lt;font style=&quot;font-size:10px&quot; color=&quot;#FFFFFF&quot;&gt;④ User → DMZ Web Portal → DX → EKS Web/WAS&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" parent="legend" vertex="1">
+                    <mxGeometry x="10" y="90" width="420" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="flow5" value="&lt;font style=&quot;font-size:10px&quot; color=&quot;#FFFFFF&quot;&gt;⑤ WAS → LLM Gateway → PII: Qwen3 / No PII: Bedrock Claude&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" parent="legend" vertex="1">
+                    <mxGeometry x="10" y="110" width="420" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="flow6" value="&lt;font style=&quot;font-size:10px&quot; color=&quot;#FFFFFF&quot;&gt;⑥ LLM → OpenSearch (RAG 검색) → 응답 생성 → User&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" parent="legend" vertex="1">
+                    <mxGeometry x="10" y="130" width="420" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-dx-s3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;strokeColor=#3F8624;strokeWidth=2;exitX=1;exitY=0.3;exitDx=0;exitDy=0;" parent="1" source="dx-line" target="s3-icon" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-dx-eks" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;strokeColor=#147EBA;strokeWidth=2;exitX=1;exitY=0.7;exitDx=0;exitDy=0;" parent="1" source="dx-line" target="web-pod1" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="num1" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:11px&quot;&gt;&lt;b&gt;①&lt;/b&gt;&lt;/font&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3F8624;strokeColor=none;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="115" y="278" width="24" height="24" as="geometry"/>
+                </mxCell>
+                <mxCell id="num2" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:11px&quot;&gt;&lt;b&gt;②&lt;/b&gt;&lt;/font&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3F8624;strokeColor=none;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="320" y="395" width="24" height="24" as="geometry"/>
+                </mxCell>
+                <mxCell id="num3" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:11px&quot;&gt;&lt;b&gt;③&lt;/b&gt;&lt;/font&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=none;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="740" y="95" width="24" height="24" as="geometry"/>
+                </mxCell>
+                <mxCell id="num4" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:11px&quot;&gt;&lt;b&gt;④&lt;/b&gt;&lt;/font&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#147EBA;strokeColor=none;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="460" y="620" width="24" height="24" as="geometry"/>
+                </mxCell>
+                <mxCell id="num5" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:11px&quot;&gt;&lt;b&gt;⑤&lt;/b&gt;&lt;/font&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#01A88D;strokeColor=none;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="1340" y="270" width="24" height="24" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

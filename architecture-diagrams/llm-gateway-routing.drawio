@@ -1,0 +1,182 @@
+<mxfile host="65bd71144e">
+    <diagram id="llm-gateway-routing" name="LLM Gateway Routing">
+        <mxGraphModel dx="1622" dy="1010" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1600" pageHeight="900" background="none" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#232F3E;strokeColor=#FF9900;arcSize=4;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="20" y="20" width="1560" height="860" as="geometry"/>
+                </mxCell>
+                <mxCell id="title" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:20px&quot;&gt;&lt;b&gt;LLM Gateway — PII 기반 라우팅 아키텍처&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=20;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="40" width="800" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="user-icon" value="" style="shape=mxgraph.aws4.users;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#BF0816;strokeColor=none;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="340" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="user-label" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;사용자 질의&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot; color=&quot;#AABBCC&quot;&gt;User Query&lt;/font&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;whiteSpace=wrap;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="430" width="120" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="gateway-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#37475A;strokeColor=#01A88D;arcSize=10;container=1;collapsible=0;strokeWidth=3;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="240" width="300" height="320" as="geometry"/>
+                </mxCell>
+                <mxCell id="gw-title" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:16px&quot;&gt;&lt;b&gt;LLM Gateway&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot; color=&quot;#AABBCC&quot;&gt;EKS 내 서비스&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=16;" parent="gateway-box" vertex="1">
+                    <mxGeometry x="50" y="15" width="200" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="pii-detect" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;PII 탐지 엔진&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot; color=&quot;#AABBCC&quot;&gt;개인정보 패턴 매칭&lt;br&gt;주민번호 · 전화번호 · 이메일 등&lt;/font&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4A6080;strokeColor=#FF9900;fontSize=11;arcSize=12;strokeWidth=2;" parent="gateway-box" vertex="1">
+                    <mxGeometry x="30" y="80" width="240" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="router" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;라우팅 결정&lt;/b&gt;&lt;/font&gt;" style="rhombus;whiteSpace=wrap;html=1;fillColor=#4A6080;strokeColor=#FF9900;fontSize=12;arcSize=12;strokeWidth=2;fontColor=#FFFFFF;" parent="gateway-box" vertex="1">
+                    <mxGeometry x="75" y="180" width="150" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-pii-router" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#FF9900;strokeWidth=2;" parent="gateway-box" source="pii-detect" target="router" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-user-gw" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;strokeColor=#FFFFFF;strokeWidth=3;" parent="1" source="user-icon" target="gateway-box" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-user-gw-label" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;질의 전달&lt;/b&gt;&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=11;labelBackgroundColor=none;" parent="arrow-user-gw" vertex="1" connectable="0">
+                    <mxGeometry x="-0.2" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="qwen-zone" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1A3A2A;strokeColor=#01A88D;arcSize=8;container=1;collapsible=0;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="720" y="100" width="480" height="260" as="geometry"/>
+                </mxCell>
+                <mxCell id="qwen-zone-title" value="&lt;font color=&quot;#01A88D&quot; style=&quot;font-size:13px&quot;&gt;&lt;b&gt;자체 호스팅 (Data Sovereignty)&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=13;" parent="qwen-zone" vertex="1">
+                    <mxGeometry x="15" y="10" width="300" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="eks-qwen-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eks;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;aspect=fixed;" parent="qwen-zone" vertex="1">
+                    <mxGeometry x="30" y="50" width="48" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="eks-qwen-label" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;Amazon EKS&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot; color=&quot;#AABBCC&quot;&gt;GPU Node Group&lt;/font&gt;&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=12;" parent="qwen-zone" vertex="1">
+                    <mxGeometry x="85" y="50" width="140" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="qwen-model" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:18px&quot;&gt;&lt;b&gt;Qwen3 32B&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size:12px&quot; color=&quot;#AABBCC&quot;&gt;오픈소스 LLM&lt;br&gt;vLLM / TGI 서빙&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2A5A3A;strokeColor=#01A88D;fontSize=12;arcSize=12;strokeWidth=2;" parent="qwen-zone" vertex="1">
+                    <mxGeometry x="30" y="120" width="200" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="shield-text" value="&lt;font color=&quot;#01A88D&quot; style=&quot;font-size:11px&quot;&gt;🔒 개인정보 포함 쿼리&lt;br&gt;데이터 외부 미전송&lt;br&gt;VPC 내부에서만 처리&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=11;" parent="qwen-zone" vertex="1">
+                    <mxGeometry x="260" y="120" width="200" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="bedrock-zone" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1A2A3A;strokeColor=#FF9900;arcSize=8;container=1;collapsible=0;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="720" y="440" width="480" height="260" as="geometry"/>
+                </mxCell>
+                <mxCell id="bedrock-zone-title" value="&lt;font color=&quot;#FF9900&quot; style=&quot;font-size:13px&quot;&gt;&lt;b&gt;AWS 관리형 서비스&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=13;" parent="bedrock-zone" vertex="1">
+                    <mxGeometry x="15" y="10" width="250" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="bedrock-icon2" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#01A88D;strokeColor=none;aspect=fixed;" parent="bedrock-zone" vertex="1">
+                    <mxGeometry x="30" y="50" width="48" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="bedrock-label2" value="&lt;font color=&quot;#FFFFFF&quot;&gt;&lt;b&gt;Amazon Bedrock&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot; color=&quot;#AABBCC&quot;&gt;관리형 AI 서비스&lt;/font&gt;&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=12;" parent="bedrock-zone" vertex="1">
+                    <mxGeometry x="85" y="50" width="160" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="claude-model" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:18px&quot;&gt;&lt;b&gt;Claude&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size:12px&quot; color=&quot;#AABBCC&quot;&gt;Anthropic 모델&lt;br&gt;고성능 · 비용 효율&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2A3A5A;strokeColor=#FF9900;fontSize=12;arcSize=12;strokeWidth=2;" parent="bedrock-zone" vertex="1">
+                    <mxGeometry x="30" y="120" width="200" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="managed-text" value="&lt;font color=&quot;#FF9900&quot; style=&quot;font-size:11px&quot;&gt;⚡ 일반 쿼리 처리&lt;br&gt;AWS 관리형 인프라&lt;br&gt;자동 스케일링 · 고가용성&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=11;" parent="bedrock-zone" vertex="1">
+                    <mxGeometry x="260" y="60" width="200" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="oss-zone" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2A2A4A;strokeColor=#8C4FFF;arcSize=10;container=1;collapsible=0;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="1300" y="260" width="240" height="280" as="geometry"/>
+                </mxCell>
+                <mxCell id="oss-icon2" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.opensearch_service;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;aspect=fixed;" parent="oss-zone" vertex="1">
+                    <mxGeometry x="90" y="20" width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="oss-label2" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:14px&quot;&gt;&lt;b&gt;OpenSearch&lt;br&gt;Serverless&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot; color=&quot;#AABBCC&quot;&gt;Vector Store&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" parent="oss-zone" vertex="1">
+                    <mxGeometry x="30" y="90" width="180" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="oss-detail" value="&lt;font style=&quot;font-size:10px&quot; color=&quot;#AABBCC&quot;&gt;• Bedrock KB 임베딩 저장&lt;br&gt;• 시맨틱 검색 (kNN)&lt;br&gt;• 양쪽 LLM 공유 참조&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=10;" parent="oss-zone" vertex="1">
+                    <mxGeometry x="20" y="170" width="200" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="rag-badge" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:10px&quot;&gt;&lt;b&gt;RAG&lt;/b&gt;&lt;/font&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#8C4FFF;strokeColor=none;aspect=fixed;" parent="oss-zone" vertex="1">
+                    <mxGeometry x="100" y="245" width="40" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-gw-qwen-main" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;strokeColor=#01A88D;strokeWidth=3;exitX=1;exitY=0.3;exitDx=0;exitDy=0;" parent="1" source="gateway-box" target="qwen-zone" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="650" y="336"/>
+                            <mxPoint x="650" y="230"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="arrow-gw-qwen-badge" value="&lt;font color=&quot;#232F3E&quot; style=&quot;font-size:12px&quot;&gt;&lt;b&gt;PII 감지 ✓&lt;/b&gt;&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=12;labelBackgroundColor=#01A88D;rounded=1;" parent="arrow-gw-qwen-main" vertex="1" connectable="0">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="arrow-gw-bedrock-main" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;strokeColor=#FF9900;strokeWidth=3;exitX=1;exitY=0.7;exitDx=0;exitDy=0;" parent="1" source="gateway-box" target="bedrock-zone" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="650" y="464"/>
+                            <mxPoint x="650" y="570"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="arrow-gw-bedrock-badge" value="&lt;font color=&quot;#232F3E&quot; style=&quot;font-size:12px&quot;&gt;&lt;b&gt;No PII&lt;/b&gt;&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=12;labelBackgroundColor=#FF9900;rounded=1;" parent="arrow-gw-bedrock-main" vertex="1" connectable="0">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="arrow-qwen-oss" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;strokeColor=#8C4FFF;strokeWidth=2;startArrow=classic;endArrow=classic;dashed=1;" parent="1" source="qwen-model" target="oss-zone" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="850" y="390"/>
+                            <mxPoint x="1260" y="390"/>
+                            <mxPoint x="1260" y="360"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="arrow-qwen-oss-label" value="&lt;font color=&quot;#8C4FFF&quot;&gt;RAG&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=11;labelBackgroundColor=none;fontStyle=1;" parent="arrow-qwen-oss" vertex="1" connectable="0">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="arrow-bedrock-oss" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;strokeColor=#8C4FFF;strokeWidth=2;startArrow=classic;endArrow=classic;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="claude-model" target="oss-zone" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1260" y="600"/>
+                            <mxPoint x="1260" y="440"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="arrow-bedrock-oss-label" value="&lt;font color=&quot;#8C4FFF&quot;&gt;RAG&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=11;labelBackgroundColor=none;fontStyle=1;" parent="arrow-bedrock-oss" vertex="1" connectable="0">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="arrow-qwen-user" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;strokeColor=#01A88D;strokeWidth=2;dashed=1;dashPattern=8 4;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="qwen-model" target="user-icon" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="850" y="200"/>
+                            <mxPoint x="119" y="200"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="arrow-qwen-user-label" value="&lt;font color=&quot;#01A88D&quot;&gt;응답&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;labelBackgroundColor=none;" parent="arrow-qwen-user" vertex="1" connectable="0">
+                    <mxGeometry x="-0.7" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="arrow-bedrock-user" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;strokeColor=#FF9900;strokeWidth=2;dashed=1;dashPattern=8 4;" parent="1" source="claude-model" target="user-icon" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="850" y="640"/>
+                            <mxPoint x="850" y="820"/>
+                            <mxPoint x="119" y="820"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="arrow-bedrock-user-label" value="&lt;font color=&quot;#FF9900&quot;&gt;응답&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;labelBackgroundColor=none;" parent="arrow-bedrock-user" vertex="1" connectable="0">
+                    <mxGeometry x="-0.7" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="table-title" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:13px&quot;&gt;&lt;b&gt;비교&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="130" y="740" width="60" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="table-header" value="&lt;table style=&quot;font-size:11px;color:#FFFFFF;border-collapse:collapse;&quot;&gt;&lt;tr style=&quot;background:#37475A;&quot;&gt;&lt;th style=&quot;padding:6px 12px;border:1px solid #527FFF;&quot;&gt;&lt;/th&gt;&lt;th style=&quot;padding:6px 12px;border:1px solid #527FFF;color:#01A88D;&quot;&gt;Qwen3 32B (EKS)&lt;/th&gt;&lt;th style=&quot;padding:6px 12px;border:1px solid #527FFF;color:#FF9900;&quot;&gt;Bedrock Claude&lt;/th&gt;&lt;/tr&gt;&lt;tr style=&quot;background:#2A3A4E;&quot;&gt;&lt;td style=&quot;padding:6px 12px;border:1px solid #527FFF;&quot;&gt;호스팅&lt;/td&gt;&lt;td style=&quot;padding:6px 12px;border:1px solid #527FFF;&quot;&gt;자체 (EKS GPU)&lt;/td&gt;&lt;td style=&quot;padding:6px 12px;border:1px solid #527FFF;&quot;&gt;AWS 관리형&lt;/td&gt;&lt;/tr&gt;&lt;tr style=&quot;background:#37475A;&quot;&gt;&lt;td style=&quot;padding:6px 12px;border:1px solid #527FFF;&quot;&gt;데이터&lt;/td&gt;&lt;td style=&quot;padding:6px 12px;border:1px solid #527FFF;&quot;&gt;VPC 내부 처리&lt;/td&gt;&lt;td style=&quot;padding:6px 12px;border:1px solid #527FFF;&quot;&gt;Bedrock API 전송&lt;/td&gt;&lt;/tr&gt;&lt;tr style=&quot;background:#2A3A4E;&quot;&gt;&lt;td style=&quot;padding:6px 12px;border:1px solid #527FFF;&quot;&gt;용도&lt;/td&gt;&lt;td style=&quot;padding:6px 12px;border:1px solid #527FFF;&quot;&gt;PII 포함 쿼리&lt;/td&gt;&lt;td style=&quot;padding:6px 12px;border:1px solid #527FFF;&quot;&gt;일반 쿼리&lt;/td&gt;&lt;/tr&gt;&lt;tr style=&quot;background:#37475A;&quot;&gt;&lt;td style=&quot;padding:6px 12px;border:1px solid #527FFF;&quot;&gt;장점&lt;/td&gt;&lt;td style=&quot;padding:6px 12px;border:1px solid #527FFF;&quot;&gt;Data Sovereignty&lt;/td&gt;&lt;td style=&quot;padding:6px 12px;border:1px solid #527FFF;&quot;&gt;고성능 · 비용 효율&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;overflow=fill;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="770" width="480" height="100" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

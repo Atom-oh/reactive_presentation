@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="1200" height="850" viewBox="-0.5 -0.5 1200 850">
+  <defs>
+    <style type="text/css">
+      .title { font: bold 24px 'Amazon Ember', Arial, sans-serif; fill: #ffffff; }
+      .subtitle { font: 16px 'Amazon Ember', Arial, sans-serif; fill: #b8bfc9; }
+      .label { font: 14px 'Amazon Ember', Arial, sans-serif; fill: #ffffff; }
+      .label-bold { font: bold 14px 'Amazon Ember', Arial, sans-serif; fill: #ffffff; }
+      .small-label { font: 12px 'Amazon Ember', Arial, sans-serif; fill: #b8bfc9; }
+      .code { font: 11px 'Consolas', monospace; fill: #e0e0e0; }
+      .section-title { font: bold 16px 'Amazon Ember', Arial, sans-serif; }
+    </style>
+    <linearGradient id="iamGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#dd3522;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#a82515;stop-opacity:0.3"/>
+    </linearGradient>
+    <linearGradient id="eksGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff9900;stop-opacity:0.25"/>
+      <stop offset="100%" style="stop-color:#cc7a00;stop-opacity:0.25"/>
+    </linearGradient>
+    <linearGradient id="k8sGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#326ce5;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#2251a8;stop-opacity:0.3"/>
+    </linearGradient>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4fc3f7" stroke="none"/>
+    </marker>
+    <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#dd3522" stroke="none"/>
+    </marker>
+    <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#326ce5" stroke="none"/>
+    </marker>
+    <marker id="arrowhead-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ff9900" stroke="none"/>
+    </marker>
+    <marker id="arrowhead-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2ecc71" stroke="none"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0" y="0" width="1200" height="850" fill="#1a1d2e"/>
+
+  <!-- Title -->
+  <text x="600" y="40" text-anchor="middle" class="title">EKS Security Architecture</text>
+  <text x="600" y="65" text-anchor="middle" class="subtitle">IAM Roles for Service Accounts (IRSA) + Access Entries</text>
+
+  <!-- Two Columns Header -->
+  <text x="300" y="100" text-anchor="middle" class="section-title" fill="#dd3522">IRSA (Pod Identity)</text>
+  <text x="900" y="100" text-anchor="middle" class="section-title" fill="#2ecc71">Access Entries (Cluster Auth)</text>
+
+  <!-- Divider -->
+  <line x1="600" y1="110" x2="600" y2="830" stroke="#4a5568" stroke-width="2" stroke-dasharray="8,4"/>
+
+  <!-- ===== LEFT SIDE: IRSA ===== -->
+
+  <!-- AWS IAM Section -->
+  <rect x="50" y="120" width="500" height="140" rx="8" fill="url(#iamGradient)" stroke="#dd3522" stroke-width="2"/>
+  <text x="300" y="145" text-anchor="middle" class="label-bold" fill="#dd3522">AWS IAM</text>
+
+  <!-- IAM Role -->
+  <rect x="70" y="160" width="220" height="80" rx="5" fill="#3d1a15" stroke="#dd3522" stroke-width="1.5"/>
+  <text x="180" y="185" text-anchor="middle" class="small-label" fill="#dd3522">IAM Role</text>
+  <text x="180" y="205" text-anchor="middle" class="code">app-service-role</text>
+  <text x="180" y="225" text-anchor="middle" class="small-label">Attached Policies</text>
+
+  <!-- Trust Policy -->
+  <rect x="310" y="160" width="220" height="80" rx="5" fill="#3d1a15" stroke="#f39c12" stroke-width="1.5"/>
+  <text x="420" y="185" text-anchor="middle" class="small-label" fill="#f39c12">Trust Policy</text>
+  <text x="320" y="205" class="code">Principal: OIDC</text>
+  <text x="320" y="225" class="code">Condition: :sub</text>
+
+  <!-- Arrow connecting Role and Trust -->
+  <line x1="290" y1="200" x2="305" y2="200" stroke="#dd3522" stroke-width="1.5"/>
+
+  <!-- OIDC Provider -->
+  <rect x="150" y="280" width="300" height="70" rx="6" fill="#232f3e" stroke="#ff9900" stroke-width="2"/>
+  <text x="300" y="305" text-anchor="middle" class="label-bold" fill="#ff9900">EKS OIDC Provider</text>
+  <text x="300" y="330" text-anchor="middle" class="code">oidc.eks.region.amazonaws.com/id/XXXXX</text>
+
+  <!-- Arrow from Trust to OIDC -->
+  <line x1="420" y1="240" x2="420" y2="265" stroke="#f39c12" stroke-width="2"/>
+  <line x1="420" y1="265" x2="350" y2="265" stroke="#f39c12" stroke-width="2"/>
+  <line x1="350" y1="265" x2="350" y2="275" stroke="#f39c12" stroke-width="2" marker-end="url(#arrowhead-orange)"/>
+
+  <!-- EKS Cluster Section -->
+  <rect x="50" y="370" width="500" height="200" rx="8" fill="url(#eksGradient)" stroke="#ff9900" stroke-width="2"/>
+  <text x="300" y="395" text-anchor="middle" class="label-bold" fill="#ff9900">EKS Cluster</text>
+
+  <!-- Namespace -->
+  <rect x="70" y="410" width="460" height="140" rx="6" fill="url(#k8sGradient)" stroke="#326ce5" stroke-width="1.5"/>
+  <text x="300" y="435" text-anchor="middle" class="small-label" fill="#326ce5">Namespace: production</text>
+
+  <!-- ServiceAccount -->
+  <rect x="90" y="450" width="180" height="80" rx="5" fill="#1a2d5a" stroke="#326ce5" stroke-width="1.5"/>
+  <text x="180" y="475" text-anchor="middle" class="small-label" fill="#326ce5">ServiceAccount</text>
+  <text x="180" y="495" text-anchor="middle" class="code">app-service-sa</text>
+  <text x="180" y="515" text-anchor="middle" class="small-label">Annotation: role-arn</text>
+
+  <!-- Pod -->
+  <rect x="300" y="450" width="210" height="80" rx="5" fill="#1e3a5f" stroke="#5dade2" stroke-width="1.5"/>
+  <text x="405" y="475" text-anchor="middle" class="small-label" fill="#5dade2">Application Pod</text>
+  <text x="405" y="495" text-anchor="middle" class="code">serviceAccountName:</text>
+  <text x="405" y="515" text-anchor="middle" class="code">app-service-sa</text>
+
+  <!-- Arrow from SA to Pod -->
+  <line x1="270" y1="490" x2="295" y2="490" stroke="#326ce5" stroke-width="2" marker-end="url(#arrowhead-blue)"/>
+
+  <!-- Arrow from OIDC to SA -->
+  <line x1="300" y1="350" x2="300" y2="365" stroke="#ff9900" stroke-width="2"/>
+  <line x1="300" y1="365" x2="180" y2="365" stroke="#ff9900" stroke-width="2"/>
+  <line x1="180" y1="365" x2="180" y2="445" stroke="#ff9900" stroke-width="2" marker-end="url(#arrowhead-orange)"/>
+  <text x="230" y="360" class="small-label" fill="#ff9900">Token projection</text>
+
+  <!-- AWS Services -->
+  <rect x="50" y="590" width="500" height="120" rx="8" fill="#232f3e" stroke="#2ecc71" stroke-width="2"/>
+  <text x="300" y="615" text-anchor="middle" class="label-bold" fill="#2ecc71">AWS Services (Accessed by Pod)</text>
+
+  <rect x="70" y="635" width="100" height="55" rx="4" fill="#1a365d" stroke="#3498db" stroke-width="1"/>
+  <text x="120" y="660" text-anchor="middle" class="small-label" fill="#3498db">S3</text>
+  <text x="120" y="680" text-anchor="middle" class="code">Buckets</text>
+
+  <rect x="185" y="635" width="100" height="55" rx="4" fill="#1a365d" stroke="#9b59b6" stroke-width="1"/>
+  <text x="235" y="660" text-anchor="middle" class="small-label" fill="#9b59b6">Secrets</text>
+  <text x="235" y="680" text-anchor="middle" class="code">Manager</text>
+
+  <rect x="300" y="635" width="100" height="55" rx="4" fill="#1a365d" stroke="#1abc9c" stroke-width="1"/>
+  <text x="350" y="660" text-anchor="middle" class="small-label" fill="#1abc9c">DynamoDB</text>
+  <text x="350" y="680" text-anchor="middle" class="code">Tables</text>
+
+  <rect x="415" y="635" width="100" height="55" rx="4" fill="#1a365d" stroke="#e74c3c" stroke-width="1"/>
+  <text x="465" y="660" text-anchor="middle" class="small-label" fill="#e74c3c">SQS</text>
+  <text x="465" y="680" text-anchor="middle" class="code">Queues</text>
+
+  <!-- Arrow from Pod to AWS Services -->
+  <path d="M 405 530 L 405 555 Q 405 575 350 575 L 300 575 L 300 585" stroke="#2ecc71" stroke-width="2" fill="none" marker-end="url(#arrowhead-green)"/>
+  <text x="430" y="560" class="small-label" fill="#2ecc71">Temp credentials</text>
+
+  <!-- IRSA Flow Summary -->
+  <rect x="50" y="730" width="500" height="90" rx="6" fill="#1a2d2d" stroke="#4fc3f7" stroke-width="1.5"/>
+  <text x="300" y="755" text-anchor="middle" class="label-bold" fill="#4fc3f7">IRSA Flow Summary</text>
+  <text x="60" y="780" class="small-label">1. Pod mounts projected ServiceAccount token (JWT)</text>
+  <text x="60" y="798" class="small-label">2. AWS SDK exchanges JWT for temp credentials via STS</text>
+  <text x="60" y="816" class="small-label">3. Pod accesses AWS services with IAM role permissions</text>
+
+  <!-- ===== RIGHT SIDE: Access Entries ===== -->
+
+  <!-- EKS API Section -->
+  <rect x="650" y="120" width="500" height="100" rx="8" fill="url(#eksGradient)" stroke="#ff9900" stroke-width="2"/>
+  <text x="900" y="145" text-anchor="middle" class="label-bold" fill="#ff9900">EKS API Server</text>
+  <text x="900" y="175" text-anchor="middle" class="small-label">Authentication + Authorization</text>
+  <text x="900" y="195" text-anchor="middle" class="code">Replaces: aws-auth ConfigMap</text>
+
+  <!-- Access Entry -->
+  <rect x="650" y="240" width="500" height="150" rx="8" fill="#1a3d2d" stroke="#2ecc71" stroke-width="2"/>
+  <text x="900" y="265" text-anchor="middle" class="label-bold" fill="#2ecc71">Access Entry</text>
+
+  <rect x="670" y="285" width="220" height="90" rx="5" fill="#0d2818" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="780" y="310" text-anchor="middle" class="small-label" fill="#27ae60">Principal ARN</text>
+  <text x="680" y="335" class="code">IAM Role ARN</text>
+  <text x="680" y="355" class="code">IAM User ARN</text>
+  <text x="680" y="370" class="code">Federated Identity</text>
+
+  <rect x="910" y="285" width="220" height="90" rx="5" fill="#0d2818" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="1020" y="310" text-anchor="middle" class="small-label" fill="#27ae60">Type</text>
+  <text x="920" y="335" class="code">STANDARD</text>
+  <text x="920" y="355" class="code">EC2_LINUX</text>
+  <text x="920" y="370" class="code">FARGATE_LINUX</text>
+
+  <!-- Arrow from EKS API to Access Entry -->
+  <line x1="900" y1="220" x2="900" y2="235" stroke="#2ecc71" stroke-width="2" marker-end="url(#arrowhead-green)"/>
+
+  <!-- Access Policy -->
+  <rect x="650" y="410" width="500" height="130" rx="8" fill="#2d1b4e" stroke="#9b59b6" stroke-width="2"/>
+  <text x="900" y="435" text-anchor="middle" class="label-bold" fill="#9b59b6">Access Policy</text>
+
+  <rect x="670" y="455" width="150" height="70" rx="4" fill="#1a0d2e" stroke="#9b59b6" stroke-width="1"/>
+  <text x="745" y="480" text-anchor="middle" class="small-label" fill="#9b59b6">Cluster Admin</text>
+  <text x="745" y="505" text-anchor="middle" class="code">Full access</text>
+
+  <rect x="835" y="455" width="150" height="70" rx="4" fill="#1a0d2e" stroke="#9b59b6" stroke-width="1"/>
+  <text x="910" y="480" text-anchor="middle" class="small-label" fill="#9b59b6">Admin</text>
+  <text x="910" y="505" text-anchor="middle" class="code">Namespace scoped</text>
+
+  <rect x="1000" y="455" width="130" height="70" rx="4" fill="#1a0d2e" stroke="#9b59b6" stroke-width="1"/>
+  <text x="1065" y="480" text-anchor="middle" class="small-label" fill="#9b59b6">View</text>
+  <text x="1065" y="505" text-anchor="middle" class="code">Read-only</text>
+
+  <!-- Arrow from Access Entry to Policy -->
+  <line x1="900" y1="390" x2="900" y2="405" stroke="#9b59b6" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+  <!-- K8s RBAC -->
+  <rect x="650" y="560" width="500" height="130" rx="8" fill="url(#k8sGradient)" stroke="#326ce5" stroke-width="2"/>
+  <text x="900" y="585" text-anchor="middle" class="label-bold" fill="#326ce5">Kubernetes RBAC</text>
+
+  <rect x="670" y="605" width="150" height="70" rx="4" fill="#1a2d5a" stroke="#326ce5" stroke-width="1"/>
+  <text x="745" y="630" text-anchor="middle" class="small-label" fill="#326ce5">ClusterRole</text>
+  <text x="745" y="655" text-anchor="middle" class="code">Cluster-wide</text>
+
+  <rect x="835" y="605" width="150" height="70" rx="4" fill="#1a2d5a" stroke="#326ce5" stroke-width="1"/>
+  <text x="910" y="630" text-anchor="middle" class="small-label" fill="#326ce5">Role</text>
+  <text x="910" y="655" text-anchor="middle" class="code">Namespace</text>
+
+  <rect x="1000" y="605" width="130" height="70" rx="4" fill="#1a2d5a" stroke="#326ce5" stroke-width="1"/>
+  <text x="1065" y="630" text-anchor="middle" class="small-label" fill="#326ce5">RoleBinding</text>
+  <text x="1065" y="655" text-anchor="middle" class="code">Maps user</text>
+
+  <!-- Arrow from Policy to RBAC -->
+  <line x1="900" y1="540" x2="900" y2="555" stroke="#326ce5" stroke-width="2" marker-end="url(#arrowhead-blue)"/>
+
+  <!-- Access Entries Flow Summary -->
+  <rect x="650" y="710" width="500" height="110" rx="6" fill="#1a2d2d" stroke="#4fc3f7" stroke-width="1.5"/>
+  <text x="900" y="735" text-anchor="middle" class="label-bold" fill="#4fc3f7">Access Entries Benefits</text>
+  <text x="660" y="760" class="small-label">- No ConfigMap management (GitOps friendly)</text>
+  <text x="660" y="780" class="small-label">- API-managed, auditable via CloudTrail</text>
+  <text x="660" y="800" class="small-label">- Supports IAM Identity Center (SSO)</text>
+  <text x="660" y="820" class="small-label">- Granular namespace-level permissions</text>
+</svg>

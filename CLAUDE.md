@@ -4,30 +4,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-A presentation hub serving interactive HTML slideshows. No build tools — pure HTML/CSS/JS. Each presentation is a subfolder with self-contained HTML slide files that reference shared framework assets in `common/`.
+A presentation hub serving interactive HTML slideshows. No build tools — pure HTML/CSS/JS. Each presentation is a self-contained subfolder with its own `common/` copy of the framework assets.
 
 ## Architecture
 
 ```
 index.html                    → Hub page listing all presentations
-common/                       → Shared framework (DO NOT duplicate into presentation folders)
+common/                       → Framework used by the hub page (root index.html)
   theme.css                   → Dark theme, 16:9, CSS custom properties (--accent, --bg-primary, etc.)
   slide-framework.js          → SlideFramework class: keyboard/touch nav, progress bar, presenter view
   presenter-view.js           → PresenterView class: dual-window sync via BroadcastChannel
   animation-utils.js          → Canvas primitives: setupCanvas, drawBox, drawArrow, AnimationLoop
   quiz-component.js           → QuizManager: auto-grading with data-quiz/data-correct attributes
 {slug}/                       → One presentation per folder
+  common/                     → Per-project copy of framework (independent versioning)
   index.html                  → TOC page with block cards + timeline
   01-block-name.html          → Block file (self-contained slides)
 ```
+
+Each project has its own `common/` folder so framework changes for one presentation don't break others. HTML files reference `common/` (not `common/`).
 
 ## Slide HTML Pattern
 
 Every block HTML file follows this structure. Framework files load in this exact order:
 
 ```html
-<link rel="stylesheet" href="../common/theme.css">
-<!-- optional: <link rel="stylesheet" href="../common/theme-override.css"> -->
+<link rel="stylesheet" href="common/theme.css">
+<!-- optional: <link rel="stylesheet" href="common/theme-override.css"> -->
 
 <div class="slide-deck">
   <div class="slide title-slide"><h1>Title</h1></div>
@@ -37,14 +40,14 @@ Every block HTML file follows this structure. Framework files load in this exact
   </div>
 </div>
 
-<script src="../common/animation-utils.js"></script>
-<script src="../common/slide-framework.js"></script>
-<script src="../common/quiz-component.js"></script>
-<script src="../common/presenter-view.js"></script>
+<script src="common/animation-utils.js"></script>
+<script src="common/slide-framework.js"></script>
+<script src="common/quiz-component.js"></script>
+<script src="common/presenter-view.js"></script>
 <script>
   const deck = new SlideFramework({
     footer: 'Optional footer text',
-    logoSrc: '../common/pptx-theme/images/logo_1.png',
+    logoSrc: 'common/pptx-theme/images/logo_1.png',
     presenterNotes: { 1: 'Note for slide 1' },
     onSlideChange: (index, slide) => { /* trigger animations */ }
   });

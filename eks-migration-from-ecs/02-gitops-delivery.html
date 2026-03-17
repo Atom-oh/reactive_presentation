@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ECS → EKS Migration Deep Dive</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="02-gitops-delivery.md">
+  <meta name="remarp-block" content="default">
+  <link rel="stylesheet" href="common/theme.css">
+  <link rel="stylesheet" href="common/pptx-theme/theme-override.css">
+
+  <style>
+[data-remarp-id="s7"] .timeline-dot {
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+[data-remarp-id="s7"] .timeline-connector {
+  background: linear-gradient(90deg, var(--accent), var(--accent-light, #ffbb33));
+  height: 4px;
+  border-radius: 2px;
+}
+[data-remarp-id="s7"] .timeline-connector.done {
+  background: linear-gradient(90deg, #4CAF50, #81C784);
+}
+[data-remarp-id="s11-body"] .code-block {
+  flex: 1;
+  overflow-y: auto;
+}
+/* s2 IaC diagram: scale up left diagram text */
+[data-remarp-id="s2-body"] .iac-section [style*="font-size:0.55rem"] { font-size: 0.65rem !important; }
+[data-remarp-id="s2-body"] .iac-section [style*="font-size:0.45rem"] { font-size: 0.55rem !important; }
+/* s2 IaC diagram: scale down right sidebar text */
+#iac-detail-title { font-size: 0.7rem !important; }
+#iac-detail-desc,
+#iac-detail [style*="font-size:0.62rem"] { font-size: 0.55rem !important; }
+#iac-detail-features { font-size: 0.55rem !important; }
+#iac-detail-features li { font-size: 0.55rem !important; }
+/* PDB Slide */
+.pdb-pod{position:relative;width:1.3rem;height:1.3rem;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:0.42rem;transition:all .8s ease;flex-shrink:0}
+.pdb-pod.running{color:#fff;opacity:1;transform:scale(1)}
+.pdb-pod.terminating{background:rgba(239,68,68,.2)!important;border:2px solid #ef4444!important;color:#ef4444;transform:scale(.9);opacity:.8}
+.pdb-pod.locked{background:#ea580c!important;border:2px solid #facc15!important;color:#fff;transform:scale(1.05);box-shadow:0 0 10px rgba(250,204,21,.5)}
+.pdb-pod.locked::after{content:'🔒';position:absolute;top:-5px;right:-5px;font-size:0.35rem}
+.pdb-pod.pending{background:transparent!important;border:2px dashed #34d399!important;color:#34d399;transform:scale(.95);opacity:.7}
+.pdb-pod.gone{background:transparent!important;border-color:transparent!important;color:transparent;transform:scale(.5);opacity:0}
+.pdb-pod.hidden{display:none}
+.pdb-pod[data-app="A"]{background:#2563eb}
+.pdb-pod[data-app="B"]{background:#4f46e5}
+.pdb-pod[data-app="C"]{background:#0d9488}
+.pdb-pod[data-app="D"]{background:#f97316}
+.pdb-node{border:2px solid #475569;border-radius:6px;padding:0.2rem;background:rgba(30,41,59,.5);transition:all .8s ease}
+.pdb-node.interrupted{border-color:#ef4444;background:rgba(239,68,68,.1);box-shadow:0 0 12px rgba(239,68,68,.2)}
+.pdb-node.draining{border-color:rgba(239,68,68,.5);border-style:dashed;background:rgba(239,68,68,.05)}
+.pdb-node.removed{display:none}
+.pdb-node.new-provisioning{border-color:#10b981;border-style:dashed;background:rgba(16,185,129,.1)}
+.pdb-node.new-active{border-color:rgba(16,185,129,.5);background:rgba(30,41,59,.5)}
+.pdb-node.new-hidden{display:none}
+@keyframes pdb-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.pdb-badge-active{border-color:#f97316!important;box-shadow:0 0 15px rgba(249,115,22,.3)}
+  </style>
+
+  <script>window.__remarpTheme = {"colors": {}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}};</script>
+</head>
+<body>
+<div class="slide-deck">
+<div class="slide" data-remarp-id="s0" style="background:url('common/pptx-theme/images/Picture_13.png') center/cover no-repeat; padding:0; overflow:hidden;">
+  <h1 style="position:absolute; left:5%; top:28%; font-size:2.8rem; color:#fff; font-weight:200; line-height:1.2; width:53%; margin:0;">ECS → EKS Migration Deep Dive</h1>
+  <p style="position:absolute; left:5%; top:62%; font-size:1.3rem; color:rgba(255,255,255,0.8); width:53%; margin:0;">GitOps & Progressive Delivery (30min)</p>
+  
+  <div style="position:absolute; left:5%; top:76%;">
+    <p style="font-size:1.05rem; color:#fff; font-weight:600; margin:0;">오준석 (Junseok Oh)</p>
+    <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:6px 0 0 0;">Sr. Solutions Architect, AWS</p>
+    <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:2px 0 0 0;">화해 글로벌</p>
+  </div>
+  <img src="common/pptx-theme/images/Picture_8.png" alt="" style="position:absolute; right:5%; bottom:10%; width:8%; pointer-events:none;" />
+</div>
+
+<div class="slide" data-remarp-id="s1">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>CI/CD Pain Point</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <div class="columns">
+<div class="col">
+<h3>현재 문제점</h3>
+<ul><li class="fragment fade-in" data-fragment-index="0">Jenkins/CodePipeline 기반 Push 모델</li><li class="fragment fade-in" data-fragment-index="1">배포 상태 추적 어려움</li><li class="fragment fade-in" data-fragment-index="2">롤백 시 수동 개입 필요</li><li class="fragment fade-in" data-fragment-index="3">환경별 설정 일관성 부족</li></ul>
+</div><div class="col">
+<h3>GitOps 도입 효과</h3>
+<ul><li class="fragment fade-in" data-fragment-index="4">Git = Single Source of Truth</li><li class="fragment fade-in" data-fragment-index="5">자동화된 Drift Detection</li><li class="fragment fade-in" data-fragment-index="6">메트릭 기반 자동 롤백</li><li class="fragment fade-in" data-fragment-index="7">환경별 설정 코드화</li></ul>
+</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s2">
+  <div class="slide-header" data-remarp-id="s2-header"><h2>IaC 전략: Terraform + ArgoCD</h2></div>
+  <div class="slide-body" data-remarp-id="s2-body" style="display:flex;flex-direction:row;gap:0.6rem;align-items:stretch;overflow:hidden">
+    <!-- Architecture Diagram (left) -->
+    <div style="flex:2;min-width:0;display:flex;flex-direction:column;gap:0.3rem">
+      <!-- GitHub Section -->
+      <div class="iac-section" data-iac="github" style="border:1.5px solid #6e7681;border-radius:8px;padding:0.4rem 0.6rem;background:#24292e;cursor:pointer;transition:all .2s">
+        <div style="font-weight:700;font-size:0.8rem;color:#fff;margin-bottom:0.2rem;text-align:center">GitHub - Source of Truth</div>
+        <div style="display:flex;gap:0.4rem;justify-content:center">
+          <div style="padding:0.15rem 0.6rem;border-radius:4px;border:1px solid #5c4ee5;background:#161b22;font-size:0.68rem;color:#5c4ee5">infra-repo/</div>
+          <div style="padding:0.15rem 0.6rem;border-radius:4px;border:1px solid #ef7b4d;background:#161b22;font-size:0.68rem;color:#ef7b4d">k8s-manifests/</div>
+        </div>
+      </div>
+      <!-- Arrow indicators -->
+      <div style="display:flex;justify-content:space-around;color:var(--text-muted);font-size:0.7rem;line-height:1;padding:0 2rem">
+        <span>↓</span>
+        <span style="font-size:0.5rem;color:#4a5568;border:1px dashed #4a5568;padding:0.05rem 0.4rem;border-radius:3px">Boundary</span>
+        <span>↓</span>
+      </div>
+      <!-- Two columns: Terraform vs ArgoCD -->
+      <div style="display:flex;gap:0.3rem;flex:1">
+        <!-- Terraform Layer -->
+        <div style="flex:1;border:1.5px solid #5c4ee5;border-radius:8px;padding:0.3rem;display:flex;flex-direction:column;gap:0.2rem;background:rgba(92,78,229,0.05)">
+          <div class="iac-section" data-iac="terraformLayer" style="font-weight:700;font-size:0.72rem;color:#5c4ee5;text-align:center;cursor:pointer;padding:0.1rem;border-radius:4px;border:1.5px solid transparent;transition:all .2s">Terraform - Infrastructure Layer</div>
+          <div style="display:flex;gap:0.2rem">
+            <div class="iac-section" data-iac="ghActions" style="flex:1;background:#24292e;border-radius:4px;padding:0.2rem;cursor:pointer;transition:all .2s;border:1.5px solid transparent">
+              <div style="font-size:0.55rem;color:#fff;font-weight:600;text-align:center">GitHub Actions</div>
+              <div style="font-size:0.45rem;color:#b8bfc9;text-align:center">terraform plan/apply</div>
+            </div>
+            <div class="iac-section" data-iac="tfState" style="flex:1;background:#232f3e;border-radius:4px;padding:0.2rem;cursor:pointer;transition:all .2s;border:1.5px solid transparent">
+              <div style="font-size:0.55rem;color:#ff9900;font-weight:600;text-align:center">TF State</div>
+              <div style="font-size:0.45rem;color:#b8bfc9;text-align:center">S3 + DynamoDB Lock</div>
+            </div>
+          </div>
+          <div class="iac-section" data-iac="tfModules" style="background:rgba(45,36,102,0.6);border:1.5px solid transparent;border-radius:4px;padding:0.2rem;cursor:pointer;transition:all .2s">
+            <div style="font-size:0.55rem;color:#7c6edb;font-weight:600;text-align:center;margin-bottom:0.1rem">Terraform Modules</div>
+            <div style="display:flex;gap:0.15rem;flex-wrap:wrap;justify-content:center">
+              <span style="font-size:0.45rem;background:#1a1540;color:#5c4ee5;padding:0.1rem 0.25rem;border-radius:2px">VPC</span>
+              <span style="font-size:0.45rem;background:#1a1540;color:#5c4ee5;padding:0.1rem 0.25rem;border-radius:2px">EKS</span>
+              <span style="font-size:0.45rem;background:#1a1540;color:#5c4ee5;padding:0.1rem 0.25rem;border-radius:2px">IAM</span>
+              <span style="font-size:0.45rem;background:#1a1540;color:#5c4ee5;padding:0.1rem 0.25rem;border-radius:2px">RDS</span>
+              <span style="font-size:0.45rem;background:#1a1540;color:#5c4ee5;padding:0.1rem 0.25rem;border-radius:2px">ElastiCache</span>
+              <span style="font-size:0.45rem;background:#1a1540;color:#5c4ee5;padding:0.1rem 0.25rem;border-radius:2px">Secrets</span>
+            </div>
+          </div>
+          <div class="iac-section" data-iac="awsResources" style="background:rgba(255,153,0,0.05);border:1.5px solid transparent;border-radius:4px;padding:0.2rem;cursor:pointer;transition:all .2s">
+            <div style="font-size:0.55rem;color:#ff9900;font-weight:600;text-align:center;margin-bottom:0.1rem">AWS Resources</div>
+            <div style="display:flex;gap:0.15rem;flex-wrap:wrap;justify-content:center">
+              <span style="font-size:0.45rem;background:#232f3e;color:#b8bfc9;padding:0.1rem 0.25rem;border-radius:2px">VPC</span>
+              <span style="font-size:0.45rem;background:#232f3e;color:#b8bfc9;padding:0.1rem 0.25rem;border-radius:2px">EKS×2</span>
+              <span style="font-size:0.45rem;background:#232f3e;color:#b8bfc9;padding:0.1rem 0.25rem;border-radius:2px">IAM</span>
+              <span style="font-size:0.45rem;background:#232f3e;color:#b8bfc9;padding:0.1rem 0.25rem;border-radius:2px">Aurora</span>
+              <span style="font-size:0.45rem;background:#232f3e;color:#b8bfc9;padding:0.1rem 0.25rem;border-radius:2px">Redis</span>
+              <span style="font-size:0.45rem;background:#232f3e;color:#b8bfc9;padding:0.1rem 0.25rem;border-radius:2px">NLB</span>
+            </div>
+          </div>
+        </div>
+        <!-- ArgoCD Layer -->
+        <div style="flex:1;border:1.5px solid #ef7b4d;border-radius:8px;padding:0.3rem;display:flex;flex-direction:column;gap:0.2rem;background:rgba(239,123,77,0.05)">
+          <div class="iac-section" data-iac="argocdLayer" style="font-weight:700;font-size:0.72rem;color:#ef7b4d;text-align:center;cursor:pointer;padding:0.1rem;border-radius:4px;border:1.5px solid transparent;transition:all .2s">ArgoCD - Application Layer</div>
+          <div style="display:flex;gap:0.2rem">
+            <div class="iac-section" data-iac="argoController" style="flex:1;background:#3d2520;border-radius:4px;padding:0.2rem;cursor:pointer;transition:all .2s;border:1.5px solid transparent">
+              <div style="font-size:0.55rem;color:#ef7b4d;font-weight:600;text-align:center">ArgoCD Controller</div>
+              <div style="font-size:0.45rem;color:#b8bfc9;text-align:center">Auto/Manual Sync</div>
+            </div>
+            <div class="iac-section" data-iac="gitSync" style="flex:1;background:#3d2520;border-radius:4px;padding:0.2rem;cursor:pointer;transition:all .2s;border:1.5px solid transparent">
+              <div style="font-size:0.55rem;color:#ef7b4d;font-weight:600;text-align:center">Git Sync</div>
+              <div style="font-size:0.45rem;color:#b8bfc9;text-align:center">Poll 3min / Webhook</div>
+            </div>
+          </div>
+          <div class="iac-section" data-iac="appManifests" style="background:rgba(77,45,37,0.6);border:1.5px solid transparent;border-radius:4px;padding:0.2rem;cursor:pointer;transition:all .2s">
+            <div style="font-size:0.55rem;color:#f4a261;font-weight:600;text-align:center;margin-bottom:0.1rem">Application Manifests</div>
+            <div style="display:flex;gap:0.15rem;flex-wrap:wrap;justify-content:center">
+              <span style="font-size:0.45rem;background:#2d1a15;color:#ef7b4d;padding:0.1rem 0.25rem;border-radius:2px">Helm</span>
+              <span style="font-size:0.45rem;background:#2d1a15;color:#ef7b4d;padding:0.1rem 0.25rem;border-radius:2px">Kustomize</span>
+              <span style="font-size:0.45rem;background:#2d1a15;color:#ef7b4d;padding:0.1rem 0.25rem;border-radius:2px">YAML</span>
+              <span style="font-size:0.45rem;background:#2d1a15;color:#ef7b4d;padding:0.1rem 0.25rem;border-radius:2px">ApplicationSet</span>
+            </div>
+          </div>
+          <div class="iac-section" data-iac="eksClusters" style="background:rgba(255,153,0,0.05);border:1.5px solid transparent;border-radius:4px;padding:0.2rem;cursor:pointer;transition:all .2s">
+            <div style="font-size:0.55rem;color:#ff9900;font-weight:600;text-align:center;margin-bottom:0.1rem">EKS Clusters</div>
+            <div style="display:flex;gap:0.15rem;justify-content:center">
+              <span style="font-size:0.45rem;background:#232f3e;color:#3498db;padding:0.1rem 0.35rem;border-radius:2px;border:1px solid #3498db">Cluster A (AZ-a)</span>
+              <span style="font-size:0.45rem;background:#232f3e;color:#e056fd;padding:0.1rem 0.35rem;border-radius:2px;border:1px solid #e056fd">Cluster C (AZ-c)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Detail Sidebar (right) -->
+    <div id="iac-detail" style="flex:1;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:0.5rem;overflow-y:auto;min-width:0;display:flex;flex-direction:column">
+      <h3 id="iac-detail-title" style="font-size:0.8rem;color:var(--text-accent);margin:0 0 0.3rem;padding-bottom:0.3rem;border-bottom:1px solid var(--border)">IaC 전략 개요</h3>
+      <p id="iac-detail-desc" style="font-size:0.62rem;color:var(--text-secondary);margin:0 0 0.3rem;line-height:1.3">인프라(Terraform)와 애플리케이션(ArgoCD)의 책임을 명확히 분리</p>
+      <div id="iac-detail-label" style="font-size:0.55rem;color:var(--text-secondary);margin-bottom:0.2rem;font-weight:600">🎯 핵심 설계</div>
+      <ul id="iac-detail-features" style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.2rem;flex:1;font-size:0.62rem;color:var(--text-secondary)">
+        <li style="background:var(--bg-tertiary);padding:0.25rem 0.4rem;border-radius:4px;line-height:1.3"><span style="color:#5c4ee5">●</span> Terraform: AWS 인프라 리소스 상태 관리</li>
+        <li style="background:var(--bg-tertiary);padding:0.25rem 0.4rem;border-radius:4px;line-height:1.3"><span style="color:#ef7b4d">●</span> ArgoCD: K8s 워크로드 지속 동기화</li>
+        <li style="background:var(--bg-tertiary);padding:0.25rem 0.4rem;border-radius:4px;line-height:1.3"><span style="color:#ff9900">●</span> Git이 Single Source of Truth</li>
+      </ul>
+      <button id="iac-reset-btn" style="display:none;margin-top:0.3rem;padding:0.2rem;font-size:0.6rem;background:var(--bg-tertiary);color:var(--text-muted);border:1px solid var(--border);border-radius:4px;cursor:pointer">전체 개요로 돌아가기</button>
+    </div>
+  </div>
+</div>
+<script>(function(){
+  const iacData = {
+    overview: {
+      title: 'IaC 전략 개요',
+      desc: '인프라(Terraform)와 애플리케이션(ArgoCD)의 책임을 명확히 분리',
+      features: [
+        '<span style="color:#5c4ee5">●</span> Terraform: AWS 인프라 리소스 상태 관리',
+        '<span style="color:#ef7b4d">●</span> ArgoCD: K8s 워크로드 지속 동기화',
+        '<span style="color:#ff9900">●</span> Git이 Single Source of Truth'
+      ]
+    },
+    github: {
+      title: 'GitHub - Source of Truth',
+      desc: '인프라 코드와 K8s 매니페스트를 별도 저장소에서 관리',
+      features: [
+        '<strong>infra-repo/</strong>: Terraform HCL 코드 (VPC, EKS, IAM 등)',
+        '<strong>k8s-manifests/</strong>: Helm Charts, Kustomize, Raw YAML',
+        'PR 기반 코드 리뷰 → 변경 이력 추적',
+        'Branch Protection으로 프로덕션 안전성 확보'
+      ]
+    },
+    terraformLayer: {
+      title: 'Terraform - Infrastructure Layer',
+      desc: 'AWS 인프라를 선언적으로 관리하는 IaC 도구',
+      features: [
+        '<strong>상태 관리</strong>: S3 + DynamoDB Lock으로 팀 협업',
+        '<strong>Plan/Apply</strong>: 변경 사항 사전 검증',
+        '<strong>모듈화</strong>: 재사용 가능한 인프라 컴포넌트',
+        '<strong>Drift Detection</strong>: 수동 변경 감지'
+      ]
+    },
+    ghActions: {
+      title: 'GitHub Actions CI/CD',
+      desc: 'Terraform 워크플로우 자동화',
+      features: [
+        '<code>on: push (main)</code>으로 자동 트리거',
+        '<code>terraform plan</code> → PR 코멘트에 결과 표시',
+        '<code>terraform apply</code> → main 머지 시 자동 적용',
+        'OIDC로 AWS 크레덴셜 관리 (장기 키 불필요)'
+      ]
+    },
+    tfState: {
+      title: 'Terraform State 관리',
+      desc: '인프라 상태를 안전하게 저장하고 동시 접근을 제어',
+      features: [
+        '<strong>S3 Backend</strong>: terraform-state-bucket에 상태 저장',
+        '<strong>DynamoDB Lock</strong>: 동시 apply 방지',
+        '<strong>버전 관리</strong>: S3 Versioning으로 상태 복구 가능',
+        '<strong>환경 분리</strong>: workspace 또는 디렉토리별 상태 파일'
+      ]
+    },
+    tfModules: {
+      title: 'Terraform Modules',
+      desc: '재사용 가능한 인프라 컴포넌트',
+      features: [
+        '<strong>VPC Module</strong>: Subnets, NAT Gateway, IGW',
+        '<strong>EKS Module</strong>: Cluster, Managed Node Group, Add-ons',
+        '<strong>IAM Module</strong>: Roles, Policies, IRSA',
+        '<strong>RDS Module</strong>: Aurora (Multi-AZ)',
+        '<strong>ElastiCache</strong>: Redis Cluster',
+        '<strong>Secrets Manager</strong>: 애플리케이션 시크릿'
+      ]
+    },
+    awsResources: {
+      title: 'AWS Resources (Terraform 생성)',
+      desc: 'Terraform이 관리하는 AWS 인프라 리소스',
+      features: [
+        '<strong>네트워킹</strong>: VPC, Subnets, NLB, ACM',
+        '<strong>컴퓨팅</strong>: EKS Cluster ×2 (AZ-a, AZ-c)',
+        '<strong>보안</strong>: IAM Roles, Security Groups',
+        '<strong>데이터</strong>: Aurora (RDS), Redis (ElastiCache)',
+        '<strong>스토리지</strong>: S3, EBS'
+      ]
+    },
+    argocdLayer: {
+      title: 'ArgoCD - Application Layer',
+      desc: 'K8s 워크로드를 GitOps 방식으로 지속 배포',
+      features: [
+        '<strong>선언적 배포</strong>: Git 상태 = 클러스터 상태',
+        '<strong>자동 동기화</strong>: Drift 감지 → Self-Heal',
+        '<strong>멀티 클러스터</strong>: ApplicationSet으로 일괄 관리',
+        '<strong>롤백</strong>: Git revert → 자동 복구'
+      ]
+    },
+    argoController: {
+      title: 'ArgoCD Controller',
+      desc: 'Git 저장소와 K8s 클러스터 상태를 지속 비교/동기화',
+      features: [
+        '<strong>Sync 모드</strong>: Auto (Dev) / Manual (Prod)',
+        '<strong>Self-Heal</strong>: 수동 변경 자동 복구',
+        '<strong>Prune</strong>: Git에서 삭제된 리소스 자동 제거',
+        '<strong>Health Check</strong>: 리소스 상태 모니터링'
+      ]
+    },
+    gitSync: {
+      title: 'Git Sync 메커니즘',
+      desc: 'Git 변경 사항을 감지하고 클러스터에 적용',
+      features: [
+        '<strong>Polling</strong>: 3분 간격 Git 변경 감지',
+        '<strong>Webhook</strong>: Push 이벤트 즉시 Sync 트리거',
+        '<strong>Diff Detection</strong>: 실제 변경분만 적용',
+        '<strong>Sync Window</strong>: 배포 허용 시간대 제한'
+      ]
+    },
+    appManifests: {
+      title: 'Application Manifests',
+      desc: 'K8s 워크로드 정의 방식',
+      features: [
+        '<strong>Helm Charts</strong>: 패키지 관리 + values.yaml 오버라이드',
+        '<strong>Kustomize</strong>: base/ + overlays/ 환경별 패치',
+        '<strong>Raw YAML</strong>: 단순 매니페스트 직접 관리',
+        '<strong>ApplicationSet</strong>: 멀티 클러스터 자동 생성',
+        '<strong>Sync Waves</strong>: 배포 순서 제어 (CRD → App)'
+      ]
+    },
+    eksClusters: {
+      title: 'EKS Clusters (ArgoCD 배포 대상)',
+      desc: 'ArgoCD가 워크로드를 배포하는 대상 클러스터',
+      features: [
+        '<strong>Cluster A (AZ-a)</strong>: NGF, Istio, App Deployments, Karpenter',
+        '<strong>Cluster C (AZ-c)</strong>: NGF, Istio, App Deployments, Karpenter',
+        '<strong>컨트롤러</strong>: ALB Controller, External DNS, Cert Manager',
+        '<strong>옵저버빌리티</strong>: ADOT, CloudWatch Agent'
+      ]
+    }
+  };
+  const sections = document.querySelectorAll('.iac-section');
+  const titleEl = document.getElementById('iac-detail-title');
+  const descEl = document.getElementById('iac-detail-desc');
+  const featEl = document.getElementById('iac-detail-features');
+  const resetBtn = document.getElementById('iac-reset-btn');
+  if (!titleEl) return;
+  function activate(key) {
+    const d = iacData[key];
+    titleEl.textContent = d.title;
+    descEl.textContent = d.desc;
+    featEl.innerHTML = d.features.map(f =>
+      '<li style="background:var(--bg-tertiary);padding:0.25rem 0.4rem;border-radius:4px;line-height:1.3">' + f + '</li>'
+    ).join('');
+    sections.forEach(s => {
+      const isActive = s.dataset.iac === key;
+      s.style.borderColor = isActive ? '#3b82f6' : 'transparent';
+      s.style.background = isActive ? 'rgba(59,130,246,0.08)' : '';
+    });
+    resetBtn.style.display = key === 'overview' ? 'none' : 'block';
+  }
+  sections.forEach(s => s.addEventListener('click', (e) => { e.stopPropagation(); activate(s.dataset.iac); }));
+  resetBtn.addEventListener('click', () => activate('overview'));
+})();</script>
+
+<div class="slide" data-remarp-id="sN1">
+  <div class="slide-header"><h2>Terraform vs ArgoCD vs ACK 의사결정</h2></div>
+  <div class="slide-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="ack-matrix">의사결정 매트릭스</button>
+      <button class="tab-btn" data-tab="ack-overview">ACK 개요</button>
+      <button class="tab-btn" data-tab="ack-criteria">ACK vs Terraform 선택 기준</button>
+      <button class="tab-btn" data-tab="eks-cap">EKS Capabilities 의사결정</button>
+    </div>
+    <div class="tab-content active" data-tab="ack-matrix">
+      <table>
+        <thead><tr><th>리소스 특성</th><th>Terraform</th><th>ArgoCD</th><th>ACK</th></tr></thead>
+        <tbody>
+          <tr><td>EKS 클러스터, VPC, Subnet</td><td><strong>✅ 권장</strong></td><td>❌</td><td>❌</td></tr>
+          <tr><td>EKS Add-on (VPC CNI, CoreDNS)</td><td><strong>✅ 권장</strong></td><td>△ 가능</td><td>△ 가능</td></tr>
+          <tr><td>K8s Controller (ALB, ExternalDNS)</td><td>△ 가능</td><td><strong>✅ 권장</strong></td><td>❌</td></tr>
+          <tr><td>앱 Deployment, Service</td><td>❌</td><td><strong>✅ 권장</strong></td><td>❌</td></tr>
+          <tr><td>앱 전용 S3 Bucket</td><td>△ 가능</td><td>△ 가능</td><td><strong>✅ 권장</strong></td></tr>
+          <tr><td>앱 전용 SQS Queue</td><td>△ 가능</td><td>△ 가능</td><td><strong>✅ 권장</strong></td></tr>
+          <tr><td>앱 전용 IAM Role</td><td><strong>✅ 권장</strong></td><td>❌</td><td>△ 가능</td></tr>
+          <tr><td>공용 RDS/Aurora</td><td><strong>✅ 권장</strong></td><td>❌</td><td>△ 가능</td></tr>
+          <tr><td>공용 ElastiCache</td><td><strong>✅ 권장</strong></td><td>❌</td><td>△ 가능</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:1rem"><strong>핵심 원칙</strong>: 리소스의 생명주기가 앱과 같으면 → ACK/ArgoCD, 인프라 수준이면 → Terraform</p>
+    </div>
+    <div class="tab-content" data-tab="ack-overview">
+      <p><strong>AWS Controllers for Kubernetes (ACK)</strong></p>
+      <ul>
+        <li>Kubernetes CR로 AWS 리소스를 선언적 관리</li>
+        <li><code>kubectl apply</code>로 S3, SQS, RDS 등 생성/삭제</li>
+        <li>ArgoCD와 자연스럽게 통합 (GitOps)</li>
+      </ul>
+      <div class="code-block"><span class="code-label">sqs-queue.yaml</span><span class="comment"># ACK로 SQS Queue 생성</span>
+<span class="key">apiVersion</span>: sqs.services.k8s.aws/v1alpha1
+<span class="key">kind</span>: Queue
+<span class="key">metadata</span>:
+  <span class="key">name</span>: order-queue
+  <span class="key">namespace</span>: production
+<span class="key">spec</span>:
+  <span class="key">queueName</span>: hwahae-order-queue
+  <span class="key">visibilityTimeout</span>: <span class="string">"30"</span>
+  <span class="key">tags</span>:
+    - <span class="key">key</span>: team
+      <span class="key">value</span>: backend</div>
+      <p style="margin-top:1rem"><strong>장점</strong>: 앱과 AWS 리소스를 동일한 GitOps 워크플로우로 관리<br>
+      <strong>제한</strong>: IAM, VPC 등 인프라 리소스는 지원 제한적</p>
+    </div>
+    <div class="tab-content" data-tab="ack-criteria">
+      <div class="code-block" style="background:var(--bg-tertiary)">앱 전용 AWS 리소스인가?
+  ├─ Yes → 리소스 생명주기가 앱과 동일한가?
+  │         ├─ Yes → <span style="color:#4CAF50">ACK (GitOps 통합)</span>
+  │         └─ No  → <span style="color:#41B3FF">Terraform</span>
+  └─ No (공용 리소스) → <span style="color:#41B3FF">Terraform</span>
+
+보안 민감 리소스인가? (IAM Role, SG)
+  ├─ Yes → <span style="color:#41B3FF">Terraform (변경 이력 + Plan 검증)</span>
+  └─ No  → ACK 또는 Terraform</div>
+      <div style="margin-top:1.5rem">
+        <p><strong>화해 현재 구조와 매핑</strong>:</p>
+        <ul>
+          <li><code>terraform/</code>: EKS, VPC, 공용 RDS, IAM → <span class="badge-blue">유지</span></li>
+          <li><code>terraform/applications/&lt;app&gt;/</code>: 앱 전용 SG, IAM → <span class="badge-blue">유지</span> (보안상 Terraform 권장)</li>
+          <li><strong>신규</strong>: 앱 전용 S3, SQS, SNS → <span class="badge-yellow">ACK로 전환 검토</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="tab-content" data-tab="eks-cap">
+      <p><strong>EKS Capabilities</strong> (관리형 Add-on, Auto Mode 등)</p>
+      <table>
+        <thead><tr><th>항목</th><th>EKS Add-on (Terraform)</th><th>ArgoCD</th><th>판단 기준</th></tr></thead>
+        <tbody>
+          <tr><td>VPC CNI</td><td><strong>✅</strong></td><td>△</td><td>EKS API 통합, 자동 업그레이드</td></tr>
+          <tr><td>CoreDNS</td><td><strong>✅</strong></td><td>△</td><td>EKS 버전 호환성 자동 관리</td></tr>
+          <tr><td>kube-proxy</td><td><strong>✅</strong></td><td>△</td><td>EKS 버전 연동</td></tr>
+          <tr><td>AWS LB Controller</td><td>△</td><td><strong>✅</strong></td><td>Helm values 커스터마이징 필요</td></tr>
+          <tr><td>External DNS</td><td>❌</td><td><strong>✅</strong></td><td>K8s 네이티브 설정</td></tr>
+          <tr><td>Cert Manager</td><td>❌</td><td><strong>✅</strong></td><td>K8s 네이티브 설정</td></tr>
+          <tr><td>Karpenter</td><td>△</td><td><strong>✅</strong></td><td>NodePool CRD는 ArgoCD가 적합</td></tr>
+          <tr><td>ADOT/CloudWatch Agent</td><td><strong>✅</strong></td><td>△</td><td>EKS Add-on으로 간편 관리</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:1rem"><strong>원칙</strong>: EKS API로 관리되는 핵심 네트워킹/시스템 컴포넌트는 Terraform, 나머지 Controller는 ArgoCD</p>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="sN2">
+  <div class="slide-header"><h2>ACK 실전 설정</h2></div>
+  <div class="slide-body">
+    <div class="code-block"><span class="code-label">ack-setup.yaml</span><span class="comment"># 1. ACK S3 Controller 설치 (ArgoCD Application)</span>
+<span class="key">apiVersion</span>: argoproj.io/v1alpha1
+<span class="key">kind</span>: Application
+<span class="key">metadata</span>:
+  <span class="key">name</span>: ack-s3-controller
+  <span class="key">namespace</span>: argocd
+<span class="key">spec</span>:
+  <span class="key">source</span>:
+    <span class="key">chart</span>: s3-chart
+    <span class="key">repoURL</span>: public.ecr.aws/aws-controllers-k8s
+    <span class="key">targetRevision</span>: v1.0.15
+    <span class="key">helm</span>:
+      <span class="key">values</span>: |
+        <span class="key">serviceAccount</span>:
+          <span class="key">annotations</span>:
+            eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ACK-S3-Role
+  <span class="key">destination</span>:
+    <span class="key">server</span>: https://kubernetes.default.svc
+    <span class="key">namespace</span>: ack-system</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="sN2a">
+  <div class="slide-header"><h2>ACK 리소스 매니페스트</h2></div>
+  <div class="slide-body" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-content:start">
+      <div class="code-block"><span class="code-label">s3-bucket.yaml</span><span class="comment"># 앱 전용 S3 Bucket</span>
+<span class="key">apiVersion</span>: s3.services.k8s.aws/v1alpha1
+<span class="key">kind</span>: Bucket
+<span class="key">metadata</span>:
+  <span class="key">name</span>: hwahae-user-uploads
+  <span class="key">namespace</span>: production
+<span class="key">spec</span>:
+  <span class="key">name</span>: hwahae-user-uploads-prod
+  <span class="key">versioning</span>:
+    <span class="key">status</span>: Enabled
+  <span class="key">encryption</span>:
+    <span class="key">rules</span>:
+      - <span class="key">applyServerSideEncryptionByDefault</span>:
+          <span class="key">sseAlgorithm</span>: aws:kms</div>
+      <div class="code-block"><span class="code-label">sqs-queue.yaml</span><span class="comment"># 앱 전용 SQS Queue</span>
+<span class="key">apiVersion</span>: sqs.services.k8s.aws/v1alpha1
+<span class="key">kind</span>: Queue
+<span class="key">metadata</span>:
+  <span class="key">name</span>: order-processing
+  <span class="key">namespace</span>: production
+<span class="key">spec</span>:
+  <span class="key">queueName</span>: hwahae-order-processing
+  <span class="key">visibilityTimeout</span>: <span class="string">"60"</span>
+  <span class="key">messageRetentionPeriod</span>: <span class="string">"345600"</span>
+  <span class="key">redrivePolicy</span>: |
+    {
+      "deadLetterTargetArn": "...-dlq",
+      "maxReceiveCount": 3
+    }</div>
+    <p style="grid-column:span 2"><strong>효과</strong>: K8s 매니페스트로 AWS 리소스 관리 → 앱팀 셀프서비스, ArgoCD GitOps 일원화</p>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s3">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>ArgoCD Sync vs Argo Rollouts</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body" data-compare-mode="side-by-side">
+    <div class="compare-toggle">
+            <button class="compare-btn active" data-compare="argocd-sync">ArgoCD Sync (일반 배포)</button>
+      <button class="compare-btn" data-compare="argo-rollouts-progressive-delivery">Argo Rollouts (Progressive Delivery)</button>
+    </div>
+    <div class="col-2" style="flex:1">
+            <div class="card compare-content active compare-highlight" data-compare="argocd-sync" data-remarp-id="s3-left">
+<h3 style="color:var(--text-accent);margin-bottom:.5rem">ArgoCD Sync (일반 배포)</h3>
+<ul><li>Git 변경 감지 → 자동/수동 Sync</li><li>Deployment의 기본 RollingUpdate 사용</li><li><strong>장점</strong>: 설정 간단, 빠른 배포</li><li><strong>단점</strong>: 세밀한 트래픽 제어 불가</li><li><strong>적합</strong>: 내부 서비스, 개발 환경</li></ul>
+<div class="code-block"><span class="key">syncPolicy</span>:
+  <span class="key">automated</span>:
+    <span class="key">prune</span>: <span class="keyword">true</span>
+    <span class="key">selfHeal</span>: <span class="keyword">true</span></div>
+</div>
+      <div class="card compare-content active" data-compare="argo-rollouts-progressive-delivery" data-remarp-id="s3-right">
+<h3 style="color:var(--text-accent);margin-bottom:.5rem">Argo Rollouts (Progressive Delivery)</h3>
+<ul><li>Canary / Blue-Green 배포 지원</li><li>트래픽 가중치 단계별 조정</li><li><strong>장점</strong>: 메트릭 기반 자동 롤백</li><li><strong>장점</strong>: Istio VirtualService 연동</li><li><strong>적합</strong>: 프로덕션, 고객 대면 서비스</li></ul>
+<div class="code-block"><span class="key">strategy</span>:
+  <span class="key">canary</span>:
+    <span class="key">steps</span>:
+      - setWeight: 10
+      - analysis: {templates: [success-rate]}
+      - setWeight: 50</div>
+</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s4">
+  <div class="slide-header" data-remarp-id="s4-header"><h2>Argo Rollouts + Istio Canary Architecture</h2></div>
+  <div class="slide-body" data-remarp-id="s4-body">
+    <div class="columns">
+      <div class="col" style="flex:2">
+        <div style="background:var(--bg-secondary);border-radius:0.8rem;padding:1.5rem;border:1px solid var(--border)">
+          <h3 style="color:var(--accent);margin:0 0 1rem">배포 흐름</h3>
+          <div style="display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap;">
+            <div class="badge-blue" style="padding:0.5rem 1rem">Git Push</div>
+            <div style="color:var(--accent);font-size:1.5rem;line-height:1">▸</div>
+            <div class="badge-blue" style="padding:0.5rem 1rem">ArgoCD Sync</div>
+            <div style="color:var(--accent);font-size:1.5rem;line-height:1">▸</div>
+            <div style="background:#E6522C;color:#fff;padding:0.5rem 1rem;border-radius:6px">Argo Rollouts</div>
+            <div style="color:var(--accent);font-size:1.5rem;line-height:1">▸</div>
+            <div style="background:#326CE5;color:#fff;padding:0.5rem 1rem;border-radius:6px">Istio VirtualService</div>
+          </div>
+          <div style="margin-top:1.2rem;display:grid;grid-template-columns:1fr 1fr;gap:0.8rem">
+            <div class="card" style="background:var(--bg-tertiary)">
+              <h4 style="color:#00C7B7;margin:0 0 0.5rem">Stable (v1)</h4>
+              <p style="margin:0;font-size:0.85rem;color:var(--text-secondary)">현재 프로덕션 트래픽<br>weight: 90% → 0%</p>
+            </div>
+            <div class="card" style="background:var(--bg-tertiary)">
+              <h4 style="color:#FF9900;margin:0 0 0.5rem">Canary (v2)</h4>
+              <p style="margin:0;font-size:0.85rem;color:var(--text-secondary)">새 버전 트래픽<br>weight: 10% → 100%</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col" style="flex:1">
+        <div style="background:var(--bg-secondary);border-radius:0.8rem;padding:1.5rem;border:1px solid var(--border)">
+          <h3 style="color:#FFA726;margin:0 0 1rem">AnalysisRun</h3>
+          <ul style="list-style:none;padding:0;margin:0">
+            <li style="margin-bottom:0.6rem;color:var(--text-secondary)"><span style="color:var(--accent)">●</span> Prometheus 메트릭 조회</li>
+            <li style="margin-bottom:0.6rem;color:var(--text-secondary)"><span style="color:#4CAF50">●</span> 성공률 ≥ 95% → Promote</li>
+            <li style="color:var(--text-secondary)"><span style="color:#f44336">●</span> 실패 시 → 자동 Rollback</li>
+          </ul>
+        </div>
+        <div style="margin-top:0.8rem;display:flex;gap:0.5rem">
+          <div style="flex:1;background:#4CAF50;color:#fff;padding:0.5rem;border-radius:6px;text-align:center;font-size:0.85rem">Promote<br>→ 100%</div>
+          <div style="flex:1;background:#f44336;color:#fff;padding:0.5rem;border-radius:6px;text-align:center;font-size:0.85rem">Rollback<br>→ 0%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="slide" data-remarp-id="s7">
+  <div class="slide-header" data-remarp-id="s7-header"><h2>Canary Deployment Flow</h2></div>
+  <div class="slide-body" data-remarp-id="s7-body">
+    <div class="timeline">
+      <div class="timeline-step" data-step="1">
+        <div class="timeline-dot">1</div>
+        <div class="timeline-label">10%</div>
+        <div class="timeline-desc">초기 트래픽 전환<br>2분 대기 후 메트릭 분석</div>
+      </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-step" data-step="2">
+        <div class="timeline-dot">2</div>
+        <div class="timeline-label">30%</div>
+        <div class="timeline-desc">성공 시 트래픽 증가<br>에러율 모니터링</div>
+      </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-step" data-step="3">
+        <div class="timeline-dot">3</div>
+        <div class="timeline-label">50%</div>
+        <div class="timeline-desc">절반 전환<br>5분간 안정성 검증</div>
+      </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-step" data-step="4">
+        <div class="timeline-dot">4</div>
+        <div class="timeline-label">80%</div>
+        <div class="timeline-desc">대부분 전환<br>최종 검증</div>
+      </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-step" data-step="5">
+        <div class="timeline-dot">5</div>
+        <div class="timeline-label">100%</div>
+        <div class="timeline-desc">완전 전환<br>Stable로 Promote</div>
+      </div>
+    </div>
+<div class="callout-info" style="margin-top:1rem"><p><strong>지원 Traffic Provider</strong>: Istio, NGINX Ingress, ALB, SMI, Apache APISIX, Traefik</p></div>
+  </div>
+
+<script>(function() {
+  const slide = document.currentScript.closest('.slide');
+  if (!slide) return;
+  const steps = slide.querySelectorAll('.timeline-step');
+  const connectors = slide.querySelectorAll('.timeline-connector');
+  let current = 0;
+  function update() {
+    steps.forEach((s, i) => {
+      s.classList.remove('active', 'done');
+      if (i < current) s.classList.add('done');
+      else if (i === current) s.classList.add('active');
+    });
+    connectors.forEach((c, i) => {
+      c.classList.toggle('done', i < current);
+    });
+  }
+  update();
+  slide.__canvasStep = function(dir) {
+    if (dir === 'next' && current < steps.length - 1) { current++; update(); return current; }
+    else if (dir === 'prev' && current > 0) { current--; update(); return current; }
+    return false;
+  };
+  slide.dataset.slideAction = 'canvas-step';
+  slide.dataset.canvasMaxStep = String(steps.length - 1);
+})();</script>
+</div>
+
+<div class="slide" data-remarp-id="s8-pdb">
+  <div class="slide-header"><h2>Zone-Aware PDB 방어 시나리오</h2></div>
+  <div class="slide-body" style="display:flex;flex-direction:column;gap:0.25rem;overflow:hidden;padding:0.3rem 0.5rem">
+    <!-- Info bar -->
+    <div style="display:flex;align-items:center;gap:0.5rem">
+      <div id="pdb-info" style="flex:1;background:rgba(30,58,138,.3);border:1px solid rgba(59,130,246,.5);border-radius:6px;padding:0.25rem 0.5rem;font-size:0.52rem;color:#cbd5e1;line-height:1.4"></div>
+      <div id="pdb-ctrl" style="background:#1e293b;border:1px solid #475569;border-radius:8px;padding:0.3rem 0.5rem;min-width:12rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.2rem">
+          <span id="pdb-step-label" style="font-size:0.48rem;color:#c4b5fd;font-weight:700;text-transform:uppercase;letter-spacing:0.05em">Step 1 / 7</span>
+          <div id="pdb-dots" style="display:flex;gap:3px"></div>
+        </div>
+        <div id="pdb-step-title" style="font-size:0.55rem;color:#fff;font-weight:700;margin-bottom:0.2rem"></div>
+      </div>
+    </div>
+    <!-- Main: Zone A + Zone C -->
+    <div style="display:flex;gap:0.4rem;flex:1;min-height:0">
+      <!-- Zone A -->
+      <div style="flex:3;border:2px solid rgba(59,130,246,.3);border-radius:10px;background:rgba(30,41,59,.4);padding:0.3rem;display:flex;flex-direction:column;overflow:hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.25rem">
+          <div style="font-size:0.6rem;font-weight:700;color:#60a5fa;display:flex;align-items:center;gap:0.3rem">Zone A Cluster (Spot) <span id="pdb-alert" style="color:#ef4444;display:none">⚠</span></div>
+          <div id="pdb-badge" style="display:flex;align-items:center;gap:0.3rem;background:#0f172a;border:2px solid #475569;border-radius:8px;padding:0.15rem 0.4rem;transition:all .8s">
+            <span style="font-size:0.45rem;color:#94a3b8;font-weight:700">App D PDB</span>
+            <span id="pdb-badge-val" style="font-size:0.5rem;font-family:monospace;font-weight:700;color:#94a3b8">maxUnavailable: 2</span>
+          </div>
+        </div>
+        <div id="pdb-nodes-a" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.3rem;flex:1;align-content:start"></div>
+      </div>
+      <!-- Zone C -->
+      <div style="flex:1;border:2px solid rgba(99,102,241,.2);border-radius:10px;background:rgba(30,41,59,.2);padding:0.3rem;display:flex;flex-direction:column;opacity:.6">
+        <div style="font-size:0.55rem;font-weight:700;color:#818cf8;margin-bottom:0.15rem;display:flex;align-items:center;gap:0.2rem">Zone C Cluster <span style="color:#10b981">✓</span></div>
+        <div style="background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);border-radius:4px;padding:0.15rem 0.3rem;font-size:0.42rem;color:#a5b4fc;margin-bottom:0.2rem;display:flex;align-items:center;gap:0.2rem"><span style="width:5px;height:5px;background:#818cf8;border-radius:50%;display:inline-block"></span> 안정적인 트래픽 처리 중</div>
+        <div id="pdb-nodes-c" style="display:flex;flex-direction:column;gap:0.2rem;flex:1"></div>
+      </div>
+    </div>
+    <!-- Legend -->
+    <div style="display:flex;gap:0.6rem;justify-content:center;align-items:center;font-size:0.42rem;color:#94a3b8;padding:0.15rem 0;border-top:1px solid #1e293b;margin-top:0.1rem">
+      <span><span class="pdb-pod running" data-app="D" style="width:0.8rem;height:0.8rem;font-size:0.35rem;vertical-align:middle">D</span> App D (PDB)</span>
+      <span style="color:#334155">│</span>
+      <span><span style="display:inline-block;width:0.8rem;height:0.8rem;border-radius:3px;background:#334155;border:1px solid #64748b;vertical-align:middle"></span> Running</span>
+      <span><span style="display:inline-block;width:0.8rem;height:0.8rem;border-radius:3px;background:rgba(239,68,68,.2);border:1px solid #ef4444;color:#ef4444;font-size:0.35rem;text-align:center;line-height:0.8rem;vertical-align:middle">T</span> Terminating</span>
+      <span><span style="display:inline-block;width:0.8rem;height:0.8rem;border-radius:3px;background:#ea580c;border:2px solid #facc15;vertical-align:middle"></span> PDB Blocked</span>
+      <span><span style="display:inline-block;width:0.8rem;height:0.8rem;border-radius:3px;border:2px dashed #34d399;vertical-align:middle"></span> Pending</span>
+    </div>
+  </div>
+</div>
+<script>(function(){
+  const STEPS=[
+    {title:"1. 정상 운영 상태",desc:"Zone A(Spot)와 Zone C(On-Demand)에서 안정적으로 트래픽을 처리 중입니다. App D는 2개까지만 동시 중단을 허용(maxUnavailable=2)합니다."},
+    {title:"2. 1차 퇴거 및 PDB 발동",desc:"Node-3, 4에 회수 경고가 발생했습니다. PDB 규칙에 따라 App D는 2개만 먼저 Terminating 되고, 나머지 4개는 Lock으로 보호됩니다."},
+    {title:"3. 새 노드 및 1차 Pending",desc:"Karpenter가 Node-5를 프로비저닝합니다. 1차 퇴거 파드들이 새 노드에 Pending 상태로 배치됩니다. Lock 걸린 파드들은 여전히 트래픽을 받습니다."},
+    {title:"4. 2차 퇴거 (PDB 순차 해제)",desc:"새 노드에서 App D 파드가 Running 되며 가용성이 회복. 잠겨있던 App D 중 2개가 Lock 해제되어 Terminating 됩니다."},
+    {title:"5. 2차 파드 프로비저닝",desc:"2차로 퇴거된 App D 파드 2개가 Node-5에 Pending 됩니다. 마지막 남은 App D 파드는 여전히 Lock 상태로 보호받습니다."},
+    {title:"6. 최종 3차 퇴거",desc:"2차 파드들이 Running 상태가 됨에 따라 마지막 2개의 파드 역시 Lock이 풀리고 최종적으로 Terminating 됩니다."},
+    {title:"7. 복구 완료",desc:"모든 App D 파드가 2개씩 순차적으로 안전하게 이전되었습니다. 기존 노드들은 완전히 회수(Terminated)되며 상황이 종료됩니다."}
+  ];
+  const NODES_A=[
+    {id:1,name:'Node-1',pods:[{a:'A'},{a:'A'},{a:'B'},{a:'C'},{a:'D'}]},
+    {id:2,name:'Node-2',pods:[{a:'A'},{a:'A'},{a:'B'},{a:'C'},{a:'C'},{a:'C'},{a:'D'}]},
+    {id:3,name:'Node-3',isTarget:true,pods:[
+      {a:'B',sf:function(s){return s>=2?'gone':s===1?'terminating':'running'}},
+      {a:'B',sf:function(s){return s>=2?'gone':s===1?'terminating':'running'}},
+      {a:'D',sf:function(s){return s>=2?'gone':s===1?'terminating':'running'}},
+      {a:'D',sf:function(s){return s>=2?'gone':s===1?'terminating':'running'}},
+      {a:'D',sf:function(s){return s>=4?'gone':s===3?'terminating':s>=1?'locked':'running'}},
+      {a:'D',sf:function(s){return s>=4?'gone':s===3?'terminating':s>=1?'locked':'running'}},
+      {a:'D',sf:function(s){return s>=6?'gone':s===5?'terminating':s>=1?'locked':'running'}}
+    ]},
+    {id:4,name:'Node-4',isTarget:true,pods:[
+      {a:'A',sf:function(s){return s>=2?'gone':s===1?'terminating':'running'}},
+      {a:'B',sf:function(s){return s>=2?'gone':s===1?'terminating':'running'}},
+      {a:'C',sf:function(s){return s>=2?'gone':s===1?'terminating':'running'}},
+      {a:'C',sf:function(s){return s>=2?'gone':s===1?'terminating':'running'}},
+      {a:'D',sf:function(s){return s>=6?'gone':s===5?'terminating':s>=1?'locked':'running'}}
+    ]},
+    {id:5,name:'Node-5 (New)',isNew:true,pods:[
+      {a:'B',sf:function(s){return s>=3?'running':s===2?'pending':'hidden'}},
+      {a:'A',sf:function(s){return s>=3?'running':s===2?'pending':'hidden'}},
+      {a:'C',sf:function(s){return s>=3?'running':s===2?'pending':'hidden'}},
+      {a:'D',sf:function(s){return s>=3?'running':s===2?'pending':'hidden'}},
+      {a:'D',sf:function(s){return s>=3?'running':s===2?'pending':'hidden'}},
+      {a:'D',sf:function(s){return s>=5?'running':s===4?'pending':'hidden'}},
+      {a:'D',sf:function(s){return s>=5?'running':s===4?'pending':'hidden'}},
+      {a:'D',sf:function(s){return s>=6?'running':s===5?'pending':'hidden'}}
+    ]}
+  ];
+  // Static pods default to 'running'
+  NODES_A.forEach(function(n){n.pods.forEach(function(p){if(!p.sf)p.sf=function(){return'running'}})});
+
+  var NODES_C=[
+    {id:1,pods:['A','B','C','D']},{id:2,pods:['A','B','B','C']},
+    {id:3,pods:['A','B','C','D']},{id:4,pods:['B','D','D','D']}
+  ];
+  var containerA=document.getElementById('pdb-nodes-a');
+  var containerC=document.getElementById('pdb-nodes-c');
+  var infoEl=document.getElementById('pdb-info');
+  var stepLabel=document.getElementById('pdb-step-label');
+  var stepTitle=document.getElementById('pdb-step-title');
+  var dotsEl=document.getElementById('pdb-dots');
+  var badge=document.getElementById('pdb-badge');
+  var badgeVal=document.getElementById('pdb-badge-val');
+  var alertEl=document.getElementById('pdb-alert');
+  if(!containerA)return;
+
+  // Build dots
+  for(var i=0;i<7;i++){var d=document.createElement('div');d.style.cssText='width:6px;height:6px;border-radius:50%;background:#334155;transition:background .5s';d.className='pdb-dot';dotsEl.appendChild(d)}
+
+  // Build Zone A nodes
+  var nodeEls={};
+  NODES_A.forEach(function(n){
+    var el=document.createElement('div');el.className='pdb-node';el.id='pdb-n'+n.id;
+    var hdr='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.2rem">'
+      +'<span style="font-weight:700;font-size:0.5rem;color:#e2e8f0;display:flex;align-items:center;gap:0.15rem">⊞ '+n.name+'</span>'
+      +'<span class="pdb-node-badge" style="font-size:0.38rem;text-transform:uppercase;font-weight:700;padding:0.08rem 0.25rem;border-radius:3px;background:#334155;color:#cbd5e1;transition:all .8s">Active</span>'
+      +'</div><div class="pdb-pod-row" style="display:flex;flex-wrap:wrap;gap:2px;min-height:1.3rem">';
+    var pods='';
+    n.pods.forEach(function(p,pi){
+      pods+='<span class="pdb-pod running" data-app="'+p.a+'" data-nid="'+n.id+'" data-pi="'+pi+'">'+(p.a==='D'?'D':p.a)+'</span>';
+    });
+    el.innerHTML=hdr+pods+'</div>';
+    containerA.appendChild(el);
+    nodeEls[n.id]=el;
+  });
+
+  // Build Zone C nodes (static)
+  NODES_C.forEach(function(n){
+    var el=document.createElement('div');
+    el.style.cssText='border:1px solid #334155;border-radius:6px;background:rgba(30,41,59,.3);padding:0.2rem';
+    var html='<div style="display:flex;align-items:center;gap:0.15rem;margin-bottom:0.15rem"><span style="font-size:0.42rem;color:#64748b">⊞</span><span style="font-size:0.45rem;font-weight:600;color:#94a3b8">Node-'+n.id+'</span></div><div style="display:flex;flex-wrap:wrap;gap:3px">';
+    n.pods.forEach(function(a){html+='<span style="width:1.2rem;height:1.2rem;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:0.4rem;color:rgba(255,255,255,.5);background:#334155">'+a+'</span>'});
+    el.innerHTML=html+'</div>';
+    containerC.appendChild(el);
+  });
+
+  var curStep=0;
+  function render(s){
+    infoEl.textContent=STEPS[s].desc;
+    stepLabel.textContent='Step '+(s+1)+' / 7';
+    stepTitle.textContent=STEPS[s].title;
+    // dots
+    dotsEl.querySelectorAll('.pdb-dot').forEach(function(d,i){d.style.background=i<=s?'#8b5cf6':'#334155'});
+    // alert icon
+    alertEl.style.display=(s>0&&s<6)?'inline':'none';
+    // PDB badge
+    if(s>=1&&s<=5){badge.classList.add('pdb-badge-active');badgeVal.style.color='#fdba74'}
+    else{badge.classList.remove('pdb-badge-active');badgeVal.style.color='#94a3b8'}
+    // Update nodes
+    NODES_A.forEach(function(n){
+      var el=nodeEls[n.id];
+      var bdg=el.querySelector('.pdb-node-badge');
+      el.className='pdb-node';
+      if(n.isTarget){
+        if(s===1){el.classList.add('interrupted');bdg.textContent='Interrupted';bdg.style.background='#ef4444';bdg.style.color='#fff'}
+        else if(s>=2&&s<=5){el.classList.add('draining');bdg.textContent='Draining...';bdg.style.background='rgba(239,68,68,.2)';bdg.style.color='#f87171';bdg.style.animation='pdb-pulse 1.5s infinite'}
+        else if(s>=6){el.classList.add('removed');bdg.textContent='Terminated'}
+        else{bdg.textContent='Active';bdg.style.background='#334155';bdg.style.color='#cbd5e1';bdg.style.animation=''}
+      }
+      if(n.isNew){
+        if(s<2){el.classList.add('new-hidden')}
+        else if(s===2||s===4||s===5){el.classList.add('new-provisioning');bdg.textContent='Provisioning';bdg.style.background='rgba(16,185,129,.2)';bdg.style.color='#34d399'}
+        else{el.classList.add('new-active');bdg.textContent='Active (New)';bdg.style.background='#059669';bdg.style.color='#fff'}
+      }
+      if(!n.isTarget&&!n.isNew){bdg.textContent='Active';bdg.style.background='#334155';bdg.style.color='#cbd5e1';bdg.style.animation=''}
+      // Update pods
+      n.pods.forEach(function(p,pi){
+        var podEl=el.querySelector('[data-pi="'+pi+'"]');
+        if(!podEl)return;
+        var st=p.sf(s);
+        podEl.className='pdb-pod '+st;
+        podEl.setAttribute('data-app',p.a);
+        if(st==='terminating')podEl.textContent='T';
+        else if(st==='pending')podEl.textContent='⟳';
+        else if(st==='gone'||st==='hidden')podEl.textContent='';
+        else podEl.textContent=p.a;
+      });
+    });
+  }
+  render(0);
+  // Wire up canvas-step for keyboard nav
+  var slide=containerA.closest('.slide');
+  if(slide){
+    slide.dataset.slideAction='canvas-step';
+    slide.dataset.canvasMaxStep='6';
+    slide.__canvasStep=function(dir){
+      if(dir==='next'&&curStep<6){curStep++;render(curStep);return curStep}
+      if(dir==='prev'&&curStep>0){curStep--;render(curStep);return curStep}
+      return false;
+    };
+  }
+})();</script>
+
+<div class="slide" data-remarp-id="s8">
+  <div class="slide-header" data-remarp-id="s8-header"><h2>Zone-Aware Rollouts</h2></div>
+  <div class="slide-body" data-remarp-id="s8-body">
+    <div class="canvas-container" data-remarp-id="s8-canvas" style="flex:1">
+      <canvas id="zone-aware-rollouts"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s9">
+  <div class="slide-header" data-remarp-id="s9-header"><h2>GitHub Self-Hosted Runner (ARC)</h2></div>
+  <div class="slide-body" data-remarp-id="s9-body">
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="arc">ARC 개요</button>
+      <button class="tab-btn" data-tab="tab-1">아키텍처</button>
+      <button class="tab-btn" data-tab="tab-2">리소스 설정</button>
+    </div>
+        <div class="tab-content active" data-tab="arc">
+<p><strong>Actions Runner Controller (ARC)</strong></p>
+<ul><li>GitHub Actions Self-Hosted Runner를 EKS에서 실행</li><li>Runner Pod 자동 스케일링 (HRA)</li><li>워크로드별 Runner 격리 가능</li></ul>
+<p><strong>장점</strong>:</p>
+<ul><li>VPC 내부 리소스 접근 (RDS, ElastiCache)</li><li>ECR Push 시 IAM Role 활용</li><li>빌드 캐시 PVC로 속도 향상</li></ul>
+</div>
+    <div class="tab-content" data-tab="tab-1">
+<div style="display:flex;flex-direction:column;align-items:center;gap:0;">
+  <div style="background:#24292e;color:#fff;padding:0.6rem 1.5rem;border-radius:8px;font-weight:600;border:2px solid #555">GitHub Actions Workflow</div>
+  <div style="width:2px;height:1.2rem;background:var(--accent)"></div>
+  <div style="background:#FF9900;color:#fff;padding:0.5rem 1.5rem;border-radius:8px;font-size:0.85rem">Webhook Event (workflow_job)</div>
+  <div style="width:2px;height:1.2rem;background:var(--accent)"></div>
+  <div style="background:#326CE5;color:#fff;padding:0.6rem 1.5rem;border-radius:8px;font-weight:600;border:2px solid #4a7aed">ARC Controller (EKS)</div>
+  <div style="width:2px;height:1.2rem;background:var(--accent)"></div>
+  <div style="background:#6c5ce7;color:#fff;padding:0.5rem 1.5rem;border-radius:8px;font-size:0.85rem">Runner Pod 생성 (ephemeral)</div>
+  <div style="width:2px;height:1.2rem;background:var(--accent)"></div>
+  <div style="display:flex;gap:0.5rem;align-items:center">
+    <div style="background:#4CAF50;color:#fff;padding:0.5rem 1rem;border-radius:8px;font-size:0.85rem">Job 실행</div>
+    <div style="color:var(--accent);font-size:1.2rem">▸</div>
+    <div style="background:#FF9900;color:#fff;padding:0.5rem 1rem;border-radius:8px;font-size:0.85rem">ECR Push</div>
+    <div style="color:var(--accent);font-size:1.2rem">▸</div>
+    <div style="background:#E6522C;color:#fff;padding:0.5rem 1rem;border-radius:8px;font-size:0.85rem">ArgoCD Sync</div>
+  </div>
+  <div style="width:2px;height:1.2rem;background:#f44336"></div>
+  <div style="background:#f44336;color:#fff;padding:0.5rem 1.5rem;border-radius:8px;font-size:0.85rem">Runner Pod 삭제</div>
+</div>
+</div>
+    <div class="tab-content" data-tab="tab-2">
+<div class="code-block"><span class="comment"># Runner Pod 리소스</span>
+<span class="key">resources</span>:
+  <span class="key">requests</span>:
+    <span class="key">cpu</span>: <span class="string">"500m"</span>
+    <span class="key">memory</span>: <span class="string">"1Gi"</span>
+  <span class="key">limits</span>:
+    <span class="key">cpu</span>: <span class="string">"2000m"</span>
+    <span class="key">memory</span>: <span class="string">"4Gi"</span>
+<span class="comment">
+# Runner 스케일링</span>
+<span class="key">minRunners</span>: 1
+<span class="key">maxRunners</span>: 10</div>
+</div>
+  </div>
+</div>
+
+
+<div class="slide" data-remarp-id="s11">
+  <div class="slide-header" data-remarp-id="s11-header"><h2>HorizontalRunnerAutoscaler - 자동 스케일링</h2></div>
+  <div class="slide-body" data-remarp-id="s11-body">
+    <div class="code-block"><span class="code-label">hra.yaml</span><span class="key">apiVersion</span>: actions.summerwind.dev/v1alpha1
+<span class="key">kind</span>: HorizontalRunnerAutoscaler
+<span class="key">metadata</span>:
+  <span class="key">name</span>: hwahae-runners-autoscaler
+  <span class="key">namespace</span>: arc-runners
+<span class="key">spec</span>:
+  <span class="key">scaleTargetRef</span>:
+    <span class="key">kind</span>: RunnerDeployment
+    <span class="key">name</span>: hwahae-runners
+  <span class="key">minReplicas</span>: 1
+  <span class="key">maxReplicas</span>: 10
+  <span class="key">metrics</span>:
+    - type: TotalNumberOfQueuedAndInProgressWorkflowRuns
+      <span class="key">repositoryNames</span>:
+        - hwahae/backend
+        - hwahae/frontend</div>
+  </div>
+</div>
+
+
+<div class="slide" data-remarp-id="s13">
+  <div class="slide-header" data-remarp-id="s13-header"><h2>NGINX Gateway Fabric vs Istio Gateway</h2></div>
+  <div class="slide-body" data-remarp-id="s13-body" data-compare-mode="side-by-side">
+    <div class="compare-toggle">
+            <button class="compare-btn active" data-compare="nginx-gateway-fabric">NGINX Gateway Fabric</button>
+      <button class="compare-btn" data-compare="istio-gateway">Istio Gateway</button>
+    </div>
+    <div class="col-2" style="flex:1">
+            <div class="card compare-content active compare-highlight" data-compare="nginx-gateway-fabric" data-remarp-id="s13-left">
+<h3 style="color:var(--text-accent);margin-bottom:.5rem">NGINX Gateway Fabric</h3>
+<p><strong>역할</strong>: North-South 트래픽 (외부 → 클러스터)</p>
+<ul><li>L4/L7 로드밸런싱</li><li>TLS 종료</li><li>Rate Limiting</li><li>WAF 통합 가능</li><li><strong>Gateway API 네이티브</strong></li></ul>
+<div class="code-block"><span class="key">apiVersion</span>: gateway.networking.k8s.io/v1
+<span class="key">kind</span>: Gateway
+<span class="key">metadata</span>:
+  <span class="key">name</span>: external-gateway
+<span class="key">spec</span>:
+  <span class="key">gatewayClassName</span>: nginx
+  <span class="key">listeners</span>:
+    - name: https
+      <span class="key">port</span>: 443
+      <span class="key">protocol</span>: HTTPS</div>
+</div>
+      <div class="card compare-content active" data-compare="istio-gateway" data-remarp-id="s13-right">
+<h3 style="color:var(--text-accent);margin-bottom:.5rem">Istio Service Mesh</h3>
+<p style="color:var(--text-muted);font-style:italic;margin-bottom:1rem">현재 요구사항에 미포함 (향후 검토)</p>
+<p><strong>참고</strong>: Service Mesh 도입 시 고려사항</p>
+<ul><li>East-West 트래픽 (Pod ↔ Pod) mTLS</li><li>트래픽 미러링, Circuit Breaker</li><li>Canary 배포 (Argo Rollouts 연동)</li><li>리소스 오버헤드 (Sidecar Proxy)</li><li>운영 복잡성 증가</li></ul>
+<div class="callout-info"><p><strong>결론</strong>: 현 단계에서는 NGINX Gateway Fabric만으로 충분. Service Mesh는 트래픽 관찰 요구사항 발생 시 도입 검토</p></div>
+</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s14">
+  <div class="slide-header" data-remarp-id="s14-header"><h2>GitOps Best Practices</h2></div>
+  <div class="slide-body" data-remarp-id="s14-body">
+    <ul class="checklist">
+            <li class="has-detail" data-remarp-id="s14-li-0"><span class="check"></span> <span class="checklist-text"><strong>Repository 구조</strong></span>
+      <div class="checklist-detail"><p>  - 모노레포 vs 폴리레포 결정</p>
+<p>  - <code>base/</code> + <code>overlays/</code> Kustomize 구조</p>
+<p>  - 환경별 브랜치 또는 디렉토리 분리</p></div></li>
+      <li class="has-detail" data-remarp-id="s14-li-1"><span class="check"></span> <span class="checklist-text"><strong>Sync 전략</strong></span>
+      <div class="checklist-detail"><p>  - Dev/Staging: <code>automated</code> + <code>selfHeal: true</code></p>
+<p>  - Production: <code>manual</code> 또는 Sync Window 설정</p>
+<p>  - <code>prune: true</code> 신중하게 적용</p></div></li>
+      <li class="has-detail" data-remarp-id="s14-li-2"><span class="check"></span> <span class="checklist-text"><strong>보안</strong></span>
+      <div class="checklist-detail"><p>  - Sealed Secrets 또는 External Secrets Operator</p>
+<p>  - RBAC: AppProject별 네임스페이스 제한</p>
+<p>  - SSO 통합 (OIDC)</p></div></li>
+      <li class="has-detail" data-remarp-id="s14-li-3"><span class="check"></span> <span class="checklist-text"><strong>운영</strong></span>
+      <div class="checklist-detail"><p>  - Notification 설정 (Slack, PagerDuty)</p>
+<p>  - Application 상태 대시보드 구성</p>
+<p>  - 정기적 Diff 리포트 검토</p></div></li>
+    </ul>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s14b">
+  <div class="slide-header"><h2>AWS 리소스 관리: Terraform vs ArgoCD vs ACK</h2></div>
+  <div class="slide-body">
+    <table>
+      <thead><tr><th>리소스 유형</th><th>관리 도구</th><th>예시</th><th>변경 빈도</th></tr></thead>
+      <tbody>
+        <tr><td><strong>인프라 기반</strong></td><td><div class="badge-blue">Terraform</div></td><td>VPC, EKS Cluster, RDS, IAM Role</td><td>낮음</td></tr>
+        <tr><td><strong>EKS 핵심 애드온</strong></td><td><div class="badge-blue">Terraform (EKS Add-on)</div></td><td>VPC CNI, CoreDNS, kube-proxy, EBS CSI</td><td>낮음</td></tr>
+        <tr><td><strong>클러스터 컨트롤러</strong></td><td><div class="badge-green">ArgoCD</div></td><td>ALB Controller, External DNS, ESO, Cert Manager</td><td>중간</td></tr>
+        <tr><td><strong>App 전용 AWS 리소스</strong></td><td><div class="badge-green">ArgoCD</div> <span style="color:var(--text-muted)">or</span> <div class="badge-yellow" style="display:inline-block">ACK</div></td><td>App별 SQS Queue, S3 Bucket, IAM Policy</td><td>높음</td></tr>
+      </tbody>
+    </table>
+    <div class="callout-info" style="margin-top:1rem"><p><strong>화해 현재 원칙과 일치</strong>: "EKS 내 리소스는 ArgoCD, 공용 AWS 리소스는 Terraform"</p></div>
+    <div class="callout-warning" style="margin-top:.5rem"><p><strong>ACK 도입 시점</strong>: App팀이 K8s 매니페스트로 SQS, S3 등 AWS 리소스를 직접 관리해야 할 때. 현재 단계에서는 Terraform + ArgoCD 이원화로 충분</p></div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s15">
+  <div class="slide-header" data-remarp-id="s15-header"><h2>Block 02 Quiz</h2></div>
+  <div class="slide-body" data-remarp-id="s15-body" style="overflow-y:auto">
+    <div class="quiz" data-quiz="q1">
+      <div class="quiz-question">Q1: GitOps의 핵심 원칙은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">CI 파이프라인이 직접 kubectl apply 실행</button>
+<button class="quiz-option" data-correct="true">Git이 Single Source of Truth</button>
+<button class="quiz-option" data-correct="false">수동 배포로 변경 통제</button>
+<button class="quiz-option" data-correct="false">환경별 설정을 별도 DB에 저장</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q2">
+      <div class="quiz-question">Q2: Argo Rollouts에서 Canary 배포 실패 시 동작은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">수동으로 kubectl rollback 실행</button>
+<button class="quiz-option" data-correct="false">배포가 그대로 유지됨</button>
+<button class="quiz-option" data-correct="true">AnalysisRun 실패 시 자동 롤백</button>
+<button class="quiz-option" data-correct="false">알림만 발송하고 대기</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q3">
+      <div class="quiz-question">Q3: Zone-Aware Rollouts의 주요 장점은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">배포 속도가 빨라진다</button>
+<button class="quiz-option" data-correct="true">Zone별 독립적 PDB로 Spot 중단 대응</button>
+<button class="quiz-option" data-correct="false">단일 Rollout으로 모든 Zone 관리</button>
+<button class="quiz-option" data-correct="false">Istio 없이 Canary 배포 가능</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q4">
+      <div class="quiz-question">Q4: ArgoCD에서 프로덕션 환경 권장 Sync 정책은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">automated + selfHeal: true</button>
+<button class="quiz-option" data-correct="true">manual 또는 Sync Window 설정</button>
+<button class="quiz-option" data-correct="false">prune: true + allowEmpty: true</button>
+<button class="quiz-option" data-correct="false">자동 동기화 + 3분 간격</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+  </div>
+</div>
+</div>
+<script src="common/animation-utils.js"></script>
+<script src="common/slide-framework.js"></script>
+<script src="common/quiz-component.js"></script>
+<script src="common/presenter-view.js"></script>
+<script>
+(function() {
+  const canvas = document.getElementById('zone-aware-rollouts');
+  if (!canvas) return;
+  const container = canvas.parentElement;
+  const BASE_W = 960, BASE_H = 420;
+
+  function resizeCanvas() {
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+    if (cw <= 0 || ch <= 0) { setupCanvas('zone-aware-rollouts', BASE_W, BASE_H); return; }
+    const dpr = window.devicePixelRatio || 1;
+    const scale = cw / BASE_W;
+    const scaledH = Math.min(Math.round(BASE_H * scale), ch);
+    canvas.width = Math.round(cw * dpr);
+    canvas.height = Math.round(scaledH * dpr);
+    canvas.style.width = cw + 'px';
+    canvas.style.height = scaledH + 'px';
+    canvas.style.maxWidth = 'none';
+    const c = canvas.getContext('2d');
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.scale(scale * dpr, scale * dpr);
+  }
+  resizeCanvas();
+
+  const ctx = canvas.getContext('2d');
+  let step = 0;
+  const MAX_STEP = 5;
+
+  function drawRoundedRect(x, y, w, h, r, fill, stroke) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, BASE_W, BASE_H);
+    ctx.font = '13px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+
+    // Step 1: Two zone clusters
+    if (step >= 1) {
+      drawRoundedRect(40, 30, 400, 200, 12, 'rgba(35,47,62,0.8)', '#41B3FF');
+      ctx.fillStyle = '#41B3FF'; ctx.font = 'bold 14px system-ui'; ctx.fillText('Zone A Cluster', 240, 55);
+      drawRoundedRect(520, 30, 400, 200, 12, 'rgba(35,47,62,0.8)', '#41B3FF');
+      ctx.fillStyle = '#41B3FF'; ctx.fillText('Zone C Cluster', 720, 55);
+    }
+
+    // Step 2: Rollouts with Stable/Canary pods
+    if (step >= 2) {
+      ctx.font = '12px system-ui';
+      // Zone A
+      drawRoundedRect(70, 75, 150, 35, 6, '#E6522C', null);
+      ctx.fillStyle = '#fff'; ctx.fillText('Rollout A', 145, 98);
+      drawRoundedRect(70, 125, 70, 30, 6, '#00C7B7', null);
+      ctx.fillStyle = '#fff'; ctx.font = '11px system-ui'; ctx.fillText('Stable v1', 105, 145);
+      drawRoundedRect(150, 125, 70, 30, 6, '#FF9900', null);
+      ctx.fillStyle = '#fff'; ctx.fillText('Canary v2', 185, 145);
+      // Zone C
+      ctx.font = '12px system-ui';
+      drawRoundedRect(550, 75, 150, 35, 6, '#E6522C', null);
+      ctx.fillStyle = '#fff'; ctx.fillText('Rollout C', 625, 98);
+      drawRoundedRect(550, 125, 70, 30, 6, '#00C7B7', null);
+      ctx.fillStyle = '#fff'; ctx.font = '11px system-ui'; ctx.fillText('Stable v1', 585, 145);
+      drawRoundedRect(630, 125, 70, 30, 6, '#FF9900', null);
+      ctx.fillStyle = '#fff'; ctx.fillText('Canary v2', 665, 145);
+    }
+
+    // Step 3: PDB per zone
+    if (step >= 3) {
+      ctx.font = '11px system-ui';
+      drawRoundedRect(70, 170, 340, 28, 6, '#9C27B0', null);
+      ctx.fillStyle = '#fff'; ctx.fillText('PDB: minAvailable=2 (독립)', 240, 189);
+      drawRoundedRect(550, 170, 340, 28, 6, '#9C27B0', null);
+      ctx.fillStyle = '#fff'; ctx.fillText('PDB: minAvailable=2 (독립)', 720, 189);
+    }
+
+    // Step 4: NLB routing
+    if (step >= 4) {
+      ctx.font = '13px system-ui';
+      drawRoundedRect(390, 270, 180, 45, 8, '#232F3E', '#FF9900');
+      ctx.fillStyle = '#FF9900'; ctx.fillText('NLB (Weighted)', 480, 298);
+      // Arrows
+      ctx.strokeStyle = '#41B3FF'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(430, 270); ctx.lineTo(240, 230); ctx.stroke();
+      ctx.fillStyle = '#41B3FF'; ctx.fillText('50%', 320, 248);
+      ctx.beginPath(); ctx.moveTo(530, 270); ctx.lineTo(720, 230); ctx.stroke();
+      ctx.fillText('50%', 640, 248);
+    }
+
+    // Step 5: Failover scenario
+    if (step >= 5) {
+      // Red X on Zone A
+      ctx.strokeStyle = '#f44336'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(60, 40); ctx.lineTo(420, 220); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(420, 40); ctx.lineTo(60, 220); ctx.stroke();
+      // Zone A label
+      ctx.font = 'bold 14px system-ui'; ctx.fillStyle = '#f44336';
+      ctx.fillText('Zone A 장애!', 240, 250);
+      // Updated routing
+      drawRoundedRect(390, 340, 180, 40, 8, '#4CAF50', null);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 13px system-ui';
+      ctx.fillText('자동 Failover → 0:100', 480, 365);
+      // Arrow to Zone C only
+      ctx.strokeStyle = '#4CAF50'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(530, 340); ctx.lineTo(720, 230); ctx.stroke();
+      ctx.fillStyle = '#4CAF50'; ctx.font = '13px system-ui'; ctx.fillText('100%', 640, 290);
+    }
+  }
+
+  draw();
+  new ResizeObserver(() => { resizeCanvas(); draw(); }).observe(container);
+
+  const slide = canvas.closest('.slide');
+  if (slide) {
+    slide.dataset.slideAction = 'canvas-step';
+    slide.dataset.canvasMaxStep = String(MAX_STEP);
+    slide.__canvasStep = function(dir) {
+      if (dir === 'next' && step < MAX_STEP) { step++; draw(); return step; }
+      if (dir === 'prev' && step > 0) { step--; draw(); return step; }
+      return false;
+    };
+  }
+})();
+</script>
+<script>
+  
+  const presenterNotes = {
+    1: "[1.5min] Block 02에서는 GitOps와 Progressive Delivery에 대해 다룹니다. ArgoCD를 활용한 선언적 배포와 Argo Rollouts + Istio를 통한 안전한 Canary 배포 전략을 살펴보겠습니다.\n\n💬 예상 질문:\n• \"GitOps 도입 시 기존 Jenkins 파이프라인은 어떻게 되나요?\" → CI(빌드/테스트)는 Jenkins 유지, CD(배포)만 ArgoCD로 전환하는 것이 일반적입니다.",
+    2: "⏸️ [2.5min] 현재 Push 기반 배포의 문제점입니다. 배포 파이프라인이 클러스터에 직접 kubectl apply를 실행하는 방식은 배포 상태 추적이 어렵고, 실패 시 롤백도 수동입니다. GitOps는 이 문제를 Pull 모델로 해결합니다.\n\n💬 예상 질문:\n• \"Pull 모델이면 배포 지연이 생기지 않나요?\" → ArgoCD의 기본 Sync 간격은 3분이지만, Webhook으로 즉시 Sync를 트리거할 수 있어 Push 모델과 속도 차이가 거의 없습니다.",
+    3: "[2min] 인프라와 애플리케이션 배포를 분리하는 전략입니다. Terraform은 EKS 클러스터, VPC, IAM 등 인프라를 관리하고, ArgoCD는 Kubernetes 워크로드를 관리합니다. 이 분리를 통해 인프라 변경과 애플리케이션 배포의 책임을 명확히 구분합니다.\n\n💬 예상 질문:\n• \"Terraform과 ArgoCD 중 하나만 쓰면 안 되나요?\" → 둘의 강점이 다릅니다. Terraform은 AWS 리소스 상태 관리에 최적화, ArgoCD는 K8s 워크로드 지속 동기화에 최적화되어 있습니다.",
+    4: "[3.5min] Terraform, ArgoCD, ACK의 역할 분담 의사결정 가이드입니다. 핵심은 리소스의 생명주기입니다. 앱과 함께 생성/삭제되는 리소스는 ACK로 GitOps 통합하고, 인프라 수준의 장기 리소스는 Terraform으로 관리합니다. 화해의 현재 Terraform + ArgoCD 구조는 잘 설계되어 있으며, 여기에 ACK를 추가하면 앱 전용 S3, SQS 등을 더 효율적으로 관리할 수 있습니다. EKS Capabilities 중 VPC CNI, CoreDNS 등은 EKS Add-on으로, ALB Controller, Karpenter 등은 ArgoCD로 관리하는 것이 적합합니다.\n\n💬 예상 질문:\n• \"ACK가 Terraform을 완전히 대체할 수 있나요?\" → 아니요. IAM, VPC 등 보안 민감 리소스는 Terraform의 Plan/Apply 워크플로우가 더 안전합니다. ACK는 앱 전용 리소스에만 권장합니다.\n• \"ACK 도입 시 러닝 커브가 크나요?\" → K8s에 익숙하다면 낮습니다. CRD 형태로 AWS 리소스를 정의하므로 kubectl로 관리할 수 있습니다.",
+    5: "[2min] ACK 실전 설정 예시입니다. ACK Controller는 ArgoCD Application으로 설치하고, IRSA로 AWS 권한을 부여합니다.\n\n💬 예상 질문:\n• \"ACK Controller 설치가 복잡한가요?\" → Helm Chart로 ArgoCD Application 하나만 등록하면 됩니다. IRSA 설정만 주의하면 됩니다.",
+    6: "[1.5min] ACK로 관리하는 앱 전용 AWS 리소스 매니페스트입니다. S3 Bucket과 SQS Queue를 Kubernetes CR로 정의하면, ArgoCD가 앱 배포와 함께 AWS 리소스도 자동으로 생성합니다. 라이프사이클이 앱과 일치합니다.\n\n💬 예상 질문:\n• \"ACK로 만든 리소스 삭제 시 실제 AWS 리소스도 삭제되나요?\" → 기본적으로 예. 하지만 deletionPolicy를 retain으로 설정하면 CR 삭제 시에도 AWS 리소스는 유지됩니다.",
+    7: "[2.5min] ArgoCD의 기본 Sync와 Argo Rollouts의 차이입니다. 일반 배포는 Kubernetes의 RollingUpdate를 사용하고, Rollouts는 트래픽 가중치를 단계별로 조정하며 메트릭 분석을 통해 자동 롤백할 수 있습니다.\n\n💬 예상 질문:\n• \"모든 서비스에 Argo Rollouts를 적용해야 하나요?\" → 아니요. 내부 서비스나 개발 환경은 기본 RollingUpdate로 충분합니다. 고객 대면 프로덕션 서비스에만 Rollouts를 적용하는 것이 효율적입니다.",
+    8: "[3min] Argo Rollouts와 Istio 통합 아키텍처입니다. Rollouts 컨트롤러가 VirtualService의 가중치를 자동으로 조정하고, AnalysisRun이 Prometheus 메트릭을 조회하여 성공/실패를 판단합니다. 성공률이 임계값 미만이면 자동으로 롤백됩니다.\n\nGitBook 참고: https://atomoh.gitbook.io/kubernetes-docs/service-mesh/istio/advanced/08-argo-rollouts\n\n💬 예상 질문:\n• \"AnalysisTemplate에서 어떤 메트릭을 주로 사용하나요?\" → 에러율(5xx), 레이턴시(p99), 성공률이 기본입니다. 비즈니스 메트릭(주문 성공률 등)을 추가하면 더 정교한 판단이 가능합니다.",
+    9: "[2.5min] Canary 배포의 각 단계입니다. 작은 트래픽부터 시작하여 점진적으로 증가시키며, 각 단계에서 메트릭을 분석합니다. 문제 발생 시 즉시 롤백하여 사용자 영향을 최소화합니다.\n\n💬 예상 질문:\n• \"각 단계의 대기 시간은 어떻게 정하나요?\" → 서비스 특성에 따라 다릅니다. 트래픽이 많은 서비스는 2-3분이면 충분하고, 트래픽이 적으면 5-10분으로 늘려야 의미 있는 메트릭을 수집할 수 있습니다.",
+    10: "[3.5min] Zone-Aware PDB 방어 시나리오입니다. Spot Instance 회수 시 PDB가 Pod를 2개씩만 순차적으로 퇴거시키는 과정을 7단계로 보여줍니다. maxUnavailable=2 설정으로 한 번에 2개만 중단되어 서비스 가용성을 유지합니다.\n\n💬 예상 질문:\n• \"PDB 없이 Spot이 회수되면 어떻게 되나요?\" → 모든 Pod가 동시에 Terminating 되어 서비스 중단이 발생합니다. PDB는 이를 방지하는 안전장치입니다.\n• \"maxUnavailable vs minAvailable 어떤 것을 쓰나요?\" → 둘 다 가능하지만, 수평 확장되는 워크로드는 maxUnavailable이 더 직관적입니다.",
+    11: "[3min] Zone-Aware Rollouts 아키텍처입니다. 각 Zone의 Rollout이 독립적인 PDB를 관리하여, 한 Zone의 Spot Instance 중단이 다른 Zone에 영향을 주지 않습니다. Istio의 locality-aware 라우팅으로 Zone 장애 시 자동 Failover됩니다.\n\nGitBook 참고: https://atomoh.gitbook.io/kubernetes-docs/service-mesh/istio/advanced/09-zone-aware-argo-rollouts\n\n💬 예상 질문:\n• \"Zone별 Rollout을 따로 관리하면 복잡도가 높아지지 않나요?\" → 초기 설정은 복잡하지만, ApplicationSet으로 템플릿화하면 관리 부담이 줄어듭니다. Spot 사용률이 높은 환경에서는 이 복잡도가 가용성 향상으로 충분히 보상됩니다.",
+    12: "[2.5min] GitHub Actions Runner Controller(ARC)를 EKS에서 운영하는 방법입니다. Self-Hosted Runner를 사용하면 VPC 내부 리소스에 접근할 수 있고, IRSA를 통해 안전하게 ECR에 이미지를 Push할 수 있습니다.\n\n💬 예상 질문:\n• \"GitHub-hosted runner 대비 비용 절감 효과가 있나요?\" → Runner 자체는 무료이지만 EC2 비용이 발생합니다. 빌드가 많고 VPC 접근이 필요한 경우에만 비용 대비 효과가 있습니다.",
+    13: "[2min] ARC 설정 예시입니다. RunnerDeployment로 Runner Pool을 정의하고, HorizontalRunnerAutoscaler로 대기 중인 Job 수에 따라 자동 스케일링합니다. IRSA를 통해 Runner Pod가 ECR, S3 등 AWS 리소스에 접근할 수 있습니다.\n\n💬 예상 질문:\n• \"Runner Pod가 ephemeral인데 빌드 캐시는 어떻게 처리하나요?\" → PVC를 마운트하여 Maven/npm 캐시를 유지하거나, S3 기반 원격 캐시를 사용합니다. Docker layer 캐시는 Kaniko + registry cache 조합이 효과적입니다.",
+    14: "❓ [2.5min] NGF와 Istio의 역할 분담입니다. 둘 다 사용할 필요가 있는지 질문을 많이 받는데요, 외부 트래픽 관리(NGF)와 내부 서비스 메시(Istio)는 다른 문제를 해결합니다. 화해처럼 Canary 배포가 필요한 경우 Istio가 필수입니다.\n\n💬 예상 질문:\n• \"Istio 없이 Canary 배포를 할 수 있는 방법은?\" → NGINX Ingress나 ALB의 가중치 기반 라우팅으로 가능하지만, 메트릭 기반 자동 롤백은 Istio + Argo Rollouts 조합이 가장 성숙합니다.",
+    15: "[2.5min] GitOps 도입 시 베스트 프랙티스입니다. 특히 프로덕션에서는 자동 동기화를 신중하게 설정해야 합니다. Sync Window를 활용하여 업무 시간 외에만 자동 배포가 되도록 제한하는 것을 권장합니다.\n\nGitBook 참고: https://atomoh.gitbook.io/kubernetes-docs/gitops/argocd/09-best-practices\n\n💬 예상 질문:\n• \"Sealed Secrets vs External Secrets Operator 중 어떤 것을 추천하나요?\" → AWS 환경이면 ESO + Secrets Manager 조합을 권장합니다. 시크릿 로테이션이 자동화되고, 기존 AWS 시크릿을 재사용할 수 있습니다.",
+    16: "[2.5min] AWS 리소스를 어떤 도구로 관리할지에 대한 의사결정 매트릭스입니다.\n\n핵심 원칙:\n1. 인프라 기반(VPC, EKS, RDS)은 Terraform — 변경이 드물고, 상태 관리가 중요\n2. EKS 핵심 애드온(VPC CNI, CoreDNS)도 Terraform의 EKS Add-on으로 — 클러스터 업그레이드와 함께 관리\n3. 클러스터 내 컨트롤러(ALB Controller, ESO 등)는 ArgoCD — Helm Chart 기반 GitOps\n4. App 전용 AWS 리소스는 상황에 따라 ArgoCD 또는 ACK\n\nACK(AWS Controllers for Kubernetes)는 K8s CRD로 AWS 리소스를 관리하는 도구입니다. App팀이 자율적으로 SQS Queue나 S3 Bucket을 생성해야 할 때 유용하지만, 현재 단계에서는 Terraform + ArgoCD 이원화로 충분합니다.\n\n💬 예상 질문:\n• \"EKS Add-on과 ArgoCD로 같은 컴포넌트를 관리하면 충돌나지 않나요?\" → 네, 동일 컴포넌트를 두 곳에서 관리하면 안 됩니다. VPC CNI 같은 핵심 시스템은 EKS Add-on으로, ALB Controller 같은 확장 컴포넌트는 ArgoCD로 명확히 분리해야 합니다.",
+    17: "❓ [3min] Block 02 퀴즈입니다. GitOps와 Progressive Delivery의 핵심 개념을 확인합니다. 특히 프로덕션 환경에서의 안전한 배포 전략에 대해 복습해보세요.\n\n💬 예상 질문:\n• \"실제 마이그레이션 시 GitOps 도입 순서는?\" → 1) ArgoCD 설치 및 기존 앱 등록 (manual sync), 2) Dev 환경에서 automated sync 테스트, 3) Staging에 Argo Rollouts 적용, 4) Production에 점진적 적용 순서를 권장합니다."
+  };
+  const deck = new SlideFramework({
+    logoSrc: 'common/pptx-theme/images/logo_1.png',
+    footer: '© 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.',
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

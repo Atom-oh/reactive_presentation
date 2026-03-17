@@ -92,11 +92,16 @@
       display: flex;
       flex-direction: column;
       gap: 0.8rem;
+      cursor: pointer;
     }
     .hub-card:hover {
       border-color: var(--accent);
       box-shadow: 0 0.5rem 2rem rgba(108, 92, 231, .2);
       transform: translateY(-4px);
+    }
+    .hub-card > a[style*="display:contents"] ~ .card-export {
+      position: relative;
+      z-index: 2;
     }
     .hub-card .card-icon {
       font-size: 2rem;
@@ -151,6 +156,40 @@
       color: var(--text-muted);
     }
 
+    /* Export buttons on cards */
+    .card-export {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .card-export .export-btn {
+      font-size: 0.72rem;
+      padding: 0.3rem 0.7rem;
+      border-radius: 6px;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .card-export .export-btn:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .card-export .export-btn svg {
+      width: 0.85rem;
+      height: 0.85rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
     /* Page footer */
     .hub-footer {
       text-align: center;
@@ -173,39 +212,78 @@
   <div class="hub-main">
     <h2 class="hub-section-title">Training Sessions</h2>
     <div class="hub-grid">
-      <a href="eks-observability-ops/index.html" class="hub-card">
-        <div class="card-icon">&#9881;</div>
-        <h2>EKS Auto Mode & Observability</h2>
-        <p class="card-desc">EKS Auto Mode 내부 아키텍처, 노드 라이프사이클 모니터링, Grafana 스택 기반 Logs/Metrics/Traces 상관분석, VPA 리소스 최적화 전략</p>
-        <div class="card-blocks">
-          <span class="block-tag">Architecture</span>
-          <span class="block-tag">Node Lifecycle</span>
-          <span class="block-tag">Observability</span>
-          <span class="block-tag">Resource Optimization</span>
+      <div class="hub-card">
+        <a href="eks-observability-ops/index.html" style="text-decoration:none;color:inherit;display:contents;">
+          <div class="card-icon">&#9881;</div>
+          <h2>EKS Auto Mode & Observability</h2>
+          <p class="card-desc">EKS Auto Mode 내부 아키텍처, 노드 라이프사이클 모니터링, Grafana 스택 기반 Logs/Metrics/Traces 상관분석, VPA 리소스 최적화 전략</p>
+          <div class="card-blocks">
+            <span class="block-tag">Architecture</span>
+            <span class="block-tag">Node Lifecycle</span>
+            <span class="block-tag">Observability</span>
+            <span class="block-tag">Resource Optimization</span>
+          </div>
+          <div class="card-meta">
+            <span>2h Training</span>
+            <span>4 Blocks / 50 Slides</span>
+            <span>Korean</span>
+          </div>
+        </a>
+        <div class="card-export">
+          <button class="export-btn" onclick="event.stopPropagation();HubExport.exportPDF('eks-observability-ops','EKS Auto Mode & Observability')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>PDF</button>
+          <button class="export-btn" onclick="event.stopPropagation();HubExport.exportZIP('eks-observability-ops','EKS Auto Mode & Observability')"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>ZIP</button>
+          <button class="export-btn" onclick="event.stopPropagation();HubExport.exportPPTX('eks-observability-ops','EKS Auto Mode & Observability')"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>PPTX</button>
         </div>
-        <div class="card-meta">
-          <span>2h Training</span>
-          <span>4 Blocks / 50 Slides</span>
-          <span>Korean</span>
-        </div>
-      </a>
+      </div>
 
-      <a href="eks-hybrid-nodes/index.html" class="hub-card">
-        <div class="card-icon">&#9741;</div>
-        <h2>EKS Hybrid Nodes</h2>
-        <p class="card-desc">이제는 Amazon EKS를 온프레미스에서도 — 아키텍처 개요, 6가지 트래픽 패턴 심층분석, 노드 부트스트랩 & Day-2 운영, Cloud Bursting & 전략적 가치</p>
-        <div class="card-blocks">
-          <span class="block-tag">Architecture</span>
-          <span class="block-tag">Networking</span>
-          <span class="block-tag">Node Setup</span>
-          <span class="block-tag">Advanced Patterns</span>
+      <div class="hub-card">
+        <a href="eks-hybrid-nodes/index.html" style="text-decoration:none;color:inherit;display:contents;">
+          <div class="card-icon">&#9741;</div>
+          <h2>EKS Hybrid Nodes</h2>
+          <p class="card-desc">이제는 Amazon EKS를 온프레미스에서도 — 아키텍처 개요, 6가지 트래픽 패턴 심층분석, 노드 부트스트랩 & Day-2 운영, Cloud Bursting & 전략적 가치</p>
+          <div class="card-blocks">
+            <span class="block-tag">Architecture</span>
+            <span class="block-tag">Networking</span>
+            <span class="block-tag">Node Setup</span>
+            <span class="block-tag">Advanced Patterns</span>
+          </div>
+          <div class="card-meta">
+            <span>~60min Training</span>
+            <span>4 Blocks / 52 Slides</span>
+            <span>Korean</span>
+          </div>
+        </a>
+        <div class="card-export">
+          <button class="export-btn" onclick="event.stopPropagation();HubExport.exportPDF('eks-hybrid-nodes','EKS Hybrid Nodes')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>PDF</button>
+          <button class="export-btn" onclick="event.stopPropagation();HubExport.exportZIP('eks-hybrid-nodes','EKS Hybrid Nodes')"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>ZIP</button>
+          <button class="export-btn" onclick="event.stopPropagation();HubExport.exportPPTX('eks-hybrid-nodes','EKS Hybrid Nodes')"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>PPTX</button>
         </div>
-        <div class="card-meta">
-          <span>~60min Training</span>
-          <span>4 Blocks / 52 Slides</span>
-          <span>Korean</span>
+      </div>
+
+      <div class="hub-card">
+        <a href="eks-migration-from-ecs/index.html" style="text-decoration:none;color:inherit;display:contents;">
+          <div class="card-icon">&#9654;</div>
+          <h2>ECS &rarr; EKS Migration</h2>
+          <p class="card-desc">ECS에서 EKS 멀티클러스터 마이그레이션 — 아키텍처 설계, 트래픽 관리, GitOps CI/CD, Karpenter 스케일링, 보안 &amp; 관측성 전략</p>
+          <div class="card-blocks">
+            <span class="block-tag">Multi-cluster</span>
+            <span class="block-tag">Traffic</span>
+            <span class="block-tag">GitOps</span>
+            <span class="block-tag">Scaling</span>
+            <span class="block-tag">Security</span>
+          </div>
+          <div class="card-meta">
+            <span>2h Training</span>
+            <span>5 Blocks / 76 Slides</span>
+            <span>Korean</span>
+          </div>
+        </a>
+        <div class="card-export">
+          <button class="export-btn" onclick="event.stopPropagation();HubExport.exportPDF('eks-migration-from-ecs','ECS → EKS Migration')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>PDF</button>
+          <button class="export-btn" onclick="event.stopPropagation();HubExport.exportZIP('eks-migration-from-ecs','ECS → EKS Migration')"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>ZIP</button>
+          <button class="export-btn" onclick="event.stopPropagation();HubExport.exportPPTX('eks-migration-from-ecs','ECS → EKS Migration')"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>PPTX</button>
         </div>
-      </a>
+      </div>
 
       <!-- Future presentations add cards here -->
     </div>
@@ -214,5 +292,194 @@
   <div class="hub-footer">
     Built with Reactive Presentation Framework
   </div>
+
+  <script>
+  /* Card click → navigate to presentation (export buttons stop propagation) */
+  document.querySelectorAll('.hub-card').forEach(function(card) {
+    card.addEventListener('click', function(e) {
+      if (e.target.closest('.card-export')) return;
+      var a = card.querySelector('a[href]');
+      if (a) window.location.href = a.href;
+    });
+  });
+  </script>
+  <script src="common/export-utils.js"></script>
+  <script>
+  /* Hub-level export: discovers blocks from a presentation's TOC page */
+  const HubExport = {
+    async getBlocksFromTOC(tocUrl) {
+      const resp = await fetch(tocUrl);
+      if (!resp.ok) throw new Error('Failed to fetch TOC: ' + resp.status);
+      const html = await resp.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const base = tocUrl.replace(/index\.html$/, '').replace(/toc\.html$/, '');
+      return Array.from(doc.querySelectorAll('a.block-card'))
+        .map(a => base + a.getAttribute('href'))
+        .filter(Boolean);
+    },
+
+    async exportPDF(slug, title) {
+      const tocUrl = slug + '/index.html';
+      ExportUtils.showProgress('Loading ' + title + '...');
+      try {
+        const blocks = await this.getBlocksFromTOC(tocUrl);
+        if (!blocks.length) {
+          // fallback: scan for numbered HTML files
+          const resp = await fetch(tocUrl);
+          const html = await resp.text();
+          const doc = new DOMParser().parseFromString(html, 'text/html');
+          doc.querySelectorAll('a[href$=".html"]').forEach(a => {
+            const href = a.getAttribute('href');
+            if (href && /^\d/.test(href)) blocks.push(slug + '/' + href);
+          });
+        }
+        if (!blocks.length) { ExportUtils.hideProgress(); alert('No blocks found.'); return; }
+
+        let allStyles = '', allSlides = '', slideCount = 0;
+        for (let i = 0; i < blocks.length; i++) {
+          ExportUtils.updateProgress('Fetching block ' + (i+1) + '/' + blocks.length, ((i+1)/blocks.length)*50);
+          const r = await fetch(blocks[i]);
+          const html = await r.text();
+          const doc = new DOMParser().parseFromString(html, 'text/html');
+          doc.querySelectorAll('style').forEach(s => allStyles += s.textContent + '\n');
+          doc.querySelectorAll('.slide').forEach(slide => {
+            slideCount++;
+            allSlides += '<div class="slide print-slide">' + slide.innerHTML + '</div>\n';
+          });
+        }
+        ExportUtils.updateProgress('Building print view (' + slideCount + ' slides)...', 75);
+        const baseURL = window.location.href.replace(/\/[^/]*$/, '/' + slug + '/');
+        const printHTML = '<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">' +
+          '<base href="' + baseURL + '">' +
+          '<title>' + title + ' - PDF</title>' +
+          '<link rel="stylesheet" href="common/theme.css">' +
+          '<link rel="stylesheet" href="common/theme-override.css">' +
+          '<style>@page{size:16in 9in landscape;margin:0}html,body{margin:0;padding:0;background:#000;overflow:visible!important;display:block!important;height:auto!important}' +
+          '.print-slide{width:16in;height:9in;display:flex!important;flex-direction:column;padding:2rem 2.7rem;background:var(--bg-primary);position:relative;page-break-after:always;overflow:hidden;box-sizing:border-box}' +
+          '.print-slide:last-child{page-break-after:auto}canvas{display:none!important}.canvas-container{position:relative}.canvas-container::after{content:"[Interactive Animation]";display:flex;align-items:center;justify-content:center;width:100%;min-height:200px;color:var(--text-muted);font-style:italic;font-size:1.1rem;background:var(--bg-secondary);border-radius:0.5rem}' +
+          '.canvas-controls{display:none!important}.progress-bar,.slide-counter,.nav-hint,.slide-logo,.slide-footer{display:none!important}' +
+          allStyles + '</style></head><body>' + allSlides +
+          '<script>window.onload=function(){setTimeout(function(){window.print()},500)};<\/script></body></html>';
+        ExportUtils.updateProgress('Opening print dialog...', 95);
+        const w = window.open('', '_blank');
+        if (!w) { ExportUtils.hideProgress(); alert('Pop-up blocked.'); return; }
+        w.document.write(printHTML); w.document.close();
+        ExportUtils.hideProgress();
+      } catch(e) { ExportUtils.hideProgress(); alert('PDF export failed: ' + e.message); }
+    },
+
+    async exportZIP(slug, title) {
+      ExportUtils.showProgress('Preparing ZIP for ' + title + '...');
+      try {
+        if (!window.JSZip) {
+          ExportUtils.updateProgress('Loading JSZip...', 5);
+          await new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = ExportUtils.JSZIP_CDN; s.onload = resolve; s.onerror = reject;
+            document.head.appendChild(s);
+          });
+        }
+        const zip = new JSZip();
+        const tocResp = await fetch(slug + '/index.html');
+        const tocHtml = await tocResp.text();
+        zip.file(slug + '/index.html', tocHtml);
+
+        // Discover blocks
+        const doc = new DOMParser().parseFromString(tocHtml, 'text/html');
+        const blockFiles = [];
+        doc.querySelectorAll('a.block-card, a[href$=".html"]').forEach(a => {
+          const href = a.getAttribute('href');
+          if (href && href !== 'index.html' && !href.startsWith('http')) blockFiles.push(href);
+        });
+
+        const imageSet = new Set();
+        for (let i = 0; i < blockFiles.length; i++) {
+          ExportUtils.updateProgress('Fetching ' + blockFiles[i], ((i+1)/blockFiles.length)*40 + 10);
+          try {
+            const r = await fetch(slug + '/' + blockFiles[i]);
+            const html = await r.text();
+            zip.file(slug + '/' + blockFiles[i], html);
+            ExportUtils._extractImageURLs(html).forEach(u => imageSet.add(u));
+          } catch(e) { /* skip */ }
+        }
+
+        // Common files
+        for (const f of ExportUtils.COMMON_FILES) {
+          try {
+            const r = await fetch('common/' + f);
+            if (r.ok) zip.file('common/' + f, await r.text());
+          } catch(e) {}
+        }
+
+        // Images
+        const images = Array.from(imageSet);
+        for (let i = 0; i < images.length; i++) {
+          ExportUtils.updateProgress('Fetching images ' + (i+1) + '/' + images.length, 50 + (i/images.length)*40);
+          try {
+            const imgPath = images[i].startsWith('../') ? images[i].slice(3) : slug + '/' + images[i];
+            const r = await fetch(imgPath);
+            if (r.ok) zip.file(imgPath, await r.blob());
+          } catch(e) {}
+        }
+
+        // Theme images
+        for (const img of ['Picture_13.png', 'Picture_8.png', 'logo_1.png']) {
+          try {
+            const r = await fetch('common/pptx-theme/images/' + img);
+            if (r.ok) zip.file('common/pptx-theme/images/' + img, await r.blob());
+          } catch(e) {}
+        }
+
+        ExportUtils.updateProgress('Creating ZIP...', 95);
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = slug + '.zip';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        ExportUtils.hideProgress();
+      } catch(e) { ExportUtils.hideProgress(); alert('ZIP failed: ' + e.message); }
+    },
+
+    async exportPPTX(slug, title) {
+      const tocUrl = slug + '/index.html';
+      ExportUtils.showProgress('Loading ' + title + ' for PPTX...');
+      try {
+        const blocks = await this.getBlocksFromTOC(tocUrl);
+        if (!blocks.length) {
+          const resp = await fetch(tocUrl);
+          const html = await resp.text();
+          const doc = new DOMParser().parseFromString(html, 'text/html');
+          doc.querySelectorAll('a[href$=".html"]').forEach(a => {
+            const href = a.getAttribute('href');
+            if (href && /^\d/.test(href)) blocks.push(slug + '/' + href);
+          });
+        }
+        if (!blocks.length) { ExportUtils.hideProgress(); alert('No blocks found.'); return; }
+
+        // Collect all slides
+        let allSlides = [];
+        for (let i = 0; i < blocks.length; i++) {
+          ExportUtils.updateProgress('Fetching block ' + (i+1) + '/' + blocks.length, ((i+1)/blocks.length)*50);
+          const r = await fetch(blocks[i]);
+          const html = await r.text();
+          const doc = new DOMParser().parseFromString(html, 'text/html');
+          doc.querySelectorAll('.slide').forEach(slide => allSlides.push(slide));
+        }
+
+        ExportUtils.updateProgress('Generating PPTX (' + allSlides.length + ' slides)...', 60);
+
+        // Use ExportUtils.exportPPTX if available, otherwise fallback to print
+        if (typeof ExportUtils !== 'undefined' && ExportUtils.exportPPTX) {
+          ExportUtils.exportPPTX({ title: title, blocks: blocks.map(b => b.replace(slug + '/', '')) });
+        } else {
+          // Fallback: navigate to TOC page and use its PPTX export
+          window.location.href = tocUrl;
+        }
+        ExportUtils.hideProgress();
+      } catch(e) { ExportUtils.hideProgress(); alert('PPTX export failed: ' + e.message); }
+    }
+  };
+  </script>
 </body>
 </html>

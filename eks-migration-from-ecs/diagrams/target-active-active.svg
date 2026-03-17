@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="1400" height="900" viewBox="-0.5 -0.5 1400 900">
+  <defs>
+    <style type="text/css">
+      .title { font: bold 26px 'Amazon Ember', Arial, sans-serif; fill: #ffffff; }
+      .subtitle { font: 16px 'Amazon Ember', Arial, sans-serif; fill: #b8bfc9; }
+      .label { font: 14px 'Amazon Ember', Arial, sans-serif; fill: #ffffff; }
+      .label-bold { font: bold 14px 'Amazon Ember', Arial, sans-serif; fill: #ffffff; }
+      .small-label { font: 12px 'Amazon Ember', Arial, sans-serif; fill: #b8bfc9; }
+      .weight-label { font: bold 16px 'Amazon Ember', Arial, sans-serif; fill: #2ecc71; }
+      .accent { fill: #ff9900; }
+    </style>
+    <linearGradient id="vpcGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a472a;stop-opacity:0.9"/>
+      <stop offset="100%" style="stop-color:#0d2818;stop-opacity:0.9"/>
+    </linearGradient>
+    <linearGradient id="eksGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff9900;stop-opacity:0.25"/>
+      <stop offset="100%" style="stop-color:#cc7a00;stop-opacity:0.25"/>
+    </linearGradient>
+    <linearGradient id="azGradientA" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#2d5aa0;stop-opacity:0.5"/>
+      <stop offset="100%" style="stop-color:#1a3a6e;stop-opacity:0.5"/>
+    </linearGradient>
+    <linearGradient id="azGradientC" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#6b2d5a;stop-opacity:0.5"/>
+      <stop offset="100%" style="stop-color:#4a1a3e;stop-opacity:0.5"/>
+    </linearGradient>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4fc3f7" stroke="none"/>
+    </marker>
+    <marker id="arrowhead-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2ecc71" stroke="none"/>
+    </marker>
+    <marker id="arrowhead-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ff9900" stroke="none"/>
+    </marker>
+    <marker id="arrowhead-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#9b59b6" stroke="none"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0" y="0" width="1400" height="900" fill="#1a1d2e"/>
+
+  <!-- Title -->
+  <text x="700" y="40" text-anchor="middle" class="title">Target Active-Active Architecture</text>
+  <text x="700" y="65" text-anchor="middle" class="subtitle">Multi-Cluster EKS with NLB Weighted Routing | ap-northeast-2</text>
+
+  <!-- Internet -->
+  <rect x="620" y="85" width="160" height="40" rx="5" fill="#2d3748" stroke="#4a5568" stroke-width="2"/>
+  <text x="700" y="110" text-anchor="middle" class="label">Internet Traffic</text>
+
+  <!-- Arrow from Internet to NLB -->
+  <line x1="700" y1="125" x2="700" y2="155" stroke="#4fc3f7" stroke-width="3" marker-end="url(#arrowhead)"/>
+
+  <!-- NLB -->
+  <rect x="550" y="160" width="300" height="55" rx="8" fill="#232f3e" stroke="#ff9900" stroke-width="3"/>
+  <text x="700" y="185" text-anchor="middle" class="label-bold" fill="#ff9900">Network Load Balancer</text>
+  <text x="700" y="205" text-anchor="middle" class="small-label">Weighted Target Groups</text>
+
+  <!-- Weighted Routing Arrows -->
+  <path d="M 600 215 Q 450 260 350 300" stroke="#2ecc71" stroke-width="3" fill="none" marker-end="url(#arrowhead-green)"/>
+  <text x="420" y="250" class="weight-label">50%</text>
+  <rect x="280" y="280" width="100" height="30" rx="4" fill="#1e4d3d" stroke="#2ecc71" stroke-width="2"/>
+  <text x="330" y="300" text-anchor="middle" class="small-label" fill="#2ecc71">TG-A</text>
+
+  <path d="M 800 215 Q 950 260 1050 300" stroke="#2ecc71" stroke-width="3" fill="none" marker-end="url(#arrowhead-green)"/>
+  <text x="980" y="250" class="weight-label">50%</text>
+  <rect x="1020" y="280" width="100" height="30" rx="4" fill="#1e4d3d" stroke="#2ecc71" stroke-width="2"/>
+  <text x="1070" y="300" text-anchor="middle" class="small-label" fill="#2ecc71">TG-C</text>
+
+  <!-- VPC Container -->
+  <rect x="40" y="320" width="1320" height="560" rx="10" fill="url(#vpcGradient)" stroke="#2ecc71" stroke-width="2" stroke-dasharray="5,5"/>
+  <text x="60" y="345" class="label" fill="#2ecc71">VPC: 10.0.0.0/16</text>
+
+  <!-- AZ-a -->
+  <rect x="60" y="360" width="600" height="380" rx="8" fill="url(#azGradientA)" stroke="#3498db" stroke-width="2"/>
+  <text x="360" y="385" text-anchor="middle" class="label-bold" fill="#3498db">ap-northeast-2a</text>
+
+  <!-- AZ-c -->
+  <rect x="740" y="360" width="600" height="380" rx="8" fill="url(#azGradientC)" stroke="#e056fd" stroke-width="2"/>
+  <text x="1040" y="385" text-anchor="middle" class="label-bold" fill="#e056fd">ap-northeast-2c</text>
+
+  <!-- EKS Cluster A -->
+  <rect x="80" y="400" width="560" height="320" rx="6" fill="url(#eksGradient)" stroke="#ff9900" stroke-width="2"/>
+  <text x="360" y="425" text-anchor="middle" class="label-bold" fill="#ff9900">EKS Cluster A</text>
+
+  <!-- NGINX Gateway Fabric (A) -->
+  <rect x="100" y="445" width="180" height="70" rx="5" fill="#1a3d5c" stroke="#00d4aa" stroke-width="2"/>
+  <text x="190" y="470" text-anchor="middle" class="small-label" fill="#00d4aa">NGINX Gateway Fabric</text>
+  <text x="190" y="490" text-anchor="middle" class="small-label">L4/L7 Routing</text>
+  <text x="190" y="505" text-anchor="middle" class="small-label" fill="#4fc3f7">Gateway API</text>
+
+  <!-- Istio Service Mesh (A) -->
+  <rect x="300" y="445" width="160" height="70" rx="5" fill="#2d1b4e" stroke="#9b59b6" stroke-width="2"/>
+  <text x="380" y="470" text-anchor="middle" class="small-label" fill="#9b59b6">Istio Service Mesh</text>
+  <text x="380" y="490" text-anchor="middle" class="small-label">mTLS + Traffic Mgmt</text>
+  <text x="380" y="505" text-anchor="middle" class="small-label" fill="#e056fd">Envoy Sidecars</text>
+
+  <!-- Application Pods (A) -->
+  <rect x="480" y="445" width="140" height="70" rx="5" fill="#1e3a5f" stroke="#5dade2" stroke-width="1.5"/>
+  <text x="550" y="470" text-anchor="middle" class="small-label" fill="#5dade2">Application Pods</text>
+  <text x="550" y="490" text-anchor="middle" class="small-label">Microservices</text>
+
+  <!-- Pod Icons (A) -->
+  <rect x="100" y="535" width="60" height="45" rx="3" fill="#2d4a6f" stroke="#5dade2" stroke-width="1"/>
+  <text x="130" y="562" text-anchor="middle" class="small-label">API</text>
+
+  <rect x="175" y="535" width="60" height="45" rx="3" fill="#2d4a6f" stroke="#5dade2" stroke-width="1"/>
+  <text x="205" y="562" text-anchor="middle" class="small-label">User</text>
+
+  <rect x="250" y="535" width="60" height="45" rx="3" fill="#2d4a6f" stroke="#5dade2" stroke-width="1"/>
+  <text x="280" y="562" text-anchor="middle" class="small-label">Product</text>
+
+  <rect x="325" y="535" width="60" height="45" rx="3" fill="#2d4a6f" stroke="#5dade2" stroke-width="1"/>
+  <text x="355" y="562" text-anchor="middle" class="small-label">Review</text>
+
+  <rect x="400" y="535" width="60" height="45" rx="3" fill="#2d4a6f" stroke="#5dade2" stroke-width="1"/>
+  <text x="430" y="562" text-anchor="middle" class="small-label">Search</text>
+
+  <rect x="475" y="535" width="60" height="45" rx="3" fill="#2d4a6f" stroke="#5dade2" stroke-width="1"/>
+  <text x="505" y="562" text-anchor="middle" class="small-label">Order</text>
+
+  <rect x="550" y="535" width="70" height="45" rx="3" fill="#2d4a6f" stroke="#5dade2" stroke-width="1"/>
+  <text x="585" y="562" text-anchor="middle" class="small-label">Payment</text>
+
+  <!-- Karpenter (A) -->
+  <rect x="100" y="600" width="130" height="50" rx="4" fill="#3d2914" stroke="#f39c12" stroke-width="1.5"/>
+  <text x="165" y="620" text-anchor="middle" class="small-label" fill="#f39c12">Karpenter</text>
+  <text x="165" y="638" text-anchor="middle" class="small-label">Auto Scaling</text>
+
+  <!-- KEDA (A) -->
+  <rect x="250" y="600" width="130" height="50" rx="4" fill="#143d3d" stroke="#1abc9c" stroke-width="1.5"/>
+  <text x="315" y="620" text-anchor="middle" class="small-label" fill="#1abc9c">KEDA</text>
+  <text x="315" y="638" text-anchor="middle" class="small-label">Event Scaling</text>
+
+  <!-- Prometheus/Grafana (A) -->
+  <rect x="400" y="600" width="130" height="50" rx="4" fill="#3d1414" stroke="#e74c3c" stroke-width="1.5"/>
+  <text x="465" y="620" text-anchor="middle" class="small-label" fill="#e74c3c">Prometheus</text>
+  <text x="465" y="638" text-anchor="middle" class="small-label">Monitoring</text>
+
+  <!-- EKS Cluster C -->
+  <rect x="760" y="400" width="560" height="320" rx="6" fill="url(#eksGradient)" stroke="#ff9900" stroke-width="2"/>
+  <text x="1040" y="425" text-anchor="middle" class="label-bold" fill="#ff9900">EKS Cluster C</text>
+
+  <!-- NGINX Gateway Fabric (C) -->
+  <rect x="780" y="445" width="180" height="70" rx="5" fill="#1a3d5c" stroke="#00d4aa" stroke-width="2"/>
+  <text x="870" y="470" text-anchor="middle" class="small-label" fill="#00d4aa">NGINX Gateway Fabric</text>
+  <text x="870" y="490" text-anchor="middle" class="small-label">L4/L7 Routing</text>
+  <text x="870" y="505" text-anchor="middle" class="small-label" fill="#4fc3f7">Gateway API</text>
+
+  <!-- Istio Service Mesh (C) -->
+  <rect x="980" y="445" width="160" height="70" rx="5" fill="#2d1b4e" stroke="#9b59b6" stroke-width="2"/>
+  <text x="1060" y="470" text-anchor="middle" class="small-label" fill="#9b59b6">Istio Service Mesh</text>
+  <text x="1060" y="490" text-anchor="middle" class="small-label">mTLS + Traffic Mgmt</text>
+  <text x="1060" y="505" text-anchor="middle" class="small-label" fill="#e056fd">Envoy Sidecars</text>
+
+  <!-- Application Pods (C) -->
+  <rect x="1160" y="445" width="140" height="70" rx="5" fill="#1e3a5f" stroke="#5dade2" stroke-width="1.5"/>
+  <text x="1230" y="470" text-anchor="middle" class="small-label" fill="#5dade2">Application Pods</text>
+  <text x="1230" y="490" text-anchor="middle" class="small-label">Microservices</text>
+
+  <!-- Pod Icons (C) -->
+  <rect x="780" y="535" width="60" height="45" rx="3" fill="#2d4a6f" stroke="#5dade2" stroke-width="1"/>
+  <text x="810" y="562" text-anchor="middle" class="small-label">API</text>
+
+  <rect x="855" y="535" width="60" height="45" rx="3" fill="#2d4a6f" stroke="#5dade2" stroke-width="1"/>
+  <text x="885" y="562" text-anchor="middle" class="small-label">User</text>
+
+  <rect x="930" y="535" width="60" height="45" rx="3" fill="#2d4a6f" stroke="#5dade2" stroke-width="1"/>
+  <text x="960" y="562" text-anchor="middle" class="small-label">Product</text>
+
+  <rect x="1005" y="535" width="60" height="45" rx="3" fill="#2d4a6f" stroke="#5dade2" stroke-width="1"/>
+  <text x="1035" y="562" text-anchor="middle" class="small-label">Review</text>
+
+  <rect x="1080" y="535" width="60" height="45" rx="3" fill="#2d4a6f" stroke="#5dade2" stroke-width="1"/>
+  <text x="1110" y="562" text-anchor="middle" class="small-label">Search</text>
+
+  <rect x="1155" y="535" width="60" height="45" rx="3" fill="#2d4a6f" stroke="#5dade2" stroke-width="1"/>
+  <text x="1185" y="562" text-anchor="middle" class="small-label">Order</text>
+
+  <rect x="1230" y="535" width="70" height="45" rx="3" fill="#2d4a6f" stroke="#5dade2" stroke-width="1"/>
+  <text x="1265" y="562" text-anchor="middle" class="small-label">Payment</text>
+
+  <!-- Karpenter (C) -->
+  <rect x="780" y="600" width="130" height="50" rx="4" fill="#3d2914" stroke="#f39c12" stroke-width="1.5"/>
+  <text x="845" y="620" text-anchor="middle" class="small-label" fill="#f39c12">Karpenter</text>
+  <text x="845" y="638" text-anchor="middle" class="small-label">Auto Scaling</text>
+
+  <!-- KEDA (C) -->
+  <rect x="930" y="600" width="130" height="50" rx="4" fill="#143d3d" stroke="#1abc9c" stroke-width="1.5"/>
+  <text x="995" y="620" text-anchor="middle" class="small-label" fill="#1abc9c">KEDA</text>
+  <text x="995" y="638" text-anchor="middle" class="small-label">Event Scaling</text>
+
+  <!-- Prometheus/Grafana (C) -->
+  <rect x="1080" y="600" width="130" height="50" rx="4" fill="#3d1414" stroke="#e74c3c" stroke-width="1.5"/>
+  <text x="1145" y="620" text-anchor="middle" class="small-label" fill="#e74c3c">Prometheus</text>
+  <text x="1145" y="638" text-anchor="middle" class="small-label">Monitoring</text>
+
+  <!-- Shared Services -->
+  <rect x="350" y="760" width="150" height="55" rx="5" fill="#1a365d" stroke="#9b59b6" stroke-width="2"/>
+  <text x="425" y="785" text-anchor="middle" class="small-label" fill="#9b59b6">RDS Aurora</text>
+  <text x="425" y="805" text-anchor="middle" class="small-label">Multi-AZ</text>
+
+  <rect x="520" y="760" width="150" height="55" rx="5" fill="#1a365d" stroke="#1abc9c" stroke-width="2"/>
+  <text x="595" y="785" text-anchor="middle" class="small-label" fill="#1abc9c">ElastiCache</text>
+  <text x="595" y="805" text-anchor="middle" class="small-label">Redis Cluster</text>
+
+  <rect x="690" y="760" width="150" height="55" rx="5" fill="#1a365d" stroke="#3498db" stroke-width="2"/>
+  <text x="765" y="785" text-anchor="middle" class="small-label" fill="#3498db">S3</text>
+  <text x="765" y="805" text-anchor="middle" class="small-label">Object Storage</text>
+
+  <rect x="860" y="760" width="150" height="55" rx="5" fill="#1a365d" stroke="#f39c12" stroke-width="2"/>
+  <text x="935" y="785" text-anchor="middle" class="small-label" fill="#f39c12">OpenSearch</text>
+  <text x="935" y="805" text-anchor="middle" class="small-label">Search Engine</text>
+
+  <!-- ArgoCD -->
+  <rect x="60" y="760" width="140" height="55" rx="5" fill="#232f3e" stroke="#00d4aa" stroke-width="2"/>
+  <text x="130" y="785" text-anchor="middle" class="small-label" fill="#00d4aa">ArgoCD</text>
+  <text x="130" y="805" text-anchor="middle" class="small-label">GitOps</text>
+
+  <!-- ArgoCD Arrows -->
+  <path d="M 130 760 L 130 700 Q 130 680 150 680 L 330 680" stroke="#00d4aa" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrowhead-green)"/>
+  <path d="M 130 760 L 130 720 Q 200 720 700 720 Q 900 720 1010 680" stroke="#00d4aa" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrowhead-green)"/>
+
+  <!-- Connection labels -->
+  <text x="700" y="745" text-anchor="middle" class="small-label" fill="#b8bfc9">Shared Data Layer</text>
+</svg>

@@ -1,0 +1,266 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 300" width="1024" height="300">
+  <defs>
+    <linearGradient id="aws-dark" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1B2838"/>
+      <stop offset="100%" style="stop-color:#232F3E"/>
+    </linearGradient>
+    <linearGradient id="onprem-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#3D4F5F"/>
+      <stop offset="100%" style="stop-color:#2C3E4E"/>
+    </linearGradient>
+    <linearGradient id="aws-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#2A3A4E"/>
+      <stop offset="100%" style="stop-color:#1A2A3E"/>
+    </linearGradient>
+    <linearGradient id="dx-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#8C4FFF"/>
+      <stop offset="100%" style="stop-color:#6B3FCC"/>
+    </linearGradient>
+    <filter id="shadow" x="-2%" y="-2%" width="104%" height="104%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+    <filter id="glow-green">
+      <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#01A88D" flood-opacity="0.5"/>
+    </filter>
+    <filter id="glow-orange">
+      <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#FF9900" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="300" rx="8" fill="url(#aws-dark)"/>
+
+  <!-- ===== ON-PREMISES ZONE ===== -->
+  <rect x="16" y="16" width="280" height="268" rx="8" fill="url(#onprem-grad)" stroke="#5A6A7A" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="156" y="38" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="11" font-weight="700" fill="#8899AA">ON-PREMISES</text>
+
+  <!-- Private Cloud sub-zone -->
+  <rect x="26" y="48" width="260" height="100" rx="6" fill="#2C3E4E" stroke="#4A5A6A" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="36" y="64" font-family="Amazon Ember, Arial, sans-serif" font-size="9" fill="#6B7B8B">Private Cloud</text>
+
+  <!-- Subsidiaries -->
+  <rect x="36" y="72" width="110" height="66" rx="5" fill="#374858" stroke="#4A5A6A" stroke-width="1"/>
+  <!-- Server icons -->
+  <rect x="44" y="82" width="14" height="20" rx="2" fill="#8C4FFF" opacity="0.8"/>
+  <rect x="62" y="82" width="14" height="20" rx="2" fill="#8C4FFF" opacity="0.6"/>
+  <rect x="80" y="82" width="14" height="20" rx="2" fill="#8C4FFF" opacity="0.4"/>
+  <text x="100" y="96" font-family="Amazon Ember, Arial, sans-serif" font-size="9" fill="#6B7B8B">...</text>
+  <rect x="108" y="82" width="14" height="20" rx="2" fill="#8C4FFF" opacity="0.3"/>
+  <text x="91" y="126" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="9" font-weight="600" fill="#CCDDEE">계열사 A~J</text>
+  <text x="91" y="106" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="8" fill="#6B7B8B">FTP / File</text>
+
+  <!-- Crawler + NAS -->
+  <rect x="160" y="72" width="55" height="30" rx="4" fill="#374858" stroke="#ED7100" stroke-width="1"/>
+  <text x="187" y="91" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="9" font-weight="600" fill="#ED7100">Crawler</text>
+  <rect x="225" y="72" width="50" height="30" rx="4" fill="#374858" stroke="#3F8624" stroke-width="1"/>
+  <text x="250" y="91" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="9" font-weight="600" fill="#3F8624">NAS</text>
+
+  <!-- Arrow: Subsidiaries → Crawler -->
+  <line x1="146" y1="90" x2="158" y2="87" stroke="#666" stroke-width="1.2" marker-end="url(#arrowGray)"/>
+  <!-- Arrow: Crawler → NAS -->
+  <line x1="215" y1="87" x2="223" y2="87" stroke="#666" stroke-width="1.2" marker-end="url(#arrowGray)"/>
+
+  <!-- DMZ sub-zone -->
+  <rect x="26" y="158" width="260" height="116" rx="6" fill="#3A2E1E" stroke="#ED7100" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="36" y="174" font-family="Amazon Ember, Arial, sans-serif" font-size="9" fill="#ED7100">DMZ</text>
+
+  <!-- Web Portal -->
+  <rect x="36" y="182" width="100" height="40" rx="5" fill="#374858" stroke="#147EBA" stroke-width="1.5"/>
+  <text x="86" y="200" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="10" font-weight="600" fill="#FFFFFF">Web Portal</text>
+  <text x="86" y="213" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="8" fill="#6B8BAA">AI Proxy</text>
+
+  <!-- Users -->
+  <!-- User icon -->
+  <circle cx="54" cy="248" r="8" fill="#BF0816" opacity="0.8"/>
+  <circle cx="74" cy="248" r="8" fill="#BF0816" opacity="0.6"/>
+  <circle cx="94" cy="248" r="8" fill="#BF0816" opacity="0.4"/>
+  <text x="74" y="268" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="8" fill="#AABBCC">사용자</text>
+
+  <!-- Arrow: Users → Portal -->
+  <line x1="74" y1="238" x2="74" y2="224" stroke="#147EBA" stroke-width="1.5"/>
+  <polygon points="74,222 71,228 77,228" fill="#147EBA"/>
+
+  <!-- Public Crawler -->
+  <rect x="156" y="182" width="120" height="40" rx="5" fill="#374858" stroke="#ED7100" stroke-width="1"/>
+  <text x="216" y="200" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="10" font-weight="600" fill="#FFFFFF">Public Crawler</text>
+  <text x="216" y="213" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="8" fill="#6B7B8B">외부 데이터 수집</text>
+
+  <!-- ===== DIRECT CONNECT ===== -->
+  <rect x="310" y="60" width="44" height="180" rx="6" fill="url(#dx-grad)" stroke="#A070FF" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="332" y="130" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="9" font-weight="700" fill="#FFFFFF" transform="rotate(-90,332,130)">Direct Connect</text>
+  <!-- DX icon dots -->
+  <circle cx="332" cy="80" r="3" fill="#FFFFFF" opacity="0.6"/>
+  <circle cx="332" cy="90" r="2" fill="#FFFFFF" opacity="0.4"/>
+  <circle cx="332" cy="210" r="2" fill="#FFFFFF" opacity="0.4"/>
+  <circle cx="332" cy="220" r="3" fill="#FFFFFF" opacity="0.6"/>
+
+  <!-- Arrow: NAS → DX -->
+  <line x1="275" y1="87" x2="308" y2="100" stroke="#3F8624" stroke-width="1.5"/>
+  <polygon points="308,100 301,97 303,103" fill="#3F8624"/>
+  <!-- Arrow: Portal → DX -->
+  <line x1="136" y1="200" x2="308" y2="170" stroke="#147EBA" stroke-width="1.5"/>
+  <polygon points="308,170 301,167 303,173" fill="#147EBA"/>
+
+  <!-- ===== AWS CLOUD ZONE ===== -->
+  <rect x="370" y="16" width="638" height="268" rx="8" fill="url(#aws-grad)" stroke="#FF9900" stroke-width="2" filter="url(#shadow)"/>
+  <!-- AWS logo area -->
+  <text x="690" y="36" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="11" font-weight="700" fill="#FF9900">AWS Cloud</text>
+
+  <!-- VPC border -->
+  <rect x="380" y="44" width="618" height="232" rx="6" fill="none" stroke="#527FFF" stroke-width="1" stroke-dasharray="6 3"/>
+  <text x="392" y="58" font-family="Amazon Ember, Arial, sans-serif" font-size="9" font-weight="600" fill="#527FFF">VPC</text>
+
+  <!-- === DATA PIPELINE === -->
+  <rect x="390" y="64" width="230" height="200" rx="6" fill="#1E2E3E" stroke="#3A4A5A" stroke-width="1"/>
+  <text x="505" y="80" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="9" font-weight="600" fill="#5A7A9A">Data Pipeline</text>
+
+  <!-- S3 -->
+  <rect x="400" y="90" width="64" height="42" rx="5" fill="#2A3A2A" stroke="#3F8624" stroke-width="1.5"/>
+  <rect x="412" y="96" width="40" height="8" rx="2" fill="#3F8624" opacity="0.6"/>
+  <text x="432" y="122" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="9" font-weight="700" fill="#3F8624">S3</text>
+
+  <!-- Glue -->
+  <rect x="400" y="146" width="64" height="42" rx="5" fill="#2A2A3A" stroke="#8C4FFF" stroke-width="1.5"/>
+  <text x="432" y="165" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="9" font-weight="700" fill="#8C4FFF">Glue</text>
+  <text x="432" y="178" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="7" fill="#6B7B8B">ETL</text>
+
+  <!-- Arrow: S3 → Glue -->
+  <line x1="432" y1="132" x2="432" y2="144" stroke="#FF9900" stroke-width="1.5"/>
+  <polygon points="432,144 429,139 435,139" fill="#FF9900"/>
+
+  <!-- Bedrock KB -->
+  <rect x="482" y="90" width="68" height="42" rx="5" fill="#1A2E2E" stroke="#01A88D" stroke-width="1.5"/>
+  <text x="516" y="108" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="8" font-weight="700" fill="#01A88D">Bedrock</text>
+  <text x="516" y="120" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="8" font-weight="600" fill="#01A88D">KB</text>
+
+  <!-- Arrow: Glue → Bedrock KB -->
+  <path d="M464,160 Q480,140 482,111" fill="none" stroke="#FF9900" stroke-width="1.5"/>
+  <polygon points="482,111 479,117 485,116" fill="#FF9900"/>
+
+  <!-- OpenSearch -->
+  <rect x="482" y="146" width="68" height="42" rx="5" fill="#2A2A3A" stroke="#8C4FFF" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="516" y="164" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="8" font-weight="700" fill="#8C4FFF">OpenSearch</text>
+  <text x="516" y="178" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="8" fill="#8C4FFF">Serverless</text>
+
+  <!-- Arrow: Bedrock KB → OpenSearch -->
+  <line x1="516" y1="132" x2="516" y2="144" stroke="#FF9900" stroke-width="1.5"/>
+  <polygon points="516,144 513,139 519,139" fill="#FF9900"/>
+
+  <!-- Step Functions -->
+  <rect x="568" y="146" width="44" height="42" rx="5" fill="#2E1E2E" stroke="#E7157B" stroke-width="1"/>
+  <text x="590" y="164" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="7" font-weight="700" fill="#E7157B">Step</text>
+  <text x="590" y="176" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="7" font-weight="600" fill="#E7157B">Fn</text>
+
+  <!-- Vector Store label -->
+  <text x="516" y="202" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="7" fill="#8C4FFF">Vector Store</text>
+  <!-- Embedding label -->
+  <text x="516" y="250" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="7" fill="#01A88D">임베딩 생성 + 벡터 저장</text>
+
+  <!-- === EKS CLUSTER === -->
+  <rect x="630" y="64" width="358" height="200" rx="6" fill="#1E2E3E" stroke="#FF9900" stroke-width="1.5"/>
+  <text x="648" y="80" font-family="Amazon Ember, Arial, sans-serif" font-size="9" font-weight="700" fill="#FF9900">EKS Cluster</text>
+
+  <!-- Web/WAS Node Group -->
+  <rect x="640" y="88" width="170" height="74" rx="5" fill="#2A3A4E" stroke="#527FFF" stroke-width="1"/>
+  <text x="725" y="102" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="8" font-weight="600" fill="#527FFF">Web/WAS Node Group</text>
+
+  <!-- Web Frontend -->
+  <rect x="648" y="108" width="50" height="28" rx="4" fill="#374858" stroke="#527FFF" stroke-width="1"/>
+  <text x="673" y="125" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="7" font-weight="600" fill="#FFFFFF">Web</text>
+
+  <!-- WAS Backend -->
+  <rect x="706" y="108" width="50" height="28" rx="4" fill="#374858" stroke="#527FFF" stroke-width="1"/>
+  <text x="731" y="125" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="7" font-weight="600" fill="#FFFFFF">WAS</text>
+
+  <!-- LLM Gateway -->
+  <rect x="764" y="108" width="40" height="28" rx="4" fill="#374858" stroke="#01A88D" stroke-width="1.5"/>
+  <text x="784" y="120" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="6" font-weight="700" fill="#01A88D">LLM</text>
+  <text x="784" y="130" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="6" font-weight="600" fill="#01A88D">GW</text>
+
+  <!-- Arrows inside Web/WAS -->
+  <line x1="698" y1="122" x2="704" y2="122" stroke="#527FFF" stroke-width="1"/>
+  <line x1="756" y1="122" x2="762" y2="122" stroke="#01A88D" stroke-width="1"/>
+
+  <!-- GPU Node Group (Qwen3) -->
+  <rect x="640" y="172" width="170" height="84" rx="5" fill="#1A2E2A" stroke="#01A88D" stroke-width="2" filter="url(#glow-green)"/>
+  <text x="725" y="186" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="8" font-weight="600" fill="#01A88D">GPU Node Group</text>
+
+  <!-- Qwen3 card -->
+  <rect x="648" y="194" width="100" height="50" rx="5" fill="#2A4A3A" stroke="#01A88D" stroke-width="1.5"/>
+  <text x="698" y="212" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">Qwen3 32B</text>
+  <text x="698" y="226" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="7" fill="#6BAA8D">vLLM / TGI</text>
+  <text x="698" y="236" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="6" fill="#4A8A6A">NVIDIA GPU</text>
+
+  <!-- PII badge on Qwen3 -->
+  <rect x="752" y="198" width="50" height="16" rx="8" fill="#01A88D"/>
+  <text x="777" y="210" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="7" font-weight="700" fill="#1A2E2A">PII 포함</text>
+
+  <!-- Data Sovereignty note -->
+  <text x="777" y="230" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="6" fill="#6BAA8D">Data</text>
+  <text x="777" y="240" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="6" fill="#6BAA8D">Sovereignty</text>
+
+  <!-- Bedrock Claude area -->
+  <rect x="822" y="88" width="156" height="168" rx="5" fill="#1E2A3E" stroke="#FF9900" stroke-width="1.5" stroke-dasharray="4 3" filter="url(#glow-orange)"/>
+  <text x="900" y="104" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="9" font-weight="700" fill="#FF9900">Amazon Bedrock</text>
+
+  <!-- Claude card -->
+  <rect x="835" y="114" width="130" height="50" rx="5" fill="#2A3A5A" stroke="#FF9900" stroke-width="1.5"/>
+  <text x="900" y="134" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">Claude</text>
+  <text x="900" y="150" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="7" fill="#AABBCC">고성능 / 관리형</text>
+
+  <!-- No PII badge -->
+  <rect x="860" y="170" width="80" height="16" rx="8" fill="#FF9900"/>
+  <text x="900" y="182" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="7" font-weight="700" fill="#232F3E">No PII 쿼리</text>
+
+  <!-- Titan Embedding -->
+  <rect x="835" y="196" width="130" height="36" rx="5" fill="#2A3A4A" stroke="#01A88D" stroke-width="1"/>
+  <text x="900" y="212" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="8" font-weight="600" fill="#01A88D">Titan Embedding</text>
+  <text x="900" y="224" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="7" fill="#6B8BAA">벡터 임베딩 생성</text>
+
+  <!-- === ROUTING ARROWS === -->
+  <!-- LLM GW → Qwen3 (PII path) -->
+  <path d="M784,136 L784,145 Q784,150 779,155 L720,190" fill="none" stroke="#01A88D" stroke-width="2"/>
+  <polygon points="720,190 727,185 724,191" fill="#01A88D"/>
+
+  <!-- LLM GW → Bedrock Claude (No PII path) -->
+  <path d="M804,122 L820,122 L860,130" fill="none" stroke="#FF9900" stroke-width="2" stroke-dasharray="4 3"/>
+  <polygon points="860,130 853,127 855,133" fill="#FF9900"/>
+
+  <!-- OpenSearch ↔ Qwen3 RAG -->
+  <path d="M550,167 L632,210" fill="none" stroke="#8C4FFF" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <polygon points="550,167 556,170 554,164" fill="#8C4FFF"/>
+  <polygon points="632,210 626,207 628,213" fill="#8C4FFF"/>
+  <text x="586" y="182" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="7" font-weight="600" fill="#8C4FFF">RAG</text>
+
+  <!-- DX → S3 arrow -->
+  <line x1="354" y1="110" x2="398" y2="110" stroke="#3F8624" stroke-width="1.5"/>
+  <polygon points="398,110 393,107 393,113" fill="#3F8624"/>
+
+  <!-- DX → EKS arrow -->
+  <line x1="354" y1="170" x2="380" y2="170" stroke="#147EBA" stroke-width="1.5"/>
+  <path d="M380,170 Q400,170 460,140 Q520,110 640,120" fill="none" stroke="#147EBA" stroke-width="1.5"/>
+  <polygon points="640,120 634,117 634,123" fill="#147EBA"/>
+
+  <!-- === FLOW NUMBER BADGES === -->
+  <circle cx="170" y="108" r="8" fill="#3F8624"/>
+  <text x="170" y="112" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="8" font-weight="700" fill="#FFF">1</text>
+
+  <circle cx="297" cy="93" r="8" fill="#3F8624"/>
+  <text x="297" y="97" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="8" font-weight="700" fill="#FFF">2</text>
+
+  <circle cx="458" cy="137" r="8" fill="#FF9900"/>
+  <text x="458" y="141" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="8" font-weight="700" fill="#232F3E">3</text>
+
+  <circle cx="590" cy="122" r="8" fill="#147EBA"/>
+  <text x="590" y="126" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="8" font-weight="700" fill="#FFF">4</text>
+
+  <circle cx="808" cy="145" r="8" fill="#01A88D"/>
+  <text x="808" y="149" text-anchor="middle" font-family="Amazon Ember, Arial, sans-serif" font-size="8" font-weight="700" fill="#1A2E2A">5</text>
+
+  <!-- Arrow marker defs -->
+  <defs>
+    <marker id="arrowGray" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+      <polygon points="0,0 6,3 0,6" fill="#666"/>
+    </marker>
+  </defs>
+</svg>

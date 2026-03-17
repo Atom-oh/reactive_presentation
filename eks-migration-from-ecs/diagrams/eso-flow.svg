@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="1200" height="800" viewBox="-0.5 -0.5 1200 800">
+  <defs>
+    <style type="text/css">
+      .title { font: bold 24px 'Amazon Ember', Arial, sans-serif; fill: #ffffff; }
+      .subtitle { font: 16px 'Amazon Ember', Arial, sans-serif; fill: #b8bfc9; }
+      .label { font: 14px 'Amazon Ember', Arial, sans-serif; fill: #ffffff; }
+      .label-bold { font: bold 14px 'Amazon Ember', Arial, sans-serif; fill: #ffffff; }
+      .small-label { font: 12px 'Amazon Ember', Arial, sans-serif; fill: #b8bfc9; }
+      .code { font: 11px 'Consolas', monospace; fill: #e0e0e0; }
+      .step-num { font: bold 16px 'Amazon Ember', Arial, sans-serif; fill: #ffffff; }
+    </style>
+    <linearGradient id="awsGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff9900;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#cc7a00;stop-opacity:0.3"/>
+    </linearGradient>
+    <linearGradient id="k8sGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#326ce5;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#2251a8;stop-opacity:0.3"/>
+    </linearGradient>
+    <linearGradient id="esoGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#6c5ce7;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#4834d4;stop-opacity:0.3"/>
+    </linearGradient>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4fc3f7" stroke="none"/>
+    </marker>
+    <marker id="arrowhead-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ff9900" stroke="none"/>
+    </marker>
+    <marker id="arrowhead-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6c5ce7" stroke="none"/>
+    </marker>
+    <marker id="arrowhead-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2ecc71" stroke="none"/>
+    </marker>
+    <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#326ce5" stroke="none"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0" y="0" width="1200" height="800" fill="#1a1d2e"/>
+
+  <!-- Title -->
+  <text x="600" y="40" text-anchor="middle" class="title">External Secrets Operator Flow</text>
+  <text x="600" y="65" text-anchor="middle" class="subtitle">Secure Secret Synchronization from AWS Secrets Manager to Kubernetes</text>
+
+  <!-- AWS Secrets Manager (Source) -->
+  <rect x="50" y="100" width="300" height="250" rx="10" fill="url(#awsGradient)" stroke="#ff9900" stroke-width="2"/>
+  <text x="200" y="130" text-anchor="middle" class="label-bold" fill="#ff9900">AWS Secrets Manager</text>
+  <text x="200" y="150" text-anchor="middle" class="small-label">Source of Truth</text>
+
+  <!-- Secret entries -->
+  <rect x="70" y="170" width="260" height="55" rx="5" fill="#232f3e" stroke="#f39c12" stroke-width="1.5"/>
+  <text x="200" y="195" text-anchor="middle" class="small-label" fill="#f39c12">prod/database/credentials</text>
+  <text x="80" y="215" class="code">{"username":"app","password":"***"}</text>
+
+  <rect x="70" y="235" width="260" height="55" rx="5" fill="#232f3e" stroke="#f39c12" stroke-width="1.5"/>
+  <text x="200" y="260" text-anchor="middle" class="small-label" fill="#f39c12">prod/api/keys</text>
+  <text x="80" y="280" class="code">{"api_key":"sk-***","secret":"***"}</text>
+
+  <rect x="70" y="300" width="260" height="40" rx="5" fill="#232f3e" stroke="#f39c12" stroke-width="1.5"/>
+  <text x="200" y="325" text-anchor="middle" class="small-label" fill="#f39c12">prod/redis/connection</text>
+
+  <!-- EKS Cluster -->
+  <rect x="450" y="100" width="700" height="580" rx="10" fill="url(#k8sGradient)" stroke="#326ce5" stroke-width="2"/>
+  <text x="800" y="130" text-anchor="middle" class="label-bold" fill="#326ce5">EKS Cluster</text>
+
+  <!-- ESO Controller -->
+  <rect x="480" y="160" width="280" height="140" rx="8" fill="url(#esoGradient)" stroke="#6c5ce7" stroke-width="2"/>
+  <text x="620" y="190" text-anchor="middle" class="label-bold" fill="#6c5ce7">External Secrets Operator</text>
+  <text x="620" y="210" text-anchor="middle" class="small-label">Controller</text>
+
+  <rect x="500" y="225" width="240" height="60" rx="4" fill="#2d1b4e" stroke="#9b59b6" stroke-width="1"/>
+  <text x="620" y="250" text-anchor="middle" class="small-label" fill="#9b59b6">Reconciliation Loop</text>
+  <text x="510" y="275" class="code">Watch ExternalSecrets CRDs</text>
+
+  <!-- SecretStore CRD -->
+  <rect x="800" y="160" width="320" height="140" rx="8" fill="#1a2d2d" stroke="#2ecc71" stroke-width="2"/>
+  <text x="960" y="190" text-anchor="middle" class="label-bold" fill="#2ecc71">SecretStore</text>
+  <text x="960" y="210" text-anchor="middle" class="small-label">CRD - Cluster or Namespaced</text>
+
+  <rect x="820" y="225" width="280" height="60" rx="4" fill="#0d2818" stroke="#27ae60" stroke-width="1"/>
+  <text x="830" y="250" class="code">provider: aws</text>
+  <text x="830" y="270" class="code">auth: serviceAccountRef (IRSA)</text>
+
+  <!-- ExternalSecret CRD -->
+  <rect x="480" y="330" width="280" height="170" rx="8" fill="#1a2d3d" stroke="#3498db" stroke-width="2"/>
+  <text x="620" y="360" text-anchor="middle" class="label-bold" fill="#3498db">ExternalSecret</text>
+  <text x="620" y="380" text-anchor="middle" class="small-label">CRD - Per secret mapping</text>
+
+  <rect x="500" y="395" width="240" height="90" rx="4" fill="#0d1a2d" stroke="#2980b9" stroke-width="1"/>
+  <text x="510" y="420" class="code">secretStoreRef: aws-sm</text>
+  <text x="510" y="440" class="code">target: db-credentials</text>
+  <text x="510" y="460" class="code">data:</text>
+  <text x="510" y="480" class="code">  - remoteRef: prod/database</text>
+
+  <!-- Kubernetes Secret (created) -->
+  <rect x="800" y="330" width="320" height="170" rx="8" fill="#1a3d1a" stroke="#27ae60" stroke-width="2"/>
+  <text x="960" y="360" text-anchor="middle" class="label-bold" fill="#27ae60">Kubernetes Secret</text>
+  <text x="960" y="380" text-anchor="middle" class="small-label">Auto-created by ESO</text>
+
+  <rect x="820" y="395" width="280" height="90" rx="4" fill="#0d280d" stroke="#2ecc71" stroke-width="1"/>
+  <text x="830" y="420" class="code">name: db-credentials</text>
+  <text x="830" y="440" class="code">type: Opaque</text>
+  <text x="830" y="460" class="code">data:</text>
+  <text x="830" y="480" class="code">  username: YXBw (base64)</text>
+
+  <!-- Application Pod -->
+  <rect x="640" y="530" width="320" height="130" rx="8" fill="#1e3a5f" stroke="#5dade2" stroke-width="2"/>
+  <text x="800" y="560" text-anchor="middle" class="label-bold" fill="#5dade2">Application Pod</text>
+
+  <rect x="660" y="580" width="280" height="65" rx="4" fill="#152a40" stroke="#4fc3f7" stroke-width="1"/>
+  <text x="670" y="605" class="code">volumeMounts:</text>
+  <text x="670" y="625" class="code">  - name: db-creds</text>
+  <text x="670" y="640" class="code">    mountPath: /secrets</text>
+
+  <!-- Flow Arrows with Step Numbers -->
+
+  <!-- Step 1: ESO reads from AWS SM -->
+  <circle cx="380" cy="200" r="15" fill="#ff9900" stroke="#ffffff" stroke-width="2"/>
+  <text x="380" y="205" text-anchor="middle" class="step-num">1</text>
+  <path d="M 350 200 L 475 200" stroke="#ff9900" stroke-width="3" fill="none" marker-end="url(#arrowhead-orange)"/>
+  <text x="400" y="185" class="small-label" fill="#ff9900">Fetch secrets</text>
+
+  <!-- Step 2: ESO checks SecretStore -->
+  <circle cx="770" cy="230" r="15" fill="#2ecc71" stroke="#ffffff" stroke-width="2"/>
+  <text x="770" y="235" text-anchor="middle" class="step-num">2</text>
+  <path d="M 760 230 L 795 230" stroke="#2ecc71" stroke-width="2" fill="none" marker-end="url(#arrowhead-green)"/>
+  <text x="755" y="215" text-anchor="middle" class="small-label" fill="#2ecc71">Auth config</text>
+
+  <!-- Step 3: ESO reads ExternalSecret -->
+  <circle cx="620" cy="320" r="15" fill="#3498db" stroke="#ffffff" stroke-width="2"/>
+  <text x="620" y="325" text-anchor="middle" class="step-num">3</text>
+  <path d="M 620 300 L 620 325" stroke="#3498db" stroke-width="2" fill="none" marker-end="url(#arrowhead-blue)"/>
+
+  <!-- Step 4: ESO creates/updates K8s Secret -->
+  <circle cx="770" cy="415" r="15" fill="#6c5ce7" stroke="#ffffff" stroke-width="2"/>
+  <text x="770" y="420" text-anchor="middle" class="step-num">4</text>
+  <path d="M 760 415 L 795 415" stroke="#6c5ce7" stroke-width="3" fill="none" marker-end="url(#arrowhead-purple)"/>
+  <text x="770" y="455" text-anchor="middle" class="small-label" fill="#6c5ce7">Sync</text>
+
+  <!-- Step 5: Pod mounts secret -->
+  <circle cx="960" cy="520" r="15" fill="#5dade2" stroke="#ffffff" stroke-width="2"/>
+  <text x="960" y="525" text-anchor="middle" class="step-num">5</text>
+  <path d="M 960 500 L 960 515 Q 960 530 880 555 L 830 570" stroke="#5dade2" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="920" y="545" class="small-label" fill="#5dade2">Mount</text>
+
+  <!-- Refresh Interval indicator -->
+  <rect x="480" y="690" width="640" height="60" rx="6" fill="#2d2d1a" stroke="#f39c12" stroke-width="1.5"/>
+  <text x="800" y="715" text-anchor="middle" class="label-bold" fill="#f39c12">Sync Configuration</text>
+  <text x="500" y="738" class="code">refreshInterval: 1h    |    deletionPolicy: Retain    |    creationPolicy: Owner</text>
+
+  <!-- Legend -->
+  <rect x="50" y="380" width="300" height="200" rx="8" fill="#232f3e" stroke="#4a5568" stroke-width="1.5"/>
+  <text x="200" y="410" text-anchor="middle" class="label-bold" fill="#ffffff">Flow Steps</text>
+
+  <circle cx="80" cy="440" r="12" fill="#ff9900"/>
+  <text x="80" y="445" text-anchor="middle" class="small-label" fill="#1a1d2e">1</text>
+  <text x="100" y="445" class="small-label">ESO fetches from AWS SM</text>
+
+  <circle cx="80" cy="470" r="12" fill="#2ecc71"/>
+  <text x="80" y="475" text-anchor="middle" class="small-label" fill="#1a1d2e">2</text>
+  <text x="100" y="475" class="small-label">Authenticate via IRSA</text>
+
+  <circle cx="80" cy="500" r="12" fill="#3498db"/>
+  <text x="80" y="505" text-anchor="middle" class="small-label" fill="#1a1d2e">3</text>
+  <text x="100" y="505" class="small-label">Read ExternalSecret spec</text>
+
+  <circle cx="80" cy="530" r="12" fill="#6c5ce7"/>
+  <text x="80" y="535" text-anchor="middle" class="small-label" fill="#1a1d2e">4</text>
+  <text x="100" y="535" class="small-label">Create/Update K8s Secret</text>
+
+  <circle cx="80" cy="560" r="12" fill="#5dade2"/>
+  <text x="80" y="565" text-anchor="middle" class="small-label" fill="#1a1d2e">5</text>
+  <text x="100" y="565" class="small-label">Pod mounts secret volume</text>
+
+  <!-- Benefits box -->
+  <rect x="50" y="600" width="300" height="150" rx="6" fill="#1a2d2d" stroke="#4fc3f7" stroke-width="1.5"/>
+  <text x="200" y="625" text-anchor="middle" class="label-bold" fill="#4fc3f7">Benefits</text>
+  <text x="60" y="650" class="small-label">- No secrets in Git repos</text>
+  <text x="60" y="670" class="small-label">- Automatic rotation support</text>
+  <text x="60" y="690" class="small-label">- IRSA for secure auth (no static creds)</text>
+  <text x="60" y="710" class="small-label">- Audit trail in AWS CloudTrail</text>
+  <text x="60" y="730" class="small-label">- Multi-cluster secret sync</text>
+</svg>

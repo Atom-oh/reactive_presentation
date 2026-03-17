@@ -1,0 +1,455 @@
+<mxfile host="app.diagrams.net" agent="Claude">
+  <diagram id="vpce-traffic-sep" name="On-Prem VPCE Traffic Separation">
+    <mxGraphModel dx="1622" dy="1010" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1600" pageHeight="900" background="none" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- ═══════════════════ BACKGROUND ═══════════════════ -->
+        <mxCell id="bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#232F3E;strokeColor=#FF9900;arcSize=3;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="10" y="10" width="1580" height="880" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════ TITLE ═══════════════════ -->
+        <mxCell id="title" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:18px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;On-Prem 환경별 VPCE 트래픽 분리 아키텍처&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="300" y="18" width="1000" height="35" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════ ON-PREMISES GROUP ═══════════════════ -->
+        <mxCell id="onprem-group" value="&lt;font color=&quot;#AABBCC&quot; style=&quot;font-size:14px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;On-Premises (IDC)&lt;/b&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#37475A;strokeColor=#7D8998;arcSize=6;strokeWidth=2;verticalAlign=top;spacingTop=8;container=0;" vertex="1" parent="1">
+          <mxGeometry x="25" y="62" width="250" height="690" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Dev On-Prem Section ── -->
+        <mxCell id="onprem-dev-box" value="&lt;font color=&quot;#27AE60&quot; style=&quot;font-size:12px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Dev Environment&lt;/b&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0D2818;strokeColor=#27AE60;arcSize=10;strokeWidth=2;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="35" y="100" width="230" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="dev-dns-icon" value="" style="shape=mxgraph.aws4.traditional_server;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#5A30B5;strokeColor=none;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="65" y="140" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="dev-dns-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:10px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Dev DNS&lt;/b&gt;&lt;br&gt;Resolver&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="49" y="192" width="80" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="dev-app-icon" value="" style="shape=mxgraph.aws4.traditional_server;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#D05C17;strokeColor=none;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="180" y="140" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="dev-app-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:10px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Dev App&lt;/b&gt;&lt;br&gt;Server&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="164" y="192" width="80" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="dev-dns-query-label" value="&lt;font color=&quot;#27AE60&quot; style=&quot;font-size:9px;font-family:Amazon Ember,Arial;&quot;&gt;bedrock-runtime&lt;br&gt;.region.amazonaws.com&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="45" y="230" width="140" height="35" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Stg On-Prem Section ── -->
+        <mxCell id="onprem-stg-box" value="&lt;font color=&quot;#F39C12&quot; style=&quot;font-size:12px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Stg Environment&lt;/b&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2D2506;strokeColor=#F39C12;arcSize=10;strokeWidth=2;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="35" y="300" width="230" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="stg-dns-icon" value="" style="shape=mxgraph.aws4.traditional_server;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#5A30B5;strokeColor=none;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="65" y="340" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="stg-dns-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:10px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Stg DNS&lt;/b&gt;&lt;br&gt;Resolver&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="49" y="392" width="80" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="stg-app-icon" value="" style="shape=mxgraph.aws4.traditional_server;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#D05C17;strokeColor=none;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="180" y="340" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="stg-app-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:10px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Stg App&lt;/b&gt;&lt;br&gt;Server&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="164" y="392" width="80" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="stg-dns-query-label" value="&lt;font color=&quot;#F39C12&quot; style=&quot;font-size:9px;font-family:Amazon Ember,Arial;&quot;&gt;bedrock-runtime&lt;br&gt;.region.amazonaws.com&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="45" y="430" width="140" height="35" as="geometry"/>
+        </mxCell>
+
+        <!-- ── Prod On-Prem Section ── -->
+        <mxCell id="onprem-prod-box" value="&lt;font color=&quot;#E74C3C&quot; style=&quot;font-size:12px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Prod Environment&lt;/b&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2D0B0B;strokeColor=#E74C3C;arcSize=10;strokeWidth=2;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="35" y="500" width="230" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="prod-dns-icon" value="" style="shape=mxgraph.aws4.traditional_server;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#5A30B5;strokeColor=none;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="65" y="540" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="prod-dns-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:10px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Prod DNS&lt;/b&gt;&lt;br&gt;Resolver&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="49" y="592" width="80" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="prod-app-icon" value="" style="shape=mxgraph.aws4.traditional_server;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#D05C17;strokeColor=none;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="180" y="540" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="prod-app-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:10px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Prod App&lt;/b&gt;&lt;br&gt;Server&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="164" y="592" width="80" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="prod-dns-query-label" value="&lt;font color=&quot;#E74C3C&quot; style=&quot;font-size:9px;font-family:Amazon Ember,Arial;&quot;&gt;bedrock-runtime&lt;br&gt;.region.amazonaws.com&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="45" y="630" width="140" height="35" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════ NETWORK HUB ═══════════════════ -->
+        <mxCell id="net-group" value="&lt;font color=&quot;#AABBCC&quot; style=&quot;font-size:13px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Network Hub&lt;/b&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2A3A4E;strokeColor=#FF9900;arcSize=6;strokeWidth=2;verticalAlign=top;spacingTop=8;container=0;" vertex="1" parent="1">
+          <mxGeometry x="300" y="62" width="170" height="690" as="geometry"/>
+        </mxCell>
+
+        <!-- Direct Connect -->
+        <mxCell id="dx-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.direct_connect;outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="361" y="130" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="dx-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:11px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Direct&lt;br&gt;Connect&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="340" y="182" width="90" height="35" as="geometry"/>
+        </mxCell>
+
+        <!-- DX Gateway -->
+        <mxCell id="dxgw-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.direct_connect;outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="361" y="310" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="dxgw-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:11px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;DX&lt;br&gt;Gateway&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="340" y="362" width="90" height="35" as="geometry"/>
+        </mxCell>
+
+        <!-- Transit Gateway -->
+        <mxCell id="tgw-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.transit_gateway;outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="361" y="480" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="tgw-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:11px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Transit&lt;br&gt;Gateway&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="340" y="532" width="90" height="35" as="geometry"/>
+        </mxCell>
+        <!-- Route Table boxes (color-coded per environment) -->
+        <mxCell id="tgw-rt-dev" value="&lt;font color=&quot;#27AE60&quot; style=&quot;font-size:9px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;RT-Dev&lt;/b&gt;&lt;br&gt;10.1.0.0/16 → Dev VPC&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0D2818;strokeColor=#27AE60;arcSize=12;strokeWidth=2;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="315" y="575" width="140" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="tgw-rt-stg" value="&lt;font color=&quot;#F39C12&quot; style=&quot;font-size:9px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;RT-Stg&lt;/b&gt;&lt;br&gt;10.2.0.0/16 → Stg VPC&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2D2506;strokeColor=#F39C12;arcSize=12;strokeWidth=2;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="315" y="612" width="140" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="tgw-rt-prod" value="&lt;font color=&quot;#E74C3C&quot; style=&quot;font-size:9px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;RT-Prod&lt;/b&gt;&lt;br&gt;10.3.0.0/16 → Prod VPC&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2D0B0B;strokeColor=#E74C3C;arcSize=12;strokeWidth=2;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="315" y="649" width="140" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- TGW → RT internal connection arrows -->
+        <mxCell id="arr-tgw-rt-dev" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#27AE60;strokeWidth=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="tgw-icon" target="tgw-rt-dev">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr-tgw-rt-stg" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#F39C12;strokeWidth=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="tgw-icon" target="tgw-rt-stg">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr-tgw-rt-prod" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#E74C3C;strokeWidth=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="tgw-icon" target="tgw-rt-prod">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Network internal arrows: DX → DXGW → TGW -->
+        <mxCell id="arrow-dx-dxgw" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#FF9900;strokeWidth=3;" edge="1" parent="1" source="dx-icon" target="dxgw-icon">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow-dxgw-tgw" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#FF9900;strokeWidth=3;" edge="1" parent="1" source="dxgw-icon" target="tgw-icon">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════ AWS CLOUD ═══════════════════ -->
+        <mxCell id="aws-cloud" value="&lt;font color=&quot;#FF9900&quot; style=&quot;font-size:14px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;AWS Cloud&lt;/b&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1A2636;strokeColor=#FF9900;arcSize=4;strokeWidth=2;verticalAlign=top;spacingTop=8;container=0;" vertex="1" parent="1">
+          <mxGeometry x="495" y="62" width="1080" height="690" as="geometry"/>
+        </mxCell>
+        <mxCell id="region-label" value="&lt;font color=&quot;#AABBCC&quot; style=&quot;font-size:11px;font-family:Amazon Ember,Arial;&quot;&gt;Region: ap-northeast-2&lt;/font&gt;" style="text;html=1;align=right;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1360" y="65" width="200" height="25" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════ DEV VPC ═══════════ -->
+        <mxCell id="dev-vpc" value="&lt;font color=&quot;#27AE60&quot; style=&quot;font-size:13px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Dev VPC&lt;/b&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0D2818;strokeColor=#27AE60;arcSize=6;strokeWidth=2;verticalAlign=top;spacingTop=6;container=0;" vertex="1" parent="1">
+          <mxGeometry x="510" y="98" width="1050" height="185" as="geometry"/>
+        </mxCell>
+        <!-- R53 Inbound Resolver -->
+        <mxCell id="dev-r53-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.route_53;outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="540" y="145" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="dev-r53-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:9px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Route 53&lt;br&gt;Inbound Resolver&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="517" y="197" width="95" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="dev-r53-ip" value="&lt;font color=&quot;#27AE60&quot; style=&quot;font-size:8px;font-family:Amazon Ember,Arial;&quot;&gt;10.1.0.10&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=8;" vertex="1" parent="1">
+          <mxGeometry x="527" y="232" width="75" height="18" as="geometry"/>
+        </mxCell>
+        <!-- PHZ -->
+        <mxCell id="dev-phz" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:10px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Private Hosted Zone&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:8px&quot; color=&quot;#27AE60&quot;&gt;bedrock-runtime&lt;br&gt;.ap-northeast-2&lt;br&gt;.amazonaws.com&lt;/font&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1A3A2A;strokeColor=#27AE60;arcSize=12;strokeWidth=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="680" y="140" width="150" height="75" as="geometry"/>
+        </mxCell>
+        <!-- Bedrock VPCE -->
+        <mxCell id="dev-vpce-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.vpc;outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="890" y="145" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="dev-vpce-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:9px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Bedrock&lt;br&gt;Interface VPCE&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="868" y="197" width="93" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="dev-vpce-ip" value="&lt;font color=&quot;#27AE60&quot; style=&quot;font-size:8px;font-family:Amazon Ember,Arial;&quot;&gt;10.1.1.100&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=8;" vertex="1" parent="1">
+          <mxGeometry x="878" y="232" width="75" height="18" as="geometry"/>
+        </mxCell>
+        <!-- Bedrock Service -->
+        <mxCell id="dev-bedrock-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;outlineConnect=0;fontColor=#232F3E;gradientColor=#4AB29A;gradientDirection=north;fillColor=#116D5B;strokeColor=#ffffff;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="1070" y="145" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="dev-bedrock-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:9px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Amazon&lt;br&gt;Bedrock&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="1055" y="197" width="78" height="35" as="geometry"/>
+        </mxCell>
+        <!-- IRA Trust Anchor -->
+        <mxCell id="dev-ira-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.identity_and_access_management;outlineConnect=0;fontColor=#232F3E;gradientColor=#F54749;gradientDirection=north;fillColor=#C7131F;strokeColor=#ffffff;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="145" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="dev-ira-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:9px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;IAM Roles&lt;br&gt;Anywhere&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#27AE60&quot;&gt;Dev Trust Anchor&lt;/font&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="1232" y="197" width="105" height="45" as="geometry"/>
+        </mxCell>
+        <!-- Dev VPC internal arrows -->
+        <mxCell id="dev-arr-r53-phz" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#27AE60;strokeWidth=2;dashed=1;dashPattern=4 4;" edge="1" parent="1" source="dev-r53-icon" target="dev-phz">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="dev-arr-r53-phz-lbl" value="&lt;font color=&quot;#27AE60&quot; style=&quot;font-size:8px;&quot;&gt;DNS&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;fontSize=8;" vertex="1" connectable="0" parent="dev-arr-r53-phz">
+          <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="dev-arr-phz-vpce" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#27AE60;strokeWidth=2;" edge="1" parent="1" source="dev-phz" target="dev-vpce-icon">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="dev-arr-phz-vpce-lbl" value="&lt;font color=&quot;#27AE60&quot; style=&quot;font-size:8px;&quot;&gt;Resolve&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;fontSize=8;" vertex="1" connectable="0" parent="dev-arr-phz-vpce">
+          <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="dev-arr-vpce-bedrock" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#27AE60;strokeWidth=2;" edge="1" parent="1" source="dev-vpce-icon" target="dev-bedrock-icon">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="dev-arr-vpce-bedrock-lbl" value="&lt;font color=&quot;#27AE60&quot; style=&quot;font-size:8px;&quot;&gt;Private&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;fontSize=8;" vertex="1" connectable="0" parent="dev-arr-vpce-bedrock">
+          <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- ═══════════ STG VPC ═══════════ -->
+        <mxCell id="stg-vpc" value="&lt;font color=&quot;#F39C12&quot; style=&quot;font-size:13px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Stg VPC&lt;/b&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2D2506;strokeColor=#F39C12;arcSize=6;strokeWidth=2;verticalAlign=top;spacingTop=6;container=0;" vertex="1" parent="1">
+          <mxGeometry x="510" y="298" width="1050" height="185" as="geometry"/>
+        </mxCell>
+        <mxCell id="stg-r53-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.route_53;outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="540" y="345" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="stg-r53-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:9px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Route 53&lt;br&gt;Inbound Resolver&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="517" y="397" width="95" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="stg-r53-ip" value="&lt;font color=&quot;#F39C12&quot; style=&quot;font-size:8px;font-family:Amazon Ember,Arial;&quot;&gt;10.2.0.10&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=8;" vertex="1" parent="1">
+          <mxGeometry x="527" y="432" width="75" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="stg-phz" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:10px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Private Hosted Zone&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:8px&quot; color=&quot;#F39C12&quot;&gt;bedrock-runtime&lt;br&gt;.ap-northeast-2&lt;br&gt;.amazonaws.com&lt;/font&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3A3A1A;strokeColor=#F39C12;arcSize=12;strokeWidth=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="680" y="340" width="150" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="stg-vpce-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.vpc;outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="890" y="345" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="stg-vpce-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:9px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Bedrock&lt;br&gt;Interface VPCE&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="868" y="397" width="93" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="stg-vpce-ip" value="&lt;font color=&quot;#F39C12&quot; style=&quot;font-size:8px;font-family:Amazon Ember,Arial;&quot;&gt;10.2.1.100&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=8;" vertex="1" parent="1">
+          <mxGeometry x="878" y="432" width="75" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="stg-bedrock-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;outlineConnect=0;fontColor=#232F3E;gradientColor=#4AB29A;gradientDirection=north;fillColor=#116D5B;strokeColor=#ffffff;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="1070" y="345" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="stg-bedrock-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:9px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Amazon&lt;br&gt;Bedrock&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="1055" y="397" width="78" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="stg-ira-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.identity_and_access_management;outlineConnect=0;fontColor=#232F3E;gradientColor=#F54749;gradientDirection=north;fillColor=#C7131F;strokeColor=#ffffff;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="345" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="stg-ira-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:9px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;IAM Roles&lt;br&gt;Anywhere&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#F39C12&quot;&gt;Stg Trust Anchor&lt;/font&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="1232" y="397" width="105" height="45" as="geometry"/>
+        </mxCell>
+        <!-- Stg VPC internal arrows -->
+        <mxCell id="stg-arr-r53-phz" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#F39C12;strokeWidth=2;dashed=1;dashPattern=4 4;" edge="1" parent="1" source="stg-r53-icon" target="stg-phz">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="stg-arr-r53-phz-lbl" value="&lt;font color=&quot;#F39C12&quot; style=&quot;font-size:8px;&quot;&gt;DNS&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;fontSize=8;" vertex="1" connectable="0" parent="stg-arr-r53-phz">
+          <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="stg-arr-phz-vpce" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#F39C12;strokeWidth=2;" edge="1" parent="1" source="stg-phz" target="stg-vpce-icon">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="stg-arr-phz-vpce-lbl" value="&lt;font color=&quot;#F39C12&quot; style=&quot;font-size:8px;&quot;&gt;Resolve&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;fontSize=8;" vertex="1" connectable="0" parent="stg-arr-phz-vpce">
+          <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="stg-arr-vpce-bedrock" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#F39C12;strokeWidth=2;" edge="1" parent="1" source="stg-vpce-icon" target="stg-bedrock-icon">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="stg-arr-vpce-bedrock-lbl" value="&lt;font color=&quot;#F39C12&quot; style=&quot;font-size:8px;&quot;&gt;Private&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;fontSize=8;" vertex="1" connectable="0" parent="stg-arr-vpce-bedrock">
+          <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- ═══════════ PROD VPC ═══════════ -->
+        <mxCell id="prod-vpc" value="&lt;font color=&quot;#E74C3C&quot; style=&quot;font-size:13px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Prod VPC&lt;/b&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2D0B0B;strokeColor=#E74C3C;arcSize=6;strokeWidth=2;verticalAlign=top;spacingTop=6;container=0;" vertex="1" parent="1">
+          <mxGeometry x="510" y="498" width="1050" height="185" as="geometry"/>
+        </mxCell>
+        <mxCell id="prod-r53-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.route_53;outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="540" y="545" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="prod-r53-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:9px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Route 53&lt;br&gt;Inbound Resolver&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="517" y="597" width="95" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="prod-r53-ip" value="&lt;font color=&quot;#E74C3C&quot; style=&quot;font-size:8px;font-family:Amazon Ember,Arial;&quot;&gt;10.3.0.10&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=8;" vertex="1" parent="1">
+          <mxGeometry x="527" y="632" width="75" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="prod-phz" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:10px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Private Hosted Zone&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:8px&quot; color=&quot;#E74C3C&quot;&gt;bedrock-runtime&lt;br&gt;.ap-northeast-2&lt;br&gt;.amazonaws.com&lt;/font&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3A1A1A;strokeColor=#E74C3C;arcSize=12;strokeWidth=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="680" y="540" width="150" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="prod-vpce-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.vpc;outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="890" y="545" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="prod-vpce-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:9px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Bedrock&lt;br&gt;Interface VPCE&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="868" y="597" width="93" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="prod-vpce-ip" value="&lt;font color=&quot;#E74C3C&quot; style=&quot;font-size:8px;font-family:Amazon Ember,Arial;&quot;&gt;10.3.1.100&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=8;" vertex="1" parent="1">
+          <mxGeometry x="878" y="632" width="75" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="prod-bedrock-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;outlineConnect=0;fontColor=#232F3E;gradientColor=#4AB29A;gradientDirection=north;fillColor=#116D5B;strokeColor=#ffffff;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="1070" y="545" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="prod-bedrock-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:9px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Amazon&lt;br&gt;Bedrock&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="1055" y="597" width="78" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="prod-ira-icon" value="" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.identity_and_access_management;outlineConnect=0;fontColor=#232F3E;gradientColor=#F54749;gradientDirection=north;fillColor=#C7131F;strokeColor=#ffffff;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="545" width="48" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="prod-ira-label" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:9px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;IAM Roles&lt;br&gt;Anywhere&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#E74C3C&quot;&gt;Prod Trust Anchor&lt;/font&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=top;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="1232" y="597" width="105" height="45" as="geometry"/>
+        </mxCell>
+        <!-- Prod VPC internal arrows -->
+        <mxCell id="prod-arr-r53-phz" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#E74C3C;strokeWidth=2;dashed=1;dashPattern=4 4;" edge="1" parent="1" source="prod-r53-icon" target="prod-phz">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="prod-arr-r53-phz-lbl" value="&lt;font color=&quot;#E74C3C&quot; style=&quot;font-size:8px;&quot;&gt;DNS&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;fontSize=8;" vertex="1" connectable="0" parent="prod-arr-r53-phz">
+          <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="prod-arr-phz-vpce" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#E74C3C;strokeWidth=2;" edge="1" parent="1" source="prod-phz" target="prod-vpce-icon">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="prod-arr-phz-vpce-lbl" value="&lt;font color=&quot;#E74C3C&quot; style=&quot;font-size:8px;&quot;&gt;Resolve&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;fontSize=8;" vertex="1" connectable="0" parent="prod-arr-phz-vpce">
+          <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="prod-arr-vpce-bedrock" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#E74C3C;strokeWidth=2;" edge="1" parent="1" source="prod-vpce-icon" target="prod-bedrock-icon">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="prod-arr-vpce-bedrock-lbl" value="&lt;font color=&quot;#E74C3C&quot; style=&quot;font-size:8px;&quot;&gt;Private&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;fontSize=8;" vertex="1" connectable="0" parent="prod-arr-vpce-bedrock">
+          <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- ═══════════════════ CROSS-ZONE ARROWS ═══════════════════ -->
+
+        <!-- On-Prem Dev → DX (DNS query flow) -->
+        <mxCell id="arr-onprem-dev-dx" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#27AE60;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="dev-dns-icon" target="dx-icon">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="290" y="164"/>
+              <mxPoint x="290" y="154"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <!-- On-Prem Stg → DX -->
+        <mxCell id="arr-onprem-stg-dx" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#F39C12;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="stg-dns-icon" target="dx-icon">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="295" y="364"/>
+              <mxPoint x="295" y="154"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <!-- On-Prem Prod → DX -->
+        <mxCell id="arr-onprem-prod-dx" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#E74C3C;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="prod-dns-icon" target="dx-icon">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="300" y="564"/>
+              <mxPoint x="300" y="154"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- RT-Dev → Dev VPC -->
+        <mxCell id="arr-tgw-dev" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#27AE60;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="tgw-rt-dev" target="dev-r53-icon">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="480" y="590"/>
+              <mxPoint x="480" y="169"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <!-- RT-Stg → Stg VPC -->
+        <mxCell id="arr-tgw-stg" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#F39C12;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="tgw-rt-stg" target="stg-r53-icon">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="485" y="627"/>
+              <mxPoint x="485" y="369"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <!-- RT-Prod → Prod VPC -->
+        <mxCell id="arr-tgw-prod" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#E74C3C;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="tgw-rt-prod" target="prod-r53-icon">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="490" y="664"/>
+              <mxPoint x="490" y="569"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ═══════════════════ LEGEND ═══════════════════ -->
+        <mxCell id="legend-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2A3A4E;strokeColor=#545B64;arcSize=10;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="25" y="765" width="1550" height="115" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-title" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:12px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Legend &amp;amp; DNS Flow&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="770" width="200" height="25" as="geometry"/>
+        </mxCell>
+
+        <!-- Color legend -->
+        <mxCell id="leg-dev-line" value="" style="endArrow=classic;strokeColor=#27AE60;strokeWidth=3;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="50" y="810" as="sourcePoint"/>
+            <mxPoint x="100" y="810" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="leg-dev-text" value="&lt;font color=&quot;#27AE60&quot; style=&quot;font-size:10px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Dev&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="105" y="800" width="40" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg-stg-line" value="" style="endArrow=classic;strokeColor=#F39C12;strokeWidth=3;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="155" y="810" as="sourcePoint"/>
+            <mxPoint x="205" y="810" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="leg-stg-text" value="&lt;font color=&quot;#F39C12&quot; style=&quot;font-size:10px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Stg&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="210" y="800" width="40" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg-prod-line" value="" style="endArrow=classic;strokeColor=#E74C3C;strokeWidth=3;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="260" y="810" as="sourcePoint"/>
+            <mxPoint x="310" y="810" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="leg-prod-text" value="&lt;font color=&quot;#E74C3C&quot; style=&quot;font-size:10px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Prod&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="315" y="800" width="40" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg-dx-line" value="" style="endArrow=classic;strokeColor=#FF9900;strokeWidth=3;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="370" y="810" as="sourcePoint"/>
+            <mxPoint x="420" y="810" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="leg-dx-text" value="&lt;font color=&quot;#FF9900&quot; style=&quot;font-size:10px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Direct Connect&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="425" y="800" width="110" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- DNS Flow description -->
+        <mxCell id="dns-flow-title" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:11px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;DNS Resolution Flow:&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="830" width="180" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="dns-flow-desc" value="&lt;font color=&quot;#AABBCC&quot; style=&quot;font-size:10px;font-family:Amazon Ember,Arial;&quot;&gt;On-Prem DNS Resolver → &lt;font color=&quot;#FF9900&quot;&gt;DX/TGW&lt;/font&gt; → Route 53 Inbound Resolver EP → &lt;font color=&quot;#945DF2&quot;&gt;Private Hosted Zone&lt;/font&gt; → VPCE ENI IP (환경별 격리)&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="850" width="600" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- Key insight box -->
+        <mxCell id="insight-box" value="&lt;font color=&quot;#FFFFFF&quot; style=&quot;font-size:10px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;핵심 포인트:&lt;/b&gt; 동일한 bedrock-runtime DNS 주소가 각 VPC의 PHZ에 의해 &lt;b&gt;환경별 다른 VPCE IP&lt;/b&gt;로 resolve됨&lt;br&gt;→ On-Prem DNS Resolver가 환경별로 분리되어 해당 VPC의 R53 Inbound EP로만 쿼리 전달&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#37475A;strokeColor=#FF9900;arcSize=12;strokeWidth=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="700" y="795" width="850" height="45" as="geometry"/>
+        </mxCell>
+
+        <!-- Data flow description -->
+        <mxCell id="data-flow-desc" value="&lt;font color=&quot;#AABBCC&quot; style=&quot;font-size:10px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Data Flow:&lt;/b&gt; App Server → &lt;font color=&quot;#FF9900&quot;&gt;DX/TGW&lt;/font&gt; → Bedrock Interface VPCE (ENI) → Amazon Bedrock (PrivateLink)&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="700" y="850" width="600" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- IRA flow description -->
+        <mxCell id="ira-flow-desc" value="&lt;font color=&quot;#AABBCC&quot; style=&quot;font-size:10px;font-family:Amazon Ember,Arial;&quot;&gt;&lt;b&gt;Auth:&lt;/b&gt; &lt;font color=&quot;#F54749&quot;&gt;IAM Roles Anywhere&lt;/font&gt; — 환경별 Trust Anchor + Profile로 On-Prem 워크로드 인증&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="700" y="866" width="600" height="20" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

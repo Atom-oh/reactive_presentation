@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Block 3: Observability Correlation | EKS Observability Ops</title>
   <link rel="icon" type="image/png" href="../favicon.png">
-  <link rel="stylesheet" href="../common/theme.css">
-  <link rel="stylesheet" href="../common/theme-override.css">
+  <link rel="stylesheet" href="common/theme.css">
+  <link rel="stylesheet" href="common/theme-override.css">
   <style>
     /* Slide-specific styles */
     .pillar-card {
@@ -234,7 +234,7 @@
   <div class="slide-deck">
 
     <!-- Slide 1: Session Cover (PPTX layout) -->
-    <div class="slide" style="background:url('../common/pptx-theme/images/Picture_13.png') center/cover no-repeat; padding:0; overflow:hidden;">
+    <div class="slide" style="background:url('common/pptx-theme/images/Picture_13.png') center/cover no-repeat; padding:0; overflow:hidden;">
       <h1 style="position:absolute; left:5%; top:48%; font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:53%; margin:0;">EKS Observability</h1>
       <p style="position:absolute; left:5%; top:62%; font-size:1.3rem; color:rgba(255,255,255,0.8); width:53%; margin:0;">Observability Correlation</p>
       <div style="position:absolute; left:5%; top:76%;">
@@ -242,7 +242,7 @@
         <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:6px 0 0 0;">Sr. Solutions Architect</p>
         <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:2px 0 0 0;">Amazon Web Services</p>
       </div>
-      <img src="../common/pptx-theme/images/Picture_8.png" alt="" style="position:absolute; right:5%; bottom:10%; width:8%; pointer-events:none;" />
+      <img src="common/pptx-theme/images/Picture_8.png" alt="" style="position:absolute; right:5%; bottom:10%; width:8%; pointer-events:none;" />
     </div>
 
     <!-- Slide 2: Pain Point -->
@@ -1112,15 +1112,15 @@ ERROR: Unable to acquire connection within 5s
   </div>
 
   <!-- Framework Scripts -->
-  <script src="../common/slide-framework.js"></script>
-  <script src="../common/presenter-view.js"></script>
-  <script src="../common/animation-utils.js"></script>
-  <script src="../common/quiz-component.js"></script>
+  <script src="common/slide-framework.js"></script>
+  <script src="common/presenter-view.js"></script>
+  <script src="common/animation-utils.js"></script>
+  <script src="common/quiz-component.js"></script>
 
   <script>
     // Initialize slide framework
     const slideFramework = new SlideFramework({
-      logoSrc: '../common/pptx-theme/images/logo_1.png',
+      logoSrc: 'common/pptx-theme/images/logo_1.png',
       presenterNotes: {
         1: '세션 시작 슬라이드.\n\n자기소개 후 Block 3 개요 안내.\n이번 블록에서는 관측성 데이터의 상관 분석(Correlation)을 다룹니다.\n\n핵심 질문: "메트릭에서 이상을 발견했을 때, 관련 트레이스와 로그를 얼마나 빨리 찾을 수 있나요?"\n\n상관 분석 = Metrics, Traces, Logs 세 가지 시그널을 서로 연결해서 한 화면에서 탐색하는 것.\n이것이 가능해지면 MTTR(Mean Time To Resolution)이 50% 이상 단축됩니다.',
         2: '청중에게 공감을 이끌어내세요.\n\n"CloudWatch에서 에러율 급증을 봤는데, 어떤 요청이 실패한 건지 찾으려면 로그를 grep 하고, 트레이스를 별도 도구에서 검색하고... 이 과정에 30분이 걸린다면?"\n\n이게 바로 상관 분석이 해결하는 문제입니다.\n- 도구 간 컨텍스트 스위칭 비용\n- 시간대를 수동으로 맞추는 번거로움\n- TraceID를 복사-붙여넣기하는 수작업\n\nGrafana 스택(Prometheus + Loki + Tempo)을 사용하면 클릭 한 번으로 시그널 간 이동이 가능합니다.',

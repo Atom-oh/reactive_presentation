@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ECS → EKS Migration Deep Dive</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="01-multi-cluster.md">
+  <meta name="remarp-block" content="default">
+  <link rel="stylesheet" href="common/theme.css">
+  <link rel="stylesheet" href="common/pptx-theme/theme-override.css">
+  <style>
+    /* Fix 1: Gateway API slide font size */
+    [data-remarp-id="s6"] .tab-content { font-size: 0.95rem; }
+    [data-remarp-id="s6"] .code-block { font-size: 0.82rem; }
+    /* Fix 2: Timeline roadmap font size */
+    .timeline-desc { font-size: 0.85rem; line-height: 1.5; }
+    /* Fix 3: Multi-Plane slide border highlight */
+    [data-remarp-id="sN2"] .mp-section:hover { background: rgba(59,130,246,0.04); }
+  </style>
+
+
+  <script>window.__remarpTheme = {"colors": {}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}};</script>
+</head>
+<body>
+<div class="slide-deck">
+<div class="slide" data-remarp-id="s0" style="background:url('common/pptx-theme/images/Picture_13.png') center/cover no-repeat; padding:0; overflow:hidden;">
+  <h1 style="position:absolute; left:5%; top:28%; font-size:2.8rem; color:#fff; font-weight:200; line-height:1.2; width:53%; margin:0;">ECS → EKS Migration Deep Dive</h1>
+  <p style="position:absolute; left:5%; top:62%; font-size:1.3rem; color:rgba(255,255,255,0.8); width:53%; margin:0;">Multi-Cluster Active-Active Architecture (30min)</p>
+  
+  <div style="position:absolute; left:5%; top:76%;">
+    <p style="font-size:1.05rem; color:#fff; font-weight:600; margin:0;">오준석 (Junseok Oh)</p>
+    <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:6px 0 0 0;">Sr. Solutions Architect, AWS</p>
+    <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:2px 0 0 0;">화해 글로벌</p>
+  </div>
+  <img src="common/pptx-theme/images/Picture_8.png" alt="" style="position:absolute; right:5%; bottom:10%; width:8%; pointer-events:none;" />
+</div>
+
+<div class="slide" data-remarp-id="s1">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>ECS에서 EKS로 — 왜 전환을 고려하는가?</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <blockquote><p>"ECS로 잘 운영하고 있었는데, 서비스 규모가 커지면서 한계가 보이기 시작했습니다."</p></blockquote>
+    <div class="columns">
+<div class="col">
+<h3>규모가 커지면서 발생하는 ECS 한계</h3>
+<ul><li class="fragment fade-in" data-fragment-index="0"><strong>멀티클러스터</strong> 구성이 네이티브로 불가 — Blast Radius 관리 어려움</li><li class="fragment fade-in" data-fragment-index="1"><strong>네트워크 제어</strong>가 제한적 — Pod 레벨 Security Group, Network Policy 부재</li><li class="fragment fade-in" data-fragment-index="2"><strong>IP 고갈</strong> — awsvpc 모드에서 Task당 ENI IP 점유, 서브넷 고갈</li><li class="fragment fade-in" data-fragment-index="3"><strong>에코시스템</strong> — Helm, Karpenter, Argo, Istio 등 CNCF 생태계 활용 불가</li></ul>
+</div><div class="col">
+<h3>EKS 전환 시 기대효과</h3>
+<ul><li class="fragment fade-in" data-fragment-index="4"><strong>Multi-Cluster Active-Active</strong>로 Blast Radius 최소화</li><li class="fragment fade-in" data-fragment-index="5"><strong>Prefix Delegation</strong>으로 IP 효율성 6배 향상</li><li class="fragment fade-in" data-fragment-index="6"><strong>Gateway API + Istio</strong>로 표준화된 트래픽 관리</li><li class="fragment fade-in" data-fragment-index="7"><strong>Karpenter + KEDA</strong>로 지능형 오토스케일링</li></ul>
+</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s2">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>Target: Active-Active Multi-Cluster</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body">
+    <p><img src="diagrams/target-active-active.svg" style="width:100%;max-height:70vh;"></p>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s4">
+  <div class="slide-header" data-remarp-id="s4-header"><h2>Single Cluster vs Multi-Cluster</h2></div>
+  <div class="slide-body" data-remarp-id="s4-body" data-compare-mode="side-by-side">
+    <div class="compare-toggle">
+            <button class="compare-btn active" data-compare="single-cluster">Single Cluster</button>
+      <button class="compare-btn" data-compare="multi-cluster-active-active">Multi-Cluster (Active-Active)</button>
+    </div>
+    <div class="col-2" style="flex:1">
+            <div class="card compare-content active compare-highlight" data-compare="single-cluster" data-remarp-id="s4-left">
+<h3 style="color:var(--text-accent);margin-bottom:.5rem">Single Cluster</h3>
+<ul><li>관리 포인트 단일화</li><li>클러스터 내 Pod 간 통신 빠름</li><li><strong>단점</strong>: 클러스터 장애 시 전체 서비스 중단</li><li><strong>단점</strong>: 업그레이드 시 다운타임 발생</li><li><strong>Blast Radius</strong>: 전체 서비스</li></ul>
+</div>
+      <div class="card compare-content active" data-compare="multi-cluster-active-active" data-remarp-id="s4-right">
+<h3 style="color:var(--text-accent);margin-bottom:.5rem">Multi-Cluster (Active-Active)</h3>
+<ul><li>Zone별 독립 운영</li><li>클러스터 업그레이드 시 무중단 가능</li><li><strong>장점</strong>: Blast Radius 50% 감소</li><li><strong>장점</strong>: Zone 장애 대응 가능</li><li><strong>트레이드오프</strong>: 운영 복잡성 증가</li></ul>
+</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="sN1">
+  <div class="slide-header"><h2>멀티 클러스터 분리 전략</h2></div>
+  <div class="slide-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="separation-decision">분리 기준 의사결정</button>
+      <button class="tab-btn" data-tab="account-pattern">계정별 분리 패턴</button>
+      <button class="tab-btn" data-tab="cluster-pattern">클러스터 분리 패턴</button>
+    </div>
+    <div class="tab-content active" data-tab="separation-decision">
+<table><thead><tr><th>기준</th><th>Single Cluster</th><th>Multi-Cluster</th></tr></thead>
+<tbody><tr><td>서비스 수</td><td>&lt; 50개 서비스</td><td>50+ 서비스</td></tr>
+<tr><td>보안 격리</td><td>Namespace RBAC 충분</td><td>컴플라이언스/규제 요구</td></tr>
+<tr><td>팀 독립성</td><td>공유 리소스 가능</td><td>팀별 독립 릴리스 필요</td></tr>
+<tr><td>Blast Radius</td><td>전체 서비스 영향 허용</td><td>장애 범위 제한 필수</td></tr>
+<tr><td>업그레이드</td><td>다운타임 허용 가능</td><td>무중단 필수</td></tr></tbody></table>
+<div class="callout-info" style="margin-top:1rem"><p><strong>화해 판단</strong>: 전체 서비스 EKS 이관 + 무중단 업그레이드 필요 → <strong>Multi-Cluster 권장</strong></p></div>
+    </div>
+    <div class="tab-content" data-tab="account-pattern">
+<table><thead><tr><th>패턴</th><th>구조</th><th>적합한 경우</th></tr></thead>
+<tbody><tr><td>환경별 분리</td><td>Dev Account / Staging Account / Prod Account</td><td>환경 간 완전 격리 필요</td></tr>
+<tr><td>워크로드별 분리</td><td>Frontend Account / Backend Account / Data Account</td><td>팀별 비용 분리, 독립 운영</td></tr>
+<tr><td><strong>하이브리드</strong></td><td>Prod-Service / Prod-Data / NonProd</td><td><strong>화해 권장</strong> — 서비스와 데이터 분리 + 환경 분리</td></tr></tbody></table>
+<div class="callout-info" style="margin-top:1rem"><p><strong>핵심</strong>: AWS Organizations + OU 구조로 계정 표준화, 신규 계정은 Control Tower로 자동 프로비저닝</p></div>
+    </div>
+    <div class="tab-content" data-tab="cluster-pattern">
+<table><thead><tr><th>패턴</th><th>클러스터 수</th><th>장점</th><th>단점</th></tr></thead>
+<tbody><tr><td>환경별</td><td>Dev + Staging + Prod</td><td>간단, 명확한 격리</td><td>Prod 클러스터 비대화</td></tr>
+<tr><td>도메인별</td><td>서비스A + 서비스B + Platform</td><td>팀 자율성</td><td>클러스터 관리 부담</td></tr>
+<tr><td>기능별</td><td>Service Plane + Data Plane</td><td>워크로드 특성 최적화</td><td>서비스 간 통신 복잡</td></tr>
+<tr><td><strong>AZ 기반</strong></td><td>Zone-A + Zone-C</td><td>고가용성 극대화</td><td>데이터 동기화 고려</td></tr></tbody></table>
+<div class="callout-info" style="margin-top:1rem"><p><strong>화해 권장</strong>: AZ 기반 Active-Active + Service/Data Plane 분리 조합</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="sN2">
+  <div class="slide-header"><h2>Service Plane vs Data Plane 분리</h2></div>
+  <div class="slide-body" style="display:flex;flex-direction:row;gap:0.6rem;align-items:stretch;overflow:hidden">
+    <!-- Architecture Diagram (left) -->
+    <div style="flex:2;min-width:0">
+      <!-- AWS VPC wrapper -->
+      <div style="border:2px dashed #FF9900;border-radius:10px;padding:0.8rem 0.5rem 0.4rem;position:relative;height:100%;display:flex;flex-direction:column;gap:0.3rem;background:rgba(255,153,0,0.03)">
+        <span style="position:absolute;top:-0.5rem;left:0.8rem;background:var(--bg-primary);padding:0 0.4rem;font-size:0.6rem;color:#FF9900;font-weight:600">☁ AWS VPC (Multi-AZ)</span>
+        <!-- ALB -->
+        <div class="mp-section" data-mp="alb" style="margin:0 auto;padding:0.2rem 1rem;border-radius:6px;border:1.5px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:0.4rem;font-weight:600;font-size:0.7rem;color:var(--text-secondary);transition:all .2s">
+          <span style="font-size:0.8rem">⚖</span> Application Load Balancer
+        </div>
+        <div style="text-align:center;color:var(--text-muted);font-size:0.7rem;line-height:1">↓</div>
+        <!-- EKS Cluster -->
+        <div style="border:1.5px solid #3b82f6;border-radius:8px;padding:0.35rem;position:relative;flex:1;display:flex;flex-direction:column">
+          <span style="position:absolute;top:-0.5rem;left:0.8rem;background:var(--bg-primary);padding:0 0.4rem;font-size:0.6rem;color:#3b82f6;font-weight:600">⎈ Amazon EKS Cluster</span>
+          <div style="display:flex;gap:0.3rem;flex:1;margin-top:0.3rem">
+            <!-- Service Plane -->
+            <div class="mp-section" data-mp="servicePlane" style="flex:1;border:1.5px solid transparent;border-radius:6px;padding:0.3rem;cursor:pointer;transition:all .2s">
+              <div style="font-weight:700;font-size:0.65rem;color:#10b981;margin-bottom:0.2rem">📦 Service Plane <span style="font-size:0.55rem;color:var(--text-muted)">(Stateless)</span></div>
+              <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:4px;padding:0.25rem;margin-bottom:0.2rem">
+                <div style="font-size:0.55rem;color:var(--text-muted);margin-bottom:0.15rem">Namespace: <code style="color:#10b981">service-ns</code></div>
+                <div style="display:flex;gap:0.2rem;font-size:0.6rem;color:var(--text-secondary)">
+                  <span style="flex:1;text-align:center;background:var(--bg-tertiary);border-radius:3px;padding:0.1rem">API Pod</span>
+                  <span style="flex:1;text-align:center;background:var(--bg-tertiary);border-radius:3px;padding:0.1rem">Web Pod</span>
+                </div>
+                <div style="font-size:0.5rem;color:var(--text-muted);margin-top:0.1rem;text-align:center">Spot / Fargate · Deployment · HPA</div>
+              </div>
+              <div style="font-size:0.55rem;color:var(--text-muted)">💾 EFS (ReadWriteMany)</div>
+            </div>
+            <!-- Network Policy divider -->
+            <div class="mp-section" data-mp="networkPolicy" style="display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0 0.1rem;transition:all .2s">
+              <div style="border:1px dashed #ef4444;border-radius:4px;padding:0.15rem 0.25rem;font-size:0.45rem;color:#ef4444;font-weight:600;text-align:center;line-height:1.2">🔒<br>Net<br>Policy</div>
+            </div>
+            <!-- Data Plane -->
+            <div class="mp-section" data-mp="dataPlane" style="flex:1;border:1.5px solid transparent;border-radius:6px;padding:0.3rem;cursor:pointer;transition:all .2s">
+              <div style="font-weight:700;font-size:0.65rem;color:#f97316;margin-bottom:0.2rem">🗄 Data Plane <span style="font-size:0.55rem;color:var(--text-muted)">(Stateful)</span></div>
+              <div style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:4px;padding:0.25rem;margin-bottom:0.2rem;position:relative">
+                <div style="position:absolute;top:-0.35rem;right:0.2rem;background:#ef444422;color:#ef4444;font-size:0.4rem;padding:0.05rem 0.2rem;border-radius:2px;font-weight:600">🛡 Taint</div>
+                <div style="font-size:0.55rem;color:var(--text-muted);margin-bottom:0.15rem">Namespace: <code style="color:#f97316">data-ns</code></div>
+                <div style="display:flex;gap:0.2rem;font-size:0.6rem;color:var(--text-secondary)">
+                  <div style="flex:1;text-align:center">
+                    <div style="background:var(--bg-tertiary);border-radius:3px;padding:0.1rem">db-0</div>
+                    <div style="background:#334155;color:#94a3b8;font-size:0.45rem;border-radius:2px;padding:0.05rem;margin-top:0.1rem">EBS</div>
+                  </div>
+                  <div style="flex:1;text-align:center">
+                    <div style="background:var(--bg-tertiary);border-radius:3px;padding:0.1rem">db-1</div>
+                    <div style="background:#334155;color:#94a3b8;font-size:0.45rem;border-radius:2px;padding:0.05rem;margin-top:0.1rem">EBS</div>
+                  </div>
+                </div>
+                <div style="font-size:0.5rem;color:var(--text-muted);margin-top:0.1rem;text-align:center">On-Demand · StatefulSet · KEDA</div>
+              </div>
+              <div style="font-size:0.55rem;color:var(--text-muted)">🌐 Headless Service (고정 DNS)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Detail Sidebar (right) -->
+    <div id="mp-detail" style="flex:1;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:0.5rem;overflow-y:auto;min-width:0;display:flex;flex-direction:column">
+      <h3 id="mp-detail-title" style="font-size:0.8rem;color:var(--text-accent);margin:0 0 0.3rem;padding-bottom:0.3rem;border-bottom:1px solid var(--border)">EKS Multi-Plane 아키텍처 개요</h3>
+      <p id="mp-detail-desc" style="font-size:0.62rem;color:var(--text-secondary);margin:0 0 0.3rem;line-height:1.3">Service Plane과 Data Plane을 분리하여 비용 최적화 + 데이터 안정성 극대화</p>
+      <div style="font-size:0.62rem;color:var(--text-secondary);margin-bottom:0.2rem;font-weight:600">🎯 주요 설계 포인트</div>
+      <ul id="mp-detail-features" style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.2rem;flex:1;font-size:0.62rem;color:var(--text-secondary)">
+        <li style="background:var(--bg-tertiary);padding:0.25rem 0.4rem;border-radius:4px;line-height:1.3"><span style="color:#3b82f6">●</span> 리소스 분리로 Noisy Neighbor 문제 방지</li>
+        <li style="background:var(--bg-tertiary);padding:0.25rem 0.4rem;border-radius:4px;line-height:1.3"><span style="color:#3b82f6">●</span> 워크로드 특성별 인스턴스 타입 (Spot vs On-Demand)</li>
+        <li style="background:var(--bg-tertiary);padding:0.25rem 0.4rem;border-radius:4px;line-height:1.3"><span style="color:#3b82f6">●</span> 명확한 네트워크 격리 및 스토리지 할당 전략</li>
+      </ul>
+      <button id="mp-reset-btn" style="display:none;margin-top:0.3rem;padding:0.2rem;font-size:0.6rem;background:var(--bg-tertiary);color:var(--text-muted);border:1px solid var(--border);border-radius:4px;cursor:pointer">전체 개요로 돌아가기</button>
+    </div>
+  </div>
+</div>
+<script>(function(){
+  const mpData = {
+    overview: {
+      title: 'EKS Multi-Plane 아키텍처 개요',
+      desc: 'Service Plane과 Data Plane을 분리하여 비용 최적화 + 데이터 안정성 극대화',
+      features: [
+        '리소스 분리로 Noisy Neighbor 문제 방지',
+        '워크로드 특성별 인스턴스 타입 (Spot vs On-Demand)',
+        '명확한 네트워크 격리 및 스토리지 할당 전략'
+      ]
+    },
+    alb: {
+      title: 'Application Load Balancer (ALB)',
+      desc: '외부 트래픽을 EKS 클러스터 내부로 라우팅합니다.',
+      features: [
+        'AWS Load Balancer Controller를 통해 프로비저닝',
+        'Service Plane의 Ingress/Service로 트래픽 전달',
+        'Data Plane으로의 직접 외부 접근 차단'
+      ]
+    },
+    servicePlane: {
+      title: 'Service Plane (Stateless)',
+      desc: '트래픽 변화에 유연하게 대응하는 API, Web, Mobile BFF 영역',
+      features: [
+        '<strong>컴퓨팅</strong>: Spot 70% + On-Demand 30% 또는 Fargate',
+        '<strong>스케일링</strong>: HPA + Karpenter (RPS 기반 병렬 확장)',
+        '<strong>스토리지</strong>: EFS (ReadWriteMany) 또는 Ephemeral',
+        '<strong>가용성</strong>: Multi-AZ에 자유롭게 Pod 배치'
+      ]
+    },
+    dataPlane: {
+      title: 'Data Plane (Stateful)',
+      desc: '데이터 영속성·정합성이 필수인 DB, 메시지 큐, Batch 영역',
+      features: [
+        '<strong>컴퓨팅</strong>: On-Demand 90% (안정성 우선)',
+        '<strong>스케일링</strong>: StatefulSet + KEDA (Queue depth/Lag)',
+        '<strong>스토리지</strong>: EBS 1:1 매핑 (Pod 재생성 시 동일 볼륨)',
+        '<strong>격리</strong>: Taints/Tolerations로 일반 Pod 침범 방지'
+      ]
+    },
+    networkPolicy: {
+      title: '네트워크 격리 (Network Policies)',
+      desc: 'Service ↔ Data Plane 간 통신을 제어하여 보안 강화',
+      features: [
+        '<strong>Default Deny</strong>: Data Plane 인바운드 기본 차단',
+        '<strong>Targeted Allow</strong>: 허용된 Pod만 DB 포트 접근',
+        '<strong>Namespace 격리</strong>: service-ns ↔ data-ns 분리'
+      ]
+    }
+  };
+  const sections = document.querySelectorAll('.mp-section');
+  const titleEl = document.getElementById('mp-detail-title');
+  const descEl = document.getElementById('mp-detail-desc');
+  const featEl = document.getElementById('mp-detail-features');
+  const resetBtn = document.getElementById('mp-reset-btn');
+  if (!titleEl) return;
+
+  function activate(key) {
+    const d = mpData[key];
+    titleEl.textContent = d.title;
+    descEl.textContent = d.desc;
+    featEl.innerHTML = d.features.map(f =>
+      '<li style="background:var(--bg-tertiary);padding:0.25rem 0.4rem;border-radius:4px;line-height:1.3"><span style="color:#3b82f6">●</span> ' + f + '</li>'
+    ).join('');
+    sections.forEach(s => {
+      const isActive = s.dataset.mp === key;
+      s.style.borderColor = isActive ? '#3b82f6' : 'transparent';
+      s.style.background = isActive ? 'rgba(59,130,246,0.06)' : '';
+    });
+    resetBtn.style.display = key === 'overview' ? 'none' : 'block';
+  }
+  sections.forEach(s => s.addEventListener('click', () => activate(s.dataset.mp)));
+  resetBtn.addEventListener('click', () => activate('overview'));
+})();</script>
+
+<div class="slide" data-remarp-id="sN2a">
+  <div class="slide-header"><h2>워크로드 생명주기 — Stateless vs Stateful</h2></div>
+  <div class="slide-body">
+    <div class="canvas-container">
+      <canvas id="canvas-lifecycle" width="960" height="370"></canvas>
+    </div>
+    <div id="lifecycle-phase" style="text-align:center;margin-top:0.2rem;font-size:0.8rem;color:var(--text-secondary);min-height:1.2em;"></div>
+    <div style="display:flex;justify-content:center;align-items:center;gap:1.2rem;margin-top:0.2rem;font-size:0.7rem;color:var(--text-muted)">
+      <span style="display:inline-flex;align-items:center;gap:3px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#10b981;border:1px solid #34d399"></span>Stateless</span>
+      <span style="display:inline-flex;align-items:center;gap:3px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#f97316;border:1px solid #fb923c"></span>Stateful</span>
+      <span style="display:inline-flex;align-items:center;gap:3px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#475569"></span>EBS</span>
+      <span style="display:inline-flex;align-items:center;gap:3px"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#3b82f6"></span>Traffic</span>
+      <span style="display:inline-flex;align-items:center;gap:3px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#ef4444;border:1px solid #f87171"></span>Error</span>
+      <span id="lifecycle-step" style="margin-left:0.5rem;color:var(--text-accent);font-weight:600">Step 0 / 4</span>
+    </div>
+  </div>
+</div>
+<script>(function(){
+  const canvas = document.getElementById('canvas-lifecycle');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const BASE_W = 960, BASE_H = 370;
+  const phaseEl = document.getElementById('lifecycle-phase');
+  const stepEl = document.getElementById('lifecycle-step');
+
+  let currentStep = 0;
+  let animId = null, animating = false;
+  let particles = [], trafficActive = false;
+
+  const phases = [
+    '초기 구조 — ↓ 키로 단계 진행',
+    'Phase 1: 배포 — Stateless 동시, Stateful 순차',
+    'Phase 2: 정상 서비스 — ALB 트래픽 분산',
+    'Phase 3: 장애 발생 — Pod/노드 장애 + 소멸',
+    'Phase 4: 자가 치유 — 새 ID(Stateless) / 동일 ID+EBS 재연결(Stateful)'
+  ];
+
+  const stateless = [
+    { id:'web-a7x9', bx:120, by:160, scale:0, status:'normal', isNew:false },
+    { id:'web-p2k4', bx:230, by:160, scale:0, status:'normal', isNew:false },
+    { id:'web-m9q1', bx:175, by:235, scale:0, status:'normal', isNew:false },
+  ];
+  const stateful = [
+    { id:'db-0', bx:560, by:160, scale:0, status:'normal', ebs:true },
+    { id:'db-1', bx:670, by:160, scale:0, status:'normal', ebs:true },
+    { id:'db-2', bx:615, by:235, scale:0, status:'normal', ebs:true },
+  ];
+  const ebsVols = [
+    { id:'ebs-0', bx:560, by:310 },
+    { id:'ebs-1', bx:670, by:310 },
+    { id:'ebs-2', bx:615, by:310 },
+  ];
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0) return;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+  }
+
+  function sc() { return canvas.width / BASE_W; }
+
+  function rr(x,y,w,h,r,fill,stroke,lw) {
+    const k=sc();ctx.save();ctx.scale(k,k);
+    ctx.beginPath();ctx.roundRect(x,y,w,h,r);
+    if(fill){ctx.fillStyle=fill;ctx.fill();}
+    if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw||2;ctx.stroke();}
+    ctx.restore();
+  }
+
+  function txt(x,y,text,color,font) {
+    const k=sc();ctx.save();ctx.scale(k,k);
+    ctx.fillStyle=color||'#fff';ctx.font=font||'bold 12px sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,x,y);ctx.restore();
+  }
+
+  function drawPod(p,type) {
+    if(p.scale<=0) return;
+    const k=sc();ctx.save();ctx.scale(k,k);ctx.translate(p.bx,p.by);ctx.scale(p.scale,p.scale);
+    let fill,stroke;
+    if(p.status==='error'){fill='rgba(239,68,68,0.15)';stroke='#ef4444';}
+    else if(p.status==='recovering'){fill='rgba(59,130,246,0.15)';stroke='#3b82f6';}
+    else if(type==='stateless'){fill='rgba(16,185,129,0.12)';stroke='#10b981';}
+    else{fill='rgba(249,115,22,0.12)';stroke='#f97316';}
+    ctx.beginPath();ctx.roundRect(-38,-26,76,52,6);ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke;ctx.lineWidth=2.5;ctx.stroke();
+    ctx.fillStyle=stroke;ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(p.id,0,-4);
+    ctx.font='9px sans-serif';ctx.fillText(type==='stateless'?'Deployment':'StatefulSet',0,12);
+    if(p.isNew){ctx.fillStyle='#ef4444';ctx.font='bold 9px sans-serif';ctx.fillText('NEW ID!',0,-18);}
+    ctx.restore();
+  }
+
+  function drawEBS(ebs,pod) {
+    const k=sc();ctx.save();ctx.scale(k,k);
+    ctx.beginPath();ctx.roundRect(ebs.bx-28,ebs.by-14,56,28,4);ctx.fillStyle='#334155';ctx.fill();ctx.strokeStyle='#64748b';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#94a3b8';ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(ebs.id,ebs.bx,ebs.by);
+    if(pod&&pod.scale>0&&pod.ebs){
+      ctx.beginPath();ctx.moveTo(pod.bx,pod.by+26*pod.scale);ctx.lineTo(ebs.bx,ebs.by-14);
+      if(pod.status==='recovering'){ctx.strokeStyle='#3b82f6';ctx.setLineDash([4,4]);ctx.lineWidth=2;}
+      else if(pod.status==='error'){ctx.strokeStyle='#ef4444';ctx.setLineDash([2,4]);ctx.lineWidth=1;}
+      else{ctx.strokeStyle='#f97316';ctx.setLineDash([]);ctx.lineWidth=1.5;}
+      ctx.stroke();ctx.setLineDash([]);
+    }
+    ctx.restore();
+  }
+
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    // EKS Cluster bg
+    rr(15,40,930,310,12,'rgba(30,41,59,0.3)','#475569',1.5);
+    txt(80,57,'Amazon EKS Cluster','#94a3b8','bold 13px sans-serif');
+    // ALB
+    rr(370,5,220,40,6,'rgba(168,85,247,0.15)','#a855f7',2);
+    txt(480,25,'Application Load Balancer','#c084fc','bold 11px sans-serif');
+    // Service Plane
+    rr(30,80,380,245,8,'rgba(16,185,129,0.05)','#065f46',1);
+    txt(220,100,'Service Plane (Stateless)','#34d399','bold 12px sans-serif');
+    txt(220,117,'랜덤 Pod ID / 동시 스케일링','#6ee7b7','9px sans-serif');
+    // Data Plane
+    rr(440,80,490,245,8,'rgba(249,115,22,0.05)','#9a3412',1);
+    txt(685,100,'Data Plane (Stateful)','#fb923c','bold 12px sans-serif');
+    txt(685,117,'고정 Pod ID / 순차 스케일링','#fdba74','9px sans-serif');
+    // EBS area
+    rr(460,280,260,35,4,'rgba(51,65,85,0.3)','#64748b',1);
+    txt(590,297,'Persistent Storage (EBS)','#94a3b8','9px sans-serif');
+    // EBS + connections
+    ebsVols.forEach((e,i)=>drawEBS(e,stateful[i]));
+    // Pods
+    stateless.forEach(p=>drawPod(p,'stateless'));
+    stateful.forEach(p=>drawPod(p,'stateful'));
+    // Particles
+    const k=sc();ctx.save();ctx.scale(k,k);
+    particles.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fillStyle='#3b82f6';ctx.fill();});
+    ctx.restore();
+  }
+
+  function updateUI() {
+    if(stepEl) stepEl.textContent='Step '+currentStep+' / 4';
+    if(phaseEl) phaseEl.textContent=phases[currentStep]||'';
+  }
+
+  function stopAnim() {
+    if(animId){cancelAnimationFrame(animId);animId=null;}
+    animating=false;trafficActive=false;
+  }
+
+  function moveParticles() {
+    for(let i=particles.length-1;i>=0;i--){
+      const p=particles[i],dx=p.tx-p.x,dy=p.ty-p.y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<5)particles.splice(i,1);else{p.x+=dx/d*7;p.y+=dy/d*7;}
+    }
+  }
+
+  function spawnTrafficParticle() {
+    const all=[...stateless,...stateful].filter(p=>p.scale>0.5&&p.status==='normal');
+    if(all.length){const t=all[Math.floor(Math.random()*all.length)];particles.push({x:480,y:30,tx:t.bx,ty:t.by-26});}
+  }
+
+  // --- Step 0: structure only (no pods) ---
+  function snapToStep(step) {
+    stopAnim();particles=[];
+    stateless.forEach(p=>{p.scale=0;p.status='normal';p.isNew=false;});
+    stateless[0].id='web-a7x9';stateless[1].id='web-p2k4';stateless[2].id='web-m9q1';
+    stateful.forEach(p=>{p.scale=0;p.status='normal';p.ebs=true;});
+
+    if(step>=1){stateless.forEach(p=>p.scale=1);stateful.forEach(p=>p.scale=1);}
+    if(step>=3){stateless[1].scale=0;stateless[1].status='normal';stateful[0].scale=0;stateful[0].ebs=false;}
+    if(step>=4){
+      stateless[1].id='web-new';stateless[1].scale=1;stateless[1].isNew=true;stateless[1].status='normal';
+      stateful[0].scale=1;stateful[0].ebs=true;stateful[0].status='normal';
+    }
+    currentStep=step;updateUI();draw();
+  }
+
+  // --- Animated transitions (forward) ---
+  function animateDeploy() {
+    let f=0;
+    function tick(){
+      f++;
+      if(f<=25)stateless.forEach(p=>{p.scale=Math.min(1,p.scale+0.04);});
+      if(f>10)stateful[0].scale=Math.min(1,stateful[0].scale+0.04);
+      if(f>25)stateful[1].scale=Math.min(1,stateful[1].scale+0.04);
+      if(f>40)stateful[2].scale=Math.min(1,stateful[2].scale+0.04);
+      draw();
+      if(f>=65){animating=false;return;}
+      animId=requestAnimationFrame(tick);
+    }
+    animId=requestAnimationFrame(tick);
+  }
+
+  function animateTraffic() {
+    let f=0;trafficActive=true;
+    function tick(){
+      f++;
+      if(f%4===0)spawnTrafficParticle();
+      moveParticles();draw();
+      if(f>=120){trafficActive=false;animating=false;particles=[];draw();return;}
+      animId=requestAnimationFrame(tick);
+    }
+    animId=requestAnimationFrame(tick);
+  }
+
+  function animateFailure() {
+    let f=0;
+    stateless[1].status='error';stateful[0].status='error';
+    function tick(){
+      f++;
+      if(f>20&&f<=50){
+        if(stateless[1].scale>0)stateless[1].scale=Math.max(0,stateless[1].scale-0.04);
+        if(stateful[0].scale>0)stateful[0].scale=Math.max(0,stateful[0].scale-0.04);
+      }
+      if(f===50){stateless[1].scale=0;stateful[0].scale=0;stateful[0].ebs=false;}
+      draw();
+      if(f>=55){animating=false;return;}
+      animId=requestAnimationFrame(tick);
+    }
+    animId=requestAnimationFrame(tick);
+  }
+
+  function animateRecovery() {
+    let f=0;
+    stateless[1].id='web-'+Math.random().toString(36).substr(2,4);
+    stateless[1].status='recovering';stateless[1].isNew=true;
+    stateful[0].status='recovering';
+    function tick(){
+      f++;
+      if(f<=30){
+        stateless[1].scale=Math.min(1,stateless[1].scale+0.035);
+        stateful[0].scale=Math.min(1,stateful[0].scale+0.035);
+        if(f===20)stateful[0].ebs=true;
+      }
+      if(f===35){stateless[1].status='normal';stateful[0].status='normal';}
+      if(f>40&&f<=100){if(f%4===0)spawnTrafficParticle();moveParticles();}
+      draw();
+      if(f>=105){particles=[];animating=false;draw();return;}
+      animId=requestAnimationFrame(tick);
+    }
+    animId=requestAnimationFrame(tick);
+  }
+
+  function stepDown() {
+    if(animating)return true;
+    if(currentStep>=4)return false;
+    currentStep++;updateUI();
+    animating=true;
+    if(currentStep===1)animateDeploy();
+    else if(currentStep===2)animateTraffic();
+    else if(currentStep===3)animateFailure();
+    else if(currentStep===4)animateRecovery();
+    return true;
+  }
+
+  function stepUp() {
+    if(animating)return true;
+    if(currentStep<=0)return false;
+    currentStep--;
+    snapToStep(currentStep);
+    return true;
+  }
+
+  window._lifecycleStepDown=stepDown;
+  window._lifecycleStepUp=stepUp;
+
+  new ResizeObserver(()=>{resize();draw();}).observe(canvas);
+  const parentSlide=canvas.closest('.slide');
+  if(parentSlide){new MutationObserver(()=>{
+    if(parentSlide.classList.contains('active'))requestAnimationFrame(()=>{resize();draw();});
+    else{stopAnim();particles=[];}
+  }).observe(parentSlide,{attributes:true,attributeFilter:['class']});}
+  resize();updateUI();draw();
+})();</script>
+
+<div class="slide" data-remarp-id="sN3">
+  <div class="slide-header"><h2>Service/Data Plane 분리의 이점</h2></div>
+  <div class="slide-body" data-compare-mode="side-by-side">
+    <div class="compare-toggle">
+      <button class="compare-btn active" data-compare="service-plane">Service Plane</button>
+      <button class="compare-btn" data-compare="data-plane">Data Plane</button>
+    </div>
+    <div class="col-2" style="flex:1">
+      <div class="card compare-content active compare-highlight" data-compare="service-plane">
+<h3 style="color:var(--text-accent);margin-bottom:.5rem">Service Plane</h3>
+<ul><li><strong>워크로드</strong>: API, Web, Mobile BFF</li>
+<li><strong>특성</strong>: Stateless, 수평 확장 용이</li>
+<li><strong>노드</strong>: Spot Instance 70% + On-Demand 30%</li>
+<li><strong>스케일링</strong>: HPA + Karpenter (RPS 기반)</li>
+<li><strong>업그레이드</strong>: Canary/Rolling (빠른 반영)</li>
+<li><strong>장애 영향</strong>: 서비스 일시 지연 (복구 빠름)</li></ul>
+      </div>
+      <div class="card compare-content active" data-compare="data-plane">
+<h3 style="color:var(--text-accent);margin-bottom:.5rem">Data Plane</h3>
+<ul><li><strong>워크로드</strong>: Kafka Consumer, Batch, ML Inference</li>
+<li><strong>특성</strong>: Stateful/Long-running, 데이터 정합성 중요</li>
+<li><strong>노드</strong>: On-Demand 90% + Spot 10% (비중요 배치만)</li>
+<li><strong>스케일링</strong>: KEDA (Queue depth/Lag 기반)</li>
+<li><strong>업그레이드</strong>: Blue/Green (안전 우선)</li>
+<li><strong>장애 영향</strong>: 데이터 유실 가능 (복구 시간 필요)</li></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="sN4">
+  <div class="slide-header"><h2>멀티 계정 네트워크 토폴로지</h2></div>
+  <div class="slide-body">
+    <div class="columns" style="gap:1rem;margin-bottom:1rem">
+      <div class="col" style="flex:1">
+        <div class="card" style="border:2px solid #FF9900;height:100%">
+          <h3 style="color:#FF9900;margin:0 0 0.5rem;font-size:0.95rem;text-align:center">Prod Service Account</h3>
+          <div style="background:#FF990022;border-radius:6px;padding:0.5rem;text-align:center;color:#ffbb55;font-size:0.85rem">EKS Service Cluster</div>
+        </div>
+      </div>
+      <div class="col" style="flex:1">
+        <div class="card" style="border:2px solid #6c5ce7;height:100%">
+          <h3 style="color:#6c5ce7;margin:0 0 0.5rem;font-size:0.95rem;text-align:center">Prod Data Account</h3>
+          <div style="background:#6c5ce722;border-radius:6px;padding:0.5rem;text-align:center;color:#b8b0f0;font-size:0.85rem">EKS Data Cluster</div>
+        </div>
+      </div>
+      <div class="col" style="flex:1">
+        <div class="card" style="border:2px solid #4CAF50;height:100%">
+          <h3 style="color:#888;margin:0 0 0.5rem;font-size:0.95rem;text-align:center">NonProd Account</h3>
+          <div style="background:#4CAF5022;border-radius:6px;padding:0.5rem;text-align:center;color:#81C784;font-size:0.85rem">EKS Dev/Staging</div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;margin:0.8rem 0">
+      <div style="display:inline-block;background:#3B48CC;color:#fff;padding:0.5rem 2rem;border-radius:8px;font-weight:600;font-size:0.95rem">Transit Gateway</div>
+      <div style="display:flex;justify-content:center;gap:2rem;margin-top:0.3rem">
+        <span style="color:var(--text-muted);font-size:0.8rem">↑ VPC Peering ↑</span>
+      </div>
+    </div>
+    <div class="columns" style="gap:1rem">
+      <div class="col" style="flex:1">
+        <div class="card" style="border:2px solid #9C27B0">
+          <h3 style="color:#CE93D8;margin:0 0 0.3rem;font-size:0.9rem;text-align:center">Shared VPC</h3>
+          <p style="margin:0;text-align:center;font-size:0.8rem;color:var(--text-secondary)">ArgoCD, Monitoring</p>
+        </div>
+      </div>
+      <div class="col" style="flex:1">
+        <div class="card" style="border:2px solid #9C27B0">
+          <h3 style="color:#CE93D8;margin:0 0 0.3rem;font-size:0.9rem;text-align:center">Route 53</h3>
+          <p style="margin:0;text-align:center;font-size:0.8rem;color:var(--text-secondary)">Private Hosted Zone / DNS Resolution</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s5">
+  <div class="slide-header" data-remarp-id="s5-header"><h2>NLB Weighted Routing Deep Dive</h2></div>
+  <div class="slide-body" data-remarp-id="s5-body">
+    <p><img src="diagrams/nlb-weighted-routing.svg" style="width:100%;max-height:70vh;"></p>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s6">
+  <div class="slide-header" data-remarp-id="s6-header"><h2>Gateway API 소개</h2></div>
+  <div class="slide-body" data-remarp-id="s6-body">
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="gatewayclass">GatewayClass</button>
+      <button class="tab-btn" data-tab="gateway">Gateway</button>
+      <button class="tab-btn" data-tab="httproute">HTTPRoute</button>
+    </div>
+        <div class="tab-content active" data-tab="gatewayclass">
+<div class="code-block"><span class="key">apiVersion</span>: gateway.networking.k8s.io/v1
+<span class="key">kind</span>: GatewayClass
+<span class="key">metadata</span>:
+  <span class="key">name</span>: nginx
+<span class="key">spec</span>:
+  <span class="key">controllerName</span>: gateway.nginx.org/nginx-gateway-controller</div>
+<p><strong>역할</strong>: 인프라 제공자가 정의하는 Gateway 템플릿</p>
+<p><strong>담당</strong>: Platform Team</p>
+</div>
+    <div class="tab-content" data-tab="gateway">
+<div class="code-block"><span class="code-label">production-gateway.yaml</span><span class="key">apiVersion</span>: gateway.networking.k8s.io/v1
+<span class="key">kind</span>: Gateway
+<span class="key">metadata</span>:
+  <span class="key">name</span>: production-gateway
+<span class="key">spec</span>:
+  <span class="key">gatewayClassName</span>: nginx
+  <span class="key">listeners</span>:
+    - name: https
+      <span class="key">protocol</span>: HTTPS
+      <span class="key">port</span>: 443</div>
+<div class="code-block"><span class="code-label">hwahae-gateway.yaml</span><span class="key">apiVersion</span>: gateway.networking.k8s.io/v1
+<span class="key">kind</span>: Gateway
+<span class="key">metadata</span>:
+  <span class="key">name</span>: hwahae-gateway
+  <span class="key">namespace</span>: gateway-system
+<span class="key">spec</span>:
+  <span class="key">gatewayClassName</span>: nginx
+  <span class="key">listeners</span>:
+    - name: https
+      <span class="key">protocol</span>: HTTPS
+      <span class="key">port</span>: 443
+      <span class="key">tls</span>:
+        <span class="key">mode</span>: Terminate
+        <span class="key">certificateRefs</span>:
+          - kind: Secret
+            <span class="key">name</span>: hwahae-tls
+      <span class="key">allowedRoutes</span>:
+        <span class="key">namespaces</span>:
+          <span class="keyword">from</span>: All</div>
+<p><strong>역할</strong>: 실제 로드밸런서 인스턴스</p>
+<p><strong>담당</strong>: Cluster Admin</p>
+</div>
+    <div class="tab-content" data-tab="httproute">
+<div class="code-block"><span class="key">apiVersion</span>: gateway.networking.k8s.io/v1
+<span class="key">kind</span>: HTTPRoute
+<span class="key">metadata</span>:
+  <span class="key">name</span>: api-route
+<span class="key">spec</span>:
+  <span class="key">parentRefs</span>:
+    - name: production-gateway
+  <span class="key">rules</span>:
+    - matches:
+        - path: {type: PathPrefix, value: /api}
+      <span class="key">backendRefs</span>:
+        - name: api-service
+          <span class="key">port</span>: 8080</div>
+<p><strong>역할</strong>: 애플리케이션 라우팅 규칙</p>
+<p><strong>담당</strong>: Application Developer</p>
+</div>
+  </div>
+</div>
+
+
+<div class="slide" data-remarp-id="s11">
+  <div class="slide-header" data-remarp-id="s11-header"><h2>VPC CNI & Prefix Delegation</h2></div>
+  <div class="slide-body" data-remarp-id="s11-body">
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="ip">IP 고갈 문제</button>
+      <button class="tab-btn" data-tab="prefix-delegation">Prefix Delegation 솔루션</button>
+      <button class="tab-btn" data-tab="tab-2">적용 시 고려사항</button>
+    </div>
+        <div class="tab-content active" data-tab="ip">
+<table><thead><tr><th>인스턴스</th><th>최대 ENI</th><th>ENI당 IP</th><th><strong>최대 Pod</strong></th></tr></thead><tbody><tr><td>t3.medium</td><td>3</td><td>6</td><td><strong>17</strong></td></tr><tr><td>t3.large</td><td>3</td><td>12</td><td><strong>35</strong></td></tr><tr><td>m5.xlarge</td><td>4</td><td>15</td><td><strong>58</strong></td></tr></tbody></table>
+<p><strong>문제</strong>: ENI당 할당 가능한 Secondary IP 수 제한</p>
+<p><strong>결과</strong>: 노드당 Pod 수 제한 → 수평 확장 비용 증가</p>
+</div>
+    <div class="tab-content" data-tab="prefix-delegation">
+<table><thead><tr><th>모드</th><th>할당 단위</th><th>t3.medium 최대 Pod</th></tr></thead><tbody><tr><td>Secondary IP</td><td>개별 IP</td><td>17</td></tr><tr><td><strong>Prefix Delegation</strong></td><td>/28 (16 IPs)</td><td><strong>110</strong></td></tr></tbody></table>
+<p><strong>/28 Prefix = 16개 IP 한 번에 할당</strong></p>
+<ul><li class="fragment fade-in" data-fragment-index="0">IP 할당 속도 향상 (1 API call → 16 IPs)</li><li class="fragment fade-in" data-fragment-index="1">노드당 Pod 밀도 <strong>6배 이상</strong> 증가</li><li class="fragment fade-in" data-fragment-index="2">Nitro 인스턴스에서 최적 성능</li></ul>
+</div>
+    <div class="tab-content" data-tab="tab-2">
+<p><strong>요구사항</strong>:</p>
+<ul><li class="fragment fade-in" data-fragment-index="3">EKS 1.21+ / VPC CNI 1.9+</li><li class="fragment fade-in" data-fragment-index="4">Nitro 기반 인스턴스 권장</li><li class="fragment fade-in" data-fragment-index="5">서브넷 /28 prefix 여유 확인</li></ul>
+<p><strong>주의사항</strong>:</p>
+<ul><li class="fragment fade-in" data-fragment-index="6">기존 노드 재시작 필요</li><li class="fragment fade-in" data-fragment-index="7">Windows 노드 미지원</li><li class="fragment fade-in" data-fragment-index="8">Custom Networking과 함께 사용 권장</li></ul>
+</div>
+  </div>
+</div>
+
+
+<div class="slide" data-remarp-id="s13">
+  <div class="slide-header" data-remarp-id="s13-header"><h2>Custom Networking - ENIConfig (AZ별 Pod 서브넷)</h2></div>
+  <div class="slide-body" data-remarp-id="s13-body">
+    <div class="code-block"><span class="code-label">eniconfig.yaml</span><span class="key">apiVersion</span>: crd.k8s.amazonaws.com/v1alpha1
+<span class="key">kind</span>: ENIConfig
+<span class="key">metadata</span>:
+  <span class="key">name</span>: ap-northeast-2a
+<span class="key">spec</span>:
+  <span class="key">subnet</span>: subnet-0abc123def456789a  <span class="comment"># Pod 전용 서브넷</span>
+  <span class="key">securityGroups</span>:
+    - sg-0123456789abcdef0</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s14">
+  <div class="slide-header"><h2>Security Group for Pods — 선택지 비교</h2></div>
+  <div class="slide-body">
+    <div class="columns" style="gap:1rem">
+      <div class="col">
+        <div class="card" style="border-top:3px solid #f44336">
+          <h3 style="color:#f44336;margin:0 0 .8rem">SGP (Branch ENI)</h3>
+          <ul>
+            <li>Pod별 Security Group 적용 가능</li>
+            <li>Branch ENI 소모 → <strong>Pod 밀도 낮음</strong></li>
+            <li>기존 SG 규칙 재활용</li>
+            <li>m5.large: 최대 9 Branch ENI</li>
+          </ul>
+          <div class="badge-red" style="margin-top:.5rem">Pod 밀도 제한</div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card" style="border-top:3px solid #4CAF50">
+          <h3 style="color:#4CAF50;margin:0 0 .8rem">Prefix Delegation + Network Policy</h3>
+          <ul>
+            <li>노드 SG 공유, Pod 격리는 Network Policy</li>
+            <li>/28 prefix 단위 할당 → <strong>Pod 밀도 6배↑</strong></li>
+            <li>Cilium L3/L4/L7 필터링</li>
+            <li>대부분의 격리 요구사항 충족</li>
+          </ul>
+          <div class="badge-green" style="margin-top:.5rem">권장 조합</div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card" style="border-top:3px solid #FF9900">
+          <h3 style="color:#FF9900;margin:0 0 .8rem">Fargate</h3>
+          <ul>
+            <li>Task별 SG 적용 가능 (서버리스)</li>
+            <li>ENI 제한 무관</li>
+            <li>DaemonSet 미지원</li>
+            <li>EKS 제어 영역 비용 별도</li>
+          </ul>
+          <div class="badge-yellow" style="margin-top:.5rem">특수 워크로드용</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout-info" style="margin-top:1rem"><p><strong>화해 권장</strong>: SGP 필요 Pod만 선별 적용, 나머지는 Prefix Delegation + Network Policy 조합. 기존 SGP Pod → 대부분 Network Policy로 전환 가능</p></div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="sN5">
+  <div class="slide-header"><h2>SGP Branch ENI 제약과 대안</h2></div>
+  <div class="slide-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="branch-eni-arch">Branch ENI 동작 원리</button>
+      <button class="tab-btn" data-tab="branch-eni-solution">해결 방안</button>
+      <button class="tab-btn" data-tab="branch-eni-strategy">권장 전략</button>
+    </div>
+    <div class="tab-content active" data-tab="branch-eni-arch">
+<p><strong>Security Group for Pods(SGP) 아키텍처</strong>:</p>
+<div class="code-block"><span class="comment">Node ENI (Primary)     → 노드 자체 통신</span>
+<span class="comment">Trunk ENI              → Branch ENI 관리 (노드당 1개)</span>
+<span class="comment">Branch ENI             → SGP Pod 전용 (VLAN 태깅)</span></div>
+<p><strong>제약 사항</strong>:</p>
+<table><thead><tr><th>인스턴스</th><th>Branch ENI 최대</th><th>SGP Pod 최대</th></tr></thead>
+<tbody><tr><td>t3.medium</td><td>6</td><td>6</td></tr>
+<tr><td>m5.large</td><td>9</td><td>9</td></tr>
+<tr><td>m5.xlarge</td><td>18</td><td>18</td></tr></tbody></table>
+<ul><li>Prefix Delegation과 <strong>병행 불가</strong> (Branch ENI는 개별 IP 할당)</li>
+<li>SGP Pod는 Branch ENI 수에 제한됨 → 노드당 Pod 밀도 급감</li></ul>
+    </div>
+    <div class="tab-content" data-tab="branch-eni-solution">
+<p><strong>방안 1: SGP 최소화 + NetworkPolicy 활용 (권장)</strong></p>
+<div class="code-block"><span class="code-label">network-policy.yaml</span><span class="comment"># NetworkPolicy로 L3/L4 트래픽 제어 (SGP 불필요한 경우)</span>
+<span class="key">apiVersion</span>: networking.k8s.io/v1
+<span class="key">kind</span>: NetworkPolicy
+<span class="key">metadata</span>:
+  <span class="key">name</span>: db-access-only
+<span class="key">spec</span>:
+  <span class="key">podSelector</span>:
+    <span class="key">matchLabels</span>:
+      <span class="key">app</span>: api-server
+  <span class="key">egress</span>:
+    - <span class="key">to</span>:
+        - <span class="key">ipBlock</span>:
+            <span class="key">cidr</span>: <span class="string">10.0.100.0/24</span>  <span class="comment"># RDS 서브넷</span>
+      <span class="key">ports</span>:
+        - <span class="key">port</span>: <span class="value">5432</span></div>
+<p><strong>방안 2: SGP 필수 Pod는 Fargate로 전환</strong></p>
+<ul><li>Fargate Pod는 자체 ENI → Branch ENI 제약 없음</li>
+<li>RDS 직접 접근 등 SG 필수 케이스에 적합</li></ul>
+<p><strong>방안 3: VPC CNI v1.15+ <code>POD_SECURITY_GROUP_ENFORCING_MODE=standard</code></strong></p>
+<ul><li>Standard 모드에서 SGP + Prefix Delegation 동시 사용 가능</li>
+<li>단, NetworkPolicy와 SGP 간 우선순위 주의</li></ul>
+    </div>
+    <div class="tab-content" data-tab="branch-eni-strategy">
+<div class="columns" style="gap:1rem">
+  <div class="col">
+    <div class="card" style="border-top:3px solid #4CAF50">
+      <h3 style="color:#4CAF50;margin:0 0 .5rem">대부분의 Pod</h3>
+      <ul style="margin:0;font-size:0.9rem">
+        <li>Prefix Delegation (높은 Pod 밀도)</li>
+        <li>NetworkPolicy로 L3/L4 트래픽 제어</li>
+        <li>Spot Instance 활용 가능</li>
+      </ul>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card" style="border-top:3px solid #FF9900">
+      <h3 style="color:#FF9900;margin:0 0 .5rem">SG 필수 Pod (RDS 직접 접근 등)</h3>
+      <ul style="margin:0;font-size:0.9rem">
+        <li><strong>옵션 A</strong>: Fargate (SGP 제약 없음)</li>
+        <li><strong>옵션 B</strong>: 전용 노드 그룹 (SGP 활성화)</li>
+        <li><strong>옵션 C</strong>: standard 모드 (v1.15+)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+<div class="callout-info" style="margin-top:1rem"><p><strong>화해 권장</strong>: 대부분 NetworkPolicy로 전환하고, RDS 직접 접근 등 SG가 반드시 필요한 Pod만 Fargate 또는 전용 노드 그룹으로 분리</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="sN6">
+  <div class="slide-header"><h2>서브넷 IP 고갈 — 초기 설계 vs 후적용</h2></div>
+  <div class="slide-body" data-compare-mode="side-by-side">
+    <div class="compare-toggle">
+      <button class="compare-btn active" data-compare="initial-design">초기 설계 시 적용 (권장)</button>
+      <button class="compare-btn" data-compare="retrofit">운영 중 후적용</button>
+    </div>
+    <div class="col-2" style="flex:1">
+      <div class="card compare-content active compare-highlight" data-compare="initial-design">
+<h3 style="color:var(--text-accent);margin-bottom:.5rem">초기 설계 시 적용 (권장)</h3>
+<ul><li>VPC 생성 시 Secondary CIDR 추가</li>
+<li>Pod 전용 서브넷 (/19 이상) 미리 구성</li>
+<li>ENIConfig AZ별 매핑 설정</li>
+<li><strong>장점</strong>: 무중단 적용</li>
+<li><strong>장점</strong>: 서브넷 사이징 자유도 높음</li>
+<li><strong>비용</strong>: 추가 비용 없음</li></ul>
+      </div>
+      <div class="card compare-content active" data-compare="retrofit">
+<h3 style="color:var(--text-accent);margin-bottom:.5rem">운영 중 후적용</h3>
+<ul><li>Secondary CIDR 추가 → 가능 (VPC 설정)</li>
+<li>Pod 전용 서브넷 생성 → 가능</li>
+<li>Custom Networking 활성화 → <strong>노드 롤링 재시작 필요</strong></li>
+<li><strong>주의</strong>: 기존 Pod IP가 변경됨</li>
+<li><strong>주의</strong>: ENIConfig 적용 후 신규 노드부터 적용</li>
+<li><strong>권장</strong>: Blue/Green 노드 그룹 교체</li></ul>
+      </div>
+    </div>
+    <div class="callout-warning" style="margin-top:1rem"><p><strong>결론</strong>: 클러스터 초기 설계 시 <code>100.64.0.0/16</code> Secondary CIDR + Custom Networking을 적용하는 것이 <strong>강력히 권장</strong>됩니다. 후적용도 가능하지만 노드 롤링 재시작이 필요하며, Blue/Green 노드 그룹 교체 방식이 안전합니다.</p></div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s15">
+  <div class="slide-header" data-remarp-id="s15-header"><h2>ECS → EKS 마이그레이션 로드맵</h2></div>
+  <div class="slide-body" data-remarp-id="s15-body">
+    <div class="timeline">
+      <div class="timeline-step" data-step="1">
+        <div class="timeline-dot">1</div>
+        <div class="timeline-label">Phase 1</div>
+        <div class="timeline-desc"><strong>기반 구축</strong><br>VPC 설계, EKS 클러스터 프로비저닝,<br>Gateway API 설치 (2주)</div>
+      </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-step" data-step="2">
+        <div class="timeline-dot">2</div>
+        <div class="timeline-label">Phase 2</div>
+        <div class="timeline-desc"><strong>파일럿 서비스</strong><br>단일 서비스 마이그레이션,<br>CI/CD 파이프라인 구축, 모니터링 설정 (2주)</div>
+      </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-step" data-step="3">
+        <div class="timeline-dot">3</div>
+        <div class="timeline-label">Phase 3</div>
+        <div class="timeline-desc"><strong>점진적 전환</strong><br>서비스별 순차 마이그레이션,<br>트래픽 가중치 조정, ECS 축소 (4주)</div>
+      </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-step" data-step="4">
+        <div class="timeline-dot">4</div>
+        <div class="timeline-label">Phase 4</div>
+        <div class="timeline-desc"><strong>완전 전환</strong><br>ECS 종료, Multi-Cluster 활성화,<br>운영 안정화 (2주)</div>
+      </div>
+    </div>
+  </div>
+
+<script>(function() {
+  const slide = document.currentScript.closest('.slide');
+  if (!slide) return;
+  const steps = slide.querySelectorAll('.timeline-step');
+  const connectors = slide.querySelectorAll('.timeline-connector');
+  let current = 0;
+  function update() {
+    steps.forEach((s, i) => {
+      s.classList.remove('active', 'done');
+      if (i < current) s.classList.add('done');
+      else if (i === current) s.classList.add('active');
+    });
+    connectors.forEach((c, i) => {
+      c.classList.toggle('done', i < current);
+    });
+  }
+  update();
+  slide.__canvasStep = function(dir) {
+    if (dir === 'next' && current < steps.length - 1) { current++; update(); return current; }
+    else if (dir === 'prev' && current > 0) { current--; update(); return current; }
+    return false;
+  };
+  slide.dataset.slideAction = 'canvas-step';
+  slide.dataset.canvasMaxStep = String(steps.length - 1);
+})();</script>
+</div>
+
+<div class="slide" data-remarp-id="s16">
+  <div class="slide-header" data-remarp-id="s16-header"><h2>마이그레이션 사전 체크리스트</h2></div>
+  <div class="slide-body" data-remarp-id="s16-body">
+    <ul class="checklist">
+            <li class="has-detail" data-remarp-id="s16-li-0"><span class="check"></span> <span class="checklist-text"><strong>네트워크 준비</strong></span>
+      <div class="checklist-detail"><p>  - VPC Secondary CIDR 추가 (100.64.0.0/16)</p>
+<p>  - Pod 전용 서브넷 생성 (/19 이상)</p>
+<p>  - Security Group 정리 및 표준화</p></div></li>
+      <li class="has-detail" data-remarp-id="s16-li-1"><span class="check"></span> <span class="checklist-text"><strong>IAM 준비</strong></span>
+      <div class="checklist-detail"><p>  - EKS 클러스터 역할 생성</p>
+<p>  - 노드 그룹 역할 생성</p>
+<p>  - IRSA용 OIDC Provider 설정</p>
+<p>  - Pod Identity 정책 준비</p></div></li>
+      <li class="has-detail" data-remarp-id="s16-li-2"><span class="check"></span> <span class="checklist-text"><strong>GitOps 준비</strong></span>
+      <div class="checklist-detail"><p>  - Git 저장소 구조 설계</p>
+<p>  - ArgoCD 설치 계획</p>
+<p>  - Helm Chart / Kustomize 선택</p></div></li>
+      <li class="has-detail" data-remarp-id="s16-li-3"><span class="check"></span> <span class="checklist-text"><strong>모니터링 준비</strong></span>
+      <div class="checklist-detail"><p>  - CloudWatch Container Insights 활성화</p>
+<p>  - Prometheus/Grafana 스택 계획</p>
+<p>  - 기존 ECS 메트릭 대시보드 매핑</p></div></li>
+    </ul>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s17">
+  <div class="slide-header" data-remarp-id="s17-header"><h2>Block 01 Quiz</h2></div>
+  <div class="slide-body" data-remarp-id="s17-body" style="overflow-y:auto">
+    <div class="quiz" data-quiz="q1">
+      <div class="quiz-question">Q1: Multi-Cluster Active-Active 아키텍처의 주요 장점은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">관리 포인트가 단일화된다</button>
+<button class="quiz-option" data-correct="true">Blast Radius를 줄여 장애 영향을 최소화한다</button>
+<button class="quiz-option" data-correct="false">클러스터 간 Pod 통신이 빨라진다</button>
+<button class="quiz-option" data-correct="false">비용이 절감된다</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q2">
+      <div class="quiz-question">Q2: Gateway API에서 애플리케이션 개발자가 관리하는 리소스는?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">GatewayClass</button>
+<button class="quiz-option" data-correct="false">Gateway</button>
+<button class="quiz-option" data-correct="true">HTTPRoute</button>
+<button class="quiz-option" data-correct="false">DestinationRule</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q3">
+      <div class="quiz-question">Q3: Multi-Cluster 환경에서 클러스터 간 워크로드 동기화에 사용하는 도구는?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">Cluster Autoscaler</button>
+<button class="quiz-option" data-correct="true">ArgoCD ApplicationSet</button>
+<button class="quiz-option" data-correct="false">kubectl apply</button>
+<button class="quiz-option" data-correct="false">Helm install</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q4">
+      <div class="quiz-question">Q4: NLB 가중치 라우팅에서 한 클러스터 점검 시 권장 설정은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">50:50 유지</button>
+<button class="quiz-option" data-correct="false">Health Check로 자동 전환</button>
+<button class="quiz-option" data-correct="true">0:100으로 수동 조정</button>
+<button class="quiz-option" data-correct="false">클러스터 삭제</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+  </div>
+</div>
+</div>
+<script src="common/animation-utils.js"></script>
+<script src="common/slide-framework.js"></script>
+<script src="common/quiz-component.js"></script>
+<script src="common/presenter-view.js"></script>
+
+<script>
+  
+  const presenterNotes = {
+    1: "[2min] 안녕하세요, AWS 솔루션즈 아키텍트 오준석입니다. 오늘은 ECS에서 EKS로의 마이그레이션 여정 중 첫 번째 세션으로, Multi-Cluster Active-Active 아키텍처에 대해 다루겠습니다. 네트워크 구성의 복잡성과 IP 고갈 문제를 해결하는 방법을 중점적으로 살펴보겠습니다.\n\n💬 예상 질문:\n• Q: 이 세션은 ECS 운영 경험이 없어도 이해할 수 있나요?\n  → 네, EKS 관점에서 설명하므로 ECS 경험 없이도 Multi-Cluster 설계를 이해할 수 있습니다.",
+    2: "⏸️ [4min] ECS로 잘 운영하다가도 서비스 규모가 커지면 자연스럽게 한계에 부딪히게 됩니다. 특히 멀티클러스터 구성이 네이티브로 안 되는 점, awsvpc 모드에서 Task당 ENI IP를 점유해서 서브넷이 고갈되는 점이 대표적입니다. EKS로 전환하면 Kubernetes 생태계의 강력한 도구들 — Karpenter, Argo, Istio, Gateway API 등을 활용할 수 있습니다. 오늘 세션에서 이 전환을 어떻게 설계하는지 상세히 다루겠습니다.\n\n💬 예상 질문:\n• Q: ECS Anywhere나 ECS Service Connect로도 해결 가능하지 않나요?\n  → Service Connect는 서비스 메시 기능을 제공하지만, 멀티클러스터 Active-Active나 CNCF 생태계 활용에는 한계가 있습니다.\n• Q: IP 고갈 문제는 ECS에서도 해결 가능한가요?\n  → awsvpc 모드의 구조적 한계로, ECS에서는 Prefix Delegation 같은 솔루션이 없습니다.",
+    3: "[3min] 목표 아키텍처입니다. 두 개의 EKS 클러스터를 A-Zone과 C-Zone에 각각 배치하고, NLB를 통해 50:50 가중치 라우팅을 수행합니다. 각 클러스터는 독립적으로 운영되며, 한 클러스터 장애 시에도 다른 클러스터가 전체 트래픽을 처리할 수 있습니다.\n\n💬 예상 질문:\n• Q: 왜 A-Zone과 C-Zone인가요? B-Zone은요?\n  → 서울 리전에서 A/C가 가장 많은 인스턴스 타입과 서비스를 지원합니다. B-Zone은 제약이 있어 제외하는 경우가 많습니다.\n• Q: Cross-AZ 트래픽 비용은 어떻게 되나요?\n  → AZ 간 데이터 전송 비용(GB당 $0.01)이 발생하지만, Active-Active 가용성 확보 비용으로 감수합니다.",
+    4: "❓ [3min] Multi-Cluster가 항상 정답은 아닙니다. 관리 복잡성이 증가하므로, 팀의 운영 역량과 서비스의 가용성 요구사항을 고려해서 결정해야 합니다. 높은 가용성이 필요한 커머스 서비스에서는 Multi-Cluster가 적합합니다.\n\n💬 예상 질문:\n• Q: 서비스가 몇 개 정도일 때 Multi-Cluster를 고려해야 하나요?\n  → 서비스 수보다는 가용성 요구사항이 중요합니다. SLA 99.99% 이상이 필요하면 서비스 10개라도 Multi-Cluster를 고려하세요.\n• Q: Multi-Cluster 운영에 필요한 최소 인력은?\n  → GitOps + IaC가 잘 갖춰져 있다면 2-3명의 플랫폼 엔지니어로 운영 가능합니다.",
+    5: "[2min] 멀티 클러스터 분리 전략을 결정하는 기준입니다. 서비스 수, 보안 격리 요구사항, 팀 독립성, Blast Radius 허용 범위, 업그레이드 정책에 따라 Single vs Multi-Cluster를 결정합니다. 탭을 전환하면서 계정별 분리 패턴과 클러스터 분리 패턴도 함께 살펴보세요.\n\n💬 예상 질문:\n• Q: 환경별 분리(Dev/Staging/Prod)와 AZ별 분리 중 어떤 것이 우선인가요?\n  → 환경 분리가 우선입니다. Prod 환경 내에서 AZ별 Active-Active를 구성하는 것이 일반적입니다.",
+    6: "[2min] Service Plane과 Data Plane을 분리하는 이유입니다. Stateless API 서비스와 Stateful 데이터 처리 워크로드는 스케일링 특성, 노드 타입, 장애 영향이 다르므로 분리 운영이 효율적입니다.\n\n💬 예상 질문:\n• Q: Service Plane과 Data Plane을 같은 클러스터에 두면 안 되나요?\n  → 가능하지만 Spot 비율, 노드 타입, 업그레이드 정책이 달라 운영 복잡성이 증가합니다. 규모가 크면 분리를 권장합니다.",
+    7: "[2.5min] 워크로드 생명주기 애니메이션입니다. Play를 눌러 5단계를 관찰하세요.\nPhase 1: Stateless(Deployment)는 3개 Pod가 동시에 생성되고, Stateful(StatefulSet)은 db-0 → db-1 → db-2 순서로 순차 생성됩니다.\nPhase 2: ALB가 트래픽을 정상 분산합니다.\nPhase 3: 노드 장애로 Stateless Pod 1개와 Stateful Pod 1개가 동시에 죽습니다.\nPhase 4: 핵심 차이! Stateless는 완전히 새로운 랜덤 ID로 생성되고, Stateful은 동일한 이름(db-0)으로 재생성되며 기존 EBS를 다시 연결합니다.\nPhase 5: 복구 후 서비스가 재개됩니다.\n이것이 Deployment와 StatefulSet을 구분하는 가장 중요한 이유입니다.\n\n💬 예상 질문:\n• Q: StatefulSet이 EBS를 다시 연결하는 메커니즘은?\n  → PVC(PersistentVolumeClaim)가 Pod 이름에 바인딩되어 있어, 같은 이름의 Pod가 재생성되면 기존 PVC를 자동으로 마운트합니다.\n• Q: Stateless Pod가 새 ID로 생성되면 로드밸런서 설정은?\n  → Service가 Label Selector로 매칭하므로 Pod 이름이 바뀌어도 자동으로 트래픽이 라우팅됩니다.",
+    8: "[2min] Service/Data Plane 분리의 구체적인 이점입니다. 워크로드 특성에 맞는 노드 타입, 스케일링 전략, 배포 방식을 적용할 수 있습니다.\n\n💬 예상 질문:\n• Q: Kafka Consumer는 왜 Data Plane인가요?\n  → Consumer Lag 기반 스케일링, 메시지 처리 순서 보장 등 Stateful 특성이 있어 Data Plane에 배치합니다.",
+    9: "[2min] 멀티 계정 네트워크 토폴로지입니다. Transit Gateway를 중심으로 Prod Service, Prod Data, NonProd 계정을 연결합니다. Shared VPC에서 ArgoCD와 모니터링을 중앙 관리합니다.\n\n💬 예상 질문:\n• Q: VPC Peering 대신 Transit Gateway를 쓰는 이유는?\n  → 3개 이상의 VPC를 연결할 때 Peering은 Full Mesh가 필요하지만, TGW는 Hub-Spoke로 관리가 간편합니다.",
+    10: "[3min] NLB의 가중치 기반 라우팅 상세 구조입니다. Target Group별로 가중치를 설정하여 트래픽을 분산합니다. 평상시에는 50:50, 한 클러스터 점검 시에는 0:100으로 조정합니다. Health Check 실패 시 자동으로 트래픽이 정상 클러스터로 전환됩니다.\n\n💬 예상 질문:\n• Q: ALB 대신 NLB를 사용하는 이유는?\n  → NLB는 L4에서 동작하여 지연시간이 낮고, 가중치 라우팅이 Target Group 레벨에서 가능합니다. 클러스터 내부에서 Gateway API로 L7 라우팅을 처리합니다.\n• Q: Health Check 간격은 어떻게 설정하나요?\n  → 10초 간격, 2회 실패 시 Unhealthy로 설정하면 약 20-30초 내 자동 전환됩니다.",
+    11: "[3min] Gateway API는 Kubernetes의 차세대 인그레스 API입니다. 기존 Ingress API의 한계인 역할 분리 불가, Annotation 남용 문제를 해결합니다. GatewayClass, Gateway, HTTPRoute의 3계층 구조로 인프라 팀, 플랫폼 팀, 개발 팀의 책임을 명확히 분리합니다.\n\nGitBook 참고: https://atomoh.gitbook.io/kubernetes-docs/networking/04-gateway-api\n\n💬 예상 질문:\n• Q: 기존 Ingress를 Gateway API로 마이그레이션해야 하나요?\n  → 당장은 아닙니다. Ingress도 계속 지원되지만, 신규 구축 시 Gateway API를 권장합니다.\n• Q: Istio VirtualService와 Gateway API 중 뭘 써야 하나요?\n  → Gateway API가 Kubernetes 표준이므로 벤더 락인 없이 사용 가능합니다. Istio도 Gateway API를 지원합니다.",
+    12: "🎬 [3min] IP 고갈 문제의 핵심은 ENI당 할당 가능한 Secondary IP 수 제한입니다. Prefix Delegation을 활성화하면 개별 IP 대신 /28 prefix(16개 IP)를 할당받아 노드당 Pod 밀도를 대폭 높일 수 있습니다.\n\nGitBook 참고: https://atomoh.gitbook.io/kubernetes-docs/networking/01-vpc-cni\n\n💬 예상 질문:\n• Q: Prefix Delegation 활성화 시 기존 Pod에 영향이 있나요?\n  → 기존 노드는 재시작이 필요합니다. 신규 노드부터 적용되므로 Rolling Update로 점진적 전환이 가능합니다.\n• Q: /28이면 16개인데, 왜 t3.medium이 110개 Pod를 수용하나요?\n  → ENI당 여러 개의 /28 prefix를 할당받을 수 있습니다. 인스턴스 타입별 최대 prefix 수가 다릅니다.\n• Q: Karpenter를 쓰면 IP 고갈이 완화되나요?\n  → 간접적으로 도움됩니다. Karpenter가 큰 인스턴스 타입을 자동 선택하면 노드당 ENI/IP 수용량이 증가하고, bin-packing 효율화로 노드 수가 줄어 낭비 IP가 감소합니다. 하지만 Pod당 1 IP 할당 구조는 동일하므로 Prefix Delegation이 근본 해결책입니다. Karpenter + Prefix Delegation 조합이 가장 효과적입니다.",
+    13: "[2min] ENIConfig를 사용한 Custom Networking 설정입니다. AZ별로 Pod 전용 서브넷을 지정하여 노드 서브넷과 Pod 서브넷을 분리합니다.\n\n💬 예상 질문:\n• Q: ENIConfig를 AZ별로 만들어야 하는 이유는?\n  → Pod IP가 해당 AZ의 서브넷에서 할당되어야 Cross-AZ 트래픽을 최소화할 수 있습니다.",
+    14: "[2min] SGP(Security Group for Pods)와 대안 비교입니다. SGP는 Branch ENI를 사용하여 Pod별 SG를 적용하지만, 노드당 Branch ENI 수가 제한적입니다(m5.large 기준 최대 9개). 화해에서 겪고 있는 Pod 밀도 부족 문제의 원인이 바로 이것입니다.\n\nPrefix Delegation + Network Policy 조합이 대부분의 워크로드에 적합합니다. RDS나 ElastiCache 등 AWS 리소스 접근 제어가 필요한 경우만 SGP를 선별 적용하세요.\n\nFargate는 SGP 대안이지만 DaemonSet 미지원, 로그 수집기나 모니터링 에이전트를 사이드카로 전환해야 하는 트레이드오프가 있습니다.\n\n💬 예상 질문:\n• Q: Network Policy로 RDS 접근 제어가 가능한가요?\n  → Network Policy는 IP/Port 기반 제어만 가능합니다. RDS Security Group에서 Pod 서브넷 CIDR을 허용하는 방식으로 대체합니다.",
+    15: "[2min] SGP Branch ENI의 구체적인 제약과 해결 방안입니다. VPC CNI v1.15+에서는 standard 모드로 SGP와 Prefix Delegation을 동시에 사용할 수 있습니다.\n\n💬 예상 질문:\n• Q: standard 모드의 단점은 없나요?\n  → NetworkPolicy와 SGP 규칙이 둘 다 적용되므로 우선순위를 명확히 이해해야 합니다. SGP가 더 제한적이면 NetworkPolicy가 무시될 수 있습니다.",
+    16: "[2min] 서브넷 IP 고갈 문제를 초기 설계 시 적용하는 것과 운영 중 후적용하는 것의 차이입니다. 초기 설계 시 적용이 훨씬 수월하지만, 운영 중에도 Blue/Green 노드 그룹 교체로 적용 가능합니다.\n\n💬 예상 질문:\n• Q: 기존 클러스터에 Secondary CIDR을 추가하면 기존 서비스에 영향이 있나요?\n  → CIDR 추가 자체는 영향 없습니다. Custom Networking 활성화 시 신규 노드부터 적용되므로 기존 서비스는 유지됩니다.",
+    17: "[2min] 총 10주 마이그레이션 로드맵입니다. Phase 1에서 기반을 구축하고, Phase 2에서 파일럿 서비스로 검증합니다. Phase 3에서 점진적으로 서비스를 전환하며, Phase 4에서 완전한 전환과 Multi-Cluster 활성화를 완료합니다.\n\n💬 예상 질문:\n• Q: 10주가 현실적인 일정인가요?\n  → IaC/GitOps가 준비되어 있다면 가능합니다. 준비 안 된 경우 Phase 1에 2-4주 추가를 권장합니다.\n• Q: 파일럿 서비스 선정 기준은?\n  → 트래픽이 적고, 장애 영향이 작으며, 팀이 적극적으로 협조하는 서비스를 선택합니다.",
+    18: "[2min] 마이그레이션 전 반드시 확인해야 할 체크리스트입니다. 특히 네트워크 준비가 가장 중요합니다. Secondary CIDR과 Pod 서브넷을 미리 준비하지 않으면 마이그레이션 중간에 IP 고갈 문제가 재발할 수 있습니다.\n\n💬 예상 질문:\n• Q: IRSA와 Pod Identity 중 어떤 것을 써야 하나요?\n  → 신규 구축이면 Pod Identity를 권장합니다. 설정이 간편하고 OIDC Provider 없이 동작합니다.",
+    19: "❓ [3min] Block 01 내용을 복습하는 퀴즈입니다. 각 질문에 대해 잠시 생각해보시고, 정답을 확인해보세요. 이해가 안 되는 부분이 있으면 질문해주세요.\n\n💬 예상 질문:\n• Q: 다음 Block에서는 어떤 내용을 다루나요?\n  → Block 02에서는 Karpenter를 활용한 노드 오토스케일링과 Spot Instance 전략을 다룹니다."
+  };
+  const deck = new SlideFramework({
+    logoSrc: 'common/pptx-theme/images/logo_1.png',
+    footer: '© 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.',
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+
+  // Slide 07 (index 6): Lifecycle canvas — ↑↓ step navigation
+  deck.registerSlideAction(6, {
+    down: () => window._lifecycleStepDown ? window._lifecycleStepDown() : false,
+    up: () => window._lifecycleStepUp ? window._lifecycleStepUp() : false
+  });
+</script>
+</body>
+</html>

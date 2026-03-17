@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ECS → EKS Migration Deep Dive</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="03-scaling-strategy.md">
+  <meta name="remarp-block" content="default">
+  <link rel="stylesheet" href="common/theme.css">
+  <link rel="stylesheet" href="common/pptx-theme/theme-override.css">
+
+  <style>
+[data-remarp-id="s4-body"] .code-block,
+[data-remarp-id="s10-body"] .tab-content .code-block {
+  flex: 1;
+  overflow-y: auto;
+}
+[data-remarp-id="s10-body"] .tab-content.active {
+  display: flex !important;
+  flex-direction: column;
+  flex: 1;
+}
+  </style>
+
+  <script>window.__remarpTheme = {"colors": {}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}};</script>
+</head>
+<body>
+<div class="slide-deck">
+<div class="slide" data-remarp-id="s0" style="background:url('common/pptx-theme/images/Picture_13.png') center/cover no-repeat; padding:0; overflow:hidden;">
+  <h1 style="position:absolute; left:5%; top:28%; font-size:2.8rem; color:#fff; font-weight:200; line-height:1.2; width:53%; margin:0;">ECS → EKS Migration Deep Dive</h1>
+  <p style="position:absolute; left:5%; top:62%; font-size:1.3rem; color:rgba(255,255,255,0.8); width:53%; margin:0;">Scaling Strategy — Karpenter & KEDA (25 min)</p>
+  <div style="position:absolute; left:5%; top:76%;">
+    <p style="font-size:1.05rem; color:#fff; font-weight:600; margin:0;">오준석 (Junseok Oh)</p>
+    <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:6px 0 0 0;">Sr. Solutions Architect, AWS</p>
+    <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:2px 0 0 0;">화해 글로벌</p>
+  </div>
+  <img src="common/pptx-theme/images/Picture_8.png" alt="" style="position:absolute; right:5%; bottom:10%; width:8%; pointer-events:none;" />
+</div>
+
+<div class="slide" data-remarp-id="s1">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>Scaling Pain Point</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <blockquote><p>"노드/Pod 스케일링 전략 수립이 어려움"</p></blockquote>
+<blockquote><p>— ECS에서는 Auto Scaling이 간단했는데, EKS는 노드 그룹, HPA, VPA, Cluster Autoscaler 등 옵션이 너무 많습니다. 어떤 조합이 최적인지 모르겠습니다.</p></blockquote>
+<p><strong>화해 현황</strong>:</p>
+<ul><li>Cluster Autoscaler 사용 중 — 스케일 아웃에 5-7분 소요</li><li>노드 그룹 10개 이상 관리 복잡성</li><li>Spot Instance 활용률 낮음 (비용 최적화 기회 상실)</li></ul>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s2">
+  <div class="slide-header" data-remarp-id="s2-header"><h2>Cluster Autoscaler vs Karpenter</h2></div>
+  <div class="slide-body" data-remarp-id="s2-body" data-compare-mode="side-by-side">
+    <div class="compare-toggle">
+            <button class="compare-btn active" data-compare="cluster-autoscaler">Cluster Autoscaler</button>
+      <button class="compare-btn" data-compare="karpenter">Karpenter</button>
+    </div>
+    <div class="col-2" style="flex:1">
+            <div class="card compare-content active compare-highlight" data-compare="cluster-autoscaler" data-remarp-id="s2-left">
+<h3 style="color:var(--text-accent);margin-bottom:.5rem">Cluster Autoscaler</h3>
+<ul><li>노드 그룹 기반 스케일링</li><li>ASG(Auto Scaling Group) 의존</li><li>스케일링 속도: <strong>분 단위</strong> (5-10분)</li><li>인스턴스 유형: 노드 그룹별 고정</li><li>Bin-packing 효율: 중간</li><li>구성 복잡도: 노드 그룹 수에 비례</li></ul>
+</div>
+      <div class="card compare-content active" data-compare="karpenter" data-remarp-id="s2-right">
+<h3 style="color:var(--text-accent);margin-bottom:.5rem">Karpenter</h3>
+<ul><li>워크로드 요구사항 기반 스케일링</li><li>EC2 Fleet API 직접 호출</li><li>스케일링 속도: <strong>초 단위</strong> (30-60초)</li><li>인스턴스 유형: 동적 선택 (최적 매칭)</li><li>Bin-packing 효율: 높음 (비용 30-50% 절감)</li><li>구성 복잡도: NodePool 1-2개로 단순화</li></ul>
+</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s3">
+  <div class="slide-header" style="margin-bottom: 8px;" data-remarp-id="s3-header">
+    <h2>Grafana: EKS Node Monitoring</h2>
+    <p style="font-size:0.85rem; color:var(--text-secondary); margin:0;">CPU Requests vs Usage — Karpenter 판단 기준 시각화</p>
+  </div>
+  <div class="slide-body" data-remarp-id="s3-body" style="gap: 0;">
+    <div class="canvas-container" style="flex: 1; position: relative;">
+      <canvas id="dashboard-canvas"></canvas>
+      <div class="btn-group" style="justify-content: center; position: absolute; bottom: 4px; left: 0; right: 0; z-index: 10;">
+        <button class="btn" id="btn-add-node">노드 추가</button>
+        <button class="btn" id="btn-add-workload">워크로드 추가</button>
+        <button class="btn" style="border-color: #f39c12; color: #f39c12;" id="btn-remove-workload">워크로드 삭제</button>
+        <button class="btn" style="border-color: #e17055; color: #e17055;" id="btn-spot-interrupt">Spot 인터럽트</button>
+        <button class="btn" style="border-color: #fdcb6e; color: #fdcb6e;" id="btn-consolidation">Consolidation</button>
+        <button class="btn btn-sm" id="btn-reset">Reset</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s4">
+  <div class="slide-header" data-remarp-id="s4-header"><h2>NodePool 설정</h2></div>
+  <div class="slide-body" data-remarp-id="s4-body">
+    <div class="code-block"><span class="code-label">nodepool.yaml</span><span class="key">apiVersion</span>: karpenter.sh/v1
+<span class="key">kind</span>: NodePool
+<span class="key">metadata</span>:
+  <span class="key">name</span>: default
+<span class="key">spec</span>:
+  <span class="key">template</span>:
+    <span class="key">spec</span>:
+<span class="hl-line">      <span class="key">requirements</span>:</span>
+<span class="hl-line"><span class="comment">        # Spot + On-Demand 혼합</span></span>
+<span class="hl-line">        - key: karpenter.sh/capacity-type</span>
+<span class="hl-line">          <span class="key">operator</span>: In</span>
+<span class="hl-line">          <span class="key">values</span>: [<span class="string">"spot"</span>, <span class="string">"on-demand"</span>]</span>
+<span class="hl-line"><span class="comment">        # 다양한 인스턴스 패밀리</span></span>
+<span class="hl-line">        - key: karpenter.k8s.aws/instance-family</span>
+<span class="hl-line">          <span class="key">operator</span>: In</span>
+<span class="hl-line">          <span class="key">values</span>: [<span class="string">"m5"</span>, <span class="string">"m6i"</span>, <span class="string">"m6a"</span>, <span class="string">"c5"</span>, <span class="string">"c6i"</span>, <span class="string">"r5"</span>, <span class="string">"r6i"</span>]</span>
+<span class="comment">        # 아키텍처</span>
+        - key: kubernetes.io/arch
+          <span class="key">operator</span>: In
+          <span class="key">values</span>: [<span class="string">"amd64"</span>]
+<span class="hl-line">      <span class="key">nodeClassRef</span>:</span>
+<span class="hl-line">        <span class="key">group</span>: karpenter.k8s.aws</span>
+<span class="hl-line">        <span class="key">kind</span>: EC2NodeClass</span>
+        <span class="key">name</span>: default
+<span class="comment">  # 리소스 제한</span>
+  <span class="key">limits</span>:
+    <span class="key">cpu</span>: 1000
+    <span class="key">memory</span>: 1000Gi
+<span class="comment">  # Disruption 정책</span>
+  <span class="key">disruption</span>:
+    <span class="key">consolidationPolicy</span>: WhenEmptyOrUnderutilized
+    <span class="key">consolidateAfter</span>: 1m</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s5">
+  <div class="slide-header" data-remarp-id="s5-header"><h2>Karpenter Consolidation</h2></div>
+  <div class="slide-body" data-remarp-id="s5-body">
+    <div class="canvas-container" data-remarp-id="s5-canvas" style="flex:1">
+      <canvas id="consolidation"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s6">
+  <div class="slide-header" data-remarp-id="s6-header"><h2>KEDA RPS 기반 오토스케일링</h2></div>
+  <div class="slide-body" data-remarp-id="s6-body" style="gap: 0;">
+    <div class="canvas-container" style="background:var(--bg-primary); border-radius:10px; padding:8px; flex:1;">
+      <canvas id="keda-rps-canvas"></canvas>
+      <div class="canvas-controls" style="margin-top:6px; display:flex; align-items:center; gap:12px;">
+        <label style="font-size:.8rem; color:var(--text-secondary);">RPS:</label>
+        <input type="range" id="rps-slider" min="0" max="500" value="100" step="10" style="flex:1;">
+        <span id="rps-value" style="font-size:.85rem; font-weight:600; color:var(--accent-light,var(--text-accent)); min-width:36px;">100</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s9">
+  <div class="slide-header" data-remarp-id="s9-header"><h2>KEDA Architecture</h2></div>
+  <div class="slide-body" data-remarp-id="s9-body">
+    <div class="canvas-container" data-remarp-id="s9-canvas" style="flex:1">
+      <canvas id="keda-arch"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s10">
+  <div class="slide-header" data-remarp-id="s10-header"><h2>KEDA Scalers</h2></div>
+  <div class="slide-body" data-remarp-id="s10-body">
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="sqs-scaler">SQS Scaler</button>
+      <button class="tab-btn" data-tab="prometheus-scaler">Prometheus Scaler</button>
+      <button class="tab-btn" data-tab="cron-scaler">Cron Scaler</button>
+      <button class="tab-btn" data-tab="cloudwatch-scaler">CloudWatch Scaler</button>
+    </div>
+        <div class="tab-content active" data-tab="sqs-scaler">
+<div class="code-block"><span class="key">apiVersion</span>: keda.sh/v1alpha1
+<span class="key">kind</span>: ScaledObject
+<span class="key">metadata</span>:
+  <span class="key">name</span>: sqs-scaler
+<span class="key">spec</span>:
+  <span class="key">scaleTargetRef</span>:
+    <span class="key">name</span>: order-processor
+  <span class="key">minReplicaCount</span>: 0      # Zero scaling 가능!
+  <span class="key">maxReplicaCount</span>: 50
+  <span class="key">triggers</span>:
+    - type: aws-sqs-queue
+      <span class="key">metadata</span>:
+        <span class="key">queueURL</span>: https:<span class="comment">//sqs.ap-northeast-2.amazonaws.com/123456789/orders</span>
+        <span class="key">queueLength</span>: <span class="string">"5"</span>  # 메시지 5개당 Pod 1개
+        <span class="key">awsRegion</span>: ap-northeast-2</div>
+</div>
+    <div class="tab-content" data-tab="prometheus-scaler">
+<div class="code-block"><span class="key">triggers</span>:
+  - type: prometheus
+    <span class="key">metadata</span>:
+      <span class="key">serverAddress</span>: http:<span class="comment">//prometheus:9090</span>
+      <span class="key">metricName</span>: http_requests_per_second
+      <span class="key">threshold</span>: <span class="string">"100"</span>      # RPS 100 초과 시 스케일 아웃
+      <span class="key">query</span>: |
+        sum(rate(http_requests_total{
+          service=<span class="string">"api-gateway"</span>
+        }[1m]))</div>
+</div>
+    <div class="tab-content" data-tab="cron-scaler">
+<div class="code-block"><span class="key">triggers</span>:
+  - type: cron
+    <span class="key">metadata</span>:
+      <span class="key">timezone</span>: Asia/Seoul
+      <span class="key">start</span>: 0 9 * * 1-5   # 평일 09:00
+      <span class="key">end</span>: 0 18 * * 1-5    # 평일 18:00
+      <span class="key">desiredReplicas</span>: <span class="string">"10"</span> # 업무시간 10개 유지</div>
+</div>
+    <div class="tab-content" data-tab="cloudwatch-scaler">
+<div class="code-block"><span class="key">triggers</span>:
+  - type: aws-cloudwatch
+    <span class="key">metadata</span>:
+      <span class="key">namespace</span>: AWS/ApplicationELB
+      <span class="key">dimensionName</span>: LoadBalancer
+      <span class="key">dimensionValue</span>: app/my-alb/1234567890
+      <span class="key">metricName</span>: RequestCount
+      <span class="key">targetValue</span>: <span class="string">"1000"</span>
+      <span class="key">awsRegion</span>: ap-northeast-2</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s11">
+  <div class="slide-header" data-remarp-id="s11-header"><h2>KEDA + Istio Metrics</h2></div>
+  <div class="slide-body" data-remarp-id="s11-body">
+    <div class="code-block"><span class="code-label">keda-istio.yaml</span><span class="key">apiVersion</span>: keda.sh/v1alpha1
+<span class="key">kind</span>: ScaledObject
+<span class="key">metadata</span>:
+  <span class="key">name</span>: istio-rps-scaler
+<span class="key">spec</span>:
+  <span class="key">scaleTargetRef</span>:
+    <span class="key">name</span>: api-server
+  <span class="key">minReplicaCount</span>: 2
+  <span class="key">maxReplicaCount</span>: 20
+  <span class="key">triggers</span>:
+<span class="hl-line">    - type: prometheus</span>
+<span class="hl-line">      <span class="key">metadata</span>:</span>
+<span class="hl-line">        <span class="key">serverAddress</span>: http:<span class="comment">//prometheus.istio-system:9090</span></span>
+<span class="hl-line">        <span class="key">metricName</span>: istio_requests_per_second</span>
+<span class="hl-line">        <span class="key">threshold</span>: <span class="string">"50"</span>    # Pod당 RPS 50 유지</span>
+<span class="hl-line">        <span class="key">query</span>: |</span>
+<span class="hl-line">          sum(rate(istio_requests_total{</span>
+            destination_service=<span class="string">"api-server.production.svc.cluster.local"</span>,
+            response_code!~<span class="string">"5.*"</span>
+          }[1m])) /
+          count(kube_pod_info{
+            namespace=<span class="string">"production"</span>,
+            pod=~<span class="string">"api-server-.*"</span>
+          })</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="sN1">
+  <div class="slide-header"><h2>Batch &amp; Schedule 워크로드 패턴</h2></div>
+  <div class="slide-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="cronjob">Kubernetes CronJob</button>
+      <button class="tab-btn" data-tab="airflow">Airflow + KubernetesExecutor</button>
+      <button class="tab-btn" data-tab="jenkins">Jenkins + Kubernetes Plugin</button>
+      <button class="tab-btn" data-tab="keda-batch">KEDA + Batch 조합</button>
+    </div>
+    <div class="tab-content active" data-tab="cronjob">
+<p><strong>기본 패턴: CronJob으로 배치 스케줄링</strong></p>
+<div class="code-block"><span class="code-label">cronjob.yaml</span><span class="key">apiVersion</span>: batch/v1
+<span class="key">kind</span>: CronJob
+<span class="key">metadata</span>:
+  <span class="key">name</span>: daily-report
+  <span class="key">namespace</span>: batch
+<span class="key">spec</span>:
+  <span class="key">schedule</span>: <span class="string">"0 2 * * *"</span>        <span class="comment"># 매일 02:00 KST</span>
+  <span class="key">timeZone</span>: <span class="string">"Asia/Seoul"</span>
+  <span class="key">concurrencyPolicy</span>: Forbid     <span class="comment"># 중복 실행 방지</span>
+  <span class="key">jobTemplate</span>:
+    <span class="key">spec</span>:
+      <span class="key">backoffLimit</span>: 3
+      <span class="key">activeDeadlineSeconds</span>: 3600
+      <span class="key">template</span>:
+        <span class="key">spec</span>:
+          <span class="key">serviceAccountName</span>: batch-runner
+          <span class="key">containers</span>:
+            - name: report
+              <span class="key">image</span>: hwahae/daily-report:latest
+              <span class="key">resources</span>:
+                <span class="key">requests</span>:
+                  <span class="key">cpu</span>: <span class="string">"1"</span>
+                  <span class="key">memory</span>: <span class="string">"2Gi"</span>
+          <span class="key">restartPolicy</span>: Never
+          <span class="key">nodeSelector</span>:
+            karpenter.sh/capacity-type: spot</div>
+<p><strong>장점</strong>: 단순, K8s 네이티브, CronJob 내장 스케줄러</p>
+<p><strong>적합</strong>: 단일 작업, 의존성 없는 배치</p>
+</div>
+    <div class="tab-content" data-tab="airflow">
+<p><strong>패턴: Airflow UI + Pod 런타임</strong></p>
+<div class="code-block">Airflow Webserver (Deployment)
+    ↓
+Airflow Scheduler (Deployment)
+    ↓ DAG 트리거
+KubernetesExecutor
+    ↓ Pod 생성
+Task Pod (Ephemeral)
+    ↓ 실행 완료
+Pod 삭제 → 리소스 회수</div>
+<p><strong>핵심 설정</strong>:</p>
+<div class="code-block"><span class="code-label">airflow.cfg (Helm values)</span><span class="key">executor</span>: KubernetesExecutor
+<span class="key">kubernetes_executor</span>:
+  <span class="key">namespace</span>: airflow-tasks
+  <span class="key">worker_container_image_pull_policy</span>: Always
+  <span class="key">delete_worker_pods</span>: <span class="keyword">True</span>
+  <span class="key">delete_worker_pods_on_failure</span>: <span class="keyword">False</span>  <span class="comment"># 실패 시 디버깅용</span></div>
+<p><strong>장점</strong>: DAG 의존성 관리, UI 제공, 복잡한 워크플로우</p>
+<p><strong>적합</strong>: ETL 파이프라인, ML 학습, 다단계 배치</p>
+</div>
+    <div class="tab-content" data-tab="jenkins">
+<p><strong>패턴: Jenkins UI + 동적 Agent Pod</strong></p>
+<div class="code-block"><span class="code-label">Jenkinsfile</span>// Jenkinsfile
+pipeline {
+  agent {
+    kubernetes {
+      yaml '''
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+          - name: gradle
+            image: gradle:8-jdk17
+            resources:
+              requests:
+                cpu: "2"
+                memory: "4Gi"
+          nodeSelector:
+            karpenter.sh/capacity-type: spot
+      '''
+    }
+  }
+  stages {
+    stage('Build') {
+      steps {
+        container('gradle') {
+          sh 'gradle build'
+        }
+      }
+    }
+  }
+}</div>
+<p><strong>장점</strong>: 기존 Jenkins 파이프라인 재활용, 동적 리소스 할당</p>
+<p><strong>적합</strong>: CI/CD 빌드, 기존 Jenkins 사용 팀</p>
+</div>
+    <div class="tab-content" data-tab="keda-batch">
+<p><strong>패턴: KEDA Cron Scaler로 예측 스케일링</strong></p>
+<div class="code-block"><span class="code-label">keda-batch.yaml</span><span class="comment"># 업무시간에 배치 처리 Worker 미리 확보</span>
+<span class="key">apiVersion</span>: keda.sh/v1alpha1
+<span class="key">kind</span>: ScaledObject
+<span class="key">metadata</span>:
+  <span class="key">name</span>: batch-worker-scaler
+<span class="key">spec</span>:
+  <span class="key">scaleTargetRef</span>:
+    <span class="key">name</span>: batch-worker
+  <span class="key">minReplicaCount</span>: 0           <span class="comment"># 비업무시간 Zero Scale</span>
+  <span class="key">maxReplicaCount</span>: 20
+  <span class="key">triggers</span>:
+    <span class="comment"># SQS 기반 동적 스케일링</span>
+    - type: aws-sqs-queue
+      <span class="key">metadata</span>:
+        <span class="key">queueURL</span>: https:<span class="comment">//sqs.../batch-jobs</span>
+        <span class="key">queueLength</span>: <span class="string">"3"</span>
+    <span class="comment"># 업무시간 최소 Pod 확보</span>
+    - type: cron
+      <span class="key">metadata</span>:
+        <span class="key">timezone</span>: Asia/Seoul
+        <span class="key">start</span>: 0 9 * * 1-5
+        <span class="key">end</span>: 0 22 * * 1-5
+        <span class="key">desiredReplicas</span>: <span class="string">"3"</span></div>
+<p><strong>장점</strong>: SQS 큐 기반 + 시간 기반 하이브리드, Zero Scaling으로 비용 최적화</p>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="sN2">
+  <div class="slide-header"><h2>Batch 전용 Karpenter NodePool</h2></div>
+  <div class="slide-body">
+<div class="code-block"><span class="code-label">batch-nodepool.yaml</span><span class="comment"># Batch 전용 NodePool — Spot 최적화</span>
+<span class="key">apiVersion</span>: karpenter.sh/v1
+<span class="key">kind</span>: NodePool
+<span class="key">metadata</span>:
+  <span class="key">name</span>: batch
+<span class="key">spec</span>:
+  <span class="key">template</span>:
+    <span class="key">metadata</span>:
+      <span class="key">labels</span>:
+        workload-type: batch
+    <span class="key">spec</span>:
+      <span class="key">requirements</span>:
+        <span class="comment"># Batch는 Spot Only (비용 최적화)</span>
+        - key: karpenter.sh/capacity-type
+          <span class="key">operator</span>: In
+          <span class="key">values</span>: [<span class="string">"spot"</span>]
+        <span class="comment"># 컴퓨팅 최적화 패밀리</span>
+        - key: karpenter.k8s.aws/instance-family
+          <span class="key">operator</span>: In
+          <span class="key">values</span>: [<span class="string">"c5"</span>, <span class="string">"c5a"</span>, <span class="string">"c6i"</span>, <span class="string">"c6a"</span>, <span class="string">"c7i"</span>, <span class="string">"c7a"</span>]
+        - key: kubernetes.io/arch
+          <span class="key">operator</span>: In
+          <span class="key">values</span>: [<span class="string">"amd64"</span>, <span class="string">"arm64"</span>]
+      <span class="key">nodeClassRef</span>:
+        <span class="key">group</span>: karpenter.k8s.aws
+        <span class="key">kind</span>: EC2NodeClass
+        <span class="key">name</span>: batch
+      <span class="comment"># Batch Pod 완료 후 빠른 노드 회수</span>
+      <span class="key">expireAfter</span>: 2h
+  <span class="key">limits</span>:
+    <span class="key">cpu</span>: 200
+  <span class="key">disruption</span>:
+    <span class="key">consolidationPolicy</span>: WhenEmpty
+    <span class="key">consolidateAfter</span>: 30s       <span class="comment"># 빈 노드 30초 후 즉시 정리</span></div>
+<div class="code-block"><span class="code-label">batch-pod-example.yaml</span><span class="comment"># Batch Pod에 Toleration + NodeSelector 추가</span>
+<span class="key">spec</span>:
+  <span class="key">nodeSelector</span>:
+    workload-type: batch
+  <span class="key">tolerations</span>:
+    - key: workload-type
+      <span class="key">value</span>: batch
+      <span class="key">effect</span>: NoSchedule</div>
+<p><strong>효과</strong>: Batch 완료 후 노드 자동 회수 → 유휴 비용 0원</p>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s12">
+  <div class="slide-header" data-remarp-id="s12-header"><h2>HPA → Karpenter → KEDA 도입 로드맵</h2></div>
+  <div class="slide-body" data-remarp-id="s12-body">
+    <div class="timeline">
+            <div class="timeline-step" data-step="1" data-remarp-id="s12-step-0">
+      <div class="timeline-dot" style="width:1.67rem;height:1.67rem;font-size:0.82rem">1</div>
+      <div class="timeline-label" style="max-width:5rem">Phase 1 (Week 1-2)</div>
+      <div class="timeline-desc">Karpenter 설치 및 NodePool 구성 기존 Cluster Autoscaler와 병행 운영 테스트 워크로드로 검증</div>
+    </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-step" data-step="2" data-remarp-id="s12-step-1">
+      <div class="timeline-dot" style="width:1.67rem;height:1.67rem;font-size:0.82rem">2</div>
+      <div class="timeline-label" style="max-width:5rem">Phase 2 (Week 3-4)</div>
+      <div class="timeline-desc">Cluster Autoscaler 제거 Karpenter Consolidation 활성화 Spot Instance 비율 확대</div>
+    </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-step" data-step="3" data-remarp-id="s12-step-2">
+      <div class="timeline-dot" style="width:1.67rem;height:1.67rem;font-size:0.82rem">3</div>
+      <div class="timeline-label" style="max-width:5rem">Phase 3 (Week 5-6)</div>
+      <div class="timeline-desc">KEDA 설치 SQS 기반 워커 스케일링 적용 Prometheus 메트릭 연동</div>
+    </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-step" data-step="4" data-remarp-id="s12-step-3">
+      <div class="timeline-dot" style="width:1.67rem;height:1.67rem;font-size:0.82rem">4</div>
+      <div class="timeline-label" style="max-width:5rem">Phase 4 (Week 7-8)</div>
+      <div class="timeline-desc">Istio 메트릭 기반 스케일링 Cron 스케일러로 예측 스케일링 Zero Scaling 적용 (비용 최적화)</div>
+    </div>
+    </div>
+  </div>
+  
+<script>(function() {
+  const slide = document.currentScript.closest('.slide');
+  if (!slide) return;
+  const steps = slide.querySelectorAll('.timeline-step');
+  const connectors = slide.querySelectorAll('.timeline-connector');
+  let current = 0;
+  function update() {
+    steps.forEach((s, i) => {
+      s.classList.remove('active', 'done');
+      if (i < current) s.classList.add('done');
+      else if (i === current) s.classList.add('active');
+    });
+    connectors.forEach((c, i) => {
+      c.classList.toggle('done', i < current);
+    });
+  }
+  update();
+  slide.__canvasStep = function(dir) {
+    if (dir === 'next' && current < 3) current++;
+    else if (dir === 'prev' && current > 0) current--;
+    else return (dir === 'next') ? false : false;
+    update();
+    return current;
+  };
+  slide.dataset.slideAction = 'canvas-step';
+  slide.dataset.canvasMaxStep = '3';
+})();</script>
+</div>
+
+<div class="slide" data-remarp-id="s13">
+  <div class="slide-header" data-remarp-id="s13-header"><h2>Block 03 Quiz</h2></div>
+  <div class="slide-body" data-remarp-id="s13-body" style="overflow-y:auto">
+    <div class="quiz" data-quiz="q1">
+      <div class="quiz-question">Q1: Karpenter가 Cluster Autoscaler보다 빠른 이유는?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">더 많은 CPU를 사용해서</button>
+<button class="quiz-option" data-correct="true">ASG를 거치지 않고 EC2 Fleet API를 직접 호출해서</button>
+<button class="quiz-option" data-correct="false">미리 노드를 프로비저닝해두기 때문에</button>
+<button class="quiz-option" data-correct="false">AWS 전용 서비스이기 때문에</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q2">
+      <div class="quiz-question">Q2: Karpenter Consolidation의 목적은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">노드 수를 최대화하여 가용성 확보</button>
+<button class="quiz-option" data-correct="false">Pod를 균등하게 분산</button>
+<button class="quiz-option" data-correct="true">저활용 노드를 통합하여 비용 절감</button>
+<button class="quiz-option" data-correct="false">Spot Instance 중단 방지</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q3">
+      <div class="quiz-question">Q3: KEDA의 가장 큰 장점은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">HPA보다 빠른 스케일링 속도</button>
+<button class="quiz-option" data-correct="true">50+ 이벤트 소스 기반 스케일링과 Zero Scaling 지원</button>
+<button class="quiz-option" data-correct="false">Kubernetes 기본 내장 기능</button>
+<button class="quiz-option" data-correct="false">노드 레벨 스케일링 지원</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q4">
+      <div class="quiz-question">Q4: Spot Instance 다각화 전략이 중요한 이유는?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">비용을 더 절감하기 위해</button>
+<button class="quiz-option" data-correct="false">성능을 향상시키기 위해</button>
+<button class="quiz-option" data-correct="true">Spot 용량 풀을 넓혀 중단 확률을 낮추기 위해</button>
+<button class="quiz-option" data-correct="false">관리를 단순화하기 위해</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+  </div>
+</div>
+</div>
+<script src="common/animation-utils.js"></script>
+<script src="common/slide-framework.js"></script>
+<script src="common/quiz-component.js"></script>
+<script src="common/presenter-view.js"></script>
+<script>
+(function initDashboard() {
+  // Responsive canvas: fills container, uniform scale from 960-wide logical coords
+  const canvas = document.getElementById('dashboard-canvas');
+  if (!canvas) return;
+  const dashContainer = canvas.parentElement;
+  const BASE_W = 960;
+  let ctx, width, height;
+  let L = {}; // dynamic layout positions
+
+  function resizeDashboard() {
+    const cw = dashContainer.clientWidth;
+    const ch = dashContainer.clientHeight - 38; // reserve for button overlay
+    const dpr = window.devicePixelRatio || 1;
+
+    if (cw <= 0 || ch <= 0) {
+      // Slide hidden: use fixed fallback dimensions
+      canvas.width = BASE_W * dpr;
+      canvas.height = 440 * dpr;
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
+      canvas.style.maxWidth = 'none';
+      canvas.style.aspectRatio = BASE_W + '/440';
+      ctx = canvas.getContext('2d');
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+      width = BASE_W;
+      height = 440;
+    } else {
+      // Slide visible: fill container
+      canvas.width = Math.round(cw * dpr);
+      canvas.height = Math.round(ch * dpr);
+      canvas.style.width = '100%';
+      canvas.style.height = ch + 'px';
+      canvas.style.maxWidth = 'none';
+      canvas.style.aspectRatio = 'unset';
+      ctx = canvas.getContext('2d');
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      const scale = (cw * dpr) / BASE_W;
+      ctx.scale(scale, scale);
+      width = BASE_W;
+      height = Math.round((ch * dpr) / scale);
+    }
+    // Dynamic vertical layout
+    const statY = 30, statH = 40;
+    const chartY = statY + statH + 4;
+    const chartH = Math.max(80, Math.min(200, Math.round((height - chartY) * 0.28)));
+    const gridY = chartY + chartH + 6;
+    const gridH = height - gridY - 4;
+    L = { statY, statH, chartY, chartH, gridY, gridH };
+    return true;
+  }
+  resizeDashboard();
+
+  const INSTANCE_TYPES = ['m5.xlarge', 'm5.2xlarge', 'c5.xlarge', 'r5.xlarge', 'm6i.xlarge', 'c6g.xlarge'];
+  const MAX_NODES = 8;
+
+  let nodes = [];
+  let events = [];
+  let timeSeriesData = []; // { avgReq, avgUsage }
+  let tsInterval = null;
+
+  function initNodes() {
+    nodes = [];
+    const initData = [
+      { req: 55, use: 32, cap: 'on-demand', inst: 'm5.xlarge' },
+      { req: 48, use: 28, cap: 'on-demand', inst: 'm5.2xlarge' },
+      { req: 62, use: 40, cap: 'spot',      inst: 'c5.xlarge' },
+      { req: 25, use: 12, cap: 'spot',      inst: 'r5.xlarge' },
+      { req: 70, use: 45, cap: 'on-demand', inst: 'm6i.xlarge' },
+      { req: 38, use: 22, cap: 'spot',      inst: 'c6g.xlarge' }
+    ];
+    initData.forEach((d, i) => {
+      nodes.push({
+        id: i, name: `node-${i + 1}`, status: 'Ready',
+        cpuRequests: d.req, cpuUsage: d.use,
+        capacityType: d.cap, instanceType: d.inst,
+        animOffset: Math.random() * Math.PI * 2
+      });
+    });
+    events = [
+      { time: '10:32:15', type: 'Provisioned', msg: 'NodeClaim node-1~6 created', color: Colors.green },
+      { time: '10:32:10', type: 'Scheduled',   msg: 'All pods scheduled',          color: Colors.blue }
+    ];
+    timeSeriesData = [];
+    // Seed 5 initial data points
+    for (let i = 0; i < 5; i++) pushTimeSeriesPoint();
+  }
+
+  function pushTimeSeriesPoint() {
+    const active = nodes.filter(n => n.status === 'Ready' || n.status === 'Cordoned');
+    if (active.length === 0) {
+      timeSeriesData.push({ avgReq: 0, avgUsage: 0 });
+    } else {
+      const avgReq = Math.round(active.reduce((s, n) => s + n.cpuRequests, 0) / active.length);
+      const avgUsage = Math.round(active.reduce((s, n) => s + n.cpuUsage, 0) / active.length);
+      timeSeriesData.push({ avgReq, avgUsage });
+    }
+    if (timeSeriesData.length > 20) timeSeriesData.shift();
+  }
+
+  function startTimeSeries() {
+    if (tsInterval) clearInterval(tsInterval);
+    // Add small jitter to usage each tick for realism
+    tsInterval = setInterval(() => {
+      nodes.forEach(n => {
+        if (n.status === 'Ready') {
+          n.cpuUsage = clamp(n.cpuUsage + Math.floor(Math.random() * 7) - 3, 5, Math.min(95, n.cpuRequests + 10));
+        }
+      });
+      pushTimeSeriesPoint();
+    }, 5000);
+  }
+
+  function getTimestamp() {
+    const now = new Date();
+    return now.toTimeString().slice(0, 8);
+  }
+
+  function addEvent(type, msg, color) {
+    events.unshift({ time: getTimestamp(), type, msg, color: color || Colors.textSec });
+    if (events.length > 15) events.pop();
+  }
+
+  initNodes();
+  startTimeSeries();
+
+  // ── Draw functions ──
+
+  function drawGrafanaHeader() {
+    // Header bar
+    drawRoundRect(ctx, 0, 0, width, 26, 0, '#1a1a2e', null);
+    drawText(ctx, '⬡', 18, 13, { size: 13, color: '#f46800', align: 'left' });
+    drawText(ctx, 'Grafana', 38, 13, { size: 11, weight: '700', color: '#f46800', align: 'left' });
+    drawText(ctx, 'EKS Node Monitoring', 110, 13, { size: 11, color: Colors.textSec, align: 'left' });
+    drawText(ctx, 'Last 5m ▾', width - 80, 13, { size: 9, color: Colors.textMuted, align: 'left' });
+    drawText(ctx, '🔄', width - 15, 13, { size: 10, color: Colors.textMuted });
+  }
+
+  function drawStatPanels() {
+    const active = nodes.filter(n => n.status === 'Ready' || n.status === 'Cordoned');
+    const readyCount = nodes.filter(n => n.status === 'Ready').length;
+    const activeCount = active.length;
+    const avgReq = activeCount > 0 ? Math.round(active.reduce((s, n) => s + n.cpuRequests, 0) / activeCount) : 0;
+    const avgUse = activeCount > 0 ? Math.round(active.reduce((s, n) => s + n.cpuUsage, 0) / activeCount) : 0;
+    const cost = (activeCount * 0.12).toFixed(2);
+
+    const panels = [
+      { label: 'Active Nodes', value: String(activeCount), color: Colors.green },
+      { label: 'Ready',        value: String(readyCount),  color: Colors.green },
+      { label: 'CPU Requests', value: `avg ${avgReq}%`,    color: Colors.blue },
+      { label: 'CPU Usage',    value: `avg ${avgUse}%`,    color: Colors.cyan },
+      { label: 'Cost/hr',      value: `$${cost}`,          color: Colors.yellow }
+    ];
+
+    const panelY = L.statY;
+    const panelH = L.statH;
+    const gap = 6;
+    const totalGap = gap * (panels.length - 1);
+    const panelW = (width - 20 - totalGap) / panels.length;
+
+    panels.forEach((p, i) => {
+      const px = 10 + i * (panelW + gap);
+      drawRoundRect(ctx, px, panelY, panelW, panelH, 6, Colors.surface, Colors.border);
+      drawText(ctx, p.label, px + panelW / 2, panelY + 12, { size: 9, color: Colors.textMuted });
+      drawText(ctx, p.value, px + panelW / 2, panelY + 28, { size: 14, weight: '700', color: p.color });
+    });
+  }
+
+  function drawTimeSeriesChart() {
+    const chartX = 10;
+    const chartY = L.chartY;
+    const chartW = width - 20;
+    const chartH = L.chartH;
+
+    // Panel background
+    drawRoundRect(ctx, chartX, chartY, chartW, chartH, 6, Colors.surface, Colors.border);
+
+    // Title
+    drawText(ctx, 'CPU Requests vs Usage (%)', chartX + 15, chartY + 14, { size: 10, color: Colors.textMuted, align: 'left' });
+
+    // Chart area within panel
+    const areaX = chartX + 45;
+    const areaY = chartY + 26;
+    const areaW = chartW - 60;
+    const areaH = chartH - 38;
+
+    // Grid lines + Y-axis labels
+    ctx.strokeStyle = Colors.border + '60';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const gy = areaY + (areaH / 4) * i;
+      ctx.beginPath();
+      ctx.moveTo(areaX, gy);
+      ctx.lineTo(areaX + areaW, gy);
+      ctx.stroke();
+      const label = `${100 - i * 25}%`;
+      drawText(ctx, label, areaX - 8, gy, { size: 9, color: Colors.textMuted, align: 'right' });
+    }
+
+    if (timeSeriesData.length < 2) return;
+
+    // Helper to map value to y
+    const valToY = (v) => areaY + areaH - (areaH * clamp(v, 0, 100) / 100);
+
+    // Draw filled area between requests and usage (the "gap")
+    ctx.beginPath();
+    timeSeriesData.forEach((d, i) => {
+      const x = areaX + (areaW / (Math.max(timeSeriesData.length - 1, 1))) * i;
+      ctx.lineTo(x, valToY(d.avgReq));
+    });
+    for (let i = timeSeriesData.length - 1; i >= 0; i--) {
+      const x = areaX + (areaW / (Math.max(timeSeriesData.length - 1, 1))) * i;
+      ctx.lineTo(x, valToY(timeSeriesData[i].avgUsage));
+    }
+    ctx.closePath();
+    ctx.fillStyle = Colors.blue + '15';
+    ctx.fill();
+
+    // Draw Requests line (blue)
+    ctx.beginPath();
+    ctx.strokeStyle = Colors.blue;
+    ctx.lineWidth = 2;
+    timeSeriesData.forEach((d, i) => {
+      const x = areaX + (areaW / (Math.max(timeSeriesData.length - 1, 1))) * i;
+      if (i === 0) ctx.moveTo(x, valToY(d.avgReq));
+      else ctx.lineTo(x, valToY(d.avgReq));
+    });
+    ctx.stroke();
+
+    // Draw Usage line (green/cyan)
+    ctx.beginPath();
+    ctx.strokeStyle = Colors.cyan;
+    ctx.lineWidth = 2;
+    timeSeriesData.forEach((d, i) => {
+      const x = areaX + (areaW / (Math.max(timeSeriesData.length - 1, 1))) * i;
+      if (i === 0) ctx.moveTo(x, valToY(d.avgUsage));
+      else ctx.lineTo(x, valToY(d.avgUsage));
+    });
+    ctx.stroke();
+
+    // Data points on last point
+    const lastIdx = timeSeriesData.length - 1;
+    const lastX = areaX + areaW;
+    const lastD = timeSeriesData[lastIdx];
+
+    drawCircle(ctx, lastX, valToY(lastD.avgReq), 4, Colors.blue, null);
+    drawCircle(ctx, lastX, valToY(lastD.avgUsage), 4, Colors.cyan, null);
+
+    // Legend
+    const legX = chartX + chartW - 220;
+    const legY = chartY + 14;
+    ctx.fillStyle = Colors.blue;
+    ctx.fillRect(legX, legY - 4, 16, 3);
+    drawText(ctx, 'Requests', legX + 24, legY, { size: 9, color: Colors.blue, align: 'left' });
+    ctx.fillStyle = Colors.cyan;
+    ctx.fillRect(legX + 85, legY - 4, 16, 3);
+    drawText(ctx, 'Usage', legX + 109, legY, { size: 9, color: Colors.cyan, align: 'left' });
+
+    // Gap annotation
+    if (lastD.avgReq - lastD.avgUsage > 10) {
+      const midY = (valToY(lastD.avgReq) + valToY(lastD.avgUsage)) / 2;
+      drawText(ctx, `gap ${lastD.avgReq - lastD.avgUsage}%`, lastX + 8, midY, { size: 9, weight: '600', color: Colors.yellow, align: 'left' });
+    }
+  }
+
+  function drawNodeGrid(elapsed) {
+    const gridX = 10;
+    const gridY = L.gridY;
+    const gridW = 530;
+    const gridH = L.gridH;
+
+    drawRoundRect(ctx, gridX, gridY, gridW, gridH, 6, Colors.surface, Colors.border);
+    drawText(ctx, 'Node Status', gridX + 15, gridY + 14, { size: 10, color: Colors.textMuted, align: 'left' });
+
+    const startX = gridX + 10;
+    const startY = gridY + 24;
+    const nodeW = 166;
+    const gapX = 10;
+    const gapY = 6;
+    const nodeH = Math.min(86, Math.max(58, Math.round((gridH - 28) / 2 - gapY)));
+    const cols = 3;
+
+    nodes.forEach((node, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const nx = startX + col * (nodeW + gapX);
+      const ny = startY + row * (nodeH + gapY);
+
+      // Node border color based on status
+      let borderColor = Colors.border;
+      let bgColor = Colors.bg;
+      if (node.status === 'Ready') {
+        borderColor = node.cpuRequests < 30 ? Colors.yellow : Colors.green;
+        bgColor = Colors.bg;
+      } else if (node.status === 'Cordoned') {
+        borderColor = Colors.yellow;
+        bgColor = Colors.yellow + '10';
+      } else if (node.status === 'Terminating') {
+        borderColor = Colors.red;
+        bgColor = Colors.red + '10';
+      }
+
+      // Pulse for terminating
+      let alpha = 1;
+      if (node.status === 'Terminating') {
+        alpha = 0.5 + 0.5 * Math.sin(elapsed * 4 + node.animOffset);
+      }
+      ctx.globalAlpha = alpha;
+
+      drawRoundRect(ctx, nx, ny, nodeW, nodeH, 6, bgColor, borderColor);
+
+      // Node name + instance type
+      drawText(ctx, node.name, nx + 8, ny + 13, { size: 11, weight: '700', color: Colors.textPri, align: 'left' });
+      drawText(ctx, node.instanceType, nx + nodeW - 8, ny + 13, { size: 9, color: Colors.textMuted, align: 'right' });
+
+      // Spot badge
+      if (node.capacityType === 'spot') {
+        const badgeX = nx + 8;
+        const badgeY = ny + 23;
+        drawRoundRect(ctx, badgeX, badgeY, 32, 14, 3, Colors.orange + '30', null);
+        drawText(ctx, 'SPOT', badgeX + 16, badgeY + 7, { size: 8, weight: '700', color: Colors.orange });
+      }
+
+      // Low Req warning
+      if (node.status === 'Ready' && node.cpuRequests < 30) {
+        const warnX = node.capacityType === 'spot' ? nx + 46 : nx + 8;
+        const warnY = ny + 23;
+        drawRoundRect(ctx, warnX, warnY, 48, 14, 3, Colors.yellow + '30', null);
+        drawText(ctx, 'Low Req', warnX + 24, warnY + 7, { size: 8, weight: '700', color: Colors.yellow });
+      }
+
+      // Cordon badge
+      if (node.status === 'Cordoned') {
+        const cordonX = nx + nodeW - 50;
+        const cordonY = ny + 23;
+        drawRoundRect(ctx, cordonX, cordonY, 44, 14, 3, Colors.yellow + '30', Colors.yellow + '60');
+        drawText(ctx, 'CORDON', cordonX + 22, cordonY + 7, { size: 8, weight: '700', color: Colors.yellow });
+      }
+
+      // CPU bars
+      const barX = nx + 8;
+      const barW = nodeW - 16;
+      const barH = 8;
+
+      // Requests bar (blue)
+      const reqBarY = ny + nodeH - 26;
+      ctx.fillStyle = Colors.bg + 'cc';
+      ctx.fillRect(barX, reqBarY, barW, barH);
+      ctx.fillStyle = Colors.blue;
+      ctx.fillRect(barX, reqBarY, barW * (node.cpuRequests / 100), barH);
+      drawText(ctx, `Req ${node.cpuRequests}%`, nx + nodeW - 8, reqBarY + 4, { size: 8, color: Colors.blue, align: 'right' });
+
+      // Usage bar (cyan)
+      const useBarY = ny + nodeH - 14;
+      ctx.fillStyle = Colors.bg + 'cc';
+      ctx.fillRect(barX, useBarY, barW, barH);
+      ctx.fillStyle = Colors.cyan;
+      ctx.fillRect(barX, useBarY, barW * (node.cpuUsage / 100), barH);
+      drawText(ctx, `Use ${node.cpuUsage}%`, nx + nodeW - 8, useBarY + 4, { size: 8, color: Colors.cyan, align: 'right' });
+
+      ctx.globalAlpha = 1;
+    });
+
+    // Empty slots
+    for (let i = nodes.length; i < MAX_NODES; i++) {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const nx = startX + col * (nodeW + gapX);
+      const ny = startY + row * (nodeH + gapY);
+      if (ny + nodeH <= gridY + gridH) {
+        drawRoundRect(ctx, nx, ny, nodeW, nodeH, 6, Colors.bg + '40', Colors.border + '40');
+        drawText(ctx, '— empty —', nx + nodeW / 2, ny + nodeH / 2, { size: 10, color: Colors.textMuted });
+      }
+    }
+  }
+
+  function drawEventLog() {
+    const logX = 548;
+    const logY = L.gridY;
+    const logW = width - logX - 10;
+    const logH = L.gridH;
+
+    drawRoundRect(ctx, logX, logY, logW, logH, 6, Colors.surface, Colors.border);
+    drawText(ctx, 'Karpenter Events', logX + 15, logY + 14, { size: 10, color: Colors.textMuted, align: 'left' });
+
+    const maxEvents = Math.max(6, Math.floor((logH - 32) / 22));
+    events.slice(0, maxEvents).forEach((evt, i) => {
+      const ey = logY + 32 + i * 22;
+      // Timestamp
+      drawText(ctx, evt.time, logX + 10, ey, { size: 9, color: Colors.textMuted, align: 'left', font: 'JetBrains Mono, monospace' });
+      // Event type badge
+      drawText(ctx, evt.type, logX + 85, ey, { size: 9, weight: '600', color: evt.color, align: 'left' });
+      // Message
+      drawText(ctx, evt.msg, logX + 165, ey, { size: 9, color: Colors.textSec, align: 'left' });
+    });
+  }
+
+  function draw(elapsed) {
+    ctx.fillStyle = '#0b0e14';
+    ctx.fillRect(0, 0, width, height);
+
+    drawGrafanaHeader();
+    drawStatPanels();
+    drawTimeSeriesChart();
+    drawNodeGrid(elapsed);
+    drawEventLog();
+  }
+
+  const loop = new AnimationLoop(draw);
+  loop.start();
+
+  // ── Resize handler ──
+  new ResizeObserver(() => {
+    resizeDashboard();
+  }).observe(dashContainer);
+
+  // ── Pod redistribution helper (shared by Spot & Consolidation) ──
+
+  function redistributePods(sourceNode, onComplete) {
+    const remaining = nodes.filter(n => n.status === 'Ready' && n !== sourceNode);
+    if (remaining.length === 0 || sourceNode.cpuRequests === 0) {
+      if (sourceNode.cpuRequests > 0) {
+        addEvent('Pending', `${sourceNode.cpuRequests}% requests waiting — provisioning`, Colors.orange);
+        setTimeout(() => {
+          if (nodes.length < MAX_NODES) {
+            const inst = INSTANCE_TYPES[Math.floor(Math.random() * INSTANCE_TYPES.length)];
+            const usageRatio = sourceNode.cpuUsage / Math.max(sourceNode.cpuRequests, 1);
+            const newNode = {
+              id: nodes.length, name: `node-${nodes.length + 1}`, status: 'Ready',
+              cpuRequests: sourceNode.cpuRequests,
+              cpuUsage: Math.ceil(sourceNode.cpuRequests * usageRatio),
+              capacityType: 'on-demand', instanceType: inst,
+              animOffset: Math.random() * Math.PI * 2
+            };
+            nodes.push(newNode);
+            addEvent('Provisioned', `New node ${newNode.name} for displaced pods`, Colors.green);
+            pushTimeSeriesPoint();
+          }
+          if (onComplete) onComplete();
+        }, 1500);
+      } else {
+        if (onComplete) onComplete();
+      }
+      return;
+    }
+
+    // Calculate available capacity on remaining Ready nodes
+    let totalCapacity = 0;
+    remaining.forEach(n => { totalCapacity += (95 - n.cpuRequests); });
+
+    if (totalCapacity >= sourceNode.cpuRequests) {
+      // All pods fit on existing nodes
+      const share = Math.ceil(sourceNode.cpuRequests / remaining.length);
+      const usageShare = Math.ceil(sourceNode.cpuUsage / remaining.length);
+      remaining.forEach(n => {
+        n.cpuRequests = clamp(n.cpuRequests + share, 0, 95);
+        n.cpuUsage = clamp(n.cpuUsage + usageShare, 0, Math.min(90, n.cpuRequests));
+      });
+      addEvent('Rescheduled', 'Pods moved to existing nodes', Colors.green);
+      pushTimeSeriesPoint();
+      if (onComplete) onComplete();
+    } else {
+      // Partial fit — fill existing nodes, provision for the rest
+      const overflow = sourceNode.cpuRequests - totalCapacity;
+      const usageRatio = sourceNode.cpuUsage / Math.max(sourceNode.cpuRequests, 1);
+      remaining.forEach(n => {
+        const canTake = 95 - n.cpuRequests;
+        n.cpuRequests = clamp(n.cpuRequests + canTake, 0, 95);
+        n.cpuUsage = clamp(n.cpuUsage + Math.ceil(canTake * usageRatio), 0, 90);
+      });
+      pushTimeSeriesPoint();
+      addEvent('Pending', `${overflow}% requests waiting — provisioning new node`, Colors.orange);
+      setTimeout(() => {
+        if (nodes.length < MAX_NODES) {
+          const inst = INSTANCE_TYPES[Math.floor(Math.random() * INSTANCE_TYPES.length)];
+          const newNode = {
+            id: nodes.length, name: `node-${nodes.length + 1}`, status: 'Ready',
+            cpuRequests: overflow,
+            cpuUsage: Math.ceil(overflow * usageRatio),
+            capacityType: 'on-demand', instanceType: inst,
+            animOffset: Math.random() * Math.PI * 2
+          };
+          nodes.push(newNode);
+          addEvent('Provisioned', `New node ${newNode.name} for displaced pods`, Colors.green);
+          pushTimeSeriesPoint();
+        }
+        if (onComplete) onComplete();
+      }, 1500);
+    }
+  }
+
+  // ── Button handlers ──
+
+  document.getElementById('btn-add-node').onclick = () => {
+    if (nodes.length >= MAX_NODES) {
+      addEvent('Warning', 'Max nodes reached', Colors.yellow);
+      return;
+    }
+    const inst = INSTANCE_TYPES[Math.floor(Math.random() * INSTANCE_TYPES.length)];
+    const cap = Math.random() > 0.5 ? 'spot' : 'on-demand';
+    const newNode = {
+      id: nodes.length, name: `node-${nodes.length + 1}`, status: 'Ready',
+      cpuRequests: 0, cpuUsage: 0,
+      capacityType: cap, instanceType: inst,
+      animOffset: Math.random() * Math.PI * 2
+    };
+    nodes.push(newNode);
+    addEvent('Provisioned', `NodeClaim ${newNode.name} (${inst}, ${cap})`, Colors.green);
+    pushTimeSeriesPoint();
+  };
+
+  document.getElementById('btn-add-workload').onclick = () => {
+    const readyNodes = nodes.filter(n => n.status === 'Ready');
+    if (readyNodes.length === 0) return;
+    readyNodes.forEach(n => {
+      // Requests increase more than Usage — shows over-allocation
+      n.cpuRequests = clamp(n.cpuRequests + Math.floor(Math.random() * 21) + 20, 0, 95);
+      n.cpuUsage = clamp(n.cpuUsage + Math.floor(Math.random() * 11) + 10, 0, Math.min(90, n.cpuRequests));
+    });
+    addEvent('Scheduled', `Pods deployed to ${readyNodes.length} nodes`, Colors.blue);
+    pushTimeSeriesPoint();
+  };
+
+  document.getElementById('btn-remove-workload').onclick = () => {
+    const readyNodes = nodes.filter(n => n.status === 'Ready' && n.cpuRequests > 0);
+    if (readyNodes.length === 0) {
+      addEvent('Info', 'No workloads to remove', Colors.textMuted);
+      return;
+    }
+    // Pick 1-2 random nodes and reduce their load significantly
+    const count = Math.min(readyNodes.length, Math.random() > 0.5 ? 2 : 1);
+    const targets = readyNodes.sort(() => Math.random() - 0.5).slice(0, count);
+    let totalRemoved = 0;
+    targets.forEach(n => {
+      const drop = Math.floor(Math.random() * 21) + 20; // 20-40% drop
+      const prevReq = n.cpuRequests;
+      n.cpuRequests = Math.max(0, n.cpuRequests - drop);
+      n.cpuUsage = Math.min(n.cpuUsage, n.cpuRequests);
+      n.cpuUsage = Math.max(0, n.cpuUsage - Math.floor(drop * 0.6));
+      totalRemoved += prevReq - n.cpuRequests;
+    });
+    const names = targets.map(n => n.name).join(', ');
+    addEvent('Deleted', `Pods removed from ${names} (-${totalRemoved}% req)`, Colors.orange);
+    pushTimeSeriesPoint();
+  };
+
+  document.getElementById('btn-spot-interrupt').onclick = () => {
+    const spotNodes = nodes.filter(n => n.status === 'Ready' && n.capacityType === 'spot');
+    const target = spotNodes.length > 0 ? spotNodes[Math.floor(Math.random() * spotNodes.length)]
+                                         : nodes.find(n => n.status === 'Ready');
+    if (!target) return;
+    const iid = 'i-' + Math.random().toString(36).slice(2, 9);
+
+    // Phase 1 (0ms): EC2 Spot ITN → EventBridge → SQS
+    addEvent('EventBridge', `Spot ITN → SQS (${iid})`, Colors.orange);
+
+    // Phase 2 (1000ms): Karpenter consumes SQS → Cordon
+    setTimeout(() => {
+      target.status = 'Cordoned';
+      addEvent('Karpenter', `SQS consumed → ${target.name} cordoned`, Colors.yellow);
+
+      // Phase 3 (2000ms): PDB check before eviction
+      setTimeout(() => {
+        if (target.status !== 'Cordoned') return;
+        addEvent('PDB Check', 'minAvailable satisfied — eviction allowed', Colors.blue);
+
+        // Phase 4 (3000ms): Pod deletion (graceful termination)
+        setTimeout(() => {
+          if (target.status !== 'Cordoned') return;
+          target.status = 'Terminating';
+          addEvent('Draining', `Deleting pods from ${target.name} (graceful)`, Colors.yellow);
+
+          // Phase 5 (4000ms): ReplicaSet creates replacements → redistribute
+          setTimeout(() => {
+            addEvent('ReplicaSet', 'Replacement pods created — scheduling', Colors.cyan);
+            redistributePods(target, () => {
+              // Phase 6: Node terminated
+              setTimeout(() => {
+                const idx = nodes.indexOf(target);
+                if (idx !== -1) nodes.splice(idx, 1);
+                nodes.forEach((n, i) => { n.id = i; n.name = `node-${i + 1}`; });
+                addEvent('Terminated', `${target.instanceType} (${iid}) removed`, Colors.red);
+                pushTimeSeriesPoint();
+              }, 1500);
+            });
+          }, 1000);
+        }, 1000);
+      }, 1000);
+    }, 1000);
+  };
+
+  document.getElementById('btn-consolidation').onclick = () => {
+    // Karpenter consolidates based on Requests, not Usage
+    const candidates = nodes.filter(n => n.status === 'Ready' && n.cpuRequests < 30);
+    if (candidates.length === 0) {
+      addEvent('Info', 'No low-request nodes to consolidate', Colors.textMuted);
+      return;
+    }
+    // Pick the lowest requests node
+    candidates.sort((a, b) => a.cpuRequests - b.cpuRequests);
+    const target = candidates[0];
+
+    // Phase 1: Cordon — block new scheduling
+    target.status = 'Cordoned';
+    addEvent('Consolidation', `Cordoning ${target.name} (Req: ${target.cpuRequests}%)`, Colors.yellow);
+
+    // Phase 2: Drain — evict pods
+    setTimeout(() => {
+      if (target.status !== 'Cordoned') return;
+      target.status = 'Terminating';
+      addEvent('Draining', `Evicting pods from ${target.name}`, Colors.yellow);
+
+      // Phase 3: Redistribute pods
+      setTimeout(() => {
+        redistributePods(target, () => {
+          // Phase 4: Remove node
+          setTimeout(() => {
+            const idx = nodes.indexOf(target);
+            if (idx !== -1) nodes.splice(idx, 1);
+            nodes.forEach((n, i) => { n.id = i; n.name = `node-${i + 1}`; });
+            addEvent('Consolidated', `${target.instanceType} removed`, Colors.green);
+            pushTimeSeriesPoint();
+          }, 1200);
+        });
+      }, 1500);
+    }, 1500);
+  };
+
+  document.getElementById('btn-reset').onclick = () => {
+    initNodes();
+    startTimeSeries();
+    addEvent('Info', 'Dashboard reset', Colors.textMuted);
+  };
+})();
+</script>
+<script>
+(function() {
+  const canvas = document.getElementById('consolidation');
+  if (!canvas) return;
+  const container = canvas.parentElement;
+  const BASE_W = 960, BASE_H = 400;
+
+  function resizeCanvas() {
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+    if (cw <= 0 || ch <= 0) {
+      setupCanvas('consolidation', BASE_W, BASE_H);
+      return;
+    }
+    const dpr = window.devicePixelRatio || 1;
+    const scale = cw / BASE_W;
+    const scaledH = Math.min(Math.round(BASE_H * scale), ch);
+    canvas.width = Math.round(cw * dpr);
+    canvas.height = Math.round(scaledH * dpr);
+    canvas.style.width = cw + 'px';
+    canvas.style.height = scaledH + 'px';
+    canvas.style.maxWidth = 'none';
+    const c = canvas.getContext('2d');
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.scale(scale * dpr, scale * dpr);
+  }
+  resizeCanvas();
+
+  const ctx = canvas.getContext('2d');
+  const width = BASE_W, height = BASE_H;
+  let step = 0;
+  const MAX_STEP = 4;
+
+  function drawBoxMultiline(ctx, x, y, w, h, lines, color) {
+    drawRoundRect(ctx, x, y, w, h, 8, color + '22', color);
+    ctx.fillStyle = Colors.textPri;
+    ctx.font = '600 13px Pretendard, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const lineHeight = 18;
+    const startY = y + h / 2 - (lines.length - 1) * lineHeight / 2;
+    lines.forEach((line, i) => {
+      ctx.fillText(line, x + w / 2, startY + i * lineHeight);
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, width, height);
+    if (step >= 1) { drawBoxMultiline(ctx, 80, 150, 120, 80, ['Node 1', '30% used'], '#FF9900'); }
+    if (step >= 1) { drawBoxMultiline(ctx, 250, 150, 120, 80, ['Node 2', '25% used'], '#FF9900'); }
+    if (step >= 1) { drawBoxMultiline(ctx, 420, 150, 120, 80, ['Node 3', '20% used'], '#FF9900'); }
+    if (step >= 2) { drawBoxMultiline(ctx, 250, 280, 120, 50, ['Consolidation', 'Trigger'], '#6c5ce7'); }
+    if (step >= 2) { drawArrow(ctx, 200, 190, 250, 305, Colors.accent, true); }
+    if (step >= 2) { drawArrow(ctx, 310, 230, 310, 280, Colors.accent, true); }
+    if (step >= 2) { drawArrow(ctx, 420, 190, 370, 305, Colors.accent, true); }
+    if (step >= 3) { drawBox(ctx, 550, 280, 120, 50, 'Pod Migration', '#3B48CC'); }
+    if (step >= 3) { drawArrow(ctx, 370, 305, 550, 305, Colors.accent, false); }
+    if (step >= 3) { drawText(ctx, 'drain', 460, 293, {size: 10, color: Colors.textSec, align: 'center'}); }
+    if (step >= 4) { drawBoxMultiline(ctx, 700, 150, 140, 80, ['Optimized Node', '85% used'], '#4CAF50'); }
+    if (step >= 4) { drawArrow(ctx, 670, 305, 700, 190, Colors.accent, false); }
+    if (step >= 4) { drawText(ctx, 'schedule', 685, 235, {size: 10, color: Colors.textSec, align: 'center'}); }
+  }
+
+  draw();
+  new ResizeObserver(() => { resizeCanvas(); draw(); }).observe(container);
+
+  const slide = canvas.closest('.slide');
+  if (slide) {
+    slide.dataset.slideAction = 'canvas-step';
+    slide.dataset.canvasMaxStep = String(MAX_STEP);
+    slide.__canvasStep = function(dir) {
+      if (dir === 'next' && step < MAX_STEP) step++;
+      if (dir === 'prev' && step > 0) step--;
+      draw();
+      return step;
+    };
+  }
+})();
+</script>
+<script>
+(function() {
+  const canvas = document.getElementById('keda-arch');
+  if (!canvas) return;
+  const container = canvas.parentElement;
+  const BASE_W = 960, BASE_H = 400;
+
+  function resizeCanvas() {
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+    if (cw <= 0 || ch <= 0) {
+      setupCanvas('keda-arch', BASE_W, BASE_H);
+      return;
+    }
+    const dpr = window.devicePixelRatio || 1;
+    const scale = cw / BASE_W;
+    const scaledH = Math.min(Math.round(BASE_H * scale), ch);
+    canvas.width = Math.round(cw * dpr);
+    canvas.height = Math.round(scaledH * dpr);
+    canvas.style.width = cw + 'px';
+    canvas.style.height = scaledH + 'px';
+    canvas.style.maxWidth = 'none';
+    const c = canvas.getContext('2d');
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.scale(scale * dpr, scale * dpr);
+  }
+  resizeCanvas();
+
+  const ctx = canvas.getContext('2d');
+  const width = BASE_W, height = BASE_H;
+  let step = 0;
+  const MAX_STEP = 4;
+
+  function drawBoxMultiline(ctx, x, y, w, h, lines, color) {
+    drawRoundRect(ctx, x, y, w, h, 8, color + '22', color);
+    ctx.fillStyle = Colors.textPri;
+    ctx.font = '600 13px Pretendard, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const lineHeight = 16;
+    const startY = y + h / 2 - (lines.length - 1) * lineHeight / 2;
+    lines.forEach((line, i) => {
+      ctx.fillText(line, x + w / 2, startY + i * lineHeight);
+    });
+  }
+
+  // Component definitions
+  const components = [
+    { x: 50, y: 60, w: 860, h: 120, label: 'KEDA Control Plane', color: '#232F3E', isContainer: true, step: 1 },
+    { x: 50, y: 240, w: 860, h: 120, label: 'Kubernetes', color: '#326CE5', isContainer: true, step: 1 },
+    { x: 70, y: 100, w: 130, h: 55, label: 'ScaledObject', color: '#6c5ce7', step: 1 },
+    { x: 250, y: 100, w: 140, h: 55, label: 'KEDA Operator', color: '#FF9900', step: 2 },
+    { x: 450, y: 100, w: 150, h: 55, label: 'Metrics Server', color: '#FF9900', step: 3 },
+    { x: 450, y: 275, w: 150, h: 55, label: 'Triggers', color: '#3B48CC', step: 3 },
+    { x: 250, y: 275, w: 140, h: 50, label: 'HPA', color: '#326CE5', step: 2 },
+    { x: 680, y: 100, w: 130, h: 55, label: 'Deployment', color: '#326CE5', step: 4 },
+    { x: 680, y: 275, w: 130, h: 50, label: 'Pods (0→N)', color: '#4CAF50', step: 4 },
+  ];
+
+  const arrows = [
+    { from: 2, to: 3, label: 'watch', step: 2 },
+    { from: 3, to: 6, label: 'create', step: 2, vertical: true },
+    { from: 3, to: 4, label: 'expose', step: 3 },
+    { from: 5, to: 4, label: 'poll', step: 3, vertical: true, innerEdge: true },
+    { from: 6, to: 8, label: 'scale', step: 4, useBottom: true },
+    { from: 7, to: 8, label: 'replicas', step: 4, vertical: true },
+  ];
+
+  function draw() {
+    ctx.clearRect(0, 0, width, height);
+    // Title
+    if (step >= 1) { drawText(ctx, 'KEDA Event-Driven Autoscaling Flow', width / 2, 30, {size: 14, weight: '600', color: Colors.textPri, align: 'center'}); }
+
+    // Draw containers first
+    components.filter(c => c.isContainer && step >= c.step).forEach(c => {
+      drawRoundRect(ctx, c.x, c.y, c.w, c.h, 12, c.color + '15', c.color);
+      ctx.fillStyle = c.color === '#232F3E' ? '#aaa' : c.color;
+      ctx.font = '600 12px Pretendard, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(c.label, c.x + 12, c.y + 20);
+    });
+
+    // Draw components
+    components.filter(c => !c.isContainer && step >= c.step).forEach(c => {
+      drawBox(ctx, c.x, c.y, c.w, c.h, c.label, c.color);
+    });
+
+    // Draw arrows
+    arrows.filter(a => step >= a.step).forEach(a => {
+      const from = components[a.from];
+      const to = components[a.to];
+      let x1, y1, x2, y2;
+      if (a.vertical) {
+        x1 = from.x + from.w / 2;
+        x2 = to.x + to.w / 2;
+        if (a.innerEdge) {
+          y1 = from.y;
+          y2 = to.y + to.h;
+        } else {
+          y1 = a.reverse ? to.y : from.y + from.h;
+          y2 = a.reverse ? from.y + from.h : to.y;
+          if (a.reverse) { [x1, x2] = [x2, x1]; [y1, y2] = [y2, y1]; }
+        }
+      } else if (a.useBottom) {
+        x1 = from.x + from.w;
+        y1 = from.y + from.h / 2;
+        x2 = to.x;
+        y2 = to.y + to.h / 2;
+      } else {
+        x1 = from.x + from.w;
+        y1 = from.y + from.h / 2;
+        x2 = to.x;
+        y2 = to.y + to.h / 2;
+      }
+      drawArrow(ctx, x1, y1, x2, y2, Colors.accent, false);
+      if (a.label) {
+        drawText(ctx, a.label, (x1 + x2) / 2, (y1 + y2) / 2 - 10, {size: 10, color: Colors.textSec, align: 'center'});
+      }
+    });
+  }
+
+  draw();
+  new ResizeObserver(() => { resizeCanvas(); draw(); }).observe(container);
+
+  const slide = canvas.closest('.slide');
+  if (slide) {
+    slide.dataset.slideAction = 'canvas-step';
+    slide.dataset.canvasMaxStep = String(MAX_STEP);
+    slide.__canvasStep = function(dir) {
+      if (dir === 'next' && step < MAX_STEP) step++;
+      if (dir === 'prev' && step > 0) step--;
+      draw();
+      return step;
+    };
+  }
+})();
+</script>
+<script>(function(){
+// ==========================================
+// KEDA RPS Canvas (IIFE to capture refs before sidebar cloning)
+// ==========================================
+const canvas = document.getElementById('keda-rps-canvas');
+const slider = document.getElementById('rps-slider');
+const rpsValueEl = document.getElementById('rps-value');
+if (!canvas || !slider) return;
+
+let kedaCtx = null;
+let kedaW = 0, kedaH = 0;
+const BASE_W = 500, BASE_H = 340;
+
+function initKedaCanvas() {
+  const container = canvas.parentElement;
+  const cw = container.clientWidth - 16;
+  if (cw <= 0) return;
+  const scale = cw / BASE_W;
+  const ch = Math.round(BASE_H * scale);
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.round(cw * dpr);
+  canvas.height = Math.round(ch * dpr);
+  canvas.style.width = cw + 'px';
+  canvas.style.height = ch + 'px';
+  canvas.style.maxWidth = 'none';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(scale * dpr, scale * dpr);
+  kedaCtx = ctx;
+  kedaW = BASE_W;
+  kedaH = BASE_H;
+  drawKedaCanvas();
+}
+
+function drawKedaCanvas() {
+  if (!kedaCtx) return;
+  const ctx = kedaCtx;
+  const w = kedaW, h = kedaH;
+
+  const rps = parseInt(slider.value);
+  const threshold = 50;
+  const podCount = Math.max(rps === 0 ? 0 : 1, Math.min(10, Math.ceil(rps / threshold)));
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Background
+  ctx.fillStyle = Colors.bg;
+  ctx.fillRect(0, 0, w, h);
+
+  // --- Section 1: Gateway Flow (top) ---
+  const flowY = 36;
+  const gwColor = rps > 300 ? Colors.red : rps > 100 ? Colors.yellow : Colors.green;
+  const latency = rps === 0 ? 0 : rps <= 100 ? Math.round(5 + rps * 0.45)
+                 : rps <= 300 ? Math.round(50 + (rps - 100) * 0.75)
+                 : Math.round(200 + (rps - 300) * 3);
+  const latColor = latency <= 50 ? Colors.green : latency <= 200 ? Colors.yellow : Colors.red;
+  const gwStatus = rps === 0 ? 'Idle' : rps <= 100 ? 'Healthy' : rps <= 300 ? 'Slow' : 'Error';
+
+  function flowArrow(x1, x2, label, labelColor) {
+    ctx.strokeStyle = labelColor || Colors.textMuted;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x1, flowY); ctx.lineTo(x2, flowY); ctx.stroke();
+    ctx.fillStyle = labelColor || Colors.textMuted;
+    ctx.beginPath(); ctx.moveTo(x2 - 5, flowY - 4); ctx.lineTo(x2, flowY); ctx.lineTo(x2 - 5, flowY + 4); ctx.fill();
+    if (label) {
+      ctx.font = '8px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = labelColor || Colors.textMuted;
+      ctx.fillText(label, (x1 + x2) / 2, flowY - 7);
+    }
+  }
+
+  drawBox(ctx, 10, flowY - 16, 80, 32, 'Gateway', gwColor);
+  ctx.fillStyle = gwColor;
+  ctx.font = 'bold 8px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(gwStatus, 50, flowY + 24);
+
+  flowArrow(95, 120, rps + ' rps', gwColor);
+  ctx.font = '7px sans-serif';
+  ctx.fillStyle = latColor;
+  ctx.textAlign = 'center';
+  ctx.fillText(latency > 0 ? 'P99: ' + latency + 'ms' : '', 107, flowY + 10);
+
+  drawBox(ctx, 125, flowY - 16, 90, 32, 'Prometheus', Colors.orange);
+  flowArrow(220, 245, 'query', Colors.textMuted);
+  drawBox(ctx, 250, flowY - 16, 70, 32, 'KEDA', Colors.accent);
+  flowArrow(325, 350, 'scale', Colors.textMuted);
+  drawBox(ctx, 355, flowY - 16, 60, 32, 'HPA', Colors.cyan);
+  flowArrow(420, 445, podCount + ' pods', Colors.green);
+  drawBox(ctx, 450, flowY - 16, 44, 32, 'Pods', Colors.green);
+
+  // --- Section 2: RPS Gauge (left) ---
+  const gaugeX = 70, gaugeY = 110, gaugeR = 42;
+  ctx.beginPath();
+  ctx.arc(gaugeX, gaugeY, gaugeR, Math.PI, 2 * Math.PI);
+  ctx.strokeStyle = Colors.border;
+  ctx.lineWidth = 10;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+  const pct = Math.min(rps / 500, 1);
+  if (pct > 0) {
+    const angle = Math.PI + pct * Math.PI;
+    ctx.beginPath();
+    ctx.arc(gaugeX, gaugeY, gaugeR, Math.PI, angle);
+    ctx.strokeStyle = gwColor;
+    ctx.lineWidth = 10;
+    ctx.stroke();
+  }
+  ctx.lineCap = 'butt';
+  ctx.fillStyle = gwColor;
+  ctx.font = 'bold 22px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(rps, gaugeX, gaugeY + 6);
+  ctx.fillStyle = Colors.textMuted;
+  ctx.font = '10px sans-serif';
+  ctx.fillText('RPS', gaugeX, gaugeY + 20);
+  ctx.fillStyle = Colors.textMuted;
+  ctx.font = '9px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('0', gaugeX - gaugeR - 4, gaugeY + 14);
+  ctx.textAlign = 'right';
+  ctx.fillText('500', gaugeX + gaugeR + 4, gaugeY + 14);
+
+  ctx.fillStyle = Colors.yellow;
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('threshold: ' + threshold + ' RPS/pod', gaugeX, gaugeY + 40);
+
+  // --- Section 3: Pod Grid (right) ---
+  const gridX = 165, gridY = 80;
+  const podW = 56, podH = 42, podGapX = 8, podGapY = 6;
+  const cols = 5;
+
+  ctx.fillStyle = Colors.textPri;
+  ctx.font = 'bold 11px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('Pods (' + podCount + '/' + '10)', gridX, gridY - 6);
+
+  for (let i = 0; i < 10; i++) {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const px = gridX + col * (podW + podGapX);
+    const py = gridY + row * (podH + podGapY);
+
+    if (i < podCount) {
+      const c = Colors.green;
+      ctx.fillStyle = c + '25';
+      ctx.strokeStyle = c + '90';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(px, py, podW, podH, 5);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = Colors.textPri;
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Pod ' + (i + 1), px + podW / 2, py + podH / 2 - 3);
+      ctx.fillStyle = Colors.green;
+      ctx.font = '8px sans-serif';
+      ctx.fillText('Running', px + podW / 2, py + podH / 2 + 10);
+    } else {
+      ctx.setLineDash([3, 3]);
+      ctx.strokeStyle = Colors.border;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(px, py, podW, podH, 5);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = Colors.textMuted + '60';
+      ctx.font = '9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('empty', px + podW / 2, py + podH / 2 + 3);
+    }
+  }
+
+  // --- Section 4: Status Bar (bottom) ---
+  const barY = h - 70;
+  ctx.fillStyle = Colors.surface;
+  ctx.strokeStyle = Colors.border;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(10, barY, w - 20, 60, 8);
+  ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = Colors.textMuted;
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('Current: ' + rps + ' RPS', 24, barY + 22);
+  ctx.fillText('Threshold: ' + threshold + ' RPS/pod', 170, barY + 22);
+  ctx.fillText('Desired: ' + podCount + ' pods', 340, barY + 22);
+
+  let statusText, statusColor;
+  if (rps === 0) {
+    statusText = 'Scale to Zero — 비용 절감 모드';
+    statusColor = '#8b5cf6';
+  } else if (podCount >= 10) {
+    statusText = 'MAX CAPACITY — maxReplicaCount 도달';
+    statusColor = Colors.red;
+  } else if (podCount > 3) {
+    statusText = 'Scaling Out — 트래픽 증가 대응 중';
+    statusColor = Colors.yellow;
+  } else {
+    statusText = 'Normal — 안정 상태';
+    statusColor = Colors.green;
+  }
+  ctx.fillStyle = statusColor;
+  ctx.font = 'bold 11px sans-serif';
+  ctx.fillText(statusText, 24, barY + 44);
+
+  ctx.fillStyle = Colors.textMuted;
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText('ceil(' + rps + ' / ' + threshold + ') = ' + podCount, w - 24, barY + 44);
+}
+
+// Slider listener using captured ref
+slider.addEventListener('input', function(e) {
+  if (rpsValueEl) rpsValueEl.textContent = e.target.value;
+  drawKedaCanvas();
+});
+
+// ResizeObserver for responsive sizing
+new ResizeObserver(function() { initKedaCanvas(); }).observe(canvas.parentElement);
+
+// Initial draw
+initKedaCanvas();
+})();
+</script>
+<script>
+
+  const presenterNotes = {
+    1: "[1min] Block 03에서는 EKS 환경의 스케일링 전략을 다룹니다.\nKarpenter를 통한 노드 프로비저닝과 KEDA를 통한 이벤트 기반 Pod 스케일링을 학습합니다.\n\n💬 예상 질문:\n• Karpenter와 KEDA를 동시에 도입해야 하나요? → 아니요, Karpenter(노드 스케일링)부터 도입하고 안정화 후 KEDA(Pod 스케일링)를 추가하는 것을 권장합니다.",
+    2: "[2min] 화해 팀이 겪고 있는 스케일링 관련 Pain Point입니다.\nCluster Autoscaler는 노드 그룹 기반으로 동작하기 때문에 스케일링 속도가 느리고, 인스턴스 유형 선택이 제한적입니다.\n오늘 다룰 Karpenter와 KEDA를 도입하면 이러한 문제를 대부분 해결할 수 있습니다.\n\n💬 예상 질문:\n• Cluster Autoscaler에서 5-7분 걸리는 이유가 뭔가요? → ASG 스케일링 → EC2 프로비저닝 → 노드 등록 → Pod 스케줄링 단계를 거치기 때문입니다. 각 단계에서 polling interval과 대기 시간이 누적됩니다.",
+    3: "[3min] Grafana Node Monitoring 대시보드입니다. Karpenter가 노드 스케일링 결정을 내리는 기준을 시각화합니다.\n\n버튼별 시나리오:\n• 노드 추가: 새 EC2 인스턴스가 프로비저닝되어 클러스터에 추가됩니다.\n• 워크로드 추가: 모든 노드에 Pod가 배포되어 CPU Requests가 증가합니다. Usage보다 Requests가 더 많이 증가하는 over-allocation 패턴을 보여줍니다.\n• 워크로드 삭제: 일부 노드의 워크로드가 감소하여 Low Req 상태가 됩니다.\n• Spot 인터럽트: Spot 노드에 ITN(Interruption Notice)이 발생하고, Karpenter가 자동으로 Cordon → Drain → 새 노드 프로비저닝 → Pod 재스케줄링 과정을 진행합니다.\n• Consolidation: Low Req 노드를 감지하여 Pod를 다른 노드로 이동시키고 해당 노드를 종료합니다.\n\n핵심 포인트: Karpenter는 CPU Usage가 아닌 CPU Requests를 기준으로 Consolidation을 결정합니다. 차트의 gap(Requests - Usage)이 클수록 리소스 낭비가 발생하고 있다는 의미입니다.\n\n💬 예상 질문:\n• 왜 Usage가 아닌 Requests 기준인가요? → Requests는 예약된 리소스이므로 다른 Pod가 사용할 수 없습니다. Usage가 낮아도 Requests가 높으면 실제로 활용할 수 있는 용량이 없습니다.",
+    4: "[3min] Karpenter의 동작 흐름입니다. 각 단계를 클릭하며 설명합니다.\nStep 1: 스케줄링할 수 없는 Pending Pod가 발생합니다.\nStep 2: Karpenter Controller가 이를 감지합니다.\nStep 3: NodePool과 EC2NodeClass를 평가하여 요구사항을 분석합니다.\nStep 4: EC2 Fleet API를 직접 호출하여 최적의 인스턴스를 선택합니다. ASG를 거치지 않아서 빠릅니다.\nStep 5: 노드가 프로비저닝되고 Pending Pod가 스케줄링됩니다.\n전체 과정이 30-60초 내에 완료됩니다.\n\n💬 예상 질문:\n• EC2 Fleet API가 뭔가요? → 여러 인스턴스 유형/AZ에서 최적의 조합을 한 번의 API 호출로 요청하는 API입니다. Spot Instance 가용성과 가격을 고려한 선택이 가능합니다.\n• 30-60초면 Pod가 그동안 대기하나요? → 네, 하지만 기존 5-7분 대비 큰 개선입니다. 즉각적인 응답이 필요하면 Overprovisioning(빈 Pod로 노드 미리 확보) 패턴을 고려하세요.",
+    5: "[2.5min] NodePool 설정 예시입니다.\n핵심 포인트:\n1. capacity-type에 spot과 on-demand를 모두 포함하여 Spot 우선, On-Demand 폴백 전략을 구현합니다.\n2. instance-family를 다양하게 지정하면 Karpenter가 가용성과 가격을 고려해 최적의 인스턴스를 선택합니다.\n3. disruption.consolidationPolicy를 WhenEmptyOrUnderutilized로 설정하면 유휴 노드를 자동으로 정리합니다.\n\n💬 예상 질문:\n• NodePool을 여러 개 만들어야 하나요? → 대부분의 경우 1-2개면 충분합니다. GPU 워크로드나 특수 요구사항이 있을 때만 별도 NodePool을 만드세요.\n• limits에서 cpu: 1000은 무슨 의미인가요? → 이 NodePool이 프로비저닝할 수 있는 총 vCPU 상한입니다. 예상치 못한 비용 폭증을 방지하는 안전장치입니다.",
+    6: "[2.5min] KEDA RPS 기반 오토스케일링 데모입니다. 슬라이더를 조작하며 Pod 스케일링을 시뮬레이션합니다.\n\n핵심 개념:\n• threshold: 50 RPS/pod — Pod 1개가 처리할 수 있는 요청 수입니다.\n• 공식: desiredReplicas = ceil(currentRPS / threshold)\n• RPS 0: Scale to Zero — 트래픽이 없으면 Pod를 0개로 줄여 비용을 절감합니다.\n• RPS 100: 2개 Pod (100/50 = 2)\n• RPS 500: 10개 Pod (maxReplicaCount 도달)\n\n시나리오 시연:\n1. RPS를 0으로 → Scale to Zero 상태 (보라색 상태바)\n2. RPS를 점진적으로 올리며 Pod 증가 확인\n3. RPS를 300 이상으로 → Gateway Slow/Error 상태와 높은 P99 Latency 확인\n4. RPS를 500으로 → MAX CAPACITY 도달\n\n실제 구현 시에는 Prometheus에서 RPS 메트릭을 수집하고, KEDA ScaledObject에서 해당 쿼리를 트리거로 설정합니다.\n\n💬 예상 질문:\n• threshold 값은 어떻게 정하나요? → 부하 테스트로 Pod당 처리 가능한 RPS를 측정 후 70-80% 수준으로 설정합니다.\n• Scale to Zero의 cold start 문제는? → minReplicaCount: 1로 최소 1개는 유지하거나, Knative의 activator 패턴을 사용합니다.",
+    7: "[2.5min] Spot Instance 전략의 핵심 3가지입니다. 탭을 전환하며 설명합니다.\n첫째, Karpenter는 Spot 중단 알림을 자동으로 처리합니다. 별도의 Node Termination Handler가 필요 없습니다.\n둘째, 다양한 인스턴스 패밀리를 지정하면 Spot 용량 풀이 넓어져서 중단 확률이 낮아집니다.\n셋째, capacity-type에 spot과 on-demand를 함께 지정하면 Spot 우선, On-Demand 폴백 전략이 자동으로 적용됩니다.\n\n💬 예상 질문:\n• Spot 중단 시 2분이면 Pod 마이그레이션이 가능한가요? → Karpenter가 중단 알림 즉시 새 노드 프로비저닝을 시작합니다. graceful shutdown과 병렬로 진행되어 대부분 문제없습니다.\n• Stateful 워크로드도 Spot에서 돌려도 되나요? → 권장하지 않습니다. DB, 캐시 등은 On-Demand 전용 NodePool을 만들거나 nodeSelector로 분리하세요.",
+    9: "[2min] KEDA(Kubernetes Event-driven Autoscaling) 아키텍처입니다. 단계별로 클릭하며 설명합니다.\nKEDA는 Kubernetes HPA를 확장하여 다양한 이벤트 소스 기반 스케일링을 지원합니다.\nScaledObject를 정의하면 KEDA가 자동으로 HPA를 생성하고, External Metrics Server를 통해 외부 메트릭을 수집합니다.\n가장 큰 장점은 HPA가 지원하지 않는 SQS 큐 길이, Kafka lag, Prometheus 메트릭 등을 스케일링 트리거로 사용할 수 있다는 점입니다.\n\n💬 예상 질문:\n• 기존 HPA가 있으면 KEDA와 충돌하나요? → 네, 같은 Deployment에 HPA와 ScaledObject를 동시에 적용하면 안 됩니다. KEDA가 HPA를 자동 생성하므로 기존 HPA는 제거하세요.\n• KEDA 설치가 복잡한가요? → Helm으로 간단히 설치됩니다. helm install keda kedacore/keda 한 줄이면 됩니다.",
+    10: "[2.5min] KEDA가 지원하는 주요 Scaler들입니다. 각 탭을 클릭하며 설명합니다.\nSQS Scaler: 큐에 쌓인 메시지 수에 따라 Consumer Pod를 스케일링합니다. minReplicaCount: 0으로 Zero Scaling도 가능합니다.\nPrometheus Scaler: PromQL 쿼리 결과를 기반으로 스케일링합니다. RPS, Latency 등 커스텀 메트릭 활용이 가능합니다.\nCron Scaler: 예측 가능한 트래픽 패턴에 맞춰 미리 스케일 아웃할 수 있습니다.\nCloudWatch Scaler: AWS 메트릭을 직접 활용한 스케일링이 가능합니다.\n\n💬 예상 질문:\n• SQS Scaler에서 queueLength: 5의 의미는? → 메시지 5개당 Pod 1개를 유지한다는 의미입니다. 큐에 50개 메시지가 있으면 10개 Pod가 됩니다.\n• Zero Scaling 시 cold start 문제는 없나요? → 있습니다. 첫 메시지 처리까지 Pod 시작 시간(보통 10-30초)이 걸립니다. 민감한 서비스는 minReplicaCount: 1로 설정하세요.",
+    11: "[2min] Istio 메트릭을 활용한 KEDA 스케일링 예시입니다.\nistio_requests_total 메트릭에서 5xx 에러를 제외한 성공 요청만 카운트합니다.\n현재 Pod 수로 나누어 Pod당 RPS를 계산하고, 이를 threshold와 비교하여 스케일링합니다.\nCPU 기반 스케일링보다 실제 트래픽을 반영하므로 더 정확한 스케일링이 가능합니다.\n\n💬 예상 질문:\n• Istio 없이도 RPS 기반 스케일링이 가능한가요? → 네, 애플리케이션에서 Prometheus 메트릭을 직접 노출하거나, Ingress Controller 메트릭을 사용할 수 있습니다.\n• threshold 값은 어떻게 정하나요? → 부하 테스트로 Pod당 처리 가능한 RPS를 측정한 후, 70-80% 수준으로 설정하세요. 너무 높으면 스케일 아웃이 늦어집니다.",
+    12: "[2.5min] Batch 및 Schedule 워크로드 운영 패턴입니다. 4개 탭을 순서대로 설명합니다.\n\nK8s CronJob: 단순 주기적 작업에 적합합니다. 6시간마다 DB 정리, 일일 리포트 생성 등. 복잡한 의존관계가 필요하면 한계가 있습니다.\n\nAirflow + KubernetesExecutor: DAG 기반으로 복잡한 파이프라인을 정의하고, UI에서 실행 상태를 모니터링할 수 있습니다. ETL이나 ML 파이프라인에 적합합니다.\n\nJenkins + Kubernetes Plugin: 기존 Jenkins 파이프라인을 유지하면서 Agent를 동적 Pod로 운영합니다.\n\nKEDA + Batch: SQS 기반 동적 스케일링과 Cron 기반 예측 스케일링을 조합하여 비용 최적화합니다.\n\n💬 예상 질문:\n• 기존 ECS Scheduled Task를 어떻게 마이그레이션하나요? → 단순 작업은 CronJob으로, 복잡한 워크플로우는 Airflow나 Argo Workflows로 마이그레이션하세요.\n• Batch 작업이 Spot에서 중단되면 어떻게 하나요? → Job의 backoffLimit을 설정하고, 멱등성 있게 설계하세요. 체크포인트를 저장하면 재시작 시 이어서 처리 가능합니다.",
+    13: "[2min] Batch 전용 Karpenter NodePool 설정입니다.\nBatch 워크로드는 Spot Only로 구성하여 비용을 최대한 절감합니다.\n컴퓨팅 최적화(c5, c6i 등) 인스턴스 패밀리를 지정하고, arm64도 포함하여 Graviton 활용이 가능합니다.\nexpireAfter: 2h로 장시간 유휴 노드를 자동 정리하고, consolidateAfter: 30s로 빈 노드를 빠르게 회수합니다.\n\n💬 예상 질문:\n• Batch NodePool과 일반 NodePool을 어떻게 분리하나요? → nodeSelector와 Toleration을 사용합니다. Batch Pod에 workload-type: batch를 지정하면 해당 NodePool에만 스케줄링됩니다.\n• arm64(Graviton) 사용 시 주의점은? → 컨테이너 이미지가 multi-arch로 빌드되어야 합니다. docker buildx로 amd64/arm64 모두 지원하는 이미지를 만드세요.",
+    14: "[2min] 단계적 도입 로드맵입니다. 타임라인을 클릭하며 각 Phase를 설명합니다.\nPhase 1-2에서 Karpenter를 도입하고 기존 Cluster Autoscaler를 제거합니다.\nPhase 3-4에서 KEDA를 도입하여 이벤트 기반 스케일링을 구현합니다.\n각 단계에서 충분한 검증 기간을 두고, 문제 발생 시 롤백할 수 있도록 합니다.\n전체 8주 소요되며, 완료 후 30-50% 비용 절감을 기대할 수 있습니다.\n\n💬 예상 질문:\n• Cluster Autoscaler에서 Karpenter로 마이그레이션 시 다운타임이 있나요? → 병행 운영 기간을 두면 다운타임 없이 마이그레이션 가능합니다. 새 워크로드부터 Karpenter로 전환하고 점진적으로 확대하세요.\n• 8주가 너무 긴 것 같은데 단축 가능한가요? → 테스트 환경이 잘 갖춰져 있다면 4-6주로 단축 가능합니다. 단, 프로덕션 적용 전 충분한 부하 테스트는 필수입니다.",
+    15: "[3min] Q1: Karpenter는 ASG 없이 EC2 Fleet API를 직접 호출하므로 30-60초 내 프로비저닝이 가능합니다.\nQ2: Consolidation은 저활용 노드를 통합하여 리소스 활용률을 높이고 비용을 절감합니다.\nQ3: KEDA는 SQS, Kafka, Prometheus 등 다양한 이벤트 소스 기반 스케일링과 Zero Scaling을 지원합니다.\nQ4: 다양한 인스턴스 패밀리를 사용하면 Spot 용량 풀이 넓어져 중단 위험이 분산됩니다.\n\n💬 예상 질문:\n• 퀴즈 관련 추가 질문이 있으면 자유롭게 물어보세요. 실제 환경에서의 적용 경험이나 트러블슈팅 사례도 공유해 드릴 수 있습니다."
+  };
+  const deck = new SlideFramework({
+    logoSrc: 'common/pptx-theme/images/logo_1.png',
+    footer: '© 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.',
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

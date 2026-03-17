@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ECS → EKS Migration Deep Dive</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="04-security-platform.md">
+  <meta name="remarp-block" content="default">
+  <link rel="stylesheet" href="common/theme.css">
+  <link rel="stylesheet" href="common/pptx-theme/theme-override.css">
+  
+  
+  
+  <script>window.__remarpTheme = {"colors": {}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}};</script>
+  <style>
+    .slide-counter { z-index: 100; }
+    ol { padding-left: 1.5rem; }
+    ol li { padding-left: 0.3rem; }
+  </style>
+</head>
+<body>
+<div class="slide-deck">
+<div class="slide" data-remarp-id="s0" style="background:url('common/pptx-theme/images/Picture_13.png') center/cover no-repeat; padding:0; overflow:hidden;">
+  <h1 style="position:absolute; left:5%; top:28%; font-size:2.8rem; color:#fff; font-weight:200; line-height:1.2; width:53%; margin:0;">ECS → EKS Migration Deep Dive</h1>
+  <p style="position:absolute; left:5%; top:62%; font-size:1.3rem; color:rgba(255,255,255,0.8); width:53%; margin:0;">Security & Platform Engineering (20 min)</p>
+  <div style="position:absolute; left:5%; top:76%;">
+    <p style="font-size:1.05rem; color:#fff; font-weight:600; margin:0;">오준석 (Junseok Oh)</p>
+    <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:6px 0 0 0;">Sr. Solutions Architect, AWS</p>
+    <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:2px 0 0 0;">화해 글로벌</p>
+  </div>
+  <img src="common/pptx-theme/images/Picture_8.png" alt="" style="position:absolute; right:5%; bottom:10%; width:8%; pointer-events:none;" />
+</div>
+
+<div class="slide" data-remarp-id="s1">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>EKS Security Architecture</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <p><strong>보안 계층</strong>:</p>
+<ol><li class="fragment fade-in" data-fragment-index="0"><strong>IAM Layer</strong>: OIDC Provider → IRSA/Pod Identity → AWS 서비스 접근</li><li class="fragment fade-in" data-fragment-index="1"><strong>Cluster Layer</strong>: RBAC, Access Entries, Cluster Endpoint 접근 제어</li><li class="fragment fade-in" data-fragment-index="2"><strong>Workload Layer</strong>: Pod Security Standards, Network Policy</li><li class="fragment fade-in" data-fragment-index="3"><strong>Data Layer</strong>: Secrets Manager, KMS 암호화</li></ol>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s2">
+  <div class="slide-header" data-remarp-id="s2-header"><h2>aws-auth vs Access Entries</h2></div>
+  <div class="slide-body" data-remarp-id="s2-body" data-compare-mode="side-by-side" style="font-size:0.65rem;">
+    <div class="compare-toggle">
+            <button class="compare-btn active" data-compare="aws-auth-configmap-legacy" style="font-size:0.6rem;padding:0.25rem 0.6rem;">aws-auth ConfigMap (Legacy)</button>
+      <button class="compare-btn" data-compare="access-entries" style="font-size:0.6rem;padding:0.25rem 0.6rem;">Access Entries (권장)</button>
+    </div>
+    <div class="col-2" style="flex:1;gap:0.4rem;">
+            <div class="card compare-content active compare-highlight" data-compare="aws-auth-configmap-legacy" data-remarp-id="s2-left" style="padding:0.4rem 0.5rem;overflow:hidden;">
+<h3 style="color:var(--text-accent);margin-bottom:.2rem;font-size:0.75rem">aws-auth ConfigMap (Legacy)</h3>
+<ul style="margin:0.15rem 0;padding-left:1.2rem;"><li>ConfigMap 기반 IAM 매핑</li><li>수동 편집 필요 (오류 시 접근 불가)</li><li>변경 이력 추적 어려움</li><li>GitOps와 충돌 가능성</li><li><strong>단점</strong>: ConfigMap 삭제 시 클러스터 잠금</li></ul>
+<div class="code-block" style="font-size:0.55rem;padding:0.3rem 0.4rem;margin-top:0.2rem;line-height:1.4;"><span class="comment"># aws-auth ConfigMap</span>
+<span class="key">apiVersion</span>: v1
+<span class="key">kind</span>: ConfigMap
+<span class="key">metadata</span>:
+  <span class="key">name</span>: aws-auth
+  <span class="key">namespace</span>: kube-system
+<span class="key">data</span>:
+  <span class="key">mapRoles</span>: |
+    - rolearn: arn:aws:iam::role/NodeRole
+      <span class="key">username</span>: system:node:{{...}}
+      <span class="key">groups</span>:
+        - system:bootstrappers
+        - system:nodes</div>
+</div>
+      <div class="card compare-content active" data-compare="access-entries" data-remarp-id="s2-right" style="padding:0.4rem 0.5rem;overflow:hidden;">
+<h3 style="color:var(--text-accent);margin-bottom:.2rem;font-size:0.75rem">Access Entries (권장)</h3>
+<ul style="margin:0.15rem 0;padding-left:1.2rem;"><li>EKS API 기반 IAM 매핑</li><li>AWS CLI/Console/IaC로 관리</li><li>CloudTrail 감사 로그 자동 기록</li><li>Terraform/CDK 완벽 지원</li><li><strong>장점</strong>: ConfigMap 삭제해도 접근 유지</li></ul>
+<div class="code-block" style="font-size:0.55rem;padding:0.3rem 0.4rem;margin-top:0.2rem;line-height:1.4;"><span class="comment"># Access Entry 생성</span>
+aws eks create-access-entry \
+  --cluster-name my-cluster \
+  --principal-arn arn:aws:iam::role/DevRole \
+  --type STANDARD</div>
+</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s3">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>Access Entries 설정</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body">
+    <div class="code-block"><span class="code-label">bash</span><span class="comment"># 1. Access Entry 생성</span>
+<span class="hl-line">aws eks create-access-entry \</span>
+<span class="hl-line">  --cluster-name hwahae-prod \</span>
+<span class="hl-line">  --principal-arn arn:aws:iam::123456789012:role/DevOpsRole \</span>
+<span class="hl-line">  --type STANDARD</span>
+
+<span class="comment"># 2. Access Policy 연결 (RBAC 권한 부여)</span>
+aws eks associate-access-policy \
+  --cluster-name hwahae-prod \
+<span class="hl-line">  --principal-arn arn:aws:iam::123456789012:role/DevOpsRole \</span>
+<span class="hl-line">  --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy \</span>
+<span class="hl-line">  --access-scope type=cluster</span>
+<span class="hl-line"></span>
+<span class="hl-line"><span class="comment"># 사용 가능한 Policy:</span></span>
+<span class="comment"># - AmazonEKSClusterAdminPolicy (전체 관리자)</span>
+<span class="comment"># - AmazonEKSAdminPolicy (네임스페이스 관리자)</span>
+<span class="comment"># - AmazonEKSEditPolicy (편집 권한)</span>
+<span class="comment"># - AmazonEKSViewPolicy (읽기 권한)</span></div>
+<div class="code-block"><span class="code-label">terraform/access-entries.tf</span><span class="comment"># Terraform으로 Access Entry 관리</span>
+resource <span class="string">"aws_eks_access_entry"</span> <span class="string">"devops"</span> {
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = aws_iam_role.devops.arn
+  type          = <span class="string">"STANDARD"</span>
+}
+
+resource <span class="string">"aws_eks_access_policy_association"</span> <span class="string">"devops"</span> {
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = aws_iam_role.devops.arn
+  policy_arn    = <span class="string">"arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"</span>
+
+  access_scope {
+    type       = <span class="string">"namespace"</span>
+    namespaces = [<span class="string">"production"</span>, <span class="string">"staging"</span>]
+  }
+}</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s3a">
+  <div class="slide-header"><h2>RBAC & OIDC 워크플로우</h2></div>
+  <div class="slide-body" style="padding: 0.2rem 1rem 0.3rem; display:flex; flex-direction:column; gap:4px; overflow:hidden;">
+
+    <!-- Step 1: OIDC Provider (dark blue card) -->
+    <div style="background:linear-gradient(135deg,#1e3a5f,#1e40af); border-radius:12px; padding:0.5rem 0.8rem; position:relative; overflow:hidden;">
+      <div style="position:absolute; right:8px; top:4px; font-size:2.5rem; opacity:0.08;">🛡️</div>
+      <div style="font-size:0.6rem; font-weight:700; letter-spacing:0.08em; color:#93c5fd; margin-bottom:4px;">🔑 STEP 1: External Identity Provider (OIDC)</div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:0.35rem 0.5rem; flex:1;">
+          <div style="font-size:0.55rem; font-family:monospace; color:#93c5fd; margin-bottom:2px;">// ID Token (JWT) Claims</div>
+          <div style="font-size:0.55rem; font-family:monospace; color:#e0e0e0; line-height:1.5;">
+            <span style="color:#93c5fd;">"sub":</span> "alice-id"<br>
+            <span style="color:#93c5fd;">"email":</span> "alice@company.com"<br>
+            <span style="color:#4ade80;">"groups":</span> ["dev-team", "admin-group"]
+          </div>
+        </div>
+        <div style="font-size:1.2rem; color:#60a5fa;">→</div>
+        <div style="flex:1; font-size:0.6rem; color:#bfdbfe; font-style:italic; line-height:1.5;">
+          K8s API 서버는 이 토큰을 읽어 <b style="color:#fff;">Alice</b>라는 유저와 <b style="color:#fff;">dev-team</b>이라는 그룹이 요청을 보냈음을 인식합니다.
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab switch: Namespace / Cluster Level -->
+    <div style="display:flex; justify-content:center;">
+      <div id="rbac-flow-tabs" style="display:inline-flex; background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:6px; overflow:hidden;">
+        <button class="rbac-tab-btn active" data-rbac-tab="namespace" style="padding:0.25rem 0.8rem; font-size:0.65rem; font-weight:600; border:none; cursor:pointer; background:#2563eb; color:#fff; transition:all 0.2s;">Namespace Level</button>
+        <button class="rbac-tab-btn" data-rbac-tab="cluster" style="padding:0.25rem 0.8rem; font-size:0.65rem; font-weight:600; border:none; cursor:pointer; background:transparent; color:var(--text-secondary); transition:all 0.2s;">Cluster Level</button>
+      </div>
+    </div>
+
+    <!-- Horizontal flow: Subjects → Binding → Permissions -->
+    <div style="display:flex; align-items:stretch; gap:6px; flex:1; min-height:0;">
+
+      <!-- Subjects Block -->
+      <div style="flex:1.2; display:flex; flex-direction:column; gap:2px;">
+        <div style="font-size:0.55rem; font-weight:700; letter-spacing:0.08em; color:#888; text-align:center;">STEP 2: SUBJECTS</div>
+        <div style="flex:1; display:flex; flex-direction:column; gap:2px; justify-content:center;">
+          <div style="background:#3b82f615; border:1.5px solid #3b82f6; border-radius:6px; padding:0.2rem; text-align:center;">
+            <div style="font-size:0.75rem;">👤</div>
+            <div style="font-size:0.6rem; font-weight:700; color:#60a5fa;">User (alice@...)</div>
+          </div>
+          <div style="text-align:center; color:#555; font-weight:700; font-size:0.5rem; line-height:1;">+</div>
+          <div style="background:#3b82f615; border:1.5px solid #3b82f6; border-radius:6px; padding:0.2rem; text-align:center;">
+            <div style="font-size:0.75rem;">👥</div>
+            <div style="font-size:0.6rem; font-weight:700; color:#60a5fa;">Group (dev-team)</div>
+          </div>
+          <div style="text-align:center; color:#555; font-weight:700; font-size:0.5rem; line-height:1;">+</div>
+          <div style="background:#14b8a615; border:1.5px solid #14b8a6; border-radius:6px; padding:0.2rem; text-align:center;">
+            <div style="font-size:0.75rem;">🤖</div>
+            <div style="font-size:0.6rem; font-weight:700; color:#2dd4bf;">ServiceAccount</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connector: Bound to -->
+      <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; gap:4px; padding-top:16px;">
+        <div style="width:24px; height:1.5px; background:#555;"></div>
+        <div style="font-size:0.5rem; color:#777; white-space:nowrap;">Bound to</div>
+        <div style="font-size:0.7rem; color:#666;">→</div>
+      </div>
+
+      <!-- Binding Block -->
+      <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+        <div style="font-size:0.55rem; font-weight:700; letter-spacing:0.08em; color:#888; text-align:center;">STEP 3: BINDING</div>
+        <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+          <!-- Namespace tab content -->
+          <div class="rbac-tab-content active" data-rbac-tab="namespace" style="width:100%;">
+            <div style="background:#22c55e15; border:2px solid #22c55e; border-radius:12px; padding:0.6rem; text-align:center;">
+              <div style="font-size:1.4rem;">🔗</div>
+              <div style="font-size:0.75rem; font-weight:700; color:#4ade80; text-transform:uppercase;">RoleBinding</div>
+              <div style="font-size:0.5rem; font-family:monospace; color:#86efac; font-style:italic;">"Connects Subject to Role"</div>
+            </div>
+          </div>
+          <!-- Cluster tab content -->
+          <div class="rbac-tab-content" data-rbac-tab="cluster" style="width:100%; display:none;">
+            <div style="background:#6366f115; border:2px solid #6366f1; border-radius:12px; padding:0.6rem; text-align:center;">
+              <div style="font-size:1.4rem;">🔗</div>
+              <div style="font-size:0.75rem; font-weight:700; color:#a5b4fc; text-transform:uppercase;">ClusterRoleBinding</div>
+              <div style="font-size:0.5rem; font-family:monospace; color:#c7d2fe; font-style:italic;">"Cluster-wide connection"</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connector: Refers -->
+      <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; gap:4px; padding-top:16px;">
+        <div style="width:24px; height:1.5px; background:#555;"></div>
+        <div style="font-size:0.5rem; color:#777; white-space:nowrap;">Refers</div>
+        <div style="font-size:0.7rem; color:#666;">→</div>
+      </div>
+
+      <!-- Permissions Block -->
+      <div style="flex:1.2; display:flex; flex-direction:column; gap:4px;">
+        <div style="font-size:0.55rem; font-weight:700; letter-spacing:0.08em; color:#888; text-align:center;">STEP 4: PERMISSIONS</div>
+        <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+          <!-- Namespace tab content -->
+          <div class="rbac-tab-content active" data-rbac-tab="namespace" style="width:100%; display:flex; flex-direction:column; gap:4px;">
+            <div style="background:#f9731615; border:1.5px solid #f97316; border-radius:8px; padding:0.35rem; text-align:center;">
+              <div style="font-size:1rem;">🛡️</div>
+              <div style="font-size:0.65rem; font-weight:700; color:#fb923c;">Role (Reader)</div>
+              <div style="font-size:0.5rem; background:#f9731620; color:#fdba74; padding:1px 6px; border-radius:4px; display:inline-block;">Namespace: App-A</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); border:1px dashed #444; border-radius:6px; padding:0.3rem;">
+              <div style="font-size:0.5rem; font-weight:700; color:#888; margin-bottom:2px;">📦 Allowed Actions</div>
+              <div style="font-size:0.5rem; font-family:monospace; color:#aaa; line-height:1.4;">
+                - get, list, watch pods<br>- update deployments
+              </div>
+            </div>
+          </div>
+          <!-- Cluster tab content -->
+          <div class="rbac-tab-content" data-rbac-tab="cluster" style="width:100%; display:none; flex-direction:column; gap:4px;">
+            <div style="background:#ef444415; border:1.5px solid #ef4444; border-radius:8px; padding:0.35rem; text-align:center;">
+              <div style="font-size:1rem;">🌐</div>
+              <div style="font-size:0.65rem; font-weight:700; color:#f87171;">ClusterRole (Editor)</div>
+              <div style="font-size:0.5rem; background:#ef444420; color:#fca5a5; padding:1px 6px; border-radius:4px; display:inline-block;">Entire Cluster</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); border:1px dashed #444; border-radius:6px; padding:0.3rem;">
+              <div style="font-size:0.5rem; font-weight:700; color:#888; margin-bottom:2px;">📦 Allowed Actions</div>
+              <div style="font-size:0.5rem; font-family:monospace; color:#aaa; line-height:1.4;">
+                - get, list, watch, update<br>- all namespaces
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom: OIDC explanation (compact 2-col) -->
+    <div style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:8px; padding:0.35rem 0.5rem;">
+      <div style="font-size:0.6rem; font-weight:700; color:var(--text-primary); margin-bottom:3px;">ℹ️ OIDC와 K8s 그룹 매핑</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:0.5rem; color:var(--text-secondary); line-height:1.4;">
+        <div><b style="color:#60a5fa;">토큰이 곧 신분증:</b> JWT 안의 <code style="font-size:0.48rem; background:rgba(255,255,255,0.06); padding:0 3px; border-radius:2px;">groups</code> 필드로 Subject 매핑</div>
+        <div><b style="color:#60a5fa;">설정:</b> <code style="font-size:0.48rem; background:rgba(255,255,255,0.06); padding:0 3px; border-radius:2px;">--oidc-groups-claim=groups</code></div>
+        <div><b style="color:#2dd4bf;">ServiceAccount:</b> Pod/프로세스용 내부 계정, OIDC 불필요</div>
+        <div><b style="color:#60a5fa;">RBAC 활용:</b> RoleBinding의 subjects에 <code style="font-size:0.48rem; background:rgba(255,255,255,0.06); padding:0 3px; border-radius:2px;">kind: Group</code> 지정</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script>(function(){
+  // Tab switching for RBAC flow diagram
+  document.querySelectorAll('.rbac-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.rbacTab;
+      // Update button styles
+      document.querySelectorAll('.rbac-tab-btn').forEach(b => {
+        b.classList.remove('active');
+        b.style.background = 'transparent';
+        b.style.color = 'var(--text-secondary)';
+      });
+      btn.classList.add('active');
+      btn.style.background = tab === 'namespace' ? '#2563eb' : '#4f46e5';
+      btn.style.color = '#fff';
+      // Toggle content visibility
+      document.querySelectorAll('.rbac-tab-content').forEach(c => {
+        if (c.dataset.rbacTab === tab) {
+          c.style.display = c.style.flexDirection ? 'flex' : 'block';
+          c.classList.add('active');
+        } else {
+          c.style.display = 'none';
+          c.classList.remove('active');
+        }
+      });
+    });
+  });
+})();</script>
+
+<div class="slide" data-remarp-id="s3b">
+  <div class="slide-header"><h2>RBAC — ClusterRole, Role, RoleBinding</h2></div>
+  <div class="slide-body" style="font-size:0.7rem;">
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="rbac-hierarchy">RBAC 계층 구조</button>
+      <button class="tab-btn" data-tab="rbac-team">팀별 RBAC 설계</button>
+      <button class="tab-btn" data-tab="rbac-binding">RoleBinding 설정</button>
+      <button class="tab-btn" data-tab="rbac-integration">Access Entries + RBAC 통합</button>
+    </div>
+    <div class="tab-content active" data-tab="rbac-hierarchy">
+<pre style="font-family:monospace; background:var(--bg-secondary); padding:0.5rem 0.8rem; border-radius:8px; margin-bottom:0.5rem; font-size:0.65rem; line-height:1.5;">
+IAM Role (AWS)
+  ↓ Access Entries
+EKS Cluster
+  ↓ ClusterRoleBinding / RoleBinding
+Kubernetes RBAC
+  ├─ ClusterRole    → 클러스터 전체 범위
+  ├─ Role           → 네임스페이스 범위
+  ├─ ClusterRoleBinding → ClusterRole ↔ Subject 연결
+  └─ RoleBinding    → Role ↔ Subject 연결
+</pre>
+<table style="width:100%; border-collapse:collapse; font-size:0.65rem;">
+  <thead><tr style="background:var(--bg-secondary);"><th style="padding:0.3rem 0.5rem; text-align:left; border-bottom:1px solid var(--border-color);">리소스</th><th style="padding:0.3rem 0.5rem; text-align:left; border-bottom:1px solid var(--border-color);">범위</th><th style="padding:0.3rem 0.5rem; text-align:left; border-bottom:1px solid var(--border-color);">용도</th></tr></thead>
+  <tbody>
+    <tr><td style="padding:0.3rem 0.5rem;"><strong>ClusterRole</strong></td><td style="padding:0.3rem 0.5rem;">클러스터 전체</td><td style="padding:0.3rem 0.5rem;">노드 조회, CRD 관리, 전체 네임스페이스 읽기</td></tr>
+    <tr><td style="padding:0.3rem 0.5rem;"><strong>Role</strong></td><td style="padding:0.3rem 0.5rem;">네임스페이스</td><td style="padding:0.3rem 0.5rem;">특정 네임스페이스 내 Pod/Service/ConfigMap 관리</td></tr>
+    <tr><td style="padding:0.3rem 0.5rem;"><strong>ClusterRoleBinding</strong></td><td style="padding:0.3rem 0.5rem;">클러스터 전체</td><td style="padding:0.3rem 0.5rem;">ClusterRole을 사용자/그룹에 바인딩</td></tr>
+    <tr><td style="padding:0.3rem 0.5rem;"><strong>RoleBinding</strong></td><td style="padding:0.3rem 0.5rem;">네임스페이스</td><td style="padding:0.3rem 0.5rem;">Role 또는 ClusterRole을 네임스페이스 범위로 바인딩</td></tr>
+  </tbody>
+</table>
+<p style="margin-top:0.5rem;"><strong>핵심</strong>: RoleBinding은 ClusterRole도 참조 가능 → 네임스페이스 범위로 축소 적용</p>
+    </div>
+    <div class="tab-content" data-tab="rbac-team">
+<div class="code-block"><span class="code-label">ClusterRole: namespace-viewer</span><span class="comment"># 1. ClusterRole — 공통 읽기 권한 (전체 팀 공유)</span>
+<span class="key">apiVersion</span>: rbac.authorization.k8s.io/v1
+<span class="key">kind</span>: ClusterRole
+<span class="key">metadata</span>:
+  <span class="key">name</span>: namespace-viewer
+<span class="key">rules</span>:
+  - <span class="key">apiGroups</span>: [<span class="string">""</span>]
+    <span class="key">resources</span>: [<span class="string">"pods"</span>, <span class="string">"services"</span>, <span class="string">"configmaps"</span>, <span class="string">"events"</span>]
+    <span class="key">verbs</span>: [<span class="string">"get"</span>, <span class="string">"list"</span>, <span class="string">"watch"</span>]
+  - <span class="key">apiGroups</span>: [<span class="string">"apps"</span>]
+    <span class="key">resources</span>: [<span class="string">"deployments"</span>, <span class="string">"replicasets"</span>, <span class="string">"statefulsets"</span>]
+    <span class="key">verbs</span>: [<span class="string">"get"</span>, <span class="string">"list"</span>, <span class="string">"watch"</span>]</div>
+<div class="code-block"><span class="code-label">Role: deployer</span><span class="comment"># 2. Role — 네임스페이스별 배포 권한</span>
+<span class="key">apiVersion</span>: rbac.authorization.k8s.io/v1
+<span class="key">kind</span>: Role
+<span class="key">metadata</span>:
+  <span class="key">name</span>: deployer
+  <span class="key">namespace</span>: backend
+<span class="key">rules</span>:
+  - <span class="key">apiGroups</span>: [<span class="string">"apps"</span>]
+    <span class="key">resources</span>: [<span class="string">"deployments"</span>, <span class="string">"replicasets"</span>]
+    <span class="key">verbs</span>: [<span class="string">"get"</span>, <span class="string">"list"</span>, <span class="string">"watch"</span>, <span class="string">"create"</span>, <span class="string">"update"</span>, <span class="string">"patch"</span>]
+  - <span class="key">apiGroups</span>: [<span class="string">""</span>]
+    <span class="key">resources</span>: [<span class="string">"pods"</span>, <span class="string">"pods/log"</span>, <span class="string">"pods/exec"</span>]
+    <span class="key">verbs</span>: [<span class="string">"get"</span>, <span class="string">"list"</span>, <span class="string">"watch"</span>, <span class="string">"create"</span>]
+  - <span class="key">apiGroups</span>: [<span class="string">""</span>]
+    <span class="key">resources</span>: [<span class="string">"configmaps"</span>, <span class="string">"secrets"</span>]
+    <span class="key">verbs</span>: [<span class="string">"get"</span>, <span class="string">"list"</span>, <span class="string">"watch"</span>, <span class="string">"create"</span>, <span class="string">"update"</span>]</div>
+    </div>
+    <div class="tab-content" data-tab="rbac-binding">
+<div class="code-block"><span class="code-label">RoleBinding</span><span class="comment"># 3. RoleBinding — 팀별 네임스페이스 권한 부여</span>
+<span class="key">apiVersion</span>: rbac.authorization.k8s.io/v1
+<span class="key">kind</span>: RoleBinding
+<span class="key">metadata</span>:
+  <span class="key">name</span>: backend-deployer
+  <span class="key">namespace</span>: backend
+<span class="key">subjects</span>:
+  <span class="comment"># IAM Role → Access Entry → Kubernetes Group 매핑</span>
+  - <span class="key">kind</span>: Group
+    <span class="key">name</span>: backend-team
+    <span class="key">apiGroup</span>: rbac.authorization.k8s.io
+<span class="key">roleRef</span>:
+  <span class="key">kind</span>: Role
+  <span class="key">name</span>: deployer
+  <span class="key">apiGroup</span>: rbac.authorization.k8s.io</div>
+<div class="code-block"><span class="code-label">ClusterRoleBinding</span><span class="comment"># 4. ClusterRoleBinding — 전체 읽기 권한</span>
+<span class="key">apiVersion</span>: rbac.authorization.k8s.io/v1
+<span class="key">kind</span>: ClusterRoleBinding
+<span class="key">metadata</span>:
+  <span class="key">name</span>: all-teams-viewer
+<span class="key">subjects</span>:
+  - <span class="key">kind</span>: Group
+    <span class="key">name</span>: all-developers
+    <span class="key">apiGroup</span>: rbac.authorization.k8s.io
+<span class="key">roleRef</span>:
+  <span class="key">kind</span>: ClusterRole
+  <span class="key">name</span>: namespace-viewer
+  <span class="key">apiGroup</span>: rbac.authorization.k8s.io</div>
+<div class="code-block"><span class="code-label">RoleBinding with ClusterRole</span><span class="comment"># 5. RoleBinding으로 ClusterRole 범위 축소</span>
+<span class="key">apiVersion</span>: rbac.authorization.k8s.io/v1
+<span class="key">kind</span>: RoleBinding
+<span class="key">metadata</span>:
+  <span class="key">name</span>: frontend-viewer
+  <span class="key">namespace</span>: frontend
+<span class="key">subjects</span>:
+  - <span class="key">kind</span>: Group
+    <span class="key">name</span>: frontend-team
+    <span class="key">apiGroup</span>: rbac.authorization.k8s.io
+<span class="key">roleRef</span>:
+  <span class="key">kind</span>: ClusterRole        <span class="comment"># ClusterRole이지만</span>
+  <span class="key">name</span>: namespace-viewer    <span class="comment"># 이 네임스페이스만 적용됨</span>
+  <span class="key">apiGroup</span>: rbac.authorization.k8s.io</div>
+    </div>
+    <div class="tab-content" data-tab="rbac-integration">
+<div class="code-block"><span class="code-label">bash</span><span class="comment"># IAM Role → Kubernetes Group 매핑</span>
+aws eks create-access-entry \
+  --cluster-name hwahae-prod \
+  --principal-arn arn:aws:iam::123456789012:role/BackendDevRole \
+  --type STANDARD \
+  --kubernetes-groups backend-team,all-developers</div>
+<pre style="font-family:monospace; background:var(--bg-secondary); padding:1rem; border-radius:8px; margin:1rem 0; font-size:0.9rem; line-height:1.5;">
+IAM Role: BackendDevRole
+  ↓ Access Entry (kubernetes-groups: backend-team, all-developers)
+  ├─ ClusterRoleBinding: all-teams-viewer → 전체 읽기
+  └─ RoleBinding: backend-deployer → backend NS 배포 권한
+</pre>
+<p><strong>화해 권장 패턴</strong>:</p>
+<ul>
+  <li><strong>Platform Team</strong>: <code>cluster-admin</code> ClusterRoleBinding</li>
+  <li><strong>Backend Team</strong>: 자기 네임스페이스 <code>deployer</code> Role + 전체 <code>viewer</code> ClusterRole</li>
+  <li><strong>Frontend Team</strong>: 자기 네임스페이스 <code>deployer</code> Role + 전체 <code>viewer</code> ClusterRole</li>
+  <li><strong>CI/CD (ARC)</strong>: 대상 네임스페이스별 <code>deployer</code> RoleBinding</li>
+</ul>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s4">
+  <div class="slide-header" data-remarp-id="s4-header"><h2>External Secrets Operator 흐름</h2></div>
+  <div class="slide-body" data-remarp-id="s4-body">
+    <p><strong>동작 흐름</strong>:</p>
+<ol><li class="fragment fade-in" data-fragment-index="0">ExternalSecret CR 생성 → ESO Controller 감지</li><li class="fragment fade-in" data-fragment-index="1">SecretStore 참조 → IRSA로 AWS 인증</li><li class="fragment fade-in" data-fragment-index="2">Secrets Manager에서 값 조회</li><li class="fragment fade-in" data-fragment-index="3">Kubernetes Secret 자동 생성/갱신</li><li class="fragment fade-in" data-fragment-index="4">Pod에서 Secret 사용</li></ol>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s7">
+  <div class="slide-header" data-remarp-id="s7-header"><h2>Network Policy 구현</h2></div>
+  <div class="slide-body" data-remarp-id="s7-body">
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="vpc-cni-native">VPC CNI Native (권장)</button>
+      <button class="tab-btn" data-tab="calico">Calico</button>
+    </div>
+        <div class="tab-content active" data-tab="vpc-cni-native">
+<div class="code-block"><span class="comment"># VPC CNI v1.14+ 에서 NetworkPolicy 지원</span>
+<span class="comment"># 활성화 명령:</span>
+<span class="comment"># kubectl set env daemonset aws-node -n kube-system \</span>
+<span class="comment">#   ENABLE_NETWORK_POLICY=true</span>
+
+<span class="key">apiVersion</span>: networking.k8s.io/v1
+<span class="key">kind</span>: NetworkPolicy
+<span class="key">metadata</span>:
+  <span class="key">name</span>: api-policy
+  <span class="key">namespace</span>: production
+<span class="key">spec</span>:
+  <span class="key">podSelector</span>:
+    <span class="key">matchLabels</span>:
+      <span class="key">app</span>: api-server
+  <span class="key">policyTypes</span>:
+    - Ingress
+    - Egress
+  <span class="key">ingress</span>:
+    - <span class="keyword">from</span>:
+        - podSelector:
+            <span class="key">matchLabels</span>:
+              <span class="key">app</span>: frontend
+      <span class="key">ports</span>:
+        - port: 8080
+  <span class="key">egress</span>:
+    - to:
+        - podSelector:
+            <span class="key">matchLabels</span>:
+              <span class="key">app</span>: database
+      <span class="key">ports</span>:
+        - port: 5432</div>
+</div>
+    <div class="tab-content" data-tab="calico">
+<div class="code-block"><span class="comment"># Calico 추가 기능: GlobalNetworkPolicy</span>
+<span class="key">apiVersion</span>: projectcalico.org/v3
+<span class="key">kind</span>: GlobalNetworkPolicy
+<span class="key">metadata</span>:
+  <span class="key">name</span>: default-deny-all
+<span class="key">spec</span>:
+  <span class="key">selector</span>: all()
+  <span class="key">types</span>:
+    - Ingress
+    - Egress
+<span class="comment">  # 규칙 없음 = 모든 트래픽 차단</span></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s10">
+  <div class="slide-header" data-remarp-id="s10-header"><h2>2. DNS 허용 (필수)</h2></div>
+  <div class="slide-body" data-remarp-id="s10-body" style="display:flex; flex-direction:column;">
+    <div class="code-block" style="flex:1; font-size:1.1rem; line-height:1.7;"><span class="code-label">allow-dns.yaml</span><span class="key">apiVersion</span>: networking.k8s.io/v1
+<span class="key">kind</span>: NetworkPolicy
+<span class="key">metadata</span>:
+  <span class="key">name</span>: allow-dns
+  <span class="key">namespace</span>: production
+<span class="key">spec</span>:
+  <span class="key">podSelector</span>: {}
+  <span class="key">policyTypes</span>:
+    - Egress
+  <span class="key">egress</span>:
+    - to:
+        - namespaceSelector:
+            <span class="key">matchLabels</span>:
+              <span class="key">kubernetes.io/metadata.name</span>: kube-system
+      <span class="key">ports</span>:
+        - protocol: UDP
+          <span class="key">port</span>: 53</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s12">
+  <div class="slide-header"><h2>Platform Engineering — Self-Service 아키텍처</h2></div>
+  <div class="slide-body">
+    <div class="canvas-container">
+      <canvas id="canvas-platform" width="960" height="380"></canvas>
+      <div class="canvas-controls">
+        <button class="canvas-play-btn" data-canvas="canvas-platform">▶ Play</button>
+        <button class="canvas-reset-btn" data-canvas="canvas-platform">↻ Reset</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>(function(){
+  const canvas = document.getElementById('canvas-platform');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const BASE_W = 960, BASE_H = 380;
+
+  let step = 4, animId = null;
+
+  function resize() {
+    const container = canvas.parentElement;
+    const cw = container.clientWidth;
+    if (cw <= 0) return;
+    const scale = cw / BASE_W;
+    const ch = Math.round(BASE_H * scale);
+    canvas.width = Math.round(cw * dpr);
+    canvas.height = Math.round(ch * dpr);
+    canvas.style.width = cw + 'px';
+    canvas.style.height = ch + 'px';
+  }
+
+  function drawBox(x, y, w, h, label, color, subLabel) {
+    const scale = canvas.width / BASE_W;
+    ctx.save();
+    ctx.scale(scale, scale);
+    ctx.fillStyle = color;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, 8);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const lines = label.split('\n');
+    const lineHeight = 16;
+    const startY = y + h/2 - (lines.length - 1) * lineHeight / 2;
+    lines.forEach((line, i) => {
+      ctx.fillText(line, x + w/2, startY + i * lineHeight);
+    });
+    ctx.restore();
+  }
+
+  function drawArrow(x1, y1, x2, y2, color) {
+    const scale = canvas.width / BASE_W;
+    ctx.save();
+    ctx.scale(scale, scale);
+    ctx.strokeStyle = color || '#888';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - 10 * Math.cos(angle - Math.PI/6), y2 - 10 * Math.sin(angle - Math.PI/6));
+    ctx.lineTo(x2 - 10 * Math.cos(angle + Math.PI/6), y2 - 10 * Math.sin(angle + Math.PI/6));
+    ctx.closePath();
+    ctx.fillStyle = color || '#888';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const Colors = { purple: '#6c5ce7', orange: '#FF9900', red: '#E6522C', green: '#4CAF50' };
+
+    // Step 1: IDP
+    if (step >= 1) {
+      drawBox(330, 20, 300, 50, 'Internal Developer Platform', Colors.purple);
+    }
+    // Step 2: Self-Service interfaces
+    if (step >= 2) {
+      drawBox(50, 100, 180, 50, 'Service Catalog\n(Backstage/Port)', Colors.orange);
+      drawBox(280, 100, 180, 50, 'App Templates\n(Helm/Kustomize)', Colors.orange);
+      drawBox(510, 100, 180, 50, 'Platform CLI\n(kubectl plugin)', Colors.orange);
+      drawArrow(480, 45, 140, 100, '#888');
+      drawArrow(480, 45, 370, 100, '#888');
+      drawArrow(480, 45, 600, 100, '#888');
+    }
+    // Step 3: GitOps Automation
+    if (step >= 3) {
+      drawBox(150, 190, 160, 50, 'ArgoCD\nApplicationSet', Colors.red);
+      drawBox(450, 190, 160, 50, 'ACK\nAWS Resources', Colors.red);
+      drawArrow(140, 150, 200, 190, '#888');
+      drawArrow(370, 150, 500, 190, '#888');
+    }
+    // Step 4: Auto-provisioned resources
+    if (step >= 4) {
+      drawBox(30, 290, 130, 45, 'Namespace\n+ RBAC', Colors.green);
+      drawBox(190, 290, 140, 45, 'ResourceQuota\n+ LimitRange', Colors.green);
+      drawBox(360, 290, 130, 45, 'NetworkPolicy', Colors.green);
+      drawBox(520, 290, 140, 45, 'ServiceMonitor\n+ Alerts', Colors.green);
+      drawArrow(230, 240, 95, 290, '#888');
+      drawArrow(230, 240, 260, 290, '#888');
+      drawArrow(230, 240, 425, 290, '#888');
+      drawArrow(230, 240, 590, 290, '#888');
+    }
+  }
+
+  function animate() {
+    if (step < 4) {
+      step++;
+      draw();
+      animId = setTimeout(animate, 800);
+    }
+  }
+
+  function reset() {
+    clearTimeout(animId);
+    step = 0;
+    draw();
+  }
+
+  new ResizeObserver(()=>{ resize(); draw(); }).observe(canvas);
+
+  const parentSlide = canvas.closest('.slide');
+  if (parentSlide) {
+    new MutationObserver(() => {
+      if (parentSlide.classList.contains('active')) {
+        requestAnimationFrame(() => { resize(); draw(); });
+      }
+    }).observe(parentSlide, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  resize();
+  draw();
+
+  document.querySelector('[data-canvas="canvas-platform"].canvas-play-btn')?.addEventListener('click', () => { reset(); animate(); });
+  document.querySelector('[data-canvas="canvas-platform"].canvas-reset-btn')?.addEventListener('click', reset);
+})();</script>
+
+<div class="slide" data-remarp-id="s12b">
+  <div class="slide-header"><h2>ApplicationSet으로 팀별 자동 배포</h2></div>
+  <div class="slide-body">
+<div class="code-block"><span class="code-label">appset-team-onboarding.yaml</span><span class="comment"># 1. ApplicationSet — Git Directory Generator</span>
+<span class="key">apiVersion</span>: argoproj.io/v1alpha1
+<span class="key">kind</span>: ApplicationSet
+<span class="key">metadata</span>:
+  <span class="key">name</span>: team-onboarding
+  <span class="key">namespace</span>: argocd
+<span class="key">spec</span>:
+  <span class="key">generators</span>:
+    - <span class="key">git</span>:
+        <span class="key">repoURL</span>: https://github.com/hwahae/platform-config
+        <span class="key">revision</span>: main
+        <span class="key">directories</span>:
+          - <span class="key">path</span>: <span class="string">"teams/*"</span>       <span class="comment"># teams/backend, teams/frontend, ...</span>
+  <span class="key">template</span>:
+    <span class="key">metadata</span>:
+      <span class="key">name</span>: <span class="string">"team-{{path.basename}}"</span>
+    <span class="key">spec</span>:
+      <span class="key">project</span>: <span class="string">"{{path.basename}}"</span>
+      <span class="key">source</span>:
+        <span class="key">repoURL</span>: https://github.com/hwahae/platform-config
+        <span class="key">path</span>: <span class="string">"{{path}}"</span>
+        <span class="key">targetRevision</span>: main
+      <span class="key">destination</span>:
+        <span class="key">server</span>: https://kubernetes.default.svc
+        <span class="key">namespace</span>: <span class="string">"{{path.basename}}"</span>
+      <span class="key">syncPolicy</span>:
+        <span class="key">automated</span>:
+          <span class="key">prune</span>: <span class="keyword">true</span>
+          <span class="key">selfHeal</span>: <span class="keyword">true</span>
+        <span class="key">syncOptions</span>:
+          - CreateNamespace=<span class="keyword">true</span></div>
+<div class="code-block"><span class="code-label">teams/backend/kustomization.yaml</span><span class="comment"># 팀 디렉토리 구조: teams/backend/</span>
+<span class="key">resources</span>:
+  - namespace.yaml        <span class="comment"># Namespace + Labels</span>
+  - rbac.yaml             <span class="comment"># Role + RoleBinding</span>
+  - resource-quota.yaml   <span class="comment"># CPU/Memory 제한</span>
+  - limit-range.yaml      <span class="comment"># Pod 기본 리소스</span>
+  - network-policy.yaml   <span class="comment"># Default Deny + DNS Allow</span>
+  - service-monitor.yaml  <span class="comment"># Prometheus 자동 수집</span></div>
+<p><strong>결과</strong>: <code>teams/</code> 디렉토리에 폴더만 추가하면 → 네임스페이스 + 모든 기본 정책 자동 생성</p>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s12c">
+  <div class="slide-header"><h2>Namespace Provisioner 번들</h2></div>
+  <div class="slide-body" style="font-size:0.7rem;">
+    <div class="col-2" style="gap:0.4rem;">
+      <div>
+<div class="code-block" style="font-size:0.55rem;padding:0.3rem 0.4rem;margin-bottom:0.3rem;"><span class="code-label">namespace-bundle.yaml</span><span class="comment"># 1. ResourceQuota — 팀별 리소스 상한</span>
+<span class="key">apiVersion</span>: v1
+<span class="key">kind</span>: ResourceQuota
+<span class="key">metadata</span>:
+  <span class="key">name</span>: team-quota
+<span class="key">spec</span>:
+  <span class="key">hard</span>:
+    <span class="key">requests.cpu</span>: <span class="string">"20"</span>
+    <span class="key">requests.memory</span>: <span class="string">"40Gi"</span>
+    <span class="key">limits.cpu</span>: <span class="string">"40"</span>
+    <span class="key">limits.memory</span>: <span class="string">"80Gi"</span>
+    <span class="key">pods</span>: <span class="string">"100"</span></div>
+<div class="code-block" style="font-size:0.55rem;padding:0.3rem 0.4rem;"><span class="code-label">limit-range.yaml</span><span class="comment"># 2. LimitRange — Pod 기본값 및 최대값</span>
+<span class="key">apiVersion</span>: v1
+<span class="key">kind</span>: LimitRange
+<span class="key">metadata</span>:
+  <span class="key">name</span>: default-limits
+<span class="key">spec</span>:
+  <span class="key">limits</span>:
+    - <span class="key">type</span>: Container
+      <span class="key">default</span>:
+        <span class="key">cpu</span>: <span class="string">"200m"</span>
+        <span class="key">memory</span>: <span class="string">"256Mi"</span>
+      <span class="key">defaultRequest</span>:
+        <span class="key">cpu</span>: <span class="string">"100m"</span>
+        <span class="key">memory</span>: <span class="string">"128Mi"</span></div>
+      </div>
+      <div>
+<div class="code-block" style="font-size:0.55rem;padding:0.3rem 0.4rem;margin-bottom:0.3rem;"><span class="code-label">network-policy.yaml</span><span class="comment"># 3. Default NetworkPolicy — Ingress Deny</span>
+<span class="key">apiVersion</span>: networking.k8s.io/v1
+<span class="key">kind</span>: NetworkPolicy
+<span class="key">metadata</span>:
+  <span class="key">name</span>: default-deny-ingress
+<span class="key">spec</span>:
+  <span class="key">podSelector</span>: {}
+  <span class="key">policyTypes</span>:
+    - Ingress</div>
+<div class="code-block" style="font-size:0.55rem;padding:0.3rem 0.4rem;"><span class="code-label">allow-dns.yaml</span><span class="comment"># 4. DNS 허용</span>
+<span class="key">apiVersion</span>: networking.k8s.io/v1
+<span class="key">kind</span>: NetworkPolicy
+<span class="key">metadata</span>:
+  <span class="key">name</span>: allow-dns
+<span class="key">spec</span>:
+  <span class="key">podSelector</span>: {}
+  <span class="key">policyTypes</span>:
+    - Egress
+  <span class="key">egress</span>:
+    - <span class="key">to</span>:
+        - <span class="key">namespaceSelector</span>:
+            <span class="key">matchLabels</span>:
+              <span class="key">kubernetes.io/metadata.name</span>: kube-system
+      <span class="key">ports</span>:
+        - <span class="key">protocol</span>: UDP
+          <span class="key">port</span>: 53</div>
+      </div>
+    </div>
+<p style="margin-top:0.3rem;"><strong>Self-Service 흐름</strong>: 개발자 <code>teams/my-team/</code> 생성 → PR → Platform Team 리뷰 → ArgoCD 자동 Namespace + 번들 생성</p>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s13">
+  <div class="slide-header" data-remarp-id="s13-header"><h2>Block 04 Quiz</h2></div>
+  <div class="slide-body" data-remarp-id="s13-body" style="overflow-y:auto">
+    <div class="quiz" data-quiz="q1">
+      <div class="quiz-question">Q1: Access Entries가 aws-auth ConfigMap보다 좋은 이유는?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">더 빠른 인증 속도</button>
+<button class="quiz-option" data-correct="true">API 기반 관리로 안전하고 CloudTrail 감사 지원</button>
+<button class="quiz-option" data-correct="false">더 많은 IAM Role 지원</button>
+<button class="quiz-option" data-correct="false">비용이 저렴함</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q2">
+      <div class="quiz-question">Q2: External Secrets Operator의 역할은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">Kubernetes Secret을 암호화</button>
+<button class="quiz-option" data-correct="false">Pod 간 Secret 공유</button>
+<button class="quiz-option" data-correct="true">외부 Secret 저장소(AWS SM)와 K8s Secret 동기화</button>
+<button class="quiz-option" data-correct="false">Secret 접근 로깅</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q3">
+      <div class="quiz-question">Q3: Network Policy의 Default Deny 패턴에서 반드시 허용해야 하는 것은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">HTTP 트래픽</button>
+<button class="quiz-option" data-correct="false">HTTPS 트래픽</button>
+<button class="quiz-option" data-correct="true">DNS 트래픽 (UDP 53)</button>
+<button class="quiz-option" data-correct="false">SSH 트래픽</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q4">
+      <div class="quiz-question">Q4: IRSA(IAM Roles for Service Accounts)의 장점은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">IAM Role 생성이 자동화됨</button>
+<button class="quiz-option" data-correct="false">모든 Pod가 동일한 권한을 가짐</button>
+<button class="quiz-option" data-correct="true">Pod별로 최소 권한 AWS 접근이 가능함</button>
+<button class="quiz-option" data-correct="false">AWS 자격 증명을 Secret으로 저장함</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+  </div>
+</div>
+</div>
+<script src="common/animation-utils.js"></script>
+<script src="common/slide-framework.js"></script>
+<script src="common/quiz-component.js"></script>
+<script src="common/presenter-view.js"></script>
+
+<script>
+  
+  const presenterNotes = {
+    1: "[1min] Block 04에서는 EKS 보안과 Platform Engineering을 다룹니다.\nIAM 통합, Secret 관리, Network Policy를 학습하고, 개발자 Self-Service 환경 구축 방안을 살펴봅니다.\n\n💬 예상 질문:\n• ECS에서는 Task Role로 권한 관리했는데 EKS는 어떻게 다른가요? → EKS는 IRSA/Pod Identity로 Pod 단위 IAM Role을 부여합니다. Task Role과 개념은 유사하지만, OIDC 기반 인증이 추가됩니다.",
+    2: "[2.5min] EKS 보안 아키텍처의 4개 계층입니다.\nIAM Layer에서는 OIDC Provider를 통해 Pod가 AWS 서비스에 안전하게 접근합니다.\nCluster Layer에서는 RBAC과 Access Entries로 클러스터 접근을 제어합니다.\nWorkload Layer에서는 Pod Security Standards와 Network Policy로 워크로드를 격리합니다.\nData Layer에서는 Secrets Manager와 KMS로 민감 정보를 보호합니다.\n\n💬 예상 질문:\n• Pod Security Standards는 ECS Security Group과 어떻게 다른가요? → PSS는 컨테이너 런타임 수준 보안(privileged 모드, 호스트 네트워크 등)을 제어하고, Security Group은 네트워크 수준 접근 제어입니다. EKS에서는 둘 다 사용합니다.",
+    3: "[2.5min] aws-auth ConfigMap과 Access Entries의 비교입니다.\naws-auth는 ConfigMap을 직접 편집해야 하는데, 실수로 삭제하면 클러스터에 접근할 수 없게 됩니다.\nAccess Entries는 EKS 1.23부터 지원되며, AWS API로 관리되어 더 안전하고 감사 추적이 용이합니다.\n신규 클러스터는 Access Entries를, 기존 클러스터는 점진적 마이그레이션을 권장합니다.\n\n💬 예상 질문:\n• 기존 aws-auth를 사용 중인데 Access Entries로 마이그레이션하려면? → 병렬 운영이 가능합니다. Access Entries를 먼저 추가하고 테스트한 후, aws-auth에서 해당 항목을 제거하면 됩니다.\n• Access Entries 설정 실수하면 클러스터 잠금되나요? → 아닙니다. AWS API 기반이라 클러스터 생성자의 IAM은 항상 접근 가능합니다.",
+    4: "[2.5min] Access Entries 설정 방법입니다.\n먼저 create-access-entry로 IAM Role을 등록하고, associate-access-policy로 권한을 부여합니다.\naccess-scope를 namespace로 제한하면 특정 네임스페이스에만 권한을 부여할 수 있습니다.\nTerraform으로 관리하면 GitOps 워크플로우와 완벽하게 통합됩니다.\n\n💬 예상 질문:\n• AmazonEKSClusterAdminPolicy와 AmazonEKSAdminPolicy 차이는? → ClusterAdminPolicy는 cluster-admin 수준 전체 권한, AdminPolicy는 네임스페이스 범위로 제한 가능한 관리자 권한입니다.\n• SSO 사용자도 Access Entries로 관리 가능한가요? → 네, IAM Identity Center(SSO) Role ARN을 principal-arn으로 등록하면 됩니다.",
+    5: "[2min] RBAC & OIDC 워크플로우 전체 흐름입니다. Play 버튼을 눌러 애니메이션을 확인하세요.\n1단계: EKS OIDC Provider가 JWT 토큰을 발급하고 검증합니다.\n2단계: IAM Role(Access Entry), ServiceAccount(IRSA/Pod Identity), Group/User가 인증 주체로 동작합니다.\n3단계: ClusterRoleBinding/RoleBinding과 Access Policy Association으로 주체와 권한을 연결합니다.\n4단계: ClusterRole, Role, EKS Access Policy, Pod Identity를 통해 실제 리소스 접근 권한이 부여됩니다.\n\n💬 예상 질문:\n• IRSA와 Pod Identity 중 어떤 걸 써야 하나요? → 신규는 Pod Identity 권장(설정이 더 간단), 기존 IRSA도 계속 지원됩니다. Pod Identity는 cross-account 접근도 더 쉽습니다.",
+    6: "[3min] RBAC 설계입니다. 탭을 전환하며 각 패턴을 설명하세요.\n핵심 패턴은 ClusterRole로 공통 권한을 정의하고, RoleBinding으로 네임스페이스별로 바인딩하는 것입니다.\nClusterRole을 RoleBinding에서 참조하면, 해당 네임스페이스 범위로 축소 적용됩니다.\n이렇게 하면 ClusterRole 하나로 여러 팀에 동일한 권한을 네임스페이스별로 부여할 수 있습니다.\nAccess Entries의 kubernetes-groups 파라미터로 IAM Role과 Kubernetes Group을 매핑하면, IAM 인증과 RBAC 인가가 자연스럽게 통합됩니다.\n\n💬 예상 질문:\n• 개발자가 다른 팀 네임스페이스 Pod 로그를 봐야 할 때는? → ClusterRoleBinding으로 전체 viewer 권한을 주거나, 필요한 네임스페이스에 RoleBinding을 추가합니다.\n• RBAC 권한 문제 디버깅은 어떻게? → kubectl auth can-i 명령으로 특정 사용자/SA의 권한을 확인할 수 있습니다.",
+    7: "[2min] External Secrets Operator의 동작 흐름입니다.\nExternalSecret을 정의하면 ESO가 AWS Secrets Manager에서 값을 가져와 Kubernetes Secret을 자동 생성합니다.\nrefreshInterval을 설정하면 Secret이 자동으로 동기화되어 로테이션도 지원됩니다.\nIRSA를 통해 인증하므로 AWS 자격 증명을 클러스터에 저장할 필요가 없습니다.\n\n💬 예상 질문:\n• ECS에서 Secrets Manager 직접 참조하던 것과 차이점은? → ECS는 Task Definition에서 직접 참조, EKS는 ESO가 K8s Secret으로 변환해서 Pod에서 일반 Secret처럼 사용합니다. 애플리케이션 코드 변경 없이 마이그레이션 가능합니다.\n• Secret 로테이션 시 Pod 재시작 필요한가요? → refreshInterval로 Secret은 자동 갱신되지만, Pod가 이미 마운트한 값은 재시작해야 반영됩니다. Reloader 같은 도구로 자동화 가능합니다.",
+    8: "[2min] Network Policy 구현 옵션입니다.\nVPC CNI Native: EKS 기본 CNI에서 NetworkPolicy를 지원합니다. 추가 설치 없이 활성화만 하면 됩니다.\nCalico: GlobalNetworkPolicy로 클러스터 전체 정책을 정의할 수 있습니다.\n대부분의 경우 VPC CNI Native로 충분합니다.\n\n💬 예상 질문:\n• ECS Security Group과 Network Policy 차이는? → Security Group은 ENI 수준(IP 기반), Network Policy는 Pod Label 기반입니다. Network Policy가 더 세밀한 제어가 가능합니다.\n• VPC CNI Network Policy와 Calico 중 어떤 걸 선택? → VPC CNI가 관리 오버헤드가 적고 AWS 지원을 받을 수 있어 권장합니다. GlobalNetworkPolicy가 꼭 필요하면 Calico를 고려하세요.",
+    9: "[1.5min] DNS 허용 정책입니다. Default Deny 패턴 적용 시 DNS를 허용하지 않으면 Pod가 서비스 이름을 resolve할 수 없습니다.\nkube-system 네임스페이스의 UDP 53 포트를 반드시 허용해야 합니다.\n\n💬 예상 질문:\n• DNS 허용 안 하면 어떤 증상이 나타나나요? → Pod에서 서비스 이름으로 접근 시 name resolution failed 에러가 발생합니다. IP로는 통신 가능하지만 서비스 디스커버리가 안 됩니다.\n• CoreDNS 대신 외부 DNS 사용하면? → 해당 DNS 서버 IP와 포트를 Egress에 추가로 허용해야 합니다.",
+    10: "[2min] Internal Developer Platform 아키텍처입니다. Play 버튼을 눌러 애니메이션을 확인하세요.\n개발자가 Service Catalog에서 템플릿을 선택하면, GitOps를 통해 Namespace, RBAC, ResourceQuota, NetworkPolicy, ServiceMonitor가 자동으로 프로비저닝됩니다.\n개발자는 인프라 세부사항을 알 필요 없이 서비스를 배포할 수 있습니다.\nBackstage나 Port 같은 IDP 도구를 도입하면 개발자 경험을 더욱 향상시킬 수 있습니다.\n\n💬 예상 질문:\n• Platform Engineering 도입 시 가장 먼저 해야 할 것은? → 반복되는 작업(네임스페이스 생성, RBAC 설정 등)을 파악하고, GitOps 기반 자동화부터 시작하세요. IDP 도구는 그 다음입니다.\n• Backstage 도입 비용/난이도는? → 오픈소스라 라이선스 비용은 없지만, 커스터마이징에 개발 리소스가 필요합니다. 소규모 팀은 ArgoCD + Git PR 워크플로우로 시작하는 것을 권장합니다.",
+    11: "[2min] ApplicationSet Git Directory Generator를 활용한 팀별 자동 배포입니다.\nteams/ 디렉토리 아래에 팀 폴더를 추가하기만 하면 ArgoCD가 자동으로 네임스페이스, RBAC, ResourceQuota, NetworkPolicy, ServiceMonitor를 생성합니다.\n새 팀 온보딩이 Git PR 하나로 완료됩니다.\n\n💬 예상 질문:\n• 팀별로 다른 ResourceQuota를 적용하려면? → 각 팀 디렉토리의 resource-quota.yaml을 다르게 설정하거나, Kustomize overlay로 팀별 값을 오버라이드합니다.\n• ApplicationSet이 너무 많은 권한을 가지는 것 아닌가요? → ArgoCD Project로 ApplicationSet이 생성할 수 있는 리소스 종류와 네임스페이스를 제한할 수 있습니다.",
+    12: "[2min] Namespace Provisioner 번들입니다.\nResourceQuota로 팀별 리소스 상한을 설정하고, LimitRange로 개발자가 리소스 설정을 빠뜨려도 기본값이 적용됩니다.\nNetworkPolicy는 Default Deny + DNS Allow 패턴을 적용하여 Zero Trust를 기본으로 합니다.\n이 번들이 ApplicationSet과 결합되면, 팀 온보딩이 완전 자동화됩니다.\n\n💬 예상 질문:\n• ResourceQuota 초과하면 어떻게 되나요? → 새 Pod 생성이 거부됩니다. kubectl describe quota로 현재 사용량을 확인하고, Platform Team에 증설을 요청하는 프로세스를 만드세요.\n• LimitRange 기본값이 너무 작으면? → 개발자가 Pod spec에 명시적으로 resources를 설정하면 LimitRange 기본값을 오버라이드합니다. 기본값은 설정 누락 시에만 적용됩니다.",
+    13: "[3min] 퀴즈 시간입니다. 참석자들이 직접 답을 선택하도록 유도하세요.\nQ1: Access Entries는 EKS API로 관리되어 ConfigMap 삭제 위험이 없고, CloudTrail로 변경 이력을 추적할 수 있습니다.\nQ2: ESO는 AWS Secrets Manager 등 외부 저장소의 Secret을 Kubernetes Secret으로 자동 동기화합니다.\nQ3: Default Deny 정책 적용 시 DNS를 허용하지 않으면 Pod가 서비스 이름을 resolve할 수 없습니다.\nQ4: IRSA는 ServiceAccount별로 IAM Role을 할당하여 Pod 단위 최소 권한 원칙을 구현합니다.\n\n💬 예상 질문:\n• 실제 마이그레이션 시 보안 설정 순서는? → 1) Access Entries로 팀 접근 권한 설정 → 2) IRSA/Pod Identity로 AWS 서비스 접근 → 3) ESO로 Secret 마이그레이션 → 4) Network Policy 적용 순서를 권장합니다."
+  };
+  const deck = new SlideFramework({
+    logoSrc: 'common/pptx-theme/images/logo_1.png',
+    footer: '© 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.',
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

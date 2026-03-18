@@ -322,16 +322,12 @@
         .map(a => base + a.getAttribute('href'))
         .filter(Boolean);
 
-      // Single-file presentation: index.html itself contains all slides
-      if (!blocks.length && doc.querySelectorAll('.slide').length) {
-        blocks.push(tocUrl);
-      }
-
-      // Fallback: try toc.html if index.html had no block links and no slides
+      // Fallback: try toc.html (HEAD check first to avoid 404 console errors)
       if (!blocks.length && tocUrl.endsWith('index.html')) {
         try {
-          const tocResp = await fetch(tocUrl.replace('index.html', 'toc.html'));
-          if (tocResp.ok) {
+          const headResp = await fetch(tocUrl.replace('index.html', 'toc.html'), { method: 'HEAD' });
+          if (headResp.ok) {
+            const tocResp = await fetch(tocUrl.replace('index.html', 'toc.html'));
             const tocHtml = await tocResp.text();
             const tocDoc = new DOMParser().parseFromString(tocHtml, 'text/html');
             let tocLinks = tocDoc.querySelectorAll('a.block-card');
@@ -341,6 +337,11 @@
               .filter(Boolean);
           }
         } catch(e) { /* toc.html not available */ }
+      }
+
+      // Single-file presentation: index.html itself contains all slides
+      if (!blocks.length && doc.querySelectorAll('.slide').length) {
+        blocks.push(tocUrl);
       }
 
       return blocks;
@@ -417,14 +418,17 @@
         const blockFiles = [];
         let blockLinks = doc.querySelectorAll('a.block-card');
         if (!blockLinks.length) blockLinks = doc.querySelectorAll('a.block-link');
-        // Skip toc.html fetch if index.html itself is a single-file presentation
-        if (!blockLinks.length && !doc.querySelectorAll('.slide').length) {
+        // Try toc.html (HEAD check first to avoid 404 console errors)
+        if (!blockLinks.length) {
           try {
-            const tocResp2 = await fetch(slug + '/toc.html');
-            if (tocResp2.ok) {
-              const tocDoc = new DOMParser().parseFromString(await tocResp2.text(), 'text/html');
-              blockLinks = tocDoc.querySelectorAll('a.block-card');
-              if (!blockLinks.length) blockLinks = tocDoc.querySelectorAll('a.block-link');
+            const headResp = await fetch(slug + '/toc.html', { method: 'HEAD' });
+            if (headResp.ok) {
+              const tocResp2 = await fetch(slug + '/toc.html');
+              if (tocResp2.ok) {
+                const tocDoc = new DOMParser().parseFromString(await tocResp2.text(), 'text/html');
+                blockLinks = tocDoc.querySelectorAll('a.block-card');
+                if (!blockLinks.length) blockLinks = tocDoc.querySelectorAll('a.block-link');
+              }
             }
           } catch(e) {}
         }

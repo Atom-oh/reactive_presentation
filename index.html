@@ -314,21 +314,17 @@
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const base = tocUrl.replace(/index\.html$/, '').replace(/toc\.html$/, '');
 
-      // Try block-card first, then block-link
+      // 1. Check index.html for block-card / block-link
       let links = doc.querySelectorAll('a.block-card');
       if (!links.length) links = doc.querySelectorAll('a.block-link');
 
       let blocks = Array.from(links)
         .map(a => base + a.getAttribute('href'))
         .filter(Boolean);
+      if (blocks.length) return blocks;
 
-      // If index.html itself contains slides, use it directly
-      if (!blocks.length && doc.querySelectorAll('.slide').length) {
-        blocks.push(tocUrl);
-      }
-
-      // Last resort: try toc.html if index.html had neither block links nor slides
-      if (!blocks.length && tocUrl.endsWith('index.html')) {
+      // 2. Try toc.html (some presentations have combined index.html + separate toc.html with block links)
+      if (tocUrl.endsWith('index.html')) {
         try {
           const tocResp = await fetch(tocUrl.replace('index.html', 'toc.html'));
           if (tocResp.ok) {
@@ -339,11 +335,17 @@
             blocks = Array.from(tocLinks)
               .map(a => base + a.getAttribute('href'))
               .filter(Boolean);
+            if (blocks.length) return blocks;
           }
         } catch(e) { /* toc.html not available */ }
       }
 
-      return blocks;
+      // 3. Fallback: if index.html itself contains slides, use it directly (single-file presentation)
+      if (doc.querySelectorAll('.slide').length) {
+        return [tocUrl];
+      }
+
+      return [];
     },
 
     async exportPDF(slug, title) {
@@ -492,25 +494,70 @@
         }
         if (!blocks.length) { ExportUtils.hideProgress(); alert('No blocks found.'); return; }
 
-        // Collect all slides
-        let allSlides = [];
+        ExportUtils.updateProgress('Loading PptxGenJS...', 5);
+        await ExportUtils.loadPptxGen();
+
+        const pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_WIDE';
+        pres.author = 'Reactive Presentation';
+        pres.title = title;
+
+        const bgColor = '1a1d2e', textColor = 'FFFFFF', accentColor = 'FF9900';
+        pres.defineSlideMaster({ title: 'REACTIVE_MASTER', background: { color: bgColor }, objects: [] });
+
+        let totalSlides = 0;
         for (let i = 0; i < blocks.length; i++) {
-          ExportUtils.updateProgress('Fetching block ' + (i+1) + '/' + blocks.length, ((i+1)/blocks.length)*50);
+          ExportUtils.updateProgress('Processing block ' + (i+1) + '/' + blocks.length, 10 + (i/blocks.length)*70);
           const r = await fetch(blocks[i]);
+          if (!r.ok) continue;
           const html = await r.text();
           const doc = new DOMParser().parseFromString(html, 'text/html');
-          doc.querySelectorAll('.slide').forEach(slide => allSlides.push(slide));
+
+          doc.querySelectorAll('.slide').forEach(slideEl => {
+            const pptxSlide = pres.addSlide({ masterName: 'REACTIVE_MASTER' });
+            totalSlides++;
+
+            const heading = slideEl.querySelector('h1, h2');
+            if (heading) {
+              const isH1 = heading.tagName === 'H1';
+              pptxSlide.addText(heading.textContent.trim(), {
+                x: 0.5, y: isH1 ? 1.5 : 0.3, w: '90%',
+                fontSize: isH1 ? 36 : 24, color: accentColor, bold: true, fontFace: 'Arial'
+              });
+            }
+
+            const listItems = slideEl.querySelectorAll('li');
+            if (listItems.length > 0) {
+              const bullets = [];
+              listItems.forEach(li => {
+                bullets.push({ text: li.textContent.trim(), options: { fontSize: 16, color: textColor, bullet: true, fontFace: 'Arial' } });
+              });
+              pptxSlide.addText(bullets, { x: 0.5, y: heading ? 1.2 : 0.5, w: '90%', h: '60%', valign: 'top' });
+            }
+
+            const paragraphs = slideEl.querySelectorAll('.slide-body > p, .slide-body .col > p');
+            if (paragraphs.length > 0 && listItems.length === 0) {
+              const pTexts = [];
+              paragraphs.forEach(p => {
+                if (p.textContent.trim()) pTexts.push({ text: p.textContent.trim(), options: { fontSize: 16, color: textColor, fontFace: 'Arial', breakLine: true } });
+              });
+              if (pTexts.length > 0) pptxSlide.addText(pTexts, { x: 0.5, y: heading ? 1.2 : 0.5, w: '90%', h: '60%', valign: 'top' });
+            }
+
+            slideEl.querySelectorAll('.code-block, pre, code').forEach((codeEl, ci) => {
+              let codeText = codeEl.textContent.trim();
+              if (codeText.length > 500) codeText = codeText.substring(0, 500) + '\n...';
+              pptxSlide.addText(codeText, { x: 0.5, y: 3.0 + ci * 1.5, w: '90%', fontSize: 10, color: 'C0C0C0', fontFace: 'Courier New', fill: { color: '2D2D2D' }, margin: [8, 12, 8, 12] });
+            });
+
+            slideEl.querySelectorAll('canvas, .canvas-container').forEach(c => {
+              pptxSlide.addText('[Interactive: ' + (c.id || 'animation') + ']', { x: 1, y: 2.5, w: '80%', h: 2, fontSize: 18, color: '888888', fontFace: 'Arial', align: 'center', valign: 'middle', fill: { color: '2D2D2D' }, border: { type: 'dash', pt: 1, color: '666666' } });
+            });
+          });
         }
 
-        ExportUtils.updateProgress('Generating PPTX (' + allSlides.length + ' slides)...', 60);
-
-        // Use ExportUtils.exportPPTX if available, otherwise fallback to print
-        if (typeof ExportUtils !== 'undefined' && ExportUtils.exportPPTX) {
-          ExportUtils.exportPPTX({ title: title, blocks: blocks.map(b => b.replace(slug + '/', '')) });
-        } else {
-          // Fallback: navigate to TOC page and use its PPTX export
-          window.location.href = tocUrl;
-        }
+        ExportUtils.updateProgress('Generating PPTX (' + totalSlides + ' slides)...', 85);
+        await pres.writeFile({ fileName: slug + '.pptx' });
         ExportUtils.hideProgress();
       } catch(e) { ExportUtils.hideProgress(); alert('PPTX export failed: ' + e.message); }
     }

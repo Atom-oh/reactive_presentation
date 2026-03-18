@@ -338,6 +338,12 @@
         } catch(e) { /* toc.html not available */ }
       }
 
+      // Single-file presentation: index.html itself contains all slides
+      if (!blocks.length) {
+        const slides = doc.querySelectorAll('.slide');
+        if (slides.length) blocks.push(tocUrl);
+      }
+
       return blocks;
     },
 
@@ -429,6 +435,10 @@
         });
 
         const imageSet = new Set();
+        // Single-file presentation: index.html itself has all slides, already added above
+        if (!blockFiles.length) {
+          ExportUtils._extractImageURLs(tocHtml).forEach(u => imageSet.add(u));
+        }
         for (let i = 0; i < blockFiles.length; i++) {
           ExportUtils.updateProgress('Fetching ' + blockFiles[i], ((i+1)/blockFiles.length)*40 + 10);
           try {

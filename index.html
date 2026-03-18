@@ -313,9 +313,32 @@
       const html = await resp.text();
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const base = tocUrl.replace(/index\.html$/, '').replace(/toc\.html$/, '');
-      return Array.from(doc.querySelectorAll('a.block-card'))
+
+      // Try block-card first, then block-link
+      let links = doc.querySelectorAll('a.block-card');
+      if (!links.length) links = doc.querySelectorAll('a.block-link');
+
+      let blocks = Array.from(links)
         .map(a => base + a.getAttribute('href'))
         .filter(Boolean);
+
+      // Fallback: try toc.html if index.html had no block links
+      if (!blocks.length && tocUrl.endsWith('index.html')) {
+        try {
+          const tocResp = await fetch(tocUrl.replace('index.html', 'toc.html'));
+          if (tocResp.ok) {
+            const tocHtml = await tocResp.text();
+            const tocDoc = new DOMParser().parseFromString(tocHtml, 'text/html');
+            let tocLinks = tocDoc.querySelectorAll('a.block-card');
+            if (!tocLinks.length) tocLinks = tocDoc.querySelectorAll('a.block-link');
+            blocks = Array.from(tocLinks)
+              .map(a => base + a.getAttribute('href'))
+              .filter(Boolean);
+          }
+        } catch(e) { /* toc.html not available */ }
+      }
+
+      return blocks;
     },
 
     async exportPDF(slug, title) {
@@ -387,9 +410,22 @@
         // Discover blocks
         const doc = new DOMParser().parseFromString(tocHtml, 'text/html');
         const blockFiles = [];
-        doc.querySelectorAll('a.block-card, a[href$=".html"]').forEach(a => {
+        let blockLinks = doc.querySelectorAll('a.block-card');
+        if (!blockLinks.length) blockLinks = doc.querySelectorAll('a.block-link');
+        if (!blockLinks.length) {
+          try {
+            const tocResp2 = await fetch(slug + '/toc.html');
+            if (tocResp2.ok) {
+              const tocDoc = new DOMParser().parseFromString(await tocResp2.text(), 'text/html');
+              blockLinks = tocDoc.querySelectorAll('a.block-card');
+              if (!blockLinks.length) blockLinks = tocDoc.querySelectorAll('a.block-link');
+            }
+          } catch(e) {}
+        }
+        if (!blockLinks.length) blockLinks = doc.querySelectorAll('a[href$=".html"]');
+        blockLinks.forEach(a => {
           const href = a.getAttribute('href');
-          if (href && href !== 'index.html' && !href.startsWith('http')) blockFiles.push(href);
+          if (href && href !== 'index.html' && !href.startsWith('http') && !href.startsWith('../')) blockFiles.push(href);
         });
 
         const imageSet = new Set();
@@ -403,11 +439,11 @@
           } catch(e) { /* skip */ }
         }
 
-        // Common files
+        // Common files (per-presentation copy)
         for (const f of ExportUtils.COMMON_FILES) {
           try {
-            const r = await fetch('common/' + f);
-            if (r.ok) zip.file('common/' + f, await r.text());
+            const r = await fetch(slug + '/common/' + f);
+            if (r.ok) zip.file(slug + '/common/' + f, await r.text());
           } catch(e) {}
         }
 
@@ -422,11 +458,11 @@
           } catch(e) {}
         }
 
-        // Theme images
+        // Theme images (per-presentation copy)
         for (const img of ['Picture_13.png', 'Picture_8.png', 'logo_1.png']) {
           try {
-            const r = await fetch('common/pptx-theme/images/' + img);
-            if (r.ok) zip.file('common/pptx-theme/images/' + img, await r.blob());
+            const r = await fetch(slug + '/common/pptx-theme/images/' + img);
+            if (r.ok) zip.file(slug + '/common/pptx-theme/images/' + img, await r.blob());
           } catch(e) {}
         }
 

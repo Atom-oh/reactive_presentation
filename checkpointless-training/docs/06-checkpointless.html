@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkpointless Training - Checkpointless Training Research</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="progress-bar"></div>
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="doc-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="doc-main">
+      <div class="doc-content">
+        <span class="reading-time">약 90분</span>
+
+        <h1>Checkpointless Training</h1>
+        <p class="lead">디스크 I/O 병목을 완전히 제거하고, 메모리 기반 P2P 상태 복제로 패러다임을 전환한 AWS의 혁신적인 Fault Tolerance 기술을 심층 분석합니다.</p>
+
+        <!-- Section 1: 개요 -->
+        <h2>1. 개요: 패러다임의 전환</h2>
+
+        <h3>1.1 전통적 Checkpoint-Restart</h3>
+        <p>기존 방식은 주기적으로 모델 상태를 디스크(S3, FSx)에 저장하고, 장애 발생 시 전체 클러스터를 종료한 후 디스크에서 상태를 복구합니다.</p>
+
+        <div class="compare-flow">
+          <div class="step-box">Train</div>
+          <div class="arrow">&#8594;</div>
+          <div class="step-box">Save to Disk</div>
+          <div class="arrow">&#8594;</div>
+          <div class="step-box" style="border-color: #EF4444;">Fault!</div>
+          <div class="arrow">&#8594;</div>
+          <div class="step-box">Kill All</div>
+          <div class="arrow">&#8594;</div>
+          <div class="step-box highlight">Load from Disk<br><small>(병목)</small></div>
+          <div class="arrow">&#8594;</div>
+          <div class="step-box">Resume</div>
+        </div>
+
+        <h3>1.2 Checkpointless: Always-On In-Memory Recovery</h3>
+        <p>Checkpointless Training은 디스크 저장을 제거하고, <strong>클러스터 메모리 내에서 P2P로 상태를 복제</strong>합니다.</p>
+
+        <div class="compare-flow">
+          <div class="step-box">Train</div>
+          <div class="arrow">&#8594;</div>
+          <div class="step-box highlight">P2P Memory Sync<br><small>(실시간)</small></div>
+          <div class="arrow">&#8594;</div>
+          <div class="step-box" style="border-color: #EF4444;">Fault!</div>
+          <div class="arrow">&#8594;</div>
+          <div class="step-box">Swap Node</div>
+          <div class="arrow">&#8594;</div>
+          <div class="step-box highlight">P2P Restore<br><small>(EFA 3200Gbps)</small></div>
+          <div class="arrow">&#8594;</div>
+          <div class="step-box">Resume</div>
+        </div>
+
+        <div class="callout success">
+          <strong>핵심 차별점</strong>
+          디스크 I/O를 완전히 제거하고, EFA(3,200 Gbps)를 통한 초고속 메모리 간 직접 전송으로 복구 시간을 <strong>90초 미만</strong>으로 단축합니다.
+        </div>
+
+        <!-- Section 2: Component 1 - Rootless NCCL -->
+        <h2>2. Component 1: Rootless NCCL</h2>
+
+        <h3>2.1 기존 TCPStore의 문제점</h3>
+        <p>표준 NCCL/Gloo 초기화는 중앙의 <strong>Rank 0 (Master)</strong> 노드가 TCPStore를 관리하여 프로세스를 동기화합니다.</p>
+
+        <div class="card">
+          <h4>TCPStore 기반 Rendezvous</h4>
+          <pre><code><span class="code-comment"># 기존 방식: Rank 0가 TCPStore 호스팅</span>
+<span class="code-keyword">import</span> torch.distributed <span class="code-keyword">as</span> dist
+
+dist.init_process_group(
+    backend=<span class="code-string">"nccl"</span>,
+    init_method=<span class="code-string">"tcp://MASTER_ADDR:MASTER_PORT"</span>,  <span class="code-comment"># SPOF!</span>
+    rank=rank,
+    world_size=world_size
+)</code></pre>
+        </div>
+
+        <div class="callout danger">
+          <strong>Single Point of Failure (SPOF)</strong>
+          Master 노드(Rank 0)가 죽으면 전체 통신 링이 붕괴됩니다. 모든 노드가 TCPStore에 재연결을 시도하며, 수천 개 프로세스의 재동기화에 <strong>수십 분</strong>이 소요됩니다.
+        </div>
+
+        <h3>2.2 Rootless 솔루션: Decentralized Handshake</h3>
+        <p>중앙 집중식 TCPStore를 제거하고, 각 Rank가 독립적으로 피어(Peer) 연결 정보를 계산하는 <strong>Symmetric Address Pattern</strong>을 도입했습니다.</p>
+
+        <div class="card">
+          <h4>환경 변수 설정</h4>
+          <pre><code><span class="code-comment"># Rootless NCCL 활성화</span>
+export HPCT_USE_ROOTLESS=1
+
+<span class="code-comment"># TCPStore 우회</span>
+export TORCH_SKIP_TCPSTORE=1
+
+<span class="code-comment"># 포트 범위 확장 (다중 프로세스 통신용)</span>
+sysctl -w net.ipv4.ip_local_port_range="20000 65535"</code></pre>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>항목</th>
+              <th>기존 TCPStore</th>
+              <th>Rootless NCCL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>아키텍처</td>
+              <td>중앙 집중형 (Master/Slave)</td>
+              <td>분산형 (Peer-to-Peer)</td>
+            </tr>
+            <tr>
+              <td>SPOF</td>
+              <td>있음 (Rank 0)</td>
+              <td>없음</td>
+            </tr>
+            <tr>
+              <td>재초기화 시간</td>
+              <td>수십 분</td>
+              <td><strong>수 초</strong></td>
+            </tr>
+            <tr>
+              <td>확장성</td>
+              <td>대규모에서 병목</td>
+              <td>수만 노드 지원</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Section 3: Component 2 - MMAP Data Loading -->
+        <h2>3. Component 2: MMAP Data Loading</h2>
+
+        <h3>3.1 Linux mmap 원리</h3>
+        <p><code>mmap()</code>은 파일이나 메모리 영역을 프로세스의 가상 주소 공간에 매핑합니다. 여러 프로세스가 동일한 물리 메모리를 공유할 수 있어 메모리 효율이 극대화됩니다.</p>
+
+        <h3>3.2 /dev/shm 공유 메모리</h3>
+        <p><code>/dev/shm</code>은 Linux의 tmpfs 기반 공유 메모리 영역입니다. RAM에 직접 데이터를 저장하므로 디스크 I/O 없이 초고속 접근이 가능합니다.</p>
+
+        <div class="callout info">
+          <strong>메모리 효율성: 8 GPU에서 1개 복사본</strong>
+          기존에는 노드당 8개 GPU가 각각 데이터 복사본을 유지했습니다. MMAP을 사용하면 <strong>1개의 공유 복사본</strong>만 유지하여 메모리 사용량을 1/8로 줄입니다.
+        </div>
+
+        <h3>3.3 MMAPDataModule API</h3>
+
+        <pre><code><span class="code-keyword">from</span> hyperpod_checkpointless_training.dataloader.mmap_data_module <span class="code-keyword">import</span> MMAPDataModule
+<span class="code-keyword">from</span> hyperpod_checkpointless_training.dataloader.config <span class="code-keyword">import</span> CacheResumeMMAPConfig
+
+<span class="code-comment"># MMAP 기반 데이터 로더 설정</span>
+data_module = MMAPDataModule(
+    data_module=MY_DATA_MODULE(...),
+    mmap_config=CacheResumeMMAPConfig(
+        cache_dir=<span class="code-string">"/dev/shm/pdl_cache"</span>,    <span class="code-comment"># 공유 메모리 경로</span>
+        prefetch_length=<span class="code-number">10</span>,                <span class="code-comment"># 미리 가져올 배치 수</span>
+        val_prefetch_length=<span class="code-number">10</span>,            <span class="code-comment"># 검증용 prefetch</span>
+        lookback_length=<span class="code-number">2</span>,                 <span class="code-comment"># 최근 소비된 배치 보관 수</span>
+        checkpoint_frequency=<span class="code-keyword">None</span>,         <span class="code-comment"># 캐시 체크포인트 주기</span>
+        enable_batch_encryption=<span class="code-keyword">False</span>     <span class="code-comment"># 배치 암호화 여부</span>
+    ),
+)</code></pre>
+
+        <h3>3.4 CacheResumeMMAPConfig 파라미터</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>파라미터</th>
+              <th>타입</th>
+              <th>기본값</th>
+              <th>설명</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>cache_dir</code></td>
+              <td>str</td>
+              <td>/dev/shm/pdl_cache</td>
+              <td>공유 메모리 캐시 경로</td>
+            </tr>
+            <tr>
+              <td><code>prefetch_length</code></td>
+              <td>int</td>
+              <td>10</td>
+              <td>미리 가져올 배치 수</td>
+            </tr>
+            <tr>
+              <td><code>val_prefetch_length</code></td>
+              <td>int</td>
+              <td>10</td>
+              <td>검증용 prefetch 배치 수</td>
+            </tr>
+            <tr>
+              <td><code>lookback_length</code></td>
+              <td>int</td>
+              <td>2</td>
+              <td>최근 소비된 배치 보관 수 (롤백용)</td>
+            </tr>
+            <tr>
+              <td><code>checkpoint_frequency</code></td>
+              <td>int/None</td>
+              <td>None</td>
+              <td>캐시 메타데이터 저장 주기</td>
+            </tr>
+            <tr>
+              <td><code>enable_batch_encryption</code></td>
+              <td>bool</td>
+              <td>False</td>
+              <td>민감 데이터 암호화 여부</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout success">
+          <strong>복구 시 이점</strong>
+          프로세스가 재시작되어도 캐시된 배치 데이터가 RAM에 그대로 유지됩니다. 데이터 인덱스를 처음부터 다시 스캔할 필요 없이 <strong>즉시 학습을 재개</strong>할 수 있습니다.
+        </div>
+
+        <!-- Section 4: Component 3 - In-Process Recovery -->
+        <h2>4. Component 3: In-Process Recovery (IPR)</h2>
+
+        <h3>4.1 기존 방식: 전체 Kill</h3>
+        <p>기존에는 하나의 GPU에서 CUDA Error가 발생하면 <strong>전체 클러스터의 모든 프로세스</strong>를 강제로 종료하고 처음부터 다시 시작했습니다 (Job-level Restart).</p>
+
+        <h3>4.2 IPR: 프로세스 격리</h3>
+        <p>장애를 <strong>프로세스 레벨(Process-level)</strong>로 격리합니다. 정상 노드들은 프로세스를 종료하지 않고 기존의 CUDA Context와 컴파일러 캐시를 유지한 채 대기 상태(Wait state)에 진입합니다.</p>
+
+        <h3>4.3 Recovery 유형</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>유형</th>
+              <th>약어</th>
+              <th>원인</th>
+              <th>메커니즘</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>In-Process Recovery</strong></td>
+              <td>IPR</td>
+              <td>코드 레벨 오류, 예외</td>
+              <td>기존 프로세스 내에서 RCB 재실행</td>
+            </tr>
+            <tr>
+              <td><strong>Process Level Restart</strong></td>
+              <td>PLR</td>
+              <td>손상된 CUDA Context, 프로세스 종료</td>
+              <td>Training Operator가 프로세스 재시작 (K8s Pod 재시작 생략)</td>
+            </tr>
+            <tr>
+              <td><strong>Job Level Restart</strong></td>
+              <td>JLR</td>
+              <td>영구적 하드웨어 장애</td>
+              <td>노드 교체 후 전체 Job 재시작</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>4.4 @HPWrapper Decorator</h3>
+        <p>Re-executable Code Block (RCB)을 지정하는 데코레이터입니다. 장애 발생 시 해당 블록만 재실행됩니다.</p>
+
+        <pre><code><span class="code-keyword">from</span> hyperpod_checkpointless_training.inprocess.wrap <span class="code-keyword">import</span> HPWrapper
+<span class="code-keyword">from</span> hyperpod_checkpointless_training.inprocess.health_check <span class="code-keyword">import</span> CudaHealthCheck
+<span class="code-keyword">from</span> hyperpod_checkpointless_training.inprocess.train_utils <span class="code-keyword">import</span> HPAgentK8sAPIFactory
+<span class="code-keyword">from</span> hyperpod_checkpointless_training.inprocess.abort <span class="code-keyword">import</span> (
+    CheckpointlessAbortManager,
+    CheckpointlessFinalizeCleanup
+)
+
+<span class="code-comment"># In-Process Recovery Wrapper</span>
+@HPWrapper(
+    health_check=CudaHealthCheck(),                    <span class="code-comment"># CUDA 상태 검사</span>
+    hp_api_factory=HPAgentK8sAPIFactory(),            <span class="code-comment"># K8s API 연동</span>
+    abort_timeout=<span class="code-number">60.0</span>,                              <span class="code-comment"># Abort 타임아웃</span>
+    abort=CheckpointlessAbortManager.get_default_checkpointless_abort(),
+    finalize=CheckpointlessFinalizeCleanup(),
+)
+<span class="code-keyword">def</span> run_main(cfg, caller=<span class="code-keyword">None</span>):
+    <span class="code-comment"># 이 블록 전체가 Re-executable Code Block (RCB)</span>
+    trainer = Trainer(...)
+    trainer.wrapper = caller  <span class="code-comment"># wrapper 연결 필수</span>
+    trainer.fit(model, data_module)</code></pre>
+
+        <h3>4.5 CudaHealthCheck</h3>
+        <p>CUDA 디바이스의 상태를 주기적으로 검사합니다. 기본 타임아웃은 30초입니다.</p>
+
+        <h3>4.6 wait_rank() API</h3>
+        <p>HyperPod Training Operator로부터 Rank 정보를 수신할 때까지 대기합니다.</p>
+
+        <pre><code><span class="code-keyword">from</span> hyperpod_checkpointless_training.inprocess.train_utils <span class="code-keyword">import</span> wait_rank
+
+<span class="code-comment"># Training Operator가 RANK, WORLD_SIZE 환경변수를 설정할 때까지 대기</span>
+wait_rank()
+
+<span class="code-comment"># 이후 분산 학습 초기화</span>
+rank = int(os.environ[<span class="code-string">"RANK"</span>])
+world_size = int(os.environ[<span class="code-string">"WORLD_SIZE"</span>])</code></pre>
+
+        <!-- Section 5: Component 4 - P2P State Replication -->
+        <h2>5. Component 4: P2P State Replication</h2>
+
+        <h3>5.1 N+1 Redundancy / M-copy Scheme</h3>
+        <p>모델의 Weights와 Optimizer State를 여러 노드 그룹에 중복 복제합니다. <code>num_distributed_optimizer_instances >= 2</code> 설정으로 활성화됩니다.</p>
+
+        <div class="callout info">
+          <strong>핵심 원리</strong>
+          S3에서 수 TB의 Checkpoint를 다운로드하는 대신, 살아있는 피어(Peer) 노드의 CPU/GPU 메모리에서 <strong>EFA 네트워크(3,200 Gbps)</strong>를 통해 직접 상태를 가져옵니다.
+        </div>
+
+        <h3>5.2 데이터 전송 경로</h3>
+        <div class="compare-flow">
+          <div class="step-box">GPU VRAM<br><small>(Source Node)</small></div>
+          <div class="arrow">&#8594;</div>
+          <div class="step-box">CPU DRAM<br><small>(Staging)</small></div>
+          <div class="arrow">&#8594;</div>
+          <div class="step-box highlight">EFA<br><small>3,200 Gbps</small></div>
+          <div class="arrow">&#8594;</div>
+          <div class="step-box">CPU DRAM<br><small>(Target Node)</small></div>
+          <div class="arrow">&#8594;</div>
+          <div class="step-box">GPU VRAM<br><small>(Restored)</small></div>
+        </div>
+
+        <h3>5.3 CheckpointlessMegatronStrategy</h3>
+
+        <pre><code><span class="code-keyword">from</span> hyperpod_checkpointless_training.nemo_plugins.strategy <span class="code-keyword">import</span> CheckpointlessMegatronStrategy
+
+trainer = Trainer(
+    strategy=CheckpointlessMegatronStrategy(
+        <span class="code-comment"># N+1 Redundancy: 최소 2개 인스턴스 필요</span>
+        num_distributed_optimizer_instances=<span class="code-number">2</span>,
+
+        <span class="code-comment"># 기타 Megatron 설정</span>
+        tensor_model_parallel_size=<span class="code-number">8</span>,
+        pipeline_model_parallel_size=<span class="code-number">4</span>,
+        context_parallel_size=<span class="code-number">1</span>,
+    ),
+)</code></pre>
+
+        <div class="callout warning">
+          <strong>메모리 오버헤드</strong>
+          <code>num_distributed_optimizer_instances >= 2</code> 설정은 추가 메모리를 사용합니다. 대략 DCP Checkpoint 크기만큼의 메모리가 복제본 당 추가로 필요합니다. 단, 저정밀도 가중치, 그래디언트, 활성화 메모리는 모델 병렬 처리로 샤딩되어 영향받지 않습니다.
+        </div>
+
+        <h3>5.4 CheckpointManager API</h3>
+
+        <pre><code><span class="code-keyword">from</span> hyperpod_checkpointless_training.nemo_plugins.checkpoint_manager <span class="code-keyword">import</span> CheckpointManager
+
+checkpoint_manager = CheckpointManager(
+    enable_checksum=<span class="code-keyword">False</span>,   <span class="code-comment"># 모델 상태 체크섬 검증</span>
+    enable_offload=<span class="code-keyword">False</span>,    <span class="code-comment"># CPU 메모리로 오프로드</span>
+)
+
+<span class="code-comment"># 주요 메서드</span>
+checkpoint_manager.save_checkpoint(trainer)              <span class="code-comment"># 메모리에 저장</span>
+checkpoint_manager.try_checkpointless_load(trainer)      <span class="code-comment"># P2P 복구 시도</span>
+checkpoint_manager.checkpointless_recovery_feasible(trainer)  <span class="code-comment"># 복구 가능성 검증</span>
+checkpoint_manager.store_rng_states()                    <span class="code-comment"># RNG 상태 저장</span>
+checkpoint_manager.load_rng_states()                     <span class="code-comment"># RNG 상태 복원</span></code></pre>
+
+        <h3>5.5 PEFTCheckpointManager</h3>
+        <p>PEFT(Parameter-Efficient Fine-Tuning) 워크플로우용 확장 매니저입니다. Base 모델 가중치와 Adapter 파라미터를 분리하여 관리합니다.</p>
+
+        <pre><code><span class="code-keyword">from</span> hyperpod_checkpointless_training.nemo_plugins.checkpoint_manager <span class="code-keyword">import</span> PEFTCheckpointManager
+
+<span class="code-comment"># PEFT (LoRA 등) 학습용</span>
+peft_checkpoint_manager = PEFTCheckpointManager(
+    enable_checksum=<span class="code-keyword">False</span>,
+    enable_offload=<span class="code-keyword">False</span>,
+)</code></pre>
+
+        <!-- Section 6: Component 5 - Training Operator -->
+        <h2>6. Component 5: Training Operator</h2>
+
+        <h3>6.1 개요</h3>
+        <p>HyperPod Training Operator는 모든 복구 과정을 조율하는 <strong>Kubernetes-native Operator</strong>입니다.</p>
+
+        <h3>6.2 K8s CRD (Custom Resource Definition)</h3>
+        <p><code>HyperPodPytorchJob</code> CRD를 통해 학습 Job을 정의합니다.</p>
+
+        <pre><code><span class="code-keyword">apiVersion:</span> sagemaker.amazonaws.com/v1
+<span class="code-keyword">kind:</span> HyperPodPytorchJob
+<span class="code-keyword">metadata:</span>
+  <span class="code-keyword">name:</span> checkpointless-training-job
+  <span class="code-keyword">namespace:</span> default
+<span class="code-keyword">spec:</span>
+  <span class="code-keyword">nprocPerNode:</span> <span class="code-string">"8"</span>
+  <span class="code-keyword">runPolicy:</span>
+    <span class="code-keyword">cleanPodPolicy:</span> <span class="code-string">"None"</span>
+  <span class="code-keyword">replicaSpecs:</span>
+    - <span class="code-keyword">name:</span> worker
+      <span class="code-keyword">replicas:</span> <span class="code-number">16</span>
+      <span class="code-keyword">template:</span>
+        <span class="code-keyword">spec:</span>
+          <span class="code-keyword">containers:</span>
+            - <span class="code-keyword">name:</span> training
+              <span class="code-keyword">image:</span> &lt;hyperpod-checkpointless-container-image&gt;
+              <span class="code-keyword">env:</span>
+                - <span class="code-keyword">name:</span> HPCT_USE_ROOTLESS
+                  <span class="code-keyword">value:</span> <span class="code-string">"1"</span>
+              <span class="code-keyword">command:</span>
+                - hyperpodrun
+                - --nproc_per_node=8
+                - --inprocess-restart   <span class="code-comment"># IPR 활성화</span>
+                - training_script.py</code></pre>
+
+        <h3>6.3 Health Monitoring & Hot Spare Pool</h3>
+        <p>Training Operator는 클러스터 상태를 지속적으로 모니터링하고, 미리 준비된 <strong>Hot Spare 노드</strong>를 즉시 투입합니다.</p>
+
+        <h3>6.4 장애 복구 흐름</h3>
+        <div class="compare-flow">
+          <div class="step-box" style="border-color: #EF4444;">Failure<br><small>감지</small></div>
+          <div class="arrow">&#8594;</div>
+          <div class="step-box">Cordon<br><small>노드 격리</small></div>
+          <div class="arrow">&#8594;</div>
+          <div class="step-box">Swap<br><small>Hot Spare 투입</small></div>
+          <div class="arrow">&#8594;</div>
+          <div class="step-box highlight">P2P Restore<br><small>상태 복구</small></div>
+          <div class="arrow">&#8594;</div>
+          <div class="step-box" style="border-color: #10B981;">Resume<br><small>학습 재개</small></div>
+        </div>
+
+        <h3>6.5 hyperpodrun 명령</h3>
+
+        <pre><code><span class="code-comment"># entrypoint.sh 예시</span>
+#!/bin/bash
+set -ex
+
+<span class="code-comment"># Rootless NCCL 설정</span>
+export HPCT_USE_ROOTLESS=1
+sysctl -w net.ipv4.ip_local_port_range="20000 65535"
+
+<span class="code-comment"># HyperPod Elastic Agent로 학습 실행</span>
+hyperpodrun \
+    --nproc_per_node=8 \
+    --inprocess-restart \
+    --inprocess-timeout=120 \
+    --shutdown-signal=SIGKILL \
+    --shutdown-timeout=15 \
+    training_script.py</code></pre>
+
+        <!-- Section 7: Recovery Flow 전체 -->
+        <h2>7. Recovery Flow 전체</h2>
+
+        <div class="card">
+          <h4>Checkpointless Recovery Flow</h4>
+          <ol>
+            <li><strong>Training loop 시작</strong> - 정상 학습 진행</li>
+            <li><strong>Fault 발생</strong> - GPU 오류, 네트워크 장애 등</li>
+            <li><strong>Resume 가능성 평가</strong> - <code>checkpointless_recovery_feasible()</code></li>
+            <li><strong>분기점</strong>:
+              <ul>
+                <li><strong>가능:</strong> Checkpointless resume 시도 (P2P State Restore)</li>
+                <li><strong>불가능:</strong> 전통적 Checkpoint 로딩으로 Fallback</li>
+              </ul>
+            </li>
+            <li><strong>Resource Cleanup</strong> - Process group abort, 메모리 해제</li>
+            <li><strong>Training loop 재개</strong> - 1단계로 복귀</li>
+          </ol>
+        </div>
+
+        <details>
+          <summary>Checkpointless Resume이 불가능한 경우</summary>
+          <div>
+            <ul>
+              <li>복제본을 가진 모든 노드가 동시에 장애 발생</li>
+              <li>하드웨어 장애로 노드 교체가 필요하고 Hot Spare가 없음</li>
+              <li>초기 학습 단계에서 복제가 완료되지 않음</li>
+              <li>네트워크 파티션으로 피어 노드 접근 불가</li>
+            </ul>
+            <p>이런 경우 시스템은 자동으로 <strong>전통적 Checkpoint 로딩</strong>으로 Fallback합니다.</p>
+          </div>
+        </details>
+
+        <!-- Section 8: Managed Tiered Checkpointing -->
+        <h2>8. Managed Tiered Checkpointing</h2>
+        <p>Checkpointless Training과 별개로, AWS는 <strong>Tiered Checkpointing</strong> 기능도 제공합니다. RDMA over EFA와 S3 통합을 통해 기존 Checkpoint I/O를 최적화합니다.</p>
+
+        <div class="callout info">
+          <strong>Checkpointless vs Tiered Checkpointing</strong>
+          <ul>
+            <li><strong>Checkpointless:</strong> 디스크 I/O 완전 제거, 메모리 기반 P2P 복구</li>
+            <li><strong>Tiered Checkpointing:</strong> 디스크 I/O 최적화, 계층형 스토리지 활용</li>
+          </ul>
+          두 기술은 상호 보완적으로 사용할 수 있습니다.
+        </div>
+
+        <h3>8.1 amzn-sagemaker-checkpointing 라이브러리</h3>
+
+        <pre><code><span class="code-keyword">from</span> amzn_sagemaker_checkpointing <span class="code-keyword">import</span> (
+    SageMakerTieredStorageWriter,
+    SageMakerTieredStorageReader
+)
+<span class="code-keyword">import</span> torch.distributed.checkpoint <span class="code-keyword">as</span> dcp
+
+<span class="code-comment"># Tiered Storage Writer 설정</span>
+writer = SageMakerTieredStorageWriter(
+    path=<span class="code-string">"s3://my-bucket/checkpoints/"</span>,
+    storage_path=<span class="code-string">"/local/nvme/staging/"</span>,  <span class="code-comment"># 로컬 NVMe 스테이징</span>
+    thread_count=<span class="code-number">32</span>,                       <span class="code-comment"># 병렬 업로드 스레드</span>
+)
+
+<span class="code-comment"># 분산 Checkpoint 저장</span>
+dcp.save(
+    state_dict=state_dict,
+    storage_writer=writer,
+)
+
+<span class="code-comment"># Tiered Storage Reader 설정</span>
+reader = SageMakerTieredStorageReader(
+    path=<span class="code-string">"s3://my-bucket/checkpoints/step_1000/"</span>,
+    storage_path=<span class="code-string">"/local/nvme/staging/"</span>,
+    thread_count=<span class="code-number">32</span>,
+)
+
+<span class="code-comment"># 분산 Checkpoint 로드</span>
+dcp.load(
+    state_dict=state_dict,
+    storage_reader=reader,
+)</code></pre>
+
+        <h3>8.2 Tiered Storage 아키텍처</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th>스토리지</th>
+              <th>용도</th>
+              <th>특징</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Tier 0</td>
+              <td>GPU VRAM</td>
+              <td>P2P 복제 (Checkpointless)</td>
+              <td>가장 빠름, 용량 제한</td>
+            </tr>
+            <tr>
+              <td>Tier 1</td>
+              <td>CPU DRAM</td>
+              <td>P2P 복제 대기</td>
+              <td>EFA로 직접 전송</td>
+            </tr>
+            <tr>
+              <td>Tier 2</td>
+              <td>Local NVMe</td>
+              <td>스테이징</td>
+              <td>고속 I/O</td>
+            </tr>
+            <tr>
+              <td>Tier 3</td>
+              <td>FSx for Lustre</td>
+              <td>공유 스토리지</td>
+              <td>노드 간 공유</td>
+            </tr>
+            <tr>
+              <td>Tier 4</td>
+              <td>Amazon S3</td>
+              <td>장기 보관</td>
+              <td>내구성, 저비용</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="nav-footer"></div>
+      </div>
+    </main>
+  </div>
+  <script src="shared.js"></script>
+</body>
+</html>

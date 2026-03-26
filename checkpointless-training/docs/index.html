@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkpointless Training - Deep Research</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="progress-bar"></div>
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <div class="doc-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="doc-main">
+      <div class="doc-content">
+
+        <div class="hero-banner">
+          <h1>SageMaker HyperPod Checkpointless Training</h1>
+          <p>대규모 분산 학습의 장애 복구를 혁신하는 기술 — 심층 연구 문서</p>
+          <div class="hero-meta">
+            <span>9 Chapters</span>
+            <span>~10시간 학습 분량</span>
+            <span>Level 200-300</span>
+            <span>AWS Seoul Summit 2026</span>
+          </div>
+        </div>
+
+        <h2 id="about">이 문서에 대하여</h2>
+        <p class="lead">이 문서는 AWS Seoul Summit에서 SageMaker HyperPod Checkpointless Training을 발표하기 위해 작성된 심층 연구 자료입니다. ML에 대한 기초 지식이 없는 상태에서도 기술의 원리를 깊이 이해할 수 있도록 구성되었습니다.</p>
+
+        <div class="callout info">
+          <strong>학습 목표</strong>
+          SageMaker가 무엇인지부터 시작하여, 분산 학습의 원리, 기존 Checkpointing의 한계, 그리고 Checkpointless Training이 이를 어떻게 해결하는지를 체계적으로 이해합니다. 경쟁 기술과 학술 연구까지 파악하여 Q&A에도 자신 있게 대응할 수 있는 수준을 목표로 합니다.
+        </div>
+
+        <h2 id="toc">목차</h2>
+
+        <!-- Part 1 -->
+        <h3>Part 1: 기초 지식 (Foundation)</h3>
+        <p>ML 학습 인프라의 기초부터 탄탄하게 쌓습니다.</p>
+        <div class="card-grid">
+          <a href="01-sagemaker-hyperpod.html" class="card" style="text-decoration:none;color:inherit">
+            <h4><span class="badge badge-aws">AWS</span> Chapter 1</h4>
+            <strong>Amazon SageMaker & HyperPod</strong>
+            <p style="font-size:13px;color:var(--text-secondary);margin-top:8px">SageMaker 서비스 개요, HyperPod 아키텍처, Slurm vs EKS 오케스트레이션, Auto-Resume, UltraServers</p>
+            <span class="reading-time">📖 약 60분</span>
+          </a>
+          <a href="02-distributed-training.html" class="card" style="text-decoration:none;color:inherit">
+            <h4><span class="badge badge-pytorch">PyTorch</span> Chapter 2</h4>
+            <strong>분산 학습 기초</strong>
+            <p style="font-size:13px;color:var(--text-secondary);margin-top:8px">Forward/Backward Pass, Optimizers (SGD/Adam/AdamW), Mixed Precision, Data/Tensor/Pipeline Parallelism, 3D Parallelism</p>
+            <span class="reading-time">📖 약 90분</span>
+          </a>
+          <a href="03-fsdp-zero-nccl.html" class="card" style="text-decoration:none;color:inherit">
+            <h4><span class="badge badge-pytorch">PyTorch</span> Chapter 3</h4>
+            <strong>FSDP, ZeRO, NCCL</strong>
+            <p style="font-size:13px;color:var(--text-secondary);margin-top:8px">ZeRO Stage 1/2/3, FSDP 동작 원리, 메모리 계산, NCCL Collective Operations, Ring/Tree Algorithm</p>
+            <span class="reading-time">📖 약 90분</span>
+          </a>
+          <a href="04-hardware-networking.html" class="card" style="text-decoration:none;color:inherit">
+            <h4><span class="badge badge-nvidia">NVIDIA</span> Chapter 4</h4>
+            <strong>GPU & EFA 네트워킹</strong>
+            <p style="font-size:13px;color:var(--text-secondary);margin-top:8px">H100/H200 스펙, NVLink/NVSwitch, AWS Trainium, EFA (3200 Gbps), FSx for Lustre, UltraClusters</p>
+            <span class="reading-time">📖 약 45분</span>
+          </a>
+        </div>
+
+        <!-- Part 2 -->
+        <h3>Part 2: 문제 정의 (The Problem)</h3>
+        <p>대규모 학습에서 기존 Checkpointing이 왜 병목이 되는지 이해합니다.</p>
+        <div class="card-grid">
+          <a href="05-checkpointing.html" class="card" style="text-decoration:none;color:inherit">
+            <h4><span class="badge" style="background:#EF4444;color:#fff">문제</span> Chapter 5</h4>
+            <strong>Checkpointing의 한계</strong>
+            <p style="font-size:13px;color:var(--text-secondary);margin-top:8px">Checkpoint 구성요소 & 크기 계산 (Llama 3 70B=521GB), 6단계 순차 복구, Meta Llama 3 장애 통계 (466회/54일), 비용 분석 ($4,693/장애)</p>
+            <span class="reading-time">📖 약 60분</span>
+          </a>
+        </div>
+
+        <!-- Part 3 -->
+        <h3>Part 3: 솔루션 (The Solution)</h3>
+        <p>Checkpointless Training의 5대 컴포넌트와 실전 적용법을 학습합니다.</p>
+        <div class="card-grid">
+          <a href="06-checkpointless.html" class="card" style="text-decoration:none;color:inherit">
+            <h4><span class="badge badge-aws">핵심</span> Chapter 6</h4>
+            <strong>Checkpointless Training</strong>
+            <p style="font-size:13px;color:var(--text-secondary);margin-top:8px">5대 컴포넌트 상세: Rootless NCCL, MMAP Data Loading, In-Process Recovery, P2P State Replication, Training Operator</p>
+            <span class="reading-time">📖 약 90분</span>
+          </a>
+          <a href="07-getting-started.html" class="card" style="text-decoration:none;color:inherit">
+            <h4><span class="badge badge-aws">실전</span> Chapter 7</h4>
+            <strong>성능 & Getting Started</strong>
+            <p style="font-size:13px;color:var(--text-secondary);margin-top:8px">벤치마크 (2,304 GPU <2분 복구, 95%+ goodput), 4-Tier Integration 가이드, Pre-configured Recipes, 코드 예시</p>
+            <span class="reading-time">📖 약 60분</span>
+          </a>
+        </div>
+
+        <!-- Part 4 -->
+        <h3>Part 4: 비교 & 참고 (Comparison & References)</h3>
+        <p>경쟁 기술과 학술 연구를 파악하여 Q&A 대비를 완료합니다.</p>
+        <div class="card-grid">
+          <a href="08-competitors.html" class="card" style="text-decoration:none;color:inherit">
+            <h4><span class="badge badge-paper">비교</span> Chapter 8</h4>
+            <strong>경쟁 기술 & 학술 연구</strong>
+            <p style="font-size:13px;color:var(--text-secondary);margin-top:8px">PyTorch Elastic, NVIDIA NVRx, DeepSpeed, Google Pathways/OCS, CheckFreq, Bamboo, Varuna, Oobleck, MegaScale</p>
+            <span class="reading-time">📖 약 60분</span>
+          </a>
+          <a href="09-qa-glossary.html" class="card" style="text-decoration:none;color:inherit">
+            <h4><span class="badge" style="background:#06B6D4;color:#000">참고</span> Chapter 9</h4>
+            <strong>Q&A & 용어집</strong>
+            <p style="font-size:13px;color:var(--text-secondary);margin-top:8px">예상 질문 15개 + 상세 답변, 기술 용어 50개+ 정의, 슬라이드별 발표 가이드, 참고 URL</p>
+            <span class="reading-time">📖 약 45분</span>
+          </a>
+        </div>
+
+        <h2 id="how-to-study">학습 가이드</h2>
+        <div class="callout success">
+          <strong>추천 학습 순서</strong>
+          <strong>Day 1 (4시간):</strong> Chapter 1-4 — 기초 지식 습득. SageMaker와 분산 학습의 전반적인 그림을 이해합니다.<br>
+          <strong>Day 2 (3시간):</strong> Chapter 5-7 — 핵심 내용. 문제(Checkpointing 한계)와 솔루션(Checkpointless)을 깊이 학습합니다.<br>
+          <strong>Day 3 (3시간):</strong> Chapter 8-9 — Q&A 대비. 경쟁 기술을 비교하고 예상 질문에 대한 답변을 준비합니다.
+        </div>
+
+        <div class="callout warning">
+          <strong>발표 직전 빠른 복습 (30분)</strong>
+          시간이 부족한 경우 Chapter 5 (문제 정의) → Chapter 6 (Checkpointless 5대 컴포넌트) → Chapter 9 (Q&A)만 읽어도 발표에 필요한 핵심을 파악할 수 있습니다.
+        </div>
+
+        <h2 id="sources">리서치 소스</h2>
+        <p>이 문서는 다음 소스에서 수집한 정보를 통합하여 작성되었습니다:</p>
+        <table>
+          <thead><tr><th>소스</th><th>내용</th></tr></thead>
+          <tbody>
+            <tr><td>AWS 공식 문서</td><td>SageMaker HyperPod, Checkpointless Training, EFA, FSx 문서</td></tr>
+            <tr><td>AWS 블로그 (3개)</td><td>Checkpointless Training 기술 상세, Tiered Checkpointing, 런치 발표</td></tr>
+            <tr><td>원본 PPTX (AIM3338)</td><td>re:Invent 2024 세션 52슬라이드 전체 텍스트 추출</td></tr>
+            <tr><td>Gemini CLI 리서치 (2건)</td><td>Checkpointless 종합 분석, 분산 학습 기초</td></tr>
+            <tr><td>Claude Agent 리서치 (6건)</td><td>ML Fundamentals, AWS Docs, Competitors, Academic Papers</td></tr>
+            <tr><td>NVIDIA 공식 문서</td><td>H100/H200 스펙, NVLink, NCCL, NVRx GitHub</td></tr>
+            <tr><td>학술 논문 (5편)</td><td>CheckFreq, Bamboo, Varuna, Oobleck, MegaScale</td></tr>
+            <tr><td>GitHub</td><td>sagemaker-hyperpod-checkpointless-training, sagemaker-hyperpod-recipes</td></tr>
+          </tbody>
+        </table>
+
+        <div class="nav-footer"></div>
+      </div>
+    </main>
+  </div>
+  <script src="shared.js"></script>
+</body>
+</html>

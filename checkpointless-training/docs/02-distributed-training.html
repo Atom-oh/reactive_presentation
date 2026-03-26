@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>분산 학습 기초 - Checkpointless Training Research</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="progress-bar"></div>
+  <button class="sidebar-toggle" onclick="toggleSidebar()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="doc-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="doc-main"><div class="doc-content">
+      <span class="reading-time">📖 약 90분</span>
+      <h1>Chapter 2: 분산 학습 기초</h1>
+      <p class="lead">Neural Network의 학습 원리부터 대규모 분산 학습 패러다임까지, Checkpointless Training을 이해하기 위한 기초 지식을 교과서 수준으로 다룹니다.</p>
+
+      <!-- ============================================================ -->
+      <h2 id="nn-basics">1. Neural Network Training 기초</h2>
+
+      <h3>1.1 Forward Pass</h3>
+      <p>입력 데이터 X가 네트워크의 각 레이어를 통과하며 예측값을 계산하는 과정입니다. 각 레이어 <em>l</em>에서는 다음 연산이 수행됩니다:</p>
+      <div class="formula">Z<sup>(l)</sup> = W<sup>(l)</sup> · A<sup>(l-1)</sup> + b<sup>(l)</sup>&nbsp;&nbsp;&nbsp;(선형 변환)</div>
+      <div class="formula">A<sup>(l)</sup> = σ(Z<sup>(l)</sup>)&nbsp;&nbsp;&nbsp;(활성화 함수 적용)</div>
+      <p>최종 출력 Ŷ를 얻고, 실제 정답 Y와의 차이를 <strong>Loss Function</strong> L(Ŷ, Y)로 계산합니다. 대표적인 Loss Function으로는 회귀의 MSE(Mean Squared Error), 분류의 Cross-Entropy Loss가 있습니다.</p>
+
+      <h3>1.2 Backward Pass (Backpropagation)</h3>
+      <p>오차를 최소화하기 위해 <strong>Chain Rule(연쇄 법칙)</strong>을 사용하여 각 가중치에 대한 Loss의 기울기(Gradient)를 계산합니다:</p>
+      <div class="formula">∂L/∂W<sup>(l)</sup> = ∂L/∂A<sup>(l)</sup> · ∂A<sup>(l)</sup>/∂Z<sup>(l)</sup> · ∂Z<sup>(l)</sup>/∂W<sup>(l)</sup></div>
+      <p>이 Gradient는 해당 가중치를 <em>어느 방향으로 얼마나</em> 수정해야 Loss가 줄어드는지를 나타내는 벡터입니다. Neural Network의 출력(Loss)은 하나이고 파라미터는 수십억 개이므로, 출력에서 입력 방향으로 진행하는 <strong>Reverse-mode differentiation</strong>(역방향 미분)이 효율적입니다 — 한 번의 backward pass로 모든 파라미터의 gradient를 계산할 수 있습니다.</p>
+
+      <div class="callout info">
+        <strong>왜 "Backpropagation"인가?</strong>
+        출력층에서 계산된 오차 신호(gradient)가 네트워크를 거꾸로 <em>역전파(back-propagate)</em>되며 각 레이어의 가중치에 대한 기울기를 연쇄적으로 계산하기 때문입니다. Forward pass의 중간값(Activation)을 저장해두었다가 backward에서 재사용합니다 — 이것이 <strong>Activation Memory</strong>의 원인입니다.
+      </div>
+
+      <h3>1.3 Training Step 전체 흐름</h3>
+      <div class="compare-flow">
+        <div class="step-box">Forward Pass<br><small>예측값 계산</small></div>
+        <div class="arrow">→</div>
+        <div class="step-box">Loss 계산<br><small>오차 측정</small></div>
+        <div class="arrow">→</div>
+        <div class="step-box">Backward Pass<br><small>Gradient 계산</small></div>
+        <div class="arrow">→</div>
+        <div class="step-box highlight">Optimizer Step<br><small>가중치 업데이트</small></div>
+      </div>
+
+      <!-- ============================================================ -->
+      <h2 id="optimizers">2. Optimizers 상세</h2>
+
+      <h3>2.1 SGD (Stochastic Gradient Descent)</h3>
+      <p>가장 기본적인 최적화 알고리즘으로, Learning Rate η만큼 Gradient의 반대 방향으로 파라미터를 이동시킵니다:</p>
+      <div class="formula">θ<sub>t+1</sub> = θ<sub>t</sub> − η · ∇L(θ<sub>t</sub>)</div>
+      <p><strong>SGD with Momentum</strong>: 이전 Gradient의 이동 방향을 기억하여 진동을 줄이고 수렴을 가속합니다:</p>
+      <div class="formula">v<sub>t</sub> = β · v<sub>t-1</sub> + (1 − β) · g<sub>t</sub><br>θ<sub>t+1</sub> = θ<sub>t</sub> − η · v<sub>t</sub></div>
+      <p>β는 보통 0.9로 설정합니다. 관성(momentum)을 활용하여 local minima 탈출 가능성을 높입니다.</p>
+
+      <h3>2.2 Adam (Adaptive Moment Estimation)</h3>
+      <p>Momentum과 RMSprop을 결합한 적응적 학습률 최적화 알고리즘입니다. 각 파라미터마다 학습률을 개별 조절합니다:</p>
+
+      <p><strong>1차 모멘트 (Momentum):</strong></p>
+      <div class="formula">m<sub>t</sub> = β<sub>1</sub> · m<sub>t-1</sub> + (1 − β<sub>1</sub>) · g<sub>t</sub></div>
+
+      <p><strong>2차 모멘트 (Variance, RMSprop 역할):</strong></p>
+      <div class="formula">v<sub>t</sub> = β<sub>2</sub> · v<sub>t-1</sub> + (1 − β<sub>2</sub>) · g<sub>t</sub><sup>2</sup></div>
+
+      <p><strong>Bias Correction</strong> (초기화가 0이므로 초반 편향 보정):</p>
+      <div class="formula">m̂<sub>t</sub> = m<sub>t</sub> / (1 − β<sub>1</sub><sup>t</sup>)&nbsp;&nbsp;&nbsp;&nbsp;v̂<sub>t</sub> = v<sub>t</sub> / (1 − β<sub>2</sub><sup>t</sup>)</div>
+
+      <p><strong>파라미터 업데이트:</strong></p>
+      <div class="formula">θ<sub>t+1</sub> = θ<sub>t</sub> − η · m̂<sub>t</sub> / (√v̂<sub>t</sub> + ε)</div>
+
+      <table>
+        <thead><tr><th>Parameter</th><th>Default</th><th>의미</th></tr></thead>
+        <tbody>
+          <tr><td>β<sub>1</sub></td><td>0.9</td><td>1차 모멘트 decay (Momentum)</td></tr>
+          <tr><td>β<sub>2</sub></td><td>0.999</td><td>2차 모멘트 decay (Variance)</td></tr>
+          <tr><td>ε</td><td>10<sup>-8</sup></td><td>Numerical stability (0으로 나누기 방지)</td></tr>
+          <tr><td>η</td><td>10<sup>-3</sup></td><td>Learning rate</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout info">
+        <strong>Adam의 메모리 비용</strong>
+        Adam은 파라미터당 m<sub>t</sub>(4 bytes), v<sub>t</sub>(4 bytes), FP32 master weights(4 bytes) = <strong>12 bytes의 추가 메모리</strong>를 사용합니다. 70B 모델의 경우 Optimizer state만 840GB에 달합니다.
+      </div>
+
+      <h3>2.3 AdamW (Decoupled Weight Decay)</h3>
+      <p>표준 Adam에서 L2 Regularization은 gradient에 weight decay term을 추가하므로, Adam의 adaptive learning rate 메커니즘에 의해 의도치 않은 상호작용이 발생합니다. <strong>AdamW</strong>는 weight decay를 gradient update와 <em>분리(decouple)</em>합니다:</p>
+      <div class="formula">θ<sub>t+1</sub> = θ<sub>t</sub> − η · m̂<sub>t</sub> / (√v̂<sub>t</sub> + ε) − η · λ · θ<sub>t</sub></div>
+      <p>여기서 λ는 weight decay coefficient입니다.</p>
+
+      <table>
+        <thead><tr><th>비교 항목</th><th>Adam + L2</th><th>AdamW</th></tr></thead>
+        <tbody>
+          <tr><td>Weight decay 적용</td><td>Gradient에 포함 (∇L + λw)</td><td>Parameter에 직접 적용</td></tr>
+          <tr><td>Adaptive scaling 영향</td><td>Weight decay도 적응적 스케일링 적용받음</td><td>Weight decay는 별도 적용</td></tr>
+          <tr><td>효과</td><td>큰 gradient 파라미터의 decay가 약해짐</td><td>모든 파라미터에 균일한 decay</td></tr>
+          <tr><td>일반화 성능</td><td>상대적으로 낮음</td><td>더 우수 (LLM 학습 표준)</td></tr>
+        </tbody>
+      </table>
+
+      <!-- ============================================================ -->
+      <h2 id="mixed-precision">3. Mixed Precision Training</h2>
+
+      <p>메모리 사용량을 줄이고 연산 속도를 높이기 위해 다양한 정밀도의 부동소수점 데이터 타입을 혼합하여 사용합니다.</p>
+
+      <table>
+        <thead><tr><th>Format</th><th>Bits</th><th>Exponent</th><th>Mantissa</th><th>Dynamic Range</th><th>Use Case</th></tr></thead>
+        <tbody>
+          <tr><td><strong>FP32</strong></td><td>32</td><td>8</td><td>23</td><td>±3.4×10<sup>38</sup></td><td>Master weights, accumulation</td></tr>
+          <tr><td><strong>FP16</strong></td><td>16</td><td>5</td><td>10</td><td>±65,504</td><td>Forward/backward (Loss Scaling 필수)</td></tr>
+          <tr><td><strong>BF16</strong></td><td>16</td><td>8</td><td>7</td><td>±3.4×10<sup>38</sup></td><td>LLM 학습 표준 (Loss Scaling 불필요)</td></tr>
+          <tr><td><strong>FP8 (E4M3)</strong></td><td>8</td><td>4</td><td>3</td><td>±448</td><td>Forward pass (정밀도 우선)</td></tr>
+          <tr><td><strong>FP8 (E5M2)</strong></td><td>8</td><td>5</td><td>2</td><td>±57,344</td><td>Backward pass (범위 우선)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout success">
+        <strong>왜 BF16이 LLM 학습의 표준인가?</strong>
+        BF16은 지수부(exponent)가 FP32와 동일한 8비트이므로 <strong>FP32와 동일한 Dynamic Range</strong>를 가집니다. 따라서 FP16처럼 gradient underflow/overflow가 발생하지 않아 <strong>Loss Scaling이 불필요</strong>합니다. 정밀도(mantissa 7비트)는 FP16(10비트)보다 낮지만, 딥러닝은 본질적으로 노이즈에 강해 학습 품질에 영향이 거의 없습니다.
+      </div>
+
+      <h3>Mixed Precision 학습 방식</h3>
+      <p>Forward/Backward 연산은 BF16/FP16으로 빠르게 수행하고, 파라미터 업데이트 시 누적 오차를 방지하기 위해 <strong>Master Weights를 FP32로 유지</strong>하여 업데이트합니다:</p>
+      <pre><code><span class="code-comment"># PyTorch AMP (Automatic Mixed Precision) 예시</span>
+<span class="code-keyword">from</span> torch.amp <span class="code-keyword">import</span> autocast, GradScaler
+
+scaler = GradScaler()  <span class="code-comment"># FP16 사용 시만 필요 (BF16은 불필요)</span>
+
+<span class="code-keyword">for</span> input, target <span class="code-keyword">in</span> data:
+    optimizer.zero_grad()
+
+    <span class="code-keyword">with</span> autocast(device_type=<span class="code-string">'cuda'</span>, dtype=torch.bfloat16):
+        output = model(input)       <span class="code-comment"># BF16으로 연산</span>
+        loss = loss_fn(output, target)
+
+    loss.backward()                 <span class="code-comment"># Gradient도 BF16</span>
+    optimizer.step()                <span class="code-comment"># FP32 master weights 업데이트</span></code></pre>
+
+      <!-- ============================================================ -->
+      <h2 id="lr-scheduler">4. Learning Rate Schedulers</h2>
+
+      <h3>4.1 Linear Warmup</h3>
+      <p>학습 초기에 불안정한 가중치에 큰 gradient가 곱해져 발산(divergence)하는 것을 방지합니다. 매우 작은 학습률에서 시작하여 목표 학습률까지 선형적으로 증가시킵니다:</p>
+      <div class="formula">η<sub>t</sub> = η<sub>max</sub> · (t / warmup_steps)&nbsp;&nbsp;&nbsp;for t &lt; warmup_steps</div>
+
+      <h3>4.2 Cosine Decay</h3>
+      <p>Warmup 이후 코사인 곡선을 따라 학습률을 0에 가깝게 서서히 감소시킵니다. 학습 후반부에 미세한 가중치 조정(fine-tuning)이 가능해져 더 좋은 local minima를 찾습니다:</p>
+      <div class="formula">η<sub>t</sub> = η<sub>min</sub> + ½(η<sub>max</sub> − η<sub>min</sub>)(1 + cos(π · t / T<sub>max</sub>))</div>
+
+      <div class="callout info">
+        <strong>일반적인 LLM 학습 스케줄</strong>
+        대부분의 LLM (Llama 3, GPT 등)은 <strong>Linear Warmup + Cosine Decay</strong> 조합을 사용합니다. Warmup은 보통 총 학습 스텝의 1-5% (예: 2,000 steps), 이후 나머지 기간 동안 cosine decay로 η<sub>min</sub> (보통 η<sub>max</sub>의 1/10)까지 감소시킵니다.
+      </div>
+
+      <!-- ============================================================ -->
+      <h2 id="data-parallelism">5. Data Parallelism (DP / DDP)</h2>
+
+      <h3>5.1 DataParallel (DP) — 단일 머신</h3>
+      <p>GPU 0이 모든 것을 관장하는 방식입니다:</p>
+      <ol>
+        <li>GPU 0에서 batch를 읽고 각 GPU에 mini-batch 분배</li>
+        <li>GPU 0에서 최신 모델을 다른 GPU에 복제</li>
+        <li>각 GPU에서 forward pass → 출력을 GPU 0으로 전송 → loss 계산</li>
+        <li>GPU 0에서 loss를 각 GPU에 분배 → backward pass</li>
+        <li>모든 gradient를 GPU 0으로 수집하여 평균</li>
+      </ol>
+      <div class="callout danger">
+        <strong>DP의 문제점</strong>
+        GPU 0에 불균형한 메모리 부하가 집중됩니다. 통신이 순차적(sequential)이고, 단일 머신으로 제한됩니다. <strong>실무에서는 사용하지 않습니다.</strong>
+      </div>
+
+      <h3>5.2 DistributedDataParallel (DDP) — 멀티 머신</h3>
+      <p>각 GPU가 완전히 독립적으로 동작하며, backward pass 중에 AllReduce로 gradient를 동기화합니다:</p>
+      <ol>
+        <li>메인 프로세스가 GPU 0의 모델을 모든 GPU에 복제 (초기 1회)</li>
+        <li>각 GPU가 독립적으로 자신의 mini-batch 처리 (forward + backward)</li>
+        <li><strong>Backward pass 중에</strong> AllReduce로 gradient 동기화 (autograd hook)</li>
+        <li>각 GPU가 동기화된 gradient로 독립적으로 optimizer step</li>
+      </ol>
+
+      <pre><code><span class="code-keyword">import</span> torch.distributed <span class="code-keyword">as</span> dist
+
+<span class="code-comment"># 분산 환경 초기화</span>
+dist.init_process_group(
+    backend=<span class="code-string">'nccl'</span>,      <span class="code-comment"># GPU용 (CPU는 'gloo')</span>
+    rank=rank,             <span class="code-comment"># 현재 프로세스 번호</span>
+    world_size=world_size  <span class="code-comment"># 전체 GPU 수</span>
+)
+
+<span class="code-comment"># DDP 래핑</span>
+model = DistributedDataParallel(model, device_ids=[local_rank])
+
+<span class="code-comment"># backward() 반환 시 param.grad는 이미 동기화된 gradient를 포함</span></code></pre>
+
+      <div class="callout success">
+        <strong>DDP의 핵심 장점</strong>
+        Backward pass의 gradient 계산과 AllReduce 통신을 <strong>오버랩(overlap)</strong>하여 동시에 수행합니다. 레이어 단위로 gradient가 준비되면 즉시 통신을 시작하므로, 통신 오버헤드가 연산에 숨겨집니다.
+      </div>
+
+      <!-- ============================================================ -->
+      <h2 id="tensor-parallelism">6. Tensor Parallelism (TP)</h2>
+
+      <p>하나의 거대한 행렬 곱셈 연산을 여러 GPU로 쪼개어 분산 연산합니다. Megatron-LM에 의해 널리 알려졌습니다.</p>
+
+      <h3>6.1 Column-Parallel Linear Layer</h3>
+      <p>행렬 A를 column 방향으로 분할합니다:</p>
+      <div class="formula">Y = X · A = X · [A<sub>1</sub>, A<sub>2</sub>] = [X·A<sub>1</sub>, X·A<sub>2</sub>] = [Y<sub>1</sub>, Y<sub>2</sub>]</div>
+      <p>각 GPU가 A의 일부 column을 담당합니다. Forward에서 각 GPU가 독립적으로 연산하고, 결과를 column-wise로 concat합니다.</p>
+
+      <h3>6.2 Row-Parallel Linear Layer</h3>
+      <p>행렬 A를 row 방향으로 분할합니다:</p>
+      <div class="formula">Y = X · A = [X<sub>1</sub>, X<sub>2</sub>] · [A<sub>1</sub>; A<sub>2</sub>] = X<sub>1</sub>·A<sub>1</sub> + X<sub>2</sub>·A<sub>2</sub></div>
+      <p>Forward 시 부분합을 더하기 위해 <strong>AllReduce</strong>가 필요합니다. 일반적으로 Column-parallel 다음에 배치하여 통신을 최소화합니다.</p>
+
+      <h3>6.3 Transformer에서의 Tensor Parallelism</h3>
+
+      <details>
+        <summary>MLP Block에서의 TP</summary>
+        <div>
+          <div class="formula">Column-Parallel Linear → GeLU → Row-Parallel Linear</div>
+          <p>GeLU는 element-wise 연산이므로 통신이 불필요합니다. Row-parallel 출력 시에만 AllReduce가 발생합니다.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Self-Attention Block에서의 TP</summary>
+        <div>
+          <p><strong>Q, K, V projection</strong>: Column-parallel (각 GPU가 attention head의 일부를 담당)<br>
+          <strong>Output projection</strong>: Row-parallel<br>
+          <strong>제약</strong>: Attention head 수가 TP degree의 배수여야 합니다.</p>
+        </div>
+      </details>
+
+      <table>
+        <thead><tr><th>통신 위치</th><th>횟수 (per layer)</th><th>연산</th></tr></thead>
+        <tbody>
+          <tr><td>Forward pass</td><td>2번</td><td>AllReduce (MLP 1번 + Attention 1번)</td></tr>
+          <tr><td>Backward pass</td><td>2번</td><td>AllReduce (MLP 1번 + Attention 1번)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warning">
+        <strong>TP의 제약사항</strong>
+        레이어 내부에서 빈번한 AllReduce가 발생하므로 <strong>GPU 간 고대역폭 연결(NVLink)이 필수</strong>입니다. 일반적으로 <strong>단일 노드 내부(8-way TP)</strong>에서만 사용하며, 노드 간에는 사용하지 않습니다.
+      </div>
+
+      <!-- ============================================================ -->
+      <h2 id="pipeline-parallelism">7. Pipeline Parallelism (PP)</h2>
+
+      <p>모델의 레이어를 순차적으로 여러 GPU에 배치합니다:</p>
+      <pre><code>GPU 0: Layers 0-7    (Stage 0)
+GPU 1: Layers 8-15   (Stage 1)
+GPU 2: Layers 16-23  (Stage 2)
+GPU 3: Layers 24-31  (Stage 3)</code></pre>
+
+      <h3>7.1 Pipeline Bubble 문제</h3>
+      <p>Naive한 구현에서는 대부분의 GPU가 대기 상태(idle)입니다:</p>
+      <pre><code>Time →
+GPU 0: [F0][  ][  ][  ][B0][  ][  ][  ]
+GPU 1: [  ][F0][  ][  ][  ][B0][  ][  ]
+GPU 2: [  ][  ][F0][  ][  ][  ][B0][  ]
+GPU 3: [  ][  ][  ][F0][  ][  ][  ][B0]
+         ↑ Bubble (유휴 시간) ↑</code></pre>
+
+      <h3>7.2 Micro-batch를 통한 해결</h3>
+      <p>Mini-batch를 더 작은 <strong>Micro-batch</strong>로 분할하여 파이프라인에 연속으로 밀어 넣습니다:</p>
+      <pre><code>Time → (M=4 micro-batches)
+GPU 0: [F0][F1][F2][F3][B0][B1][B2][B3]
+GPU 1: [  ][F0][F1][F2][F3][B0][B1][B2]
+GPU 2: [  ][  ][F0][F1][F2][F3][B0][B1]
+GPU 3: [  ][  ][  ][F0][F1][F2][F3][B0]</code></pre>
+
+      <p><strong>Bubble 비율 공식:</strong></p>
+      <div class="formula">Bubble Ratio = (P − 1) / M</div>
+      <p>P = Pipeline stages (GPU 수), M = Micro-batches 수. M이 클수록 bubble 비율이 감소합니다. 예: P=4, M=32이면 bubble은 9.4%에 불과합니다.</p>
+
+      <h3>7.3 1F1B (One Forward One Backward) Schedule</h3>
+      <p>Forward와 Backward를 interleave하여 <strong>activation memory 사용량을 최적화</strong>합니다. 모든 micro-batch의 forward를 먼저 수행하는 대신, forward 하나 → backward 하나를 교대로 실행합니다.</p>
+
+      <!-- ============================================================ -->
+      <h2 id="seq-parallelism">8. Sequence / Context Parallelism (SP/CP)</h2>
+
+      <p>최근 100K~1M 이상의 긴 Context를 처리하기 위해 <strong>Sequence 차원</strong>을 여러 GPU에 분할합니다.</p>
+
+      <h3>왜 필요한가?</h3>
+      <p>Self-Attention의 메모리 복잡도는 <strong>O(sequence_length²)</strong>입니다. 시퀀스 길이가 증가하면 activation memory가 급격히 증가하여 단일 GPU로 처리할 수 없습니다.</p>
+
+      <h3>Ring Attention</h3>
+      <p>시퀀스를 GPU 수만큼 분할하고, 각 GPU가 자신의 Query chunk에 대해 K, V를 Ring 구조로 순환시키며 Attention을 계산합니다. 통신과 연산을 오버랩하여 효율을 높입니다.</p>
+
+      <h3>DeepSpeed Ulysses</h3>
+      <p>AlltoAll 통신으로 시퀀스 차원의 분할과 head 차원의 분할을 교환합니다. Flash Attention과 함께 사용하여 효율성을 극대화합니다.</p>
+
+      <table>
+        <thead><tr><th>설정</th><th>최대 시퀀스 길이</th></tr></thead>
+        <tbody>
+          <tr><td>단일 H100 GPU (80GB)</td><td>~500K tokens</td></tr>
+          <tr><td>단일 노드 (8 GPU)</td><td>~3.7M tokens</td></tr>
+          <tr><td>4 노드 (32 GPU)</td><td>~15M tokens</td></tr>
+        </tbody>
+      </table>
+
+      <!-- ============================================================ -->
+      <h2 id="expert-parallelism">9. Expert Parallelism (EP)</h2>
+
+      <p><strong>Mixture of Experts (MoE)</strong> 모델에서 각 Expert를 다른 GPU에 분산 배치합니다.</p>
+
+      <h3>MoE 구조</h3>
+      <div class="compare-flow">
+        <div class="step-box">Input Token</div>
+        <div class="arrow">→</div>
+        <div class="step-box highlight">Router/Gate<br><small>Top-k 선택</small></div>
+        <div class="arrow">→</div>
+        <div class="step-box">Expert 0-7<br><small>GPU 0-3에 분산</small></div>
+        <div class="arrow">→</div>
+        <div class="step-box">Combine Output</div>
+      </div>
+
+      <p>Router가 각 토큰을 적절한 Expert에 배정(Top-k routing)합니다. 각 토큰은 일부 Expert만 활성화(sparse activation)되므로, 파라미터 수에 비해 연산량이 적습니다.</p>
+
+      <h3>All-to-All 통신</h3>
+      <ol>
+        <li><strong>Token dispatch</strong>: 각 GPU의 토큰을 담당 Expert가 있는 GPU로 전송</li>
+        <li><strong>Expert computation</strong>: 각 GPU가 자신의 Expert 연산 수행</li>
+        <li><strong>Token combine</strong>: 결과를 원래 GPU로 반환</li>
+      </ol>
+
+      <h3>Load Balancing</h3>
+      <p>Expert에 토큰이 불균형하게 배정되면 일부 GPU에 병목이 발생합니다. 이를 방지하기 위한 Auxiliary Loss:</p>
+      <div class="formula">L<sub>aux</sub> = α · Σ<sub>i</sub> f<sub>i</sub> · P<sub>i</sub></div>
+      <p>f<sub>i</sub>: Expert i에 배정된 토큰 비율, P<sub>i</sub>: Router가 Expert i에 배정할 확률, α: balancing coefficient. 이 loss를 main loss에 추가하여 균등 분배를 유도합니다.</p>
+
+      <!-- ============================================================ -->
+      <h2 id="3d-parallelism">10. 3D Parallelism (TP + PP + DP)</h2>
+
+      <p>대규모 모델 학습에서는 세 가지 parallelism을 <strong>계층적으로 조합</strong>합니다:</p>
+
+      <table>
+        <thead><tr><th>Parallelism</th><th>적용 범위</th><th>이유</th><th>통신 패턴</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Tensor Parallelism</strong></td><td>노드 내 (NVLink)</td><td>고대역폭 필수 (900 GB/s)</td><td>AllReduce, AllGather</td></tr>
+          <tr><td><strong>Pipeline Parallelism</strong></td><td>노드 간 (InfiniBand/EFA)</td><td>낮은 대역폭 OK</td><td>Point-to-point Send/Recv</td></tr>
+          <tr><td><strong>Data Parallelism</strong></td><td>전체 클러스터</td><td>가장 효율적 확장</td><td>AllReduce (gradient sync)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>1 Trillion Parameter 모델 예시</h3>
+      <div class="card">
+        <h4>구성: 512 GPU (64 nodes × 8 GPUs)</h4>
+        <table>
+          <thead><tr><th>설정</th><th>값</th><th>설명</th></tr></thead>
+          <tbody>
+            <tr><td>TP</td><td>8</td><td>노드 내 8개 GPU (NVLink)</td></tr>
+            <tr><td>PP</td><td>8</td><td>8개 노드에 걸쳐 파이프라인</td></tr>
+            <tr><td>DP</td><td>8</td><td>8개 파이프라인 레플리카</td></tr>
+            <tr><td>Total GPUs</td><td>8 × 8 × 8 = 512</td><td></td></tr>
+          </tbody>
+        </table>
+
+        <p><strong>Effective Batch Size:</strong></p>
+        <div class="formula">Global Batch = micro_batch × gradient_accumulation × DP_degree = 1 × 64 × 8 = 512</div>
+
+        <p><strong>메모리 분배:</strong></p>
+        <table>
+          <thead><tr><th>Component</th><th>분배 방식</th></tr></thead>
+          <tbody>
+            <tr><td>Model Parameters</td><td>TP × PP로 분할 (1T / 64 = 15.6B per GPU)</td></tr>
+            <tr><td>Optimizer States</td><td>ZeRO로 DP 간 추가 분할 가능</td></tr>
+            <tr><td>Activations</td><td>PP로 stage별 분할, TP로 추가 분할</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout success">
+        <strong>핵심 요약</strong>
+        3D Parallelism의 구성 원칙: <strong>TP는 NVLink가 있는 노드 내부</strong>에서, <strong>PP는 노드 간</strong>에서, <strong>DP는 클러스터 전체</strong>에서 적용합니다. 이 조합으로 수천 개의 GPU에서 trillion-scale 모델 학습이 가능해집니다.
+      </div>
+
+      <div class="nav-footer"></div>
+    </div></main>
+  </div>
+  <script src="shared.js"></script>
+</body>
+</html>

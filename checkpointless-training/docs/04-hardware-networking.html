@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPU & EFA 네트워킹 - Checkpointless Training Research</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="progress-bar"></div>
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="doc-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="doc-main">
+      <div class="doc-content">
+        <span class="reading-time">📖 약 45분</span>
+
+        <h1>Chapter 4: GPU & EFA 네트워킹</h1>
+        <p class="lead">대규모 분산 학습의 하드웨어 기반을 이해합니다. NVIDIA GPU 스펙, NVLink/NVSwitch 인터커넥트, AWS Trainium, EFA 네트워킹, 그리고 FSx for Lustre 스토리지까지 다룹니다.</p>
+
+        <div class="callout info">
+          <strong>이 장에서 배우는 것</strong>
+          H100/H200 GPU의 상세 스펙, NVLink 세대별 진화, AWS의 AI 가속기(Trainium), P5/P5e/P5en 인스턴스 비교, EFA의 OS Bypass 아키텍처, 그리고 체크포인트 저장을 위한 FSx for Lustre 성능을 학습합니다.
+        </div>
+
+        <!-- Section 1: NVIDIA H100 -->
+        <h2 id="h100">1. NVIDIA H100</h2>
+
+        <h3>H100 개요</h3>
+        <p><strong>NVIDIA H100</strong>은 Hopper 아키텍처 기반의 데이터센터 GPU로, 대규모 AI 학습과 추론에 최적화되었습니다. SXM과 NVL 두 가지 폼팩터로 제공됩니다.</p>
+
+        <h3>H100 SXM vs NVL 스펙 비교</h3>
+        <table>
+          <thead>
+            <tr><th>스펙</th><th>H100 SXM</th><th>H100 NVL</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>HBM3 메모리</strong></td><td>80 GB</td><td>94 GB (2-GPU 합산 188 GB)</td></tr>
+            <tr><td><strong>메모리 대역폭</strong></td><td>3.35 TB/s</td><td>3.9 TB/s</td></tr>
+            <tr><td><strong>FP16 Tensor Core</strong></td><td>1,979 TFLOPS</td><td>1,979 TFLOPS</td></tr>
+            <tr><td><strong>FP8 Tensor Core</strong></td><td>3,958 TFLOPS</td><td>3,958 TFLOPS</td></tr>
+            <tr><td><strong>BF16 Tensor Core</strong></td><td>1,979 TFLOPS</td><td>1,979 TFLOPS</td></tr>
+            <tr><td><strong>NVLink 대역폭</strong></td><td>900 GB/s (양방향)</td><td>600 GB/s (NVLink Bridge)</td></tr>
+            <tr><td><strong>TDP</strong></td><td>700W</td><td>400W (per GPU)</td></tr>
+            <tr><td><strong>MIG 지원</strong></td><td>최대 7 인스턴스</td><td>최대 7 인스턴스</td></tr>
+            <tr><td><strong>폼팩터</strong></td><td>SXM5 (서버 전용)</td><td>PCIe Gen5 듀얼슬롯</td></tr>
+            <tr><td><strong>사용 사례</strong></td><td>대규모 학습 클러스터</td><td>LLM 추론, RAG</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout info">
+          <strong>MIG (Multi-Instance GPU)</strong>
+          H100은 하나의 물리 GPU를 최대 7개의 독립된 인스턴스로 분할할 수 있습니다. 각 인스턴스는 자체 메모리, SM, L2 캐시를 가지며 완전히 격리됩니다. 추론 워크로드에서 GPU 활용률을 높이는 데 유용합니다.
+        </div>
+
+        <!-- Section 2: NVIDIA H200 -->
+        <h2 id="h200">2. NVIDIA H200</h2>
+
+        <h3>H200 개요</h3>
+        <p><strong>NVIDIA H200</strong>은 H100의 메모리 업그레이드 버전으로, <strong>HBM3e</strong> 메모리를 탑재하여 대형 LLM 추론 성능을 크게 향상시켰습니다.</p>
+
+        <h3>H200 vs H100 비교</h3>
+        <table>
+          <thead>
+            <tr><th>스펙</th><th>H100 SXM</th><th>H200 SXM</th><th>개선율</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>HBM 용량</strong></td><td>80 GB (HBM3)</td><td><strong>141 GB</strong> (HBM3e)</td><td>+76%</td></tr>
+            <tr><td><strong>메모리 대역폭</strong></td><td>3.35 TB/s</td><td><strong>4.8 TB/s</strong></td><td>+43%</td></tr>
+            <tr><td><strong>FP8 Tensor Core</strong></td><td>3,958 TFLOPS</td><td>3,958 TFLOPS</td><td>동일</td></tr>
+            <tr><td><strong>NVLink 대역폭</strong></td><td>900 GB/s</td><td>900 GB/s</td><td>동일</td></tr>
+            <tr><td><strong>TDP</strong></td><td>700W</td><td>700W</td><td>동일</td></tr>
+          </tbody>
+        </table>
+
+        <h3>LLM 추론 성능 향상</h3>
+        <p>H200의 추가 메모리와 대역폭은 LLM 추론에서 특히 큰 이점을 제공합니다:</p>
+
+        <table>
+          <thead>
+            <tr><th>모델</th><th>H100 처리량</th><th>H200 처리량</th><th>향상</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Llama 2 70B</td><td>기준</td><td><strong>1.9배</strong></td><td>+90%</td></tr>
+            <tr><td>Llama 3 70B</td><td>기준</td><td><strong>1.6배</strong></td><td>+60%</td></tr>
+            <tr><td>GPT-3 175B</td><td>기준</td><td><strong>1.8배</strong></td><td>+80%</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout success">
+          <strong>H200의 핵심 가치</strong>
+          H200은 연산 성능(TFLOPS)은 H100과 동일하지만, 메모리 용량/대역폭 증가로 <strong>메모리 바운드</strong> 워크로드(LLM 추론, 긴 컨텍스트)에서 큰 성능 향상을 제공합니다. 70B 모델을 단일 GPU에 로드하거나, KV 캐시를 더 많이 저장할 수 있습니다.
+        </div>
+
+        <!-- Section 3: NVLink & NVSwitch -->
+        <h2 id="nvlink">3. NVLink & NVSwitch</h2>
+
+        <h3>NVLink 개요</h3>
+        <p><strong>NVLink</strong>는 NVIDIA GPU 간 직접 연결을 위한 고속 인터커넥트입니다. PCIe보다 훨씬 높은 대역폭과 낮은 지연시간을 제공합니다.</p>
+
+        <h3>NVLink 세대별 대역폭</h3>
+        <table>
+          <thead>
+            <tr><th>세대</th><th>아키텍처</th><th>GPU당 대역폭</th><th>링크당 속도</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>NVLink 1.0</td><td>Pascal (P100)</td><td>160 GB/s</td><td>20 GB/s x 4 링크</td></tr>
+            <tr><td>NVLink 2.0</td><td>Volta (V100)</td><td>300 GB/s</td><td>25 GB/s x 6 링크</td></tr>
+            <tr><td>NVLink 3.0</td><td>Ampere (A100)</td><td>600 GB/s</td><td>50 GB/s x 12 링크</td></tr>
+            <tr><td><strong>NVLink 4.0</strong></td><td>Hopper (H100)</td><td><strong>900 GB/s</strong></td><td>50 GB/s x 18 링크</td></tr>
+            <tr><td>NVLink 5.0</td><td>Blackwell (B100/B200)</td><td>1,800 GB/s</td><td>100 GB/s x 18 링크</td></tr>
+            <tr><td><strong>NVLink 6.0</strong></td><td>Rubin (예정)</td><td><strong>3,600 GB/s</strong></td><td>200 GB/s x 18 링크</td></tr>
+          </tbody>
+        </table>
+
+        <h3>NVSwitch</h3>
+        <p><strong>NVSwitch</strong>는 단일 노드 내에서 모든 GPU를 완전 연결(Full Mesh)하는 스위치 칩입니다.</p>
+
+        <table>
+          <thead>
+            <tr><th>스펙</th><th>NVSwitch 3.0 (A100)</th><th>NVSwitch 4.0 (H100)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>총 대역폭</strong></td><td>4.8 TB/s</td><td><strong>7.2 TB/s</strong></td></tr>
+            <tr><td><strong>포트 수</strong></td><td>36 NVLink 3</td><td>64 NVLink 4</td></tr>
+            <tr><td><strong>GPU 연결</strong></td><td>8 GPU All-to-All</td><td>8 GPU All-to-All</td></tr>
+          </tbody>
+        </table>
+
+        <h3>NVL72 (GB200 NVL72)</h3>
+        <p>NVIDIA의 최신 <strong>GB200 NVL72</strong> 시스템은 72개의 Blackwell GPU를 NVLink 5.0으로 연결합니다:</p>
+        <ul>
+          <li>총 GPU 메모리: 72 x 192GB = <strong>13.8 TB HBM3e</strong></li>
+          <li>총 NVLink 대역폭: <strong>130 TB/s</strong></li>
+          <li>1.4 ExaFLOPS AI 연산 성능 (FP8)</li>
+          <li>단일 시스템에서 <strong>27조(27T) 파라미터</strong> 실시간 추론 가능</li>
+        </ul>
+
+        <!-- Section 4: AWS Trainium -->
+        <h2 id="trainium">4. AWS Trainium</h2>
+
+        <h3>Trainium 개요</h3>
+        <p><strong>AWS Trainium</strong>은 AWS가 자체 개발한 ML 학습 전용 가속기입니다. NVIDIA GPU 대비 <strong>최대 50% 비용 절감</strong>을 목표로 합니다.</p>
+
+        <h3>Trainium 세대별 비교</h3>
+        <table>
+          <thead>
+            <tr><th>스펙</th><th>Trn1 (Trainium 1)</th><th>Trn2 (Trainium 2)</th><th>Trn3 (Trainium 3, 예정)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>출시</strong></td><td>2022년 10월</td><td>2024년 11월</td><td>2025년 후반 예정</td></tr>
+            <tr><td><strong>칩당 HBM</strong></td><td>32 GB (HBM2e)</td><td>96 GB (HBM3)</td><td>192 GB (HBM3e)</td></tr>
+            <tr><td><strong>칩당 TFLOPS (BF16)</strong></td><td>210 TFLOPS</td><td>750 TFLOPS</td><td>~1,400 TFLOPS</td></tr>
+            <tr><td><strong>인스턴스</strong></td><td>trn1.32xlarge</td><td>trn2.48xlarge</td><td>TBD</td></tr>
+            <tr><td><strong>칩 수/인스턴스</strong></td><td>16 칩</td><td>16 칩</td><td>TBD</td></tr>
+            <tr><td><strong>총 HBM/인스턴스</strong></td><td>512 GB</td><td><strong>1.5 TB</strong></td><td>3 TB+</td></tr>
+            <tr><td><strong>NeuronLink</strong></td><td>1세대</td><td>2세대 (4배 대역폭)</td><td>3세대</td></tr>
+            <tr><td><strong>EFA 대역폭</strong></td><td>800 Gbps</td><td>3,200 Gbps</td><td>TBD</td></tr>
+          </tbody>
+        </table>
+
+        <h3>NeuronLink & NeuronSwitch</h3>
+        <ul>
+          <li><strong>NeuronLink</strong>: Trainium 칩 간 직접 연결 (NVLink의 AWS 버전)</li>
+          <li><strong>NeuronSwitch</strong>: 노드 내 모든 Trainium 칩을 연결하는 스위치</li>
+          <li>Trn2에서 NeuronLink 대역폭이 Trn1 대비 <strong>4배 향상</strong></li>
+        </ul>
+
+        <h3>가격 대비 성능</h3>
+        <div class="callout success">
+          <strong>Trainium의 비용 효율성</strong>
+          <ul style="margin-top:8px">
+            <li>Trn1: P4d (A100) 대비 학습 비용 <strong>최대 50% 절감</strong></li>
+            <li>Trn2: P5 (H100) 대비 유사 성능, 더 낮은 가격</li>
+            <li>AWS Neuron SDK로 PyTorch/JAX 네이티브 지원</li>
+            <li>제약: 일부 연산자/모델 아키텍처 호환성 확인 필요</li>
+          </ul>
+        </div>
+
+        <!-- Section 5: AWS P5 인스턴스 -->
+        <h2 id="p5-instances">5. AWS P5/P5e/P5en 인스턴스</h2>
+
+        <h3>P5 시리즈 상세 스펙 비교</h3>
+        <table>
+          <thead>
+            <tr><th>스펙</th><th>P5.48xlarge</th><th>P5e.48xlarge</th><th>P5en.48xlarge</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>GPU</strong></td><td>8x H100 SXM</td><td>8x H200 SXM</td><td>8x H200 SXM</td></tr>
+            <tr><td><strong>GPU 메모리</strong></td><td>8x 80GB = 640 GB</td><td>8x 141GB = <strong>1.1 TB</strong></td><td>8x 141GB = <strong>1.1 TB</strong></td></tr>
+            <tr><td><strong>vCPU</strong></td><td>192</td><td>192</td><td>192</td></tr>
+            <tr><td><strong>시스템 메모리</strong></td><td>2 TB</td><td>2 TB</td><td>2 TB</td></tr>
+            <tr><td><strong>NVSwitch</strong></td><td>NVSwitch 4.0</td><td>NVSwitch 4.0</td><td>NVSwitch 4.0</td></tr>
+            <tr><td><strong>GPU 간 대역폭</strong></td><td>900 GB/s/GPU</td><td>900 GB/s/GPU</td><td>900 GB/s/GPU</td></tr>
+            <tr><td><strong>EFA 대역폭</strong></td><td>3,200 Gbps</td><td>3,200 Gbps</td><td><strong>6,400 Gbps</strong></td></tr>
+            <tr><td><strong>EFA 어댑터</strong></td><td>32x EFA</td><td>32x EFA</td><td>64x EFA</td></tr>
+            <tr><td><strong>NVMe 스토리지</strong></td><td>8x 3.84 TB</td><td>8x 3.84 TB</td><td>8x 3.84 TB</td></tr>
+            <tr><td><strong>총 NVMe</strong></td><td>30.7 TB</td><td>30.7 TB</td><td>30.7 TB</td></tr>
+            <tr><td><strong>사용 사례</strong></td><td>대규모 학습</td><td>LLM 추론, 긴 컨텍스트</td><td>초대규모 학습</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout info">
+          <strong>P5en의 6,400 Gbps EFA</strong>
+          P5en은 EFA 대역폭이 P5의 2배(6.4 Tbps)입니다. 이는 수천 GPU 클러스터에서 FSDP/ZeRO-3의 All-Gather/Reduce-Scatter 통신 병목을 크게 완화합니다.
+        </div>
+
+        <!-- Section 6: EFA -->
+        <h2 id="efa">6. EFA (Elastic Fabric Adapter)</h2>
+
+        <h3>EFA 정의</h3>
+        <p><strong>EFA (Elastic Fabric Adapter)</strong>는 AWS가 개발한 고성능 네트워크 인터페이스로, HPC와 ML 워크로드를 위해 설계되었습니다.</p>
+
+        <h3>OS Bypass 아키텍처</h3>
+        <p>EFA의 핵심 기능은 <strong>OS Bypass</strong>입니다. 애플리케이션이 OS 커널을 거치지 않고 네트워크 하드웨어에 직접 접근합니다:</p>
+
+<pre><code><span class="code-comment"># 전통적인 네트워크 스택 (높은 지연시간)</span>
+Application → System Call → Kernel TCP/IP → NIC Driver → NIC → Network
+
+<span class="code-comment"># EFA OS Bypass (낮은 지연시간)</span>
+Application → Libfabric API → EFA Hardware → Network
+         ↑
+    <span class="code-keyword">커널 우회 (Direct Memory Access)</span>
+
+
+<span class="code-comment"># ASCII 다이어그램: EFA OS Bypass</span>
+┌─────────────────────────────────────────────────────────┐
+│                      Application                         │
+│                    (NCCL, MPI 등)                        │
+└─────────────────┬───────────────────────────────────────┘
+                  │ Libfabric API (User Space)
+                  ▼
+┌─────────────────────────────────────────────────────────┐
+│                    EFA Device                            │
+│              ┌────────────────────┐                      │
+│              │   SRD Protocol     │  ← 패킷 손실 시 재전송│
+│              │   (Scalable        │                      │
+│              │    Reliable        │                      │
+│              │    Datagram)       │                      │
+│              └────────────────────┘                      │
+└─────────────────┬───────────────────────────────────────┘
+                  │ RDMA (Remote Direct Memory Access)
+                  ▼
+┌─────────────────────────────────────────────────────────┐
+│                    AWS Network                           │
+│                 (Petabit Scale)                          │
+└─────────────────────────────────────────────────────────┘</code></pre>
+
+        <h3>SRD Protocol</h3>
+        <p><strong>SRD (Scalable Reliable Datagram)</strong>는 AWS가 개발한 전송 프로토콜입니다:</p>
+        <ul>
+          <li>InfiniBand Reliable Connection보다 <strong>확장성</strong>이 높음</li>
+          <li>패킷 손실 시 자동 재전송 (신뢰성)</li>
+          <li>순서 보장 없음 → 높은 처리량</li>
+          <li>AWS 네트워크 특성에 최적화</li>
+        </ul>
+
+        <h3>Libfabric</h3>
+        <p><strong>Libfabric</strong>은 고성능 패브릭 서비스를 위한 사용자 공간 API입니다:</p>
+        <ul>
+          <li>OpenFabrics 재단에서 개발</li>
+          <li>InfiniBand, EFA, TCP 등 다양한 백엔드 지원</li>
+          <li>NCCL, MPI가 Libfabric을 통해 EFA에 접근</li>
+        </ul>
+
+        <!-- Section 7: EFA 대역폭 -->
+        <h2 id="efa-bandwidth">7. EFA 대역폭</h2>
+
+        <h3>인스턴스 타입별 EFA 대역폭</h3>
+        <table>
+          <thead>
+            <tr><th>인스턴스</th><th>GPU/가속기</th><th>EFA 대역폭</th><th>EFA 어댑터 수</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>P6e (B200)</strong></td>
+              <td>8x B200</td>
+              <td><strong>28,800 Gbps (28.8 Tbps)</strong></td>
+              <td>TBD</td>
+            </tr>
+            <tr>
+              <td><strong>P5en.48xlarge</strong></td>
+              <td>8x H200</td>
+              <td><strong>6,400 Gbps</strong></td>
+              <td>64</td>
+            </tr>
+            <tr>
+              <td><strong>P5.48xlarge</strong></td>
+              <td>8x H100</td>
+              <td><strong>3,200 Gbps</strong></td>
+              <td>32</td>
+            </tr>
+            <tr>
+              <td><strong>P5e.48xlarge</strong></td>
+              <td>8x H200</td>
+              <td><strong>3,200 Gbps</strong></td>
+              <td>32</td>
+            </tr>
+            <tr>
+              <td><strong>Trn2.48xlarge</strong></td>
+              <td>16x Trainium2</td>
+              <td><strong>3,200 Gbps</strong></td>
+              <td>32</td>
+            </tr>
+            <tr>
+              <td>Trn1.32xlarge</td>
+              <td>16x Trainium1</td>
+              <td>800 Gbps</td>
+              <td>8</td>
+            </tr>
+            <tr>
+              <td>P4d.24xlarge</td>
+              <td>8x A100</td>
+              <td>400 Gbps</td>
+              <td>4</td>
+            </tr>
+            <tr>
+              <td>P4de.24xlarge</td>
+              <td>8x A100 80GB</td>
+              <td>400 Gbps</td>
+              <td>4</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout warning">
+          <strong>대역폭의 중요성</strong>
+          FSDP/ZeRO-3에서 All-Gather/Reduce-Scatter 통신량은 모델 크기에 비례합니다. 70B 모델의 경우 매 Forward/Backward마다 수백 GB의 데이터가 노드 간 이동합니다. EFA 대역폭이 부족하면 <strong>통신이 연산보다 오래 걸려</strong> GPU가 유휴 상태로 대기합니다.
+        </div>
+
+        <!-- Section 8: RDMA 지원 -->
+        <h2 id="rdma">8. RDMA 지원</h2>
+
+        <h3>RDMA란?</h3>
+        <p><strong>RDMA (Remote Direct Memory Access)</strong>는 원격 시스템의 메모리에 CPU 개입 없이 직접 읽기/쓰기하는 기술입니다.</p>
+
+        <h3>RDMA 동작</h3>
+<pre><code><span class="code-comment"># RDMA Write (zero-copy)</span>
+Node A GPU Memory ─────────────────→ Node B GPU Memory
+                    │
+            CPU/OS 개입 없음
+            네트워크 하드웨어가 직접 전송
+
+<span class="code-comment"># 전통적인 전송 (multiple copies)</span>
+Node A GPU → Node A CPU → Kernel → NIC → Network → NIC → Kernel → Node B CPU → Node B GPU
+        copy       copy              copy              copy       copy
+</code></pre>
+
+        <h3>AWS Nitro 버전별 RDMA 지원</h3>
+        <table>
+          <thead>
+            <tr><th>Nitro 버전</th><th>인스턴스</th><th>EFA RDMA 지원</th><th>GPUDirect RDMA</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Nitro v4</td><td>P4d, Trn1</td><td>부분 (SRD)</td><td>미지원</td></tr>
+            <tr><td>Nitro v5</td><td>P5, Trn2</td><td><strong>완전 지원</strong></td><td><strong>지원</strong></td></tr>
+            <tr><td>Nitro v6</td><td>P5en, P6e</td><td><strong>완전 지원</strong></td><td><strong>지원</strong></td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout success">
+          <strong>GPUDirect RDMA</strong>
+          P5 이상에서 지원되는 <strong>GPUDirect RDMA</strong>는 GPU 메모리에서 EFA를 통해 다른 노드의 GPU 메모리로 직접 데이터를 전송합니다. CPU 메모리를 경유하지 않아 지연시간이 크게 감소하고 CPU 부하가 없습니다.
+        </div>
+
+        <!-- Section 9: FSx for Lustre -->
+        <h2 id="fsx-lustre">9. FSx for Lustre</h2>
+
+        <h3>FSx for Lustre 개요</h3>
+        <p><strong>Amazon FSx for Lustre</strong>는 고성능 병렬 파일 시스템으로, ML 학습의 체크포인트 저장과 데이터 로딩에 최적화되었습니다.</p>
+
+        <h3>성능 스펙</h3>
+        <table>
+          <thead>
+            <tr><th>스펙</th><th>Scratch (임시)</th><th>Persistent (영구)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>최대 처리량</strong></td><td>200 MB/s per TiB</td><td>50-1000 MB/s per TiB</td></tr>
+            <tr><td><strong>IOPS</strong></td><td>수백만</td><td>수백만</td></tr>
+            <tr><td><strong>지연시간</strong></td><td>~1ms 미만</td><td>~1ms 미만</td></tr>
+            <tr><td><strong>내구성</strong></td><td>없음 (임시)</td><td>복제/백업</td></tr>
+            <tr><td><strong>사용 사례</strong></td><td>단기 학습, 캐시</td><td>체크포인트, 데이터셋</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Storage Classes</h3>
+        <table>
+          <thead>
+            <tr><th>스토리지 클래스</th><th>처리량</th><th>비용</th><th>사용 사례</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>SSD (PERSISTENT_1)</td><td>50-200 MB/s/TiB</td><td>높음</td><td>지연시간 민감 워크로드</td></tr>
+            <tr><td>SSD (PERSISTENT_2)</td><td>125-1000 MB/s/TiB</td><td>중간</td><td><strong>ML 학습 권장</strong></td></tr>
+            <tr><td>HDD (PERSISTENT)</td><td>12-40 MB/s/TiB</td><td>낮음</td><td>대용량 Cold 데이터</td></tr>
+          </tbody>
+        </table>
+
+        <h3>File Striping</h3>
+        <p>Lustre는 대용량 파일을 여러 OST(Object Storage Target)에 분산 저장합니다:</p>
+        <ul>
+          <li>파일 크기 > 100GB: 자동으로 stripe count 32</li>
+          <li>병렬 I/O로 처리량 선형 증가</li>
+          <li>체크포인트 저장 시 모든 노드가 동시에 쓰기 가능</li>
+        </ul>
+
+        <h3>EFA Throughput</h3>
+        <table>
+          <thead>
+            <tr><th>연결 방식</th><th>최대 처리량</th><th>설명</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Standard (ENA)</td><td>100 Gbps</td><td>일반 네트워크 인터페이스</td></tr>
+            <tr><td><strong>EFA</strong></td><td><strong>700 Gbps</strong></td><td>EFA 직접 연결</td></tr>
+            <tr><td><strong>EFA + GPUDirect Storage</strong></td><td><strong>1,200 Gbps</strong></td><td>GPU 메모리 ↔ FSx 직접 전송</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout info">
+          <strong>GPUDirect Storage (GDS)</strong>
+          <strong>GPUDirect Storage</strong>는 GPU 메모리와 스토리지(FSx, NVMe) 간 직접 데이터 전송을 지원합니다. 체크포인트를 GPU 메모리에서 FSx로 CPU를 거치지 않고 직접 저장할 수 있어, 체크포인트 저장 시간을 크게 단축합니다.
+        </div>
+
+        <!-- Section 10: EC2 UltraClusters -->
+        <h2 id="ultraclusters">10. EC2 UltraClusters</h2>
+
+        <h3>UltraCluster 개요</h3>
+        <p><strong>EC2 UltraClusters</strong>는 AWS의 초대규모 ML 학습을 위한 클러스터 구성입니다.</p>
+
+        <h3>스펙</h3>
+        <table>
+          <thead>
+            <tr><th>스펙</th><th>수치</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>최대 GPU 수</strong></td><td>20,000+ GPU</td></tr>
+            <tr><td><strong>최대 연산 성능</strong></td><td>20 ExaFLOPS (FP8)</td></tr>
+            <tr><td><strong>네트워크</strong></td><td>Petabit-scale non-blocking fabric</td></tr>
+            <tr><td><strong>스토리지</strong></td><td>FSx for Lustre (TB/s 급 처리량)</td></tr>
+            <tr><td><strong>지원 인스턴스</strong></td><td>P5, P5e, P5en, Trn2</td></tr>
+          </tbody>
+        </table>
+
+        <h3>특징</h3>
+        <ul>
+          <li><strong>Non-blocking Fabric</strong>: 모든 노드 간 동일한 대역폭 보장 (Fat-tree 토폴로지)</li>
+          <li><strong>동일 가용영역</strong>: 모든 인스턴스가 같은 AZ에 위치하여 지연시간 최소화</li>
+          <li><strong>Placement Group</strong>: Cluster placement group으로 네트워크 최적화</li>
+          <li><strong>EFA 풀 활용</strong>: 모든 EFA 어댑터가 최대 대역폭 사용 가능</li>
+        </ul>
+
+        <div class="callout success">
+          <strong>UltraCluster 활용 사례</strong>
+          <ul style="margin-top:8px">
+            <li><strong>Amazon Nova</strong>: 수만 개의 가속기에서 Checkpointless Training으로 학습</li>
+            <li><strong>Anthropic Claude</strong>: AWS UltraCluster에서 Claude 모델 학습</li>
+            <li><strong>Stability AI</strong>: Stable Diffusion 모델 학습</li>
+          </ul>
+        </div>
+
+        <!-- Summary -->
+        <h2 id="summary">요약</h2>
+        <div class="callout success">
+          <strong>핵심 포인트</strong>
+          <ul style="margin-top:8px">
+            <li><strong>H100 SXM</strong>: 80GB HBM3, 900 GB/s NVLink, 대규모 학습의 표준</li>
+            <li><strong>H200</strong>: 141GB HBM3e, 4.8 TB/s 대역폭, LLM 추론 성능 1.6-1.9배 향상</li>
+            <li><strong>NVLink 4.0</strong>: GPU당 900 GB/s, NVSwitch로 8 GPU All-to-All 7.2 TB/s</li>
+            <li><strong>Trainium 2</strong>: H100 대비 유사 성능, 최대 50% 비용 절감</li>
+            <li><strong>P5en</strong>: 6,400 Gbps EFA, 초대규모 학습에 최적</li>
+            <li><strong>EFA</strong>: OS Bypass + SRD + Libfabric으로 저지연 고대역폭 통신</li>
+            <li><strong>FSx for Lustre</strong>: EFA 700 Gbps, GDS 1,200 Gbps로 체크포인트 고속 저장</li>
+            <li><strong>UltraClusters</strong>: 20,000 GPU, 20 ExaFLOPS, Petabit 네트워크</li>
+          </ul>
+        </div>
+
+        <div class="nav-footer"></div>
+      </div>
+    </main>
+  </div>
+  <script src="shared.js"></script>
+</body>
+</html>

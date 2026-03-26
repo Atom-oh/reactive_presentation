@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>성능 & Getting Started - Checkpointless Training Research</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="progress-bar"></div>
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="doc-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="doc-main">
+      <div class="doc-content">
+        <span class="reading-time">약 60분</span>
+
+        <h1>성능 & Getting Started</h1>
+        <p class="lead">Checkpointless Training의 실제 성능 벤치마크와 단계별 통합 가이드를 제공합니다.</p>
+
+        <!-- Section 1: 성능 벤치마크 -->
+        <h2>1. 성능 벤치마크</h2>
+
+        <h3>1.1 복구 시간 및 Goodput 비교</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>구성</th>
+              <th>복구 시간</th>
+              <th>시간 단축</th>
+              <th>Goodput</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>2,304 GPU</strong> (대규모)</td>
+              <td>&lt; 2분</td>
+              <td>87-93%</td>
+              <td><strong>95%+</strong></td>
+            </tr>
+            <tr>
+              <td><strong>256 GPU</strong> Llama-3 70B Pre-training</td>
+              <td>47초</td>
+              <td>84%</td>
+              <td><strong>95%+</strong></td>
+            </tr>
+            <tr>
+              <td><strong>16 GPU</strong> Fine-tuning</td>
+              <td>50초</td>
+              <td>84%</td>
+              <td><strong>95%+</strong></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout success">
+          <strong>핵심 성과</strong>
+          기존 15-30분 이상 소요되던 복구 시간을 <strong>90초 미만</strong>으로 단축. 클러스터 규모와 관계없이 <strong>95% 이상의 Goodput</strong>을 달성합니다.
+        </div>
+
+        <h3>1.2 기존 방식 대비 비교</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Traditional Checkpoint-Restart</th>
+              <th>HyperPod Checkpointless</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Recovery Time</strong></td>
+              <td>15-30+ 분</td>
+              <td><strong>&lt; 90초</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Training Goodput</strong></td>
+              <td>60-85%</td>
+              <td><strong>95%+</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Storage I/O</strong></td>
+              <td>수 TB 읽기/쓰기</td>
+              <td><strong>제거됨</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Max Validated Scale</strong></td>
+              <td>규모 증가 시 성능 저하</td>
+              <td><strong>수만 GPU</strong></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Section 2: Amazon Nova 검증 -->
+        <h2>2. Amazon Nova 검증</h2>
+
+        <div class="card">
+          <h4>Production-Level Validation</h4>
+          <p>Checkpointless Training은 <strong>Amazon Nova</strong> 모델 제품군 학습에 직접 사용되어 프로덕션 레벨의 검증을 마쳤습니다.</p>
+          <ul>
+            <li><strong>규모:</strong> 수만 개(tens of thousands)의 가속기</li>
+            <li><strong>Goodput:</strong> 95% 이상 유지</li>
+            <li><strong>안정성:</strong> 잦은 개별 노드 장애에도 학습 지속</li>
+            <li><strong>검증:</strong> 스토리지 병목 없이 안정적인 스케일링 증명</li>
+          </ul>
+        </div>
+
+        <div class="callout info">
+          <strong>Amazon Nova의 의미</strong>
+          Amazon Nova는 AWS의 자체 Foundation Model로, Checkpointless Training이 실제 대규모 FM 학습에서 검증되었음을 의미합니다.
+        </div>
+
+        <!-- Section 3: Prerequisites -->
+        <h2>3. Prerequisites</h2>
+
+        <h3>3.1 지원 Instance Types</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Instance Type</th>
+              <th>Accelerator</th>
+              <th>GPU/Chip 수</th>
+              <th>EFA 대역폭</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>p5.48xlarge</strong></td>
+              <td>NVIDIA H100 80GB</td>
+              <td>8</td>
+              <td>3,200 Gbps</td>
+            </tr>
+            <tr>
+              <td><strong>p5e.48xlarge</strong></td>
+              <td>NVIDIA H100 80GB (Enhanced)</td>
+              <td>8</td>
+              <td>3,200 Gbps</td>
+            </tr>
+            <tr>
+              <td><strong>p5en.48xlarge</strong></td>
+              <td>NVIDIA H200</td>
+              <td>8</td>
+              <td>3,200 Gbps</td>
+            </tr>
+            <tr>
+              <td><strong>p6-b200</strong> (예정)</td>
+              <td>NVIDIA B200</td>
+              <td>8</td>
+              <td>TBD</td>
+            </tr>
+            <tr>
+              <td><strong>trn2.48xlarge</strong></td>
+              <td>AWS Trainium2</td>
+              <td>16</td>
+              <td>3,200 Gbps</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>3.2 소프트웨어 요구사항</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>버전</th>
+              <th>비고</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Training Operator</strong></td>
+              <td>v1.2.0+</td>
+              <td>Checkpointless 지원 필수</td>
+            </tr>
+            <tr>
+              <td><strong>Elastic Agent</strong></td>
+              <td>v1.1.0+</td>
+              <td>In-Process Recovery 지원</td>
+            </tr>
+            <tr>
+              <td><strong>Kubernetes</strong></td>
+              <td>1.28 - 1.33</td>
+              <td>EKS 지원 버전</td>
+            </tr>
+            <tr>
+              <td><strong>PyTorch</strong></td>
+              <td>2.4.0 - 2.7.1</td>
+              <td>FSDP2 지원</td>
+            </tr>
+            <tr>
+              <td><strong>Python</strong></td>
+              <td>&gt;= 3.10, &lt; 3.14</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><strong>Kueue</strong> (선택)</td>
+              <td>v0.12.2 / v0.12.3</td>
+              <td>Job 스케줄링</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>3.3 Container Image</h3>
+        <p>AWS에서 제공하는 Pre-built 컨테이너 이미지를 사용합니다.</p>
+
+        <pre><code><span class="code-comment"># Container Image URI (ap-northeast-1 예시)</span>
+356859066553.dkr.ecr.ap-northeast-1.amazonaws.com/hyperpod-checkpointless-training:v1.0.0
+
+<span class="code-comment"># 지원 리전</span>
+us-east-1, us-east-2, us-west-1, us-west-2
+eu-west-1, eu-west-2, eu-central-1, eu-north-1
+ap-northeast-1, ap-south-1, ap-southeast-1, ap-southeast-2
+sa-east-1</code></pre>
+
+        <h3>3.4 Container 버전 정보 (v1.0.0)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Version</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>PyTorch</td><td>v2.6.0</td></tr>
+            <tr><td>CUDA</td><td>v12.9</td></tr>
+            <tr><td>NCCL</td><td>v2.27.5</td></tr>
+            <tr><td>EFA</td><td>v1.43.0</td></tr>
+            <tr><td>AWS-OFI-NCCL</td><td>v1.16.0</td></tr>
+            <tr><td>Libfabric</td><td>v2.1</td></tr>
+            <tr><td>Megatron</td><td>v0.15.0</td></tr>
+            <tr><td>NeMo</td><td>v2.6.0rc0</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Section 4: 4-Tier Integration Guide -->
+        <h2>4. 4-Tier Integration Guide</h2>
+        <p>Checkpointless Training은 단계별로 통합할 수 있습니다. 각 Tier는 이전 Tier를 포함합니다.</p>
+
+        <h3>Tier 1: 환경 변수만 설정 (Rootless NCCL)</h3>
+        <p>가장 간단한 통합. Rootless NCCL만 활성화하여 NCCL 초기화 시간을 단축합니다.</p>
+
+        <pre><code><span class="code-comment"># entrypoint.sh</span>
+#!/bin/bash
+set -ex
+
+<span class="code-comment"># Tier 1: Rootless NCCL 활성화</span>
+export HPCT_USE_ROOTLESS=1
+export TORCH_SKIP_TCPSTORE=1
+sysctl -w net.ipv4.ip_local_port_range="20000 65535"
+
+<span class="code-comment"># 기존 학습 스크립트 실행</span>
+python training_script.py</code></pre>
+
+        <div class="callout info">
+          <strong>Tier 1 효과</strong>
+          코드 수정 없이 환경 변수만으로 NCCL 재초기화 시간을 수십 분에서 수 초로 단축합니다.
+        </div>
+
+        <h3>Tier 2: MMAP Data Loading 추가</h3>
+        <p>공유 메모리 기반 데이터 로딩으로 DataLoader 초기화 시간을 제거합니다.</p>
+
+        <pre><code><span class="code-keyword">from</span> hyperpod_checkpointless_training.dataloader.mmap_data_module <span class="code-keyword">import</span> MMAPDataModule
+<span class="code-keyword">from</span> hyperpod_checkpointless_training.dataloader.config <span class="code-keyword">import</span> CacheResumeMMAPConfig
+
+<span class="code-comment"># Tier 2: MMAP DataLoader 설정</span>
+mmap_config = CacheResumeMMAPConfig(
+    cache_dir=<span class="code-string">"/dev/shm/pdl_cache"</span>,
+    prefetch_length=<span class="code-number">10</span>,
+    lookback_length=<span class="code-number">2</span>,
+)
+
+data_module = MMAPDataModule(
+    data_module=YourDataModule(...),
+    mmap_config=mmap_config,
+)
+
+<span class="code-comment"># Trainer에서 사용</span>
+trainer.fit(model, data_module)</code></pre>
+
+        <h3>Tier 3: In-Process Recovery (IPR) 추가</h3>
+        <p>프로세스 레벨 장애 격리로 정상 노드의 재시작을 방지합니다.</p>
+
+        <pre><code><span class="code-keyword">from</span> hyperpod_checkpointless_training.inprocess.wrap <span class="code-keyword">import</span> HPWrapper
+<span class="code-keyword">from</span> hyperpod_checkpointless_training.inprocess.health_check <span class="code-keyword">import</span> CudaHealthCheck
+<span class="code-keyword">from</span> hyperpod_checkpointless_training.inprocess.train_utils <span class="code-keyword">import</span> wait_rank, HPAgentK8sAPIFactory
+<span class="code-keyword">from</span> hyperpod_checkpointless_training.inprocess.abort <span class="code-keyword">import</span> (
+    CheckpointlessAbortManager,
+    CheckpointlessFinalizeCleanup
+)
+
+<span class="code-comment"># Tier 3: In-Process Recovery 설정</span>
+wait_rank()  <span class="code-comment"># Training Operator로부터 Rank 정보 수신 대기</span>
+
+@HPWrapper(
+    health_check=CudaHealthCheck(),
+    hp_api_factory=HPAgentK8sAPIFactory(),
+    abort_timeout=<span class="code-number">60.0</span>,
+    abort=CheckpointlessAbortManager.get_default_checkpointless_abort(),
+    finalize=CheckpointlessFinalizeCleanup(),
+)
+<span class="code-keyword">def</span> run_main(cfg, caller=<span class="code-keyword">None</span>):
+    trainer = Trainer(...)
+    trainer.wrapper = caller
+    trainer.fit(model, data_module)
+
+<span class="code-keyword">if</span> __name__ == <span class="code-string">"__main__"</span>:
+    run_main(config)</code></pre>
+
+        <h3>Tier 4: P2P Checkpointless (완전 통합)</h3>
+        <p>메모리 기반 P2P 상태 복제로 디스크 I/O를 완전히 제거합니다.</p>
+
+        <pre><code><span class="code-keyword">from</span> hyperpod_checkpointless_training.nemo_plugins.strategy <span class="code-keyword">import</span> CheckpointlessMegatronStrategy
+<span class="code-keyword">from</span> hyperpod_checkpointless_training.nemo_plugins.checkpoint_manager <span class="code-keyword">import</span> CheckpointManager
+<span class="code-keyword">from</span> hyperpod_checkpointless_training.nemo_plugins.callbacks <span class="code-keyword">import</span> CheckpointlessCallback
+
+<span class="code-comment"># Tier 4: P2P State Replication 설정</span>
+checkpoint_manager = CheckpointManager(
+    enable_checksum=<span class="code-keyword">False</span>,
+    enable_offload=<span class="code-keyword">False</span>,
+)
+
+@HPWrapper(
+    health_check=CudaHealthCheck(),
+    hp_api_factory=HPAgentK8sAPIFactory(),
+    checkpoint_manager=checkpoint_manager,  <span class="code-comment"># CheckpointManager 추가</span>
+    abort=CheckpointlessAbortManager.get_default_checkpointless_abort(),
+    finalize=CheckpointlessFinalizeCleanup(),
+)
+<span class="code-keyword">def</span> run_main(cfg, caller=<span class="code-keyword">None</span>):
+    trainer = Trainer(
+        strategy=CheckpointlessMegatronStrategy(
+            <span class="code-comment"># N+1 Redundancy: 최소 2개 인스턴스</span>
+            num_distributed_optimizer_instances=<span class="code-number">2</span>,
+            tensor_model_parallel_size=<span class="code-number">8</span>,
+            pipeline_model_parallel_size=<span class="code-number">4</span>,
+        ),
+        callbacks=[
+            CheckpointlessCallback(checkpoint_manager=checkpoint_manager),
+        ],
+    )
+    trainer.wrapper = caller
+    trainer.fit(model, data_module)</code></pre>
+
+        <!-- Section 5: Pre-configured Recipes -->
+        <h2>5. Pre-configured Recipes</h2>
+        <p>AWS에서 제공하는 사전 구성된 학습 레시피입니다.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Method</th>
+              <th>Size</th>
+              <th>Nodes</th>
+              <th>Instance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>GPT OSS</td>
+              <td>Full Finetune</td>
+              <td>120B</td>
+              <td>16</td>
+              <td>p5.48xlarge</td>
+            </tr>
+            <tr>
+              <td>GPT OSS</td>
+              <td>LoRA</td>
+              <td>120B</td>
+              <td>2</td>
+              <td>p5.48xlarge</td>
+            </tr>
+            <tr>
+              <td>Llama3</td>
+              <td>Pretrain</td>
+              <td>70B</td>
+              <td>16</td>
+              <td>p5.48xlarge</td>
+            </tr>
+            <tr>
+              <td>Llama3</td>
+              <td>LoRA</td>
+              <td>70B</td>
+              <td>2</td>
+              <td>p5.48xlarge</td>
+            </tr>
+            <tr>
+              <td>Custom</td>
+              <td>Any</td>
+              <td>Any</td>
+              <td>Any</td>
+              <td>p5.48xlarge</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="card">
+          <h4>GitHub Repositories</h4>
+          <ul>
+            <li><strong>Checkpointless Training:</strong> <a href="https://github.com/aws/sagemaker-hyperpod-checkpointless-training" target="_blank">github.com/aws/sagemaker-hyperpod-checkpointless-training</a></li>
+            <li><strong>HyperPod Recipes:</strong> <a href="https://github.com/aws/sagemaker-hyperpod-recipes" target="_blank">github.com/aws/sagemaker-hyperpod-recipes</a></li>
+          </ul>
+        </div>
+
+        <!-- Section 6: Complete Code Example -->
+        <h2>6. Complete Code Example</h2>
+        <p>4개 Tier를 모두 통합한 전체 Python 스크립트 예시입니다.</p>
+
+        <pre><code><span class="code-comment">#!/usr/bin/env python3</span>
+<span class="code-comment"># training_script.py - Checkpointless Training Complete Example</span>
+
+<span class="code-keyword">import</span> os
+<span class="code-keyword">from</span> omegaconf <span class="code-keyword">import</span> OmegaConf
+<span class="code-keyword">from</span> pytorch_lightning <span class="code-keyword">import</span> Trainer
+
+<span class="code-comment"># Tier 2: MMAP Data Loading</span>
+<span class="code-keyword">from</span> hyperpod_checkpointless_training.dataloader.mmap_data_module <span class="code-keyword">import</span> MMAPDataModule
+<span class="code-keyword">from</span> hyperpod_checkpointless_training.dataloader.config <span class="code-keyword">import</span> CacheResumeMMAPConfig
+
+<span class="code-comment"># Tier 3: In-Process Recovery</span>
+<span class="code-keyword">from</span> hyperpod_checkpointless_training.inprocess.wrap <span class="code-keyword">import</span> HPWrapper
+<span class="code-keyword">from</span> hyperpod_checkpointless_training.inprocess.health_check <span class="code-keyword">import</span> CudaHealthCheck
+<span class="code-keyword">from</span> hyperpod_checkpointless_training.inprocess.train_utils <span class="code-keyword">import</span> wait_rank, HPAgentK8sAPIFactory
+<span class="code-keyword">from</span> hyperpod_checkpointless_training.inprocess.abort <span class="code-keyword">import</span> (
+    CheckpointlessAbortManager,
+    CheckpointlessFinalizeCleanup
+)
+
+<span class="code-comment"># Tier 4: P2P State Replication</span>
+<span class="code-keyword">from</span> hyperpod_checkpointless_training.nemo_plugins.strategy <span class="code-keyword">import</span> CheckpointlessMegatronStrategy
+<span class="code-keyword">from</span> hyperpod_checkpointless_training.nemo_plugins.checkpoint_manager <span class="code-keyword">import</span> CheckpointManager
+<span class="code-keyword">from</span> hyperpod_checkpointless_training.nemo_plugins.callbacks <span class="code-keyword">import</span> CheckpointlessCallback
+
+<span class="code-comment"># Your model and data modules</span>
+<span class="code-keyword">from</span> my_project <span class="code-keyword">import</span> MyModel, MyDataModule
+
+
+<span class="code-keyword">def</span> create_data_module(cfg):
+    <span class="code-string">"""Tier 2: MMAP DataLoader 생성"""</span>
+    base_data_module = MyDataModule(
+        data_path=cfg.data.path,
+        batch_size=cfg.data.batch_size,
+    )
+
+    mmap_config = CacheResumeMMAPConfig(
+        cache_dir=<span class="code-string">"/dev/shm/pdl_cache"</span>,
+        prefetch_length=cfg.data.prefetch_length,
+        lookback_length=cfg.data.lookback_length,
+    )
+
+    <span class="code-keyword">return</span> MMAPDataModule(
+        data_module=base_data_module,
+        mmap_config=mmap_config,
+    )
+
+
+<span class="code-keyword">def</span> create_trainer(cfg, checkpoint_manager):
+    <span class="code-string">"""Tier 4: Checkpointless Trainer 생성"""</span>
+    strategy = CheckpointlessMegatronStrategy(
+        num_distributed_optimizer_instances=cfg.model.num_optimizer_instances,
+        tensor_model_parallel_size=cfg.model.tp_size,
+        pipeline_model_parallel_size=cfg.model.pp_size,
+        context_parallel_size=cfg.model.cp_size,
+    )
+
+    callbacks = [
+        CheckpointlessCallback(checkpoint_manager=checkpoint_manager),
+    ]
+
+    <span class="code-keyword">return</span> Trainer(
+        strategy=strategy,
+        callbacks=callbacks,
+        max_steps=cfg.training.max_steps,
+        accelerator=<span class="code-string">"gpu"</span>,
+        devices=cfg.training.devices,
+        num_nodes=cfg.training.num_nodes,
+    )
+
+
+<span class="code-comment"># Tier 4: CheckpointManager 설정</span>
+checkpoint_manager = CheckpointManager(
+    enable_checksum=<span class="code-keyword">False</span>,
+    enable_offload=<span class="code-keyword">False</span>,
+)
+
+
+<span class="code-comment"># Tier 3: In-Process Recovery Wrapper</span>
+@HPWrapper(
+    health_check=CudaHealthCheck(timeout=<span class="code-number">30</span>),
+    hp_api_factory=HPAgentK8sAPIFactory(),
+    abort_timeout=<span class="code-number">60.0</span>,
+    checkpoint_manager=checkpoint_manager,
+    abort=CheckpointlessAbortManager.get_default_checkpointless_abort(),
+    finalize=CheckpointlessFinalizeCleanup(),
+)
+<span class="code-keyword">def</span> run_main(cfg, caller=<span class="code-keyword">None</span>):
+    <span class="code-string">"""메인 학습 함수 - Re-executable Code Block (RCB)"""</span>
+
+    <span class="code-comment"># 모델 생성</span>
+    model = MyModel(cfg.model)
+
+    <span class="code-comment"># Tier 2: MMAP DataLoader</span>
+    data_module = create_data_module(cfg)
+
+    <span class="code-comment"># Tier 4: Checkpointless Trainer</span>
+    trainer = create_trainer(cfg, checkpoint_manager)
+    trainer.wrapper = caller  <span class="code-comment"># HPWrapper 연결 필수</span>
+
+    <span class="code-comment"># 학습 실행</span>
+    trainer.fit(model, data_module)
+
+
+<span class="code-keyword">if</span> __name__ == <span class="code-string">"__main__"</span>:
+    <span class="code-comment"># Tier 3: Training Operator로부터 Rank 정보 수신 대기</span>
+    wait_rank()
+
+    <span class="code-comment"># 설정 로드</span>
+    cfg = OmegaConf.load(<span class="code-string">"config.yaml"</span>)
+
+    <span class="code-comment"># 학습 실행</span>
+    run_main(cfg)</code></pre>
+
+        <!-- Section 7: HyperPod Elastic Agent -->
+        <h2>7. HyperPod Elastic Agent</h2>
+
+        <h3>7.1 entrypoint.sh 예시</h3>
+        <pre><code><span class="code-comment">#!/bin/bash</span>
+set -ex
+
+<span class="code-comment"># Tier 1: Rootless NCCL 환경 설정</span>
+export HPCT_USE_ROOTLESS=1
+export TORCH_SKIP_TCPSTORE=1
+sysctl -w net.ipv4.ip_local_port_range="20000 65535"
+
+<span class="code-comment"># 추가 환경 설정</span>
+export CUDA_DEVICE_MAX_CONNECTIONS=1
+export NCCL_DEBUG=INFO
+
+<span class="code-comment"># HyperPod Elastic Agent로 학습 실행</span>
+hyperpodrun \
+    --nproc_per_node=8 \
+    --inprocess-restart \
+    --inprocess-timeout=120 \
+    --shutdown-signal=SIGKILL \
+    --shutdown-timeout=15 \
+    training_script.py</code></pre>
+
+        <h3>7.2 hyperpodrun Arguments</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Argument</th>
+              <th>기본값</th>
+              <th>설명</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>--nproc_per_node</code></td>
+              <td>8</td>
+              <td>노드당 프로세스 수 (GPU 수)</td>
+            </tr>
+            <tr>
+              <td><code>--inprocess-restart</code></td>
+              <td>-</td>
+              <td>In-Process Recovery 활성화</td>
+            </tr>
+            <tr>
+              <td><code>--inprocess-timeout</code></td>
+              <td>120</td>
+              <td>Sync barrier 대기 시간 (초)</td>
+            </tr>
+            <tr>
+              <td><code>--shutdown-signal</code></td>
+              <td>SIGKILL</td>
+              <td>프로세스 종료 시그널 (SIGTERM/SIGKILL)</td>
+            </tr>
+            <tr>
+              <td><code>--shutdown-timeout</code></td>
+              <td>15</td>
+              <td>시그널 간 대기 시간 (초)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Section 8: IAM Policy -->
+        <h2>8. IAM Policy</h2>
+        <p>Tiered Checkpointing 사용 시 S3 접근을 위한 IAM 정책입니다.</p>
+
+        <pre><code>{
+  <span class="code-string">"Version"</span>: <span class="code-string">"2012-10-17"</span>,
+  <span class="code-string">"Statement"</span>: [
+    {
+      <span class="code-string">"Effect"</span>: <span class="code-string">"Allow"</span>,
+      <span class="code-string">"Action"</span>: [
+        <span class="code-string">"s3:GetObject"</span>,
+        <span class="code-string">"s3:PutObject"</span>,
+        <span class="code-string">"s3:DeleteObject"</span>,
+        <span class="code-string">"s3:ListBucket"</span>
+      ],
+      <span class="code-string">"Resource"</span>: [
+        <span class="code-string">"arn:aws:s3:::your-checkpoint-bucket"</span>,
+        <span class="code-string">"arn:aws:s3:::your-checkpoint-bucket/*"</span>
+      ]
+    },
+    {
+      <span class="code-string">"Effect"</span>: <span class="code-string">"Allow"</span>,
+      <span class="code-string">"Action"</span>: [
+        <span class="code-string">"fsx:DescribeFileSystems"</span>
+      ],
+      <span class="code-string">"Resource"</span>: <span class="code-string">"*"</span>
+    }
+  ]
+}</code></pre>
+
+        <!-- Section 9: Troubleshooting -->
+        <h2>9. Troubleshooting</h2>
+
+        <details>
+          <summary>NCCL Timeout 발생</summary>
+          <div>
+            <p><strong>증상:</strong> NCCL 작업이 타임아웃되며 학습이 중단됨</p>
+            <p><strong>원인:</strong></p>
+            <ul>
+              <li>네트워크 대역폭 부족</li>
+              <li>노드 간 시간 동기화 문제</li>
+              <li>EFA 드라이버 버전 불일치</li>
+            </ul>
+            <p><strong>해결:</strong></p>
+            <pre><code><span class="code-comment"># NCCL 타임아웃 증가</span>
+export NCCL_TIMEOUT=1800
+
+<span class="code-comment"># 디버그 로그 활성화</span>
+export NCCL_DEBUG=INFO
+export NCCL_DEBUG_SUBSYS=ALL</code></pre>
+          </div>
+        </details>
+
+        <details>
+          <summary>/dev/shm 공간 부족</summary>
+          <div>
+            <p><strong>증상:</strong> MMAP DataLoader 초기화 실패, "No space left on device" 오류</p>
+            <p><strong>원인:</strong> 공유 메모리 크기가 prefetch 배치를 담기에 부족</p>
+            <p><strong>해결:</strong></p>
+            <pre><code><span class="code-comment"># /dev/shm 크기 확인</span>
+df -h /dev/shm
+
+<span class="code-comment"># K8s Pod에서 shm 크기 증가</span>
+<span class="code-comment"># spec.containers.volumeMounts:</span>
+<span class="code-comment">#   - name: dshm</span>
+<span class="code-comment">#     mountPath: /dev/shm</span>
+<span class="code-comment"># spec.volumes:</span>
+<span class="code-comment">#   - name: dshm</span>
+<span class="code-comment">#     emptyDir:</span>
+<span class="code-comment">#       medium: Memory</span>
+<span class="code-comment">#       sizeLimit: 64Gi</span></code></pre>
+          </div>
+        </details>
+
+        <details>
+          <summary>P2P Recovery 실패 후 Checkpoint Fallback</summary>
+          <div>
+            <p><strong>증상:</strong> Checkpointless 복구 실패 후 S3 Checkpoint 로딩으로 Fallback</p>
+            <p><strong>원인:</strong></p>
+            <ul>
+              <li>복제본을 가진 모든 노드가 동시 장애</li>
+              <li><code>num_distributed_optimizer_instances</code> 값이 1</li>
+              <li>네트워크 파티션으로 피어 노드 접근 불가</li>
+            </ul>
+            <p><strong>해결:</strong></p>
+            <pre><code><span class="code-comment"># 복제 인스턴스 수 증가</span>
+strategy = CheckpointlessMegatronStrategy(
+    num_distributed_optimizer_instances=<span class="code-number">3</span>,  <span class="code-comment"># 2에서 3으로 증가</span>
+)
+
+<span class="code-comment"># Fallback용 Checkpoint 저장 주기 설정</span>
+<span class="code-comment"># 완전한 장애 대비를 위해 주기적 Checkpoint도 유지</span></code></pre>
+          </div>
+        </details>
+
+        <details>
+          <summary>CudaHealthCheck Timeout</summary>
+          <div>
+            <p><strong>증상:</strong> GPU 상태 검사가 타임아웃되며 IPR 트리거됨</p>
+            <p><strong>원인:</strong> GPU가 무거운 연산 중이거나 실제 장애 발생</p>
+            <p><strong>해결:</strong></p>
+            <pre><code><span class="code-comment"># Health check 타임아웃 증가</span>
+@HPWrapper(
+    health_check=CudaHealthCheck(timeout=<span class="code-number">60</span>),  <span class="code-comment"># 30에서 60으로</span>
+    ...
+)</code></pre>
+          </div>
+        </details>
+
+        <details>
+          <summary>Training Operator Pod 통신 실패</summary>
+          <div>
+            <p><strong>증상:</strong> <code>wait_rank()</code>가 무한 대기, Rank 정보 수신 안됨</p>
+            <p><strong>원인:</strong></p>
+            <ul>
+              <li>Training Operator가 설치되지 않음</li>
+              <li>K8s RBAC 권한 부족</li>
+              <li>Pod 네트워크 정책 문제</li>
+            </ul>
+            <p><strong>해결:</strong></p>
+            <pre><code><span class="code-comment"># Training Operator 상태 확인</span>
+kubectl get pods -n sagemaker-hyperpod-system
+
+<span class="code-comment"># Operator 로그 확인</span>
+kubectl logs -n sagemaker-hyperpod-system deployment/training-operator</code></pre>
+          </div>
+        </details>
+
+        <div class="callout info">
+          <strong>추가 지원</strong>
+          <ul>
+            <li><a href="https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-eks-checkpointless.html" target="_blank">AWS 공식 문서</a></li>
+            <li><a href="https://github.com/aws/sagemaker-hyperpod-checkpointless-training/issues" target="_blank">GitHub Issues</a></li>
+            <li>AWS Support Case 오픈</li>
+          </ul>
+        </div>
+
+        <div class="nav-footer"></div>
+      </div>
+    </main>
+  </div>
+  <script src="shared.js"></script>
+</body>
+</html>

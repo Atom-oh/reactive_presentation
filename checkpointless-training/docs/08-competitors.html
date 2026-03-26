@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>경쟁 기술 & 학술 연구 - Checkpointless Training Research</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="progress-bar"></div>
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="doc-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="doc-main">
+      <div class="doc-content">
+        <span class="reading-time">📖 약 60분</span>
+
+        <h1>Chapter 8: 경쟁 기술 & 학술 연구</h1>
+        <p class="lead">대규모 ML 학습의 내결함성(Fault Tolerance)을 위한 업계 솔루션과 학술 연구를 비교 분석합니다. AWS Checkpointless Training의 차별점을 명확히 이해하고 Q&A에 대비합니다.</p>
+
+        <div class="callout info">
+          <strong>이 장의 학습 목표</strong>
+          PyTorch Elastic, NVIDIA NVRx, DeepSpeed, Google Pathways/OCS 등 주요 경쟁 기술의 동작 원리를 이해합니다. CheckFreq, Bamboo, Varuna, Oobleck, MegaScale 등 학술 논문의 핵심 아이디어를 파악하고, AWS Checkpointless Training이 어떤 점에서 차별화되는지 설명할 수 있습니다.
+        </div>
+
+        <!-- Section 1: PyTorch Elastic -->
+        <h2 id="pytorch-elastic">1. PyTorch Elastic (torchrun) <span class="badge badge-pytorch">PyTorch</span></h2>
+
+        <p><strong>공식 문서</strong>: <a href="https://pytorch.org/docs/stable/distributed.elastic.html" target="_blank">pytorch.org/docs/stable/distributed.elastic.html</a></p>
+
+        <h3>1.1 아키텍처 개요</h3>
+        <p>PyTorch Elastic (torchelastic)은 분산 학습에서 <strong>동적 스케일링</strong>과 <strong>내결함성</strong>을 제공하는 프레임워크입니다. <code>torchrun</code> 명령어를 통해 실행되며, 기존 <code>torch.distributed.launch</code>를 대체합니다.</p>
+
+        <div class="card">
+          <h4>Agent/Worker 모델</h4>
+          <pre><code>┌─────────────────────────────────────────────────────────────┐
+│                    PyTorch Elastic Architecture              │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐               │
+│  │  Agent   │    │  Agent   │    │  Agent   │               │
+│  │ (Node 0) │    │ (Node 1) │    │ (Node 2) │               │
+│  └────┬─────┘    └────┬─────┘    └────┬─────┘               │
+│       │               │               │                      │
+│       └───────────────┼───────────────┘                      │
+│                       │                                      │
+│              ┌────────▼────────┐                            │
+│              │   Rendezvous    │                            │
+│              │    Backend      │                            │
+│              │  (etcd/c10d)    │                            │
+│              └─────────────────┘                            │
+│                                                              │
+│  Worker Group: [W0, W1, W2, ... Wn]                         │
+│  - 동적으로 크기 조절 가능                                    │
+│  - min_nodes ~ max_nodes 범위 내 탄력적 운영                  │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+        </div>
+
+        <h3>1.2 Rendezvous Backends</h3>
+        <p>Rendezvous는 분산 학습 참여자들이 서로를 발견하고 동기화하는 메커니즘입니다.</p>
+
+        <table>
+          <thead>
+            <tr><th>Backend</th><th>특징</th><th>사용 시나리오</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>etcd</strong></td><td>외부 키-값 저장소 기반, 고가용성</td><td>대규모 프로덕션 클러스터</td></tr>
+            <tr><td><strong>c10d</strong></td><td>PyTorch 내장, TCPStore 기반</td><td>단일 노드 또는 소규모 클러스터</td></tr>
+            <tr><td><strong>static</strong></td><td>고정된 노드 목록</td><td>변경 없는 환경</td></tr>
+          </tbody>
+        </table>
+
+        <pre><code><span class="code-comment"># torchrun 실행 예시</span>
+torchrun \
+    --nnodes=1:4 \           <span class="code-comment"># min:max 노드 수</span>
+    --nproc_per_node=8 \     <span class="code-comment"># 노드당 GPU 수</span>
+    --rdzv_backend=etcd \    <span class="code-comment"># Rendezvous 백엔드</span>
+    --rdzv_endpoint=etcd-server:2379 \
+    --rdzv_id=my_job \
+    train.py</code></pre>
+
+        <h3>1.3 Dynamic Scaling 메커니즘</h3>
+        <div class="compare-flow">
+          <div class="step-box">1. Worker 장애 감지<br><small>Agent heartbeat</small></div>
+          <span class="arrow">→</span>
+          <div class="step-box">2. Rendezvous 재실행<br><small>새 world_size 협상</small></div>
+          <span class="arrow">→</span>
+          <div class="step-box">3. 모든 Worker 재시작<br><small>체크포인트 로드</small></div>
+          <span class="arrow">→</span>
+          <div class="step-box highlight">4. 학습 재개<br><small>새 topology</small></div>
+        </div>
+
+        <h3>1.4 Checkpoint-based Recovery</h3>
+        <pre><code><span class="code-keyword">def</span> <span class="code-string">train</span>():
+    <span class="code-comment"># 체크포인트 로드 (존재하는 경우)</span>
+    <span class="code-keyword">if</span> os.path.exists(CHECKPOINT_PATH):
+        checkpoint = torch.load(CHECKPOINT_PATH)
+        model.load_state_dict(checkpoint[<span class="code-string">'model'</span>])
+        optimizer.load_state_dict(checkpoint[<span class="code-string">'optimizer'</span>])
+        start_epoch = checkpoint[<span class="code-string">'epoch'</span>]
+
+    <span class="code-keyword">for</span> epoch <span class="code-keyword">in</span> range(start_epoch, total_epochs):
+        train_one_epoch()
+
+        <span class="code-comment"># 주기적 체크포인트 저장</span>
+        <span class="code-keyword">if</span> epoch % save_interval == <span class="code-number">0</span>:
+            torch.save({
+                <span class="code-string">'epoch'</span>: epoch,
+                <span class="code-string">'model'</span>: model.state_dict(),
+                <span class="code-string">'optimizer'</span>: optimizer.state_dict(),
+            }, CHECKPOINT_PATH)</code></pre>
+
+        <h3>1.5 한계점</h3>
+        <div class="callout danger">
+          <strong>PyTorch Elastic의 주요 한계</strong>
+          <table>
+            <tr><td><strong>체크포인트 I/O 오버헤드</strong></td><td>대규모 모델(수백 GB)에서 저장/로드에 수 분 소요</td></tr>
+            <tr><td><strong>전체 Worker 재시작</strong></td><td>단일 노드 장애에도 전체 학습 job이 중단되고 재시작</td></tr>
+            <tr><td><strong>복구 시간</strong></td><td>체크포인트 로드 + Rendezvous + 재시작 = 수 분~수십 분</td></tr>
+            <tr><td><strong>체크포인트 빈도 트레이드오프</strong></td><td>자주 저장 → I/O 오버헤드, 드물게 저장 → 작업 손실 증가</td></tr>
+            <tr><td><strong>Hot Spare 미지원</strong></td><td>대기 노드를 활용한 즉시 대체 불가</td></tr>
+          </table>
+        </div>
+
+        <!-- Section 2: NVIDIA NVRx -->
+        <h2 id="nvidia-nvrx">2. NVIDIA Resiliency Extension (NVRx) <span class="badge badge-nvidia">NVIDIA</span></h2>
+
+        <p><strong>GitHub</strong>: <a href="https://github.com/NVIDIA/nvidia-resiliency-ext" target="_blank">github.com/NVIDIA/nvidia-resiliency-ext</a></p>
+        <p><strong>상태</strong>: Experimental (활발한 개발 중, Breaking changes 예상)</p>
+
+        <h3>2.1 아키텍처 개요</h3>
+        <p>NVRx는 PyTorch 기반 대규모 학습의 <strong>생산성 극대화</strong>를 위한 통합 내결함성 플랫폼입니다.</p>
+
+        <div class="card">
+          <h4>NVRx 3-Layer 아키텍처</h4>
+          <pre><code>┌─────────────────────────────────────────────────────────────┐
+│  Fault Tolerance Layer                                      │
+│  ┌──────────────┐  ┌──────────────┐  ┌───────────────┐     │
+│  │ Hung Rank    │  │ Straggler    │  │ In-Process    │     │
+│  │ Detection    │  │ Detection    │  │ Restart       │     │
+│  └──────────────┘  └──────────────┘  └───────────────┘     │
+├─────────────────────────────────────────────────────────────┤
+│  Checkpointing Layer                                        │
+│  ┌──────────────┐  ┌──────────────┐                        │
+│  │ Async        │  │ Hierarchical │                        │
+│  │ Checkpointing│  │ (Local+Remote)│                        │
+│  └──────────────┘  └──────────────┘                        │
+├─────────────────────────────────────────────────────────────┤
+│  Integration Layer                                          │
+│  ┌──────────────┐  ┌──────────────┐                        │
+│  │ PyTorch      │  │ NVIDIA NeMo  │                        │
+│  │ Lightning    │  │ Framework    │                        │
+│  └──────────────┘  └──────────────┘                        │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+        </div>
+
+        <h3>2.2 In-Process Restart 메커니즘</h3>
+        <p><strong>핵심 혁신</strong>: SLURM 재할당 없이 <strong>동일 Job 내에서</strong> 장애 복구</p>
+
+        <div class="card">
+          <h4>기존 방식 vs NVRx</h4>
+          <pre><code><span class="code-comment">기존 방식 (PyTorch Elastic):</span>
+장애 → Job 종료 → SLURM 재할당 → 재시작
+[====== 수 분 ~ 수십 분 ======]
+
+<span class="code-comment">NVRx In-Process Restart:</span>
+장애 → 프로세스 내 복구 → 학습 재개
+[== 수 초 ~ 수십 초 ==]
+
+<span class="code-keyword">총 복구 시간: 수 분 → 수 초</span></code></pre>
+        </div>
+
+        <h3>2.3 Hung Rank Detection</h3>
+        <p>학습 중 <strong>응답하지 않는 Rank</strong>를 탐지하는 메커니즘입니다.</p>
+
+        <pre><code><span class="code-comment"># NVRx Hung Rank Detection 개념</span>
+<span class="code-keyword">class</span> <span class="code-string">HungRankDetector</span>:
+    <span class="code-string">"""각 Rank의 heartbeat를 모니터링하여 hang 상태 탐지"""</span>
+    <span class="code-keyword">def</span> __init__(self, timeout_seconds=<span class="code-number">300</span>):
+        self.timeout = timeout_seconds
+        self.last_heartbeat = {}
+
+    <span class="code-keyword">def</span> check_ranks(self):
+        <span class="code-keyword">for</span> rank, last_time <span class="code-keyword">in</span> self.last_heartbeat.items():
+            <span class="code-keyword">if</span> time.time() - last_time > self.timeout:
+                self.handle_hung_rank(rank)</code></pre>
+
+        <p><strong>탐지 시나리오</strong>:</p>
+        <ul>
+          <li>NCCL collective 연산 중 무한 대기</li>
+          <li>GPU 메모리 오류로 인한 hang</li>
+          <li>네트워크 파티션으로 인한 통신 불가</li>
+        </ul>
+
+        <h3>2.4 Straggler Detection</h3>
+        <p><strong>Straggler</strong>: 다른 노드보다 느리게 연산을 수행하여 전체 학습 속도를 저하시키는 노드</p>
+
+        <div class="card">
+          <pre><code>Performance Monitoring:
+┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐
+│ Rank 0  │  │ Rank 1  │  │ Rank 2  │  │ Rank 3  │
+│  100ms  │  │  102ms  │  │   98ms  │  │  250ms ⚠│
+└─────────┘  └─────────┘  └─────────┘  └─────────┘
+                                            │
+                                  <span class="code-keyword">Straggler 감지!</span>
+
+대응 옵션:
+1. 경고 로깅 및 모니터링
+2. 해당 노드 제외 및 재할당
+3. 동적 배치 크기 조절</code></pre>
+        </div>
+
+        <h3>2.5 Hierarchical Checkpointing</h3>
+        <p><strong>2단계 체크포인트 전략</strong>으로 I/O 병목 해결:</p>
+
+        <table>
+          <thead>
+            <tr><th>Level</th><th>저장 위치</th><th>저장 시간</th><th>용도</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Level 1</strong></td><td>Local SSD/NVMe</td><td>수 초</td><td>빈번한 스냅샷, 빠른 복구</td></tr>
+            <tr><td><strong>Level 2</strong></td><td>공유 스토리지 (S3, Lustre)</td><td>수 분 (비동기)</td><td>영구 보존, 노드 장애 복구</td></tr>
+          </tbody>
+        </table>
+
+        <h3>2.6 Async Checkpointing</h3>
+        <p>체크포인트 저장을 <strong>비동기로 수행</strong>하여 학습 중단 최소화:</p>
+
+        <pre><code><span class="code-keyword">class</span> <span class="code-string">AsyncCheckpointer</span>:
+    <span class="code-keyword">def</span> save_async(self, state_dict, path):
+        <span class="code-comment"># 메모리에 스냅샷 생성 (빠름)</span>
+        snapshot = self._create_snapshot(state_dict)
+
+        <span class="code-comment"># 백그라운드 스레드에서 저장</span>
+        thread = threading.Thread(
+            target=self._persist_snapshot,
+            args=(snapshot, path)
+        )
+        thread.start()
+
+        <span class="code-comment"># 학습은 즉시 계속</span>
+        <span class="code-keyword">return</span></code></pre>
+
+        <h3>2.7 AWS Checkpointless와의 비교</h3>
+        <table>
+          <thead>
+            <tr><th>특성</th><th>NVRx</th><th>AWS Checkpointless</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>복구 방식</strong></td><td>체크포인트 기반 (최적화됨)</td><td>인메모리 상태 복제</td></tr>
+            <tr><td><strong>In-Process Restart</strong></td><td>✅ 지원</td><td>✅ 지원</td></tr>
+            <tr><td><strong>디스크 I/O 필요</strong></td><td>필요 (비동기/계층적)</td><td>❌ 불필요</td></tr>
+            <tr><td><strong>Hot Spare</strong></td><td>❌ 미지원</td><td>✅ 지원</td></tr>
+            <tr><td><strong>복구 시간</strong></td><td>수 초~수십 초</td><td>수 초</td></tr>
+            <tr><td><strong>메모리 오버헤드</strong></td><td>낮음</td><td>높음 (복제본 유지)</td></tr>
+            <tr><td><strong>오픈소스</strong></td><td>✅ 완전 오픈소스</td><td>❌ AWS 서비스</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Section 3: DeepSpeed -->
+        <h2 id="deepspeed">3. DeepSpeed <span class="badge badge-pytorch">Microsoft</span></h2>
+
+        <p><strong>공식 문서</strong>: <a href="https://www.deepspeed.ai/training/" target="_blank">deepspeed.ai/training/</a></p>
+
+        <h3>3.1 아키텍처 개요</h3>
+        <p>DeepSpeed는 Microsoft에서 개발한 대규모 모델 학습 최적화 라이브러리입니다. <strong>메모리 효율성</strong>과 <strong>성능</strong>에 초점을 맞추며, 내결함성은 체크포인트 시스템을 통해 제공됩니다.</p>
+
+        <div class="card">
+          <h4>ZeRO (Zero Redundancy Optimizer)</h4>
+          <pre><code>기존 Data Parallelism (모든 것을 복제):
+GPU 0: [Model] [Optimizer] [Gradients]
+GPU 1: [Model] [Optimizer] [Gradients]  ← 중복!
+GPU 2: [Model] [Optimizer] [Gradients]  ← 중복!
+
+<span class="code-keyword">ZeRO Stage 1</span> (Optimizer State Partitioning):
+- Optimizer 상태를 GPU 간 분할
+- 메모리 절약: ~4x
+
+<span class="code-keyword">ZeRO Stage 2</span> (+ Gradient Partitioning):
+- Gradient도 분할
+- 메모리 절약: ~8x
+
+<span class="code-keyword">ZeRO Stage 3</span> (+ Parameter Partitioning):
+- 모델 파라미터까지 분할
+- 메모리 절약: GPU 수에 비례</code></pre>
+        </div>
+
+        <h3>3.2 Checkpointing 설정 옵션</h3>
+        <pre><code>{
+  <span class="code-string">"checkpoint"</span>: {
+    <span class="code-string">"tag_validation"</span>: <span class="code-string">"Warn"</span>,
+    <span class="code-string">"load_universal"</span>: <span class="code-keyword">true</span>,
+    <span class="code-string">"use_node_local_storage"</span>: <span class="code-keyword">false</span>,
+    <span class="code-string">"parallel_write"</span>: {
+      <span class="code-string">"pipeline_stage"</span>: <span class="code-keyword">true</span>
+    }
+  }
+}</code></pre>
+
+        <h3>3.3 Universal Checkpointing</h3>
+        <p><strong>클러스터 크기 변경 시에도 체크포인트 호환성 유지</strong>:</p>
+
+        <div class="compare-flow">
+          <div class="step-box">1. ZeRO 체크포인트<br><small>분할 상태 저장</small></div>
+          <span class="arrow">→</span>
+          <div class="step-box">2. ds_to_universal.py<br><small>통합 포맷 변환</small></div>
+          <span class="arrow">→</span>
+          <div class="step-box highlight">3. 재개<br><small>다른 GPU 수 OK</small></div>
+        </div>
+
+        <p><strong>사용 사례</strong>:</p>
+        <ul>
+          <li>8 GPU → 16 GPU 클러스터 업스케일</li>
+          <li>TP=4, PP=2 → TP=8, PP=1 설정 변경</li>
+          <li>다른 하드웨어로 마이그레이션</li>
+        </ul>
+
+        <h3>3.4 ZeRO-Infinity</h3>
+        <p><strong>CPU/NVMe로 오프로드</strong>하여 GPU 메모리 한계 극복:</p>
+
+        <div class="formula">
+GPU Memory ←→ CPU Memory ←→ NVMe Storage
+(Active Params)   (Optimizer States)   (Overflow)
+        </div>
+
+        <ul>
+          <li>단일 GPU에서 수 조 개 파라미터 학습 가능</li>
+          <li>자동 데이터 이동 (prefetch/offload)</li>
+          <li>NVMe 대역폭 활용으로 CPU 메모리 한계도 극복</li>
+        </ul>
+
+        <h3>3.5 한계점</h3>
+        <div class="callout warning">
+          <strong>DeepSpeed 내결함성 한계</strong>
+          <table>
+            <tr><td>체크포인트 의존</td><td>모든 복구가 디스크 체크포인트 기반</td></tr>
+            <tr><td>In-Process Restart 미지원</td><td>장애 시 Job 재시작 필요</td></tr>
+            <tr><td>Hung Rank Detection 미지원</td><td>외부 모니터링 필요</td></tr>
+            <tr><td>Hot Spare 미지원</td><td>대기 노드 활용 불가</td></tr>
+            <tr><td>Straggler Detection 미지원</td><td>느린 노드 자동 감지/대응 없음</td></tr>
+          </table>
+        </div>
+
+        <!-- Section 4: Google Pathways/OCS -->
+        <h2 id="google-pathways">4. Google Pathways/OCS <span class="badge badge-google">Google</span></h2>
+
+        <h3>4.1 Pathways 아키텍처</h3>
+        <p><strong>논문</strong>: "Pathways: Asynchronous Distributed Dataflow for ML" (MLSys 2022)</p>
+
+        <p>Pathways는 Google의 대규모 ML 학습을 위한 <strong>비동기 분산 데이터플로우</strong> 시스템입니다.</p>
+
+        <div class="card">
+          <h4>Pathways 핵심 특징</h4>
+          <pre><code>┌─────────────────────────────────────────────────────────────┐
+│              Single Controller Model                         │
+│  • 복잡한 병렬화 패턴을 단일 프로그램으로 표현                 │
+│  • 제어 플레인과 데이터 플레인 분리                           │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│         Sharded Dataflow Graph                               │
+│  • 비동기 연산자들의 샤딩된 그래프                            │
+│  • Futures 기반 데이터 의존성 관리                            │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│           Accelerator Clusters                               │
+│  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐                │
+│  │TPU Pod│  │TPU Pod│  │TPU Pod│  │TPU Pod│                │
+│  └───────┘  └───────┘  └───────┘  └───────┘                │
+│           Gang Scheduling + Data Transfer                    │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+        </div>
+
+        <p><strong>핵심 성과</strong>:</p>
+        <ul>
+          <li><strong>~100% Accelerator Utilization</strong>: 2,048 TPU에서 SPMD 학습 시 달성</li>
+          <li><strong>유연한 병렬화</strong>: 16단계 파이프라인 병렬화, 지리적으로 분산된 가속기 그룹 지원</li>
+          <li><strong>비동기 데이터플로우</strong>: Futures 기반으로 데이터 의존성 있어도 제어 플레인 병렬 실행</li>
+        </ul>
+
+        <h3>4.2 Optical Circuit Switches (OCS)</h3>
+        <p>Google은 데이터센터 네트워크에 <strong>광학 회로 스위치</strong>를 사용하여 동적 네트워크 재구성을 지원합니다.</p>
+
+        <div class="card">
+          <h4>OCS vs 기존 전기 스위치</h4>
+          <table>
+            <thead>
+              <tr><th>특성</th><th>기존 전기 스위치</th><th>OCS (Optical Circuit Switch)</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>토폴로지</td><td>고정됨</td><td>동적 변경 가능</td></tr>
+              <tr><td>장애 대응</td><td>물리적 재배선 필요</td><td>밀리초 단위 경로 전환</td></tr>
+              <tr><td>대역폭 할당</td><td>정적</td><td>동적</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>4.3 TPU Multislice Training</h3>
+        <p><strong>TPU v4/v5</strong>에서 여러 Pod Slice를 연결하여 대규모 학습:</p>
+
+        <pre><code>TPU v4 Pod (4,096 chips):
+┌─────────────────────────────────────────────────────────────┐
+│  Slice 0      Slice 1      Slice 2      Slice 3            │
+│  ┌─────┐      ┌─────┐      ┌─────┐      ┌─────┐            │
+│  │1024 │      │1024 │      │1024 │      │1024 │            │
+│  │chips│      │chips│      │chips│      │chips│            │
+│  └──┬──┘      └──┬──┘      └──┬──┘      └──┬──┘            │
+│     └────────────┴────────────┴────────────┘                │
+│              Inter-Slice Network (ICI)                      │
+└─────────────────────────────────────────────────────────────┘
+
+<span class="code-keyword">Multislice Fault Tolerance:</span>
+• Slice 단위 장애 격리
+• 장애 Slice 제외하고 나머지로 학습 계속
+• 자동 리밸런싱</code></pre>
+
+        <h3>4.4 하드웨어 접근법 vs AWS 소프트웨어 접근법</h3>
+        <table>
+          <thead>
+            <tr><th>관점</th><th>Google (하드웨어 중심)</th><th>AWS (소프트웨어 중심)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>장애 우회</strong></td><td>OCS로 네트워크 토폴로지 동적 재구성</td><td>Hot Spare 노드로 소프트웨어 대체</td></tr>
+            <tr><td><strong>상태 복구</strong></td><td>체크포인트 + 하드웨어 중복</td><td>인메모리 P2P 복제</td></tr>
+            <tr><td><strong>비용</strong></td><td>전용 하드웨어 (TPU, OCS) 필요</td><td>범용 하드웨어 (NVIDIA GPU) 사용</td></tr>
+            <tr><td><strong>유연성</strong></td><td>Google Cloud 전용</td><td>AWS 생태계 내 통합</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Section 5: 종합 비교표 -->
+        <h2 id="comparison-table">5. 종합 비교표</h2>
+
+        <div class="callout info">
+          <strong>한눈에 보는 기술 비교</strong>
+          아래 표는 모든 주요 내결함성 기술의 핵심 기능을 비교합니다.
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th>PyTorch Elastic</th>
+                <th>NVRx</th>
+                <th>DeepSpeed</th>
+                <th>Google OCS</th>
+                <th>AWS Checkpointless</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Fault Detection</strong></td>
+                <td>Agent heartbeat</td>
+                <td>Hung Rank Detection</td>
+                <td>외부 의존</td>
+                <td>시스템 레벨</td>
+                <td>분산 Health Monitor</td>
+              </tr>
+              <tr>
+                <td><strong>State Recovery</strong></td>
+                <td>체크포인트 로드</td>
+                <td>계층적 체크포인트</td>
+                <td>체크포인트 로드</td>
+                <td>체크포인트 + HW 중복</td>
+                <td><strong>인메모리 복제</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Recovery Time</strong></td>
+                <td>수 분~수십 분</td>
+                <td>수 초~수십 초</td>
+                <td>수 분~수십 분</td>
+                <td>수 초~수 분</td>
+                <td><strong>&lt; 90초</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Disk I/O Required</strong></td>
+                <td>✅ 필수</td>
+                <td>✅ (최적화됨)</td>
+                <td>✅ 필수</td>
+                <td>✅ (비동기)</td>
+                <td><strong>❌ 불필요</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Hot Spare</strong></td>
+                <td>❌</td>
+                <td>❌</td>
+                <td>❌</td>
+                <td>✅ (HW 레벨)</td>
+                <td><strong>✅</strong></td>
+              </tr>
+              <tr>
+                <td><strong>In-Process Recovery</strong></td>
+                <td>❌</td>
+                <td>✅</td>
+                <td>❌</td>
+                <td>부분적</td>
+                <td><strong>✅</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Scale Validated</strong></td>
+                <td>수백 GPU</td>
+                <td>수천 GPU</td>
+                <td>수천 GPU</td>
+                <td>수만 TPU</td>
+                <td><strong>수만 GPU</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Open Source</strong></td>
+                <td>✅</td>
+                <td>✅</td>
+                <td>✅</td>
+                <td>❌</td>
+                <td>❌ (AWS 서비스)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Section 6: CheckFreq -->
+        <h2 id="checkfreq">6. CheckFreq (FAST '21) <span class="badge badge-paper">Paper</span></h2>
+
+        <p><strong>제목</strong>: "CheckFreq: Frequent, Fine-Grained DNN Checkpointing"<br>
+        <strong>저자</strong>: Mohan et al.<br>
+        <strong>학회</strong>: USENIX FAST '21<br>
+        <strong>Source</strong>: <a href="https://www.usenix.org/conference/fast21/presentation/mohan" target="_blank">usenix.org/conference/fast21/presentation/mohan</a></p>
+
+        <h3>6.1 핵심 문제</h3>
+        <p>대규모 DNN 학습에서 체크포인트 주기 설정의 딜레마:</p>
+        <ul>
+          <li><strong>자주 저장</strong>: I/O 오버헤드로 학습 속도 저하</li>
+          <li><strong>드물게 저장</strong>: 장애 시 많은 작업 손실</li>
+        </ul>
+
+        <h3>6.2 Snapshot-and-Persist 분리</h3>
+        <div class="card">
+          <pre><code>학습 스레드                    체크포인트 스레드
+┌─────────┐                   ┌─────────────────┐
+│ Forward │                   │                 │
+│ Backward│ ──────────────→   │ Snapshot (메모리│
+│ Update  │     빠름          │   복사, ~ms)   │
+└─────────┘                   └────────┬────────┘
+    │                                  │
+    │                                  ▼
+계속 학습                     ┌─────────────────┐
+                              │ Persist (디스크 │
+                              │   쓰기, ~초)    │
+                              └─────────────────┘
+                                    비동기</code></pre>
+        </div>
+
+        <h3>6.3 I/O Latency Hiding</h3>
+        <ul>
+          <li>학습 연산과 체크포인트 I/O를 오버랩</li>
+          <li>GPU 연산 중 백그라운드로 디스크 쓰기</li>
+        </ul>
+
+        <h3>6.4 핵심 결과 & 한계</h3>
+        <table>
+          <thead>
+            <tr><th>결과</th><th>한계</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>체크포인트 주기 5-10배 단축 가능</td><td>여전히 디스크 I/O 필요</td></tr>
+            <tr><td>학습 오버헤드 5% 미만 유지</td><td>인메모리 복구 미지원</td></tr>
+            <tr><td>장애 시 작업 손실 대폭 감소</td><td>대규모 클러스터에서 스토리지 병목 가능</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Section 7: Bamboo -->
+        <h2 id="bamboo">7. Bamboo (NSDI '23) <span class="badge badge-paper">Paper</span></h2>
+
+        <p><strong>제목</strong>: "Bamboo: Making Preemptible Instances Resilient for Affordable Training of Large DNNs"<br>
+        <strong>저자</strong>: Thorpe et al.<br>
+        <strong>학회</strong>: USENIX NSDI 2023</p>
+
+        <h3>7.1 핵심 아이디어: Redundant Computation</h3>
+        <p><strong>파이프라인 버블</strong>을 활용한 <strong>중복 연산</strong>으로 즉시 대체(Instant Takeover) 구현</p>
+
+        <div class="card">
+          <h4>파이프라인 버블 활용</h4>
+          <pre><code><span class="code-comment">기존 Pipeline Parallelism의 버블:</span>
+Stage 0: [F0][F1][F2][F3][ ][ ][ ][B3][B2][B1][B0]
+Stage 1: [ ][F0][F1][F2][F3][ ][B3][B2][B1][B0][ ]
+                        ▲              ▲
+                       버블           버블
+
+<span class="code-keyword">Bamboo의 접근법 - 버블에 중복 연산 삽입:</span>
+Stage 0: [F0][F1][F2][F3]<span class="code-string">[F0']</span>[F1'][B3][B2][B1][B0]
+Stage 1: <span class="code-string">[F0']</span>[F0][F1][F2][F3][F1'][B3][B2][B1][B0]
+             ▲
+             이웃 스테이지의 연산을 중복 실행</code></pre>
+        </div>
+
+        <h3>7.2 Instant Takeover 메커니즘</h3>
+        <pre><code><span class="code-comment">정상 상태:</span>
+┌────────┐    ┌────────┐    ┌────────┐    ┌────────┐
+│Stage 0 │───→│Stage 1 │───→│Stage 2 │───→│Stage 3 │
+│        │    │ (중복: │    │ (중복: │    │        │
+│        │    │Stage 2)│    │Stage 1)│    │        │
+└────────┘    └────────┘    └────────┘    └────────┘
+
+<span class="code-keyword">Stage 2 장애 발생:</span>
+┌────────┐    ┌────────┐                  ┌────────┐
+│Stage 0 │───→│Stage 1 │─────────────────→│Stage 3 │
+│        │    │<span class="code-string">즉시    </span>│                  │        │
+│        │    │<span class="code-string">Stage 2 </span>│                  │        │
+│        │    │<span class="code-string">역할 수행</span>│                  │        │
+└────────┘    └────────┘                  └────────┘
+                 │
+                 ▼
+          <span class="code-keyword">체크포인트 로드 없이 즉시 계속!</span></code></pre>
+
+        <h3>7.3 핵심 결과 & 한계</h3>
+        <table>
+          <thead>
+            <tr><th>결과</th><th>한계</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>복구 시간</strong>: 수 분 → 수 초</td><td>파이프라인 병렬화 필수</td></tr>
+            <tr><td><strong>Preemptible VM 활용</strong>: 비용 70-90% 절감</td><td>중복 연산으로 메모리 사용량 증가</td></tr>
+            <tr><td><strong>처리량 손실</strong>: 5-15% 미만</td><td>복잡한 구현</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Section 8: Varuna -->
+        <h2 id="varuna">8. Varuna (EuroSys '22 Best Paper) <span class="badge badge-paper">Paper</span></h2>
+
+        <p><strong>제목</strong>: "Varuna: Scalable, Low-cost Training of Massive Deep Learning Models"<br>
+        <strong>저자</strong>: Microsoft Research<br>
+        <strong>학회</strong>: EuroSys '22 <strong>(Best Paper Award)</strong><br>
+        <strong>Source</strong>: <a href="https://github.com/microsoft/varuna" target="_blank">github.com/microsoft/varuna</a></p>
+
+        <h3>8.1 Dynamic Model Re-partitioning (Job Morphing)</h3>
+        <div class="card">
+          <pre><code>8 GPU 상태:              4 GPU로 축소:
+┌──┬──┬──┬──┐           ┌────┬────┐
+│S0│S1│S2│S3│    ──→    │S0+1│S2+3│
+│S4│S5│S6│S7│           │S4+5│S6+7│
+└──┴──┴──┴──┘           └────┴────┘
+
+<span class="code-keyword">CutPoint로 분할 경계 정의</span>
+리소스 변화에 따라 자동 재구성</code></pre>
+        </div>
+
+        <h3>8.2 CutPoint 정의</h3>
+        <pre><code><span class="code-keyword">from</span> varuna <span class="code-keyword">import</span> CutPoint
+
+<span class="code-keyword">class</span> <span class="code-string">MyModel</span>(nn.Module):
+    <span class="code-keyword">def</span> __init__(self):
+        self.layer1 = nn.Linear(...)
+        self.cutpoint1 = CutPoint()  <span class="code-comment"># 여기서 분할 가능</span>
+        self.layer2 = nn.Linear(...)
+        self.cutpoint2 = CutPoint()  <span class="code-comment"># 여기서도 분할 가능</span>
+        self.layer3 = nn.Linear(...)
+
+    <span class="code-keyword">def</span> forward(self, x):
+        x = self.layer1(x)
+        x = self.cutpoint1(x)  <span class="code-comment"># 파이프라인 스테이지 경계</span>
+        x = self.layer2(x)
+        x = self.cutpoint2(x)  <span class="code-comment"># 다른 경계</span>
+        x = self.layer3(x)
+        <span class="code-keyword">return</span> x</code></pre>
+
+        <h3>8.3 Spot VM Training</h3>
+        <ul>
+          <li>Spot/Low-priority VM은 On-demand 대비 <strong>5배 저렴</strong></li>
+          <li>SIGUSR1 시그널로 graceful shutdown</li>
+          <li>체크포인트 저장 후 종료, 새 리소스에서 재시작</li>
+        </ul>
+
+        <h3>8.4 핵심 결과</h3>
+        <ul>
+          <li>기존 대비 <strong>18배</strong> 빠른 학습 시간</li>
+          <li>다른 파이프라인 병렬화 대비 <strong>26%</strong> 성능 향상</li>
+          <li><strong>200B 파라미터</strong> 모델을 Spot VM에서 학습 성공</li>
+        </ul>
+
+        <!-- Section 9: Oobleck -->
+        <h2 id="oobleck">9. Oobleck (SOSP '23) <span class="badge badge-paper">Paper</span></h2>
+
+        <p><strong>제목</strong>: "Oobleck: Resilient Distributed Training of Large Models Using Pipeline Templates"<br>
+        <strong>학회</strong>: ACM SOSP 2023</p>
+
+        <h3>9.1 Pipeline Template 기반 동적 재구성</h3>
+        <p><strong>Pipeline Template</strong> = 미리 정의된 파이프라인 구성으로 노드 장애/추가에 즉시 대응</p>
+
+        <div class="card">
+          <h4>Template Library</h4>
+          <pre><code>Template A (8 GPU):  [S0|S1|S2|S3|S4|S5|S6|S7]
+Template B (6 GPU):  [S0+1|S2|S3|S4|S5+6+7]
+Template C (4 GPU):  [S0+1|S2+3|S4+5|S6+7]
+Template D (2 GPU):  [S0+1+2+3|S4+5+6+7]
+
+<span class="code-keyword">장애 발생 시:</span>
+1. 현재 가용 GPU 수 파악
+2. 적합한 Template 선택
+3. 모델 상태 재배치
+4. 학습 즉시 재개</code></pre>
+        </div>
+
+        <h3>9.2 Distributed Caching</h3>
+        <ul>
+          <li>모델 상태를 클러스터 전체에 분산 캐싱</li>
+          <li>Template 전환 시 네트워크를 통해 빠르게 상태 재배치</li>
+        </ul>
+
+        <h3>9.3 핵심 결과</h3>
+        <ul>
+          <li>Spot VM에서 <strong>안정적인</strong> 대규모 모델 학습</li>
+          <li>노드 장애 시 <strong>수 초</strong> 내 재구성</li>
+          <li>기존 체크포인트 기반 복구 대비 <strong>10배 이상</strong> 빠른 복구</li>
+        </ul>
+
+        <!-- Section 10: MegaScale -->
+        <h2 id="megascale">10. MegaScale (ByteDance 2024) <span class="badge badge-paper">Paper</span></h2>
+
+        <p><strong>제목</strong>: "MegaScale: Scaling Large Language Model Training to More Than 10,000 GPUs"<br>
+        <strong>저자</strong>: ByteDance<br>
+        <strong>Source</strong>: <a href="https://arxiv.org/abs/2402.15627" target="_blank">arxiv.org/abs/2402.15627</a></p>
+
+        <h3>10.1 핵심 성과</h3>
+        <div class="card-grid">
+          <div class="card">
+            <h4>12,288 GPU</h4>
+            <p>검증된 클러스터 규모</p>
+          </div>
+          <div class="card">
+            <h4>175B Parameters</h4>
+            <p>학습된 모델 크기</p>
+          </div>
+          <div class="card">
+            <h4>55.2% MFU</h4>
+            <p>Model FLOPs Utilization</p>
+          </div>
+          <div class="card">
+            <h4>1.34x</h4>
+            <p>Megatron-LM 대비 효율</p>
+          </div>
+        </div>
+
+        <h3>10.2 Full-Stack Co-Design 접근법</h3>
+        <table>
+          <thead>
+            <tr><th>Layer</th><th>최적화 내용</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Model Architecture & Optimizer</strong></td><td>학습 안정성을 위한 아키텍처 조정, 최적화된 Optimizer 설정</td></tr>
+            <tr><td><strong>Computation & Communication</strong></td><td>Overlapping computation and communication, Efficient collective operations</td></tr>
+            <tr><td><strong>Operator Optimization</strong></td><td>Fused kernels, Memory-efficient attention</td></tr>
+            <tr><td><strong>Data Pipeline</strong></td><td>Async data loading, Efficient preprocessing</td></tr>
+            <tr><td><strong>Network Performance</strong></td><td>Topology-aware placement, Congestion control</td></tr>
+          </tbody>
+        </table>
+
+        <h3>10.3 안정성 및 내결함성</h3>
+        <div class="callout info">
+          <strong>MegaScale 인용</strong>
+          "Stability is an important consideration in production given the long extent of LLM training jobs."
+        </div>
+
+        <ul>
+          <li><strong>진단 도구</strong>: 시스템 컴포넌트 모니터링, 장애 원인 식별</li>
+          <li><strong>Straggler 완화</strong>: 느린 노드 감지 및 대응</li>
+          <li><strong>체크포인트 전략</strong>: 장기 학습을 위한 안정적인 체크포인트</li>
+        </ul>
+
+        <!-- Section 11: AWS의 차별점 -->
+        <h2 id="aws-differentiation">11. AWS의 차별점</h2>
+
+        <h3>11.1 기술 발전 세대</h3>
+        <div class="card">
+          <pre><code><span class="code-keyword">1세대: 체크포인트 기반</span>
+└─→ 주기적 저장, 장애 시 전체 재시작
+    예: PyTorch Elastic, DeepSpeed
+
+<span class="code-keyword">2세대: 최적화된 체크포인트</span>
+└─→ 비동기/계층적 체크포인트, 빠른 복구
+    예: NVRx, CheckFreq
+
+<span class="code-keyword">3세대: 중복 연산 기반</span>
+└─→ 파이프라인 버블 활용, Instant Takeover
+    예: Bamboo
+
+<span class="code-keyword">4세대: 인메모리 복제</span> ★ AWS Checkpointless
+└─→ 디스크 I/O 제거, Hot Spare, 즉시 복구
+    예: AWS Checkpointless Training</code></pre>
+        </div>
+
+        <h3>11.2 학술 연구와의 관계</h3>
+        <table>
+          <thead>
+            <tr><th>학술 연구 아이디어</th><th>AWS 구현</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>CheckFreq의 Snapshot-and-Persist</td><td>P2P State Replication의 메모리 스냅샷</td></tr>
+            <tr><td>Bamboo의 Instant Takeover</td><td>Hot Spare 노드의 즉시 대체</td></tr>
+            <tr><td>Oobleck의 분산 캐싱</td><td>EFA를 통한 P2P 상태 복제</td></tr>
+            <tr><td>Enterprise의 Hot Standby</td><td>HyperPod Training Operator의 Hot Spare 관리</td></tr>
+          </tbody>
+        </table>
+
+        <h3>11.3 Production-Ready Managed Service</h3>
+        <div class="callout success">
+          <strong>AWS Checkpointless의 핵심 차별점</strong>
+          <table>
+            <tr><td><strong>디스크 I/O 병목 해결</strong></td><td>인메모리 상태 복제로 I/O 완전 제거</td></tr>
+            <tr><td><strong>긴 복구 시간 해결</strong></td><td>Hot Spare로 90초 미만 복구</td></tr>
+            <tr><td><strong>전체 재시작 필요 해결</strong></td><td>In-Process Recovery로 부분 복구</td></tr>
+            <tr><td><strong>Straggler 대응 어려움 해결</strong></td><td>Hot Spare를 Straggler 대체에도 활용</td></tr>
+            <tr><td><strong>실제 검증</strong></td><td>Amazon Nova 학습에서 수만 GPU, 95%+ Goodput 달성</td></tr>
+          </table>
+        </div>
+
+        <h3>11.4 선택 가이드</h3>
+        <table>
+          <thead>
+            <tr><th>시나리오</th><th>권장 기술</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>소규모 학습 (&lt; 100 GPU)</strong></td><td>PyTorch Elastic + 빈번한 체크포인트</td></tr>
+            <tr><td><strong>중규모 학습 (100-1000 GPU)</strong></td><td>NVRx 또는 DeepSpeed</td></tr>
+            <tr><td><strong>대규모 학습 (1000+ GPU)</strong></td><td>AWS Checkpointless 또는 NVRx</td></tr>
+            <tr><td><strong>Spot VM 활용</strong></td><td>Varuna, Oobleck, Bamboo</td></tr>
+            <tr><td><strong>최대 Goodput 필요</strong></td><td>AWS Checkpointless</td></tr>
+            <tr><td><strong>오픈소스 필수</strong></td><td>NVRx + Bamboo 조합</td></tr>
+          </tbody>
+        </table>
+
+        <div class="nav-footer"></div>
+      </div>
+    </main>
+  </div>
+  <script src="shared.js"></script>
+</body>
+</html>

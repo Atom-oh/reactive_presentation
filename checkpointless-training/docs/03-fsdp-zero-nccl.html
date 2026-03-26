@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FSDP, ZeRO, NCCL - Checkpointless Training Research</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="progress-bar"></div>
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="doc-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="doc-main">
+      <div class="doc-content">
+        <span class="reading-time">📖 약 90분</span>
+
+        <h1>Chapter 3: FSDP, ZeRO, NCCL</h1>
+        <p class="lead">분산 학습의 메모리 효율화 기술(ZeRO, FSDP)과 GPU 간 통신의 핵심인 NCCL을 심층적으로 이해합니다. 이 기술들은 Checkpointless Training의 기반이 됩니다.</p>
+
+        <div class="callout info">
+          <strong>이 장에서 배우는 것</strong>
+          ZeRO Stage 1/2/3의 메모리 최적화 원리, PyTorch FSDP의 동작 메커니즘, NCCL Collective Operations, 그리고 대규모 클러스터에서의 통신 알고리즘을 학습합니다.
+        </div>
+
+        <!-- Section 1: ZeRO 개요 -->
+        <h2 id="zero-overview">1. ZeRO 개요</h2>
+
+        <h3>DDP의 메모리 중복 문제</h3>
+        <p>표준 Data Parallelism (DDP)은 각 GPU가 <strong>동일한 모델 복사본(Model Replica)</strong>을 가지고, 데이터만 분산하여 처리합니다. 각 GPU는 Forward/Backward pass를 독립적으로 수행한 뒤 그래디언트를 <code>All-Reduce</code>로 동기화합니다.</p>
+
+        <div class="callout warning">
+          <strong>DDP의 핵심 문제: 메모리 중복</strong>
+          DDP에서는 모든 GPU가 <strong>모델 파라미터, 그래디언트, 옵티마이저 상태</strong>를 전부 복제합니다. GPU가 100개든 1000개든, 각 GPU는 동일한 메모리를 차지합니다. 이로 인해 단일 GPU에 올라가지 않는 대형 모델은 DDP로 학습이 불가능합니다.
+        </div>
+
+        <h3>학습 상태(Training State) 구성</h3>
+        <p>Mixed Precision Training (BF16/FP16 + FP32 Master Weights)과 Adam 옵티마이저를 사용할 때, 단일 파라미터당 필요한 메모리는 다음과 같습니다:</p>
+
+        <table>
+          <thead>
+            <tr><th>구성 요소</th><th>데이터 타입</th><th>파라미터당 크기</th><th>설명</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Model Weights</td><td>BF16/FP16</td><td>2 Bytes</td><td>Forward/Backward 연산용 가중치</td></tr>
+            <tr><td>Gradients</td><td>BF16/FP16</td><td>2 Bytes</td><td>Backward pass에서 계산된 그래디언트</td></tr>
+            <tr><td>Master Weights</td><td>FP32</td><td>4 Bytes</td><td>옵티마이저 업데이트용 고정밀 가중치</td></tr>
+            <tr><td>Momentum (1st moment)</td><td>FP32</td><td>4 Bytes</td><td>Adam의 1차 모멘트 (평균)</td></tr>
+            <tr><td>Variance (2nd moment)</td><td>FP32</td><td>4 Bytes</td><td>Adam의 2차 모멘트 (분산)</td></tr>
+            <tr><td><strong>합계</strong></td><td>-</td><td><strong>16 Bytes</strong></td><td>파라미터 1개당 총 메모리</td></tr>
+          </tbody>
+        </table>
+
+        <div class="formula">
+          총 메모리 = Parameters x 16 Bytes<br>
+          예: 70B 모델 = 70,000,000,000 x 16 = <strong>1,120 GB (1.12 TB)</strong>
+        </div>
+
+        <p>이 1.12TB를 단일 GPU(80GB VRAM)에 올리는 것은 불가능합니다. ZeRO는 이 문제를 해결합니다.</p>
+
+        <!-- Section 2: ZeRO Stage 1 -->
+        <h2 id="zero-stage-1">2. ZeRO Stage 1: Optimizer State Partitioning</h2>
+
+        <h3>동작 원리</h3>
+        <p>ZeRO Stage 1 ($P_{os}$)은 가장 메모리를 많이 차지하는 <strong>옵티마이저 상태(Optimizer States)</strong>만 GPU들에 분산(Sharding)합니다.</p>
+
+        <ul>
+          <li>각 GPU는 전체 파라미터 중 자신이 맡은 부분의 옵티마이저 상태만 유지</li>
+          <li>모델 파라미터와 그래디언트는 모든 GPU에 복제 (DDP와 동일)</li>
+          <li>옵티마이저 스텝 후, 업데이트된 파라미터를 <code>All-Gather</code>로 동기화</li>
+        </ul>
+
+        <h3>메모리 절감 계산</h3>
+        <div class="formula">
+          Optimizer States = 12 Bytes/param (Master Weights 4B + Momentum 4B + Variance 4B)<br>
+          N개 GPU 분산 시: 12/N Bytes/param<br><br>
+          8 GPU 예시: 12/8 = <strong>1.5 Bytes/param</strong> (기존 12B에서 8배 절감)
+        </div>
+
+        <details>
+          <summary>DeepSpeed ZeRO Stage 1 Config JSON</summary>
+          <div>
+<pre><code>{
+  "zero_optimization": {
+    "stage": 1,
+    "reduce_bucket_size": 5e8,
+    "allgather_bucket_size": 5e8
+  },
+  "fp16": {
+    "enabled": true,
+    "loss_scale": 0,
+    "loss_scale_window": 1000,
+    "initial_scale_power": 16,
+    "hysteresis": 2,
+    "min_loss_scale": 1
+  },
+  "optimizer": {
+    "type": "Adam",
+    "params": {
+      "lr": 1e-4,
+      "betas": [0.9, 0.999],
+      "eps": 1e-8,
+      "weight_decay": 0.01
+    }
+  }
+}</code></pre>
+          </div>
+        </details>
+
+        <!-- Section 3: ZeRO Stage 2 -->
+        <h2 id="zero-stage-2">3. ZeRO Stage 2: + Gradient Partitioning</h2>
+
+        <h3>동작 원리</h3>
+        <p>ZeRO Stage 2 ($P_{os+g}$)는 Stage 1에 추가로 <strong>그래디언트(Gradients)</strong>도 분산합니다.</p>
+
+        <ul>
+          <li>Backward pass 후, 전체 그래디언트를 <code>Reduce-Scatter</code> 연산으로 합산 + 분배</li>
+          <li>각 GPU는 자신이 담당하는 파라미터의 그래디언트만 유지</li>
+          <li>옵티마이저 스텝은 각 GPU가 자신의 파라미터 조각에 대해서만 수행</li>
+        </ul>
+
+        <h3>Reduce-Scatter 연산</h3>
+        <p><code>Reduce-Scatter</code>는 All-Reduce를 두 단계로 분리한 것 중 첫 번째입니다:</p>
+
+        <div class="compare-flow">
+          <div class="step-box">모든 GPU<br>Full Gradients</div>
+          <div class="arrow">→</div>
+          <div class="step-box highlight">Reduce<br>(합산)</div>
+          <div class="arrow">→</div>
+          <div class="step-box highlight">Scatter<br>(분배)</div>
+          <div class="arrow">→</div>
+          <div class="step-box">각 GPU<br>1/N Gradient Shard</div>
+        </div>
+
+        <h3>메모리 절감</h3>
+        <div class="formula">
+          Stage 1: Optimizer States 분산 = 12/N Bytes/param<br>
+          Stage 2: + Gradients 분산 = 2/N Bytes/param 추가 절감<br><br>
+          총: (12 + 2)/N = <strong>14/N Bytes/param</strong> (파라미터 복제 제외)
+        </div>
+
+        <details>
+          <summary>DeepSpeed ZeRO Stage 2 Config JSON</summary>
+          <div>
+<pre><code>{
+  "zero_optimization": {
+    "stage": 2,
+    "overlap_comm": true,
+    "contiguous_gradients": true,
+    "reduce_bucket_size": 5e8,
+    "allgather_bucket_size": 5e8
+  },
+  "fp16": {
+    "enabled": true,
+    "loss_scale": 0,
+    "initial_scale_power": 16
+  },
+  "gradient_clipping": 1.0,
+  "train_batch_size": 32,
+  "train_micro_batch_size_per_gpu": 4
+}</code></pre>
+          </div>
+        </details>
+
+        <!-- Section 4: ZeRO Stage 3 -->
+        <h2 id="zero-stage-3">4. ZeRO Stage 3: + Parameter Partitioning</h2>
+
+        <h3>동작 원리</h3>
+        <p>ZeRO Stage 3 ($P_{os+g+p}$)는 <strong>모델 파라미터(Parameters)</strong>까지 모두 분산합니다. 이것이 PyTorch FSDP와 기술적으로 거의 동일한 구현입니다.</p>
+
+        <ul>
+          <li>각 GPU는 모델의 <strong>1/N 조각</strong>만 메모리에 상주</li>
+          <li>연산이 필요할 때만 다른 GPU로부터 파라미터를 <code>All-Gather</code>로 가져옴</li>
+          <li>연산 후 즉시 해제하여 메모리 확보</li>
+        </ul>
+
+        <h3>All-Gather on Demand</h3>
+        <p>Forward pass 시 특정 레이어 연산 직전에 해당 레이어의 파라미터를 모든 GPU로부터 수집합니다:</p>
+
+        <div class="compare-flow">
+          <div class="step-box">GPU 0<br>Shard 0</div>
+          <div class="step-box">GPU 1<br>Shard 1</div>
+          <div class="step-box">GPU 2<br>Shard 2</div>
+          <div class="step-box">GPU 3<br>Shard 3</div>
+          <div class="arrow">→</div>
+          <div class="step-box highlight">All-Gather</div>
+          <div class="arrow">→</div>
+          <div class="step-box">Full Params<br>(임시)</div>
+        </div>
+
+        <h3>메모리 절감 (N-fold)</h3>
+        <div class="formula">
+          Stage 3: 모든 상태 분산<br>
+          총 메모리/GPU = (Parameters 2B + Gradients 2B + Optimizer 12B) / N = <strong>16/N Bytes/param</strong><br><br>
+          256 GPU 예시: 70B 모델<br>
+          = 70B x 16 / 256 = <strong>4.375 GB/GPU</strong> (기존 1.12TB에서 256배 절감)
+        </div>
+
+        <details>
+          <summary>DeepSpeed ZeRO Stage 3 Config JSON</summary>
+          <div>
+<pre><code>{
+  "zero_optimization": {
+    "stage": 3,
+    "overlap_comm": true,
+    "contiguous_gradients": true,
+    "reduce_bucket_size": 5e8,
+    "stage3_prefetch_bucket_size": 5e8,
+    "stage3_param_persistence_threshold": 1e6,
+    "stage3_max_live_parameters": 1e9,
+    "stage3_max_reuse_distance": 1e9,
+    "stage3_gather_16bit_weights_on_model_save": true
+  },
+  "bf16": {
+    "enabled": true
+  },
+  "gradient_clipping": 1.0,
+  "train_batch_size": 256,
+  "train_micro_batch_size_per_gpu": 1,
+  "gradient_accumulation_steps": 32
+}</code></pre>
+          </div>
+        </details>
+
+        <!-- Section 5: ZeRO-Infinity -->
+        <h2 id="zero-infinity">5. ZeRO-Infinity: NVMe Offloading</h2>
+
+        <h3>개념</h3>
+        <p>ZeRO-Infinity는 ZeRO Stage 3에 <strong>NVMe SSD 오프로딩</strong>을 추가하여 GPU 메모리를 넘어 <strong>시스템 메모리와 NVMe 스토리지</strong>까지 활용합니다.</p>
+
+        <h3>Memory Pool Hierarchy</h3>
+        <div class="compare-flow">
+          <div class="step-box">NVMe SSD<br>(TB급)</div>
+          <div class="arrow">↔</div>
+          <div class="step-box">CPU Memory<br>(수백 GB)</div>
+          <div class="arrow">↔</div>
+          <div class="step-box highlight">GPU HBM<br>(80 GB)</div>
+        </div>
+
+        <ul>
+          <li><strong>Offload Optimizer</strong>: 옵티마이저 상태를 CPU 메모리로 오프로드</li>
+          <li><strong>Offload Param</strong>: 파라미터까지 CPU/NVMe로 오프로드</li>
+          <li><strong>NVMe Offload</strong>: CPU 메모리도 부족할 때 NVMe SSD 활용</li>
+          <li>비동기 I/O(aio)를 통한 prefetch로 성능 저하 최소화</li>
+        </ul>
+
+        <details>
+          <summary>DeepSpeed ZeRO-Infinity Config JSON (aio 설정 포함)</summary>
+          <div>
+<pre><code>{
+  "zero_optimization": {
+    "stage": 3,
+    "offload_optimizer": {
+      "device": "nvme",
+      "nvme_path": "/local_nvme",
+      "pin_memory": true,
+      "buffer_count": 5,
+      "fast_init": false
+    },
+    "offload_param": {
+      "device": "nvme",
+      "nvme_path": "/local_nvme",
+      "pin_memory": true,
+      "buffer_count": 5,
+      "buffer_size": 1e8,
+      "max_in_cpu": 1e9
+    },
+    "overlap_comm": true,
+    "contiguous_gradients": true,
+    "sub_group_size": 1e9,
+    "reduce_bucket_size": "auto",
+    "stage3_prefetch_bucket_size": "auto",
+    "stage3_param_persistence_threshold": "auto",
+    "stage3_max_live_parameters": 1e9,
+    "stage3_max_reuse_distance": 1e9,
+    "stage3_gather_16bit_weights_on_model_save": true
+  },
+  "aio": {
+    "block_size": 1048576,
+    "queue_depth": 8,
+    "thread_count": 1,
+    "single_submit": false,
+    "overlap_events": true
+  },
+  "bf16": {
+    "enabled": true
+  },
+  "train_batch_size": 512,
+  "gradient_accumulation_steps": 64
+}</code></pre>
+          </div>
+        </details>
+
+        <div class="callout info">
+          <strong>ZeRO-Infinity 활용 사례</strong>
+          단일 DGX A100 노드(8 GPU x 80GB = 640GB)에서 <strong>1조(1T) 파라미터 모델</strong>을 학습할 수 있습니다. NVMe를 활용하면 시스템 메모리 한계도 넘어서지만, 당연히 속도는 느려집니다.
+        </div>
+
+        <!-- Section 6: FSDP 동작 원리 -->
+        <h2 id="fsdp-mechanism">6. FSDP 동작 원리</h2>
+
+        <h3>FSDP란?</h3>
+        <p><strong>FSDP (Fully Sharded Data Parallel)</strong>는 PyTorch의 ZeRO Stage 3 네이티브 구현입니다. 파라미터, 그래디언트, 옵티마이저 상태를 모든 GPU에 분산(Shard)합니다.</p>
+
+        <h3>Forward Pass</h3>
+<pre><code><span class="code-comment"># FSDP Forward Pass 동작 과정</span>
+
+<span class="code-comment"># 1. At Rest: 각 GPU는 1/N 파라미터만 보유</span>
+GPU_0: [Shard_0]  GPU_1: [Shard_1]  GPU_2: [Shard_2]  GPU_3: [Shard_3]
+
+<span class="code-comment"># 2. Before Forward: All-Gather로 전체 파라미터 재구성</span>
+All-Gather() → 모든 GPU: [Full Parameters]
+
+<span class="code-comment"># 3. Forward Compute: 전체 파라미터로 연산 수행</span>
+output = layer(input)  <span class="code-comment"># with full parameters</span>
+
+<span class="code-comment"># 4. After Forward: 사용한 파라미터 해제 (메모리 확보)</span>
+del full_parameters  <span class="code-comment"># keep only local shard</span></code></pre>
+
+        <h3>Backward Pass</h3>
+<pre><code><span class="code-comment"># FSDP Backward Pass 동작 과정</span>
+
+<span class="code-comment"># 1. Before Backward: 다시 All-Gather로 파라미터 재구성</span>
+All-Gather() → 모든 GPU: [Full Parameters]
+
+<span class="code-comment"># 2. Backward Compute: 그래디언트 계산</span>
+gradients = backward(loss)
+
+<span class="code-comment"># 3. After Backward: Reduce-Scatter로 그래디언트 합산 + 분배</span>
+Reduce-Scatter(gradients) → 각 GPU: [1/N Gradient Shard]
+
+<span class="code-comment"># 4. Optimizer Step: 각 GPU가 자신의 샤드만 업데이트</span>
+optimizer.step(local_shard)  <span class="code-comment"># only 1/N of parameters</span></code></pre>
+
+        <h3>전체 흐름 다이어그램</h3>
+        <div class="compare-flow">
+          <div class="step-box">Sharded<br>Params</div>
+          <div class="arrow">→</div>
+          <div class="step-box highlight">All-Gather</div>
+          <div class="arrow">→</div>
+          <div class="step-box">Forward</div>
+          <div class="arrow">→</div>
+          <div class="step-box">Free</div>
+          <div class="arrow">→</div>
+          <div class="step-box highlight">All-Gather</div>
+          <div class="arrow">→</div>
+          <div class="step-box">Backward</div>
+          <div class="arrow">→</div>
+          <div class="step-box highlight">Reduce-Scatter</div>
+        </div>
+
+        <div class="callout warning">
+          <strong>FSDP가 Checkpointing을 복잡하게 만드는 이유</strong>
+          <ul style="margin-top:8px">
+            <li><strong>Sharded State</strong>: 파라미터가 DTensor 조각으로 분산 - 단일 GPU에 전체 모델이 없음</li>
+            <li><strong>Reconstruction Required</strong>: "Full" checkpoint 저장 시 All-Gather 필요</li>
+            <li><strong>Memory Spike</strong>: 전체 상태 수집 시 일시적으로 메모리 사용량 2배</li>
+            <li><strong>Coordination</strong>: 모든 랭크가 체크포인트 저장 시 동기화 필요</li>
+          </ul>
+        </div>
+
+        <!-- Section 7: FSDP Sharding Strategies -->
+        <h2 id="fsdp-strategies">7. FSDP Sharding Strategies</h2>
+
+        <table>
+          <thead>
+            <tr><th>Strategy</th><th>동작</th><th>메모리</th><th>성능</th><th>사용 사례</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>FULL_SHARD</code></td>
+              <td>Forward 후 파라미터 해제</td>
+              <td>최소</td>
+              <td>통신 많음</td>
+              <td>메모리 극한 상황</td>
+            </tr>
+            <tr>
+              <td><code>SHARD_GRAD_OP</code></td>
+              <td>Forward 중 파라미터 유지</td>
+              <td>높음</td>
+              <td>통신 적음</td>
+              <td>메모리 여유 있을 때</td>
+            </tr>
+            <tr>
+              <td><code>HYBRID_SHARD</code></td>
+              <td>노드 내 샤딩, 노드 간 복제</td>
+              <td>균형</td>
+              <td>최적화됨</td>
+              <td>멀티노드 대규모 학습</td>
+            </tr>
+            <tr>
+              <td><code>NO_SHARD</code></td>
+              <td>샤딩 없음 (DDP와 동일)</td>
+              <td>최대</td>
+              <td>통신 최소</td>
+              <td>디버깅, 작은 모델</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <details>
+          <summary>HYBRID_SHARD 상세 설명</summary>
+          <div>
+            <p><code>HYBRID_SHARD</code>는 네트워크 토폴로지를 최적화합니다:</p>
+            <ul>
+              <li><strong>노드 내부 (Intra-node)</strong>: NVLink를 통해 빠른 All-Gather/Reduce-Scatter</li>
+              <li><strong>노드 간 (Inter-node)</strong>: 모델 복제로 네트워크 통신 최소화</li>
+            </ul>
+            <p>예: 8 GPU/node x 32 nodes = 256 GPU 클러스터에서, 각 노드 내 8 GPU는 FSDP로 샤딩하고, 32개 노드 간에는 DDP처럼 그래디언트만 동기화합니다.</p>
+          </div>
+        </details>
+
+        <!-- Section 8: FSDP2 vs FSDP1 -->
+        <h2 id="fsdp2">8. FSDP2 vs FSDP1</h2>
+
+        <h3>주요 차이점</h3>
+        <table>
+          <thead>
+            <tr><th>Feature</th><th>FSDP1</th><th>FSDP2</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>기반 기술</td><td>FlatParameter</td><td><strong>DTensor</strong></td></tr>
+            <tr><td>API</td><td><code>FSDP(module)</code> wrapper</td><td><code>fully_shard(module)</code> 함수</td></tr>
+            <tr><td>유연성</td><td>모듈 단위</td><td><strong>파라미터 단위</strong></td></tr>
+            <tr><td>메모리 관리</td><td>수동 조정 필요</td><td><strong>자동 최적화</strong></td></tr>
+            <tr><td>추천 버전</td><td>PyTorch 1.x ~ 2.3</td><td><strong>PyTorch 2.4+</strong></td></tr>
+          </tbody>
+        </table>
+
+        <h3>DTensor란?</h3>
+        <p><strong>DTensor (Distributed Tensor)</strong>는 PyTorch 2.0에서 도입된 분산 텐서 추상화입니다. 텐서가 여러 디바이스에 어떻게 분산되어 있는지를 메타데이터로 관리합니다.</p>
+
+        <h3>FSDP2 코드 예시</h3>
+<pre><code><span class="code-keyword">from</span> torch.distributed._composable.fsdp <span class="code-keyword">import</span> fully_shard, MixedPrecisionPolicy
+<span class="code-keyword">from</span> torch.distributed.device_mesh <span class="code-keyword">import</span> init_device_mesh
+
+<span class="code-comment"># Device Mesh 초기화 (2D: DP x TP)</span>
+mesh = init_device_mesh(<span class="code-string">"cuda"</span>, (dp_size, tp_size), mesh_dim_names=(<span class="code-string">"dp"</span>, <span class="code-string">"tp"</span>))
+
+<span class="code-comment"># Mixed Precision 정책</span>
+mp_policy = MixedPrecisionPolicy(
+    param_dtype=torch.bfloat16,
+    reduce_dtype=torch.float32,
+)
+
+<span class="code-comment"># FSDP2: 개별 모듈에 fully_shard 적용</span>
+<span class="code-keyword">for</span> layer <span class="code-keyword">in</span> model.transformer.layers:
+    fully_shard(layer, mesh=mesh[<span class="code-string">"dp"</span>], mp_policy=mp_policy)
+
+<span class="code-comment"># 최상위 모듈에도 적용</span>
+fully_shard(model, mesh=mesh[<span class="code-string">"dp"</span>], mp_policy=mp_policy)
+
+<span class="code-comment"># 이제 model은 FSDP2로 샤딩됨</span>
+output = model(input_ids)</code></pre>
+
+        <!-- Section 9: 메모리 계산 예시 -->
+        <h2 id="memory-calculation">9. 메모리 계산 예시</h2>
+
+        <h3>70B 모델 시나리오별 메모리</h3>
+        <table>
+          <thead>
+            <tr><th>시나리오</th><th>GPU 수</th><th>모델 상태 메모리/GPU</th><th>가능 여부</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>단일 GPU (DDP)</td>
+              <td>1</td>
+              <td>70B x 16B = <strong>1,120 GB</strong></td>
+              <td>불가능 (80GB VRAM 초과)</td>
+            </tr>
+            <tr>
+              <td>8 GPU ZeRO-3</td>
+              <td>8</td>
+              <td>1,120 / 8 = <strong>140 GB</strong></td>
+              <td>불가능</td>
+            </tr>
+            <tr>
+              <td>32 GPU ZeRO-3</td>
+              <td>32</td>
+              <td>1,120 / 32 = <strong>35 GB</strong></td>
+              <td><strong>가능</strong> (+ Activation 메모리 필요)</td>
+            </tr>
+            <tr>
+              <td>256 GPU ZeRO-3</td>
+              <td>256</td>
+              <td>1,120 / 256 = <strong>4.375 GB</strong></td>
+              <td><strong>여유</strong></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Activation Memory 공식</h3>
+        <p>Forward pass 시 Backward를 위해 중간 연산 결과(Activation)를 저장해야 합니다:</p>
+
+        <div class="formula">
+          Activation Memory ≈ batch_size x seq_len x hidden_dim x num_layers x bytes_per_element<br><br>
+          예: Llama 70B (hidden=8192, layers=80, BF16)<br>
+          batch=1, seq=4096: 1 x 4096 x 8192 x 80 x 2 ≈ <strong>5.4 GB</strong><br>
+          batch=4, seq=4096: 4 x 4096 x 8192 x 80 x 2 ≈ <strong>21.5 GB</strong>
+        </div>
+
+        <div class="callout info">
+          <strong>Activation Checkpointing</strong>
+          Activation 메모리가 너무 크면 <strong>Gradient Checkpointing</strong> 기법으로 Forward 중간 결과를 저장하지 않고, Backward 시 다시 계산합니다. 메모리를 절약하지만 연산량이 ~30% 증가합니다.
+        </div>
+
+        <!-- Section 10: NCCL Collective Operations -->
+        <h2 id="nccl-operations">10. NCCL Collective Operations</h2>
+
+        <h3>NCCL이란?</h3>
+        <p><strong>NCCL (NVIDIA Collective Communications Library)</strong>은 분산 GPU 학습에서 GPU 간 통신을 담당하는 고성능 라이브러리입니다. "네트워크 스택"처럼 GPU들이 서로 대화하는 방법을 정의합니다.</p>
+
+        <h3>주요 Collective Operations</h3>
+
+        <h4>All-Reduce</h4>
+        <p>모든 GPU가 기여하고, 모든 GPU가 합산 결과를 받습니다. DDP에서 그래디언트 동기화에 필수.</p>
+<pre><code><span class="code-comment"># All-Reduce: 모든 GPU의 그래디언트 합산 → 모든 GPU에 동일한 결과</span>
+GPU 0: [1, 2, 3]     GPU 0: [10, 20, 30]
+GPU 1: [2, 4, 6]  →  GPU 1: [10, 20, 30]  (sum)
+GPU 2: [3, 6, 9]     GPU 2: [10, 20, 30]
+GPU 3: [4, 8, 12]    GPU 3: [10, 20, 30]</code></pre>
+
+        <h4>All-Gather</h4>
+        <p>각 GPU의 조각을 모아 전체 텐서를 구성, 모든 GPU가 동일한 전체 텐서를 받습니다. FSDP에서 파라미터 재구성에 사용.</p>
+<pre><code><span class="code-comment"># All-Gather: 각 GPU의 샤드 수집 → 전체 텐서 재구성</span>
+GPU 0: [A]           GPU 0: [A, B, C, D]
+GPU 1: [B]        →  GPU 1: [A, B, C, D]  (concatenate)
+GPU 2: [C]           GPU 2: [A, B, C, D]
+GPU 3: [D]           GPU 3: [A, B, C, D]</code></pre>
+
+        <h4>Reduce-Scatter</h4>
+        <p>모든 GPU가 기여하고, 결과를 N등분하여 각 GPU가 다른 조각을 받습니다. FSDP Backward에서 그래디언트 분배에 사용.</p>
+<pre><code><span class="code-comment"># Reduce-Scatter: 합산 + 분배</span>
+GPU 0: [1,2,3,4]     GPU 0: [10] (chunk 0의 합)
+GPU 1: [2,4,6,8]  →  GPU 1: [20] (chunk 1의 합)
+GPU 2: [3,6,9,12]    GPU 2: [30] (chunk 2의 합)
+GPU 3: [4,8,12,16]   GPU 3: [40] (chunk 3의 합)</code></pre>
+
+        <h4>Broadcast</h4>
+        <p>하나의 GPU(root)가 데이터를 보내고, 모든 GPU가 받습니다. 초기 가중치 분배에 사용.</p>
+<pre><code><span class="code-comment"># Broadcast: Root GPU의 데이터를 모든 GPU로 복사</span>
+GPU 0: [W]  (root)   GPU 0: [W]
+GPU 1: [?]        →  GPU 1: [W]  (copied from root)
+GPU 2: [?]           GPU 2: [W]
+GPU 3: [?]           GPU 3: [W]</code></pre>
+
+        <h4>All-to-All</h4>
+        <p>각 GPU가 다른 모든 GPU에게 서로 다른 데이터를 보냅니다. MoE에서 Expert Parallelism에 사용.</p>
+<pre><code><span class="code-comment"># All-to-All: 각 GPU가 다른 GPU들에게 각각 다른 데이터 전송</span>
+GPU 0: [A0,A1,A2,A3]     GPU 0: [A0,B0,C0,D0]
+GPU 1: [B0,B1,B2,B3]  →  GPU 1: [A1,B1,C1,D1]
+GPU 2: [C0,C1,C2,C3]     GPU 2: [A2,B2,C2,D2]
+GPU 3: [D0,D1,D2,D3]     GPU 3: [A3,B3,C3,D3]</code></pre>
+
+        <!-- Section 11: Ring vs Tree Algorithm -->
+        <h2 id="ring-tree">11. Ring vs Tree Algorithm</h2>
+
+        <h3>Ring Algorithm</h3>
+        <p>GPU들을 논리적인 <strong>링(Ring)</strong> 형태로 연결하여 데이터를 순환시킵니다.</p>
+
+<pre><code><span class="code-comment"># Ring All-Reduce 동작 (4 GPU 예시)</span>
+
+   GPU 0 ←→ GPU 1
+     ↑         ↓
+   GPU 3 ←→ GPU 2
+
+<span class="code-comment"># 단계 1: 각 GPU가 이웃에게 청크 전송</span>
+<span class="code-comment"># 단계 2: 받은 데이터와 로컬 데이터 합산</span>
+<span class="code-comment"># 단계 3: N-1번 반복하면 모든 GPU가 전체 합산 결과 보유</span>
+
+<span class="code-comment"># 복잡도</span>
+대역폭: O(데이터 크기)  <span class="code-comment"># 데이터 크기에 비례, GPU 수 무관</span>
+지연시간: O(N)           <span class="code-comment"># GPU 수에 비례 (단점)</span></code></pre>
+
+        <h3>Tree Algorithm (Double Binary Tree)</h3>
+        <p>GPU들을 <strong>트리(Tree)</strong> 구조로 연결하여 계층적으로 데이터를 집계합니다.</p>
+
+<pre><code><span class="code-comment"># Tree All-Reduce 동작</span>
+
+        Root (GPU 0)
+       /           \
+    GPU 1         GPU 2
+   /     \       /     \
+GPU 3   GPU 4  GPU 5   GPU 6
+
+<span class="code-comment"># Reduce Phase: 리프 → 루트 (합산)</span>
+<span class="code-comment"># Broadcast Phase: 루트 → 리프 (분배)</span>
+
+<span class="code-comment"># 복잡도</span>
+대역폭: O(데이터 크기)     <span class="code-comment"># Ring과 동일</span>
+지연시간: O(log N)         <span class="code-comment"># GPU 수의 로그에 비례 (장점)</span></code></pre>
+
+        <h3>비교표</h3>
+        <table>
+          <thead>
+            <tr><th>특성</th><th>Ring Algorithm</th><th>Tree Algorithm</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>대역폭 효율</td><td>최적</td><td>최적</td></tr>
+            <tr><td>지연시간</td><td>O(N) - 높음</td><td>O(log N) - 낮음</td></tr>
+            <tr><td>소규모 클러스터</td><td>우수</td><td>보통</td></tr>
+            <tr><td>대규모 클러스터</td><td>지연 증가</td><td><strong>우수</strong></td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout info">
+          <strong>NCCL 자동 선택</strong>
+          NCCL은 네트워크 토폴로지와 데이터 크기를 분석하여 Ring, Tree, 또는 하이브리드 알고리즘을 <strong>자동으로 선택</strong>합니다. 대부분의 경우 사용자가 직접 지정할 필요가 없습니다.
+        </div>
+
+        <!-- Section 12: NCCL 초기화 -->
+        <h2 id="nccl-init">12. NCCL 초기화</h2>
+
+        <h3>TCPStore Rendezvous 과정</h3>
+        <p>분산 학습을 시작하려면 수백~수천 개의 프로세스(GPU)가 서로의 존재와 위치를 알아야 합니다.</p>
+
+<pre><code><span class="code-comment"># 전통적인 NCCL 초기화 과정</span>
+
+<span class="code-comment"># 1. Master Node (Rank 0)가 TCPStore 서버 시작</span>
+Rank 0: TCPStore 서버 오픈 (IP:PORT)
+
+<span class="code-comment"># 2. 모든 Worker가 Master에 연결하여 자신의 정보 등록</span>
+Rank 1 → Rank 0: "내 주소는 192.168.1.2:29501"
+Rank 2 → Rank 0: "내 주소는 192.168.1.3:29501"
+...
+Rank N → Rank 0: "내 주소는 ..."
+
+<span class="code-comment"># 3. 모든 Worker가 등록 완료되면 NCCL Unique ID 생성</span>
+Rank 0: NCCL Unique ID 생성 및 브로드캐스트
+
+<span class="code-comment"># 4. 각 Rank가 Communicator 형성</span>
+ncclCommInitRank(comm, nranks, uniqueId, rank)</code></pre>
+
+        <h3>init_process_group 코드</h3>
+<pre><code><span class="code-keyword">import</span> torch.distributed <span class="code-keyword">as</span> dist
+<span class="code-keyword">import</span> os
+
+<span class="code-comment"># 환경변수에서 분산 설정 읽기</span>
+rank = int(os.environ[<span class="code-string">'RANK'</span>])
+world_size = int(os.environ[<span class="code-string">'WORLD_SIZE'</span>])
+master_addr = os.environ[<span class="code-string">'MASTER_ADDR'</span>]
+master_port = os.environ[<span class="code-string">'MASTER_PORT'</span>]
+
+<span class="code-comment"># Process Group 초기화 (TCPStore 기반 rendezvous)</span>
+dist.init_process_group(
+    backend=<span class="code-string">'nccl'</span>,           <span class="code-comment"># GPU 통신용</span>
+    init_method=f<span class="code-string">'tcp://{master_addr}:{master_port}'</span>,
+    rank=rank,
+    world_size=world_size,
+)
+
+<span class="code-comment"># 이제 collective operations 사용 가능</span>
+tensor = torch.ones(10).cuda()
+dist.all_reduce(tensor)  <span class="code-comment"># 모든 GPU의 tensor 합산</span></code></pre>
+
+        <div class="callout danger">
+          <strong>TCPStore의 병목</strong>
+          수천 개의 Rank가 동시에 Rank 0에 연결하면 <strong>네트워크 병목</strong>이 발생합니다. Checkpointless Training은 이 문제를 <strong>Rootless NCCL 초기화</strong>로 해결합니다 (Chapter 6에서 상세 설명).
+        </div>
+
+        <!-- Section 13: Topology Discovery -->
+        <h2 id="topology">13. Topology Discovery</h2>
+
+        <h3>NCCL의 자동 토폴로지 탐색</h3>
+        <p>NCCL은 시작 시 <code>hwloc</code> 라이브러리를 사용하여 하드웨어 구성을 자동으로 탐색합니다.</p>
+
+        <h3>연결 계층 (P2P Level)</h3>
+        <table>
+          <thead>
+            <tr><th>연결 타입</th><th>대역폭</th><th>지연시간</th><th>사용 위치</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>NVLink</strong></td><td>600-900 GB/s</td><td>매우 낮음</td><td>노드 내 GPU 간</td></tr>
+            <tr><td><strong>NVSwitch</strong></td><td>7.2 TB/s (총합)</td><td>매우 낮음</td><td>노드 내 All-to-All</td></tr>
+            <tr><td><strong>PCIe Gen5</strong></td><td>64 GB/s</td><td>낮음</td><td>GPU-CPU, NVLink 없을 때</td></tr>
+            <tr><td><strong>InfiniBand HDR</strong></td><td>200 Gbps</td><td>~1 us</td><td>노드 간</td></tr>
+            <tr><td><strong>InfiniBand NDR</strong></td><td>400 Gbps</td><td>~1 us</td><td>노드 간 (최신)</td></tr>
+            <tr><td><strong>EFA (AWS)</strong></td><td>3200 Gbps</td><td>낮음</td><td>AWS 노드 간</td></tr>
+          </tbody>
+        </table>
+
+        <h3>NCCL_TOPO_FILE</h3>
+        <p>복잡한 토폴로지에서는 XML 파일로 직접 토폴로지를 지정할 수 있습니다:</p>
+
+<pre><code><span class="code-comment"># 토폴로지 파일 지정</span>
+export NCCL_TOPO_FILE=/path/to/topology.xml
+
+<span class="code-comment"># 토폴로지 탐색 결과 덤프</span>
+export NCCL_TOPO_DUMP_FILE=/tmp/nccl_topo.txt</code></pre>
+
+        <!-- Section 14: NCCL 환경변수 -->
+        <h2 id="nccl-env">14. NCCL 환경변수</h2>
+
+        <h3>중요 환경변수 테이블</h3>
+        <table>
+          <thead>
+            <tr><th>환경변수</th><th>설명</th><th>기본값</th><th>추천값</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>NCCL_DEBUG</code></td>
+              <td>디버그 로그 레벨</td>
+              <td>WARN</td>
+              <td>INFO (문제 해결 시 TRACE)</td>
+            </tr>
+            <tr>
+              <td><code>NCCL_DEBUG_SUBSYS</code></td>
+              <td>특정 서브시스템만 로깅</td>
+              <td>ALL</td>
+              <td>INIT,COLL (초기화/집단통신)</td>
+            </tr>
+            <tr>
+              <td><code>NCCL_ALGO</code></td>
+              <td>알고리즘 강제 지정</td>
+              <td>자동</td>
+              <td>Ring, Tree, CollnetDirect</td>
+            </tr>
+            <tr>
+              <td><code>NCCL_PROTO</code></td>
+              <td>프로토콜 지정</td>
+              <td>자동</td>
+              <td>Simple, LL, LL128</td>
+            </tr>
+            <tr>
+              <td><code>NCCL_BUFFSIZE</code></td>
+              <td>통신 버퍼 크기</td>
+              <td>4MB</td>
+              <td>8388608 (8MB, 대규모 시)</td>
+            </tr>
+            <tr>
+              <td><code>NCCL_NTHREADS</code></td>
+              <td>커널 스레드 수</td>
+              <td>자동</td>
+              <td>512 (대규모 시)</td>
+            </tr>
+            <tr>
+              <td><code>NCCL_IB_TIMEOUT</code></td>
+              <td>InfiniBand 타임아웃</td>
+              <td>18</td>
+              <td>22-23 (대규모 클러스터)</td>
+            </tr>
+            <tr>
+              <td><code>NCCL_IB_RETRY_CNT</code></td>
+              <td>IB 재시도 횟수</td>
+              <td>7</td>
+              <td>13 (안정성 향상)</td>
+            </tr>
+            <tr>
+              <td><code>NCCL_IB_GID_INDEX</code></td>
+              <td>IB GID 인덱스</td>
+              <td>0</td>
+              <td>RoCE v2: 3</td>
+            </tr>
+            <tr>
+              <td><code>NCCL_SOCKET_IFNAME</code></td>
+              <td>네트워크 인터페이스</td>
+              <td>자동</td>
+              <td>eth0, ens5 (AWS EFA)</td>
+            </tr>
+            <tr>
+              <td><code>NCCL_P2P_LEVEL</code></td>
+              <td>P2P 통신 제한</td>
+              <td>5</td>
+              <td>NVL (NVLink만 허용)</td>
+            </tr>
+            <tr>
+              <td><code>NCCL_SHM_DISABLE</code></td>
+              <td>공유 메모리 비활성화</td>
+              <td>0</td>
+              <td>1 (디버깅 시)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <details>
+          <summary>AWS EFA 최적화 환경변수</summary>
+          <div>
+<pre><code><span class="code-comment"># AWS EFA (Elastic Fabric Adapter) 최적화 설정</span>
+
+<span class="code-comment"># 기본 EFA 설정</span>
+export FI_PROVIDER=efa
+export FI_EFA_USE_DEVICE_RDMA=1
+export FI_EFA_FORK_SAFE=1
+
+<span class="code-comment"># NCCL EFA 플러그인</span>
+export NCCL_NET=aws-ofi-nccl
+export NCCL_DEBUG=INFO
+
+<span class="code-comment"># P5 인스턴스 (H100 x8) 최적화</span>
+export NCCL_NVLS_ENABLE=1  <span class="code-comment"># NVLink SHARP</span>
+export NCCL_IB_TIMEOUT=22
+export NCCL_MIN_NCHANNELS=4
+
+<span class="code-comment"># 대역폭 최적화</span>
+export NCCL_BUFFSIZE=8388608  <span class="code-comment"># 8MB</span>
+export NCCL_P2P_NET_CHUNKSIZE=524288  <span class="code-comment"># 512KB</span></code></pre>
+          </div>
+        </details>
+
+        <details>
+          <summary>NCCL 디버깅 팁</summary>
+          <div>
+<pre><code><span class="code-comment"># 문제 발생 시 상세 로깅</span>
+export NCCL_DEBUG=TRACE
+export NCCL_DEBUG_SUBSYS=INIT,COLL,P2P,NET
+export NCCL_DEBUG_FILE=/tmp/nccl_debug_%h_%p.log
+
+<span class="code-comment"># 토폴로지 확인</span>
+export NCCL_TOPO_DUMP_FILE=/tmp/nccl_topo.xml
+
+<span class="code-comment"># Hang 감지 (30초 타임아웃)</span>
+export NCCL_TIMEOUT=30
+export TORCH_NCCL_ASYNC_ERROR_HANDLING=1
+
+<span class="code-comment"># 디버그 정보 출력 예시</span>
+[Rank 0] NCCL INFO Bootstrap: Using eth0:192.168.1.10<6379>
+[Rank 0] NCCL INFO Trees [0] -1/-1/-1->0->1 [1] -1/-1/-1->0->1
+[Rank 0] NCCL INFO Channel 00 : 0 1 2 3</code></pre>
+          </div>
+        </details>
+
+        <!-- Summary -->
+        <h2 id="summary">요약</h2>
+        <div class="callout success">
+          <strong>핵심 포인트</strong>
+          <ul style="margin-top:8px">
+            <li><strong>ZeRO</strong>: Stage 1(Optimizer) → Stage 2(+Gradients) → Stage 3(+Parameters) 순으로 메모리 효율 극대화</li>
+            <li><strong>FSDP</strong>: PyTorch의 ZeRO-3 네이티브 구현, All-Gather/Reduce-Scatter로 동작</li>
+            <li><strong>FSDP2</strong>: DTensor 기반, <code>fully_shard()</code> API로 더 유연한 샤딩</li>
+            <li><strong>NCCL</strong>: All-Reduce, All-Gather, Reduce-Scatter 등 집단 통신 담당</li>
+            <li><strong>Ring vs Tree</strong>: 소규모는 Ring, 대규모는 Tree가 유리, NCCL이 자동 선택</li>
+            <li><strong>TCPStore</strong>: 기존 NCCL 초기화의 병목점 → Checkpointless에서 Rootless로 해결</li>
+          </ul>
+        </div>
+
+        <div class="nav-footer"></div>
+      </div>
+    </main>
+  </div>
+  <script src="shared.js"></script>
+</body>
+</html>

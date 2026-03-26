@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SageMaker & HyperPod - Checkpointless Training Research</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="progress-bar"></div>
+  <button class="sidebar-toggle" onclick="toggleSidebar()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="doc-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="doc-main"><div class="doc-content">
+      <span class="reading-time">약 60분</span>
+      <h1>Chapter 1: Amazon SageMaker & HyperPod</h1>
+
+      <!-- Section 1: Amazon SageMaker란? -->
+      <h2 id="what-is-sagemaker">1. Amazon SageMaker란?</h2>
+
+      <p>Amazon SageMaker는 AWS에서 제공하는 <strong>완전 관리형 머신러닝 서비스</strong>입니다. 데이터 사이언티스트와 ML 엔지니어가 머신러닝 모델을 빠르게 구축(Build), 학습(Train), 배포(Deploy)할 수 있도록 설계되었습니다.</p>
+
+      <div class="callout info">
+        <strong>SageMaker의 핵심 가치</strong><br>
+        인프라 관리 부담 없이 ML 워크플로우 전체를 하나의 통합 환경에서 처리할 수 있습니다. 데이터 준비부터 모델 모니터링까지 End-to-End ML 라이프사이클을 지원합니다.
+      </div>
+
+      <h3>Build - Train - Deploy 패러다임</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>단계</th>
+            <th>설명</th>
+            <th>주요 기능</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Build</strong></td>
+            <td>데이터 준비 및 Feature Engineering</td>
+            <td>Data Wrangler, Feature Store, Ground Truth</td>
+          </tr>
+          <tr>
+            <td><strong>Train</strong></td>
+            <td>모델 학습 및 튜닝</td>
+            <td>Training Jobs, HPO, Experiments, Debugger</td>
+          </tr>
+          <tr>
+            <td><strong>Deploy</strong></td>
+            <td>추론 엔드포인트 배포 및 모니터링</td>
+            <td>Real-time/Batch/Async Inference, Model Monitor</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>2024년 통합 플랫폼 진화</h3>
+
+      <p>2024년 AWS re:Invent에서 SageMaker는 크게 세 가지 축으로 재편되었습니다:</p>
+
+      <div class="card">
+        <h4>SageMaker AI</h4>
+        <p>기존 SageMaker의 ML 기능을 통합한 핵심 플랫폼입니다. Studio, Training, Inference 등 전통적인 ML 워크로드를 담당합니다. HyperPod를 통한 대규모 Foundation Model 학습도 이 범주에 포함됩니다.</p>
+      </div>
+
+      <div class="card">
+        <h4>SageMaker Lakehouse</h4>
+        <p>데이터 레이크와 데이터 웨어하우스를 통합한 새로운 데이터 관리 계층입니다. Apache Iceberg 기반의 테이블 포맷을 지원하며, Redshift, Athena, EMR 등과 원활하게 통합됩니다.</p>
+      </div>
+
+      <div class="card">
+        <h4>Amazon Bedrock 통합</h4>
+        <p>Foundation Model을 활용한 Generative AI 워크로드를 위한 통합입니다. SageMaker에서 학습한 커스텀 모델을 Bedrock으로 배포하거���, Bedrock의 FM을 SageMaker에서 Fine-tuning할 수 있습니다.</p>
+      </div>
+
+      <div class="callout warning">
+        <strong>명칭 변경 주의</strong><br>
+        2024년 이후 문서에서 "SageMaker"는 SageMaker AI를 지칭하는 경우가 많습니다. 기존 SageMaker 기능은 대부분 SageMaker AI로 이전되었으며, 데이터 관련 기능은 Lakehouse로 분리되었습니다.
+      </div>
+
+      <!-- Section 2: SageMaker 핵심 컴포넌트 -->
+      <h2 id="core-components">2. SageMaker 핵심 컴포넌트</h2>
+
+      <p>SageMaker는 ML 라이프사이클의 각 단계를 지원하는 다양한 컴포넌트로 구성됩니다. 아래 표는 주요 컴포넌트와 역할을 정리한 것입니다.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>컴포넌트</th>
+            <th>카테고리</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>SageMaker Studio</strong></td>
+            <td>개발 환경</td>
+            <td>웹 기반 통합 IDE. JupyterLab, Code Editor, 터미널을 포함하며 모든 ML 작업의 중앙 허브 역할</td>
+          </tr>
+          <tr>
+            <td><strong>SageMaker Pipelines</strong></td>
+            <td>MLOps</td>
+            <td>ML 워크플로우 오케스트레이션. DAG 기반 파이프라인 정의, 조건부 실행, 파라미터화 지원</td>
+          </tr>
+          <tr>
+            <td><strong>SageMaker Experiments</strong></td>
+            <td>실험 관리</td>
+            <td>학습 실험 추적 및 비교. 하이퍼파라미터, 메트릭, 아티팩트를 자동으로 로깅</td>
+          </tr>
+          <tr>
+            <td><strong>SageMaker Feature Store</strong></td>
+            <td>데이터</td>
+            <td>Feature 중앙 저장소. Online(실시간)/Offline(배치) 스토어 이중 구조로 학습과 추론에서 일관된 Feature 제공</td>
+          </tr>
+          <tr>
+            <td><strong>SageMaker Clarify</strong></td>
+            <td>설명 가능성</td>
+            <td>모델 편향 탐지 및 설명 가능성 분석. SHAP 기반 Feature 중요도, 데이터 편향 리포트 생성</td>
+          </tr>
+          <tr>
+            <td><strong>SageMaker Debugger</strong></td>
+            <td>디버깅</td>
+            <td>학습 중 텐서 캡처 및 분석. Gradient Vanishing, Overfitting 등 학습 문제 실시간 탐지</td>
+          </tr>
+          <tr>
+            <td><strong>SageMaker JumpStart</strong></td>
+            <td>사전학습 모델</td>
+            <td>350+ 사전학습 모델 허브. 원클릭 배포, Fine-tuning 템플릿, 솔루션 템플릿 제공</td>
+          </tr>
+          <tr>
+            <td><strong>SageMaker Model Registry</strong></td>
+            <td>모델 관리</td>
+            <td>모델 버전 관리 및 승인 워크플로우. 모델 그룹, 버전 메타데이터, 배포 승인 상태 관리</td>
+          </tr>
+          <tr>
+            <td><strong>SageMaker Model Monitor</strong></td>
+            <td>모니터링</td>
+            <td>배포된 모델 품질 모니터링. Data Drift, Model Drift, Bias Drift 자동 탐지 및 알림</td>
+          </tr>
+          <tr>
+            <td><strong>SageMaker Ground Truth</strong></td>
+            <td>데이터 레이블링</td>
+            <td>데이터 레이블링 서비스. Human-in-the-loop, Active Learning으로 효율적인 레이블링</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <details>
+        <summary>SageMaker Studio 아키텍처 상세</summary>
+        <p>SageMaker Studio는 AWS 관리형 JupyterLab 환경입니다. 각 사용자에게 독립된 EFS 홈 디렉토리가 할당되며, 컴퓨팅 리소스는 요청 시 프로비저닝됩니다.</p>
+        <ul>
+          <li><strong>Studio Domain</strong>: 조직 단위의 Studio 환경. VPC, 인증, 공유 설정 관리</li>
+          <li><strong>User Profile</strong>: 개별 사용자 설정. 실행 역할, 기본 인스턴스 타입 지정</li>
+          <li><strong>Space</strong>: 작업 공간 단위. Private(개인)/Shared(팀) 공간 구분</li>
+          <li><strong>App</strong>: 실제 컴퓨팅 인스턴스. JupyterLab, Code Editor, Terminal 등</li>
+        </ul>
+      </details>
+
+      <!-- Section 3: SageMaker Training Jobs -->
+      <h2 id="training-jobs">3. SageMaker Training Jobs</h2>
+
+      <p>SageMaker Training Job은 모델 학습을 실행하는 관리형 컴퓨팅 환경입니다. 학습 코드, 데이터, 컴퓨팅 리소스를 지정하면 SageMaker가 인프라 프로비저닝부터 학습 완료 후 정리까지 모든 과정을 자동으로 처리합니다.</p>
+
+      <h3>컨테이너 아키텍처</h3>
+
+      <p>SageMaker Training은 Docker 컨테이너 기반으로 동작합니다. 세 가지 유형의 컨테이너를 사용할 수 있습니다:</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>유형</th>
+            <th>설명</th>
+            <th>사용 사례</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Built-in Algorithm</strong></td>
+            <td>AWS가 제공하는 사전 구축된 알고리즘 컨테이너</td>
+            <td>XGBoost, Linear Learner, K-Means 등 표준 알고리즘 사용 시</td>
+          </tr>
+          <tr>
+            <td><strong>Framework Container</strong></td>
+            <td>PyTorch, TensorFlow 등 프레임워크가 설치된 AWS 관리형 컨테이너</td>
+            <td>커스텀 학습 코드를 표준 프레임워크에서 실행할 때</td>
+          </tr>
+          <tr>
+            <td><strong>Custom Container</strong></td>
+            <td>사용자가 직접 빌드한 Docker 이미지</td>
+            <td>특수 라이브러리, 비표준 환경이 필요할 때</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout info">
+        <strong>컨테이너 디렉토리 규칙</strong><br>
+        SageMaker 컨테이너는 표준화된 디렉토리 구조를 사용합니다:
+        <ul>
+          <li><code>/opt/ml/input/data/{channel}</code> - 입력 데이터</li>
+          <li><code>/opt/ml/model</code> - 학습된 모델 아티팩트 저장</li>
+          <li><code>/opt/ml/output</code> - 출력 및 로그</li>
+          <li><code>/opt/ml/code</code> - 학습 스크립트</li>
+        </ul>
+      </div>
+
+      <h3>Input Modes 비교</h3>
+
+      <p>학습 데이터를 컨테이너로 전달하는 방식에는 세 가지 모드가 있습니다:</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Input Mode</th>
+            <th>동작 방식</th>
+            <th>장점</th>
+            <th>단점</th>
+            <th>적합한 상황</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>File Mode</strong></td>
+            <td>학습 시작 전 S3에서 전체 데이터를 다운로드</td>
+            <td>랜덤 액세스 가능, 기존 코드 수정 불필요</td>
+            <td>대용량 데이터 시 시작 지연, 로컬 스토리지 제한</td>
+            <td>데이터 &lt; 50GB, 랜덤 액세스 필요</td>
+          </tr>
+          <tr>
+            <td><strong>Pipe Mode</strong></td>
+            <td>S3에서 데이터를 스트리밍 (Unix pipe)</td>
+            <td>즉시 시작, 무제한 데이터 크기</td>
+            <td>순차 읽기만 가능, 코드 수정 필요</td>
+            <td>매우 큰 데이터셋, 순차 처리</td>
+          </tr>
+          <tr>
+            <td><strong>FastFile Mode</strong></td>
+            <td>FUSE 기반 S3 마운트, 필요한 파일만 스트리밍</td>
+            <td>빠른 시작, 랜덤 액세스, 대용량 지원</td>
+            <td>첫 액세스 시 지연, 네트워크 의존</td>
+            <td>대부분의 경우 권장</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <pre><code># FastFile Mode 사용 예시
+from sagemaker.inputs import TrainingInput
+
+train_input = TrainingInput(
+    s3_data='s3://bucket/train/',
+    input_mode='FastFile'  # 권장
+)
+
+estimator.fit({'train': train_input})</code></pre>
+
+      <h3>데이터 소스 옵션</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>데이터 소스</th>
+            <th>특징</th>
+            <th>적합한 워크로드</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Amazon S3</strong></td>
+            <td>기본 옵션, 무제한 용량, 높은 처리량</td>
+            <td>대부분의 학습 작업</td>
+          </tr>
+          <tr>
+            <td><strong>Amazon EFS</strong></td>
+            <td>POSIX 파일 시스템, 실시간 동기화</td>
+            <td>데이터 전처리와 학습 간 공유, 빈번한 데이터 업데이트</td>
+          </tr>
+          <tr>
+            <td><strong>Amazon FSx for Lustre</strong></td>
+            <td>고성능 병렬 파일 시스템, S3 통합</td>
+            <td>대규모 분산 학습, 높은 IOPS 요구</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>인스턴스 타입 권장</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>워크로드 유형</th>
+            <th>권장 인스턴스</th>
+            <th>특징</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>CPU 학습</strong></td>
+            <td>ml.c5.xlarge ~ ml.c5.18xlarge</td>
+            <td>범용 CPU, XGBoost/Scikit-learn에 적합</td>
+          </tr>
+          <tr>
+            <td><strong>GPU 학습 (일반)</strong></td>
+            <td>ml.g5.xlarge ~ ml.g5.48xlarge</td>
+            <td>NVIDIA A10G GPU, 비용 효율적인 딥러닝</td>
+          </tr>
+          <tr>
+            <td><strong>GPU 학습 (고성능)</strong></td>
+            <td>ml.p5.48xlarge</td>
+            <td>NVIDIA H100 GPU x8, NVLink, 대규모 FM 학습</td>
+          </tr>
+          <tr>
+            <td><strong>AWS Trainium</strong></td>
+            <td>ml.trn1.32xlarge, ml.trn2.48xlarge</td>
+            <td>AWS 자체 ML 칩, 비용 대비 성능 최적화</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout success">
+        <strong>비용 최적화 팁</strong><br>
+        Spot Instance를 활용하면 On-Demand 대비 최대 90%까지 비용을 절감할 수 있습니다. 단, 중단에 대비한 체크포인트 전략이 필수입니다. HyperPod의 Auto-Resume 기능과 함께 사용하면 더욱 효과적입니다.
+      </div>
+
+      <!-- Section 4: SageMaker 분산 학습 -->
+      <h2 id="distributed-training">4. SageMaker 분산 학습</h2>
+
+      <p>대규모 모델 학습에는 단일 GPU로는 불가능한 메모리와 연산량이 필요합니다. SageMaker는 분산 학습을 위한 자체 라이브러리와 오픈소스 통합을 제공합니다.</p>
+
+      <h3>SMDDP (SageMaker Distributed Data Parallel)</h3>
+
+      <p>SMDDP는 <strong>Data Parallelism</strong>을 위한 SageMaker 최적화 라이브러리입니다. 각 GPU가 전체 모델 복사본을 가지고, 데이터를 분할하여 학습합니다.</p>
+
+      <div class="card">
+        <h4>AllReduce 최적화</h4>
+        <p>SMDDP는 AWS 네트워크 토폴로지에 최적화된 AllReduce 알고리즘을 사용합니다:</p>
+        <ul>
+          <li><strong>Hierarchical AllReduce</strong>: 노드 내부(NVLink) → 노드 간(EFA) 2단계 집계</li>
+          <li><strong>Gradient Compression</strong>: FP16/BF16 압축으로 통신량 감소</li>
+          <li><strong>Overlap Communication</strong>: 연산과 통신 오버랩으로 대기 시간 최소화</li>
+        </ul>
+      </div>
+
+      <pre><code># SMDDP 사용 예시
+import smdistributed.dataparallel.torch.distributed as dist
+from smdistributed.dataparallel.torch.parallel.distributed import DistributedDataParallel as DDP
+
+dist.init_process_group()
+model = DDP(model)
+
+# 학습 루프는 일반 PyTorch DDP와 동일</code></pre>
+
+      <h3>SMPv2 (SageMaker Model Parallelism v2)</h3>
+
+      <p>SMPv2는 <strong>Model Parallelism</strong>을 위한 라이브러리입니다. 모델이 단일 GPU 메모리에 맞지 않을 때 모델을 여러 GPU에 분산합니다.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>기능</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>FSDP 기반</strong></td>
+            <td>PyTorch FSDP(Fully Sharded Data Parallel)를 기반으로 하이브리드 샤딩 지원</td>
+          </tr>
+          <tr>
+            <td><strong>Tensor Parallelism</strong></td>
+            <td>행렬 연산을 여러 GPU에 분할. Attention, MLP 레이어 최적화</td>
+          </tr>
+          <tr>
+            <td><strong>Pipeline Parallelism</strong></td>
+            <td>모델 레이어를 순차적으로 여러 GPU에 배치</td>
+          </tr>
+          <tr>
+            <td><strong>Activation Checkpointing</strong></td>
+            <td>순전파 활성화 값을 선택적으로 저장하여 메모리 절감</td>
+          </tr>
+          <tr>
+            <td><strong>FlashAttention</strong></td>
+            <td>메모리 효율적인 Attention 연산 통합</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <pre><code># SMPv2 설정 예시 (JSON)
+{
+    "hybrid_shard_degree": 8,
+    "tensor_parallel_degree": 4,
+    "activation_checkpointing": true,
+    "activation_checkpointing_type": "selective",
+    "fp8": true
+}</code></pre>
+
+      <div class="callout info">
+        <strong>병렬화 전략 선택 가이드</strong><br>
+        <ul>
+          <li><strong>Data Parallel (SMDDP)</strong>: 모델이 단일 GPU에 맞을 때. 가장 간단하고 효율적</li>
+          <li><strong>FSDP (SMPv2)</strong>: 모델이 GPU 메모리의 2-8배일 때. 샤딩으로 메모리 절감</li>
+          <li><strong>Tensor Parallel</strong>: 단일 레이어가 GPU 메모리보다 클 때. 통신 오버헤드 있음</li>
+          <li><strong>Pipeline Parallel</strong>: 모델이 매우 클 때. 버블 타임으로 효율 저하 가능</li>
+        </ul>
+      </div>
+
+      <h3>DeepSpeed / Horovod 통합</h3>
+
+      <p>SageMaker는 오픈소스 분산 학습 프레임워크도 지원합니다:</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>프레임워크</th>
+            <th>특징</th>
+            <th>SageMaker 통합</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>DeepSpeed</strong></td>
+            <td>Microsoft의 분산 학습 라이브러리. ZeRO-1/2/3 메모리 최적화</td>
+            <td>Framework Container에 사전 설치, 커스텀 스크립트로 설정</td>
+          </tr>
+          <tr>
+            <td><strong>Horovod</strong></td>
+            <td>Uber의 분산 학습 라이브러리. Ring-AllReduce 기반</td>
+            <td>SageMaker 분산 학습 모드에서 직접 지원</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Section 5: Amazon SageMaker HyperPod -->
+      <h2 id="hyperpod-overview">5. Amazon SageMaker HyperPod</h2>
+
+      <p>Amazon SageMaker HyperPod는 <strong>Foundation Model 학습을 위한 복원력 있는(Resilient) 관리형 클러스터</strong>입니다. 수천 개의 GPU/Trainium 칩을 사용하는 대규모 분산 학습에서 발생하는 하드웨어 장애를 자동으로 처리합니다.</p>
+
+      <div class="callout warning">
+        <strong>HyperPod vs SageMaker Training Jobs</strong><br>
+        일반적인 Training Job은 작업 단위로 인프라를 프로비저닝합니다. HyperPod는 장기 실행 클러스터로, 여러 학습 작업을 연속으로 실행하며 노드 장애에 대한 복원력을 제공합니다. FM 학습처럼 수일~수주가 걸리는 작업에 적합합니다.
+      </div>
+
+      <h3>핵심 기능 4가지</h3>
+
+      <div class="card">
+        <h4>1. Auto-Resume (자동 재시작)</h4>
+        <p>하드웨어 장애 발생 시 자동으로 결함 노드를 교체하고, 마지막 체크포인트에서 학습을 재개합니다. 수동 개입 없이 24/7 학습 연속성을 보장합니다.</p>
+        <ul>
+          <li>GPU/Neuron 칩 상태 자동 모니터링</li>
+          <li>네트워크(EFA) 연결 상태 검사</li>
+          <li>결함 노드 자동 격리 및 교체</li>
+          <li>체크포인트 기반 학습 재개</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>2. Elastic Training (탄력적 학습)</h4>
+        <p>클러스터 크기를 동적으로 조정하면서 학습을 중단 없이 계속할 수 있습니다. 노드 추가/제거 시 자동으로 분산 학습 설정을 재구성합니다.</p>
+        <ul>
+          <li>노드 축소 시 graceful shutdown</li>
+          <li>노드 확장 시 자동 재분배</li>
+          <li>비용 최적화를 위한 동적 스케일링</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>3. Checkpointless Training (체크포인트리스 학습)</h4>
+        <p>체크포인트 저장 없이도 장애 복구가 가능한 혁신적인 기능입니다. NVIDIA Resiliency Extension 또는 AWS Trainium의 in-memory redundancy를 활용합니다.</p>
+        <ul>
+          <li>체크포인트 저장/로드 오버헤드 제거</li>
+          <li>학습 처리량 최대 20% 향상</li>
+          <li>스토리지 비용 절감</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>4. Task Governance (작업 거버넌스)</h4>
+        <p>여러 팀이 공유하는 클러스터에서 리소스 할당과 우선순위를 관리합니다. 공정한 스케줄링과 리소스 격리를 보장합니다.</p>
+        <ul>
+          <li>팀/프로젝트별 리소스 쿼터</li>
+          <li>우선순위 기반 스케줄링</li>
+          <li>Preemption 정책 설정</li>
+          <li>사용량 모니터링 및 청구</li>
+        </ul>
+      </div>
+
+      <details>
+        <summary>HyperPod 비용 모델</summary>
+        <p>HyperPod는 클러스터가 실행되는 동안 시간당 요금이 부과됩니다. 비용 최적화를 위한 전략:</p>
+        <ul>
+          <li><strong>Reserved Capacity</strong>: 장기 약정으로 최대 60% 할인</li>
+          <li><strong>Cluster 공유</strong>: Task Governance로 여러 팀이 클러스터 공유</li>
+          <li><strong>자동 축소</strong>: 유휴 시간에 노드 축소</li>
+          <li><strong>Checkpointless</strong>: I/O 시간 절감으로 총 학습 시간 단축</li>
+        </ul>
+      </details>
+
+      <!-- Section 6: HyperPod 아키텍처 -->
+      <h2 id="hyperpod-architecture">6. HyperPod 아키텍처</h2>
+
+      <p>HyperPod는 두 가지 오케스트레이션 옵션을 제공합니다: <strong>Slurm</strong> 기반과 <strong>Amazon EKS</strong> 기반입니다.</p>
+
+      <h3>Slurm 오케스트레이션</h3>
+
+      <p>Slurm은 HPC(High Performance Computing) 환경에서 널리 사용되는 워크로드 매니저입니다. HyperPod는 관리형 Slurm 클러스터를 제공합니다.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>노드 유형</th>
+            <th>역할</th>
+            <th>인스턴스 예시</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Head Node (Controller)</strong></td>
+            <td>Slurm Controller 실행, 작업 스케줄링, 클러스터 상태 관리</td>
+            <td>ml.c5.xlarge</td>
+          </tr>
+          <tr>
+            <td><strong>Login Node</strong></td>
+            <td>사용자 SSH 접속 지점, 작업 제출 인터페이스</td>
+            <td>ml.m5.xlarge</td>
+          </tr>
+          <tr>
+            <td><strong>Worker Node (Compute)</strong></td>
+            <td>실제 학습 작업 실행, GPU/Trainium 탑재</td>
+            <td>ml.p5.48xlarge, ml.trn1.32xlarge</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>Slurm 주요 명령어</h4>
+
+      <pre><code># 인터랙티브 작업 할당
+salloc -N 4 --gres=gpu:8 --time=24:00:00
+
+# 배치 작업 제출
+sbatch train_job.sh
+
+# 작업 실행 (할당된 노드에서)
+srun --auto-resume=1 python train.py
+
+# 작업 상태 확인
+squeue -u $USER
+
+# 클러스터 상태 확인
+sinfo</code></pre>
+
+      <h3>EKS 오케스트레이션</h3>
+
+      <p>Kubernetes 기반 오케스트레이션을 선호하는 팀을 위해 Amazon EKS 통합을 제공합니다.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Slurm 개념</th>
+            <th>EKS 매핑</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Head Node</td>
+            <td>EKS Control Plane</td>
+            <td>AWS 관리형, 별도 프로비저닝 불필요</td>
+          </tr>
+          <tr>
+            <td>Worker Node</td>
+            <td>EKS Node Group</td>
+            <td>HyperPod가 관리하는 GPU/Trainium 노드</td>
+          </tr>
+          <tr>
+            <td>Job</td>
+            <td>PyTorchJob / MPIJob</td>
+            <td>Kubeflow Training Operator CRD</td>
+          </tr>
+          <tr>
+            <td>srun</td>
+            <td>kubectl apply</td>
+            <td>YAML 매니페스트로 작업 제출</td>
+          </tr>
+          <tr>
+            <td>squeue</td>
+            <td>kubectl get pytorchjobs</td>
+            <td>작업 상태 조회</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <pre><code># PyTorchJob 예시
+apiVersion: kubeflow.org/v1
+kind: PyTorchJob
+metadata:
+  name: llm-training
+spec:
+  pytorchReplicaSpecs:
+    Master:
+      replicas: 1
+      template:
+        spec:
+          containers:
+          - name: pytorch
+            image: 123456789012.dkr.ecr.us-east-1.amazonaws.com/training:latest
+            resources:
+              limits:
+                nvidia.com/gpu: 8
+    Worker:
+      replicas: 3
+      template:
+        spec:
+          containers:
+          - name: pytorch
+            image: 123456789012.dkr.ecr.us-east-1.amazonaws.com/training:latest
+            resources:
+              limits:
+                nvidia.com/gpu: 8</code></pre>
+
+      <h3>Slurm vs EKS 비교</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>항목</th>
+            <th>Slurm</th>
+            <th>EKS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>대상 사용자</strong></td>
+            <td>HPC 경험자, 연구자</td>
+            <td>클라우드 네이티브 팀, DevOps</td>
+          </tr>
+          <tr>
+            <td><strong>작업 제출</strong></td>
+            <td>sbatch, srun</td>
+            <td>kubectl, Helm</td>
+          </tr>
+          <tr>
+            <td><strong>모니터링</strong></td>
+            <td>squeue, sacct</td>
+            <td>kubectl, Prometheus/Grafana</td>
+          </tr>
+          <tr>
+            <td><strong>확장성</strong></td>
+            <td>수천 노드 검증됨</td>
+            <td>Kubernetes 스케일 한계 적용</td>
+          </tr>
+          <tr>
+            <td><strong>기존 워크로드</strong></td>
+            <td>HPC 스크립트 재사용 용이</td>
+            <td>컨테이너화 필요</td>
+          </tr>
+          <tr>
+            <td><strong>Auto-Resume</strong></td>
+            <td>srun --auto-resume=1</td>
+            <td>Training Operator 자동 처리</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Section 7: HyperPod Auto-Resume -->
+      <h2 id="auto-resume">7. HyperPod Auto-Resume</h2>
+
+      <p>Auto-Resume은 HyperPod의 핵심 기능으로, 하드웨어 장애 발생 시 자동으로 학습을 재개합니다.</p>
+
+      <h3>Auto-Resume 동작 순서</h3>
+
+      <div class="card">
+        <ol>
+          <li><strong>장애 감지</strong>: Health Check 데몬이 GPU/Neuron/네트워크 이상 감지</li>
+          <li><strong>작업 중단</strong>: 현재 학습 작업을 graceful하게 중단</li>
+          <li><strong>노드 교체</strong>: 결함 노드를 클러스터에서 제외하고 새 노드 프로비저닝</li>
+          <li><strong>체크포인트 복구</strong>: 마지막 저장된 체크포인트 로드</li>
+          <li><strong>학습 재시작</strong>: 새로운 노드 구성으로 분산 학습 재개</li>
+        </ol>
+      </div>
+
+      <h3>하드웨어 Health Check</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>대상</th>
+            <th>검사 방법</th>
+            <th>주요 검사 항목</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>NVIDIA GPU</strong></td>
+            <td><code>nvidia-smi</code></td>
+            <td>GPU 상태, 메모리 에러, 온도, ECC 오류</td>
+          </tr>
+          <tr>
+            <td><strong>AWS Trainium</strong></td>
+            <td><code>/sys/devices</code> sysfs</td>
+            <td>Neuron 디바이스 상태, NeuronCore 가용성</td>
+          </tr>
+          <tr>
+            <td><strong>EFA Network</strong></td>
+            <td>EFA 상태 확인</td>
+            <td>RDMA 연결, 대역폭, 패킷 손실</td>
+          </tr>
+          <tr>
+            <td><strong>NVLink/NVSwitch</strong></td>
+            <td><code>nvidia-smi nvlink</code></td>
+            <td>GPU 간 연결 상태, 대역폭</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>srun --auto-resume 사용법</h3>
+
+      <pre><code>#!/bin/bash
+#SBATCH --job-name=llm-training
+#SBATCH --nodes=32
+#SBATCH --ntasks-per-node=8
+#SBATCH --gres=gpu:8
+#SBATCH --time=168:00:00
+#SBATCH --exclusive
+
+# Auto-Resume 활성화
+srun --auto-resume=1 \
+    --container-image=nvcr.io/nvidia/pytorch:24.01-py3 \
+    --container-mounts=/fsx:/fsx \
+    torchrun \
+    --nnodes=$SLURM_JOB_NUM_NODES \
+    --nproc_per_node=8 \
+    --rdzv_backend=c10d \
+    --rdzv_endpoint=$(hostname):29500 \
+    train.py \
+    --checkpoint_dir=/fsx/checkpoints \
+    --resume_from_checkpoint=auto</code></pre>
+
+      <div class="callout warning">
+        <strong>주의: $SLURM_JOB_NODELIST 사용 금지</strong><br>
+        Auto-Resume 환경에서는 <code>$SLURM_JOB_NODELIST</code>를 직접 사용하면 안 됩니다. 노드 교체 후 이 변수가 업데이트되지 않아 학습 재개가 실패할 수 있습니다.
+        <br><br>
+        대신 <code>$(hostname)</code>이나 <code>$SLURMD_NODENAME</code>을 사용하고, Rendezvous는 c10d 백엔드의 동적 검색에 의존하세요.
+      </div>
+
+      <h3>체크포인트 전략</h3>
+
+      <pre><code># 학습 코드에서 체크포인트 저장/로드 예시
+import torch
+import os
+
+def save_checkpoint(model, optimizer, epoch, step, path):
+    checkpoint = {
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'epoch': epoch,
+        'step': step,
+        'rng_state': torch.get_rng_state(),
+    }
+    torch.save(checkpoint, path)
+
+def load_checkpoint(model, optimizer, path):
+    if os.path.exists(path):
+        checkpoint = torch.load(path)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        torch.set_rng_state(checkpoint['rng_state'])
+        return checkpoint['epoch'], checkpoint['step']
+    return 0, 0
+
+# 주기적 체크포인트 저장 (Auto-Resume과 연동)
+if step % checkpoint_interval == 0:
+    save_checkpoint(
+        model, optimizer, epoch, step,
+        f'/fsx/checkpoints/ckpt_step_{step}.pt'
+    )</code></pre>
+
+      <!-- Section 8: HyperPod UltraServers -->
+      <h2 id="ultraservers">8. HyperPod UltraServers</h2>
+
+      <p>HyperPod UltraServers는 NVIDIA의 최신 GPU 아키텍처를 활용한 초고성능 학습 클러스터입니다.</p>
+
+      <h3>NVL72 구성</h3>
+
+      <div class="card">
+        <h4>NVIDIA GB200 NVL72</h4>
+        <table>
+          <tbody>
+            <tr>
+              <td><strong>인스턴스 수</strong></td>
+              <td>18개 인스턴스 (p5e.48xlarge)</td>
+            </tr>
+            <tr>
+              <td><strong>총 GPU 수</strong></td>
+              <td>72 NVIDIA B200 GPU</td>
+            </tr>
+            <tr>
+              <td><strong>GPU 메모리</strong></td>
+              <td>GPU당 192GB HBM3e (총 13.8TB)</td>
+            </tr>
+            <tr>
+              <td><strong>상호 연결</strong></td>
+              <td>NVLink 5.0 (1.8TB/s 양방향)</td>
+            </tr>
+            <tr>
+              <td><strong>네트워크</strong></td>
+              <td>EFA (3.2Tbps)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Topology-aware Scheduling</h3>
+
+      <p>대규모 분산 학습에서 GPU 간 통신 패턴은 성능에 큰 영향을 미칩니다. HyperPod는 네트워크 토폴로지를 인식한 스케줄링을 제공합니다.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>통신 레벨</th>
+            <th>대역폭</th>
+            <th>지연시간</th>
+            <th>스케줄링 전략</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>GPU 내 (NVLink)</strong></td>
+            <td>900 GB/s</td>
+            <td>&lt; 1 μs</td>
+            <td>Tensor Parallel 그룹을 같은 노드에 배치</td>
+          </tr>
+          <tr>
+            <td><strong>노드 내 (NVSwitch)</strong></td>
+            <td>900 GB/s</td>
+            <td>~1 μs</td>
+            <td>FSDP 샤드 그룹을 같은 노드에 배치</td>
+          </tr>
+          <tr>
+            <td><strong>노드 간 (EFA)</strong></td>
+            <td>400 Gbps</td>
+            <td>~10 μs</td>
+            <td>Data Parallel 통신, Gradient AllReduce</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <pre><code># Slurm에서 토폴로지 인식 작업 제출
+#SBATCH --switches=1@00:30:00  # 같은 스위치 내 노드 선호
+#SBATCH --constraint=nvlink    # NVLink 지원 노드만 사용
+
+# 또는 특정 파티션 지정
+#SBATCH --partition=nvl72</code></pre>
+
+      <div class="callout info">
+        <strong>NVL72 최적화 팁</strong><br>
+        <ul>
+          <li>Tensor Parallel degree는 8 (한 노드 내 GPU 수)로 설정</li>
+          <li>Pipeline Parallel은 NVLink 그룹 경계에 맞춰 설정</li>
+          <li>Data Parallel은 노드 간 통신으로, EFA 대역폭 고려</li>
+          <li>Gradient accumulation으로 통신 빈도 감소</li>
+        </ul>
+      </div>
+
+      <!-- Section 9: HyperPod Training Operator -->
+      <h2 id="training-operator">9. HyperPod Training Operator</h2>
+
+      <p>HyperPod Training Operator는 EKS 기반 HyperPod에서 분산 학습 작업을 관리하는 Kubernetes Operator입니다.</p>
+
+      <h3>Kubernetes CRD (Custom Resource Definition)</h3>
+
+      <p>Training Operator는 다음 CRD를 제공합니다:</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>CRD</th>
+            <th>용도</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>PyTorchJob</code></td>
+            <td>PyTorch 분산 학습 (torchrun 기반)</td>
+          </tr>
+          <tr>
+            <td><code>MPIJob</code></td>
+            <td>MPI 기반 분산 학습 (Horovod 등)</td>
+          </tr>
+          <tr>
+            <td><code>TFJob</code></td>
+            <td>TensorFlow 분산 학습</td>
+          </tr>
+          <tr>
+            <td><code>XGBoostJob</code></td>
+            <td>XGBoost 분산 학습</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>설치 방법</h3>
+
+      <pre><code># 1. EKS 클러스터에 HyperPod 애드온 설치
+aws eks create-addon \
+    --cluster-name my-hyperpod-cluster \
+    --addon-name amazon-sagemaker-hyperpod-taskgovernance \
+    --addon-version v1.0.0
+
+# 2. cert-manager 설치 (Training Operator 의존성)
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.0/cert-manager.yaml
+
+# 3. Pod Identity 설정
+aws eks create-pod-identity-association \
+    --cluster-name my-hyperpod-cluster \
+    --namespace training \
+    --service-account training-sa \
+    --role-arn arn:aws:iam::123456789012:role/HyperPodTrainingRole</code></pre>
+
+      <h3>hyperpod-elastic-agent</h3>
+
+      <p><code>hyperpod-elastic-agent</code>는 각 학습 Pod에서 실행되는 사이드카로, Auto-Resume과 Health Check를 담당합니다.</p>
+
+      <pre><code># PyTorchJob에 elastic-agent 설정 예시
+apiVersion: kubeflow.org/v1
+kind: PyTorchJob
+metadata:
+  name: resilient-training
+  annotations:
+    sagemaker.amazonaws.com/enable-auto-resume: "true"
+spec:
+  elasticPolicy:
+    minReplicas: 2
+    maxReplicas: 8
+    maxRestarts: 100
+  pytorchReplicaSpecs:
+    Worker:
+      replicas: 4
+      template:
+        spec:
+          containers:
+          - name: pytorch
+            image: training:latest
+            env:
+            - name: TORCHELASTIC_ENABLE_AUTO_RESUME
+              value: "1"</code></pre>
+
+      <h3>entrypoint.sh 예시</h3>
+
+      <pre><code>#!/bin/bash
+# entrypoint.sh - HyperPod EKS 학습 컨테이너 진입점
+
+set -e
+
+# 환경 변수 설정
+export MASTER_ADDR=${MASTER_ADDR:-$(hostname)}
+export MASTER_PORT=${MASTER_PORT:-29500}
+export WORLD_SIZE=${WORLD_SIZE:-1}
+export RANK=${RANK:-0}
+export LOCAL_RANK=${LOCAL_RANK:-0}
+
+# Health check 시작
+/opt/hyperpod/health-check-daemon &
+
+# NCCL 환경 설정
+export NCCL_DEBUG=INFO
+export NCCL_SOCKET_IFNAME=eth0
+export FI_EFA_USE_DEVICE_RDMA=1
+export FI_PROVIDER=efa
+
+# 체크포인트 디렉토리 확인
+CHECKPOINT_DIR=${CHECKPOINT_DIR:-/checkpoints}
+mkdir -p $CHECKPOINT_DIR
+
+# 마지막 체크포인트 찾기
+LATEST_CKPT=$(ls -t $CHECKPOINT_DIR/*.pt 2>/dev/null | head -1 || echo "")
+
+# 학습 시작
+if [ -n "$LATEST_CKPT" ]; then
+    echo "Resuming from checkpoint: $LATEST_CKPT"
+    RESUME_ARG="--resume_from_checkpoint=$LATEST_CKPT"
+else
+    echo "Starting fresh training"
+    RESUME_ARG=""
+fi
+
+torchrun \
+    --nnodes=$WORLD_SIZE \
+    --nproc_per_node=$NUM_GPUS \
+    --rdzv_backend=c10d \
+    --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
+    train.py \
+    --checkpoint_dir=$CHECKPOINT_DIR \
+    $RESUME_ARG \
+    "$@"</code></pre>
+
+      <!-- Section 10: 지원 리전 -->
+      <h2 id="regions">10. 지원 리전</h2>
+
+      <p>Amazon SageMaker HyperPod는 현재 17개 AWS 리전에서 사용 가능합니다.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>지역</th>
+            <th>리전 코드</th>
+            <th>리전 이름</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td rowspan="4"><strong>미국 (4)</strong></td>
+            <td><code>us-east-1</code></td>
+            <td>US East (N. Virginia)</td>
+          </tr>
+          <tr>
+            <td><code>us-east-2</code></td>
+            <td>US East (Ohio)</td>
+          </tr>
+          <tr>
+            <td><code>us-west-1</code></td>
+            <td>US West (N. California)</td>
+          </tr>
+          <tr>
+            <td><code>us-west-2</code></td>
+            <td>US West (Oregon)</td>
+          </tr>
+          <tr>
+            <td rowspan="5"><strong>유럽 (5)</strong></td>
+            <td><code>eu-west-1</code></td>
+            <td>Europe (Ireland)</td>
+          </tr>
+          <tr>
+            <td><code>eu-west-2</code></td>
+            <td>Europe (London)</td>
+          </tr>
+          <tr>
+            <td><code>eu-west-3</code></td>
+            <td>Europe (Paris)</td>
+          </tr>
+          <tr>
+            <td><code>eu-central-1</code></td>
+            <td>Europe (Frankfurt)</td>
+          </tr>
+          <tr>
+            <td><code>eu-north-1</code></td>
+            <td>Europe (Stockholm)</td>
+          </tr>
+          <tr>
+            <td rowspan="6"><strong>아시아 태평양 (6)</strong></td>
+            <td><code>ap-northeast-1</code></td>
+            <td>Asia Pacific (Tokyo)</td>
+          </tr>
+          <tr>
+            <td><code>ap-northeast-2</code></td>
+            <td>Asia Pacific (Seoul)</td>
+          </tr>
+          <tr>
+            <td><code>ap-northeast-3</code></td>
+            <td>Asia Pacific (Osaka)</td>
+          </tr>
+          <tr>
+            <td><code>ap-southeast-1</code></td>
+            <td>Asia Pacific (Singapore)</td>
+          </tr>
+          <tr>
+            <td><code>ap-southeast-2</code></td>
+            <td>Asia Pacific (Sydney)</td>
+          </tr>
+          <tr>
+            <td><code>ap-south-1</code></td>
+            <td>Asia Pacific (Mumbai)</td>
+          </tr>
+          <tr>
+            <td><strong>남미 (1)</strong></td>
+            <td><code>sa-east-1</code></td>
+            <td>South America (Sao Paulo)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout info">
+        <strong>리전 선택 가이드</strong><br>
+        <ul>
+          <li><strong>최신 인스턴스 타입</strong>: us-east-1, us-west-2에서 먼저 출시</li>
+          <li><strong>UltraServers (NVL72)</strong>: 현재 us-east-1, us-west-2에서만 사용 가능</li>
+          <li><strong>Trainium 인스턴스</strong>: us-east-1, us-east-2, us-west-2 권장</li>
+          <li><strong>한국 사용자</strong>: ap-northeast-2 (Seoul) 또는 지연시간 고려 시 ap-northeast-1 (Tokyo)</li>
+        </ul>
+      </div>
+
+      <div class="callout warning">
+        <strong>용량 예약 권장</strong><br>
+        대규모 HyperPod 클러스터(수십~수백 노드)는 사전 용량 예약(Capacity Reservation)을 권장합니다. 특히 p5, trn1 등 고성능 인스턴스는 수요가 높아 On-Demand 가용성이 제한될 수 있습니다. AWS 담당자와 사전 협의하세요.
+      </div>
+
+      <!-- Summary -->
+      <h2 id="summary">정리</h2>
+
+      <div class="card">
+        <h4>이 Chapter에서 배운 내용</h4>
+        <ul>
+          <li><strong>SageMaker</strong>는 AWS의 완전 관리형 ML 플랫폼으로, Build-Train-Deploy 전체 라이프사이클을 지원</li>
+          <li><strong>SageMaker 분산 학습</strong>은 SMDDP(Data Parallel)와 SMPv2(Model Parallel)를 통해 대규모 모델 학습 지원</li>
+          <li><strong>HyperPod</strong>는 FM 학습을 위한 복원력 있는 클러스터로, Auto-Resume, Elastic Training, Checkpointless Training 제공</li>
+          <li><strong>Slurm vs EKS</strong>: HPC 배경이면 Slurm, 클라우드 네이티브 팀이면 EKS 선택</li>
+          <li><strong>Auto-Resume</strong>은 하드웨어 장애 시 자동으로 노드 교체 및 체크포인트 복구 수행</li>
+          <li><strong>UltraServers</strong>는 NVL72 구성으로 72 GPU를 NVLink로 연결한 초고성능 클러스터</li>
+        </ul>
+      </div>
+
+      <p>다음 Chapter에서는 <strong>Checkpointless Training</strong>의 기술적 원리와 구현 방법을 자세히 살펴봅니다.</p>
+
+      <div class="nav-footer"></div>
+    </div></main>
+  </div>
+  <script src="shared.js"></script>
+</body>
+</html>

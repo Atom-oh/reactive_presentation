@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Q&A & 용어집 - Checkpointless Training Research</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="progress-bar"></div>
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="doc-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="doc-main">
+      <div class="doc-content">
+        <span class="reading-time">📖 약 45분</span>
+
+        <h1>Chapter 9: Q&A & 용어집</h1>
+        <p class="lead">발표 후 예상되는 질문에 대한 상세 답변, 슬라이드별 발표 가이드, 그리고 핵심 기술 용어 정의를 제공합니다.</p>
+
+        <div class="callout info">
+          <strong>이 장의 활용법</strong>
+          발표 직전 빠르게 Q&A 섹션을 훑어보며 예상 질문에 대비하세요. 용어집은 발표 중 청중의 질문에 정확한 정의로 답변할 때 참고합니다.
+        </div>
+
+        <!-- Section 1: 예상 질문 15개 -->
+        <h2 id="faq">1. 예상 질문 15개</h2>
+
+        <details>
+          <summary>Q1. Checkpointless Training이 체크포인트를 아예 안 만드나요?</summary>
+          <div>
+            <p><strong>답변</strong>: 아니요, "Checkpointless"는 <strong>장애 복구 시 체크포인트를 사용하지 않는다</strong>는 의미입니다.</p>
+            <ul>
+              <li><strong>장애 복구</strong>: P2P 메모리 복제를 통해 체크포인트 로드 없이 복구</li>
+              <li><strong>장기 보관</strong>: 모델 버전 관리, 학습 재개를 위한 S3 체크포인트는 별도 주기로 저장 가능</li>
+              <li><strong>Fallback</strong>: P2P 복구 실패 시 자동으로 체크포인트 기반 복구로 전환</li>
+            </ul>
+            <div class="callout success">
+              <strong>핵심 포인트</strong>
+              체크포인트를 "없앤" 것이 아니라, 장애 복구 경로에서 체크포인트 I/O 병목을 제거한 것입니다.
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>Q2. 기존 PyTorch 코드를 얼마나 수정해야 하나요?</summary>
+          <div>
+            <p><strong>답변</strong>: 4 Tier 점진적 적용 모델을 제공하며, <strong>Tier 1은 코드 수정 없이 환경 변수만으로</strong> 적용 가능합니다.</p>
+            <table>
+              <thead>
+                <tr><th>Tier</th><th>코드 수정</th><th>기능</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>Tier 1</strong></td><td>없음 (환경 변수만)</td><td>TCPStore-less NCCL 초기화</td></tr>
+                <tr><td><strong>Tier 2</strong></td><td>최소 (데이터 로더)</td><td>+ MMAP 데이터 로딩</td></tr>
+                <tr><td><strong>Tier 3</strong></td><td>중간</td><td>+ In-Process Recovery</td></tr>
+                <tr><td><strong>Tier 4</strong></td><td>NeMo 기반</td><td>+ P2P State Replication (전체 기능)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+
+        <details>
+          <summary>Q3. NeMo가 아닌 다른 프레임워크도 지원하나요?</summary>
+          <div>
+            <p><strong>답변</strong>: 현재 <strong>전체 기능(Tier 4)은 NeMo 기반</strong>이지만, Tier 1-3은 일반 PyTorch에서도 사용 가능합니다.</p>
+            <ul>
+              <li><strong>Tier 1-3</strong>: 순수 PyTorch, PyTorch Lightning, Hugging Face Transformers 등과 호환</li>
+              <li><strong>Tier 4</strong>: P2P State Replication은 NeMo의 분산 학습 구조와 통합 필요</li>
+              <li><strong>향후 계획</strong>: AWS는 더 많은 프레임워크 지원을 확대 중</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>Q4. GPU 메모리 오버헤드는 얼마나 되나요?</summary>
+          <div>
+            <p><strong>답변</strong>: P2P 복제 설정에 따라 다르며, <code>num_distributed_optimizer_instances=2</code>면 <strong>Optimizer State가 2x 복제</strong>됩니다.</p>
+            <ul>
+              <li><strong>모델 파라미터</strong>: 복제하지 않음 (FSDP/ZeRO로 이미 분산)</li>
+              <li><strong>Optimizer State</strong>: 복제 수만큼 메모리 사용 증가</li>
+              <li><strong>완화 방법</strong>: CPU Offload를 활용하여 GPU 메모리 부담 감소</li>
+            </ul>
+            <div class="formula">
+추가 메모리 = Optimizer State Size × (복제 수 - 1)
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>Q5. Hot Spare 노드를 몇 개 준비해야 하나요?</summary>
+          <div>
+            <p><strong>답변</strong>: 일반적으로 <strong>클러스터 크기의 1-5%</strong>를 권장합니다.</p>
+            <table>
+              <thead>
+                <tr><th>클러스터 규모</th><th>권장 Hot Spare</th><th>근거</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>100 GPU</td><td>1-2 노드</td><td>소규모에서 장애 빈도 낮음</td></tr>
+                <tr><td>1,000 GPU</td><td>10-50 노드</td><td>통계적으로 주 1-2회 장애</td></tr>
+                <tr><td>10,000+ GPU</td><td>100-500 노드</td><td>Meta 통계: 54일간 466회 장애</td></tr>
+              </tbody>
+            </table>
+            <div class="callout warning">
+              <strong>비용 고려</strong>
+              Hot Spare 비용 vs 장애 복구 시간 손실 비용을 비교하여 최적 수를 결정하세요.
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>Q6. EKS만 지원하나요? Slurm은요?</summary>
+          <div>
+            <p><strong>답변</strong>: <strong>Checkpointless Training은 EKS 기반 HyperPod Training Operator 필수</strong>입니다. Slurm 환경에서는 별도의 Auto-Resume 기능을 사용합니다.</p>
+            <ul>
+              <li><strong>EKS (권장)</strong>: Training Operator가 Hot Spare 관리, 자동 복구 오케스트레이션</li>
+              <li><strong>Slurm</strong>: Auto-Resume 기능으로 Job 재시작 지원, 하지만 In-Process Recovery 미지원</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>Q7. 복구 중 학습 진행 상태(step)는 어떻게 되나요?</summary>
+          <div>
+            <p><strong>답변</strong>: <strong>장애 발생 시점의 step으로 정확히 복귀</strong>합니다.</p>
+            <ul>
+              <li>P2P 복제된 상태에는 현재 global step 정보 포함</li>
+              <li>MMAP 데이터 로딩으로 데이터 위치도 정확히 복원</li>
+              <li>RNG State 복제로 동일한 랜덤 시드 유지</li>
+            </ul>
+            <div class="callout info">
+              <strong>기존 체크포인트 방식과의 차이</strong>
+              기존: 마지막 체크포인트 시점으로 복귀 (수백~수천 step 손실)<br>
+              Checkpointless: 장애 직전 step으로 복귀 (손실 최소화)
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>Q8. 다른 AWS 리전에서도 사용 가능한가요?</summary>
+          <div>
+            <p><strong>답변</strong>: 현재 <strong>17개 리전</strong>에서 SageMaker HyperPod를 지원하지만, 서울(ap-northeast-2)은 미포함입니다.</p>
+            <ul>
+              <li><strong>가장 가까운 리전</strong>: 도쿄 (ap-northeast-1)</li>
+              <li><strong>북미</strong>: us-east-1, us-east-2, us-west-2 등</li>
+              <li><strong>유럽</strong>: eu-west-1, eu-central-1 등</li>
+            </ul>
+            <div class="callout warning">
+              <strong>참고</strong>
+              리전 가용성은 수시로 업데이트됩니다. 최신 정보는 AWS 공식 문서를 확인하세요.
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>Q9. P2P 복제가 네트워크 대역폭을 얼마나 사용하나요?</summary>
+          <div>
+            <p><strong>답변</strong>: 학습 중 <strong>백그라운드로 복제</strong>되며, EFA 3,200 Gbps 대비 미미한 수준입니다.</p>
+            <ul>
+              <li><strong>복제 타이밍</strong>: Forward/Backward 연산의 유휴 시간 활용</li>
+              <li><strong>대역폭 사용</strong>: AllReduce 등 학습 통신과 시간 분리</li>
+              <li><strong>영향</strong>: 학습 처리량에 거의 영향 없음 (&lt;1%)</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>Q10. Silent Data Corruption은 어떻게 감지하나요?</summary>
+          <div>
+            <p><strong>답변</strong>: <strong>CudaHealthCheck</strong>와 <strong>CheckpointManager의 global step consistency 검증</strong>을 통해 감지합니다.</p>
+            <ul>
+              <li><strong>CudaHealthCheck</strong>: GPU 메모리 무결성 주기적 검증</li>
+              <li><strong>Step Consistency</strong>: 모든 Rank의 global step 일치 여부 확인</li>
+              <li><strong>Gradient 검증</strong>: NaN/Inf 감지 및 자동 롤백</li>
+            </ul>
+            <div class="callout danger">
+              <strong>SDC의 위험성</strong>
+              Google Gemini Ultra 학습에서 1-2주마다 SDC 발생 보고. 조기 감지가 매우 중요합니다.
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>Q11. 비용이 추가로 드나요?</summary>
+          <div>
+            <p><strong>답변</strong>: <strong>Hot Spare 노드 비용</strong>과 <strong>Checkpointless Container Image</strong> 사용료가 추가됩니다. 하지만 복구 시간 절감으로 <strong>순 비용 절감</strong> 효과가 있습니다.</p>
+            <table>
+              <thead>
+                <tr><th>비용 항목</th><th>추가 비용</th><th>절감 효과</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Hot Spare 노드</td><td>클러스터의 1-5%</td><td>복구 시간 90% 이상 단축</td></tr>
+                <tr><td>Container Image</td><td>미미</td><td>-</td></tr>
+                <tr><td>복구 시간 절감</td><td>-</td><td>$4,693/장애 (1,000 GPU 기준)</td></tr>
+              </tbody>
+            </table>
+            <div class="formula">
+순 절감 = (장애 횟수 × 복구 시간 절감 × GPU 시간당 비용) - Hot Spare 비용
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>Q12. Amazon Nova는 실제로 이 기술로 학습됐나요?</summary>
+          <div>
+            <p><strong>답변</strong>: <strong>네</strong>, Amazon Nova 모델 가족은 Checkpointless Training 기술로 학습되었습니다.</p>
+            <ul>
+              <li><strong>클러스터 규모</strong>: Tens of thousands of accelerators</li>
+              <li><strong>Goodput</strong>: 95% 이상 달성</li>
+              <li><strong>의의</strong>: 프로덕션 환경에서 대규모 검증 완료</li>
+            </ul>
+            <div class="callout success">
+              <strong>발표 포인트</strong>
+              "이 기술은 이론이 아닙니다. AWS가 자체 모델 학습에 사용하고 검증한 프로덕션 기술입니다."
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>Q13. On-premise 환경에서도 사용 가능한가요?</summary>
+          <div>
+            <p><strong>답변</strong>: <strong>아니요</strong>, Checkpointless Training은 <strong>SageMaker HyperPod 전용 Managed Service</strong>입니다.</p>
+            <ul>
+              <li>Training Operator, Hot Spare 관리, EFA 통합 등이 AWS 인프라에 의존</li>
+              <li>On-premise 대안: NVIDIA NVRx (오픈소스) 고려</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>Q14. Elastic Training과 Checkpointless Training의 차이는?</summary>
+          <div>
+            <p><strong>답변</strong>: <strong>목적이 다릅니다</strong>. Elastic은 동적 스케일링, Checkpointless는 장애 복구에 초점을 맞춥니다.</p>
+            <table>
+              <thead>
+                <tr><th>특성</th><th>Elastic Training</th><th>Checkpointless Training</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>목적</strong></td><td>동적 클러스터 크기 조절</td><td>빠른 장애 복구</td></tr>
+                <tr><td><strong>시나리오</strong></td><td>Spot VM 활용, 리소스 탄력성</td><td>대규모 장기 학습 안정성</td></tr>
+                <tr><td><strong>복구 방식</strong></td><td>체크포인트 기반</td><td>인메모리 복제</td></tr>
+              </tbody>
+            </table>
+            <div class="callout info">
+              <strong>보완적 관계</strong>
+              두 기술은 상호 배타적이지 않으며, 함께 사용하여 탄력성과 안정성을 모두 확보할 수 있습니다.
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>Q15. 기존 Checkpoint와 병행 사용 가능한가요?</summary>
+          <div>
+            <p><strong>답변</strong>: <strong>네</strong>, 병행 사용이 가능하며 권장됩니다.</p>
+            <ul>
+              <li><strong>P2P 복제</strong>: 빠른 장애 복구용 (primary)</li>
+              <li><strong>S3 체크포인트</strong>: 장기 보관, 버전 관리용 (별도 주기)</li>
+              <li><strong>Fallback</strong>: P2P 복구 실패 시 자동으로 체크포인트 복구로 전환</li>
+            </ul>
+            <pre><code><span class="code-comment"># 권장 설정 예시</span>
+p2p_replication_interval: <span class="code-number">100</span>    <span class="code-comment"># 100 step마다 P2P 복제</span>
+s3_checkpoint_interval: <span class="code-number">10000</span>    <span class="code-comment"># 10,000 step마다 S3 저장</span></code></pre>
+          </div>
+        </details>
+
+        <!-- Section 2: 슬라이드별 발표 가이드 -->
+        <h2 id="presentation-guide">2. 슬라이드별 발표 가이드 (15분 세션)</h2>
+
+        <div class="callout warning">
+          <strong>시간 관리 팁</strong>
+          15분 발표에서 가장 중요한 것은 시간 관리입니다. 각 섹션별 권장 시간을 준수하세요.
+        </div>
+
+        <table>
+          <thead>
+            <tr><th>Slide #</th><th>Title</th><th>Key Talking Points</th><th>Time</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>Title Slide</td>
+              <td>자기소개, 세션 목표 간단히</td>
+              <td>30초</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>Agenda</td>
+              <td>3가지 핵심: 문제, 솔루션, 성과</td>
+              <td>30초</td>
+            </tr>
+            <tr>
+              <td>3-4</td>
+              <td>The Problem</td>
+              <td>
+                - Meta 통계: 54일간 466회 장애<br>
+                - Llama 3 70B 체크포인트 = 521GB<br>
+                - 복구 시간 15-60분
+              </td>
+              <td>2분</td>
+            </tr>
+            <tr>
+              <td>5-6</td>
+              <td>Cost of Failure</td>
+              <td>
+                - $4,693/장애 (1,000 GPU)<br>
+                - Goodput 60-80%로 하락<br>
+                - "시간 = 돈" 강조
+              </td>
+              <td>2분</td>
+            </tr>
+            <tr>
+              <td>7-8</td>
+              <td>Checkpointless 소개</td>
+              <td>
+                - 핵심 아이디어: 디스크 I/O 제거<br>
+                - 인메모리 P2P 복제<br>
+                - Hot Spare 즉시 대체
+              </td>
+              <td>2분</td>
+            </tr>
+            <tr>
+              <td>9-11</td>
+              <td>5대 컴포넌트</td>
+              <td>
+                - Rootless NCCL: 단일 장애점 제거<br>
+                - MMAP: 데이터 위치 즉시 복원<br>
+                - IPR: 건강한 노드 유지<br>
+                - P2P: 상태 복제 핵심<br>
+                - Training Operator: 오케스트레이션
+              </td>
+              <td>3분</td>
+            </tr>
+            <tr>
+              <td>12-13</td>
+              <td>성능 벤치마크</td>
+              <td>
+                - 복구 시간: 15-60분 → &lt;90초<br>
+                - Goodput: 60% → 95%+<br>
+                - Amazon Nova 사례
+              </td>
+              <td>2분</td>
+            </tr>
+            <tr>
+              <td>14-15</td>
+              <td>Getting Started</td>
+              <td>
+                - 4-Tier 적용 모델<br>
+                - Pre-configured Recipes<br>
+                - GitHub 링크
+              </td>
+              <td>1분 30초</td>
+            </tr>
+            <tr>
+              <td>16-17</td>
+              <td>Wrap-up & Q&A</td>
+              <td>
+                - 핵심 3줄 요약<br>
+                - Call to Action<br>
+                - Q&A 전환
+              </td>
+              <td>1분 30초</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout success">
+          <strong>발표 핵심 메시지 (3줄 요약)</strong>
+          1. 대규모 학습에서 장애는 "예외"가 아니라 "일상"입니다.<br>
+          2. Checkpointless Training은 디스크 I/O를 제거하고 복구 시간을 90% 단축합니다.<br>
+          3. Amazon Nova 학습에서 검증된 프로덕션 기술입니다.
+        </div>
+
+        <!-- Section 3: 용어집 -->
+        <h2 id="glossary">3. 용어집 (Glossary)</h2>
+
+        <div class="callout info">
+          <strong>50개+ 핵심 기술 용어</strong>
+          알파벳 순으로 정렬되어 있습니다. Ctrl+F로 빠르게 검색하세요.
+        </div>
+
+        <table>
+          <thead>
+            <tr><th>Term</th><th>Definition</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>AllGather</strong></td>
+              <td>모든 프로세스가 각자의 데이터를 모든 프로세스에게 전송하여, 모든 프로세스가 전체 데이터를 갖게 되는 collective operation</td>
+            </tr>
+            <tr>
+              <td><strong>AllReduce</strong></td>
+              <td>모든 프로세스의 데이터를 합산(또는 다른 연산)하여 결과를 모든 프로세스에게 배포하는 collective operation. 분산 학습에서 gradient 동기화에 핵심적으로 사용</td>
+            </tr>
+            <tr>
+              <td><strong>Backpropagation</strong></td>
+              <td>신경망 학습에서 출력 오류를 역방향으로 전파하여 각 가중치의 gradient를 계산하는 알고리즘</td>
+            </tr>
+            <tr>
+              <td><strong>BF16 (BFloat16)</strong></td>
+              <td>Brain Floating Point 16-bit. Google이 개발한 16비트 부동소수점 형식으로, FP32와 동일한 지수 범위를 유지하면서 메모리 사용을 절반으로 줄임</td>
+            </tr>
+            <tr>
+              <td><strong>Checkpoint</strong></td>
+              <td>학습 중 모델 가중치, optimizer 상태, 학습 진행 상황 등을 저장한 스냅샷. 장애 복구 및 학습 재개에 사용</td>
+            </tr>
+            <tr>
+              <td><strong>CUDA</strong></td>
+              <td>NVIDIA의 병렬 컴퓨팅 플랫폼 및 프로그래밍 모델. GPU에서 범용 연산을 수행할 수 있게 함</td>
+            </tr>
+            <tr>
+              <td><strong>DDP (Distributed Data Parallel)</strong></td>
+              <td>PyTorch의 데이터 병렬 처리 모듈. 각 GPU에 모델 복제본을 두고 데이터를 분할하여 병렬 학습</td>
+            </tr>
+            <tr>
+              <td><strong>DeepSpeed</strong></td>
+              <td>Microsoft가 개발한 대규모 모델 학습 최적화 라이브러리. ZeRO 옵티마이저로 유명</td>
+            </tr>
+            <tr>
+              <td><strong>EFA (Elastic Fabric Adapter)</strong></td>
+              <td>AWS의 고성능 네트워크 인터페이스. HPC 및 ML 워크로드를 위해 설계되었으며, 최대 3,200 Gbps 대역폭 제공</td>
+            </tr>
+            <tr>
+              <td><strong>FSDP (Fully Sharded Data Parallel)</strong></td>
+              <td>PyTorch의 메모리 효율적 분산 학습 기법. 모델 파라미터, gradient, optimizer 상태를 GPU 간에 샤딩</td>
+            </tr>
+            <tr>
+              <td><strong>Goodput</strong></td>
+              <td>유효 처리량. 전체 처리량에서 장애로 인한 손실 작업을 제외한 실제 생산적인 작업량. Goodput = Throughput × (1 - Failure_Rate × Recovery_Time)</td>
+            </tr>
+            <tr>
+              <td><strong>Gradient</strong></td>
+              <td>손실 함수에 대한 각 파라미터의 편미분값. 파라미터를 업데이트할 방향과 크기를 결정</td>
+            </tr>
+            <tr>
+              <td><strong>HBM3 (High Bandwidth Memory 3)</strong></td>
+              <td>3세대 고대역폭 메모리. H100 GPU에서 3.35 TB/s 대역폭 제공. H200은 HBM3e로 4.8 TB/s</td>
+            </tr>
+            <tr>
+              <td><strong>Hot Spare</strong></td>
+              <td>장애 발생 시 즉시 대체할 수 있도록 대기 상태로 유지되는 예비 노드</td>
+            </tr>
+            <tr>
+              <td><strong>HyperPod</strong></td>
+              <td>AWS SageMaker의 대규모 분산 학습을 위한 관리형 클러스터 서비스. 자동 장애 복구, 클러스터 관리 기능 제공</td>
+            </tr>
+            <tr>
+              <td><strong>In-Process Recovery (IPR)</strong></td>
+              <td>프로세스 재시작 없이 동일 프로세스 내에서 장애를 복구하는 메커니즘. 건강한 노드의 프로세스는 유지</td>
+            </tr>
+            <tr>
+              <td><strong>JLR (Job Level Restart)</strong></td>
+              <td>전체 학습 Job을 처음부터 재시작하는 복구 방식. 가장 느리고 비용이 큼</td>
+            </tr>
+            <tr>
+              <td><strong>Loss Function</strong></td>
+              <td>모델의 예측과 실제 값 사이의 차이를 측정하는 함수. 학습의 목표는 이 값을 최소화하는 것</td>
+            </tr>
+            <tr>
+              <td><strong>MMAP (Memory-Mapped I/O)</strong></td>
+              <td>파일을 가상 메모리에 직접 매핑하여 파일 I/O를 메모리 접근처럼 처리하는 기법. 데이터 로더 상태 빠른 복원에 활용</td>
+            </tr>
+            <tr>
+              <td><strong>Mixed Precision Training</strong></td>
+              <td>FP16/BF16과 FP32를 혼합하여 학습하는 기법. 메모리 사용량과 연산 시간을 줄이면서 정확도 유지</td>
+            </tr>
+            <tr>
+              <td><strong>MTBF (Mean Time Between Failures)</strong></td>
+              <td>평균 장애 간격. 시스템이 장애 없이 운영되는 평균 시간</td>
+            </tr>
+            <tr>
+              <td><strong>NCCL (NVIDIA Collective Communications Library)</strong></td>
+              <td>NVIDIA GPU 간 고성능 통신을 위한 라이브러리. AllReduce, AllGather 등 collective operations 제공</td>
+            </tr>
+            <tr>
+              <td><strong>NeMo</strong></td>
+              <td>NVIDIA의 대화형 AI 모델 학습 프레임워크. 대규모 언어 모델 학습에 최적화</td>
+            </tr>
+            <tr>
+              <td><strong>NVLink</strong></td>
+              <td>NVIDIA의 고속 GPU 간 인터커넥트. PCIe보다 훨씬 높은 대역폭 제공 (H100: 900 GB/s)</td>
+            </tr>
+            <tr>
+              <td><strong>NVSwitch</strong></td>
+              <td>NVLink를 통해 여러 GPU를 연결하는 스위치. 단일 노드 내 모든 GPU 간 직접 통신 가능</td>
+            </tr>
+            <tr>
+              <td><strong>Optimizer State</strong></td>
+              <td>Optimizer가 유지하는 상태 정보. Adam의 경우 momentum(m)과 variance(v) 포함. 파라미터 크기의 2배 메모리 사용</td>
+            </tr>
+            <tr>
+              <td><strong>P2P (Peer-to-Peer)</strong></td>
+              <td>중앙 서버 없이 노드 간 직접 통신하는 방식. Checkpointless Training에서 상태 복제에 사용</td>
+            </tr>
+            <tr>
+              <td><strong>Pipeline Parallelism (PP)</strong></td>
+              <td>모델을 레이어 단위로 분할하여 여러 GPU에 배치하고, 마이크로배치를 파이프라인으로 처리하는 병렬화 기법</td>
+            </tr>
+            <tr>
+              <td><strong>PLR (Process Level Restart)</strong></td>
+              <td>실패한 프로세스만 재시작하는 복구 방식. JLR보다 빠르지만 여전히 체크포인트 로드 필요</td>
+            </tr>
+            <tr>
+              <td><strong>RDMA (Remote Direct Memory Access)</strong></td>
+              <td>CPU 개입 없이 원격 메모리에 직접 접근하는 기술. EFA, InfiniBand 등에서 사용</td>
+            </tr>
+            <tr>
+              <td><strong>ReduceScatter</strong></td>
+              <td>Reduce 후 결과를 분산하는 collective operation. FSDP에서 gradient 동기화 후 샤딩에 사용</td>
+            </tr>
+            <tr>
+              <td><strong>Ring Algorithm</strong></td>
+              <td>노드들을 링 형태로 연결하여 데이터를 순차적으로 전달하는 collective 알고리즘. 대역폭 효율적</td>
+            </tr>
+            <tr>
+              <td><strong>RNG State</strong></td>
+              <td>Random Number Generator 상태. 동일한 랜덤 시퀀스를 재현하기 위해 저장/복원 필요</td>
+            </tr>
+            <tr>
+              <td><strong>Rootless NCCL</strong></td>
+              <td>단일 "root" 노드 없이 분산 방식으로 NCCL을 초기화하는 기법. TCPStore 의존성 제거</td>
+            </tr>
+            <tr>
+              <td><strong>SageMaker</strong></td>
+              <td>AWS의 완전 관리형 ML 플랫폼. 모델 개발, 학습, 배포의 전체 ML 라이프사이클 지원</td>
+            </tr>
+            <tr>
+              <td><strong>Sharding</strong></td>
+              <td>데이터나 모델 상태를 여러 노드에 분할하여 저장하는 기법. 메모리 효율성 향상</td>
+            </tr>
+            <tr>
+              <td><strong>SRD (Scalable Reliable Datagram)</strong></td>
+              <td>AWS EFA에서 사용하는 전송 프로토콜. UDP 기반이지만 신뢰성 보장</td>
+            </tr>
+            <tr>
+              <td><strong>Straggler</strong></td>
+              <td>다른 노드보다 느리게 연산을 수행하여 전체 학습 속도를 저하시키는 노드</td>
+            </tr>
+            <tr>
+              <td><strong>TCPStore</strong></td>
+              <td>PyTorch 분산 학습에서 프로세스 간 정보 공유를 위한 키-값 저장소. 기본적으로 단일 마스터 노드에서 실행</td>
+            </tr>
+            <tr>
+              <td><strong>Tensor Core</strong></td>
+              <td>NVIDIA GPU의 행렬 연산 전용 유닛. 딥러닝 연산(행렬 곱셈)을 고속으로 처리</td>
+            </tr>
+            <tr>
+              <td><strong>Tensor Parallelism (TP)</strong></td>
+              <td>단일 레이어의 텐서를 여러 GPU에 분할하여 병렬 처리하는 기법. 매우 큰 레이어에 효과적</td>
+            </tr>
+            <tr>
+              <td><strong>Training Operator</strong></td>
+              <td>Kubernetes에서 분산 학습 Job을 관리하는 오퍼레이터. HyperPod에서 Hot Spare, 자동 복구 오케스트레이션 담당</td>
+            </tr>
+            <tr>
+              <td><strong>Tree Algorithm</strong></td>
+              <td>트리 구조로 데이터를 집계/배포하는 collective 알고리즘. 지연 시간 최적화</td>
+            </tr>
+            <tr>
+              <td><strong>UltraCluster</strong></td>
+              <td>AWS의 대규모 GPU 클러스터 구성. 여러 UltraServer를 고속 네트워크로 연결</td>
+            </tr>
+            <tr>
+              <td><strong>UltraServer</strong></td>
+              <td>AWS의 고성능 GPU 서버 노드. 8x H100/H200 GPU + NVSwitch + EFA로 구성</td>
+            </tr>
+            <tr>
+              <td><strong>World Size</strong></td>
+              <td>분산 학습에 참여하는 전체 프로세스(GPU) 수</td>
+            </tr>
+            <tr>
+              <td><strong>ZeRO (Zero Redundancy Optimizer)</strong></td>
+              <td>DeepSpeed의 메모리 최적화 기술. Optimizer state, gradient, parameter를 단계별로 분할하여 메모리 사용 최소화</td>
+            </tr>
+            <tr>
+              <td><strong>ZeRO-Infinity</strong></td>
+              <td>ZeRO의 확장으로, CPU 및 NVMe 스토리지로 오프로드하여 GPU 메모리 한계를 극복</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Section 4: 참고 자료 -->
+        <h2 id="references">4. 참고 자료</h2>
+
+        <h3>4.1 AWS 공식 문서</h3>
+        <ul>
+          <li><a href="https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod.html" target="_blank">SageMaker HyperPod Documentation</a></li>
+          <li><a href="https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod-operate-cli.html" target="_blank">HyperPod CLI Operations</a></li>
+          <li><a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/efa.html" target="_blank">Elastic Fabric Adapter (EFA) Documentation</a></li>
+          <li><a href="https://docs.aws.amazon.com/fsx/latest/LustreGuide/what-is.html" target="_blank">Amazon FSx for Lustre Documentation</a></li>
+        </ul>
+
+        <h3>4.2 AWS 블로그</h3>
+        <ul>
+          <li><a href="https://aws.amazon.com/blogs/machine-learning/achieve-95-goodput-training-with-amazon-sagemaker-hyperpod-checkpointless-training/" target="_blank">Achieve 95% goodput training with Amazon SageMaker HyperPod Checkpointless Training</a></li>
+          <li><a href="https://aws.amazon.com/blogs/machine-learning/tiered-checkpointing-maximize-ml-training-goodput/" target="_blank">Tiered Checkpointing: Maximize ML Training Goodput</a></li>
+          <li><a href="https://aws.amazon.com/blogs/aws/amazon-sagemaker-hyperpod-now-available/" target="_blank">Amazon SageMaker HyperPod Launch Announcement</a></li>
+        </ul>
+
+        <h3>4.3 GitHub Repositories</h3>
+        <ul>
+          <li><a href="https://github.com/aws/sagemaker-hyperpod-checkpointless-training" target="_blank">sagemaker-hyperpod-checkpointless-training</a> - Checkpointless Training 소스 코드</li>
+          <li><a href="https://github.com/aws/sagemaker-hyperpod-recipes" target="_blank">sagemaker-hyperpod-recipes</a> - Pre-configured 학습 레시피</li>
+          <li><a href="https://github.com/aws/sagemaker-hyperpod-cli" target="_blank">sagemaker-hyperpod-cli</a> - HyperPod CLI 도구</li>
+          <li><a href="https://github.com/NVIDIA/nvidia-resiliency-ext" target="_blank">nvidia-resiliency-ext (NVRx)</a> - NVIDIA 내결함성 확장</li>
+          <li><a href="https://github.com/microsoft/varuna" target="_blank">microsoft/varuna</a> - Varuna 분산 학습 프레임워크</li>
+          <li><a href="https://github.com/microsoft/DeepSpeed" target="_blank">microsoft/DeepSpeed</a> - DeepSpeed 라이브러리</li>
+        </ul>
+
+        <h3>4.4 학술 논문</h3>
+        <table>
+          <thead>
+            <tr><th>논문</th><th>학회</th><th>핵심 기여</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>CheckFreq</strong>: Frequent, Fine-Grained DNN Checkpointing</td>
+              <td>USENIX FAST '21</td>
+              <td>Snapshot-and-Persist 분리, I/O Latency Hiding</td>
+            </tr>
+            <tr>
+              <td><strong>Bamboo</strong>: Making Preemptible Instances Resilient for Affordable Training</td>
+              <td>USENIX NSDI '23</td>
+              <td>파이프라인 버블 활용 중복 연산, Instant Takeover</td>
+            </tr>
+            <tr>
+              <td><strong>Varuna</strong>: Scalable, Low-cost Training of Massive Deep Learning Models</td>
+              <td>EuroSys '22 (Best Paper)</td>
+              <td>동적 모델 재분할, Spot VM 학습</td>
+            </tr>
+            <tr>
+              <td><strong>Oobleck</strong>: Resilient Distributed Training Using Pipeline Templates</td>
+              <td>ACM SOSP '23</td>
+              <td>Pipeline Template 기반 동적 재구성</td>
+            </tr>
+            <tr>
+              <td><strong>MegaScale</strong>: Scaling LLM Training to More Than 10,000 GPUs</td>
+              <td>arXiv 2024</td>
+              <td>12,288 GPU 대규모 학습, 55.2% MFU</td>
+            </tr>
+            <tr>
+              <td><strong>Pathways</strong>: Asynchronous Distributed Dataflow for ML</td>
+              <td>MLSys '22</td>
+              <td>Google의 비동기 분산 데이터플로우</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>4.5 NVIDIA 문서</h3>
+        <ul>
+          <li><a href="https://www.nvidia.com/en-us/data-center/h100/" target="_blank">NVIDIA H100 Tensor Core GPU</a></li>
+          <li><a href="https://developer.nvidia.com/nccl" target="_blank">NVIDIA NCCL Documentation</a></li>
+          <li><a href="https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/" target="_blank">NCCL User Guide</a></li>
+          <li><a href="https://www.nvidia.com/en-us/data-center/nvlink/" target="_blank">NVLink and NVSwitch</a></li>
+        </ul>
+
+        <h3>4.6 기타 참고 자료</h3>
+        <ul>
+          <li><a href="https://pytorch.org/docs/stable/distributed.elastic.html" target="_blank">PyTorch Elastic Documentation</a></li>
+          <li><a href="https://www.deepspeed.ai/training/" target="_blank">DeepSpeed Training Documentation</a></li>
+          <li><a href="https://arxiv.org/abs/2104.04473" target="_blank">Llama Paper - Training Details</a></li>
+          <li><a href="https://ai.meta.com/research/publications/the-llama-3-herd-of-models/" target="_blank">Llama 3 Technical Report</a></li>
+        </ul>
+
+        <div class="callout success">
+          <strong>학습 완료!</strong>
+          이 문서의 모든 챕터를 완독하셨다면, SageMaker HyperPod Checkpointless Training에 대해 깊이 있는 이해를 갖추셨습니다. 발표에서 자신감 있게 기술을 설명하고 Q&A에 대응할 준비가 되었습니다.
+        </div>
+
+        <div class="nav-footer"></div>
+      </div>
+    </main>
+  </div>
+  <script src="shared.js"></script>
+</body>
+</html>

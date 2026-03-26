@@ -28,7 +28,6 @@
   <div style="position:absolute; left:5%; top:76%;">
     <p style="font-size:1.05rem; color:#fff; font-weight:600; margin:0;">오준석 (Junseok Oh)</p>
     <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:6px 0 0 0;">Sr. Solutions Architect, AWS</p>
-    <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:2px 0 0 0;">화해 글로벌</p>
   </div>
   <img src="common/pptx-theme/images/Picture_8.png" alt="" style="position:absolute; right:5%; bottom:10%; width:8%; pointer-events:none;" />
 </div>
@@ -410,7 +409,7 @@ IAM Role: BackendDevRole
   ├─ ClusterRoleBinding: all-teams-viewer → 전체 읽기
   └─ RoleBinding: backend-deployer → backend NS 배포 권한
 </pre>
-<p><strong>화해 권장 패턴</strong>:</p>
+<p><strong>권장 패턴</strong>:</p>
 <ul>
   <li><strong>Platform Team</strong>: <code>cluster-admin</code> ClusterRoleBinding</li>
   <li><strong>Backend Team</strong>: 자기 네임스페이스 <code>deployer</code> Role + 전체 <code>viewer</code> ClusterRole</li>

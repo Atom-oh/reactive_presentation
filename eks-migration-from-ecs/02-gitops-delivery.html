@@ -74,7 +74,6 @@
   <div style="position:absolute; left:5%; top:76%;">
     <p style="font-size:1.05rem; color:#fff; font-weight:600; margin:0;">오준석 (Junseok Oh)</p>
     <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:6px 0 0 0;">Sr. Solutions Architect, AWS</p>
-    <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:2px 0 0 0;">화해 글로벌</p>
   </div>
   <img src="common/pptx-theme/images/Picture_8.png" alt="" style="position:absolute; right:5%; bottom:10%; width:8%; pointer-events:none;" />
 </div>
@@ -406,7 +405,7 @@
   ├─ Yes → <span style="color:#41B3FF">Terraform (변경 이력 + Plan 검증)</span>
   └─ No  → ACK 또는 Terraform</div>
       <div style="margin-top:1.5rem">
-        <p><strong>화해 현재 구조와 매핑</strong>:</p>
+        <p><strong>현재 구조와 매핑</strong>:</p>
         <ul>
           <li><code>terraform/</code>: EKS, VPC, 공용 RDS, IAM → <span class="badge-blue">유지</span></li>
           <li><code>terraform/applications/&lt;app&gt;/</code>: 앱 전용 SG, IAM → <span class="badge-blue">유지</span> (보안상 Terraform 권장)</li>
@@ -981,7 +980,7 @@
         <tr><td><strong>App 전용 AWS 리소스</strong></td><td><div class="badge-green">ArgoCD</div> <span style="color:var(--text-muted)">or</span> <div class="badge-yellow" style="display:inline-block">ACK</div></td><td>App별 SQS Queue, S3 Bucket, IAM Policy</td><td>높음</td></tr>
       </tbody>
     </table>
-    <div class="callout-info" style="margin-top:1rem"><p><strong>화해 현재 원칙과 일치</strong>: "EKS 내 리소스는 ArgoCD, 공용 AWS 리소스는 Terraform"</p></div>
+    <div class="callout-info" style="margin-top:1rem"><p><strong>현재 원칙과 일치</strong>: "EKS 내 리소스는 ArgoCD, 공용 AWS 리소스는 Terraform"</p></div>
     <div class="callout-warning" style="margin-top:.5rem"><p><strong>ACK 도입 시점</strong>: App팀이 K8s 매니페스트로 SQS, S3 등 AWS 리소스를 직접 관리해야 할 때. 현재 단계에서는 Terraform + ArgoCD 이원화로 충분</p></div>
   </div>
 </div>
@@ -1177,7 +1176,7 @@
     1: "[1.5min] Block 02에서는 GitOps와 Progressive Delivery에 대해 다룹니다. ArgoCD를 활용한 선언적 배포와 Argo Rollouts + Istio를 통한 안전한 Canary 배포 전략을 살펴보겠습니다.\n\n💬 예상 질문:\n• \"GitOps 도입 시 기존 Jenkins 파이프라인은 어떻게 되나요?\" → CI(빌드/테스트)는 Jenkins 유지, CD(배포)만 ArgoCD로 전환하는 것이 일반적입니다.",
     2: "⏸️ [2.5min] 현재 Push 기반 배포의 문제점입니다. 배포 파이프라인이 클러스터에 직접 kubectl apply를 실행하는 방식은 배포 상태 추적이 어렵고, 실패 시 롤백도 수동입니다. GitOps는 이 문제를 Pull 모델로 해결합니다.\n\n💬 예상 질문:\n• \"Pull 모델이면 배포 지연이 생기지 않나요?\" → ArgoCD의 기본 Sync 간격은 3분이지만, Webhook으로 즉시 Sync를 트리거할 수 있어 Push 모델과 속도 차이가 거의 없습니다.",
     3: "[2min] 인프라와 애플리케이션 배포를 분리하는 전략입니다. Terraform은 EKS 클러스터, VPC, IAM 등 인프라를 관리하고, ArgoCD는 Kubernetes 워크로드를 관리합니다. 이 분리를 통해 인프라 변경과 애플리케이션 배포의 책임을 명확히 구분합니다.\n\n💬 예상 질문:\n• \"Terraform과 ArgoCD 중 하나만 쓰면 안 되나요?\" → 둘의 강점이 다릅니다. Terraform은 AWS 리소스 상태 관리에 최적화, ArgoCD는 K8s 워크로드 지속 동기화에 최적화되어 있습니다.",
-    4: "[3.5min] Terraform, ArgoCD, ACK의 역할 분담 의사결정 가이드입니다. 핵심은 리소스의 생명주기입니다. 앱과 함께 생성/삭제되는 리소스는 ACK로 GitOps 통합하고, 인프라 수준의 장기 리소스는 Terraform으로 관리합니다. 화해의 현재 Terraform + ArgoCD 구조는 잘 설계되어 있으며, 여기에 ACK를 추가하면 앱 전용 S3, SQS 등을 더 효율적으로 관리할 수 있습니다. EKS Capabilities 중 VPC CNI, CoreDNS 등은 EKS Add-on으로, ALB Controller, Karpenter 등은 ArgoCD로 관리하는 것이 적합합니다.\n\n💬 예상 질문:\n• \"ACK가 Terraform을 완전히 대체할 수 있나요?\" → 아니요. IAM, VPC 등 보안 민감 리소스는 Terraform의 Plan/Apply 워크플로우가 더 안전합니다. ACK는 앱 전용 리소스에만 권장합니다.\n• \"ACK 도입 시 러닝 커브가 크나요?\" → K8s에 익숙하다면 낮습니다. CRD 형태로 AWS 리소스를 정의하므로 kubectl로 관리할 수 있습니다.",
+    4: "[3.5min] Terraform, ArgoCD, ACK의 역할 분담 의사결정 가이드입니다. 핵심은 리소스의 생명주기입니다. 앱과 함께 생성/삭제되는 리소스는 ACK로 GitOps 통합하고, 인프라 수준의 장기 리소스는 Terraform으로 관리합니다. 현재 Terraform + ArgoCD 구조는 잘 설계되어 있으며, 여기에 ACK를 추가하면 앱 전용 S3, SQS 등을 더 효율적으로 관리할 수 있습니다. EKS Capabilities 중 VPC CNI, CoreDNS 등은 EKS Add-on으로, ALB Controller, Karpenter 등은 ArgoCD로 관리하는 것이 적합합니다.\n\n💬 예상 질문:\n• \"ACK가 Terraform을 완전히 대체할 수 있나요?\" → 아니요. IAM, VPC 등 보안 민감 리소스는 Terraform의 Plan/Apply 워크플로우가 더 안전합니다. ACK는 앱 전용 리소스에만 권장합니다.\n• \"ACK 도입 시 러닝 커브가 크나요?\" → K8s에 익숙하다면 낮습니다. CRD 형태로 AWS 리소스를 정의하므로 kubectl로 관리할 수 있습니다.",
     5: "[2min] ACK 실전 설정 예시입니다. ACK Controller는 ArgoCD Application으로 설치하고, IRSA로 AWS 권한을 부여합니다.\n\n💬 예상 질문:\n• \"ACK Controller 설치가 복잡한가요?\" → Helm Chart로 ArgoCD Application 하나만 등록하면 됩니다. IRSA 설정만 주의하면 됩니다.",
     6: "[1.5min] ACK로 관리하는 앱 전용 AWS 리소스 매니페스트입니다. S3 Bucket과 SQS Queue를 Kubernetes CR로 정의하면, ArgoCD가 앱 배포와 함께 AWS 리소스도 자동으로 생성합니다. 라이프사이클이 앱과 일치합니다.\n\n💬 예상 질문:\n• \"ACK로 만든 리소스 삭제 시 실제 AWS 리소스도 삭제되나요?\" → 기본적으로 예. 하지만 deletionPolicy를 retain으로 설정하면 CR 삭제 시에도 AWS 리소스는 유지됩니다.",
     7: "[2.5min] ArgoCD의 기본 Sync와 Argo Rollouts의 차이입니다. 일반 배포는 Kubernetes의 RollingUpdate를 사용하고, Rollouts는 트래픽 가중치를 단계별로 조정하며 메트릭 분석을 통해 자동 롤백할 수 있습니다.\n\n💬 예상 질문:\n• \"모든 서비스에 Argo Rollouts를 적용해야 하나요?\" → 아니요. 내부 서비스나 개발 환경은 기본 RollingUpdate로 충분합니다. 고객 대면 프로덕션 서비스에만 Rollouts를 적용하는 것이 효율적입니다.",
@@ -1187,7 +1186,7 @@
     11: "[3min] Zone-Aware Rollouts 아키텍처입니다. 각 Zone의 Rollout이 독립적인 PDB를 관리하여, 한 Zone의 Spot Instance 중단이 다른 Zone에 영향을 주지 않습니다. Istio의 locality-aware 라우팅으로 Zone 장애 시 자동 Failover됩니다.\n\nGitBook 참고: https://atomoh.gitbook.io/kubernetes-docs/service-mesh/istio/advanced/09-zone-aware-argo-rollouts\n\n💬 예상 질문:\n• \"Zone별 Rollout을 따로 관리하면 복잡도가 높아지지 않나요?\" → 초기 설정은 복잡하지만, ApplicationSet으로 템플릿화하면 관리 부담이 줄어듭니다. Spot 사용률이 높은 환경에서는 이 복잡도가 가용성 향상으로 충분히 보상됩니다.",
     12: "[2.5min] GitHub Actions Runner Controller(ARC)를 EKS에서 운영하는 방법입니다. Self-Hosted Runner를 사용하면 VPC 내부 리소스에 접근할 수 있고, IRSA를 통해 안전하게 ECR에 이미지를 Push할 수 있습니다.\n\n💬 예상 질문:\n• \"GitHub-hosted runner 대비 비용 절감 효과가 있나요?\" → Runner 자체는 무료이지만 EC2 비용이 발생합니다. 빌드가 많고 VPC 접근이 필요한 경우에만 비용 대비 효과가 있습니다.",
     13: "[2min] ARC 설정 예시입니다. RunnerDeployment로 Runner Pool을 정의하고, HorizontalRunnerAutoscaler로 대기 중인 Job 수에 따라 자동 스케일링합니다. IRSA를 통해 Runner Pod가 ECR, S3 등 AWS 리소스에 접근할 수 있습니다.\n\n💬 예상 질문:\n• \"Runner Pod가 ephemeral인데 빌드 캐시는 어떻게 처리하나요?\" → PVC를 마운트하여 Maven/npm 캐시를 유지하거나, S3 기반 원격 캐시를 사용합니다. Docker layer 캐시는 Kaniko + registry cache 조합이 효과적입니다.",
-    14: "❓ [2.5min] NGF와 Istio의 역할 분담입니다. 둘 다 사용할 필요가 있는지 질문을 많이 받는데요, 외부 트래픽 관리(NGF)와 내부 서비스 메시(Istio)는 다른 문제를 해결합니다. 화해처럼 Canary 배포가 필요한 경우 Istio가 필수입니다.\n\n💬 예상 질문:\n• \"Istio 없이 Canary 배포를 할 수 있는 방법은?\" → NGINX Ingress나 ALB의 가중치 기반 라우팅으로 가능하지만, 메트릭 기반 자동 롤백은 Istio + Argo Rollouts 조합이 가장 성숙합니다.",
+    14: "❓ [2.5min] NGF와 Istio의 역할 분담입니다. 둘 다 사용할 필요가 있는지 질문을 많이 받는데요, 외부 트래픽 관리(NGF)와 내부 서비스 메시(Istio)는 다른 문제를 해결합니다. Canary 배포가 필요한 경우 Istio가 필수입니다.\n\n💬 예상 질문:\n• \"Istio 없이 Canary 배포를 할 수 있는 방법은?\" → NGINX Ingress나 ALB의 가중치 기반 라우팅으로 가능하지만, 메트릭 기반 자동 롤백은 Istio + Argo Rollouts 조합이 가장 성숙합니다.",
     15: "[2.5min] GitOps 도입 시 베스트 프랙티스입니다. 특히 프로덕션에서는 자동 동기화를 신중하게 설정해야 합니다. Sync Window를 활용하여 업무 시간 외에만 자동 배포가 되도록 제한하는 것을 권장합니다.\n\nGitBook 참고: https://atomoh.gitbook.io/kubernetes-docs/gitops/argocd/09-best-practices\n\n💬 예상 질문:\n• \"Sealed Secrets vs External Secrets Operator 중 어떤 것을 추천하나요?\" → AWS 환경이면 ESO + Secrets Manager 조합을 권장합니다. 시크릿 로테이션이 자동화되고, 기존 AWS 시크릿을 재사용할 수 있습니다.",
     16: "[2.5min] AWS 리소스를 어떤 도구로 관리할지에 대한 의사결정 매트릭스입니다.\n\n핵심 원칙:\n1. 인프라 기반(VPC, EKS, RDS)은 Terraform — 변경이 드물고, 상태 관리가 중요\n2. EKS 핵심 애드온(VPC CNI, CoreDNS)도 Terraform의 EKS Add-on으로 — 클러스터 업그레이드와 함께 관리\n3. 클러스터 내 컨트롤러(ALB Controller, ESO 등)는 ArgoCD — Helm Chart 기반 GitOps\n4. App 전용 AWS 리소스는 상황에 따라 ArgoCD 또는 ACK\n\nACK(AWS Controllers for Kubernetes)는 K8s CRD로 AWS 리소스를 관리하는 도구입니다. App팀이 자율적으로 SQS Queue나 S3 Bucket을 생성해야 할 때 유용하지만, 현재 단계에서는 Terraform + ArgoCD 이원화로 충분합니다.\n\n💬 예상 질문:\n• \"EKS Add-on과 ArgoCD로 같은 컴포넌트를 관리하면 충돌나지 않나요?\" → 네, 동일 컴포넌트를 두 곳에서 관리하면 안 됩니다. VPC CNI 같은 핵심 시스템은 EKS Add-on으로, ALB Controller 같은 확장 컴포넌트는 ArgoCD로 명확히 분리해야 합니다.",
     17: "❓ [3min] Block 02 퀴즈입니다. GitOps와 Progressive Delivery의 핵심 개념을 확인합니다. 특히 프로덕션 환경에서의 안전한 배포 전략에 대해 복습해보세요.\n\n💬 예상 질문:\n• \"실제 마이그레이션 시 GitOps 도입 순서는?\" → 1) ArgoCD 설치 및 기존 앱 등록 (manual sync), 2) Dev 환경에서 automated sync 테스트, 3) Staging에 Argo Rollouts 적용, 4) Production에 점진적 적용 순서를 권장합니다."

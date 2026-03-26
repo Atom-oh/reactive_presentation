@@ -12,7 +12,6 @@ Observability & Next Steps (20 min)
 
 오준석 (Junseok Oh)
 Sr. Solutions Architect, AWS
-화해 글로벌
 
 :::notes
 {timing: 1.5min}
@@ -74,7 +73,7 @@ Sr. Solutions Architect, AWS
 - Exemplar로 메트릭에서 특정 트레이스로 점프
 - Label 매칭으로 로그와 메트릭 상관분석
 
-현재 화해에서는 이 세 가지 중 어떤 것을 가장 많이 활용하고 계신가요?
+현재 이 세 가지 중 어떤 것을 가장 많이 활용하고 계신가요?
 
 💬 예상 질문:
 • "Exemplar가 정확히 뭔가요?" → 메트릭 데이터 포인트에 TraceID를 첨부하는 기능입니다. P99 레이턴시 스파이크가 발생했을 때, 해당 시점의 실제 요청 트레이스로 바로 점프할 수 있습니다.
@@ -112,7 +111,7 @@ AWS 관리형 서비스:
 
 오픈소스 vs 관리형 선택은 운영 역량과 비용을 고려해서 결정하세요.
 
-참고: 화해에서 현재 사용 중인 OpenSearch(Elastic)는 Loki 전환 시 듀얼 출력 전략을 권장합니다. Fluent Bit에서 OpenSearch와 Loki 두 곳으로 동시 전송하다가, Loki 안정화 후 OpenSearch를 축소하는 방식입니다.
+참고: 현재 사용 중인 OpenSearch(Elastic)는 Loki 전환 시 듀얼 출력 전략을 권장합니다. Fluent Bit에서 OpenSearch와 Loki 두 곳으로 동시 전송하다가, Loki 안정화 후 OpenSearch를 축소하는 방식입니다.
 
 💬 예상 질문:
 • "CloudWatch를 완전히 버려야 하나요?" → 아닙니다. Container Insights는 기본으로 유지하고, 상세 모니터링용으로 Prometheus를 추가하는 하이브리드 구성을 권장합니다.
@@ -296,7 +295,7 @@ Datadog과 OSS 스택 비교입니다.
 - 이미 Kubernetes 운영 역량이 있을 때
 - 데이터 소유권과 벤더 독립성이 중요할 때
 
-화해 규모(수십 개 서비스)에서는 OSS Stack + AWS 관리형(AMP, AMG)을 권장합니다.
+수십 개 서비스 규모에서는 OSS Stack + AWS 관리형(AMP, AMG)을 권장합니다.
 월 비용이 Datadog 대비 50-70% 절감 가능합니다.
 
 💬 예상 질문:
@@ -525,14 +524,14 @@ EKS 클러스터 업그레이드는 Blue/Green 방식을 권장합니다.
 - **비용**: S3 저장 비용
 
 :::callout-info
-**화해 권장**: Stateless 서비스 → GitOps 재구축 (추가 비용 0), DB → RDS 자체 백업/복구 활용, PV 있는 워크로드만 Velero 선택적 적용
+**권장**: Stateless 서비스 → GitOps 재구축 (추가 비용 0), DB → RDS 자체 백업/복구 활용, PV 있는 워크로드만 Velero 선택적 적용
 :::
 
 :::notes
 {timing: 1.5min}
 DR 전략 선택지입니다. GitOps 기반 재구축은 Git이 클러스터 상태의 원본이므로 별도 백업 인프라 없이도 ArgoCD Sync만으로 전체 복원이 가능합니다. Stateless 워크로드에 최적입니다.
 
-Velero는 etcd 스냅샷과 PV 백업을 제공하여 Stateful 워크로드 복구에 필수적입니다. 하지만 대부분의 상태는 RDS, ElastiCache 등 관리형 서비스에 있으므로, 화해 환경에서는 GitOps 재구축 + RDS 자체 백업 조합이 가장 효율적입니다.
+Velero는 etcd 스냅샷과 PV 백업을 제공하여 Stateful 워크로드 복구에 필수적입니다. 하지만 대부분의 상태는 RDS, ElastiCache 등 관리형 서비스에 있으므로, 이러한 환경에서는 GitOps 재구축 + RDS 자체 백업 조합이 가장 효율적입니다.
 
 💬 예상 질문:
 • "Velero 백업 주기는 어떻게 설정하나요?" → 일반적으로 일 1회 전체 백업 + 시간당 증분 백업입니다. S3 Lifecycle 정책으로 30일 보관 후 자동 삭제하세요.
@@ -644,7 +643,7 @@ aws eks create-addon \
 - Sampling 전략 수립 (Head-based → Tail-based)
 
 :::callout-info
-**화해 현재 "분산 추적 미구축"** → 1단계 ADOT + X-Ray부터 시작 권장. EKS Add-on으로 설치하면 Terraform으로 관리 가능
+**현재 "분산 추적 미구축"** → 1단계 ADOT + X-Ray부터 시작 권장. EKS Add-on으로 설치하면 Terraform으로 관리 가능
 :::
 
 :::notes

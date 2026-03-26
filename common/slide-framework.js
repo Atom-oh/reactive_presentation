@@ -47,12 +47,9 @@ class SlideFramework {
       }
 
       this.createProgressBar();
-      if (this.pagination) {
-        this.createSlideNumber();
-      } else {
-        this.createSlideCounter();
-      }
+      if (!this.pagination) this.createSlideCounter();
       this.createNavHint();
+      if (this.pagination) this.createSlideNumber();
       this.createRefContainer();
       if (this.sidebarEnabled) {
         this.createSidebar();
@@ -296,8 +293,8 @@ class SlideFramework {
     const deck = this.getDeck() || document.body;
     const logo = deck.querySelector('.slide-logo');
     const footer = deck.querySelector('.slide-footer');
-    // Hide framework logo/footer only on cover slides (with PPTX background)
-    const hide = slide.style.backgroundImage && slide.style.backgroundImage.includes('url(');
+    // Hide framework logo/footer when the current slide already contains an <img>
+    const hide = slide.querySelector('img') !== null;
     if (logo) logo.style.display = hide ? 'none' : '';
     if (footer) footer.style.display = hide ? 'none' : '';
     const slideNum = deck.querySelector('.slide-number');
@@ -620,11 +617,6 @@ function initTabs() {
         container.querySelectorAll('.tab-content').forEach(c => {
           c.classList.toggle('active', c.dataset.tab === target);
         });
-        // Auto-reveal fragments in newly visible tab
-        const activeContent = container.querySelector('.tab-content.active');
-        if (activeContent) {
-          activeContent.querySelectorAll('.fragment').forEach(f => f.classList.add('visible'));
-        }
       });
     });
   });
@@ -679,11 +671,6 @@ function initCompareToggles() {
             c.classList.toggle('active', c.dataset.compare === target);
           });
         }
-
-        // Auto-reveal fragments in all visible compare panels
-        container.querySelectorAll('.compare-content.active').forEach(panel => {
-          panel.querySelectorAll('.fragment').forEach(f => f.classList.add('visible'));
-        });
       });
     });
   });
@@ -694,9 +681,4 @@ document.addEventListener('DOMContentLoaded', () => {
   initTabs();
   initChecklists();
   initCompareToggles();
-
-  // Auto-reveal fragments in initially visible compare panels
-  document.querySelectorAll('.compare-content.active').forEach(panel => {
-    panel.querySelectorAll('.fragment').forEach(f => f.classList.add('visible'));
-  });
 });

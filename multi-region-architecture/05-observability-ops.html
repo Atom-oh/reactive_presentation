@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Observability & Operations</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="05-observability-ops.md">
+  <meta name="remarp-block" content="default">
+  <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
+  
+  
+  <script>window.__remarpTheme = {"colors": {}, "footer": "Multi-Region Architecture Deep Dive \u2014 L300+", "pagination": true, "fonts": {}};</script>
+</head>
+<body>
+<div class="slide-deck">
+<div class="slide" data-remarp-id="s0" style="background:linear-gradient(135deg, #1a1f35 0%, #0d1117 50%, #161b2e 100%); padding:0; overflow:hidden;">
+  <div style="position:absolute; top:-20%; right:-10%; width:60%; height:80%; background:radial-gradient(ellipse, rgba(108,92,231,0.15) 0%, transparent 70%); pointer-events:none;"></div>
+  <div style="position:absolute; left:5%; top:42%; width:80px; height:3px; background:linear-gradient(90deg, #6c5ce7, #a29bfe); border-radius:2px;"></div>
+  <h1 style="position:absolute; left:5%; top:45%; font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:60%; margin:0;">Observability & Operations</h1>
+  <p style="position:absolute; left:5%; top:60%; font-size:1.3rem; color:rgba(255,255,255,0.7); width:60%; margin:0;">Cross-Region Monitoring, Cost Optimization, Production Readiness</p>
+  
+</div>
+
+<div class="slide" data-remarp-id="s1">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>Observability Stack Overview</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <div class="canvas-container" style="width:100%; max-width:1000px; margin:0 auto;">
+  <canvas></canvas>
+</div>
+<div class="canvas-controls" style="text-align:center; margin-top:4px;">
+  <span style="font-size:0.75rem; color:var(--text-muted);">Use arrow keys to step through animation</span>
+</div>
+<script>
+(function() {
+  const slide = document.currentScript.closest('.slide');
+  if (!slide) return;
+  const container = slide.querySelector('.canvas-container');
+  const canvas = container.querySelector('canvas');
+  const BASE_W = 1000, BASE_H = 380;
+  let ctx, scale = 1;
+
+  function init() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = container.getBoundingClientRect();
+    if (rect.width === 0) return;
+    scale = rect.width / BASE_W;
+    canvas.width = rect.width * dpr;
+    canvas.height = (BASE_H * scale) * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = (BASE_H * scale) + 'px';
+    ctx = canvas.getContext('2d');
+    ctx.scale(dpr * scale, dpr * scale);
+    draw(currentStep);
+  }
+
+  let currentStep = 0;
+  const MAX_STEP = 3;
+
+  function draw(step) {
+    if (!ctx) return;
+    ctx.clearRect(0, 0, BASE_W, BASE_H);
+
+    // Step 0: App Pods Group
+    drawGroup(ctx, 40, 60, 220, 260, "App Pods (20+ Services)", Colors.border);
+    drawBox(ctx, 70, 100, 160, 45, "Traces (OTLP)", Colors.blue, "#fff");
+    drawBox(ctx, 70, 165, 160, 45, "Metrics (OTLP)", Colors.green, "#fff");
+    drawBox(ctx, 70, 230, 160, 45, "Logs (OTLP)", Colors.pink, "#fff");
+
+    // Step 1: OTel Collector
+    if (step >= 1) {
+      drawArrow(ctx, 260, 190, 370, 190, Colors.textMuted);
+      drawText(ctx, "OTLP gRPC:4317", 315, 175, { color: Colors.textMuted, size: 14, align: 'center' });
+      drawBox(ctx, 370, 130, 180, 120, "AWS Distro for\nOpenTelemetry", Colors.orange, "#fff");
+    }
+
+    // Step 2: Outputs
+    if (step >= 2) {
+      // Traces Path
+      drawArrow(ctx, 550, 160, 640, 70, Colors.blue);
+      drawBox(ctx, 640, 30, 140, 50, "Tempo (S3)", Colors.blue, "#fff");
+      drawBox(ctx, 790, 30, 100, 50, "AWS X-Ray", Colors.blue, "#fff");
+      drawArrow(ctx, 780, 55, 790, 55, Colors.blue);
+
+      // Metrics Path
+      drawArrow(ctx, 550, 190, 640, 190, Colors.green);
+      drawBox(ctx, 640, 165, 180, 50, "Prometheus (AMP)", Colors.green, "#fff");
+
+      // Logs Path
+      drawArrow(ctx, 550, 220, 640, 310, Colors.pink);
+      drawBox(ctx, 640, 285, 160, 50, "CloudWatch Logs", Colors.pink, "#fff");
+    }
+
+    // Step 3: Visualization
+    if (step >= 3) {
+      drawBox(ctx, 880, 130, 100, 120, "Grafana", Colors.accent, "#fff");
+      drawText(ctx, "Visualization", 930, 265, { color: Colors.accent, size: 14, align: 'center' });
+      
+      drawArrow(ctx, 780, 60, 880, 150, Colors.textMuted, true);
+      drawArrow(ctx, 820, 190, 880, 190, Colors.textMuted, true);
+      drawArrow(ctx, 800, 310, 880, 230, Colors.textMuted, true);
+    }
+  }
+
+  slide.__canvasStep = function(dir) {
+    if (dir === 'next' && currentStep < MAX_STEP) currentStep++;
+    else if (dir === 'prev' && currentStep > 0) currentStep--;
+    else return false;
+    draw(currentStep);
+    return currentStep;
+  };
+  slide.dataset.slideAction = 'canvas-step';
+  slide.dataset.canvasMaxStep = String(MAX_STEP);
+
+  new ResizeObserver(() => init()).observe(container);
+  init();
+})();
+</script>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s2">
+  <div class="slide-header" data-remarp-id="s2-header"><h2>OTel Collector Configuration</h2></div>
+  <div class="slide-body" data-remarp-id="s2-body">
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="receivers-processors">Receivers & Processors</button>
+      <button class="tab-btn" data-tab="exporters-pipeline">Exporters & Pipeline</button>
+    </div>
+        <div class="tab-content active" data-tab="receivers-processors">
+<div class="code-block"><span class="key">receivers</span>:
+  <span class="key">otlp</span>:
+    <span class="key">protocols</span>:
+      <span class="key">grpc</span>:
+        <span class="key">endpoint</span>: 0.0.0.0:4317
+      <span class="key">http</span>:
+        <span class="key">endpoint</span>: 0.0.0.0:4318
+
+<span class="key">processors</span>:
+  <span class="key">memory_limiter</span>:
+    <span class="key">check_interval</span>: 1s
+    <span class="key">limit_mib</span>: 512
+    <span class="key">spike_limit_mib</span>: 128
+
+  <span class="key">tail_sampling</span>:
+    <span class="key">decision_wait</span>: 10s
+    <span class="key">policies</span>:
+      - name: errors-policy
+        <span class="key">type</span>: status_code
+        <span class="key">status_code</span>: { status_codes: [ERROR] }
+      - name: slow-policy
+        <span class="key">type</span>: latency
+        <span class="key">latency</span>: { threshold_ms: 500 }
+      - name: default-policy
+        <span class="key">type</span>: probabilistic
+        <span class="key">probabilistic</span>: { sampling_percentage: 10 }</div>
+</div>
+    <div class="tab-content" data-tab="exporters-pipeline">
+<div class="code-block"><span class="key">exporters</span>:
+  otlp/tempo:
+    <span class="key">endpoint</span>: tempo.observability:4317
+    <span class="key">tls</span>:
+      <span class="key">insecure</span>: <span class="keyword">true</span>
+
+  <span class="key">awsxray</span>:
+    <span class="key">region</span>: ${AWS_REGION}
+    <span class="key">index_all_attributes</span>: <span class="keyword">true</span>
+
+<span class="key">service</span>:
+  <span class="key">pipelines</span>:
+    <span class="key">traces</span>:
+      <span class="key">receivers</span>: [otlp]
+      <span class="key">processors</span>: [memory_limiter, tail_sampling, batch]
+      <span class="key">exporters</span>: [otlp/tempo, awsxray]
+    <span class="key">metrics</span>:
+      <span class="key">receivers</span>: [otlp]
+      <span class="key">processors</span>: [memory_limiter, batch]
+      <span class="key">exporters</span>: [prometheusremotewrite]</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s3">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>Tail-Based Sampling Strategy</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body">
+    <p><!-- Slide 4: Tail-Based Sampling Strategy --></p>
+<div class="col-2" style="gap:1.5rem;">
+  <div>
+    <h4 style="margin:0 0 0.75rem 0; color:var(--accent);">Why Tail > Head Sampling?</h4>
+    <div class="card" style="padding:1rem; margin-bottom:0.75rem;">
+      <p style="margin:0; font-size:0.9rem;"><strong>Head Sampling</strong>: 요청 시작 시 샘플링 결정</p>
+      <p style="margin:0.5rem 0 0 0; font-size:0.85rem; color:var(--text-muted);">문제: 에러/지연 발생 전에 결정 → 중요 트레이스 누락</p>
+    </div>
+    <div class="card" style="padding:1rem; border-color:var(--green);">
+      <p style="margin:0; font-size:0.9rem;"><strong>Tail Sampling</strong>: 전체 트레이스 완료 후 결정</p>
+      <p style="margin:0.5rem 0 0 0; font-size:0.85rem; color:var(--green);">장점: 에러/지연 여부 확인 후 선택적 저장</p>
+    </div>
+  </div>
+  <div>
+    <h4 style="margin:0 0 0.75rem 0; color:var(--cyan);">Sampling Policies</h4>
+    <table class="data-table" style="width:100%; font-size:0.85rem;">
+      <thead>
+        <tr style="background:var(--bg-card);">
+          <th style="padding:8px; text-align:left;">Policy</th>
+          <th style="padding:8px; text-align:center;">Rate</th>
+          <th style="padding:8px; text-align:left;">Condition</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px;"><span style="color:var(--red);">errors</span></td>
+          <td style="padding:8px; text-align:center; font-weight:600;">100%</td>
+          <td style="padding:8px;">status_code = ERROR</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
+          <td style="padding:8px;"><span style="color:#fdcb6e;">slow</span></td>
+          <td style="padding:8px; text-align:center; font-weight:600;">100%</td>
+          <td style="padding:8px;">latency > 500ms</td>
+        </tr>
+        <tr>
+          <td style="padding:8px;"><span style="color:var(--text-muted);">default</span></td>
+          <td style="padding:8px; text-align:center;">10%</td>
+          <td style="padding:8px;">probabilistic</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<div style="margin-top:1rem; padding:12px 16px; background:rgba(0,214,143,0.1); border:1px solid var(--green); border-radius:8px; text-align:center;">
+  <strong style="color:var(--green);">Storage Savings: ~90%</strong>
+  <span style="color:var(--text-muted); margin-left:12px;">while keeping 100% of errors & slow traces</span>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s4">
+  <div class="slide-header" data-remarp-id="s4-header"><h2>Grafana Tempo Integration</h2></div>
+  <div class="slide-body" data-remarp-id="s4-body">
+    <div class="canvas-container" style="width:100%; max-width:1000px; margin:0 auto;">
+  <canvas></canvas>
+</div>
+<div class="canvas-controls" style="text-align:center; margin-top:4px;">
+  <span style="font-size:0.75rem; color:var(--text-muted);">Use arrow keys to step through animation</span>
+</div>
+<script>
+(function() {
+  const slide = document.currentScript.closest('.slide');
+  if (!slide) return;
+  const container = slide.querySelector('.canvas-container');
+  const canvas = container.querySelector('canvas');
+  const BASE_W = 1000, BASE_H = 350;
+  let ctx, scale = 1;
+
+  function init() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = container.getBoundingClientRect();
+    if (rect.width === 0) return;
+    scale = rect.width / BASE_W;
+    canvas.width = rect.width * dpr;
+    canvas.height = (BASE_H * scale) * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = (BASE_H * scale) + 'px';
+    ctx = canvas.getContext('2d');
+    ctx.scale(dpr * scale, dpr * scale);
+    draw(currentStep);
+  }
+
+  let currentStep = 0;
+  const MAX_STEP = 4;
+
+  function draw(step) {
+    if (!ctx) return;
+    ctx.clearRect(0, 0, BASE_W, BASE_H);
+
+    // Step 0: Core Architecture
+    drawBox(ctx, 240, 50, 160, 60, "Distributor", Colors.accent, "#fff");
+    drawBox(ctx, 480, 50, 160, 60, "Ingester", Colors.accent, "#fff");
+    drawBox(ctx, 720, 50, 160, 60, "Compactor", Colors.accent, "#fff");
+    drawBox(ctx, 240, 240, 640, 60, "Object Storage (Amazon S3) - Parquet Blocks", Colors.orange, "#fff");
+
+    // Step 1: Ingestion
+    if (step >= 1) {
+      drawBox(ctx, 30, 50, 140, 60, "OTel Collector", Colors.surface, Colors.textPri);
+      drawArrow(ctx, 170, 80, 240, 80, Colors.textPri);
+      drawText(ctx, "OTLP Push", 205, 70, { size: 12, align: 'center', color: Colors.textSec });
+    }
+
+    // Step 2: Write Path
+    if (step >= 2) {
+      drawArrow(ctx, 400, 80, 480, 80, Colors.accent);
+      drawText(ctx, "In-memory WAL", 440, 100, { size: 12, align: 'center', color: Colors.textSec });
+      drawArrow(ctx, 560, 110, 560, 240, Colors.accent);
+      drawText(ctx, "Flush Blocks", 570, 175, { size: 12, align: 'left', color: Colors.accent });
+    }
+
+    // Step 3: Query Path
+    if (step >= 3) {
+      drawBox(ctx, 480, 140, 160, 60, "Querier", Colors.cyan, "#000");
+      drawArrow(ctx, 560, 140, 560, 110, Colors.cyan); // To Ingester (Recent)
+      drawArrow(ctx, 640, 170, 750, 170, Colors.cyan, false, false); 
+      drawArrow(ctx, 750, 170, 750, 240, Colors.cyan); // To S3 (Historical)
+      
+      drawText(ctx, "TraceQL", 470, 175, { size: 14, weight: 'bold', align: 'right', color: Colors.cyan });
+    }
+
+    // Step 4: Compaction
+    if (step >= 4) {
+      drawArrow(ctx, 800, 240, 800, 110, Colors.yellow);
+      drawArrow(ctx, 800, 50, 840, 50, Colors.yellow, false, false);
+      drawArrow(ctx, 840, 50, 840, 240, Colors.yellow);
+      drawText(ctx, "Compaction Cycle", 850, 145, { size: 12, align: 'left', color: Colors.yellow });
+    }
+  }
+
+  slide.__canvasStep = function(dir) {
+    if (dir === 'next' && currentStep < MAX_STEP) currentStep++;
+    else if (dir === 'prev' && currentStep > 0) currentStep--;
+    else return false;
+    draw(currentStep);
+    return currentStep;
+  };
+  slide.dataset.slideAction = 'canvas-step';
+  slide.dataset.canvasMaxStep = String(MAX_STEP);
+
+  new ResizeObserver(() => init()).observe(container);
+  init();
+})();
+</script>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s5">
+  <div class="slide-header" data-remarp-id="s5-header"><h2>Cross-Region Trace Correlation</h2></div>
+  <div class="slide-body" data-remarp-id="s5-body">
+    <p><!-- Slide 6: Cross-Region Trace Correlation --></p>
+<div class="col-2" style="gap:1.5rem;">
+  <div>
+    <h4 style="margin:0 0 0.75rem 0; color:var(--accent);">TraceQL Examples</h4>
+    <div class="code-block" style="font-size:0.8rem; margin-bottom:0.75rem;">
+<span class="comment"># 특정 서비스의 에러 트레이스</span>
+<span class="key">{</span> <span class="string">resource.service.name</span> = <span class="value">"order-service"</span> <span class="key">}</span>
+  | <span class="key">status</span> = <span class="value">error</span>
+
+<span class="comment"># 500ms 이상 걸린 결제 요청</span>
+<span class="key">{</span> <span class="string">span.http.route</span> = <span class="value">"/api/payments"</span> <span class="key">}</span>
+  | <span class="key">duration</span> > <span class="value">500ms</span>
+
+<span class="comment"># Cross-region 트레이스 (us-east → us-west)</span>
+<span class="key">{</span> <span class="string">resource.cloud.region</span> = <span class="value">"us-east-1"</span> <span class="key">}</span>
+  >> <span class="key">{</span> <span class="string">resource.cloud.region</span> = <span class="value">"us-west-2"</span> <span class="key">}</span></div>
+    <h4 style="margin:0.75rem 0 0.5rem 0; color:var(--cyan);">Service Map Generation</h4>
+    <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">
+      Tempo <code>metrics_generator</code>가 span 데이터에서 자동으로 서비스 의존성 그래프 생성
+    </p>
+  </div>
+  <div>
+    <h4 style="margin:0 0 0.75rem 0; color:var(--green);">Logs-to-Traces Correlation</h4>
+    <div class="card" style="padding:0.75rem; margin-bottom:0.5rem;">
+      <p style="margin:0; font-size:0.85rem;"><strong>1. TraceID Injection</strong></p>
+      <div class="code-block" style="font-size:0.75rem; margin-top:0.5rem;">
+<span class="comment"># Application log format</span>
+<span class="key">{"level"</span>:<span class="string">"error"</span>,
+ <span class="key">"traceId"</span>:<span class="value">"abc123..."</span>,
+ <span class="key">"spanId"</span>:<span class="value">"def456..."</span>,
+ <span class="key">"msg"</span>:<span class="string">"payment failed"</span><span class="key">}</span></div>
+    </div>
+    <div class="card" style="padding:0.75rem;">
+      <p style="margin:0; font-size:0.85rem;"><strong>2. Grafana Derived Fields</strong></p>
+      <div class="code-block" style="font-size:0.75rem; margin-top:0.5rem;">
+<span class="comment"># Loki datasource config</span>
+<span class="key">derivedFields</span>:
+  - <span class="key">name</span>: <span class="string">TraceID</span>
+    <span class="key">matcherRegex</span>: <span class="string">"traceId\":\"([^\"]+)"</span>
+    <span class="key">url</span>: <span class="string">"$${__value.raw}"</span>
+    <span class="key">datasourceUid</span>: <span class="string">tempo</span></div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s6">
+  <div class="slide-header" data-remarp-id="s6-header"><h2>Cost Analysis — $9,600 ~ $12,400/month</h2></div>
+  <div class="slide-body" data-remarp-id="s6-body">
+    <p><!-- Slide 7: Cost Analysis Overview --></p>
+<div style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center;">
+  <div class="card" style="flex:1; min-width:200px; max-width:250px; padding:1rem; text-align:center; border-top:3px solid var(--accent);">
+    <img src="common/aws-icons/services/Arch_Amazon-EC2_48.svg" style="width:40px; margin-bottom:0.5rem;">
+    <div style="font-size:1.5rem; font-weight:700; color:var(--accent);">$3,186-4,586</div>
+    <div style="font-size:0.85rem; color:var(--text-muted);">Compute (33-37%)</div>
+    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.25rem;">EKS + EC2 (Karpenter)</div>
+  </div>
+  <div class="card" style="flex:1; min-width:200px; max-width:250px; padding:1rem; text-align:center; border-top:3px solid var(--cyan);">
+    <img src="common/aws-icons/services/Arch_Amazon-RDS_48.svg" style="width:40px; margin-bottom:0.5rem;">
+    <div style="font-size:1.5rem; font-weight:700; color:var(--cyan);">$2,560</div>
+    <div style="font-size:0.85rem; color:var(--text-muted);">Database (21-27%)</div>
+    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.25rem;">Aurora + DocDB + ElastiCache</div>
+  </div>
+  <div class="card" style="flex:1; min-width:200px; max-width:250px; padding:1rem; text-align:center; border-top:3px solid #fdcb6e;">
+    <img src="common/aws-icons/services/Arch_Amazon-MSK_48.svg" style="width:40px; margin-bottom:0.5rem;">
+    <div style="font-size:1.5rem; font-weight:700; color:#fdcb6e;">$1,620</div>
+    <div style="font-size:0.85rem; color:var(--text-muted);">Messaging (13-17%)</div>
+    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.25rem;">MSK kafka.m5.large x6</div>
+  </div>
+  <div class="card" style="flex:1; min-width:200px; max-width:250px; padding:1rem; text-align:center; border-top:3px solid var(--green);">
+    <img src="common/aws-icons/services/Arch_Amazon-OpenSearch-Service_48.svg" style="width:40px; margin-bottom:0.5rem;">
+    <div style="font-size:1.5rem; font-weight:700; color:var(--green);">$1,560</div>
+    <div style="font-size:0.85rem; color:var(--text-muted);">Search (13-16%)</div>
+    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.25rem;">OpenSearch r6g.large x4</div>
+  </div>
+</div>
+<div style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; margin-top:1rem;">
+  <div class="card" style="flex:1; min-width:150px; max-width:180px; padding:0.75rem; text-align:center;">
+    <div style="font-size:1.1rem; font-weight:600; color:var(--text);">$452+</div>
+    <div style="font-size:0.8rem; color:var(--text-muted);">Networking</div>
+    <div style="font-size:0.7rem; color:var(--text-secondary);">NAT+TGW+NLB</div>
+  </div>
+  <div class="card" style="flex:1; min-width:150px; max-width:180px; padding:0.75rem; text-align:center;">
+    <div style="font-size:1.1rem; font-weight:600; color:var(--text);">$50-500</div>
+    <div style="font-size:0.8rem; color:var(--text-muted);">Edge</div>
+    <div style="font-size:0.7rem; color:var(--text-secondary);">CloudFront+WAF</div>
+  </div>
+  <div class="card" style="flex:1; min-width:150px; max-width:180px; padding:0.75rem; text-align:center;">
+    <div style="font-size:1.1rem; font-weight:600; color:var(--text);">$150-400</div>
+    <div style="font-size:0.8rem; color:var(--text-muted);">Observability</div>
+    <div style="font-size:0.7rem; color:var(--text-secondary);">CW+X-Ray+Prom</div>
+  </div>
+  <div class="card" style="flex:1; min-width:150px; max-width:180px; padding:0.75rem; text-align:center;">
+    <div style="font-size:1.1rem; font-weight:600; color:var(--text);">$29</div>
+    <div style="font-size:0.8rem; color:var(--text-muted);">Security</div>
+    <div style="font-size:0.7rem; color:var(--text-secondary);">KMS+Secrets Mgr</div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s7">
+  <div class="slide-header" data-remarp-id="s7-header"><h2>Cost Breakdown by Service</h2></div>
+  <div class="slide-body" data-remarp-id="s7-body">
+    <p><!-- Slide 8: Cost by Category Detail --></p>
+<div style="overflow-x:auto;">
+<table class="data-table" style="width:100%; font-size:0.82rem; border-collapse:collapse;">
+  <thead>
+    <tr style="background:var(--bg-card); border-bottom:2px solid var(--border);">
+      <th style="padding:8px 10px; text-align:left; color:var(--text-muted);">Category</th>
+      <th style="padding:8px 10px; text-align:left; color:var(--text-muted);">Service</th>
+      <th style="padding:8px 10px; text-align:left; color:var(--text-muted);">Spec</th>
+      <th style="padding:8px 10px; text-align:right; color:var(--text-muted);">Cost/mo</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom:1px solid var(--border);">
+      <td rowspan="3" style="padding:8px 10px; vertical-align:top; font-weight:600; color:var(--accent);">Compute</td>
+      <td style="padding:8px 10px;">EKS Control Plane</td>
+      <td style="padding:8px 10px; color:var(--text-muted);">x2 regions</td>
+      <td style="padding:8px 10px; text-align:right;">$146</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
+      <td style="padding:8px 10px;">Karpenter EC2</td>
+      <td style="padding:8px 10px; color:var(--text-muted);">m6i/c6i.xlarge variable</td>
+      <td style="padding:8px 10px; text-align:right;">$2,800-4,200</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:8px 10px;">Bootstrap Node Group</td>
+      <td style="padding:8px 10px; color:var(--text-muted);">t3.medium x2 regions</td>
+      <td style="padding:8px 10px; text-align:right;">$240</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
+      <td rowspan="4" style="padding:8px 10px; vertical-align:top; font-weight:600; color:var(--cyan);">Database</td>
+      <td style="padding:8px 10px;">Aurora DSQL</td>
+      <td style="padding:8px 10px; color:var(--text-muted);">us-east-1 only (serverless)</td>
+      <td style="padding:8px 10px; text-align:right;">$200-500</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:8px 10px;">DocumentDB</td>
+      <td style="padding:8px 10px; color:var(--text-muted);">r6g.large x4 (Global)</td>
+      <td style="padding:8px 10px; text-align:right;">$1,480</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
+      <td style="padding:8px 10px;">ElastiCache</td>
+      <td style="padding:8px 10px; color:var(--text-muted);">r6g.large x4 (Valkey)</td>
+      <td style="padding:8px 10px; text-align:right;">$880</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:8px 10px;">OpenSearch</td>
+      <td style="padding:8px 10px; color:var(--text-muted);">r6g.large x4 + master x3</td>
+      <td style="padding:8px 10px; text-align:right;">$1,560</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
+      <td style="padding:8px 10px; font-weight:600; color:#fdcb6e;">Messaging</td>
+      <td style="padding:8px 10px;">MSK</td>
+      <td style="padding:8px 10px; color:var(--text-muted);">kafka.m5.large x3 x2 regions</td>
+      <td style="padding:8px 10px; text-align:right;">$1,620</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border);">
+      <td rowspan="3" style="padding:8px 10px; vertical-align:top; font-weight:600; color:var(--green);">Network</td>
+      <td style="padding:8px 10px;">NAT Gateway</td>
+      <td style="padding:8px 10px; color:var(--text-muted);">x4 (2 per region)</td>
+      <td style="padding:8px 10px; text-align:right;">$270</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
+      <td style="padding:8px 10px;">Transit Gateway</td>
+      <td style="padding:8px 10px; color:var(--text-muted);">x2 regions + attachments</td>
+      <td style="padding:8px 10px; text-align:right;">$146</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:8px 10px;">NLB</td>
+      <td style="padding:8px 10px; color:var(--text-muted);">x2 regions</td>
+      <td style="padding:8px 10px; text-align:right;">$36+</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s8">
+  <div class="slide-header" data-remarp-id="s8-header"><h2>Cost Optimization Opportunities</h2></div>
+  <div class="slide-body" data-remarp-id="s8-body">
+    <p><!-- Slide 9: Cost Optimization Opportunities --></p>
+<table class="data-table" style="width:100%; font-size:0.85rem; border-collapse:collapse;">
+  <thead>
+    <tr style="background:var(--bg-card); border-bottom:2px solid var(--border);">
+      <th style="padding:10px 12px; text-align:left; color:var(--text-muted);">Optimization</th>
+      <th style="padding:10px 12px; text-align:center; color:var(--text-muted);">Savings</th>
+      <th style="padding:10px 12px; text-align:center; color:var(--text-muted);">Effort</th>
+      <th style="padding:10px 12px; text-align:left; color:var(--text-muted);">Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom:1px solid var(--border);" data-fragment-index="1">
+      <td style="padding:10px 12px;"><strong>Karpenter Spot Expansion</strong></td>
+      <td style="padding:10px 12px; text-align:center; color:var(--green); font-weight:600;">30-40% EC2</td>
+      <td style="padding:10px 12px; text-align:center;"><span style="color:var(--green);">L</span></td>
+      <td style="padding:10px 12px; font-size:0.8rem;">worker-tier, batch-tier NodePool에 Spot 우선 설정</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);" data-fragment-index="1">
+      <td style="padding:10px 12px;"><strong>DocumentDB Downsize</strong></td>
+      <td style="padding:10px 12px; text-align:center; color:var(--green); font-weight:600;">$370/mo</td>
+      <td style="padding:10px 12px; text-align:center;"><span style="color:var(--green);">L</span></td>
+      <td style="padding:10px 12px; font-size:0.8rem;">r6g.large → r6g.medium (현재 CPU &lt;20%)</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border);" data-fragment-index="2">
+      <td style="padding:10px 12px;"><strong>MSK Serverless</strong></td>
+      <td style="padding:10px 12px; text-align:center; color:var(--green); font-weight:600;">50-70%</td>
+      <td style="padding:10px 12px; text-align:center;"><span style="color:#fdcb6e;">M</span></td>
+      <td style="padding:10px 12px; font-size:0.8rem;">저트래픽 시 유리 (현재 provisioned 유휴)</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);" data-fragment-index="2">
+      <td style="padding:10px 12px;"><strong>OpenSearch Scale-down</strong></td>
+      <td style="padding:10px 12px; text-align:center; color:var(--green); font-weight:600;">$520/mo</td>
+      <td style="padding:10px 12px; text-align:center;"><span style="color:var(--green);">L</span></td>
+      <td style="padding:10px 12px; font-size:0.8rem;">dedicated master 제거 (현재 search 미사용)</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border);" data-fragment-index="3">
+      <td style="padding:10px 12px;"><strong>Reserved Instances 1yr</strong></td>
+      <td style="padding:10px 12px; text-align:center; color:var(--green); font-weight:600;">30-40% DB</td>
+      <td style="padding:10px 12px; text-align:center;"><span style="color:var(--green);">L</span></td>
+      <td style="padding:10px 12px; font-size:0.8rem;">DocumentDB, ElastiCache, OpenSearch</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);" data-fragment-index="3">
+      <td style="padding:10px 12px;"><strong>NAT → NAT Instance</strong></td>
+      <td style="padding:10px 12px; text-align:center; color:var(--green); font-weight:600;">$200/mo</td>
+      <td style="padding:10px 12px; text-align:center;"><span style="color:#fdcb6e;">M</span></td>
+      <td style="padding:10px 12px; font-size:0.8rem;">t4g.micro + ASG (HA 구성)</td>
+    </tr>
+  </tbody>
+</table>
+<div style="margin-top:12px; padding:12px 16px; background:rgba(0,214,143,0.1); border:1px solid var(--green); border-radius:8px; text-align:center;">
+  <strong style="color:var(--green);">Total Savings Potential: $2,500 - $3,500 / month</strong>
+  <span style="color:var(--text-muted); margin-left:12px;">(25-35% reduction)</span>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s9">
+  <div class="slide-header" data-remarp-id="s9-header"><h2>Performance Bottlenecks</h2></div>
+  <div class="slide-body" data-remarp-id="s9-body">
+    <p><!-- Slide 10: Performance Bottlenecks --></p>
+<div class="col-2" style="gap:1rem;">
+  <div>
+    <h4 style="margin:0 0 0.75rem 0; color:var(--red);">P0 — Critical Bugs</h4>
+    <div class="card" style="padding:12px; margin-bottom:8px; border-left:3px solid var(--red);">
+      <div style="font-weight:600; margin-bottom:4px;">1. Python Valkey MOVED error</div>
+      <div style="font-size:0.82rem; color:var(--text-muted);">Redis() → RedisCluster() 필요</div>
+      <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">영향: 7개 Python 서비스</div>
+    </div>
+    <div class="card" style="padding:12px; margin-bottom:8px; border-left:3px solid var(--red);">
+      <div style="font-weight:600; margin-bottom:4px;">2. DSQL connection pool default</div>
+      <div style="font-size:0.82rem; color:var(--text-muted);">기본값 4/CPU → exhaustion 발생</div>
+      <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">영향: 6개 Go 서비스</div>
+    </div>
+    <div class="card" style="padding:12px; border-left:3px solid var(--red);">
+      <div style="font-weight:600; margin-bottom:4px;">3. DocumentDB Motor maxPoolSize</div>
+      <div style="font-size:0.82rem; color:var(--text-muted);">default 100 → Pod scale 시 초과</div>
+      <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">영향: 7개 Python 서비스</div>
+    </div>
+  </div>
+  <div>
+    <h4 style="margin:0 0 0.75rem 0; color:#fdcb6e;">P1 — Improvements</h4>
+    <div class="card" style="padding:12px; margin-bottom:8px; border-left:3px solid #fdcb6e;">
+      <div style="font-weight:600; margin-bottom:4px;">4. API GW MaxIdleConnsPerHost = 2</div>
+      <div style="font-size:0.82rem; color:var(--text-muted);">Backend 연결 병목 → 100으로 상향</div>
+    </div>
+    <div class="card" style="padding:12px; margin-bottom:8px; border-left:3px solid #fdcb6e;">
+      <div style="font-weight:600; margin-bottom:4px;">5. Java SimpleClientHttpRequestFactory</div>
+      <div style="font-size:0.82rem; color:var(--text-muted);">Connection pooling 없음 → RestTemplate + pooling</div>
+    </div>
+    <h4 style="margin:0.75rem 0 0.5rem 0; color:var(--green);">Quick Wins</h4>
+    <div class="card" style="padding:12px; border-left:3px solid var(--green);">
+      <div style="font-size:0.85rem;">
+        <strong>Product cache TTL 5min</strong> → DocDB 부하 감소<br>
+        <strong>CloudFront API cache 1min</strong> → Origin 요청 50%↓
+      </div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s10">
+  <div class="slide-header" data-remarp-id="s10-header"><h2>Load Test Strategy (k6)</h2></div>
+  <div class="slide-body" data-remarp-id="s10-body">
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="baseline">Baseline</button>
+      <button class="tab-btn" data-tab="ramp-up">Ramp-up</button>
+      <button class="tab-btn" data-tab="spike">Spike</button>
+      <button class="tab-btn" data-tab="soak">Soak</button>
+    </div>
+        <div class="tab-content active" data-tab="baseline">
+<div class="code-block"><span class="comment">// Profile 1: Baseline (100 VUs, 10min)</span>
+<span class="comment">// 현재 상태의 기준선 측정</span>
+<span class="keyword">export</span> <span class="keyword">const</span> options = {
+  <span class="key">vus</span>: 100,
+  <span class="key">duration</span>: <span class="string">'10m'</span>,
+  <span class="key">thresholds</span>: {
+    <span class="key">http_req_duration</span>: [<span class="string">'p95&lt;500'</span>],
+    <span class="key">http_req_failed</span>: [<span class="string">'rate&lt;0.01'</span>],
+  },
+};
+
+<span class="keyword">export</span> default <span class="keyword">function</span>() {
+  <span class="comment">// 60% Browse, 15% Purchase, 20% Search, 5% Seller</span>
+  <span class="keyword">const</span> scenario = weightedRandom([
+    { weight: 60, fn: browseProducts },
+    { weight: 15, fn: purchaseFlow },
+    { weight: 20, fn: searchProducts },
+    { weight: 5, fn: sellerDashboard },
+  ]);
+  scenario();
+}</div>
+</div>
+    <div class="tab-content" data-tab="ramp-up">
+<div class="code-block"><span class="comment">// Profile 2: Ramp-up (100→1000 VUs, 30min)</span>
+<span class="comment">// 점진적 부하 증가로 breaking point 탐색</span>
+<span class="keyword">export</span> <span class="keyword">const</span> options = {
+  <span class="key">stages</span>: [
+    { duration: <span class="string">'5m'</span>, target: 100 },
+    { duration: <span class="string">'10m'</span>, target: 500 },
+    { duration: <span class="string">'10m'</span>, target: 1000 },
+    { duration: <span class="string">'5m'</span>, target: 0 },
+  ],
+  <span class="key">thresholds</span>: {
+    <span class="key">http_req_duration</span>: [<span class="string">'p95&lt;500'</span>, <span class="string">'p99&lt;1000'</span>],
+  },
+};</div>
+</div>
+    <div class="tab-content" data-tab="spike">
+<div class="code-block"><span class="comment">// Profile 4: Spike (500→2000→500 VUs, 15min)</span>
+<span class="comment">// 급격한 부하 증가 시 auto-scaling 반응 테스트</span>
+<span class="keyword">export</span> <span class="keyword">const</span> options = {
+  <span class="key">stages</span>: [
+    { duration: <span class="string">'2m'</span>, target: 500 },
+    { duration: <span class="string">'1m'</span>, target: 2000 },  <span class="comment">// spike</span>
+    { duration: <span class="string">'5m'</span>, target: 2000 },  <span class="comment">// sustain</span>
+    { duration: <span class="string">'2m'</span>, target: 500 },   <span class="comment">// recovery</span>
+    { duration: <span class="string">'5m'</span>, target: 500 },
+  ],
+};
+
+<span class="comment">// Karpenter scaling 반응 시간 측정</span>
+<span class="comment">// 목표: 2분 내 노드 프로비저닝</span></div>
+</div>
+    <div class="tab-content" data-tab="soak">
+<div class="code-block"><span class="comment">// Profile 5: Soak Test (300 VUs, 4hr)</span>
+<span class="comment">// 메모리 누수, 연결 누수 탐지</span>
+<span class="keyword">export</span> <span class="keyword">const</span> options = {
+  <span class="key">vus</span>: 300,
+  <span class="key">duration</span>: <span class="string">'4h'</span>,
+  <span class="key">thresholds</span>: {
+    <span class="key">http_req_duration</span>: [<span class="string">'p95&lt;300'</span>],
+    <span class="key">http_req_failed</span>: [<span class="string">'rate&lt;0.001'</span>],
+  },
+};
+
+<span class="comment">// 모니터링 항목:</span>
+<span class="comment">// - Pod memory usage trend</span>
+<span class="comment">// - DB connection count</span>
+<span class="comment">// - Goroutine/Thread count</span>
+<span class="comment">// - File descriptor usage</span></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s11">
+  <div class="slide-header" data-remarp-id="s11-header"><h2>Target Metrics (SLOs)</h2></div>
+  <div class="slide-body" data-remarp-id="s11-body">
+    <p><!-- Slide 12: Target Metrics (SLOs) --></p>
+<div class="col-2" style="gap:1.5rem;">
+  <div>
+    <h4 style="margin:0 0 0.75rem 0; color:var(--accent);">Latency SLOs</h4>
+    <table class="data-table" style="width:100%; font-size:0.9rem;">
+      <thead>
+        <tr style="background:var(--bg-card);">
+          <th style="padding:10px; text-align:left;">Percentile</th>
+          <th style="padding:10px; text-align:right;">Target</th>
+          <th style="padding:10px; text-align:center;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px;">p50</td>
+          <td style="padding:10px; text-align:right; font-weight:600;">< 100ms</td>
+          <td style="padding:10px; text-align:center;"><span style="color:var(--green);">TBD</span></td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
+          <td style="padding:10px;">p95</td>
+          <td style="padding:10px; text-align:right; font-weight:600;">< 300ms</td>
+          <td style="padding:10px; text-align:center;"><span style="color:var(--green);">TBD</span></td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">p99</td>
+          <td style="padding:10px; text-align:right; font-weight:600;">< 500ms</td>
+          <td style="padding:10px; text-align:center;"><span style="color:var(--green);">TBD</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <h4 style="margin:1rem 0 0.75rem 0; color:var(--cyan);">Throughput & Availability</h4>
+    <div class="card" style="padding:1rem;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+        <span>Sustained Throughput</span>
+        <strong style="color:var(--cyan);">5,000 RPS</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+        <span>Error Rate</span>
+        <strong style="color:var(--green);">< 0.1%</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between;">
+        <span>Availability</span>
+        <strong style="color:var(--accent);">99.9%</strong>
+      </div>
+    </div>
+  </div>
+  <div>
+    <h4 style="margin:0 0 0.75rem 0; color:#fdcb6e;">Per-Endpoint Targets</h4>
+    <table class="data-table" style="width:100%; font-size:0.85rem;">
+      <thead>
+        <tr style="background:var(--bg-card);">
+          <th style="padding:8px; text-align:left;">Endpoint</th>
+          <th style="padding:8px; text-align:right;">p95</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px;">GET /products</td>
+          <td style="padding:8px; text-align:right;">< 200ms</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
+          <td style="padding:8px;">GET /products/:id</td>
+          <td style="padding:8px; text-align:right;">< 150ms</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px;">POST /orders</td>
+          <td style="padding:8px; text-align:right;">< 500ms</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
+          <td style="padding:8px;">POST /payments</td>
+          <td style="padding:8px; text-align:right;">< 500ms</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px;">GET /search</td>
+          <td style="padding:8px; text-align:right;">< 300ms</td>
+        </tr>
+        <tr style="background:var(--bg-card);">
+          <td style="padding:8px;">GET /seller/dashboard</td>
+          <td style="padding:8px; text-align:right;">< 400ms</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s12">
+  <div class="slide-header" data-remarp-id="s12-header"><h2>Gap Analysis Summary</h2></div>
+  <div class="slide-body" data-remarp-id="s12-body">
+    <p><!-- Slide 13: Gap Analysis Summary --></p>
+<div class="flow-h" style="flex-wrap:wrap; gap:0.75rem; justify-content:center;">
+  <div class="flow-group" style="border:2px solid var(--red); background:rgba(255,107,107,0.08); min-width:260px; max-width:300px;" data-fragment-index="1">
+    <div class="flow-group-label" style="color:var(--red);">P0 — Production Blockers</div>
+    <div class="flow-v" style="gap:0.4rem; padding:0.4rem;">
+      <div class="flow-box" style="display:flex; align-items:center; gap:6px; font-size:0.85rem;">
+        <img src="common/aws-icons/services/Arch_Amazon-Cognito_48.svg" style="width:28px;">
+        <div>
+          <strong>Authentication</strong>
+          <div style="font-size:0.75rem; color:var(--text-muted);">인증 미들웨어 없음</div>
+        </div>
+      </div>
+      <div class="flow-box" style="display:flex; align-items:center; gap:6px; font-size:0.85rem;">
+        <img src="common/aws-icons/services/Arch_Amazon-MSK_48.svg" style="width:28px;">
+        <div>
+          <strong>Event Bus → MSK</strong>
+          <div style="font-size:0.75rem; color:var(--text-muted);">Mock publish only</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="flow-group" style="border:2px solid #fdcb6e; background:rgba(253,203,110,0.08); min-width:260px; max-width:300px;" data-fragment-index="2">
+    <div class="flow-group-label" style="color:#fdcb6e;">P1 — High Risk</div>
+    <div class="flow-v" style="gap:0.4rem; padding:0.4rem;">
+      <div class="flow-box" style="display:flex; align-items:center; gap:6px; font-size:0.85rem;">
+        <img src="common/aws-icons/services/Arch_AWS-WAF_48.svg" style="width:28px;">
+        <div>
+          <strong>WAF Reactivation</strong>
+          <div style="font-size:0.75rem; color:var(--text-muted);">Bot Control 차단 중</div>
+        </div>
+      </div>
+      <div class="flow-box" style="display:flex; align-items:center; gap:6px; font-size:0.85rem;">
+        <img src="common/aws-icons/services/Arch_Amazon-OpenSearch-Service_48.svg" style="width:28px;">
+        <div>
+          <strong>Search → OpenSearch</strong>
+          <div style="font-size:0.75rem; color:var(--text-muted);">strings.Contains mock</div>
+        </div>
+      </div>
+      <div class="flow-box" style="display:flex; align-items:center; gap:6px; font-size:0.85rem;">
+        <img src="common/aws-icons/services/Arch_Amazon-Aurora_48.svg" style="width:28px;">
+        <div>
+          <strong>DSQL Multi-Region</strong>
+          <div style="font-size:0.75rem; color:var(--text-muted);">us-east-1 only</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="flow-group" style="border:2px solid var(--accent); background:rgba(108,92,231,0.08); min-width:260px; max-width:300px;" data-fragment-index="3">
+    <div class="flow-group-label" style="color:var(--accent);">P2 — Improvements</div>
+    <div class="flow-v" style="gap:0.4rem; padding:0.4rem;">
+      <div class="flow-box" style="display:flex; align-items:center; gap:6px; font-size:0.85rem;">
+        <img src="common/aws-icons/services/Arch_Amazon-MSK_48.svg" style="width:28px;">
+        <div>
+          <strong>MSK Replicator</strong>
+          <div style="font-size:0.75rem; color:var(--text-muted);">Cross-region sync</div>
+        </div>
+      </div>
+      <div class="flow-box" style="display:flex; align-items:center; gap:6px; font-size:0.85rem;">
+        <img src="common/aws-icons/services/Arch_AWS-CodePipeline_48.svg" style="width:28px;">
+        <div>
+          <strong>CI/CD Automation</strong>
+          <div style="font-size:0.75rem; color:var(--text-muted);">Manual deploys 상태</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<p style="margin-top:12px; font-size:0.85rem; color:var(--text-muted); text-align:center;">
+  총 <strong>7개 Gap</strong> | P0 해결 없이는 Production 불가
+</p>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s13">
+  <div class="slide-header" data-remarp-id="s13-header"><h2>Production Readiness Roadmap</h2></div>
+  <div class="slide-body" data-remarp-id="s13-body">
+    <div class="timeline">
+            <div class="timeline-step" data-step="1" data-remarp-id="s13-step-0">
+      <div class="timeline-dot" style="width:1.67rem;height:1.67rem;font-size:0.82rem">1</div>
+      <div class="timeline-label" style="max-width:5rem">Phase 1 (2주)</div>
+      <div class="timeline-desc">P0 Gaps 해결 Authentication + Event Bus MSK 연동</div>
+    </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-step" data-step="2" data-remarp-id="s13-step-1">
+      <div class="timeline-dot" style="width:1.67rem;height:1.67rem;font-size:0.82rem">2</div>
+      <div class="timeline-label" style="max-width:5rem">Phase 2 (4주)</div>
+      <div class="timeline-desc">P1 Gaps + Performance WAF 재설정, Search→OpenSearch, DSQL Multi-Region 성능 버그 수정 (Valkey, Pool)</div>
+    </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-step" data-step="3" data-remarp-id="s13-step-2">
+      <div class="timeline-dot" style="width:1.67rem;height:1.67rem;font-size:0.82rem">3</div>
+      <div class="timeline-label" style="max-width:5rem">Phase 3 (2주)</div>
+      <div class="timeline-desc">P2 Gaps + DR MSK Replicator, CI/CD Pipeline DR 자동화 (EventBridge + Lambda)</div>
+    </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-step" data-step="4" data-remarp-id="s13-step-3">
+      <div class="timeline-dot" style="width:1.67rem;height:1.67rem;font-size:0.82rem">4</div>
+      <div class="timeline-label" style="max-width:5rem">Phase 4 (ongoing)</div>
+      <div class="timeline-desc">Load Test + Optimization k6 전체 프로필 실행 비용 최적화 적용</div>
+    </div>
+    </div>
+  </div>
+  
+<script>(function() {
+  const slide = document.currentScript.closest('.slide');
+  if (!slide) return;
+  const steps = slide.querySelectorAll('.timeline-step');
+  const connectors = slide.querySelectorAll('.timeline-connector');
+  let current = 0;
+  function update() {
+    steps.forEach((s, i) => {
+      s.classList.remove('active', 'done');
+      if (i < current) s.classList.add('done');
+      else if (i === current) s.classList.add('active');
+    });
+    connectors.forEach((c, i) => {
+      c.classList.toggle('done', i < current);
+    });
+  }
+  update();
+  slide.__canvasStep = function(dir) {
+    if (dir === 'next' && current < 3) current++;
+    else if (dir === 'prev' && current > 0) current--;
+    else return (dir === 'next') ? false : false;
+    update();
+    return current;
+  };
+  slide.dataset.slideAction = 'canvas-step';
+  slide.dataset.canvasMaxStep = '3';
+})();</script>
+</div>
+
+<div class="slide" data-remarp-id="s14">
+  <div class="slide-header" data-remarp-id="s14-header"><h2>Key Takeaways</h2></div>
+  <div class="slide-body" data-remarp-id="s14-body">
+    <p><!-- Slide 15: Key Takeaways --></p>
+<div class="col-2" style="gap:1.5rem; margin-bottom:1rem;">
+  <div class="card" style="padding:1rem; border-left:3px solid var(--accent);">
+    <h4 style="margin:0 0 0.5rem 0; color:var(--accent);">Observability Stack</h4>
+    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem;">
+      <li>OTel Collector + Tail Sampling</li>
+      <li>Storage 90% 절감, 에러 100% 보존</li>
+      <li>Tempo + X-Ray dual export</li>
+      <li>Logs-to-Traces correlation</li>
+    </ul>
+  </div>
+  <div class="card" style="padding:1rem; border-left:3px solid var(--cyan);">
+    <h4 style="margin:0 0 0.5rem 0; color:var(--cyan);">Cost Optimization</h4>
+    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem;">
+      <li>월 $9,600-12,400 총 비용</li>
+      <li>$2,500-3,500 절감 가능 (25-35%)</li>
+      <li>Quick wins: Spot, DB downsize</li>
+      <li>Medium-term: MSK Serverless, RI</li>
+    </ul>
+  </div>
+  <div class="card" style="padding:1rem; border-left:3px solid var(--red);">
+    <h4 style="margin:0 0 0.5rem 0; color:var(--red);">Production Blockers</h4>
+    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem;">
+      <li>P0: Authentication, Event Bus</li>
+      <li>P1: WAF, Search, DSQL Multi-Region</li>
+      <li>P0 해결 없이 Production 불가</li>
+      <li>8주 로드맵으로 해결</li>
+    </ul>
+  </div>
+  <div class="card" style="padding:1rem; border-left:3px solid var(--green);">
+    <h4 style="margin:0 0 0.5rem 0; color:var(--green);">Performance & Testing</h4>
+    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem;">
+      <li>P0 bugs: Valkey, DSQL pool, Motor</li>
+      <li>SLO: p95 &lt;300ms, 5K RPS</li>
+      <li>k6 4가지 프로필로 검증</li>
+      <li>Soak test로 누수 탐지</li>
+    </ul>
+  </div>
+</div>
+<div style="text-align:center;">
+  <div class="flow-h" style="justify-content:center; gap:0.5rem; flex-wrap:wrap;">
+    <span style="background:var(--red); color:#fff; padding:6px 12px; border-radius:4px; font-size:0.85rem;">1. P0 Gaps</span>
+    <span style="color:var(--text-muted);">→</span>
+    <span style="background:#fdcb6e; color:#1a1f35; padding:6px 12px; border-radius:4px; font-size:0.85rem;">2. Performance Fix</span>
+    <span style="color:var(--text-muted);">→</span>
+    <span style="background:var(--accent); color:#fff; padding:6px 12px; border-radius:4px; font-size:0.85rem;">3. Load Test</span>
+    <span style="color:var(--text-muted);">→</span>
+    <span style="background:var(--green); color:#fff; padding:6px 12px; border-radius:4px; font-size:0.85rem;">4. Cost Optimize</span>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s15">
+  <div class="slide-header" data-remarp-id="s15-header"><h2>Knowledge Check</h2></div>
+  <div class="slide-body" data-remarp-id="s15-body" style="overflow-y:auto">
+    <div class="quiz" data-quiz="q1">
+      <div class="quiz-question">Q1: Tail-Based Sampling의 핵심 장점은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">트레이스 시작 시 빠른 결정</button>
+<button class="quiz-option" data-correct="true">에러/지연 확인 후 선택적 저장으로 중요 데이터 100% 보존</button>
+<button class="quiz-option" data-correct="false">모든 트레이스 저장</button>
+<button class="quiz-option" data-correct="false">CPU 사용량 감소</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q2">
+      <div class="quiz-question">Q2: OTel Collector에서 tail_sampling의 decision_wait 역할은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">샘플링 비율 결정</button>
+<button class="quiz-option" data-correct="false">메모리 제한 설정</button>
+<button class="quiz-option" data-correct="true">트레이스의 모든 span을 모으기 위한 대기 시간</button>
+<button class="quiz-option" data-correct="false">배치 크기 설정</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q3">
+      <div class="quiz-question">Q3: 비용 최적화에서 가장 빠르게 적용할 수 있는 항목은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="true">Karpenter Spot 확장, DocumentDB downsize</button>
+<button class="quiz-option" data-correct="false">MSK Serverless 전환</button>
+<button class="quiz-option" data-correct="false">Reserved Instances 1년 계약</button>
+<button class="quiz-option" data-correct="false">NAT Instance 전환</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q4">
+      <div class="quiz-question">Q4: Production Blocker (P0) Gap에 해당하는 것은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">WAF Bot Control 설정</button>
+<button class="quiz-option" data-correct="false">MSK Replicator 구성</button>
+<button class="quiz-option" data-correct="true">Authentication 미들웨어 없음</button>
+<button class="quiz-option" data-correct="false">CI/CD Pipeline 자동화</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s16">
+  <div class="center-content" style="height:100%; gap:1.5rem;">
+    <h1 style="font-size:3rem; background:linear-gradient(135deg, var(--accent-light), var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Thank You</h1>
+    <p style="color:var(--text-secondary); font-size:1.1rem;">Thank You</p>
+    <p style="color:var(--text-muted); font-size:1rem; margin-top:0.5rem;">수고하셨습니다!</p>
+    <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+            <a href="index.html" class="btn btn-primary btn-sm" style="text-decoration:none;">← 목차로 돌아가기</a>
+    </div>
+  </div>
+</div>
+</div>
+<script src="./common/animation-utils.js"></script>
+<script src="./common/slide-framework.js"></script>
+<script src="./common/quiz-component.js"></script>
+<script src="./common/presenter-view.js"></script>
+
+<script>
+  
+  const presenterNotes = {
+    1: "[1min] 마지막 블록입니다. 지금까지 아키텍처 개요, 데이터 싱크, 트래픽 라우팅, DR/Failover를 다뤘고, 이제 운영의 핵심인 Observability와 Production Readiness를 살펴보겠습니다.\n\n이 블록에서는 네 가지를 다룹니다. 첫째, Cross-Region Observability Stack — 20개 서비스에서 나오는 메트릭, 로그, 트레이스를 어떻게 수집하고 분석하는지. 둘째, Tail-Based Sampling — 트레이스 저장 비용을 90% 줄이면서 중요한 데이터는 100% 보존하는 전략. 셋째, Cost Analysis — 월 $9,600-12,400 비용의 상세 내역과 최적화 기회. 넷째, Production Readiness — Gap 분석, 성능 병목점, Load Test 전략까지.\n\n\n먼저 Observability Stack 전체 구조부터 보겠습니다.",
+    2: "⏸️ [3min] 전체 Observability 파이프라인입니다. 왼쪽부터 오른쪽으로 데이터가 흐릅니다.\n\n먼저 20개 서비스의 Pod들이 OTLP 프로토콜로 텔레메트리를 내보냅니다. 각 서비스에는 OpenTelemetry SDK가 instrumentation되어 있고, 메트릭, 로그, 트레이스 세 가지 신호를 모두 내보냅니다.\n\n그 다음 OTel Collector입니다. AWS Distro for OpenTelemetry 0.40.0 버전을 DaemonSet으로 배포했습니다. 여기서 핵심은 tail_sampling processor입니다. 모든 트레이스를 저장하면 비용이 폭발하니까, 에러와 느린 요청만 100% 저장하고 정상 요청은 10%만 샘플링합니다.\n\n\nCollector에서 나온 데이터는 세 갈래로 갑니다. 트레이스는 Tempo와 X-Ray 둘 다로 보냅니다. Tempo는 S3에 장기 저장하고, X-Ray는 AWS 서비스 맵과 통합을 위해 씁니다. 메트릭은 kube-prometheus-stack 68.4.0으로 가고, 로그는 CloudWatch Logs로 갑니다.\n\n마지막으로 Grafana에서 모든 데이터를 통합 조회합니다. Tempo, Prometheus, CloudWatch 세 가지 데이터소스를 연결해서 하나의 대시보드에서 메트릭-로그-트레이스 상관분석이 가능합니다.\n\n\nOTel Collector 설정을 자세히 보겠습니다.",
+    3: "⏸️ [3min] OTel Collector 설정의 핵심 부분입니다.\n\n첫 번째 탭은 Receivers와 Processors입니다. OTLP receiver가 gRPC 4317, HTTP 4318 포트에서 텔레메트리를 받습니다. memory_limiter는 OOM을 방지하기 위해 512MiB 제한을 걸었습니다.\n\n핵심은 tail_sampling processor입니다. decision_wait 10초 동안 트레이스의 모든 span을 모은 다음 샘플링 결정을 내립니다. 세 가지 정책이 있는데요, errors-policy는 에러가 있는 트레이스를 100% 저장합니다. slow-policy는 500ms 이상 걸린 요청을 100% 저장합니다. default-policy는 나머지를 10%만 샘플링합니다.\n\n\n두 번째 탭은 Exporters와 Pipeline입니다. Tempo로는 OTLP로 내보내고, X-Ray로는 awsxray exporter를 씁니다. index_all_attributes를 true로 해서 모든 span 속성을 검색 가능하게 했습니다.\n\nPipeline 정의를 보면, traces 파이프라인은 otlp → memory_limiter → tail_sampling → batch → tempo,xray 순서입니다. metrics는 tail_sampling이 없고 바로 prometheusremotewrite로 갑니다.\n\n\ntail_sampling의 효과를 구체적인 숫자로 보겠습니다.",
+    4: "⏸️ [2min] Tail-Based Sampling이 왜 중요한지 설명드리겠습니다.\n\nHead Sampling은 요청이 시작될 때 \"이 요청을 추적할까 말까\"를 결정합니다. 문제는 요청이 끝나기 전에 결정하니까, 나중에 에러가 나거나 느려져도 이미 샘플링에서 제외됐으면 트레이스가 없습니다. 디버깅할 때 정작 필요한 데이터가 없는 거죠.\n\nTail Sampling은 트레이스의 모든 span이 도착할 때까지 기다렸다가 결정합니다. 에러가 났는지, 얼마나 걸렸는지 다 확인한 후에 저장 여부를 정합니다.\n\n\n오른쪽 테이블이 우리 정책입니다. 에러가 있으면 무조건 100% 저장합니다. 500ms 이상 걸린 요청도 100% 저장합니다. 나머지 정상 요청은 10%만 샘플링합니다.\n\n결과적으로 저장 비용은 90% 절감되면서, 장애 분석에 필요한 모든 에러와 지연 트레이스는 100% 보존됩니다. 이게 핵심입니다.\n\n\n이렇게 샘플링된 트레이스가 Tempo에 어떻게 저장되는지 보겠습니다.",
+    5: "⏸️ [2min] Tempo 아키텍처입니다. Monolithic 모드로 배포해서 단일 Pod에서 ingester, querier, compactor 역할을 다 합니다. 트래픽이 많지 않을 때는 이게 더 효율적입니다.\n\n백엔드는 S3입니다. Parquet 포맷으로 블록을 저장하고, zstd 압축을 써서 저장 용량을 60% 줄였습니다.\n\n\n오른쪽은 S3 Lifecycle Policy입니다. 최근 30일 데이터는 Standard에서 빠르게 조회합니다. 30-90일은 Infrequent Access로 내려서 비용을 절반으로 줄입니다. 90일 이후에는 Glacier Instant Retrieval로 가는데, 여전히 밀리초 단위로 조회 가능하면서 비용은 GB당 $0.004입니다. 1년이 지나면 삭제합니다.\n\n이 구조로 리전당 월 $185 정도 비용이 예상됩니다. 두 리전이면 $370인데, 모든 트레이스를 저장하는 것보다 훨씬 저렴합니다.\n\n\nTempo와 다른 데이터소스 간 상관분석 방법을 보겠습니다.",
+    6: "⏸️ [2min] Tempo의 TraceQL로 트레이스를 검색하는 예시입니다.\n\n첫 번째 쿼리는 order-service의 에러 트레이스를 찾습니다. 두 번째는 /api/payments 엔드포인트에서 500ms 이상 걸린 요청을 찾습니다. 세 번째가 재미있는데, Cross-region 트레이스를 찾습니다. us-east-1에서 시작해서 us-west-2로 넘어간 트레이스를 쿼리합니다. >> 연산자가 \"자식 span\"을 의미합니다.\n\n\n오른쪽은 Logs-to-Traces correlation입니다. 로그에서 에러를 발견했을 때 해당 트레이스로 바로 점프하는 기능입니다.\n\n먼저 애플리케이션 로그에 traceId와 spanId를 JSON 필드로 넣습니다. 대부분의 OpenTelemetry SDK가 자동으로 해줍니다. 그 다음 Grafana의 Loki 데이터소스에 derivedFields를 설정합니다. 정규식으로 traceId를 추출하고, 클릭하면 Tempo로 연결됩니다.\n\n이렇게 하면 로그에서 에러를 보고 → 클릭 → 전체 트레이스 확인 → 어떤 서비스에서 지연이 발생했는지 바로 파악할 수 있습니다.\n\n\n이제 전체 비용 분석으로 넘어가겠습니다.",
+    7: "⏸️ [2min] 전체 비용 분석입니다. 월 $9,600에서 $12,400 사이로 추정됩니다.\n\n가장 큰 비중은 Compute입니다. EKS Control Plane 두 개가 고정 $146이고, 나머지는 Karpenter가 프로비저닝하는 EC2 비용입니다. 트래픽에 따라 $3,000에서 $4,500까지 변동됩니다.\n\nDatabase는 Aurora DSQL, DocumentDB, ElastiCache를 합쳐서 약 $2,560입니다. DSQL은 사용량 기반이라 변동이 있지만 DocumentDB와 ElastiCache는 인스턴스 비용이 고정입니다.\n\n\nMSK가 $1,620으로 상당히 큽니다. kafka.m5.large 브로커 3개씩 두 리전이니까요. OpenSearch도 $1,560으로 비슷한 규모입니다.\n\n아래 작은 카드들은 부가 비용입니다. Networking이 $452 이상인데, NAT Gateway가 가장 큽니다. Edge는 트래픽에 따라 $50에서 $500까지 변동되고, Observability는 CloudWatch, X-Ray, Prometheus 합쳐서 $150-400입니다.\n\n\n이 비용을 어떻게 줄일 수 있는지 보겠습니다.",
+    8: "⏸️ [2min] 서비스별 상세 비용입니다.\n\nCompute 섹션을 보면, EKS Control Plane은 리전당 $73로 고정입니다. Karpenter EC2가 가장 변동폭이 큰데, 트래픽에 따라 $2,800에서 $4,200까지 갑니다. Bootstrap Node Group은 시스템 Pod용으로 t3.medium을 쓰는데 월 $240입니다.\n\nDatabase 섹션에서 DocumentDB가 $1,480으로 가장 큽니다. r6g.large 4개인데, primary 2개와 replica 2개입니다. OpenSearch도 $1,560으로 비슷한데, dedicated master 3개가 포함되어 있습니다.\n\n\nMSK가 $1,620입니다. kafka.m5.large 브로커 3개씩 두 리전이니까요. 이건 provisioned 모드라서 트래픽이 적어도 비용이 나갑니다.\n\nNetwork에서 NAT Gateway가 $270입니다. 시간당 요금 + 데이터 처리 요금이 합쳐진 건데, 이게 의외로 큽니다.\n\n\n이 비용을 어디서 줄일 수 있는지 보겠습니다.",
+    9: "⏸️ [3min] 비용 최적화 기회입니다. 총 $2,500에서 $3,500 월 절감이 가능합니다.\n\n가장 쉬운 건 Karpenter Spot 확장입니다. 현재 critical-tier만 On-Demand를 쓰고 있는데, worker-tier와 batch-tier NodePool에 Spot 인스턴스 우선 설정을 추가하면 EC2 비용이 30-40% 줄어듭니다. Effort가 Low라서 바로 할 수 있습니다.\n\nDocumentDB는 현재 CPU 사용률이 20% 미만인데 r6g.large를 쓰고 있습니다. r6g.medium으로 내리면 월 $370 절약됩니다. 이것도 Low effort입니다.\n\n\nMSK Serverless는 medium effort지만 효과가 큽니다. 현재 provisioned 클러스터가 유휴 상태일 때도 비용이 나가는데, Serverless로 바꾸면 실제 사용량만 과금됩니다. 트래픽이 적을 때 50-70% 절감이 가능합니다.\n\nOpenSearch는 dedicated master 3개가 있는데, 현재 search 서비스가 실제로 OpenSearch를 안 쓰고 있어서 dedicated master를 제거하면 월 $520 절약됩니다.\n\nReserved Instances는 1년 약정으로 DocumentDB, ElastiCache, OpenSearch에 적용하면 30-40% 할인됩니다. NAT Gateway를 NAT Instance로 바꾸면 월 $200 정도 절약되는데, t4g.micro + ASG로 HA 구성이 가능합니다.\n\n\n다음으로 성능 병목점을 보겠습니다.",
+    10: "⏸️ [3min] 성능 병목점입니다. P0 Critical bug 3개와 P1 Improvement 2개가 있습니다.\n\nP0 첫째, Python Valkey 연결입니다. 현재 Redis() 클라이언트를 쓰는데, Valkey는 클러스터 모드라서 MOVED 리다이렉션 에러가 납니다. RedisCluster()로 바꿔야 합니다. 7개 Python 서비스가 영향받습니다.\n\n둘째, DSQL connection pool입니다. Go의 database/sql 기본값이 CPU당 4개인데, 고부하 시 connection exhaustion이 발생합니다. SetMaxOpenConns, SetMaxIdleConns를 명시적으로 설정해야 합니다. 6개 Go 서비스가 해당됩니다.\n\n셋째, DocumentDB Motor입니다. Python Motor 드라이버의 maxPoolSize 기본값이 100인데, Pod이 10개로 scale되면 1000개 연결이 열리고 DocumentDB의 max_connections를 초과합니다.\n\n\nP1으로 api-gateway의 MaxIdleConnsPerHost가 2입니다. 백엔드 20개 서비스에 각각 2개씩만 연결을 유지하니까 병목이 됩니다. 100으로 올려야 합니다.\n\nJava 서비스들은 SimpleClientHttpRequestFactory를 쓰는데 connection pooling이 없습니다. Apache HttpClient로 바꾸고 pooling을 적용해야 합니다.\n\nQuick Win으로 product-catalog에 5분 TTL 캐시를 넣으면 DocumentDB 부하가 크게 줄고, CloudFront에서 GET /products/* 경로에 1분 캐시를 설정하면 Origin 요청이 50% 이상 줄어듭니다.\n\n\n이 성능 문제를 검증하기 위한 Load Test 전략을 보겠습니다.",
+    11: "⏸️ [3min] k6 Load Test 프로필 4가지입니다. Kubernetes Operator로 클러스터 안에서 실행하고, 결과는 Prometheus로 보냅니다.\n\n첫 번째 Baseline입니다. 100 VU로 10분간 현재 상태의 기준선을 측정합니다. 시나리오 비중은 Browse 60%, Purchase 15%, Search 20%, Seller 5%입니다. p95 500ms 미만, 에러율 1% 미만이 threshold입니다.\n\n두 번째 Ramp-up입니다. 100에서 1000 VU까지 30분간 점진적으로 올립니다. 어느 지점에서 latency가 급격히 증가하는지, breaking point를 찾는 테스트입니다.\n\n\n세 번째 Spike입니다. 500 VU에서 갑자기 2000으로 올렸다가 다시 내립니다. Karpenter가 얼마나 빨리 노드를 프로비저닝하는지, auto-scaling 반응 시간을 측정합니다. 목표는 2분 내 노드 프로비저닝입니다.\n\n네 번째 Soak입니다. 300 VU로 4시간 동안 지속합니다. 메모리 누수, DB 연결 누수, Goroutine 증가 같은 장기 실행 시에만 나타나는 문제를 탐지합니다.\n\n\nTarget 메트릭과 SLO를 정리하겠습니다.",
+    12: "⏸️ [2min] SLO 타겟 메트릭입니다.\n\nLatency SLO는 세 가지 퍼센타일로 정의했습니다. p50은 100ms 미만, p95는 300ms 미만, p99는 500ms 미만입니다. p50이 빠르면 대부분의 사용자 경험이 좋고, p99가 통제되면 최악의 경우도 관리 가능합니다.\n\nThroughput은 5,000 RPS를 sustained로 버텨야 합니다. 피크 시간대 예상 트래픽의 2배 정도를 여유분으로 잡은 겁니다. Error Rate은 0.1% 미만, Availability는 99.9%입니다.\n\n\n오른쪽은 엔드포인트별 세부 타겟입니다. 읽기 위주인 /products는 200ms 미만, 상품 상세는 150ms 미만으로 빨라야 합니다. 쓰기 작업인 /orders와 /payments는 트랜잭션이 포함되니까 500ms까지 허용합니다. Search는 300ms, Seller Dashboard는 400ms입니다.\n\n이 타겟들을 Load Test에서 threshold로 설정하고, 통과 여부로 릴리즈 판단을 합니다.\n\n\nProduction Readiness를 위한 Gap Analysis를 보겠습니다.",
+    13: "⏸️ [2min] Gap Analysis 요약입니다. 총 7개 Gap이 있고, 우선순위별로 분류했습니다.\n\nP0, Production Blocker가 두 개입니다. 첫째 Authentication이 아예 없습니다. api-gateway에 인증 미들웨어가 없고, 누구나 API를 호출할 수 있는 상태입니다. 둘째 event-bus 서비스가 MSK에 실제로 publish하지 않습니다. 7개 consumer 서비스가 이벤트를 못 받고 있습니다.\n\n\nP1은 운영 리스크입니다. WAF Bot Control이 curl과 headless browser를 차단해서 모니터링 체크가 실패합니다. Search 서비스는 strings.Contains()로 mock 검색을 하고 있고요. DSQL이 us-east-1에만 있어서 진정한 Multi-Region이 아닙니다.\n\nP2는 개선사항입니다. MSK Replicator로 Cross-region sync를 구성해야 하고, CI/CD가 수동 상태입니다.\n\nP0 두 개가 해결되기 전까지는 Production 런칭이 불가능합니다.\n\n\n이 Gap들을 해결하기 위한 로드맵을 보겠습니다.",
+    14: "⏸️ [2min] Production Readiness 로드맵을 4개 Phase로 정리했습니다.\n\nPhase 1은 2주입니다. P0 Gap인 Authentication과 Event Bus MSK 연동을 해결합니다. Authentication이 가장 크고 복잡한데, Cognito User Pool 설정, JWT 미들웨어 구현, 각 서비스 integration 테스트까지 2주가 빠듯합니다. Event Bus는 병렬로 진행하면 됩니다.\n\nPhase 2는 4주입니다. P1 Gap들과 성능 버그를 수정합니다. WAF scope-down rule 설정, Search 서비스의 OpenSearch 연동, DSQL Linked Clusters 구성이 여기에 들어갑니다. 동시에 Valkey ClusterClient, DSQL pool 설정, Motor maxPoolSize 같은 성능 버그도 수정합니다.\n\n\nPhase 3는 2주입니다. P2 Gap인 MSK Replicator와 CI/CD Pipeline을 구축합니다. DR 자동화도 여기서 합니다. EventBridge가 CloudWatch Alarm을 받아서 Lambda로 DocumentDB/ElastiCache promote를 자동화하는 거죠.\n\nPhase 4는 ongoing입니다. k6 Load Test 전체 프로필을 실행하고, 결과에 따라 튜닝합니다. 비용 최적화도 이 시점에 적용합니다. Spot 확장, DB downsize, RI 계약 같은 것들이요.\n\n\n전체 내용을 정리하겠습니다.",
+    15: "⏸️ [2min] 전체 내용을 네 가지로 정리하겠습니다.\n\n첫째, Observability입니다. OTel Collector와 Tail-Based Sampling으로 저장 비용 90%를 절감하면서 에러와 지연 트레이스는 100% 보존합니다. Tempo와 X-Ray 둘 다로 export해서 장기 저장과 AWS 통합을 모두 확보합니다.\n\n둘째, Cost입니다. 월 $9,600-12,400 비용 중 $2,500-3,500를 절감할 수 있습니다. Spot 확장과 DB downsize는 바로 할 수 있는 quick win이고, MSK Serverless와 RI는 중기적으로 적용합니다.\n\n\n셋째, Production Blockers입니다. Authentication과 Event Bus가 P0입니다. 이것 없이는 Production 런칭 불가능합니다. 8주 로드맵으로 P0부터 P2까지 순차 해결합니다.\n\n넷째, Performance입니다. Valkey, DSQL pool, Motor 세 가지 P0 bug를 수정하고, k6로 SLO를 검증합니다. Soak test로 장기 실행 시 누수도 탐지합니다.\n\n권장 순서는 P0 Gap 먼저, Performance Fix, Load Test, 마지막에 Cost Optimize입니다.\n\n\n이제 마지막 퀴즈로 이 블록을 마무리하겠습니다.",
+    16: "[3min] 마지막 퀴즈입니다. 4문제를 풀어보시죠.\n\nQ1은 Tail-Based Sampling의 핵심 장점입니다. 정답은 B, \"에러/지연 확인 후 선택적 저장으로 중요 데이터 100% 보존\"입니다. Head Sampling은 시작 시 결정하니까 에러 발생 전에 버려질 수 있지만, Tail은 다 보고 결정합니다.\n\nQ2는 decision_wait의 역할입니다. 정답은 C, 트레이스의 모든 span을 모으기 위한 대기 시간입니다. 분산 시스템에서 span이 여러 서비스에서 비동기로 도착하니까, 전체를 모을 때까지 기다려야 에러 여부를 판단할 수 있습니다.\n\nQ3은 가장 빠른 비용 최적화입니다. 정답은 A, Karpenter Spot 확장과 DocumentDB downsize입니다. 둘 다 Effort가 Low이고, 설정 변경만으로 바로 적용됩니다.\n\nQ4는 P0 Gap입니다. 정답은 C, Authentication 미들웨어 없음입니다. 이것 없이는 누구나 API를 호출할 수 있어서 Production 런칭이 불가능합니다.",
+    17: "[1min] 수고하셨습니다. 이것으로 Multi-Region Architecture Deep Dive 전체 프레젠테이션을 마칩니다.\n\n다섯 블록을 통해 Foundation, Data Sync, Traffic Routing, DR/Failover, 그리고 Observability & Operations까지 전체적으로 살펴봤습니다.\n\n핵심 메시지를 다시 정리하면: Multi-Region 아키텍처는 단순히 리전을 두 개 쓰는 게 아니라, 데이터 일관성, 트래픽 라우팅, DR 자동화, Observability가 모두 갖춰져야 진정한 Active-Active가 됩니다.\n\n질문이 있으시면 편하게 해주세요."
+  };
+  const deck = new SlideFramework({
+    
+    footer: 'Multi-Region Architecture Deep Dive — L300+',
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

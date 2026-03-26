@@ -1,0 +1,1188 @@
+---
+remarp: true
+block: traffic-routing
+---
+
+<!-- Slide 1: Cover -->
+@type: cover
+
+# Traffic Routing & Edge
+Global Traffic Management with Route53, CloudFront & WAF
+
+:::notes
+{timing: 1min}
+Block 3에 오신 것을 환영합니다. 이번 블록에서는 Multi-Region Shopping Mall의 트래픽 라우팅과 Edge 보안을 깊이 있게 다루겠습니다.
+
+사용자 요청이 어떻게 글로벌 Edge 네트워크를 거쳐 백엔드에 도달하는지, Route53의 Latency-based Routing, CloudFront의 캐싱 전략, WAF의 보안 규칙 스택까지 약 30분간 살펴봅니다.
+
+{cue: transition}
+먼저 End-to-End 트래픽 플로우부터 시작하겠습니다.
+:::
+
+---
+<!-- Slide 2: End-to-End Traffic Flow -->
+@type: content
+
+## End-to-End Traffic Flow
+
+:::html
+<div class="flow-v" style="gap:0.6rem; padding:0.3rem;">
+  <!-- Row 1: User Request -->
+  <div class="flow-h" style="justify-content:center; gap:1.5rem;">
+    <div class="flow-box bg-dark" style="min-width:140px; padding:0.8rem;" data-fragment-index="1">
+      <span style="font-size:1.8rem;">👤</span>
+      <span style="font-size:0.9rem;">mall.atomai.click</span>
+    </div>
+    <div class="flow-arrow" data-fragment-index="2">→</div>
+    <div class="flow-box bg-blue" style="min-width:140px;" data-fragment-index="2">
+      <img src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" style="width:36px;">
+      <span>Route53</span>
+      <span style="font-size:0.65rem; color:rgba(255,255,255,0.6);">CNAME → CloudFront</span>
+    </div>
+  </div>
+
+  <div class="flow-arrow" style="font-size:1.3rem;" data-fragment-index="3">↓</div>
+
+  <!-- Row 2: Edge Layer -->
+  <div class="flow-h" style="justify-content:center; gap:1rem;">
+    <div class="flow-group bg-orange" style="padding:0.8rem 1.2rem;" data-fragment-index="3">
+      <div class="flow-group-label">Edge Layer</div>
+      <div class="flow-h" style="gap:1rem;">
+        <div class="icon-item">
+          <img src="common/aws-icons/services/Arch_Amazon-CloudFront_48.svg" style="width:40px;">
+          <span>CloudFront</span>
+        </div>
+        <div class="icon-item">
+          <img src="common/aws-icons/services/Arch_AWS-WAF_48.svg" style="width:40px;">
+          <span>WAF</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow" style="font-size:1.3rem;" data-fragment-index="4">↓</div>
+
+  <!-- Row 3: Origin Routing Split -->
+  <div class="flow-h" style="justify-content:center; gap:2rem;">
+    <!-- Static Path -->
+    <div class="flow-box bg-green" style="min-width:160px; padding:0.7rem;" data-fragment-index="4">
+      <div style="font-size:0.75rem; color:rgba(255,255,255,0.7); margin-bottom:0.3rem;">/static/*</div>
+      <div class="flow-h" style="gap:0.5rem; align-items:center;">
+        <img src="common/aws-icons/services/Arch_Amazon-Simple-Storage-Service_48.svg" style="width:32px;">
+        <div style="text-align:left;">
+          <span style="font-size:0.85rem;">S3 + OAC</span>
+        </div>
+      </div>
+    </div>
+    <!-- API Path -->
+    <div class="flow-box bg-purple" style="min-width:200px; padding:0.7rem;" data-fragment-index="5">
+      <div style="font-size:0.75rem; color:rgba(255,255,255,0.7); margin-bottom:0.3rem;">/api/*</div>
+      <div class="flow-h" style="gap:0.5rem; align-items:center;">
+        <img src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" style="width:28px;">
+        <span style="font-size:0.8rem;">api-internal.atomai.click</span>
+      </div>
+      <div style="font-size:0.65rem; color:rgba(255,255,255,0.5); margin-top:0.3rem;">Route53 Latency-based</div>
+    </div>
+  </div>
+
+  <div class="flow-arrow" style="font-size:1.3rem;" data-fragment-index="6">↓</div>
+
+  <!-- Row 4: Regional Backend -->
+  <div class="flow-h" style="justify-content:center; gap:1.5rem;">
+    <div class="flow-group bg-blue" style="padding:0.6rem 1rem;" data-fragment-index="6">
+      <div class="flow-group-label">us-east-1 / us-west-2</div>
+      <div class="flow-h" style="gap:0.8rem;">
+        <div class="flow-box" style="padding:0.4rem 0.8rem;">
+          <img src="common/aws-icons/services/Arch_Elastic-Load-Balancing_48.svg" style="width:28px;">
+          <span style="font-size:0.75rem;">NLB</span>
+          <span style="font-size:0.6rem; color:rgba(255,255,255,0.5);">Prefix-list SG</span>
+        </div>
+        <div class="flow-arrow" style="font-size:0.9rem;">→</div>
+        <div class="flow-box" style="padding:0.4rem 0.8rem;">
+          <img src="common/aws-icons/services/Arch_Amazon-Elastic-Kubernetes-Service_48.svg" style="width:28px;">
+          <span style="font-size:0.75rem;">api-gateway</span>
+        </div>
+        <div class="flow-arrow" style="font-size:0.9rem;">→</div>
+        <div class="flow-box" style="padding:0.4rem 0.8rem; background:rgba(255,255,255,0.05);">
+          <span style="font-size:0.75rem;">Backend MSA</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+:::
+
+:::notes
+{timing: 3min}
+End-to-End 트래픽 플로우를 단계별로 살펴보겠습니다.
+
+사용자가 mall.atomai.click으로 접속하면, Route53이 CNAME 레코드로 CloudFront 도메인을 반환합니다. 이 첫 번째 DNS 조회가 글로벌 트래픽 분산의 시작점입니다.
+
+CloudFront에서 요청 경로에 따라 두 가지 분기가 발생합니다. /static/* 경로는 S3 버킷으로 직접 라우팅되어 정적 자산을 서빙합니다. OAC(Origin Access Control)가 S3 버킷을 보호하므로 CloudFront를 거치지 않은 직접 접근은 불가능합니다.
+
+{cue: pause}
+/api/* 경로는 api-internal.atomai.click으로 라우팅됩니다. 여기서 두 번째 Route53 조회가 발생하는데, 이번에는 Latency-based Routing으로 사용자에게 가장 가까운 리전의 NLB IP를 반환합니다.
+
+NLB의 Security Group이 핵심 보안 포인트입니다. CloudFront Managed Prefix List만 허용하므로, 모든 트래픽이 반드시 CloudFront와 WAF를 거쳐야 합니다. 0.0.0.0/0은 절대 허용하지 않습니다.
+
+{cue: transition}
+Route53의 Latency-based Routing 동작 방식을 자세히 살펴보겠습니다.
+:::
+
+---
+<!-- Slide 3: Route53 Latency-Based Routing -->
+@type: content
+@layout: two-column
+
+## Route53 Latency-Based Routing
+
+::: left
+### How It Works
+
+- **Latency Measurement** {.click}
+  - AWS measures RTT from 20+ edge locations
+  - Updates every ~24 hours
+  - NOT real-time user latency
+
+- **DNS Resolution** {.click}
+  - User DNS query → nearest resolver
+  - Route53 returns lowest-latency region IP
+  - TTL: 60 seconds (balance: freshness vs load)
+
+- **Automatic Failover** {.click}
+  - Health check fails → remove from rotation
+  - Traffic shifts to healthy region
+  - Recovery → automatic re-addition
+:::
+
+::: right
+### Health Check Configuration
+
+```yaml
+Type: HTTP
+Endpoint: /health
+Port: 443
+Protocol: HTTPS
+Interval: 30 seconds
+Failure Threshold: 3
+```
+
+### DNS Records {.click}
+
+| Record | Type | Routing |
+|--------|------|---------|
+| `mall.atomai.click` | CNAME | → CloudFront |
+| `api-internal.atomai.click` | A | Latency (2 regions) |
+
+### Latency Targets {.click}
+
+- us-east-1 → NLB IP (Primary)
+- us-west-2 → NLB IP (Secondary)
+:::
+
+:::notes
+{timing: 3min}
+Route53 Latency-based Routing의 동작 방식을 이해하는 것이 중요합니다.
+
+먼저 오해를 바로잡자면, Route53이 실시간 사용자 latency를 측정하는 것이 아닙니다. AWS가 전 세계 20개 이상의 Edge Location에서 각 리전까지의 RTT를 주기적으로 측정하고, 이 데이터를 약 24시간마다 업데이트합니다.
+
+사용자의 DNS 쿼리가 들어오면, Route53은 사용자의 DNS Resolver 위치를 기준으로 가장 낮은 latency를 가진 리전의 IP를 반환합니다. TTL은 60초로 설정했는데, 너무 짧으면 DNS 쿼리 부하가 증가하고 너무 길면 failover가 늦어지기 때문입니다.
+
+{cue: pause}
+Health Check는 30초마다 /health 엔드포인트를 호출합니다. 3번 연속 실패하면 해당 리전이 rotation에서 제외되고, 모든 트래픽이 남은 healthy 리전으로 이동합니다. 복구되면 자동으로 다시 추가됩니다.
+
+DNS 레코드 구조를 보면, mall.atomai.click은 CloudFront를 가리키는 CNAME이고, api-internal.atomai.click은 Latency-based A 레코드로 두 리전의 NLB를 가리킵니다.
+
+{cue: transition}
+Health Check 상세 설정을 더 살펴보겠습니다.
+:::
+
+---
+<!-- Slide 4: Route53 Health Checks -->
+@type: content
+
+## Route53 Health Checks
+
+:::html
+<div class="col-2" style="gap:1.5rem; align-items:start;">
+  <!-- Public DNS -->
+  <div class="card" style="padding:1rem;" data-fragment-index="1">
+    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.8rem;">
+      <img src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" style="width:32px;">
+      <h4 style="margin:0; color:#FF9900;">Public DNS</h4>
+    </div>
+    <div style="font-family:monospace; font-size:0.85rem; background:rgba(0,0,0,0.3); padding:0.6rem; border-radius:4px; margin-bottom:0.8rem;">
+      <span style="color:#00d68f;">mall.atomai.click</span>
+    </div>
+    <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">
+      <div><strong>Type:</strong> CNAME</div>
+      <div><strong>Target:</strong> d1234567890.cloudfront.net</div>
+      <div><strong>Health Check:</strong> None (CloudFront handles)</div>
+    </div>
+  </div>
+
+  <!-- Internal API DNS -->
+  <div class="card" style="padding:1rem;" data-fragment-index="2">
+    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.8rem;">
+      <img src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" style="width:32px;">
+      <h4 style="margin:0; color:#00cec9;">Internal API DNS</h4>
+    </div>
+    <div style="font-family:monospace; font-size:0.85rem; background:rgba(0,0,0,0.3); padding:0.6rem; border-radius:4px; margin-bottom:0.8rem;">
+      <span style="color:#00d68f;">api-internal.atomai.click</span>
+    </div>
+    <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">
+      <div><strong>Type:</strong> A Record (Latency-based)</div>
+      <div><strong>Targets:</strong></div>
+      <div style="margin-left:1rem;">• us-east-1 NLB IP</div>
+      <div style="margin-left:1rem;">• us-west-2 NLB IP</div>
+      <div><strong>Health Check:</strong> HTTP 200 on /health</div>
+    </div>
+  </div>
+</div>
+
+<!-- Health Check Details -->
+<div class="card" style="margin-top:1rem; padding:1rem; border-left:3px solid var(--green);" data-fragment-index="3">
+  <h4 style="margin:0 0 0.5rem; color:var(--green);">Health Check Parameters</h4>
+  <div class="flow-h" style="gap:2rem; flex-wrap:wrap;">
+    <div style="font-size:0.85rem;">
+      <span style="color:var(--text-muted);">Endpoint:</span>
+      <code>/health</code>
+    </div>
+    <div style="font-size:0.85rem;">
+      <span style="color:var(--text-muted);">Protocol:</span>
+      <code>HTTPS:443</code>
+    </div>
+    <div style="font-size:0.85rem;">
+      <span style="color:var(--text-muted);">Interval:</span>
+      <code>30s</code>
+    </div>
+    <div style="font-size:0.85rem;">
+      <span style="color:var(--text-muted);">Failure Threshold:</span>
+      <code>3</code>
+    </div>
+    <div style="font-size:0.85rem;">
+      <span style="color:var(--text-muted);">Regions:</span>
+      <code>us-east-1, us-west-2, eu-west-1</code>
+    </div>
+  </div>
+</div>
+:::
+
+:::notes
+{timing: 2min}
+Route53 Health Check 구성을 자세히 보겠습니다.
+
+Public DNS인 mall.atomai.click은 CloudFront로 CNAME되어 있어 별도 Health Check가 필요 없습니다. CloudFront가 자체적으로 Origin Health를 관리하기 때문입니다.
+
+핵심은 api-internal.atomai.click입니다. Latency-based A 레코드로 두 리전의 NLB IP를 가리키며, 각 리전에 대해 독립적인 Health Check가 동작합니다.
+
+{cue: pause}
+Health Check는 3개 리전에서 동시에 실행됩니다 — us-east-1, us-west-2, eu-west-1. 모든 checker가 실패를 보고해야 unhealthy로 판정되므로, 일시적인 네트워크 이슈로 인한 false positive를 방지합니다.
+
+30초 간격으로 /health 엔드포인트를 호출하고, 3번 연속 실패 시 약 90초 후에 failover가 시작됩니다. 이 시간이 너무 길다면 interval을 10초로 줄일 수 있지만, Health Check 비용이 증가합니다.
+
+{cue: transition}
+CloudFront Distribution 설정으로 넘어가겠습니다.
+:::
+
+---
+<!-- Slide 5: CloudFront Distribution -->
+@type: tabs
+
+## CloudFront Distribution
+
+### API Behavior
+```yaml
+Path Pattern: /api/*
+Origin: api-internal.atomai.click (NLB)
+Cache Policy: CachingDisabled
+  # No caching for dynamic API responses
+Origin Request Policy: AllViewerExceptHostHeader
+  # Forward all headers except Host
+Allowed Methods: GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE
+  # All HTTP methods for REST API
+Viewer Protocol: HTTPS only
+Compress: true
+```
+
+### Static Behavior
+```yaml
+Path Pattern: /static/*
+Origin: mall-static-assets.s3.amazonaws.com
+Cache Policy: CachingOptimized
+  TTL: 86400 (24 hours)
+  # Long cache for immutable assets
+Origin Access: OAC (Origin Access Control)
+  # S3 bucket not publicly accessible
+Allowed Methods: GET, HEAD
+Viewer Protocol: HTTPS only
+Compress: true
+```
+
+### SPA Fallback
+```yaml
+Path Pattern: /* (Default)
+Origin: mall-static-assets.s3.amazonaws.com
+Cache Policy: CachingOptimized
+Custom Error Response:
+  Error Code: 403, 404
+  Response Page: /index.html
+  Response Code: 200
+  # SPA client-side routing support
+```
+
+:::notes
+{timing: 3min}
+CloudFront Distribution의 세 가지 Behavior를 탭으로 구분했습니다.
+
+API Behavior는 /api/* 경로를 처리합니다. 캐싱을 완전히 비활성화하고, 모든 HTTP 메서드를 허용합니다. Origin Request Policy에서 Host 헤더만 제외하고 모든 헤더를 Origin으로 전달하는데, 이는 NLB가 원본 요청 정보를 받아야 하기 때문입니다.
+
+{cue: pause}
+Static Behavior는 /static/* 경로의 정적 자산을 처리합니다. 24시간 TTL로 강력하게 캐싱하고, OAC를 통해 S3에 접근합니다. S3 버킷은 퍼블릭 접근이 차단되어 있어 CloudFront를 거치지 않으면 접근할 수 없습니다.
+
+SPA Fallback은 Default Behavior로, React/Vue 같은 SPA의 client-side routing을 지원합니다. 존재하지 않는 경로로 요청이 오면 403/404 대신 index.html을 반환하고 200 상태를 보냅니다. 이렇게 하면 /products/123 같은 deep link가 정상 동작합니다.
+
+{cue: transition}
+CloudFront Origin Shield 설정을 살펴보겠습니다.
+:::
+
+---
+<!-- Slide 6: CloudFront Origin Shield -->
+@type: content
+@layout: two-column
+
+## CloudFront Origin Shield
+
+::: left
+### What is Origin Shield?
+
+- **Additional caching layer** at regional edge {.click}
+- Positioned between edge locations and origin {.click}
+- Single point of origin contact per region {.click}
+
+### Configuration {.click}
+
+```yaml
+Origin Shield Region: us-east-1
+  # Closest to primary origin
+Enabled: true
+```
+
+### How It Works {.click}
+
+```
+User → Edge Location → Origin Shield → Origin
+         (400+ PoPs)    (1 region)     (NLB)
+```
+:::
+
+::: right
+### Benefits
+
+:::click
+**Cache Hit Ratio Improvement**
+- Without Shield: Edge → Origin (each PoP)
+- With Shield: Edge → Shield → Origin
+- Result: **50-90% reduction** in origin requests
+:::
+
+:::click
+**Cost Analysis**
+| Item | Without Shield | With Shield |
+|------|----------------|-------------|
+| Origin Requests | 100% | 10-50% |
+| Shield Cost | $0 | ~$0.0075/10K |
+| **Net Savings** | - | **30-60%** |
+:::
+
+:::click
+### When to Use
+- High-traffic global distribution
+- Origin with limited capacity
+- Cost-sensitive workloads
+:::
+:::
+
+:::notes
+{timing: 3min}
+Origin Shield는 CloudFront의 추가 캐싱 레이어입니다. 전 세계 400개 이상의 Edge Location과 Origin 사이에 위치해서, Origin으로 가는 요청을 집약합니다.
+
+동작 방식을 보면, 기존에는 각 Edge Location이 개별적으로 Origin에 요청했습니다. 예를 들어 도쿄, 서울, 싱가포르에서 같은 콘텐츠를 요청하면 Origin에 3번 요청이 갑니다.
+
+Origin Shield를 켜면, 이 세 요청이 모두 us-east-1의 Shield 레이어로 먼저 갑니다. Shield에 캐시가 있으면 Origin에 요청하지 않고 바로 응답합니다. 없으면 한 번만 Origin에 요청하고 결과를 캐싱합니다.
+
+{cue: pause}
+실제 효과는 50-90%의 Origin 요청 감소입니다. 트래픽 패턴에 따라 다르지만, 글로벌 사용자가 많을수록 효과가 큽니다.
+
+비용 분석을 보면, Shield 자체 비용은 10,000 요청당 약 $0.0075로 저렴합니다. Origin 요청 감소로 인한 NLB 비용 절감, EKS 부하 감소 등을 고려하면 순 절감 효과는 30-60%에 달합니다.
+
+Shield 리전은 Origin에 가장 가까운 us-east-1로 설정했습니다. Shield와 Origin 사이의 latency를 최소화하기 위해서입니다.
+
+{cue: transition}
+Origin Failover 설정을 살펴보겠습니다.
+:::
+
+---
+<!-- Slide 7: CloudFront Origin Failover -->
+@type: content
+
+## CloudFront Origin Failover
+
+:::html
+<div class="flow-v" style="gap:1rem; padding:0.5rem;">
+  <!-- Origin Group -->
+  <div class="card" style="padding:1rem; border-left:3px solid var(--accent);" data-fragment-index="1">
+    <h4 style="margin:0 0 0.8rem; color:var(--accent);">Origin Group: api-origin-group</h4>
+    <div class="flow-h" style="gap:2rem; justify-content:center;">
+      <div class="flow-box bg-green" style="min-width:180px; padding:0.8rem;">
+        <div style="font-size:0.7rem; color:rgba(255,255,255,0.6); margin-bottom:0.3rem;">Primary Origin</div>
+        <div style="font-weight:600;">api-internal.atomai.click</div>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem;">us-east-1 NLB (via Route53)</div>
+      </div>
+      <div class="flow-arrow" style="color:var(--text-muted);">failover →</div>
+      <div class="flow-box bg-orange" style="min-width:180px; padding:0.8rem;">
+        <div style="font-size:0.7rem; color:rgba(255,255,255,0.6); margin-bottom:0.3rem;">Secondary Origin</div>
+        <div style="font-weight:600;">api-secondary.atomai.click</div>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem;">us-west-2 NLB (direct)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Failover Criteria -->
+  <div class="col-2" style="gap:1rem;">
+    <div class="card" style="padding:1rem;" data-fragment-index="2">
+      <h4 style="margin:0 0 0.5rem; color:var(--cyan);">Failover Triggers</h4>
+      <ul style="margin:0; padding-left:1.2rem; font-size:0.85rem; line-height:1.8;">
+        <li>HTTP 500, 502, 503, 504</li>
+        <li>Connection timeout</li>
+        <li>Origin not reachable</li>
+      </ul>
+    </div>
+    <div class="card" style="padding:1rem;" data-fragment-index="3">
+      <h4 style="margin:0 0 0.5rem; color:var(--green);">Failover Speed</h4>
+      <ul style="margin:0; padding-left:1.2rem; font-size:0.85rem; line-height:1.8;">
+        <li><strong>Sub-second switching</strong></li>
+        <li>No DNS propagation delay</li>
+        <li>Automatic recovery on primary health</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Note -->
+  <div style="padding:0.6rem 1rem; background:rgba(255,153,0,0.1); border-radius:6px; font-size:0.8rem; text-align:center;" data-fragment-index="4">
+    <strong style="color:#FF9900;">Note:</strong> Origin Failover operates at CloudFront level, independent of Route53 health checks.
+    Both layers provide redundancy.
+  </div>
+</div>
+:::
+
+:::notes
+{timing: 2min}
+CloudFront Origin Failover는 Origin Group을 통해 구성됩니다. Primary Origin이 실패하면 자동으로 Secondary Origin으로 전환됩니다.
+
+현재 설정에서 Primary는 api-internal.atomai.click으로, Route53 Latency-based Routing을 통해 가장 가까운 NLB로 라우팅됩니다. Secondary는 api-secondary.atomai.click으로, us-west-2 NLB를 직접 가리킵니다.
+
+Failover가 발생하는 조건은 5xx 에러, 연결 타임아웃, Origin 도달 불가입니다. 4xx 에러는 클라이언트 오류이므로 failover를 트리거하지 않습니다.
+
+{cue: pause}
+가장 중요한 장점은 sub-second switching입니다. DNS 기반 failover는 TTL 만료를 기다려야 하지만, CloudFront Origin Failover는 같은 요청 내에서 즉시 Secondary로 재시도합니다. 사용자는 약간의 latency 증가만 경험하고 실패를 인지하지 못합니다.
+
+Route53 Health Check와 CloudFront Origin Failover가 독립적으로 동작한다는 점을 기억하세요. 두 레이어가 각각 redundancy를 제공하므로 더 강력한 장애 대응이 가능합니다.
+
+{cue: transition}
+WAF 규칙 스택을 살펴보겠습니다.
+:::
+
+---
+<!-- Slide 8: WAF Rule Stack -->
+@type: content
+
+## WAF Rule Stack
+
+:::html
+<div class="flow-v" style="gap:0.5rem; padding:0.3rem;">
+  <!-- Layer 5: Top -->
+  <div class="card" style="padding:0.7rem 1rem; border-left:3px solid #EF4444;" data-fragment-index="1">
+    <div class="flow-h" style="justify-content:space-between; align-items:center;">
+      <div>
+        <span style="font-size:0.7rem; color:rgba(255,255,255,0.5);">Priority 1</span>
+        <h4 style="margin:0.2rem 0 0; font-size:0.95rem;">GeoRestriction</h4>
+      </div>
+      <div style="text-align:right; font-size:0.8rem;">
+        <div style="color:var(--green);">Allow: KR, US, JP</div>
+        <div style="color:var(--red);">Block: All others</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow" style="font-size:1rem; color:var(--text-muted);">↓</div>
+
+  <div class="card" style="padding:0.7rem 1rem; border-left:3px solid #F59E0B;" data-fragment-index="2">
+    <div class="flow-h" style="justify-content:space-between; align-items:center;">
+      <div>
+        <span style="font-size:0.7rem; color:rgba(255,255,255,0.5);">Priority 2</span>
+        <h4 style="margin:0.2rem 0 0; font-size:0.95rem;">RateLimit</h4>
+      </div>
+      <div style="text-align:right; font-size:0.8rem;">
+        <div><strong>2,000</strong> requests / 5 min / IP</div>
+        <div style="color:var(--text-muted);">Action: Block</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow" style="font-size:1rem; color:var(--text-muted);">↓</div>
+
+  <div class="card" style="padding:0.7rem 1rem; border-left:3px solid #3B82F6;" data-fragment-index="3">
+    <div class="flow-h" style="justify-content:space-between; align-items:center;">
+      <div>
+        <span style="font-size:0.7rem; color:rgba(255,255,255,0.5);">Priority 3</span>
+        <h4 style="margin:0.2rem 0 0; font-size:0.95rem;">AWSManagedRulesKnownBadInputsRuleSet</h4>
+      </div>
+      <div style="text-align:right; font-size:0.8rem;">
+        <div style="color:var(--text-muted);">Log4j, SSRF, etc.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow" style="font-size:1rem; color:var(--text-muted);">↓</div>
+
+  <div class="card" style="padding:0.7rem 1rem; border-left:3px solid #8B5CF6;" data-fragment-index="4">
+    <div class="flow-h" style="justify-content:space-between; align-items:center;">
+      <div>
+        <span style="font-size:0.7rem; color:rgba(255,255,255,0.5);">Priority 4</span>
+        <h4 style="margin:0.2rem 0 0; font-size:0.95rem;">AWSManagedRulesSQLiRuleSet</h4>
+      </div>
+      <div style="text-align:right; font-size:0.8rem;">
+        <div style="color:var(--text-muted);">SQL Injection patterns</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow" style="font-size:1rem; color:var(--text-muted);">↓</div>
+
+  <div class="card" style="padding:0.7rem 1rem; border-left:3px solid #10B981;" data-fragment-index="5">
+    <div class="flow-h" style="justify-content:space-between; align-items:center;">
+      <div>
+        <span style="font-size:0.7rem; color:rgba(255,255,255,0.5);">Priority 5</span>
+        <h4 style="margin:0.2rem 0 0; font-size:0.95rem;">AWSManagedRulesCommonRuleSet</h4>
+      </div>
+      <div style="text-align:right; font-size:0.8rem;">
+        <div style="color:var(--text-muted);">OWASP Top 10</div>
+      </div>
+    </div>
+  </div>
+</div>
+:::
+
+:::notes
+{timing: 3min}
+WAF 규칙은 스택 형태로 위에서 아래로 평가됩니다. Priority 숫자가 낮을수록 먼저 평가됩니다.
+
+가장 먼저 GeoRestriction을 평가합니다. 한국, 미국, 일본 외의 국가에서 오는 요청은 바로 차단합니다. 이 쇼핑몰의 서비스 대상 지역이 이 세 국가이기 때문입니다.
+
+다음은 RateLimit입니다. IP당 5분에 2,000 요청을 초과하면 차단합니다. 이 수치는 정상 사용자의 브라우징 패턴을 분석해서 설정했습니다. 일반 사용자는 5분에 100-200 요청 정도이므로 충분한 여유가 있습니다.
+
+{cue: pause}
+AWS Managed Rules 세 개를 순서대로 적용합니다. KnownBadInputs는 Log4j 취약점, SSRF 공격 패턴을 탐지합니다. SQLi RuleSet은 SQL Injection 패턴을, CommonRuleSet은 OWASP Top 10 취약점을 포괄적으로 탐지합니다.
+
+규칙 순서가 중요합니다. Geo와 RateLimit을 먼저 평가해서 명확히 차단할 트래픽을 걸러내고, 남은 트래픽에 대해서만 비용이 더 드는 Managed Rules를 평가합니다.
+
+{cue: transition}
+Terraform 코드로 구현을 살펴보겠습니다.
+:::
+
+---
+<!-- Slide 9: WAF Custom Rules (Terraform) -->
+@type: content
+
+## WAF Custom Rules — Terraform
+
+:::html
+<div class="code-block" style="font-size:0.75rem; max-height:420px; overflow-y:auto;">
+<span class="comment"># Rate Limiting Rule</span>
+<span class="key">resource</span> <span class="string">"aws_wafv2_web_acl"</span> <span class="string">"mall_waf"</span> {
+  <span class="key">name</span>  = <span class="string">"mall-waf-acl"</span>
+  <span class="key">scope</span> = <span class="string">"CLOUDFRONT"</span>
+
+  <span class="key">rule</span> {
+    <span class="key">name</span>     = <span class="string">"RateLimitRule"</span>
+    <span class="key">priority</span> = <span class="value">2</span>
+
+    <span class="key">action</span> { <span class="key">block</span> {} }
+
+    <span class="key">statement</span> {
+      <span class="key">rate_based_statement</span> {
+        <span class="key">limit</span>              = <span class="value">2000</span>
+        <span class="key">aggregate_key_type</span> = <span class="string">"IP"</span>
+      }
+    }
+
+    <span class="key">visibility_config</span> {
+      <span class="key">sampled_requests_enabled</span>   = <span class="value">true</span>
+      <span class="key">cloudwatch_metrics_enabled</span> = <span class="value">true</span>
+      <span class="key">metric_name</span>                = <span class="string">"RateLimitRule"</span>
+    }
+  }
+
+  <span class="comment"># Geo Restriction Rule</span>
+  <span class="key">rule</span> {
+    <span class="key">name</span>     = <span class="string">"GeoRestriction"</span>
+    <span class="key">priority</span> = <span class="value">1</span>
+
+    <span class="key">action</span> { <span class="key">block</span> {} }
+
+    <span class="key">statement</span> {
+      <span class="key">not_statement</span> {
+        <span class="key">statement</span> {
+          <span class="key">geo_match_statement</span> {
+            <span class="key">country_codes</span> = [<span class="string">"KR"</span>, <span class="string">"US"</span>, <span class="string">"JP"</span>]
+          }
+        }
+      }
+    }
+  }
+}
+</div>
+:::
+
+:::notes
+{timing: 2min}
+WAF Custom Rules의 Terraform 구현입니다.
+
+rate_based_statement에서 limit은 5분 단위로 측정됩니다. 2000으로 설정하면 5분에 2,000 요청을 초과하는 IP를 차단합니다. aggregate_key_type을 IP로 설정해서 소스 IP 기준으로 집계합니다.
+
+Geo Restriction은 not_statement로 구현합니다. country_codes에 허용할 국가 목록을 넣고, 이를 not으로 감싸면 "허용 국가가 아니면 차단"이 됩니다.
+
+{cue: pause}
+visibility_config는 모니터링에 필수입니다. sampled_requests_enabled로 샘플 요청을 로깅하고, CloudWatch 메트릭을 활성화해서 얼마나 많은 요청이 각 규칙에 매칭되는지 모니터링합니다.
+
+scope가 CLOUDFRONT인 점을 주목하세요. WAF가 CloudFront와 연동될 때는 반드시 us-east-1에 배포해야 합니다. 다른 리전에 배포하면 연동이 실패합니다.
+
+{cue: transition}
+Bot Control 관련 이슈와 해결책을 살펴보겠습니다.
+:::
+
+---
+<!-- Slide 10: WAF Bot Control Issue -->
+@type: content
+@layout: two-column
+
+## WAF Bot Control Issue
+
+::: left
+### Current Problem
+
+:::click
+**Bot Control Blocks Monitoring**
+- curl, wget, headless browsers → blocked
+- Health check from Route53 → blocked
+- Synthetic monitoring → blocked
+:::
+
+:::click
+**Impact**
+- False positives in production
+- Monitoring gaps
+- Currently: **Disabled**
+:::
+:::
+
+::: right
+### Solution: Scope-Down Rules
+
+:::click
+**Phase 1: Count Mode (2 weeks)**
+```yaml
+Action: Count (not Block)
+Purpose: Analyze traffic patterns
+Output: CloudWatch metrics
+```
+:::
+
+:::click
+**Phase 2: Selective Block**
+```yaml
+# Allow known user-agents
+- Route53-Health-Check/*
+- Amazon-Route53-Health-Check-Service
+- DatadogSynthetics/*
+
+# Block everything else
+- Default: Block bad bots
+```
+:::
+
+:::click
+**Best Practice**
+- Never enable Bot Control in Block mode immediately
+- Always start with Count mode
+- Build allowlist before blocking
+:::
+:::
+
+:::notes
+{timing: 3min}
+Bot Control은 강력하지만 주의해서 사용해야 합니다. 현재 우리 환경에서는 비활성화되어 있는데, 그 이유를 설명드리겠습니다.
+
+Bot Control을 활성화하면 curl, wget, headless browser가 모두 차단됩니다. 문제는 Route53 Health Check도 automated user-agent를 사용하므로 차단된다는 것입니다. Health Check가 차단되면 모든 리전이 unhealthy로 판정되어 서비스 장애가 발생합니다.
+
+{cue: pause}
+해결책은 Scope-Down Rules입니다. 먼저 2주간 Count Mode로 운영합니다. Block 대신 Count로 설정하면 실제 차단 없이 어떤 요청이 매칭되는지 CloudWatch에서 분석할 수 있습니다.
+
+분석 결과를 바탕으로 Phase 2에서 선택적 Block을 적용합니다. Route53 Health Check, Datadog Synthetics 같은 정상적인 자동화 도구의 User-Agent를 allowlist에 추가하고, 나머지 bad bot만 차단합니다.
+
+핵심 교훈은 Bot Control을 절대 처음부터 Block 모드로 켜지 말라는 것입니다. 항상 Count 모드로 시작해서 트래픽 패턴을 파악하고, allowlist를 구축한 후에 Block으로 전환해야 합니다.
+
+{cue: transition}
+Prefix-List Security Group에 대해 살펴보겠습니다.
+:::
+
+---
+<!-- Slide 11: Prefix-List Security -->
+@type: content
+
+## Prefix-List Security
+
+:::html
+<div class="flow-v" style="gap:1rem; padding:0.5rem;">
+  <!-- Main Diagram -->
+  <div class="flow-h" style="justify-content:center; gap:1.5rem;">
+    <div class="flow-box bg-orange" style="padding:0.8rem 1.2rem;" data-fragment-index="1">
+      <div class="icon-item">
+        <img src="common/aws-icons/services/Arch_Amazon-CloudFront_48.svg" style="width:40px;">
+        <span>CloudFront</span>
+      </div>
+      <div style="font-size:0.7rem; color:rgba(255,255,255,0.6); margin-top:0.3rem;">400+ Edge Locations</div>
+    </div>
+    <div class="flow-arrow" data-fragment-index="2">→</div>
+    <div class="flow-box bg-green" style="padding:0.8rem 1.2rem;" data-fragment-index="2">
+      <div style="font-size:0.8rem; margin-bottom:0.3rem;">Security Group</div>
+      <div style="font-size:0.7rem; color:var(--green);">Prefix-list ONLY</div>
+    </div>
+    <div class="flow-arrow" data-fragment-index="2">→</div>
+    <div class="flow-box bg-blue" style="padding:0.8rem 1.2rem;" data-fragment-index="2">
+      <div class="icon-item">
+        <img src="common/aws-icons/services/Arch_Elastic-Load-Balancing_48.svg" style="width:40px;">
+        <span>NLB</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Security Group Details -->
+  <div class="col-2" style="gap:1rem;">
+    <div class="card" style="padding:1rem; border-left:3px solid var(--green);" data-fragment-index="3">
+      <h4 style="margin:0 0 0.5rem; color:var(--green);">Allowed (Prefix-List)</h4>
+      <div class="code-block" style="font-size:0.75rem; margin:0;">
+<span class="key">Inbound Rule</span>:
+  <span class="key">Type</span>: <span class="string">HTTPS (443)</span>
+  <span class="key">Source</span>: <span class="string">com.amazonaws.global.cloudfront.origin-facing</span>
+  <span class="comment"># AWS-managed prefix list</span>
+  <span class="comment"># Auto-updates with CloudFront IPs</span>
+      </div>
+    </div>
+    <div class="card" style="padding:1rem; border-left:3px solid var(--red);" data-fragment-index="4">
+      <h4 style="margin:0 0 0.5rem; color:var(--red);">Blocked</h4>
+      <div style="font-size:0.85rem; line-height:1.8;">
+        <div style="text-decoration:line-through; color:var(--text-muted);">0.0.0.0/0 (Any IP)</div>
+        <div style="text-decoration:line-through; color:var(--text-muted);">Direct ALB/NLB access</div>
+        <div style="text-decoration:line-through; color:var(--text-muted);">WAF bypass attempts</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Point -->
+  <div style="padding:0.8rem 1rem; background:rgba(239,68,68,0.1); border-radius:8px; border-left:3px solid var(--red);" data-fragment-index="5">
+    <div style="font-size:0.9rem; font-weight:600; color:var(--red); margin-bottom:0.3rem;">Zero 0.0.0.0/0 Policy</div>
+    <div style="font-size:0.85rem; color:var(--text-secondary);">
+      All traffic MUST pass through CloudFront + WAF. Direct access to NLB bypasses all security controls and is strictly prohibited.
+    </div>
+  </div>
+</div>
+:::
+
+:::notes
+{timing: 3min}
+Prefix-List Security는 우리 보안 아키텍처의 핵심입니다.
+
+CloudFront Managed Prefix List는 AWS가 관리하는 IP 목록으로, 전 세계 400개 이상 Edge Location의 IP 주소를 포함합니다. 이 목록은 AWS가 Edge Location을 추가하거나 IP를 변경할 때 자동으로 업데이트됩니다.
+
+Security Group에서 이 Prefix List만 허용하면, NLB로 들어오는 모든 트래픽이 반드시 CloudFront를 거쳐야 합니다. CloudFront를 거친다는 것은 WAF 검사를 통과했다는 의미입니다.
+
+{cue: pause}
+0.0.0.0/0을 절대 사용하지 않는 이유가 여기 있습니다. 만약 NLB에 0.0.0.0/0을 허용하면, 공격자가 NLB IP를 직접 찾아서 WAF를 우회할 수 있습니다. CloudFront DNS를 거치지 않고 직접 NLB IP로 요청을 보내면 WAF 규칙이 전혀 적용되지 않습니다.
+
+이것이 우리가 "Zero 0.0.0.0/0 Policy"를 엄격하게 적용하는 이유입니다. 모든 인바운드 트래픽은 반드시 CloudFront와 WAF를 거쳐야 하며, 이를 우회하는 경로는 존재하지 않아야 합니다.
+
+{cue: transition}
+Global Accelerator와 CloudFront를 비교해 보겠습니다.
+:::
+
+---
+<!-- Slide 12: Global Accelerator vs CloudFront -->
+@type: compare
+
+## Global Accelerator vs CloudFront
+
+### Global Accelerator
+- **Anycast IP** (2 static IPs globally)
+- **Protocols**: TCP, UDP (Layer 4)
+- **Routing**: Consistent endpoint routing
+- **Use Case**: Non-HTTP, gaming, IoT
+- **Pricing**: Per-flow ($0.025/hr + data)
+- **Caching**: None (passthrough)
+- **WAF Integration**: No
+
+### CloudFront
+- **DNS-based** routing
+- **Protocols**: HTTP/HTTPS only (Layer 7)
+- **Routing**: Latency-based to edge
+- **Use Case**: Web apps, APIs, static content
+- **Pricing**: Per-request ($0.0085/10K) + data
+- **Caching**: Yes (edge caching)
+- **WAF Integration**: Yes (native)
+
+:::notes
+{timing: 3min}
+Global Accelerator와 CloudFront는 둘 다 글로벌 트래픽 분산 서비스지만, 동작 방식이 완전히 다릅니다.
+
+Global Accelerator는 Anycast IP를 제공합니다. 전 세계 어디서든 같은 IP로 접속하면 가장 가까운 AWS Edge로 라우팅됩니다. Layer 4에서 동작하므로 TCP, UDP 모두 지원하고, 게임 서버나 IoT처럼 HTTP가 아닌 프로토콜에 적합합니다.
+
+CloudFront는 DNS 기반으로 동작합니다. Layer 7 HTTP/HTTPS만 지원하지만, Edge에서 캐싱이 가능하고 WAF와 네이티브로 통합됩니다. 웹 애플리케이션과 API에 최적화되어 있습니다.
+
+{cue: pause}
+가격 구조도 다릅니다. Global Accelerator는 시간당 과금 + 데이터 전송량으로, 트래픽이 적어도 기본 비용이 발생합니다. CloudFront는 요청 수 + 데이터 전송량으로, 트래픽에 비례해서 과금됩니다.
+
+우리 쇼핑몰은 HTTP/HTTPS 웹 트래픽이고, Edge 캐싱과 WAF 통합이 필요하므로 CloudFront를 선택했습니다. 만약 실시간 게임이나 IoT 디바이스 통신이 있었다면 Global Accelerator를 고려했을 것입니다.
+
+{cue: transition}
+언제 어떤 서비스를 선택해야 하는지 의사결정 플로우를 보겠습니다.
+:::
+
+---
+<!-- Slide 13: When to Use Each -->
+@type: content
+
+## When to Use Each
+
+:::html
+<div class="flow-v" style="gap:0.8rem; padding:0.5rem; align-items:center;">
+  <!-- Decision Start -->
+  <div class="flow-box bg-blue" style="padding:0.8rem 1.5rem;" data-fragment-index="1">
+    <span style="font-weight:600;">Need Global Traffic Distribution?</span>
+  </div>
+
+  <div class="flow-arrow" style="font-size:1.2rem;">↓ Yes</div>
+
+  <!-- First Decision -->
+  <div class="flow-h" style="gap:2rem; justify-content:center;">
+    <div class="flow-v" style="gap:0.5rem; align-items:center;" data-fragment-index="2">
+      <div class="flow-box bg-orange" style="padding:0.6rem 1rem;">
+        <span>Need Edge Caching?</span>
+      </div>
+      <div class="flow-arrow">↓ Yes</div>
+      <div class="flow-box bg-green" style="padding:0.8rem 1.2rem;">
+        <img src="common/aws-icons/services/Arch_Amazon-CloudFront_48.svg" style="width:32px;">
+        <span style="font-weight:600;">CloudFront</span>
+      </div>
+    </div>
+
+    <div class="flow-v" style="gap:0.5rem; align-items:center;" data-fragment-index="3">
+      <div class="flow-box bg-orange" style="padding:0.6rem 1rem;">
+        <span>Need TCP/UDP?</span>
+      </div>
+      <div class="flow-arrow">↓ Yes</div>
+      <div class="flow-box bg-purple" style="padding:0.8rem 1.2rem;">
+        <img src="common/aws-icons/services/Arch_AWS-Global-Accelerator_48.svg" style="width:32px;">
+        <span style="font-weight:600;">Global Accelerator</span>
+      </div>
+    </div>
+
+    <div class="flow-v" style="gap:0.5rem; align-items:center;" data-fragment-index="4">
+      <div class="flow-box bg-orange" style="padding:0.6rem 1rem;">
+        <span>Need Both?</span>
+      </div>
+      <div class="flow-arrow">↓ Yes</div>
+      <div class="flow-box bg-accent" style="padding:0.8rem 1.2rem;">
+        <span style="font-weight:600;">CF + GA</span>
+        <span style="font-size:0.75rem; color:rgba(255,255,255,0.7);">Combined</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Use Cases -->
+  <div class="col-3" style="gap:1rem; margin-top:1rem; width:100%;">
+    <div class="card" style="padding:0.8rem; text-align:center;" data-fragment-index="5">
+      <div style="font-size:0.9rem; font-weight:600; color:var(--green); margin-bottom:0.3rem;">CloudFront</div>
+      <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.5;">
+        Web apps<br>REST APIs<br>Static assets<br>Video streaming
+      </div>
+    </div>
+    <div class="card" style="padding:0.8rem; text-align:center;" data-fragment-index="5">
+      <div style="font-size:0.9rem; font-weight:600; color:var(--purple); margin-bottom:0.3rem;">Global Accelerator</div>
+      <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.5;">
+        Gaming<br>VoIP/Real-time<br>IoT devices<br>Non-HTTP APIs
+      </div>
+    </div>
+    <div class="card" style="padding:0.8rem; text-align:center;" data-fragment-index="5">
+      <div style="font-size:0.9rem; font-weight:600; color:var(--accent); margin-bottom:0.3rem;">Combined</div>
+      <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.5;">
+        Web + Gaming<br>HTTP + WebSocket<br>Multi-protocol apps
+      </div>
+    </div>
+  </div>
+</div>
+:::
+
+:::notes
+{timing: 2min}
+의사결정 플로우차트를 통해 어떤 서비스를 선택할지 결정할 수 있습니다.
+
+첫 번째 질문은 Edge Caching이 필요한가입니다. 정적 콘텐츠나 반복 요청이 많다면 CloudFront의 캐싱이 큰 이점을 제공합니다. Origin 부하를 줄이고 응답 속도를 높입니다.
+
+두 번째 질문은 TCP/UDP 프로토콜이 필요한가입니다. HTTP가 아닌 프로토콜을 사용해야 한다면 Global Accelerator가 유일한 선택입니다. CloudFront는 HTTP/HTTPS만 지원합니다.
+
+{cue: pause}
+두 가지가 모두 필요하다면 조합해서 사용합니다. 예를 들어 게임 서버가 HTTP REST API와 UDP 게임 트래픽을 모두 처리한다면, REST API는 CloudFront로, 게임 트래픽은 Global Accelerator로 라우팅합니다.
+
+우리 쇼핑몰은 순수 HTTP/HTTPS 웹 애플리케이션이고, 정적 자산 캐싱과 WAF 통합이 핵심 요구사항이므로 CloudFront 단독으로 충분합니다.
+
+{cue: transition}
+Edge 네트워크의 비용 분석을 살펴보겠습니다.
+:::
+
+---
+<!-- Slide 14: Edge Network Cost Analysis -->
+@type: content
+
+## Edge Network Cost Analysis
+
+:::html
+<div class="flow-v" style="gap:1rem; padding:0.3rem;">
+  <!-- Cost Table -->
+  <table class="data-table" style="width:100%; font-size:0.85rem;">
+    <thead>
+      <tr style="background:var(--bg-card);">
+        <th style="padding:10px 12px; text-align:left;">Service</th>
+        <th style="padding:10px 12px; text-align:right;">Monthly Cost</th>
+        <th style="padding:10px 12px; text-align:left;">Pricing Model</th>
+        <th style="padding:10px 12px; text-align:left;">Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);" data-fragment-index="1">
+        <td style="padding:10px 12px;">
+          <div class="flow-h" style="gap:0.5rem; align-items:center;">
+            <img src="common/aws-icons/services/Arch_Amazon-CloudFront_48.svg" style="width:24px;">
+            <strong>CloudFront</strong>
+          </div>
+        </td>
+        <td style="padding:10px 12px; text-align:right; color:var(--accent); font-weight:600;">$50 - $500</td>
+        <td style="padding:10px 12px;">Requests + Data transfer</td>
+        <td style="padding:10px 12px; color:var(--text-muted);">Traffic-dependent</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);" data-fragment-index="2">
+        <td style="padding:10px 12px;">
+          <div class="flow-h" style="gap:0.5rem; align-items:center;">
+            <img src="common/aws-icons/services/Arch_AWS-WAF_48.svg" style="width:24px;">
+            <strong>WAF</strong>
+          </div>
+        </td>
+        <td style="padding:10px 12px; text-align:right; color:var(--green); font-weight:600;">$0</td>
+        <td style="padding:10px 12px;">ACL + Rules + Requests</td>
+        <td style="padding:10px 12px; color:var(--text-muted);">Currently disabled in prod</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);" data-fragment-index="3">
+        <td style="padding:10px 12px;">
+          <div class="flow-h" style="gap:0.5rem; align-items:center;">
+            <img src="common/aws-icons/services/Arch_Elastic-Load-Balancing_48.svg" style="width:24px;">
+            <strong>NLB (×2)</strong>
+          </div>
+        </td>
+        <td style="padding:10px 12px; text-align:right; color:var(--cyan); font-weight:600;">$36 + LCU</td>
+        <td style="padding:10px 12px;">$18/NLB + LCU charges</td>
+        <td style="padding:10px 12px; color:var(--text-muted);">2 regions × $18 base</td>
+      </tr>
+      <tr style="background:var(--bg-card);" data-fragment-index="4">
+        <td style="padding:10px 12px;">
+          <div class="flow-h" style="gap:0.5rem; align-items:center;">
+            <img src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" style="width:24px;">
+            <strong>Route53</strong>
+          </div>
+        </td>
+        <td style="padding:10px 12px; text-align:right; color:var(--purple); font-weight:600;">~$5</td>
+        <td style="padding:10px 12px;">Hosted zones + Queries</td>
+        <td style="padding:10px 12px; color:var(--text-muted);">$0.50/zone + $0.40/M queries</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Cost Optimization Tips -->
+  <div class="col-2" style="gap:1rem;">
+    <div class="card" style="padding:0.8rem; border-left:3px solid var(--green);" data-fragment-index="5">
+      <h4 style="margin:0 0 0.5rem; font-size:0.9rem; color:var(--green);">Cost Optimization</h4>
+      <ul style="margin:0; padding-left:1.2rem; font-size:0.8rem; line-height:1.6;">
+        <li>Origin Shield: 30-60% origin request reduction</li>
+        <li>Cache optimization: Higher TTL for static</li>
+        <li>Compression: Brotli/Gzip enabled</li>
+      </ul>
+    </div>
+    <div class="card" style="padding:0.8rem; border-left:3px solid var(--orange);" data-fragment-index="5">
+      <h4 style="margin:0 0 0.5rem; font-size:0.9rem; color:var(--orange);">Cost Drivers</h4>
+      <ul style="margin:0; padding-left:1.2rem; font-size:0.8rem; line-height:1.6;">
+        <li>Data transfer out (largest component)</li>
+        <li>HTTPS request count</li>
+        <li>Origin requests (cache miss)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+:::
+
+:::notes
+{timing: 2min}
+Edge 네트워크의 월간 비용을 분석해 보겠습니다.
+
+CloudFront는 트래픽에 따라 $50에서 $500 사이로 변동합니다. 주요 비용 요소는 데이터 전송량과 요청 수입니다. 캐싱을 잘 활용하면 Origin 요청을 줄여서 비용을 절감할 수 있습니다.
+
+WAF는 현재 프로덕션에서 비활성화되어 있어 $0입니다. 활성화하면 Web ACL $5 + Rules × $1 + 요청당 $0.60/M이 추가됩니다. Bot Control을 켜면 상당한 비용이 추가되므로 신중하게 결정해야 합니다.
+
+{cue: pause}
+NLB는 리전당 $18 기본 비용에 LCU(Load Balancer Capacity Unit) 요금이 추가됩니다. 두 리전이니까 기본 $36이고, 트래픽에 따라 LCU 비용이 추가됩니다.
+
+Route53은 가장 저렴해서 월 $5 정도입니다. Hosted Zone당 $0.50, 쿼리 100만 건당 $0.40입니다.
+
+비용 최적화의 핵심은 캐시 적중률을 높이는 것입니다. Origin Shield로 30-60% Origin 요청을 줄이고, 정적 자산 TTL을 길게 설정하고, Brotli/Gzip 압축으로 데이터 전송량을 줄입니다.
+
+{cue: transition}
+이 블록의 핵심 내용을 정리하겠습니다.
+:::
+
+---
+<!-- Slide 15: Key Takeaways -->
+@type: content
+
+## Key Takeaways
+
+:::html
+<div class="col-2" style="gap:1.5rem;">
+  <div class="card" style="padding:1.2rem; border-left:3px solid var(--accent);">
+    <h4 style="margin:0 0 0.8rem; color:var(--accent);">Traffic Routing</h4>
+    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
+      <li>Route53 Latency-based for regional failover</li>
+      <li>CloudFront for global edge caching</li>
+      <li>Origin Shield: 50-90% origin reduction</li>
+      <li>Origin Failover: sub-second switching</li>
+    </ul>
+  </div>
+  <div class="card" style="padding:1.2rem; border-left:3px solid var(--cyan);">
+    <h4 style="margin:0 0 0.8rem; color:var(--cyan);">Edge Security</h4>
+    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
+      <li>WAF rule stack: Geo → Rate → Managed</li>
+      <li>Bot Control: Count mode first, then Block</li>
+      <li>Prefix-list SG: Zero 0.0.0.0/0 policy</li>
+      <li>All traffic MUST pass CloudFront + WAF</li>
+    </ul>
+  </div>
+  <div class="card" style="padding:1.2rem; border-left:3px solid var(--green);">
+    <h4 style="margin:0 0 0.8rem; color:var(--green);">Architecture Decisions</h4>
+    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
+      <li>CloudFront over GA: HTTP + caching + WAF</li>
+      <li>OAC for S3: No public bucket access</li>
+      <li>NLB over ALB: Lower latency, prefix-list support</li>
+      <li>DNS TTL 60s: Balance freshness vs load</li>
+    </ul>
+  </div>
+  <div class="card" style="padding:1.2rem; border-left:3px solid #e17055;">
+    <h4 style="margin:0 0 0.8rem; color:#e17055;">Cost Optimization</h4>
+    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
+      <li>CloudFront: $50-500/mo (traffic-based)</li>
+      <li>Origin Shield ROI: 30-60% savings</li>
+      <li>Cache TTL tuning for static assets</li>
+      <li>Compression: Brotli + Gzip enabled</li>
+    </ul>
+  </div>
+</div>
+:::
+
+:::notes
+{timing: 2min}
+Block 3의 핵심 내용을 정리하겠습니다.
+
+Traffic Routing에서 기억할 점은, Route53 Latency-based Routing으로 리전 failover를 처리하고, CloudFront Origin Failover로 sub-second 전환을 제공한다는 것입니다. Origin Shield를 활용하면 Origin 요청을 50-90% 줄일 수 있습니다.
+
+Edge Security의 핵심은 WAF 규칙 스택과 Zero 0.0.0.0/0 정책입니다. 모든 트래픽이 반드시 CloudFront와 WAF를 거쳐야 합니다. Bot Control은 Count 모드로 먼저 분석한 후 Block으로 전환해야 합니다.
+
+Architecture Decisions에서, CloudFront를 선택한 이유는 HTTP 캐싱과 WAF 통합 때문입니다. NLB를 사용한 이유는 prefix-list 지원과 낮은 latency 때문입니다.
+
+비용 최적화에서는 Origin Shield의 ROI가 30-60%로 가장 효과적이고, 정적 자산 캐시 TTL 튜닝과 압축 활성화가 추가 절감 포인트입니다.
+
+{cue: transition}
+질문이 있으시면 지금 받겠습니다. 다음 블록에서는 DR과 Failover Automation을 다루겠습니다.
+:::
+
+---
+<!-- Slide 16: Quiz -->
+@type: quiz
+
+## Knowledge Check
+
+**Q1: Route53 Latency-based Routing의 latency 측정 주기는?**
+- [ ] 실시간 (요청마다)
+- [x] 약 24시간마다 (AWS Edge에서)
+- [ ] 매 분마다
+- [ ] Health Check 간격과 동일
+
+**Q2: CloudFront Origin Failover의 전환 속도는?**
+- [ ] DNS TTL 만료 후 (60초+)
+- [ ] Health Check 실패 후 (90초+)
+- [x] Sub-second (같은 요청 내 재시도)
+- [ ] 수동 전환 필요
+
+**Q3: Prefix-list Security Group의 핵심 목적은?**
+- [ ] 비용 절감
+- [ ] 성능 향상
+- [x] WAF 우회 방지 (CloudFront 강제)
+- [ ] 로깅 활성화
+
+**Q4: WAF Bot Control을 처음 활성화할 때 권장 설정은?**
+- [ ] Block 모드로 즉시 활성화
+- [x] Count 모드로 2주 분석 후 Block
+- [ ] 특정 국가만 적용
+- [ ] Rate Limit과 함께 활성화
+
+:::notes
+{timing: 3min}
+4개의 퀴즈 문제로 이 블록의 핵심 개념을 확인하겠습니다.
+
+Q1: Route53 Latency-based Routing은 실시간 측정이 아닙니다. AWS가 Edge Location에서 약 24시간마다 측정하고 업데이트합니다.
+
+Q2: CloudFront Origin Failover는 DNS 기반이 아니라 같은 요청 내에서 재시도하므로 sub-second입니다.
+
+Q3: Prefix-list SG의 핵심은 WAF 우회 방지입니다. 모든 트래픽이 CloudFront를 거치도록 강제합니다.
+
+Q4: Bot Control은 반드시 Count 모드로 시작해야 합니다. 처음부터 Block하면 Health Check 같은 정상 자동화 도구도 차단됩니다.
+:::
+
+---
+<!-- Slide 17: Thank You -->
+@type: thankyou
+
+## Thank You
+
+Block 3 — Traffic Routing & Edge 완료
+
+:::html
+<div style="display:flex; gap:16px; margin-top:20px; justify-content:center;">
+  <a href="index.html" class="btn btn-sm" style="text-decoration:none;">&#8592; 목차로 돌아가기</a>
+  <a href="04-dr-failover.html" class="btn btn-primary btn-sm" style="text-decoration:none;">다음: Block 4 — DR & Failover &#8594;</a>
+</div>
+:::
+
+:::notes
+{timing: 30sec}
+Block 3를 마무리합니다. Route53, CloudFront, WAF를 활용한 글로벌 트래픽 라우팅과 Edge 보안을 살펴봤습니다.
+
+다음 Block 4에서는 DR과 Failover Automation을 다루겠습니다. Aurora DSQL 단일 리전 리스크, MSK Replicator, 그리고 자동화된 failover 프로세스를 설명합니다.
+
+질문이 있으시면 말씀해 주세요.
+:::

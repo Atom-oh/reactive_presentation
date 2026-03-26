@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Region Architecture Deep Dive</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="03-traffic-routing.md">
+  <meta name="remarp-block" content="default">
+  <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
+  
+  
+  <script>window.__remarpTheme = {"colors": {}, "footer": "Multi-Region Architecture Deep Dive \u2014 L300+", "pagination": true, "fonts": {}};</script>
+</head>
+<body>
+<div class="slide-deck">
+<div class="slide" data-remarp-id="s0" style="background:linear-gradient(135deg, #1a1f35 0%, #0d1117 50%, #161b2e 100%); padding:0; overflow:hidden;">
+  <div style="position:absolute; top:-20%; right:-10%; width:60%; height:80%; background:radial-gradient(ellipse, rgba(108,92,231,0.15) 0%, transparent 70%); pointer-events:none;"></div>
+  <div style="position:absolute; left:5%; top:42%; width:80px; height:3px; background:linear-gradient(90deg, #6c5ce7, #a29bfe); border-radius:2px;"></div>
+  <h1 style="position:absolute; left:5%; top:45%; font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:60%; margin:0;">Traffic Routing & Edge</h1>
+  <p style="position:absolute; left:5%; top:60%; font-size:1.3rem; color:rgba(255,255,255,0.7); width:60%; margin:0;">Global Traffic Management with Route53, CloudFront & WAF</p>
+  
+</div>
+
+<div class="slide" data-remarp-id="s1">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>End-to-End Traffic Flow</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <div class="canvas-container" style="width:100%; max-width:1000px; margin:0 auto;">
+  <canvas></canvas>
+</div>
+<div class="canvas-controls" style="text-align:center; margin-top:4px;">
+  <span style="font-size:0.75rem; color:var(--text-muted);">Use arrow keys to step through animation</span>
+</div>
+<script>
+(function() {
+  const slide = document.currentScript.closest('.slide');
+  if (!slide) return;
+  const container = slide.querySelector('.canvas-container');
+  const canvas = container.querySelector('canvas');
+  const BASE_W = 1000, BASE_H = 420;
+  let ctx, scale = 1, animationId;
+  let pulseOpacity = 0;
+  let pulseDir = 1;
+
+  function init() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = container.getBoundingClientRect();
+    if (rect.width === 0) return;
+    scale = rect.width / BASE_W;
+    canvas.width = rect.width * dpr;
+    canvas.height = (BASE_H * scale) * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = (BASE_H * scale) + 'px';
+    ctx = canvas.getContext('2d');
+    ctx.scale(dpr * scale, dpr * scale);
+    draw(currentStep);
+  }
+
+  let currentStep = 0;
+  const MAX_STEP = 4;
+
+  function draw(step) {
+    if (!ctx) return;
+    ctx.clearRect(0, 0, BASE_W, BASE_H);
+
+    // Step 0: User Icon
+    drawCircle(ctx, 500, 40, 20, Colors.surface, Colors.textPri);
+    drawText(ctx, "User", 500, 75, { size: 14, color: Colors.textPri, align: 'center' });
+
+    if (step >= 1) {
+      // Route 53
+      drawBox(ctx, 420, 100, 160, 40, "Route 53", Colors.blue, "#fff");
+      drawArrow(ctx, 500, 65, 500, 95, Colors.textMuted);
+      
+      // Edge Layer Group
+      drawGroup(ctx, 300, 160, 400, 80, "AWS Edge Location", Colors.orange);
+      drawBox(ctx, 320, 185, 170, 40, "CloudFront", Colors.orange, "#fff");
+      drawBox(ctx, 510, 185, 170, 40, "WAF", Colors.red, "#fff");
+      drawArrow(ctx, 500, 145, 500, 155, Colors.textMuted);
+    }
+
+    if (step >= 2) {
+      // S3 for Static
+      drawBox(ctx, 150, 280, 150, 40, "S3 (Static Assets)", Colors.green, "#fff");
+      drawArrow(ctx, 350, 230, 225, 275, Colors.textMuted, false, true);
+      drawText(ctx, "/static/*", 260, 245, { size: 12, color: Colors.textSec });
+      
+      // API Path
+      drawText(ctx, "/api/*", 600, 245, { size: 12, color: Colors.textSec });
+      drawArrow(ctx, 550, 230, 650, 275, Colors.textMuted, false, true);
+    }
+
+    if (step >= 3) {
+      // Multi-Region Backend
+      drawGroup(ctx, 450, 310, 240, 90, "us-east-1", Colors.accent);
+      drawBox(ctx, 470, 340, 90, 40, "NLB/EKS", Colors.accent, "#fff");
+      drawBox(ctx, 580, 340, 90, 40, "API", Colors.accentLt, "#fff");
+
+      drawGroup(ctx, 720, 310, 240, 90, "us-west-2", Colors.cyan);
+      drawBox(ctx, 740, 340, 90, 40, "NLB/EKS", Colors.cyan, "#fff");
+      drawBox(ctx, 850, 340, 90, 40, "API", Colors.cyan, "#fff");
+
+      // Latency Routing Arrows
+      drawArrow(ctx, 650, 295, 570, 305, Colors.blue, true, true);
+      drawArrow(ctx, 750, 295, 840, 305, Colors.blue, true, true);
+    }
+
+    if (step >= 4) {
+      // Traffic Pulsing Effect
+      ctx.save();
+      ctx.globalAlpha = 0.3 + (pulseOpacity * 0.7);
+      const trafficColor = Colors.yellow;
+      drawArrow(ctx, 500, 65, 500, 95, trafficColor); // User to R53
+      drawArrow(ctx, 500, 145, 500, 155, trafficColor); // R53 to Edge
+      drawArrow(ctx, 350, 230, 225, 275, trafficColor); // Edge to S3
+      drawArrow(ctx, 550, 230, 650, 275, trafficColor); // Edge to Backend
+      ctx.restore();
+    }
+  }
+
+  function animate() {
+    pulseOpacity += 0.02 * pulseDir;
+    if (pulseOpacity > 1 || pulseOpacity < 0) pulseDir *= -1;
+    if (currentStep >= 4) draw(currentStep);
+    animationId = requestAnimationFrame(animate);
+  }
+
+  slide.__canvasStep = function(dir) {
+    if (dir === 'next' && currentStep < MAX_STEP) currentStep++;
+    else if (dir === 'prev' && currentStep > 0) currentStep--;
+    else return false;
+    draw(currentStep);
+    return currentStep;
+  };
+  slide.dataset.slideAction = 'canvas-step';
+  slide.dataset.canvasMaxStep = String(MAX_STEP);
+
+  new ResizeObserver(() => init()).observe(container);
+  init();
+  animate();
+
+  slide.addEventListener('slide:cleanup', () => cancelAnimationFrame(animationId));
+})();
+</script>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s2">
+  <div class="slide-header" data-remarp-id="s2-header"><h2>Route53 Latency-Based Routing</h2></div>
+  <div class="slide-body" data-remarp-id="s2-body">
+    <div class="columns">
+<div class="col">
+<h3>How It Works</h3>
+<ul><li class="fragment fade-in" data-fragment-index="2"><strong>Latency Measurement</strong>
+<ul><li>AWS measures RTT from 20+ edge locations</li><li>Updates every ~24 hours</li><li>NOT real-time user latency</li></ul></li></ul>
+<ul><li class="fragment fade-in" data-fragment-index="3"><strong>DNS Resolution</strong>
+<ul><li>User DNS query → nearest resolver</li><li>Route53 returns lowest-latency region IP</li><li>TTL: 60 seconds (balance: freshness vs load)</li></ul></li></ul>
+<ul><li class="fragment fade-in" data-fragment-index="4"><strong>Automatic Failover</strong>
+<ul><li>Health check fails → remove from rotation</li><li>Traffic shifts to healthy region</li><li>Recovery → automatic re-addition</li></ul></li></ul>
+</div><div class="col">
+<h3>Health Check Configuration</h3>
+<div class="code-block"><span class="key">Type</span>: HTTP
+<span class="key">Endpoint</span>: /health
+<span class="key">Port</span>: 443
+<span class="key">Protocol</span>: HTTPS
+<span class="key">Interval</span>: 30 seconds
+Failure Threshold: 3</div>
+<div class="fragment fade-in" data-fragment-index="0"><h3>DNS Records</h3>
+<table><thead><tr><th>Record</th><th>Type</th><th>Routing</th></tr></thead><tbody><tr><td><code>mall.atomai.click</code></td><td>CNAME</td><td>→ CloudFront</td></tr><tr><td><code>api-internal.atomai.click</code></td><td>A</td><td>Latency (2 regions)</td></tr></tbody></table>
+</div><div class="fragment fade-in" data-fragment-index="1"><h3>Latency Targets</h3>
+<ul><li>us-east-1 → NLB IP (Primary)</li><li>us-west-2 → NLB IP (Secondary)</li></ul>
+</div>
+</div>
+  </div>
+</div></div>
+
+<div class="slide" data-remarp-id="s3">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>Route53 Health Checks</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body">
+    <p><!-- Slide 4: Route53 Health Checks --></p>
+<div class="col-2" style="gap:1.5rem; align-items:start;">
+  <!-- Public DNS -->
+  <div class="card" style="padding:1rem;" data-fragment-index="1">
+    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.8rem;">
+      <img src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" style="width:32px;">
+      <h4 style="margin:0; color:#FF9900;">Public DNS</h4>
+    </div>
+    <div style="font-family:monospace; font-size:0.85rem; background:rgba(0,0,0,0.3); padding:0.6rem; border-radius:4px; margin-bottom:0.8rem;">
+      <span style="color:#00d68f;">mall.atomai.click</span>
+    </div>
+    <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">
+      <div><strong>Type:</strong> CNAME</div>
+      <div><strong>Target:</strong> d1234567890.cloudfront.net</div>
+      <div><strong>Health Check:</strong> None (CloudFront handles)</div>
+    </div>
+  </div>
+
+  <!-- Internal API DNS -->
+  <div class="card" style="padding:1rem;" data-fragment-index="2">
+    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.8rem;">
+      <img src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" style="width:32px;">
+      <h4 style="margin:0; color:#00cec9;">Internal API DNS</h4>
+    </div>
+    <div style="font-family:monospace; font-size:0.85rem; background:rgba(0,0,0,0.3); padding:0.6rem; border-radius:4px; margin-bottom:0.8rem;">
+      <span style="color:#00d68f;">api-internal.atomai.click</span>
+    </div>
+    <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">
+      <div><strong>Type:</strong> A Record (Latency-based)</div>
+      <div><strong>Targets:</strong></div>
+      <div style="margin-left:1rem;">• us-east-1 NLB IP</div>
+      <div style="margin-left:1rem;">• us-west-2 NLB IP</div>
+      <div><strong>Health Check:</strong> HTTP 200 on /health</div>
+    </div>
+  </div>
+</div>
+
+<!-- Health Check Details -->
+<div class="card" style="margin-top:1rem; padding:1rem; border-left:3px solid var(--green);" data-fragment-index="3">
+  <h4 style="margin:0 0 0.5rem; color:var(--green);">Health Check Parameters</h4>
+  <div class="flow-h" style="gap:2rem; flex-wrap:wrap;">
+    <div style="font-size:0.85rem;">
+      <span style="color:var(--text-muted);">Endpoint:</span>
+      <code>/health</code>
+    </div>
+    <div style="font-size:0.85rem;">
+      <span style="color:var(--text-muted);">Protocol:</span>
+      <code>HTTPS:443</code>
+    </div>
+    <div style="font-size:0.85rem;">
+      <span style="color:var(--text-muted);">Interval:</span>
+      <code>30s</code>
+    </div>
+    <div style="font-size:0.85rem;">
+      <span style="color:var(--text-muted);">Failure Threshold:</span>
+      <code>3</code>
+    </div>
+    <div style="font-size:0.85rem;">
+      <span style="color:var(--text-muted);">Regions:</span>
+      <code>us-east-1, us-west-2, eu-west-1</code>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s4">
+  <div class="slide-header" data-remarp-id="s4-header"><h2>CloudFront Distribution</h2></div>
+  <div class="slide-body" data-remarp-id="s4-body">
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="api-behavior">API Behavior</button>
+      <button class="tab-btn" data-tab="static-behavior">Static Behavior</button>
+      <button class="tab-btn" data-tab="spa-fallback">SPA Fallback</button>
+    </div>
+        <div class="tab-content active" data-tab="api-behavior">
+<div class="code-block">Path Pattern: /api/*
+<span class="key">Origin</span>: api-internal.atomai.click (NLB)
+Cache Policy: CachingDisabled
+<span class="comment">  # No caching for dynamic API responses</span>
+Origin Request Policy: AllViewerExceptHostHeader
+<span class="comment">  # Forward all headers except Host</span>
+Allowed Methods: GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE
+<span class="comment">  # All HTTP methods for REST API</span>
+Viewer Protocol: HTTPS only
+<span class="key">Compress</span>: <span class="keyword">true</span></div>
+</div>
+    <div class="tab-content" data-tab="static-behavior">
+<div class="code-block">Path Pattern: /static/*
+<span class="key">Origin</span>: mall-static-assets.s3.amazonaws.com
+Cache Policy: CachingOptimized
+  <span class="key">TTL</span>: 86400 (24 hours)
+<span class="comment">  # Long cache for immutable assets</span>
+Origin Access: OAC (Origin Access Control)
+<span class="comment">  # S3 bucket not publicly accessible</span>
+Allowed Methods: GET, HEAD
+Viewer Protocol: HTTPS only
+<span class="key">Compress</span>: <span class="keyword">true</span></div>
+</div>
+    <div class="tab-content" data-tab="spa-fallback">
+<div class="code-block">Path Pattern: /* (Default)
+<span class="key">Origin</span>: mall-static-assets.s3.amazonaws.com
+Cache Policy: CachingOptimized
+Custom Error Response:
+  Error Code: 403, 404
+  Response Page: /index.html
+  Response Code: 200
+<span class="comment">  # SPA client-side routing support</span></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s5">
+  <div class="slide-header" data-remarp-id="s5-header"><h2>CloudFront Origin Shield</h2></div>
+  <div class="slide-body" data-remarp-id="s5-body">
+    <div class="columns">
+<div class="col">
+<h3>What is Origin Shield?</h3>
+<ul><li class="fragment fade-in" data-fragment-index="2"><strong>Additional caching layer</strong> at regional edge</li><li class="fragment fade-in" data-fragment-index="3">Positioned between edge locations and origin</li><li class="fragment fade-in" data-fragment-index="4">Single point of origin contact per region</li></ul>
+<div class="fragment fade-in" data-fragment-index="0"><h3>Configuration</h3>
+<div class="code-block">Origin Shield Region: us-east-1
+<span class="comment">  # Closest to primary origin</span>
+<span class="key">Enabled</span>: <span class="keyword">true</span></div>
+</div><div class="fragment fade-in" data-fragment-index="1"><h3>How It Works</h3>
+<div class="code-block">User → Edge Location → Origin Shield → Origin
+         (400+ PoPs)    (1 region)     (NLB)</div>
+</div><div class="col">
+</div><h3>Benefits</h3>
+</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s6">
+  <div class="slide-header" data-remarp-id="s6-header"><h2>CloudFront Origin Failover</h2></div>
+  <div class="slide-body" data-remarp-id="s6-body">
+    <div class="canvas-container" style="width:100%; max-width:1000px; margin:0 auto;">
+  <canvas></canvas>
+</div>
+<div class="canvas-controls" style="text-align:center; margin-top:4px;">
+  <span style="font-size:0.75rem; color:var(--text-muted);">Use arrow keys to step through animation</span>
+</div>
+<script>
+(function() {
+  const slide = document.currentScript.closest('.slide');
+  if (!slide) return;
+  const container = slide.querySelector('.canvas-container');
+  const canvas = container.querySelector('canvas');
+  const BASE_W = 1000, BASE_H = 350;
+  let ctx, scale = 1;
+
+  function init() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = container.getBoundingClientRect();
+    if (rect.width === 0) return;
+    scale = rect.width / BASE_W;
+    canvas.width = rect.width * dpr;
+    canvas.height = (BASE_H * scale) * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = (BASE_H * scale) + 'px';
+    ctx = canvas.getContext('2d');
+    ctx.scale(dpr * scale, dpr * scale);
+    draw(currentStep);
+  }
+
+  let currentStep = 0;
+  const MAX_STEP = 3;
+
+  function draw(step) {
+    if (!ctx) return;
+    ctx.clearRect(0, 0, BASE_W, BASE_H);
+
+    // Step 0: Initial Structure
+    drawBox(ctx, 50, 145, 180, 60, "CloudFront", Colors.orange, "#fff");
+    
+    // Origin Group Border
+    drawGroup(ctx, 550, 40, 400, 270, "Origin Group (Failover Policy)", Colors.textMuted);
+    
+    // Origins
+    const primaryStatus = step === 2 ? Colors.red : (step >= 1 ? Colors.green : Colors.border);
+    const secondaryStatus = step === 3 ? Colors.green : Colors.border;
+    
+    drawBox(ctx, 600, 80, 300, 60, "Primary: us-east-1 NLB", primaryStatus, "#fff");
+    drawBox(ctx, 600, 210, 300, 60, "Secondary: us-west-2 NLB", secondaryStatus, "#fff");
+
+    if (step === 1) {
+      // Normal Traffic Flow
+      drawArrow(ctx, 235, 175, 590, 110, Colors.green, false, true);
+      drawText(ctx, "Normal Traffic (200 OK)", 350, 130, { size: 14, color: Colors.green });
+    }
+
+    if (step >= 2) {
+      // Failure at Primary
+      drawText(ctx, "✘", 750, 115, { size: 40, color: Colors.red, align: 'center', baseline: 'middle' });
+      drawText(ctx, "5xx Error or Timeout", 750, 160, { size: 14, color: Colors.red, align: 'center' });
+      
+      if (step === 2) {
+        drawArrow(ctx, 235, 175, 590, 110, Colors.red, false, true);
+      }
+    }
+
+    if (step >= 3) {
+      // Failover to Secondary
+      drawArrow(ctx, 235, 175, 590, 240, Colors.yellow, false, true);
+      drawText(ctx, "Automatic Failover", 350, 230, { size: 14, color: Colors.yellow });
+      drawText(ctx, "Origin Group switching to Secondary", 750, 290, { size: 12, color: Colors.textSec, align: 'center' });
+    }
+  }
+
+  slide.__canvasStep = function(dir) {
+    if (dir === 'next' && currentStep < MAX_STEP) currentStep++;
+    else if (dir === 'prev' && currentStep > 0) currentStep--;
+    else return false;
+    draw(currentStep);
+    return currentStep;
+  };
+  slide.dataset.slideAction = 'canvas-step';
+  slide.dataset.canvasMaxStep = String(MAX_STEP);
+
+  new ResizeObserver(() => init()).observe(container);
+  init();
+})();
+</script>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s7">
+  <div class="slide-header" data-remarp-id="s7-header"><h2>WAF Rule Stack</h2></div>
+  <div class="slide-body" data-remarp-id="s7-body">
+    <p><!-- Slide 8: WAF Rule Stack --></p>
+<div class="flow-v" style="gap:0.5rem; padding:0.3rem;">
+  <!-- Layer 5: Top -->
+  <div class="card" style="padding:0.7rem 1rem; border-left:3px solid #EF4444;" data-fragment-index="1">
+    <div class="flow-h" style="justify-content:space-between; align-items:center;">
+      <div>
+        <span style="font-size:0.7rem; color:rgba(255,255,255,0.5);">Priority 1</span>
+        <h4 style="margin:0.2rem 0 0; font-size:0.95rem;">GeoRestriction</h4>
+      </div>
+      <div style="text-align:right; font-size:0.8rem;">
+        <div style="color:var(--green);">Allow: KR, US, JP</div>
+        <div style="color:var(--red);">Block: All others</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow" style="font-size:1rem; color:var(--text-muted);">↓</div>
+
+  <div class="card" style="padding:0.7rem 1rem; border-left:3px solid #F59E0B;" data-fragment-index="2">
+    <div class="flow-h" style="justify-content:space-between; align-items:center;">
+      <div>
+        <span style="font-size:0.7rem; color:rgba(255,255,255,0.5);">Priority 2</span>
+        <h4 style="margin:0.2rem 0 0; font-size:0.95rem;">RateLimit</h4>
+      </div>
+      <div style="text-align:right; font-size:0.8rem;">
+        <div><strong>2,000</strong> requests / 5 min / IP</div>
+        <div style="color:var(--text-muted);">Action: Block</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow" style="font-size:1rem; color:var(--text-muted);">↓</div>
+
+  <div class="card" style="padding:0.7rem 1rem; border-left:3px solid #3B82F6;" data-fragment-index="3">
+    <div class="flow-h" style="justify-content:space-between; align-items:center;">
+      <div>
+        <span style="font-size:0.7rem; color:rgba(255,255,255,0.5);">Priority 3</span>
+        <h4 style="margin:0.2rem 0 0; font-size:0.95rem;">AWSManagedRulesKnownBadInputsRuleSet</h4>
+      </div>
+      <div style="text-align:right; font-size:0.8rem;">
+        <div style="color:var(--text-muted);">Log4j, SSRF, etc.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow" style="font-size:1rem; color:var(--text-muted);">↓</div>
+
+  <div class="card" style="padding:0.7rem 1rem; border-left:3px solid #8B5CF6;" data-fragment-index="4">
+    <div class="flow-h" style="justify-content:space-between; align-items:center;">
+      <div>
+        <span style="font-size:0.7rem; color:rgba(255,255,255,0.5);">Priority 4</span>
+        <h4 style="margin:0.2rem 0 0; font-size:0.95rem;">AWSManagedRulesSQLiRuleSet</h4>
+      </div>
+      <div style="text-align:right; font-size:0.8rem;">
+        <div style="color:var(--text-muted);">SQL Injection patterns</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow" style="font-size:1rem; color:var(--text-muted);">↓</div>
+
+  <div class="card" style="padding:0.7rem 1rem; border-left:3px solid #10B981;" data-fragment-index="5">
+    <div class="flow-h" style="justify-content:space-between; align-items:center;">
+      <div>
+        <span style="font-size:0.7rem; color:rgba(255,255,255,0.5);">Priority 5</span>
+        <h4 style="margin:0.2rem 0 0; font-size:0.95rem;">AWSManagedRulesCommonRuleSet</h4>
+      </div>
+      <div style="text-align:right; font-size:0.8rem;">
+        <div style="color:var(--text-muted);">OWASP Top 10</div>
+      </div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s8">
+  <div class="slide-header" data-remarp-id="s8-header"><h2>WAF Custom Rules — Terraform</h2></div>
+  <div class="slide-body" data-remarp-id="s8-body">
+    <p><!-- Slide 9: WAF Custom Rules (Terraform) --></p>
+<div class="code-block" style="font-size:0.75rem; max-height:420px; overflow-y:auto;">
+<span class="comment"># Rate Limiting Rule</span>
+<span class="key">resource</span> <span class="string">"aws_wafv2_web_acl"</span> <span class="string">"mall_waf"</span> {
+  <span class="key">name</span>  = <span class="string">"mall-waf-acl"</span>
+  <span class="key">scope</span> = <span class="string">"CLOUDFRONT"</span>
+
+  <span class="key">rule</span> {
+    <span class="key">name</span>     = <span class="string">"RateLimitRule"</span>
+    <span class="key">priority</span> = <span class="value">2</span>
+
+    <span class="key">action</span> { <span class="key">block</span> {} }
+
+    <span class="key">statement</span> {
+      <span class="key">rate_based_statement</span> {
+        <span class="key">limit</span>              = <span class="value">2000</span>
+        <span class="key">aggregate_key_type</span> = <span class="string">"IP"</span>
+      }
+    }
+
+    <span class="key">visibility_config</span> {
+      <span class="key">sampled_requests_enabled</span>   = <span class="value">true</span>
+      <span class="key">cloudwatch_metrics_enabled</span> = <span class="value">true</span>
+      <span class="key">metric_name</span>                = <span class="string">"RateLimitRule"</span>
+    }
+  }
+
+  <span class="comment"># Geo Restriction Rule</span>
+  <span class="key">rule</span> {
+    <span class="key">name</span>     = <span class="string">"GeoRestriction"</span>
+    <span class="key">priority</span> = <span class="value">1</span>
+
+    <span class="key">action</span> { <span class="key">block</span> {} }
+
+    <span class="key">statement</span> {
+      <span class="key">not_statement</span> {
+        <span class="key">statement</span> {
+          <span class="key">geo_match_statement</span> {
+            <span class="key">country_codes</span> = [<span class="string">"KR"</span>, <span class="string">"US"</span>, <span class="string">"JP"</span>]
+          }
+        }
+      }
+    }
+  }
+}
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s9">
+  <div class="slide-header" data-remarp-id="s9-header"><h2>Block everything else</h2></div>
+  <div class="slide-body" data-remarp-id="s9-body">
+    <div class="columns">
+<div class="col">
+<h3 style="color:var(--red);">Current Problem</h3>
+<div class="card" style="padding:0.8rem; border-left:3px solid var(--red); margin-bottom:0.8rem;">
+  <p style="margin:0; font-size:0.85rem;">WAF Bot Control이 <strong>모든 API 경로</strong>에 적용됨</p>
+  <ul style="margin:0.5rem 0 0; padding-left:1.2rem; font-size:0.8rem;">
+    <li>Health check 경로까지 검사 → 불필요한 비용</li>
+    <li>Internal API 호출도 Bot score 평가</li>
+    <li>False positive로 정상 트래픽 차단 발생</li>
+  </ul>
+</div>
+<div class="code-block" style="font-size:0.8rem;">
+<span class="comment"># 현재: 모든 요청에 Bot Control 적용</span>
+<span class="keyword">managed_rule</span> "AWSManagedRulesBotControlRuleSet"
+  <span class="key">scope</span>: <span class="string">ALL_REQUESTS</span>  <span class="comment"># 문제!</span>
+</div>
+</div><div class="col">
+<h3 style="color:var(--green);">Solution: Scope-Down Rules</h3>
+<div class="card" style="padding:0.8rem; border-left:3px solid var(--green); margin-bottom:0.8rem;">
+  <p style="margin:0; font-size:0.85rem;">Scope-down statement로 <strong>특정 경로만</strong> Bot Control 적용</p>
+  <ul style="margin:0.5rem 0 0; padding-left:1.2rem; font-size:0.8rem;">
+    <li>/api/public/* 만 Bot 검사</li>
+    <li>/api/internal/*, /health 는 제외</li>
+    <li>비용 60% 절감 + False positive 제거</li>
+  </ul>
+</div>
+<div class="code-block" style="font-size:0.8rem;">
+<span class="keyword">scope_down_statement</span> {
+  <span class="key">byte_match</span> {
+    <span class="key">search_string</span> = <span class="string">"/api/public/"</span>
+    <span class="key">field</span>     = <span class="string">URI_PATH</span>
+    <span class="key">positional</span> = <span class="string">STARTS_WITH</span>
+  }
+}
+</div>
+</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s10">
+  <div class="slide-header" data-remarp-id="s10-header"><h2>Prefix-List Security</h2></div>
+  <div class="slide-body" data-remarp-id="s10-body">
+    <p><!-- Slide 11: Prefix-List Security --></p>
+<div class="flow-v" style="gap:1rem; padding:0.5rem;">
+  <!-- Main Diagram -->
+  <div class="flow-h" style="justify-content:center; gap:1.5rem;">
+    <div class="flow-box bg-orange" style="padding:0.8rem 1.2rem;" data-fragment-index="1">
+      <div class="icon-item">
+        <img src="common/aws-icons/services/Arch_Amazon-CloudFront_48.svg" style="width:40px;">
+        <span>CloudFront</span>
+      </div>
+      <div style="font-size:0.7rem; color:rgba(255,255,255,0.6); margin-top:0.3rem;">400+ Edge Locations</div>
+    </div>
+    <div class="flow-arrow" data-fragment-index="2">→</div>
+    <div class="flow-box bg-green" style="padding:0.8rem 1.2rem;" data-fragment-index="2">
+      <div style="font-size:0.8rem; margin-bottom:0.3rem;">Security Group</div>
+      <div style="font-size:0.7rem; color:var(--green);">Prefix-list ONLY</div>
+    </div>
+    <div class="flow-arrow" data-fragment-index="2">→</div>
+    <div class="flow-box bg-blue" style="padding:0.8rem 1.2rem;" data-fragment-index="2">
+      <div class="icon-item">
+        <img src="common/aws-icons/services/Arch_Elastic-Load-Balancing_48.svg" style="width:40px;">
+        <span>NLB</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Security Group Details -->
+  <div class="col-2" style="gap:1rem;">
+    <div class="card" style="padding:1rem; border-left:3px solid var(--green);" data-fragment-index="3">
+      <h4 style="margin:0 0 0.5rem; color:var(--green);">Allowed (Prefix-List)</h4>
+      <div class="code-block" style="font-size:0.75rem; margin:0;">
+<span class="key">Inbound Rule</span>:
+  <span class="key">Type</span>: <span class="string">HTTPS (443)</span>
+  <span class="key">Source</span>: <span class="string">com.amazonaws.global.cloudfront.origin-facing</span>
+  <span class="comment"># AWS-managed prefix list</span>
+  <span class="comment"># Auto-updates with CloudFront IPs</span>
+      </div>
+    </div>
+    <div class="card" style="padding:1rem; border-left:3px solid var(--red);" data-fragment-index="4">
+      <h4 style="margin:0 0 0.5rem; color:var(--red);">Blocked</h4>
+      <div style="font-size:0.85rem; line-height:1.8;">
+        <div style="text-decoration:line-through; color:var(--text-muted);">0.0.0.0/0 (Any IP)</div>
+        <div style="text-decoration:line-through; color:var(--text-muted);">Direct ALB/NLB access</div>
+        <div style="text-decoration:line-through; color:var(--text-muted);">WAF bypass attempts</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Point -->
+  <div style="padding:0.8rem 1rem; background:rgba(239,68,68,0.1); border-radius:8px; border-left:3px solid var(--red);" data-fragment-index="5">
+    <div style="font-size:0.9rem; font-weight:600; color:var(--red); margin-bottom:0.3rem;">Zero 0.0.0.0/0 Policy</div>
+    <div style="font-size:0.85rem; color:var(--text-secondary);">
+      All traffic MUST pass through CloudFront + WAF. Direct access to NLB bypasses all security controls and is strictly prohibited.
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s11">
+  <div class="slide-header" data-remarp-id="s11-header"><h2>Global Accelerator vs CloudFront</h2></div>
+  <div class="slide-body" data-remarp-id="s11-body" data-compare-mode="side-by-side">
+    <div class="compare-toggle">
+            <button class="compare-btn active" data-compare="global-accelerator">Global Accelerator</button>
+      <button class="compare-btn" data-compare="cloudfront">CloudFront</button>
+    </div>
+    <div class="col-2" style="flex:1">
+            <div class="card compare-content active compare-highlight" data-compare="global-accelerator" data-remarp-id="s11-left">
+<h3 style="color:var(--text-accent);margin-bottom:.5rem">Global Accelerator</h3>
+<ul><li><strong>Anycast IP</strong> (2 static IPs globally)</li><li><strong>Protocols</strong>: TCP, UDP (Layer 4)</li><li><strong>Routing</strong>: Consistent endpoint routing</li><li><strong>Use Case</strong>: Non-HTTP, gaming, IoT</li><li><strong>Pricing</strong>: Per-flow ($0.025/hr + data)</li><li><strong>Caching</strong>: None (passthrough)</li><li><strong>WAF Integration</strong>: No</li></ul>
+</div>
+      <div class="card compare-content active" data-compare="cloudfront" data-remarp-id="s11-right">
+<h3 style="color:var(--text-accent);margin-bottom:.5rem">CloudFront</h3>
+<ul><li><strong>DNS-based</strong> routing</li><li><strong>Protocols</strong>: HTTP/HTTPS only (Layer 7)</li><li><strong>Routing</strong>: Latency-based to edge</li><li><strong>Use Case</strong>: Web apps, APIs, static content</li><li><strong>Pricing</strong>: Per-request ($0.0085/10K) + data</li><li><strong>Caching</strong>: Yes (edge caching)</li><li><strong>WAF Integration</strong>: Yes (native)</li></ul>
+</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s12">
+  <div class="slide-header" data-remarp-id="s12-header"><h2>When to Use Each</h2></div>
+  <div class="slide-body" data-remarp-id="s12-body">
+    <p><!-- Slide 13: When to Use Each --></p>
+<div class="flow-v" style="gap:0.8rem; padding:0.5rem; align-items:center;">
+  <!-- Decision Start -->
+  <div class="flow-box bg-blue" style="padding:0.8rem 1.5rem;" data-fragment-index="1">
+    <span style="font-weight:600;">Need Global Traffic Distribution?</span>
+  </div>
+
+  <div class="flow-arrow" style="font-size:1.2rem;">↓ Yes</div>
+
+  <!-- First Decision -->
+  <div class="flow-h" style="gap:2rem; justify-content:center;">
+    <div class="flow-v" style="gap:0.5rem; align-items:center;" data-fragment-index="2">
+      <div class="flow-box bg-orange" style="padding:0.6rem 1rem;">
+        <span>Need Edge Caching?</span>
+      </div>
+      <div class="flow-arrow">↓ Yes</div>
+      <div class="flow-box bg-green" style="padding:0.8rem 1.2rem;">
+        <img src="common/aws-icons/services/Arch_Amazon-CloudFront_48.svg" style="width:32px;">
+        <span style="font-weight:600;">CloudFront</span>
+      </div>
+    </div>
+
+    <div class="flow-v" style="gap:0.5rem; align-items:center;" data-fragment-index="3">
+      <div class="flow-box bg-orange" style="padding:0.6rem 1rem;">
+        <span>Need TCP/UDP?</span>
+      </div>
+      <div class="flow-arrow">↓ Yes</div>
+      <div class="flow-box bg-purple" style="padding:0.8rem 1.2rem;">
+        <img src="common/aws-icons/services/Arch_AWS-Global-Accelerator_48.svg" style="width:32px;">
+        <span style="font-weight:600;">Global Accelerator</span>
+      </div>
+    </div>
+
+    <div class="flow-v" style="gap:0.5rem; align-items:center;" data-fragment-index="4">
+      <div class="flow-box bg-orange" style="padding:0.6rem 1rem;">
+        <span>Need Both?</span>
+      </div>
+      <div class="flow-arrow">↓ Yes</div>
+      <div class="flow-box bg-accent" style="padding:0.8rem 1.2rem;">
+        <span style="font-weight:600;">CF + GA</span>
+        <span style="font-size:0.75rem; color:rgba(255,255,255,0.7);">Combined</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Use Cases -->
+  <div class="col-3" style="gap:1rem; margin-top:1rem; width:100%;">
+    <div class="card" style="padding:0.8rem; text-align:center;" data-fragment-index="5">
+      <div style="font-size:0.9rem; font-weight:600; color:var(--green); margin-bottom:0.3rem;">CloudFront</div>
+      <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.5;">
+        Web apps<br>REST APIs<br>Static assets<br>Video streaming
+      </div>
+    </div>
+    <div class="card" style="padding:0.8rem; text-align:center;" data-fragment-index="5">
+      <div style="font-size:0.9rem; font-weight:600; color:var(--purple); margin-bottom:0.3rem;">Global Accelerator</div>
+      <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.5;">
+        Gaming<br>VoIP/Real-time<br>IoT devices<br>Non-HTTP APIs
+      </div>
+    </div>
+    <div class="card" style="padding:0.8rem; text-align:center;" data-fragment-index="5">
+      <div style="font-size:0.9rem; font-weight:600; color:var(--accent); margin-bottom:0.3rem;">Combined</div>
+      <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.5;">
+        Web + Gaming<br>HTTP + WebSocket<br>Multi-protocol apps
+      </div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s13">
+  <div class="slide-header" data-remarp-id="s13-header"><h2>Edge Network Cost Analysis</h2></div>
+  <div class="slide-body" data-remarp-id="s13-body">
+    <p><!-- Slide 14: Edge Network Cost Analysis --></p>
+<div class="flow-v" style="gap:1rem; padding:0.3rem;">
+  <!-- Cost Table -->
+  <table class="data-table" style="width:100%; font-size:0.85rem;">
+    <thead>
+      <tr style="background:var(--bg-card);">
+        <th style="padding:10px 12px; text-align:left;">Service</th>
+        <th style="padding:10px 12px; text-align:right;">Monthly Cost</th>
+        <th style="padding:10px 12px; text-align:left;">Pricing Model</th>
+        <th style="padding:10px 12px; text-align:left;">Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);" data-fragment-index="1">
+        <td style="padding:10px 12px;">
+          <div class="flow-h" style="gap:0.5rem; align-items:center;">
+            <img src="common/aws-icons/services/Arch_Amazon-CloudFront_48.svg" style="width:24px;">
+            <strong>CloudFront</strong>
+          </div>
+        </td>
+        <td style="padding:10px 12px; text-align:right; color:var(--accent); font-weight:600;">$50 - $500</td>
+        <td style="padding:10px 12px;">Requests + Data transfer</td>
+        <td style="padding:10px 12px; color:var(--text-muted);">Traffic-dependent</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);" data-fragment-index="2">
+        <td style="padding:10px 12px;">
+          <div class="flow-h" style="gap:0.5rem; align-items:center;">
+            <img src="common/aws-icons/services/Arch_AWS-WAF_48.svg" style="width:24px;">
+            <strong>WAF</strong>
+          </div>
+        </td>
+        <td style="padding:10px 12px; text-align:right; color:var(--green); font-weight:600;">$0</td>
+        <td style="padding:10px 12px;">ACL + Rules + Requests</td>
+        <td style="padding:10px 12px; color:var(--text-muted);">Currently disabled in prod</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);" data-fragment-index="3">
+        <td style="padding:10px 12px;">
+          <div class="flow-h" style="gap:0.5rem; align-items:center;">
+            <img src="common/aws-icons/services/Arch_Elastic-Load-Balancing_48.svg" style="width:24px;">
+            <strong>NLB (×2)</strong>
+          </div>
+        </td>
+        <td style="padding:10px 12px; text-align:right; color:var(--cyan); font-weight:600;">$36 + LCU</td>
+        <td style="padding:10px 12px;">$18/NLB + LCU charges</td>
+        <td style="padding:10px 12px; color:var(--text-muted);">2 regions × $18 base</td>
+      </tr>
+      <tr style="background:var(--bg-card);" data-fragment-index="4">
+        <td style="padding:10px 12px;">
+          <div class="flow-h" style="gap:0.5rem; align-items:center;">
+            <img src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" style="width:24px;">
+            <strong>Route53</strong>
+          </div>
+        </td>
+        <td style="padding:10px 12px; text-align:right; color:var(--purple); font-weight:600;">~$5</td>
+        <td style="padding:10px 12px;">Hosted zones + Queries</td>
+        <td style="padding:10px 12px; color:var(--text-muted);">$0.50/zone + $0.40/M queries</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Cost Optimization Tips -->
+  <div class="col-2" style="gap:1rem;">
+    <div class="card" style="padding:0.8rem; border-left:3px solid var(--green);" data-fragment-index="5">
+      <h4 style="margin:0 0 0.5rem; font-size:0.9rem; color:var(--green);">Cost Optimization</h4>
+      <ul style="margin:0; padding-left:1.2rem; font-size:0.8rem; line-height:1.6;">
+        <li>Origin Shield: 30-60% origin request reduction</li>
+        <li>Cache optimization: Higher TTL for static</li>
+        <li>Compression: Brotli/Gzip enabled</li>
+      </ul>
+    </div>
+    <div class="card" style="padding:0.8rem; border-left:3px solid var(--orange);" data-fragment-index="5">
+      <h4 style="margin:0 0 0.5rem; font-size:0.9rem; color:var(--orange);">Cost Drivers</h4>
+      <ul style="margin:0; padding-left:1.2rem; font-size:0.8rem; line-height:1.6;">
+        <li>Data transfer out (largest component)</li>
+        <li>HTTPS request count</li>
+        <li>Origin requests (cache miss)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s14">
+  <div class="slide-header" data-remarp-id="s14-header"><h2>Key Takeaways</h2></div>
+  <div class="slide-body" data-remarp-id="s14-body">
+    <p><!-- Slide 15: Key Takeaways --></p>
+<div class="col-2" style="gap:1.5rem;">
+  <div class="card" style="padding:1.2rem; border-left:3px solid var(--accent);">
+    <h4 style="margin:0 0 0.8rem; color:var(--accent);">Traffic Routing</h4>
+    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
+      <li>Route53 Latency-based for regional failover</li>
+      <li>CloudFront for global edge caching</li>
+      <li>Origin Shield: 50-90% origin reduction</li>
+      <li>Origin Failover: sub-second switching</li>
+    </ul>
+  </div>
+  <div class="card" style="padding:1.2rem; border-left:3px solid var(--cyan);">
+    <h4 style="margin:0 0 0.8rem; color:var(--cyan);">Edge Security</h4>
+    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
+      <li>WAF rule stack: Geo → Rate → Managed</li>
+      <li>Bot Control: Count mode first, then Block</li>
+      <li>Prefix-list SG: Zero 0.0.0.0/0 policy</li>
+      <li>All traffic MUST pass CloudFront + WAF</li>
+    </ul>
+  </div>
+  <div class="card" style="padding:1.2rem; border-left:3px solid var(--green);">
+    <h4 style="margin:0 0 0.8rem; color:var(--green);">Architecture Decisions</h4>
+    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
+      <li>CloudFront over GA: HTTP + caching + WAF</li>
+      <li>OAC for S3: No public bucket access</li>
+      <li>NLB over ALB: Lower latency, prefix-list support</li>
+      <li>DNS TTL 60s: Balance freshness vs load</li>
+    </ul>
+  </div>
+  <div class="card" style="padding:1.2rem; border-left:3px solid #e17055;">
+    <h4 style="margin:0 0 0.8rem; color:#e17055;">Cost Optimization</h4>
+    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
+      <li>CloudFront: $50-500/mo (traffic-based)</li>
+      <li>Origin Shield ROI: 30-60% savings</li>
+      <li>Cache TTL tuning for static assets</li>
+      <li>Compression: Brotli + Gzip enabled</li>
+    </ul>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s15">
+  <div class="slide-header" data-remarp-id="s15-header"><h2>Knowledge Check</h2></div>
+  <div class="slide-body" data-remarp-id="s15-body" style="overflow-y:auto">
+    <div class="quiz" data-quiz="q1">
+      <div class="quiz-question">Q1: Route53 Latency-based Routing의 latency 측정 주기는?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">실시간 (요청마다)</button>
+<button class="quiz-option" data-correct="true">약 24시간마다 (AWS Edge에서)</button>
+<button class="quiz-option" data-correct="false">매 분마다</button>
+<button class="quiz-option" data-correct="false">Health Check 간격과 동일</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q2">
+      <div class="quiz-question">Q2: CloudFront Origin Failover의 전환 속도는?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">DNS TTL 만료 후 (60초+)</button>
+<button class="quiz-option" data-correct="false">Health Check 실패 후 (90초+)</button>
+<button class="quiz-option" data-correct="true">Sub-second (같은 요청 내 재시도)</button>
+<button class="quiz-option" data-correct="false">수동 전환 필요</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q3">
+      <div class="quiz-question">Q3: Prefix-list Security Group의 핵심 목적은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">비용 절감</button>
+<button class="quiz-option" data-correct="false">성능 향상</button>
+<button class="quiz-option" data-correct="true">WAF 우회 방지 (CloudFront 강제)</button>
+<button class="quiz-option" data-correct="false">로깅 활성화</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q4">
+      <div class="quiz-question">Q4: WAF Bot Control을 처음 활성화할 때 권장 설정은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">Block 모드로 즉시 활성화</button>
+<button class="quiz-option" data-correct="true">Count 모드로 2주 분석 후 Block</button>
+<button class="quiz-option" data-correct="false">특정 국가만 적용</button>
+<button class="quiz-option" data-correct="false">Rate Limit과 함께 활성화</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s16">
+  <div class="center-content" style="height:100%; gap:1.5rem;">
+    <h1 style="font-size:3rem; background:linear-gradient(135deg, var(--accent-light), var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Thank You</h1>
+    <p style="color:var(--text-secondary); font-size:1.1rem;">Thank You</p>
+    <p style="color:var(--text-muted); font-size:1rem; margin-top:0.5rem;">수고하셨습니다!</p>
+    <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+            <a href="index.html" class="btn btn-primary btn-sm" style="text-decoration:none;">← 목차로 돌아가기</a>
+    </div>
+  </div>
+</div>
+</div>
+<script src="./common/animation-utils.js"></script>
+<script src="./common/slide-framework.js"></script>
+<script src="./common/quiz-component.js"></script>
+<script src="./common/presenter-view.js"></script>
+
+<script>
+  
+  const presenterNotes = {
+    1: "[1min] Block 3에 오신 것을 환영합니다. 이번 블록에서는 Multi-Region Shopping Mall의 트래픽 라우팅과 Edge 보안을 깊이 있게 다루겠습니다.\n\n사용자 요청이 어떻게 글로벌 Edge 네트워크를 거쳐 백엔드에 도달하는지, Route53의 Latency-based Routing, CloudFront의 캐싱 전략, WAF의 보안 규칙 스택까지 약 30분간 살펴봅니다.\n\n\n먼저 End-to-End 트래픽 플로우부터 시작하겠습니다.",
+    2: "⏸️ [3min] End-to-End 트래픽 플로우를 단계별로 살펴보겠습니다.\n\n사용자가 mall.atomai.click으로 접속하면, Route53이 CNAME 레코드로 CloudFront 도메인을 반환합니다. 이 첫 번째 DNS 조회가 글로벌 트래픽 분산의 시작점입니다.\n\nCloudFront에서 요청 경로에 따라 두 가지 분기가 발생합니다. /static/* 경로는 S3 버킷으로 직접 라우팅되어 정적 자산을 서빙합니다. OAC(Origin Access Control)가 S3 버킷을 보호하므로 CloudFront를 거치지 않은 직접 접근은 불가능합니다.\n\n\n/api/* 경로는 api-internal.atomai.click으로 라우팅됩니다. 여기서 두 번째 Route53 조회가 발생하는데, 이번에는 Latency-based Routing으로 사용자에게 가장 가까운 리전의 NLB IP를 반환합니다.\n\nNLB의 Security Group이 핵심 보안 포인트입니다. CloudFront Managed Prefix List만 허용하므로, 모든 트래픽이 반드시 CloudFront와 WAF를 거쳐야 합니다. 0.0.0.0/0은 절대 허용하지 않습니다.\n\n\nRoute53의 Latency-based Routing 동작 방식을 자세히 살펴보겠습니다.",
+    3: "⏸️ [3min] Route53 Latency-based Routing의 동작 방식을 이해하는 것이 중요합니다.\n\n먼저 오해를 바로잡자면, Route53이 실시간 사용자 latency를 측정하는 것이 아닙니다. AWS가 전 세계 20개 이상의 Edge Location에서 각 리전까지의 RTT를 주기적으로 측정하고, 이 데이터를 약 24시간마다 업데이트합니다.\n\n사용자의 DNS 쿼리가 들어오면, Route53은 사용자의 DNS Resolver 위치를 기준으로 가장 낮은 latency를 가진 리전의 IP를 반환합니다. TTL은 60초로 설정했는데, 너무 짧으면 DNS 쿼리 부하가 증가하고 너무 길면 failover가 늦어지기 때문입니다.\n\n\nHealth Check는 30초마다 /health 엔드포인트를 호출합니다. 3번 연속 실패하면 해당 리전이 rotation에서 제외되고, 모든 트래픽이 남은 healthy 리전으로 이동합니다. 복구되면 자동으로 다시 추가됩니다.\n\nDNS 레코드 구조를 보면, mall.atomai.click은 CloudFront를 가리키는 CNAME이고, api-internal.atomai.click은 Latency-based A 레코드로 두 리전의 NLB를 가리킵니다.\n\n\nHealth Check 상세 설정을 더 살펴보겠습니다.",
+    4: "⏸️ [2min] Route53 Health Check 구성을 자세히 보겠습니다.\n\nPublic DNS인 mall.atomai.click은 CloudFront로 CNAME되어 있어 별도 Health Check가 필요 없습니다. CloudFront가 자체적으로 Origin Health를 관리하기 때문입니다.\n\n핵심은 api-internal.atomai.click입니다. Latency-based A 레코드로 두 리전의 NLB IP를 가리키며, 각 리전에 대해 독립적인 Health Check가 동작합니다.\n\n\nHealth Check는 3개 리전에서 동시에 실행됩니다 — us-east-1, us-west-2, eu-west-1. 모든 checker가 실패를 보고해야 unhealthy로 판정되므로, 일시적인 네트워크 이슈로 인한 false positive를 방지합니다.\n\n30초 간격으로 /health 엔드포인트를 호출하고, 3번 연속 실패 시 약 90초 후에 failover가 시작됩니다. 이 시간이 너무 길다면 interval을 10초로 줄일 수 있지만, Health Check 비용이 증가합니다.\n\n\nCloudFront Distribution 설정으로 넘어가겠습니다.",
+    5: "⏸️ [3min] CloudFront Distribution의 세 가지 Behavior를 탭으로 구분했습니다.\n\nAPI Behavior는 /api/* 경로를 처리합니다. 캐싱을 완전히 비활성화하고, 모든 HTTP 메서드를 허용합니다. Origin Request Policy에서 Host 헤더만 제외하고 모든 헤더를 Origin으로 전달하는데, 이는 NLB가 원본 요청 정보를 받아야 하기 때문입니다.\n\n\nStatic Behavior는 /static/* 경로의 정적 자산을 처리합니다. 24시간 TTL로 강력하게 캐싱하고, OAC를 통해 S3에 접근합니다. S3 버킷은 퍼블릭 접근이 차단되어 있어 CloudFront를 거치지 않으면 접근할 수 없습니다.\n\nSPA Fallback은 Default Behavior로, React/Vue 같은 SPA의 client-side routing을 지원합니다. 존재하지 않는 경로로 요청이 오면 403/404 대신 index.html을 반환하고 200 상태를 보냅니다. 이렇게 하면 /products/123 같은 deep link가 정상 동작합니다.\n\n\nCloudFront Origin Shield 설정을 살펴보겠습니다.",
+    6: "⏸️ [3min] Origin Shield는 CloudFront의 추가 캐싱 레이어입니다. 전 세계 400개 이상의 Edge Location과 Origin 사이에 위치해서, Origin으로 가는 요청을 집약합니다.\n\n동작 방식을 보면, 기존에는 각 Edge Location이 개별적으로 Origin에 요청했습니다. 예를 들어 도쿄, 서울, 싱가포르에서 같은 콘텐츠를 요청하면 Origin에 3번 요청이 갑니다.\n\nOrigin Shield를 켜면, 이 세 요청이 모두 us-east-1의 Shield 레이어로 먼저 갑니다. Shield에 캐시가 있으면 Origin에 요청하지 않고 바로 응답합니다. 없으면 한 번만 Origin에 요청하고 결과를 캐싱합니다.\n\n\n실제 효과는 50-90%의 Origin 요청 감소입니다. 트래픽 패턴에 따라 다르지만, 글로벌 사용자가 많을수록 효과가 큽니다.\n\n비용 분석을 보면, Shield 자체 비용은 10,000 요청당 약 $0.0075로 저렴합니다. Origin 요청 감소로 인한 NLB 비용 절감, EKS 부하 감소 등을 고려하면 순 절감 효과는 30-60%에 달합니다.\n\nShield 리전은 Origin에 가장 가까운 us-east-1로 설정했습니다. Shield와 Origin 사이의 latency를 최소화하기 위해서입니다.\n\n\nOrigin Failover 설정을 살펴보겠습니다.",
+    7: "⏸️ [2min] CloudFront Origin Failover는 Origin Group을 통해 구성됩니다. Primary Origin이 실패하면 자동으로 Secondary Origin으로 전환됩니다.\n\n현재 설정에서 Primary는 api-internal.atomai.click으로, Route53 Latency-based Routing을 통해 가장 가까운 NLB로 라우팅됩니다. Secondary는 api-secondary.atomai.click으로, us-west-2 NLB를 직접 가리킵니다.\n\nFailover가 발생하는 조건은 5xx 에러, 연결 타임아웃, Origin 도달 불가입니다. 4xx 에러는 클라이언트 오류이므로 failover를 트리거하지 않습니다.\n\n\n가장 중요한 장점은 sub-second switching입니다. DNS 기반 failover는 TTL 만료를 기다려야 하지만, CloudFront Origin Failover는 같은 요청 내에서 즉시 Secondary로 재시도합니다. 사용자는 약간의 latency 증가만 경험하고 실패를 인지하지 못합니다.\n\nRoute53 Health Check와 CloudFront Origin Failover가 독립적으로 동작한다는 점을 기억하세요. 두 레이어가 각각 redundancy를 제공하므로 더 강력한 장애 대응이 가능합니다.\n\n\nWAF 규칙 스택을 살펴보겠습니다.",
+    8: "⏸️ [3min] WAF 규칙은 스택 형태로 위에서 아래로 평가됩니다. Priority 숫자가 낮을수록 먼저 평가됩니다.\n\n가장 먼저 GeoRestriction을 평가합니다. 한국, 미국, 일본 외의 국가에서 오는 요청은 바로 차단합니다. 이 쇼핑몰의 서비스 대상 지역이 이 세 국가이기 때문입니다.\n\n다음은 RateLimit입니다. IP당 5분에 2,000 요청을 초과하면 차단합니다. 이 수치는 정상 사용자의 브라우징 패턴을 분석해서 설정했습니다. 일반 사용자는 5분에 100-200 요청 정도이므로 충분한 여유가 있습니다.\n\n\nAWS Managed Rules 세 개를 순서대로 적용합니다. KnownBadInputs는 Log4j 취약점, SSRF 공격 패턴을 탐지합니다. SQLi RuleSet은 SQL Injection 패턴을, CommonRuleSet은 OWASP Top 10 취약점을 포괄적으로 탐지합니다.\n\n규칙 순서가 중요합니다. Geo와 RateLimit을 먼저 평가해서 명확히 차단할 트래픽을 걸러내고, 남은 트래픽에 대해서만 비용이 더 드는 Managed Rules를 평가합니다.\n\n\nTerraform 코드로 구현을 살펴보겠습니다.",
+    9: "⏸️ [2min] WAF Custom Rules의 Terraform 구현입니다.\n\nrate_based_statement에서 limit은 5분 단위로 측정됩니다. 2000으로 설정하면 5분에 2,000 요청을 초과하는 IP를 차단합니다. aggregate_key_type을 IP로 설정해서 소스 IP 기준으로 집계합니다.\n\nGeo Restriction은 not_statement로 구현합니다. country_codes에 허용할 국가 목록을 넣고, 이를 not으로 감싸면 \"허용 국가가 아니면 차단\"이 됩니다.\n\n\nvisibility_config는 모니터링에 필수입니다. sampled_requests_enabled로 샘플 요청을 로깅하고, CloudWatch 메트릭을 활성화해서 얼마나 많은 요청이 각 규칙에 매칭되는지 모니터링합니다.\n\nscope가 CLOUDFRONT인 점을 주목하세요. WAF가 CloudFront와 연동될 때는 반드시 us-east-1에 배포해야 합니다. 다른 리전에 배포하면 연동이 실패합니다.\n\n\nBot Control 관련 이슈와 해결책을 살펴보겠습니다.",
+    10: "⏸️ [3min] Bot Control은 강력하지만 주의해서 사용해야 합니다. 현재 우리 환경에서는 비활성화되어 있는데, 그 이유를 설명드리겠습니다.\n\nBot Control을 활성화하면 curl, wget, headless browser가 모두 차단됩니다. 문제는 Route53 Health Check도 automated user-agent를 사용하므로 차단된다는 것입니다. Health Check가 차단되면 모든 리전이 unhealthy로 판정되어 서비스 장애가 발생합니다.\n\n\n해결책은 Scope-Down Rules입니다. 먼저 2주간 Count Mode로 운영합니다. Block 대신 Count로 설정하면 실제 차단 없이 어떤 요청이 매칭되는지 CloudWatch에서 분석할 수 있습니다.\n\n분석 결과를 바탕으로 Phase 2에서 선택적 Block을 적용합니다. Route53 Health Check, Datadog Synthetics 같은 정상적인 자동화 도구의 User-Agent를 allowlist에 추가하고, 나머지 bad bot만 차단합니다.\n\n핵심 교훈은 Bot Control을 절대 처음부터 Block 모드로 켜지 말라는 것입니다. 항상 Count 모드로 시작해서 트래픽 패턴을 파악하고, allowlist를 구축한 후에 Block으로 전환해야 합니다.\n\n\nPrefix-List Security Group에 대해 살펴보겠습니다.",
+    11: "⏸️ [3min] Prefix-List Security는 우리 보안 아키텍처의 핵심입니다.\n\nCloudFront Managed Prefix List는 AWS가 관리하는 IP 목록으로, 전 세계 400개 이상 Edge Location의 IP 주소를 포함합니다. 이 목록은 AWS가 Edge Location을 추가하거나 IP를 변경할 때 자동으로 업데이트됩니다.\n\nSecurity Group에서 이 Prefix List만 허용하면, NLB로 들어오는 모든 트래픽이 반드시 CloudFront를 거쳐야 합니다. CloudFront를 거친다는 것은 WAF 검사를 통과했다는 의미입니다.\n\n\n0.0.0.0/0을 절대 사용하지 않는 이유가 여기 있습니다. 만약 NLB에 0.0.0.0/0을 허용하면, 공격자가 NLB IP를 직접 찾아서 WAF를 우회할 수 있습니다. CloudFront DNS를 거치지 않고 직접 NLB IP로 요청을 보내면 WAF 규칙이 전혀 적용되지 않습니다.\n\n이것이 우리가 \"Zero 0.0.0.0/0 Policy\"를 엄격하게 적용하는 이유입니다. 모든 인바운드 트래픽은 반드시 CloudFront와 WAF를 거쳐야 하며, 이를 우회하는 경로는 존재하지 않아야 합니다.\n\n\nGlobal Accelerator와 CloudFront를 비교해 보겠습니다.",
+    12: "⏸️ [3min] Global Accelerator와 CloudFront는 둘 다 글로벌 트래픽 분산 서비스지만, 동작 방식이 완전히 다릅니다.\n\nGlobal Accelerator는 Anycast IP를 제공합니다. 전 세계 어디서든 같은 IP로 접속하면 가장 가까운 AWS Edge로 라우팅됩니다. Layer 4에서 동작하므로 TCP, UDP 모두 지원하고, 게임 서버나 IoT처럼 HTTP가 아닌 프로토콜에 적합합니다.\n\nCloudFront는 DNS 기반으로 동작합니다. Layer 7 HTTP/HTTPS만 지원하지만, Edge에서 캐싱이 가능하고 WAF와 네이티브로 통합됩니다. 웹 애플리케이션과 API에 최적화되어 있습니다.\n\n\n가격 구조도 다릅니다. Global Accelerator는 시간당 과금 + 데이터 전송량으로, 트래픽이 적어도 기본 비용이 발생합니다. CloudFront는 요청 수 + 데이터 전송량으로, 트래픽에 비례해서 과금됩니다.\n\n우리 쇼핑몰은 HTTP/HTTPS 웹 트래픽이고, Edge 캐싱과 WAF 통합이 필요하므로 CloudFront를 선택했습니다. 만약 실시간 게임이나 IoT 디바이스 통신이 있었다면 Global Accelerator를 고려했을 것입니다.\n\n\n언제 어떤 서비스를 선택해야 하는지 의사결정 플로우를 보겠습니다.",
+    13: "⏸️ [2min] 의사결정 플로우차트를 통해 어떤 서비스를 선택할지 결정할 수 있습니다.\n\n첫 번째 질문은 Edge Caching이 필요한가입니다. 정적 콘텐츠나 반복 요청이 많다면 CloudFront의 캐싱이 큰 이점을 제공합니다. Origin 부하를 줄이고 응답 속도를 높입니다.\n\n두 번째 질문은 TCP/UDP 프로토콜이 필요한가입니다. HTTP가 아닌 프로토콜을 사용해야 한다면 Global Accelerator가 유일한 선택입니다. CloudFront는 HTTP/HTTPS만 지원합니다.\n\n\n두 가지가 모두 필요하다면 조합해서 사용합니다. 예를 들어 게임 서버가 HTTP REST API와 UDP 게임 트래픽을 모두 처리한다면, REST API는 CloudFront로, 게임 트래픽은 Global Accelerator로 라우팅합니다.\n\n우리 쇼핑몰은 순수 HTTP/HTTPS 웹 애플리케이션이고, 정적 자산 캐싱과 WAF 통합이 핵심 요구사항이므로 CloudFront 단독으로 충분합니다.\n\n\nEdge 네트워크의 비용 분석을 살펴보겠습니다.",
+    14: "⏸️ [2min] Edge 네트워크의 월간 비용을 분석해 보겠습니다.\n\nCloudFront는 트래픽에 따라 $50에서 $500 사이로 변동합니다. 주요 비용 요소는 데이터 전송량과 요청 수입니다. 캐싱을 잘 활용하면 Origin 요청을 줄여서 비용을 절감할 수 있습니다.\n\nWAF는 현재 프로덕션에서 비활성화되어 있어 $0입니다. 활성화하면 Web ACL $5 + Rules × $1 + 요청당 $0.60/M이 추가됩니다. Bot Control을 켜면 상당한 비용이 추가되므로 신중하게 결정해야 합니다.\n\n\nNLB는 리전당 $18 기본 비용에 LCU(Load Balancer Capacity Unit) 요금이 추가됩니다. 두 리전이니까 기본 $36이고, 트래픽에 따라 LCU 비용이 추가됩니다.\n\nRoute53은 가장 저렴해서 월 $5 정도입니다. Hosted Zone당 $0.50, 쿼리 100만 건당 $0.40입니다.\n\n비용 최적화의 핵심은 캐시 적중률을 높이는 것입니다. Origin Shield로 30-60% Origin 요청을 줄이고, 정적 자산 TTL을 길게 설정하고, Brotli/Gzip 압축으로 데이터 전송량을 줄입니다.\n\n\n이 블록의 핵심 내용을 정리하겠습니다.",
+    15: "[2min] Block 3의 핵심 내용을 정리하겠습니다.\n\nTraffic Routing에서 기억할 점은, Route53 Latency-based Routing으로 리전 failover를 처리하고, CloudFront Origin Failover로 sub-second 전환을 제공한다는 것입니다. Origin Shield를 활용하면 Origin 요청을 50-90% 줄일 수 있습니다.\n\nEdge Security의 핵심은 WAF 규칙 스택과 Zero 0.0.0.0/0 정책입니다. 모든 트래픽이 반드시 CloudFront와 WAF를 거쳐야 합니다. Bot Control은 Count 모드로 먼저 분석한 후 Block으로 전환해야 합니다.\n\nArchitecture Decisions에서, CloudFront를 선택한 이유는 HTTP 캐싱과 WAF 통합 때문입니다. NLB를 사용한 이유는 prefix-list 지원과 낮은 latency 때문입니다.\n\n비용 최적화에서는 Origin Shield의 ROI가 30-60%로 가장 효과적이고, 정적 자산 캐시 TTL 튜닝과 압축 활성화가 추가 절감 포인트입니다.\n\n\n질문이 있으시면 지금 받겠습니다. 다음 블록에서는 DR과 Failover Automation을 다루겠습니다.",
+    16: "[3min] 4개의 퀴즈 문제로 이 블록의 핵심 개념을 확인하겠습니다.\n\nQ1: Route53 Latency-based Routing은 실시간 측정이 아닙니다. AWS가 Edge Location에서 약 24시간마다 측정하고 업데이트합니다.\n\nQ2: CloudFront Origin Failover는 DNS 기반이 아니라 같은 요청 내에서 재시도하므로 sub-second입니다.\n\nQ3: Prefix-list SG의 핵심은 WAF 우회 방지입니다. 모든 트래픽이 CloudFront를 거치도록 강제합니다.\n\nQ4: Bot Control은 반드시 Count 모드로 시작해야 합니다. 처음부터 Block하면 Health Check 같은 정상 자동화 도구도 차단됩니다.",
+    17: "[30sec] Block 3를 마무리합니다. Route53, CloudFront, WAF를 활용한 글로벌 트래픽 라우팅과 Edge 보안을 살펴봤습니다.\n\n다음 Block 4에서는 DR과 Failover Automation을 다루겠습니다. Aurora DSQL 단일 리전 리스크, MSK Replicator, 그리고 자동화된 failover 프로세스를 설명합니다.\n\n질문이 있으시면 말씀해 주세요."
+  };
+  const deck = new SlideFramework({
+    
+    footer: 'Multi-Region Architecture Deep Dive — L300+',
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

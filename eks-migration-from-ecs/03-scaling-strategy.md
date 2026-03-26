@@ -12,7 +12,6 @@ Scaling Strategy — Karpenter & KEDA (25 min)
 
 **오준석 (Junseok Oh)**
 Sr. Solutions Architect, AWS
-화해 글로벌
 
 :::notes
 {timing: 1min}
@@ -32,14 +31,14 @@ Karpenter를 통한 노드 프로비저닝과 KEDA를 통한 이벤트 기반 Po
 
 > — ECS에서는 Auto Scaling이 간단했는데, EKS는 노드 그룹, HPA, VPA, Cluster Autoscaler 등 옵션이 너무 많습니다. 어떤 조합이 최적인지 모르겠습니다.
 
-**화해 현황**:
+**현황**:
 - Cluster Autoscaler 사용 중 — 스케일 아웃에 5-7분 소요
 - 노드 그룹 10개 이상 관리 복잡성
 - Spot Instance 활용률 낮음 (비용 최적화 기회 상실)
 
 :::notes
 {timing: 2min}
-화해 팀이 겪고 있는 스케일링 관련 Pain Point입니다.
+팀이 겪고 있는 스케일링 관련 Pain Point입니다.
 Cluster Autoscaler는 노드 그룹 기반으로 동작하기 때문에 스케일링 속도가 느리고, 인스턴스 유형 선택이 제한적입니다.
 오늘 다룰 Karpenter와 KEDA를 도입하면 이러한 문제를 대부분 해결할 수 있습니다.
 

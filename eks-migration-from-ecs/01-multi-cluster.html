@@ -32,7 +32,6 @@
   <div style="position:absolute; left:5%; top:76%;">
     <p style="font-size:1.05rem; color:#fff; font-weight:600; margin:0;">오준석 (Junseok Oh)</p>
     <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:6px 0 0 0;">Sr. Solutions Architect, AWS</p>
-    <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:2px 0 0 0;">화해 글로벌</p>
   </div>
   <img src="common/pptx-theme/images/Picture_8.png" alt="" style="position:absolute; right:5%; bottom:10%; width:8%; pointer-events:none;" />
 </div>
@@ -95,13 +94,13 @@
 <tr><td>팀 독립성</td><td>공유 리소스 가능</td><td>팀별 독립 릴리스 필요</td></tr>
 <tr><td>Blast Radius</td><td>전체 서비스 영향 허용</td><td>장애 범위 제한 필수</td></tr>
 <tr><td>업그레이드</td><td>다운타임 허용 가능</td><td>무중단 필수</td></tr></tbody></table>
-<div class="callout-info" style="margin-top:1rem"><p><strong>화해 판단</strong>: 전체 서비스 EKS 이관 + 무중단 업그레이드 필요 → <strong>Multi-Cluster 권장</strong></p></div>
+<div class="callout-info" style="margin-top:1rem"><p><strong>판단</strong>: 전체 서비스 EKS 이관 + 무중단 업그레이드 필요 → <strong>Multi-Cluster 권장</strong></p></div>
     </div>
     <div class="tab-content" data-tab="account-pattern">
 <table><thead><tr><th>패턴</th><th>구조</th><th>적합한 경우</th></tr></thead>
 <tbody><tr><td>환경별 분리</td><td>Dev Account / Staging Account / Prod Account</td><td>환경 간 완전 격리 필요</td></tr>
 <tr><td>워크로드별 분리</td><td>Frontend Account / Backend Account / Data Account</td><td>팀별 비용 분리, 독립 운영</td></tr>
-<tr><td><strong>하이브리드</strong></td><td>Prod-Service / Prod-Data / NonProd</td><td><strong>화해 권장</strong> — 서비스와 데이터 분리 + 환경 분리</td></tr></tbody></table>
+<tr><td><strong>하이브리드</strong></td><td>Prod-Service / Prod-Data / NonProd</td><td><strong>권장</strong> — 서비스와 데이터 분리 + 환경 분리</td></tr></tbody></table>
 <div class="callout-info" style="margin-top:1rem"><p><strong>핵심</strong>: AWS Organizations + OU 구조로 계정 표준화, 신규 계정은 Control Tower로 자동 프로비저닝</p></div>
     </div>
     <div class="tab-content" data-tab="cluster-pattern">
@@ -110,7 +109,7 @@
 <tr><td>도메인별</td><td>서비스A + 서비스B + Platform</td><td>팀 자율성</td><td>클러스터 관리 부담</td></tr>
 <tr><td>기능별</td><td>Service Plane + Data Plane</td><td>워크로드 특성 최적화</td><td>서비스 간 통신 복잡</td></tr>
 <tr><td><strong>AZ 기반</strong></td><td>Zone-A + Zone-C</td><td>고가용성 극대화</td><td>데이터 동기화 고려</td></tr></tbody></table>
-<div class="callout-info" style="margin-top:1rem"><p><strong>화해 권장</strong>: AZ 기반 Active-Active + Service/Data Plane 분리 조합</p></div>
+<div class="callout-info" style="margin-top:1rem"><p><strong>권장</strong>: AZ 기반 Active-Active + Service/Data Plane 분리 조합</p></div>
     </div>
   </div>
 </div>
@@ -772,7 +771,7 @@
         </div>
       </div>
     </div>
-    <div class="callout-info" style="margin-top:1rem"><p><strong>화해 권장</strong>: SGP 필요 Pod만 선별 적용, 나머지는 Prefix Delegation + Network Policy 조합. 기존 SGP Pod → 대부분 Network Policy로 전환 가능</p></div>
+    <div class="callout-info" style="margin-top:1rem"><p><strong>권장</strong>: SGP 필요 Pod만 선별 적용, 나머지는 Prefix Delegation + Network Policy 조합. 기존 SGP Pod → 대부분 Network Policy로 전환 가능</p></div>
   </div>
 </div>
 
@@ -844,7 +843,7 @@
     </div>
   </div>
 </div>
-<div class="callout-info" style="margin-top:1rem"><p><strong>화해 권장</strong>: 대부분 NetworkPolicy로 전환하고, RDS 직접 접근 등 SG가 반드시 필요한 Pod만 Fargate 또는 전용 노드 그룹으로 분리</p></div>
+<div class="callout-info" style="margin-top:1rem"><p><strong>권장</strong>: 대부분 NetworkPolicy로 전환하고, RDS 직접 접근 등 SG가 반드시 필요한 Pod만 Fargate 또는 전용 노드 그룹으로 분리</p></div>
     </div>
   </div>
 </div>
@@ -1029,7 +1028,7 @@
     11: "[3min] Gateway API는 Kubernetes의 차세대 인그레스 API입니다. 기존 Ingress API의 한계인 역할 분리 불가, Annotation 남용 문제를 해결합니다. GatewayClass, Gateway, HTTPRoute의 3계층 구조로 인프라 팀, 플랫폼 팀, 개발 팀의 책임을 명확히 분리합니다.\n\nGitBook 참고: https://atomoh.gitbook.io/kubernetes-docs/networking/04-gateway-api\n\n💬 예상 질문:\n• Q: 기존 Ingress를 Gateway API로 마이그레이션해야 하나요?\n  → 당장은 아닙니다. Ingress도 계속 지원되지만, 신규 구축 시 Gateway API를 권장합니다.\n• Q: Istio VirtualService와 Gateway API 중 뭘 써야 하나요?\n  → Gateway API가 Kubernetes 표준이므로 벤더 락인 없이 사용 가능합니다. Istio도 Gateway API를 지원합니다.",
     12: "🎬 [3min] IP 고갈 문제의 핵심은 ENI당 할당 가능한 Secondary IP 수 제한입니다. Prefix Delegation을 활성화하면 개별 IP 대신 /28 prefix(16개 IP)를 할당받아 노드당 Pod 밀도를 대폭 높일 수 있습니다.\n\nGitBook 참고: https://atomoh.gitbook.io/kubernetes-docs/networking/01-vpc-cni\n\n💬 예상 질문:\n• Q: Prefix Delegation 활성화 시 기존 Pod에 영향이 있나요?\n  → 기존 노드는 재시작이 필요합니다. 신규 노드부터 적용되므로 Rolling Update로 점진적 전환이 가능합니다.\n• Q: /28이면 16개인데, 왜 t3.medium이 110개 Pod를 수용하나요?\n  → ENI당 여러 개의 /28 prefix를 할당받을 수 있습니다. 인스턴스 타입별 최대 prefix 수가 다릅니다.\n• Q: Karpenter를 쓰면 IP 고갈이 완화되나요?\n  → 간접적으로 도움됩니다. Karpenter가 큰 인스턴스 타입을 자동 선택하면 노드당 ENI/IP 수용량이 증가하고, bin-packing 효율화로 노드 수가 줄어 낭비 IP가 감소합니다. 하지만 Pod당 1 IP 할당 구조는 동일하므로 Prefix Delegation이 근본 해결책입니다. Karpenter + Prefix Delegation 조합이 가장 효과적입니다.",
     13: "[2min] ENIConfig를 사용한 Custom Networking 설정입니다. AZ별로 Pod 전용 서브넷을 지정하여 노드 서브넷과 Pod 서브넷을 분리합니다.\n\n💬 예상 질문:\n• Q: ENIConfig를 AZ별로 만들어야 하는 이유는?\n  → Pod IP가 해당 AZ의 서브넷에서 할당되어야 Cross-AZ 트래픽을 최소화할 수 있습니다.",
-    14: "[2min] SGP(Security Group for Pods)와 대안 비교입니다. SGP는 Branch ENI를 사용하여 Pod별 SG를 적용하지만, 노드당 Branch ENI 수가 제한적입니다(m5.large 기준 최대 9개). 화해에서 겪고 있는 Pod 밀도 부족 문제의 원인이 바로 이것입니다.\n\nPrefix Delegation + Network Policy 조합이 대부분의 워크로드에 적합합니다. RDS나 ElastiCache 등 AWS 리소스 접근 제어가 필요한 경우만 SGP를 선별 적용하세요.\n\nFargate는 SGP 대안이지만 DaemonSet 미지원, 로그 수집기나 모니터링 에이전트를 사이드카로 전환해야 하는 트레이드오프가 있습니다.\n\n💬 예상 질문:\n• Q: Network Policy로 RDS 접근 제어가 가능한가요?\n  → Network Policy는 IP/Port 기반 제어만 가능합니다. RDS Security Group에서 Pod 서브넷 CIDR을 허용하는 방식으로 대체합니다.",
+    14: "[2min] SGP(Security Group for Pods)와 대안 비교입니다. SGP는 Branch ENI를 사용하여 Pod별 SG를 적용하지만, 노드당 Branch ENI 수가 제한적입니다(m5.large 기준 최대 9개). 팀이 겪고 있는 Pod 밀도 부족 문제의 원인이 바로 이것입니다.\n\nPrefix Delegation + Network Policy 조합이 대부분의 워크로드에 적합합니다. RDS나 ElastiCache 등 AWS 리소스 접근 제어가 필요한 경우만 SGP를 선별 적용하세요.\n\nFargate는 SGP 대안이지만 DaemonSet 미지원, 로그 수집기나 모니터링 에이전트를 사이드카로 전환해야 하는 트레이드오프가 있습니다.\n\n💬 예상 질문:\n• Q: Network Policy로 RDS 접근 제어가 가능한가요?\n  → Network Policy는 IP/Port 기반 제어만 가능합니다. RDS Security Group에서 Pod 서브넷 CIDR을 허용하는 방식으로 대체합니다.",
     15: "[2min] SGP Branch ENI의 구체적인 제약과 해결 방안입니다. VPC CNI v1.15+에서는 standard 모드로 SGP와 Prefix Delegation을 동시에 사용할 수 있습니다.\n\n💬 예상 질문:\n• Q: standard 모드의 단점은 없나요?\n  → NetworkPolicy와 SGP 규칙이 둘 다 적용되므로 우선순위를 명확히 이해해야 합니다. SGP가 더 제한적이면 NetworkPolicy가 무시될 수 있습니다.",
     16: "[2min] 서브넷 IP 고갈 문제를 초기 설계 시 적용하는 것과 운영 중 후적용하는 것의 차이입니다. 초기 설계 시 적용이 훨씬 수월하지만, 운영 중에도 Blue/Green 노드 그룹 교체로 적용 가능합니다.\n\n💬 예상 질문:\n• Q: 기존 클러스터에 Secondary CIDR을 추가하면 기존 서비스에 영향이 있나요?\n  → CIDR 추가 자체는 영향 없습니다. Custom Networking 활성화 시 신규 노드부터 적용되므로 기존 서비스는 유지됩니다.",
     17: "[2min] 총 10주 마이그레이션 로드맵입니다. Phase 1에서 기반을 구축하고, Phase 2에서 파일럿 서비스로 검증합니다. Phase 3에서 점진적으로 서비스를 전환하며, Phase 4에서 완전한 전환과 Multi-Cluster 활성화를 완료합니다.\n\n💬 예상 질문:\n• Q: 10주가 현실적인 일정인가요?\n  → IaC/GitOps가 준비되어 있다면 가능합니다. 준비 안 된 경우 Phase 1에 2-4주 추가를 권장합니다.\n• Q: 파일럿 서비스 선정 기준은?\n  → 트래픽이 적고, 장애 영향이 작으며, 팀이 적극적으로 협조하는 서비스를 선택합니다.",

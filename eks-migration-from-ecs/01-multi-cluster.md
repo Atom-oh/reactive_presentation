@@ -12,7 +12,6 @@ Multi-Cluster Active-Active Architecture (30min)
 
 @speaker: Junseok Oh
 @title: Sr. Solutions Architect, AWS
-@company: 화해 글로벌
 :::notes
 {timing: 2min}
 안녕하세요, AWS 솔루션즈 아키텍트 오준석입니다. 오늘은 ECS에서 EKS로의 마이그레이션 여정 중 첫 번째 세션으로, Multi-Cluster Active-Active 아키텍처에 대해 다루겠습니다. 네트워크 구성의 복잡성과 IP 고갈 문제를 해결하는 방법을 중점적으로 살펴보겠습니다.
@@ -129,14 +128,14 @@ Q&A:
 | Blast Radius | 전체 서비스 영향 허용 | 장애 범위 제한 필수 |
 | 업그레이드 | 다운타임 허용 가능 | 무중단 필수 |
 
-**화해 판단**: 전체 서비스 EKS 이관 + 무중단 업그레이드 필요 → **Multi-Cluster 권장**
+**판단**: 전체 서비스 EKS 이관 + 무중단 업그레이드 필요 → **Multi-Cluster 권장**
 
 ### 계정별 분리 패턴
 | 패턴 | 구조 | 적합한 경우 |
 |------|------|------------|
 | 환경별 분리 | Dev Account / Staging Account / Prod Account | 환경 간 완전 격리 필요 |
 | 워크로드별 분리 | Frontend Account / Backend Account / Data Account | 팀별 비용 분리, 독립 운영 |
-| **하이브리드** | Prod-Service / Prod-Data / NonProd | **화해 권장** — 서비스와 데이터 분리 + 환경 분리 |
+| **하이브리드** | Prod-Service / Prod-Data / NonProd | **권장** — 서비스와 데이터 분리 + 환경 분리 |
 
 **핵심**: AWS Organizations + OU 구조로 계정 표준화, 신규 계정은 Control Tower로 자동 프로비저닝
 
@@ -148,7 +147,7 @@ Q&A:
 | 기능별 | Service Plane + Data Plane | 워크로드 특성 최적화 | 서비스 간 통신 복잡 |
 | **AZ 기반** | Zone-A + Zone-C | 고가용성 극대화 | 데이터 동기화 고려 |
 
-**화해 권장**: AZ 기반 Active-Active + Service/Data Plane 분리 조합
+**권장**: AZ 기반 Active-Active + Service/Data Plane 분리 조합
 
 :::notes
 {timing: 2min}
@@ -559,7 +558,7 @@ Q&A:
 ::::
 :::
 
-**화해 권장**: SGP 필요 Pod만 선별 적용, 나머지는 Prefix Delegation + Network Policy 조합. 기존 SGP Pod → 대부분 Network Policy로 전환 가능
+**권장**: SGP 필요 Pod만 선별 적용, 나머지는 Prefix Delegation + Network Policy 조합. 기존 SGP Pod → 대부분 Network Policy로 전환 가능
 
 :::notes
 {timing: 2min}
@@ -642,7 +641,7 @@ spec:
 ::::
 :::
 
-**화해 권장**: 대부분 NetworkPolicy로 전환하고, RDS 직접 접근 등 SG가 반드시 필요한 Pod만 Fargate 또는 전용 노드 그룹으로 분리
+**권장**: 대부분 NetworkPolicy로 전환하고, RDS 직접 접근 등 SG가 반드시 필요한 Pod만 Fargate 또는 전용 노드 그룹으로 분리
 
 :::notes
 {timing: 2min}

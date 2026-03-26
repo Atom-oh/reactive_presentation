@@ -3,13 +3,13 @@ remarp: true
 version: 1
 title: "ECS → EKS Migration Deep Dive"
 author: "Junseok Oh"
-audience: "화해(Hwahae) DevOps/Platform Engineering 팀 (중급~고급)"
+audience: "DevOps/Platform Engineering 팀 (중급~고급)"
 date: 2026-03-15
-event: "화해 EKS Migration Workshop"
+event: "EKS Migration Workshop"
 lang: ko
 
 blocks:
-  - name: multi-cluster
+  - name: multi-clustereiifcbfcckfdudljutrt
     title: "Multi-Cluster Active-Active Architecture"
     duration: 30
   - name: gitops-delivery

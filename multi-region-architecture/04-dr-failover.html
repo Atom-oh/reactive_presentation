@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DR & Failover Automation</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="04-dr-failover.md">
+  <meta name="remarp-block" content="default">
+  <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
+  
+  
+  <script>window.__remarpTheme = {"colors": {}, "footer": "Multi-Region Architecture Deep Dive \u2014 L300+", "pagination": true, "fonts": {}};</script>
+</head>
+<body>
+<div class="slide-deck">
+<div class="slide" data-remarp-id="s0" style="background:linear-gradient(135deg, #1a1f35 0%, #0d1117 50%, #161b2e 100%); padding:0; overflow:hidden;">
+  <div style="position:absolute; top:-20%; right:-10%; width:60%; height:80%; background:radial-gradient(ellipse, rgba(108,92,231,0.15) 0%, transparent 70%); pointer-events:none;"></div>
+  <div style="position:absolute; left:5%; top:42%; width:80px; height:3px; background:linear-gradient(90deg, #6c5ce7, #a29bfe); border-radius:2px;"></div>
+  <h1 style="position:absolute; left:5%; top:45%; font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:60%; margin:0;">DR & Failover Automation</h1>
+  <p style="position:absolute; left:5%; top:60%; font-size:1.3rem; color:rgba(255,255,255,0.7); width:60%; margin:0;">Disaster Recovery 현황 분석과 자동화 전략 (30min)</p>
+  
+</div>
+
+<div class="slide" data-remarp-id="s1">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>DR Current State — Risk Assessment</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <p><!-- Slide 2: DR Current State - Risk Assessment --></p>
+<div style="overflow-x:auto;">
+<table class="data-table" style="width:100%; border-collapse:collapse; font-size:0.82rem;">
+  <thead>
+    <tr style="background:var(--bg-card); border-bottom:2px solid var(--border);">
+      <th style="padding:10px 12px; text-align:left; color:var(--text-muted);">Component</th>
+      <th style="padding:10px 12px; text-align:center; color:var(--text-muted);">DR Capability</th>
+      <th style="padding:10px 12px; text-align:center; color:var(--text-muted);">Failover Type</th>
+      <th style="padding:10px 12px; text-align:center; color:var(--text-muted);">Risk Level</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom:1px solid var(--border);" data-fragment-index="1">
+      <td style="padding:10px 12px;"><img src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" style="width:24px; vertical-align:middle; margin-right:8px;">Traffic Routing</td>
+      <td style="padding:10px 12px; text-align:center;"><span style="color:var(--green);">Auto failover</span></td>
+      <td style="padding:10px 12px; text-align:center;"><span style="background:var(--green); color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem;">Auto</span></td>
+      <td style="padding:10px 12px; text-align:center;"><span style="background:rgba(0,214,143,0.15); color:var(--green); padding:4px 10px; border-radius:4px;">LOW</span></td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);" data-fragment-index="2">
+      <td style="padding:10px 12px;"><img src="common/aws-icons/services/Arch_Amazon-Aurora_48.svg" style="width:24px; vertical-align:middle; margin-right:8px;">Aurora DSQL</td>
+      <td style="padding:10px 12px; text-align:center; color:var(--red); font-weight:600;">NO DR (single region)</td>
+      <td style="padding:10px 12px; text-align:center;"><span style="background:var(--red); color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem;">None</span></td>
+      <td style="padding:10px 12px; text-align:center;"><span style="background:rgba(255,107,107,0.15); color:var(--red); padding:4px 10px; border-radius:4px; font-weight:600;">CRITICAL</span></td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border);" data-fragment-index="3">
+      <td style="padding:10px 12px;"><img src="common/aws-icons/services/Arch_Amazon-DocumentDB_48.svg" style="width:24px; vertical-align:middle; margin-right:8px;">DocumentDB</td>
+      <td style="padding:10px 12px; text-align:center;">Global Cluster</td>
+      <td style="padding:10px 12px; text-align:center;"><span style="background:#fdcb6e; color:#1a1f35; padding:2px 8px; border-radius:4px; font-size:0.75rem;">Manual CLI</span></td>
+      <td style="padding:10px 12px; text-align:center;"><span style="background:rgba(253,203,110,0.15); color:#fdcb6e; padding:4px 10px; border-radius:4px;">HIGH</span></td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);" data-fragment-index="3">
+      <td style="padding:10px 12px;"><img src="common/aws-icons/services/Arch_Amazon-ElastiCache_48.svg" style="width:24px; vertical-align:middle; margin-right:8px;">ElastiCache</td>
+      <td style="padding:10px 12px; text-align:center;">Global Datastore</td>
+      <td style="padding:10px 12px; text-align:center;"><span style="background:#fdcb6e; color:#1a1f35; padding:2px 8px; border-radius:4px; font-size:0.75rem;">Manual CLI</span></td>
+      <td style="padding:10px 12px; text-align:center;"><span style="background:rgba(253,203,110,0.15); color:#fdcb6e; padding:4px 10px; border-radius:4px;">MEDIUM</span></td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border);" data-fragment-index="4">
+      <td style="padding:10px 12px;"><img src="common/aws-icons/services/Arch_Amazon-MSK_48.svg" style="width:24px; vertical-align:middle; margin-right:8px;">MSK</td>
+      <td style="padding:10px 12px; text-align:center; color:var(--red); font-weight:600;">NO DR (per-region)</td>
+      <td style="padding:10px 12px; text-align:center;"><span style="background:var(--red); color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem;">None</span></td>
+      <td style="padding:10px 12px; text-align:center;"><span style="background:rgba(255,107,107,0.15); color:var(--red); padding:4px 10px; border-radius:4px; font-weight:600;">CRITICAL</span></td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);" data-fragment-index="5">
+      <td style="padding:10px 12px;"><img src="common/aws-icons/services/Arch_Amazon-OpenSearch-Service_48.svg" style="width:24px; vertical-align:middle; margin-right:8px;">OpenSearch</td>
+      <td style="padding:10px 12px; text-align:center;">Per-region (rebuild)</td>
+      <td style="padding:10px 12px; text-align:center;"><span style="background:var(--red); color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem;">Hours</span></td>
+      <td style="padding:10px 12px; text-align:center;"><span style="background:rgba(253,203,110,0.15); color:#fdcb6e; padding:4px 10px; border-radius:4px;">HIGH</span></td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border);" data-fragment-index="6">
+      <td style="padding:10px 12px;"><img src="common/aws-icons/services/Arch_Amazon-Simple-Storage-Service_48.svg" style="width:24px; vertical-align:middle; margin-right:8px;">S3</td>
+      <td style="padding:10px 12px; text-align:center;">Cross-Region Replication</td>
+      <td style="padding:10px 12px; text-align:center;"><span style="background:var(--green); color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem;">Auto CRR</span></td>
+      <td style="padding:10px 12px; text-align:center;"><span style="background:rgba(0,214,143,0.15); color:var(--green); padding:4px 10px; border-radius:4px;">LOW</span></td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);" data-fragment-index="6">
+      <td style="padding:10px 12px;"><img src="common/aws-icons/services/Arch_Amazon-Elastic-Kubernetes-Service_48.svg" style="width:24px; vertical-align:middle; margin-right:8px;">EKS</td>
+      <td style="padding:10px 12px; text-align:center;">Karpenter auto-provision</td>
+      <td style="padding:10px 12px; text-align:center;"><span style="background:var(--green); color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem;">Auto</span></td>
+      <td style="padding:10px 12px; text-align:center;"><span style="background:rgba(0,214,143,0.15); color:var(--green); padding:4px 10px; border-radius:4px;">LOW</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p style="margin-top:12px; font-size:0.85rem; color:var(--text-muted); text-align:center;">
+  <span style="color:var(--red); font-weight:600;">CRITICAL</span>: DSQL + MSK — 리전 장애 시 <strong>완전한 데이터 손실</strong>
+</p>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s2">
+  <div class="slide-header" data-remarp-id="s2-header"><h2>RTO/RPO Matrix</h2></div>
+  <div class="slide-body" data-remarp-id="s2-body">
+    <p><!-- Slide 3: RTO/RPO Matrix --></p>
+<table class="data-table" style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+  <thead>
+    <tr style="background:var(--bg-card); border-bottom:2px solid var(--border);">
+      <th style="padding:10px 14px; text-align:left; color:var(--text-muted);">Component</th>
+      <th style="padding:10px 14px; text-align:center; color:var(--text-muted);">RTO</th>
+      <th style="padding:10px 14px; text-align:center; color:var(--text-muted);">RPO</th>
+      <th style="padding:10px 14px; text-align:left; color:var(--text-muted);">Recovery Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:10px 14px;"><strong>Traffic Routing</strong></td>
+      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--green);">1-2 min</span></td>
+      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--green);">0</span></td>
+      <td style="padding:10px 14px; color:var(--text-secondary);">Health check interval + DNS TTL</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
+      <td style="padding:10px 14px;"><strong style="color:var(--red);">Aurora DSQL</strong></td>
+      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--red);">N/A</span></td>
+      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--red); font-weight:600;">Total Loss</span></td>
+      <td style="padding:10px 14px; color:var(--text-secondary);">No cross-region replica exists</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:10px 14px;"><strong>DocumentDB</strong></td>
+      <td style="padding:10px 14px; text-align:center;"><span style="color:#fdcb6e;">5-15 min</span></td>
+      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--green);">&lt; 1 min</span></td>
+      <td style="padding:10px 14px; color:var(--text-secondary);">Manual switchover-global-cluster</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
+      <td style="padding:10px 14px;"><strong>ElastiCache</strong></td>
+      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--green);">1-5 min</span></td>
+      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--green);">&lt; 1 sec</span></td>
+      <td style="padding:10px 14px; color:var(--text-secondary);">Manual promote secondary</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:10px 14px;"><strong style="color:var(--red);">MSK</strong></td>
+      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--red);">N/A</span></td>
+      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--red); font-weight:600;">Total Loss</span></td>
+      <td style="padding:10px 14px; color:var(--text-secondary);">Replicator disabled, no offset sync</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
+      <td style="padding:10px 14px;"><strong>S3</strong></td>
+      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--green);">Instant</span></td>
+      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--cyan);">&lt; 15 min</span></td>
+      <td style="padding:10px 14px; color:var(--text-secondary);">CRR replication lag</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:10px 14px;"><strong>EKS</strong></td>
+      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--green);">2-5 min</span></td>
+      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--green);">0</span></td>
+      <td style="padding:10px 14px; color:var(--text-secondary);">Karpenter node replacement</td>
+    </tr>
+  </tbody>
+</table>
+<div style="margin-top:16px; display:flex; gap:16px; justify-content:center;">
+  <div style="display:flex; align-items:center; gap:6px; font-size:0.8rem;">
+    <span style="width:12px; height:12px; background:var(--green); border-radius:2px;"></span>
+    <span>RTO &lt; 5min, RPO &lt; 1min</span>
+  </div>
+  <div style="display:flex; align-items:center; gap:6px; font-size:0.8rem;">
+    <span style="width:12px; height:12px; background:#fdcb6e; border-radius:2px;"></span>
+    <span>RTO 5-15min</span>
+  </div>
+  <div style="display:flex; align-items:center; gap:6px; font-size:0.8rem;">
+    <span style="width:12px; height:12px; background:var(--red); border-radius:2px;"></span>
+    <span>Unrecoverable</span>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s3">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>Scenario 1: Full Region Failure (us-east-1)</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body">
+    <div class="canvas-container" style="width:100%; max-width:1000px; margin:0 auto;">
+  <canvas></canvas>
+</div>
+<div class="canvas-controls" style="text-align:center; margin-top:4px;">
+  <span style="font-size:0.75rem; color:var(--text-muted);">Use arrow keys to step through animation</span>
+</div>
+<script>
+(function() {
+  const slide = document.currentScript.closest('.slide');
+  if (!slide) return;
+  const container = slide.querySelector('.canvas-container');
+  const canvas = container.querySelector('canvas');
+  const BASE_W = 1000, BASE_H = 400;
+  let ctx, scale = 1;
+
+  function init() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = container.getBoundingClientRect();
+    if (rect.width === 0) return;
+    scale = rect.width / BASE_W;
+    canvas.width = rect.width * dpr;
+    canvas.height = (BASE_H * scale) * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = (BASE_H * scale) + 'px';
+    ctx = canvas.getContext('2d');
+    ctx.scale(dpr * scale, dpr * scale);
+    draw(currentStep);
+  }
+
+  let currentStep = 0;
+  const MAX_STEP = 4;
+
+  function draw(step) {
+    if (!ctx) return;
+    ctx.clearRect(0, 0, BASE_W, BASE_H);
+
+    const r1Color = step >= 1 ? Colors.red : Colors.green;
+    const r2Color = step >= 3 ? Colors.yellow : Colors.green;
+    
+    // Regions
+    drawGroup(ctx, 50, 80, 400, 260, "Primary: us-east-1", r1Color);
+    drawGroup(ctx, 550, 80, 400, 260, "Standby: us-west-2", r2Color);
+
+    // Route 53
+    drawBox(ctx, 450, 20, 100, 40, "Route 53", Colors.blue, "#fff");
+
+    // Region 1 Services
+    const s1Color = step >= 1 ? Colors.red : Colors.green;
+    drawBox(ctx, 150, 120, 200, 40, "App Cluster (EKS)", s1Color, "#fff");
+    drawBox(ctx, 100, 220, 140, 50, "DocumentDB", s1Color, "#fff");
+    drawBox(ctx, 260, 220, 140, 50, "ElastiCache", s1Color, "#fff");
+
+    // Region 2 Services
+    const s2DbColor = step >= 3 ? Colors.yellow : Colors.green;
+    const s2CacheColor = step >= 3 ? Colors.yellow : Colors.green;
+    drawBox(ctx, 650, 120, 200, 40, "App Cluster (EKS)", Colors.green, "#fff");
+    drawBox(ctx, 600, 220, 140, 50, step >= 3 ? "Manual Promote" : "DocumentDB", s2DbColor, step >= 3 ? "#000" : "#fff");
+    drawBox(ctx, 760, 220, 140, 50, step >= 3 ? "Manual Promote" : "ElastiCache", s2CacheColor, step >= 3 ? "#000" : "#fff");
+
+    // Traffic Arrows
+    if (step === 0) {
+      drawArrow(ctx, 450, 40, 250, 80, Colors.textSec, true);
+      drawArrow(ctx, 550, 40, 750, 80, Colors.textSec, true);
+    } else if (step >= 2) {
+      drawArrow(ctx, 550, 40, 750, 80, Colors.blue, false);
+      drawText(ctx, "DNS Failover Active", 550, 35, { color: Colors.blue, size: 14, align: 'left' });
+    }
+
+    // Failure Overlay
+    if (step >= 1) {
+      ctx.strokeStyle = Colors.red;
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      ctx.moveTo(100, 100); ctx.lineTo(400, 320);
+      ctx.moveTo(400, 100); ctx.lineTo(100, 320);
+      ctx.stroke();
+      drawText(ctx, "REGION OUTAGE", 250, 200, { color: Colors.red, size: 32, weight: 'bold', align: 'center' });
+    }
+
+    // Step 4 Warning
+    if (step >= 4) {
+      drawRoundRect(ctx, 200, 350, 600, 40, 5, Colors.red + '33', Colors.red);
+      drawText(ctx, "⚠️ DSQL: Single-region = DATA LOSS RISK | MSK: Event Loss Potential", 500, 375, { color: Colors.red, size: 16, weight: 'bold', align: 'center', baseline: 'middle' });
+    }
+  }
+
+  slide.__canvasStep = function(dir) {
+    if (dir === 'next' && currentStep < MAX_STEP) currentStep++;
+    else if (dir === 'prev' && currentStep > 0) currentStep--;
+    else return false;
+    draw(currentStep);
+    return currentStep;
+  };
+  slide.dataset.slideAction = 'canvas-step';
+  slide.dataset.canvasMaxStep = String(MAX_STEP);
+
+  new ResizeObserver(() => init()).observe(container);
+  init();
+})();
+</script>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s4">
+  <div class="slide-header" data-remarp-id="s4-header"><h2>Scenario 2: Individual DB Failure</h2></div>
+  <div class="slide-body" data-remarp-id="s4-body">
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="dsql-failure">DSQL Failure</button>
+      <button class="tab-btn" data-tab="documentdb-failure">DocumentDB Failure</button>
+      <button class="tab-btn" data-tab="elasticache-failure">ElastiCache Failure</button>
+    </div>
+        <div class="tab-content active" data-tab="dsql-failure">
+<p><strong>Impact</strong>: 6 services affected</p>
+<ul><li>inventory, shipping, order, payment, user-account, warehouse</li></ul>
+<p><strong>Current Behavior</strong>:</p>
+<ul><li>Services fail with connection timeout</li><li>No automatic fallback</li></ul>
+<p><strong>Graceful Degradation</strong> (recommended):</p>
+<div class="code-block"><span class="comment">// Mock fallback mode</span>
+<span class="keyword">if</span> err != nil &amp;&amp; config.MockFallbackEnabled {
+    <span class="keyword">return</span> mockResponse(), nil
+}</div>
+</div>
+    <div class="tab-content" data-tab="documentdb-failure">
+<p><strong>Impact</strong>: 7 services affected</p>
+<ul><li>product-catalog, recommendation, review, wishlist, notification, analytics, user-profile</li></ul>
+<p><strong>Manual Failover Steps</strong>:</p>
+<div class="code-block">aws docdb failover-global-cluster \
+  --global-cluster-identifier production-docdb-global \
+  --target-db-cluster-identifier production-docdb-global-us-west-2</div>
+<p><strong>RTO</strong>: 5-15 minutes</p>
+<p><strong>RPO</strong>: < 1 minute</p>
+</div>
+    <div class="tab-content" data-tab="elasticache-failure">
+<p><strong>Impact</strong>: cart service (session + cache)</p>
+<p><strong>Manual Promotion</strong>:</p>
+<div class="code-block">aws elasticache failover-global-replication-group \
+  --global-replication-group-id production-elasticache \
+  --primary-region us-west-2</div>
+<p><strong>RTO</strong>: 1-5 minutes</p>
+<p><strong>Cart data</strong>: Temporary loss (rebuild from DB)</p>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s5">
+  <div class="slide-header" data-remarp-id="s5-header"><h2>Missing PDB</h2></div>
+  <div class="slide-body" data-remarp-id="s5-body">
+    <div class="columns">
+<div class="col">
+<h3>Auto Recovery (Karpenter)</h3>
+<ul><li class="fragment fade-in" data-fragment-index="0"><strong>Node replacement</strong>: 2-5 minutes</li><li class="fragment fade-in" data-fragment-index="1"><strong>ArgoCD</strong>: Auto-redeploy workloads</li><li class="fragment fade-in" data-fragment-index="2"><strong>Karpenter</strong>: Provisions new nodes on demand</li></ul>
+<h3>Workload Recovery</h3>
+<ul><li class="fragment fade-in" data-fragment-index="3">Deployment rollout triggered automatically</li><li class="fragment fade-in" data-fragment-index="4">Pod scheduling to new nodes</li><li class="fragment fade-in" data-fragment-index="5">Service endpoints updated</li></ul>
+</div><div class="col">
+<h3>Current Gap</h3>
+</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s6">
+  <div class="slide-header" data-remarp-id="s6-header"><h2>DSQL Single-Region Risk — CRITICAL</h2></div>
+  <div class="slide-body" data-remarp-id="s6-body">
+    <p><!-- Slide 7: DSQL Single-Region Risk --></p>
+<div style="display:flex; gap:1.5rem; align-items:stretch;">
+  <div style="flex:1;">
+    <div class="card" style="padding:1rem; border:2px solid var(--red); background:rgba(255,107,107,0.08);">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:0.8rem;">
+        <img src="common/aws-icons/services/Arch_Amazon-Aurora_48.svg" style="width:40px;">
+        <div>
+          <h4 style="margin:0; color:var(--red);">Aurora DSQL</h4>
+          <div style="font-size:0.8rem; color:var(--text-muted);">us-east-1 ONLY</div>
+        </div>
+        <span style="margin-left:auto; background:var(--red); color:#fff; padding:4px 10px; border-radius:4px; font-size:0.75rem; font-weight:600;">SINGLE REGION</span>
+      </div>
+      <p style="font-size:0.9rem; color:var(--text-secondary); margin:0 0 0.8rem 0;">
+        Region failure = <strong style="color:var(--red);">Total data loss</strong> for 6 core services
+      </p>
+      <div style="font-size:0.85rem;">
+        <strong>Affected Services:</strong>
+        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
+          <span style="background:rgba(255,107,107,0.2); color:var(--red); padding:4px 10px; border-radius:4px; font-size:0.8rem;">order</span>
+          <span style="background:rgba(255,107,107,0.2); color:var(--red); padding:4px 10px; border-radius:4px; font-size:0.8rem;">payment</span>
+          <span style="background:rgba(255,107,107,0.2); color:var(--red); padding:4px 10px; border-radius:4px; font-size:0.8rem;">inventory</span>
+          <span style="background:rgba(255,107,107,0.2); color:var(--red); padding:4px 10px; border-radius:4px; font-size:0.8rem;">user-account</span>
+          <span style="background:rgba(255,107,107,0.2); color:var(--red); padding:4px 10px; border-radius:4px; font-size:0.8rem;">shipping</span>
+          <span style="background:rgba(255,107,107,0.2); color:var(--red); padding:4px 10px; border-radius:4px; font-size:0.8rem;">warehouse</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex:1;">
+    <h4 style="margin:0 0 0.8rem 0; color:var(--text-secondary);">Business Impact</h4>
+    <div class="card" style="padding:0.8rem; margin-bottom:0.6rem; border-left:3px solid var(--red);">
+      <strong>Order Processing</strong>
+      <div style="font-size:0.85rem; color:var(--text-muted);">All active orders lost, no recovery</div>
+    </div>
+    <div class="card" style="padding:0.8rem; margin-bottom:0.6rem; border-left:3px solid var(--red);">
+      <strong>Payment Records</strong>
+      <div style="font-size:0.85rem; color:var(--text-muted);">Transaction history unavailable</div>
+    </div>
+    <div class="card" style="padding:0.8rem; margin-bottom:0.6rem; border-left:3px solid var(--red);">
+      <strong>Inventory State</strong>
+      <div style="font-size:0.85rem; color:var(--text-muted);">Stock levels unknown, oversell risk</div>
+    </div>
+    <div class="card" style="padding:0.8rem; border-left:3px solid var(--red);">
+      <strong>User Accounts</strong>
+      <div style="font-size:0.85rem; color:var(--text-muted);">Authentication data lost</div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s7">
+  <div class="slide-header" data-remarp-id="s7-header"><h2>DSQL Linked Clusters — Solution</h2></div>
+  <div class="slide-body" data-remarp-id="s7-body">
+    <div class="columns">
+<div class="col">
+<h3 style="color:var(--accent);">Future State: Multi-Region Active-Active</h3>
+<div class="card" style="padding:0.8rem; margin-bottom:0.6rem;">
+  <div style="font-weight:600; color:var(--green); margin-bottom:0.5rem;">DSQL Linked Clusters (Preview)</div>
+  <ul style="margin:0; padding-left:1.2rem; font-size:0.85rem;">
+    <li>Multi-region Active-Active writes</li>
+    <li>Strong consistency across regions</li>
+    <li>Automatic conflict resolution</li>
+    <li>RPO = 0, RTO &lt; 1min</li>
+  </ul>
+</div>
+<div class="card" style="padding:0.8rem;">
+  <div style="font-weight:600; color:var(--cyan); margin-bottom:0.5rem;">Architecture Change</div>
+  <ul style="margin:0; padding-left:1.2rem; font-size:0.85rem;">
+    <li>us-east-1 ↔ us-west-2 linked cluster</li>
+    <li>Both regions accept writes</li>
+    <li>No write forwarding latency</li>
+    <li>Automatic failover, no manual intervention</li>
+  </ul>
+</div>
+</div><div class="col">
+<h3 style="color:#fdcb6e;">Interim Mitigation</h3>
+<div class="card" style="padding:0.8rem; margin-bottom:0.6rem; border-left:3px solid #fdcb6e;">
+  <div style="font-weight:600; margin-bottom:0.5rem;">Phase 1: Read Replica Fallback</div>
+  <ul style="margin:0; padding-left:1.2rem; font-size:0.85rem;">
+    <li>Aurora Global DB + Write Forwarding 유지</li>
+    <li>Read-only mode graceful degradation 구현</li>
+    <li>Queue writes during failure (MSK buffer)</li>
+  </ul>
+</div>
+<div class="card" style="padding:0.8rem; border-left:3px solid var(--red);">
+  <div style="font-weight:600; margin-bottom:0.5rem;">Phase 2: DSQL Migration</div>
+  <ul style="margin:0; padding-left:1.2rem; font-size:0.85rem;">
+    <li>DSQL Linked Clusters GA 대기</li>
+    <li>Schema compatibility 검증</li>
+    <li>성능 벤치마크 (write latency)</li>
+    <li>점진적 서비스 마이그레이션</li>
+  </ul>
+</div>
+</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s8">
+  <div class="slide-header" data-remarp-id="s8-header"><h2>Automated Failover Pipeline</h2></div>
+  <div class="slide-body" data-remarp-id="s8-body">
+    <div class="canvas-container" style="width:100%; max-width:1000px; margin:0 auto;">
+  <canvas></canvas>
+</div>
+<div class="canvas-controls" style="text-align:center; margin-top:4px;">
+  <span style="font-size:0.75rem; color:var(--text-muted);">Use arrow keys to step through animation</span>
+</div>
+<script>
+(function() {
+  const slide = document.currentScript.closest('.slide');
+  if (!slide) return;
+  const container = slide.querySelector('.canvas-container');
+  const canvas = container.querySelector('canvas');
+  const BASE_W = 1000, BASE_H = 350;
+  let ctx, scale = 1;
+
+  function init() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = container.getBoundingClientRect();
+    if (rect.width === 0) return;
+    scale = rect.width / BASE_W;
+    canvas.width = rect.width * dpr;
+    canvas.height = (BASE_H * scale) * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = (BASE_H * scale) + 'px';
+    ctx = canvas.getContext('2d');
+    ctx.scale(dpr * scale, dpr * scale);
+    draw(currentStep);
+  }
+
+  let currentStep = 0;
+  const MAX_STEP = 4;
+
+  function draw(step) {
+    if (!ctx) return;
+    ctx.clearRect(0, 0, BASE_W, BASE_H);
+
+    // Pipeline Boxes
+    const cwColor = step >= 1 ? Colors.red : Colors.surface;
+    drawBox(ctx, 50, 150, 150, 60, "CloudWatch\nAlarm", cwColor, "#fff");
+    
+    drawBox(ctx, 280, 150, 150, 60, "EventBridge", Colors.orange, "#fff");
+    
+    drawBox(ctx, 510, 150, 150, 60, "Lambda\nFailover Action", Colors.accent, "#fff");
+
+    // Target Services
+    const targetColor = step >= 4 ? Colors.green : Colors.surface;
+    const targetText = step >= 4 ? "Promoted Primary ✅" : "Global Cluster\n(Secondary)";
+    drawBox(ctx, 780, 80, 180, 70, "DocumentDB\n" + targetText, targetColor, "#fff");
+    drawBox(ctx, 780, 210, 180, 70, "ElastiCache\n" + targetText, targetColor, "#fff");
+
+    // Step 1: CW Pulse
+    if (step === 1) {
+      drawCircle(ctx, 125, 180, 45 + Math.sin(Date.now()/200)*5, null, Colors.red);
+      drawArrow(ctx, 200, 180, 280, 180, Colors.red, false);
+    }
+
+    // Step 2: EB Routing
+    if (step >= 2) {
+      drawArrow(ctx, 200, 180, 280, 180, Colors.orange, false);
+      drawArrow(ctx, 430, 180, 510, 180, Colors.orange, false);
+      drawText(ctx, "failover handler", 470, 170, { color: Colors.textSec, size: 12, align: 'center' });
+    }
+
+    // Step 3: Lambda Execution
+    if (step >= 3) {
+      drawArrow(ctx, 660, 170, 780, 115, Colors.accent, false);
+      drawArrow(ctx, 660, 190, 780, 245, Colors.accent, false);
+      drawText(ctx, "switchover-global-cluster", 720, 130, { color: Colors.accentLt, size: 11, align: 'center' });
+      drawText(ctx, "failover-global-replication-group", 720, 230, { color: Colors.accentLt, size: 11, align: 'center' });
+    }
+
+    // Step 4: Success label
+    if (step >= 4) {
+      drawText(ctx, "AUTOMATED FAILOVER COMPLETE", 500, 40, { color: Colors.green, size: 24, weight: 'bold', align: 'center' });
+      drawText(ctx, "RTO: ~30 seconds", 500, 70, { color: Colors.textSec, size: 16, align: 'center' });
+    }
+
+    if (step === 1) requestAnimationFrame(() => draw(currentStep));
+  }
+
+  slide.__canvasStep = function(dir) {
+    if (dir === 'next' && currentStep < MAX_STEP) currentStep++;
+    else if (dir === 'prev' && currentStep > 0) currentStep--;
+    else return false;
+    draw(currentStep);
+    return currentStep;
+  };
+  slide.dataset.slideAction = 'canvas-step';
+  slide.dataset.canvasMaxStep = String(MAX_STEP);
+
+  new ResizeObserver(() => init()).observe(container);
+  init();
+})();
+</script>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s9">
+  <div class="slide-header" data-remarp-id="s9-header"><h2>Lambda Failover Code</h2></div>
+  <div class="slide-body" data-remarp-id="s9-body">
+    <p><!-- Slide 10: Lambda Failover Code --></p>
+<div class="col-2" style="gap:1.5rem;">
+  <div>
+    <h4 style="margin:0 0 0.5rem 0; color:var(--cyan);">DocumentDB Failover Lambda</h4>
+    <div class="code-block" style="font-size:0.75rem; padding:0.8rem;">
+<span class="keyword">import</span> boto3
+<span class="keyword">import</span> os
+
+<span class="keyword">def</span> <span class="value">handler</span>(event, context):
+    <span class="comment"># Safety flag check</span>
+    <span class="keyword">if not</span> os.environ.get(<span class="string">'ENABLE_AUTO_FAILOVER'</span>):
+        <span class="keyword">return</span> {<span class="string">'status'</span>: <span class="string">'skipped'</span>}
+
+    docdb = boto3.client(<span class="string">'docdb'</span>)
+
+    response = docdb.switchover_global_cluster(
+        GlobalClusterIdentifier=<span class="string">'production-docdb-global'</span>,
+        TargetDbClusterIdentifier=
+            <span class="string">'production-docdb-global-us-west-2'</span>
+    )
+
+    <span class="keyword">return</span> {<span class="string">'status'</span>: <span class="string">'success'</span>}
+    </div>
+  </div>
+
+  <div>
+    <h4 style="margin:0 0 0.5rem 0; color:var(--green);">ElastiCache Failover Lambda</h4>
+    <div class="code-block" style="font-size:0.75rem; padding:0.8rem;">
+<span class="keyword">import</span> boto3
+<span class="keyword">import</span> os
+
+<span class="keyword">def</span> <span class="value">handler</span>(event, context):
+    <span class="comment"># Safety flag check</span>
+    <span class="keyword">if not</span> os.environ.get(<span class="string">'ENABLE_AUTO_FAILOVER'</span>):
+        <span class="keyword">return</span> {<span class="string">'status'</span>: <span class="string">'skipped'</span>}
+
+    elasticache = boto3.client(<span class="string">'elasticache'</span>)
+
+    response = elasticache.failover_global_replication_group(
+        GlobalReplicationGroupId=
+            <span class="string">'production-elasticache'</span>,
+        PrimaryRegion=<span class="string">'us-west-2'</span>
+    )
+
+    <span class="keyword">return</span> {<span class="string">'status'</span>: <span class="string">'success'</span>}
+    </div>
+  </div>
+</div>
+<div style="margin-top:1rem; padding:0.8rem; background:rgba(253,203,110,0.1); border:1px solid #fdcb6e; border-radius:8px;">
+  <div style="display:flex; align-items:center; gap:8px;">
+    <span style="font-size:1.2rem;">⚠️</span>
+    <div>
+      <strong style="color:#fdcb6e;">ENABLE_AUTO_FAILOVER Safety Flag</strong>
+      <div style="font-size:0.85rem; color:var(--text-secondary);">환경 변수로 자동 failover 활성화/비활성화 제어. 테스트 환경에서는 비활성화, 프로덕션에서만 활성화.</div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s10">
+  <div class="slide-header" data-remarp-id="s10-header"><h2>DocumentDB Failover — Step by Step</h2></div>
+  <div class="slide-body" data-remarp-id="s10-body">
+    <p><!-- Slide 11: DocumentDB Failover Steps --></p>
+<div class="card" style="padding:1rem; margin-bottom:1rem; background:rgba(0,0,0,0.2);">
+  <h4 style="margin:0 0 0.5rem 0; color:var(--cyan);">CLI Command</h4>
+  <div class="code-block" style="font-size:0.82rem; padding:0.8rem; margin:0;">
+aws docdb switchover-global-cluster \
+  --global-cluster-identifier <span class="string">production-docdb-global</span> \
+  --target-db-cluster-identifier <span class="string">production-docdb-global-us-west-2</span>
+  </div>
+</div>
+
+<div class="flow-h" style="justify-content:center; gap:0.5rem; flex-wrap:wrap;">
+  <div class="card" style="padding:0.8rem; min-width:140px; text-align:center;" data-fragment-index="1">
+    <div style="font-size:1.5rem; font-weight:700; color:var(--red);">30s</div>
+    <div style="font-size:0.8rem; color:var(--text-muted);">Health Check Detect</div>
+    <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:4px;">Route53 detects failure</div>
+  </div>
+  <div class="flow-arrow" style="font-size:1.5rem;">→</div>
+  <div class="card" style="padding:0.8rem; min-width:140px; text-align:center;" data-fragment-index="2">
+    <div style="font-size:1.5rem; font-weight:700; color:#fdcb6e;">10s</div>
+    <div style="font-size:0.8rem; color:var(--text-muted);">Lambda Trigger</div>
+    <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:4px;">EventBridge → Lambda</div>
+  </div>
+  <div class="flow-arrow" style="font-size:1.5rem;">→</div>
+  <div class="card" style="padding:0.8rem; min-width:140px; text-align:center;" data-fragment-index="3">
+    <div style="font-size:1.5rem; font-weight:700; color:var(--accent);">5-15m</div>
+    <div style="font-size:0.8rem; color:var(--text-muted);">Failover Execution</div>
+    <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:4px;">switchover-global-cluster</div>
+  </div>
+  <div class="flow-arrow" style="font-size:1.5rem;">→</div>
+  <div class="card" style="padding:0.8rem; min-width:140px; text-align:center;" data-fragment-index="4">
+    <div style="font-size:1.5rem; font-weight:700; color:var(--green);">30s</div>
+    <div style="font-size:0.8rem; color:var(--text-muted);">DNS Propagation</div>
+    <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:4px;">New endpoint active</div>
+  </div>
+</div>
+
+<div style="margin-top:1rem; padding:0.8rem; background:var(--bg-card); border-radius:8px;">
+  <h4 style="margin:0 0 0.5rem 0; font-size:0.9rem;">Endpoint Update</h4>
+  <div style="display:flex; gap:1rem; font-size:0.85rem;">
+    <div style="flex:1;">
+      <div style="color:var(--text-muted);">Before (us-east-1):</div>
+      <code style="font-size:0.75rem;">production-docdb-global.cluster-xxx.us-east-1.docdb.amazonaws.com</code>
+    </div>
+    <div style="flex:1;">
+      <div style="color:var(--green);">After (us-west-2):</div>
+      <code style="font-size:0.75rem;">production-docdb-global.cluster-yyy.us-west-2.docdb.amazonaws.com</code>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s11">
+  <div class="slide-header" data-remarp-id="s11-header"><h2>ElastiCache Promotion — Step by Step</h2></div>
+  <div class="slide-body" data-remarp-id="s11-body">
+    <p><!-- Slide 12: ElastiCache Promotion --></p>
+<div class="card" style="padding:1rem; margin-bottom:1rem; background:rgba(0,0,0,0.2);">
+  <h4 style="margin:0 0 0.5rem 0; color:var(--green);">CLI Command</h4>
+  <div class="code-block" style="font-size:0.82rem; padding:0.8rem; margin:0;">
+aws elasticache failover-global-replication-group \
+  --global-replication-group-id <span class="string">production-elasticache</span> \
+  --primary-region <span class="string">us-west-2</span>
+  </div>
+</div>
+
+<div class="flow-h" style="justify-content:center; gap:0.5rem; flex-wrap:wrap;">
+  <div class="card" style="padding:0.8rem; min-width:140px; text-align:center;" data-fragment-index="1">
+    <div style="font-size:1.5rem; font-weight:700; color:var(--red);">30s</div>
+    <div style="font-size:0.8rem; color:var(--text-muted);">Detect</div>
+    <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:4px;">Health check fail</div>
+  </div>
+  <div class="flow-arrow" style="font-size:1.5rem;">→</div>
+  <div class="card" style="padding:0.8rem; min-width:140px; text-align:center;" data-fragment-index="2">
+    <div style="font-size:1.5rem; font-weight:700; color:var(--accent);">1-5m</div>
+    <div style="font-size:0.8rem; color:var(--text-muted);">Promote</div>
+    <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:4px;">Secondary → Primary</div>
+  </div>
+  <div class="flow-arrow" style="font-size:1.5rem;">→</div>
+  <div class="card" style="padding:0.8rem; min-width:140px; text-align:center;" data-fragment-index="3">
+    <div style="font-size:1.5rem; font-weight:700; color:var(--green);">Ready</div>
+    <div style="font-size:0.8rem; color:var(--text-muted);">Writes Enabled</div>
+    <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:4px;">us-west-2 is primary</div>
+  </div>
+</div>
+
+<div style="margin-top:1.5rem;">
+  <h4 style="margin:0 0 0.8rem 0; font-size:0.9rem; color:var(--text-secondary);">Cart Service Impact</h4>
+  <div class="col-2" style="gap:1rem;">
+    <div class="card" style="padding:0.8rem; border-left:3px solid #fdcb6e;">
+      <strong style="color:#fdcb6e;">During Failover (1-5min)</strong>
+      <ul style="margin:0.5rem 0 0; padding-left:1.2rem; font-size:0.85rem; color:var(--text-secondary);">
+        <li>Cart reads: degraded (stale data)</li>
+        <li>Cart writes: fail (read-only)</li>
+        <li>Session data: may be lost</li>
+      </ul>
+    </div>
+    <div class="card" style="padding:0.8rem; border-left:3px solid var(--green);">
+      <strong style="color:var(--green);">After Promotion</strong>
+      <ul style="margin:0.5rem 0 0; padding-left:1.2rem; font-size:0.85rem; color:var(--text-secondary);">
+        <li>Full read/write restored</li>
+        <li>RPO: < 1 second (async lag)</li>
+        <li>Cart rebuild from session cookie</li>
+      </ul>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s12">
+  <div class="slide-header" data-remarp-id="s12-header"><h2>DR Improvement Roadmap</h2></div>
+  <div class="slide-body" data-remarp-id="s12-body">
+    <div class="timeline">
+            <div class="timeline-step" data-step="1" data-remarp-id="s12-step-0">
+      <div class="timeline-dot" style="width:2rem;height:2rem;font-size:0.9rem">1</div>
+      <div class="timeline-label" style="max-width:6rem">P0 — Critical (Week 1-2)</div>
+      <div class="timeline-desc">DSQL Linked Clusters 설정 MSK Replicator 활성화 6개 서비스 multi-region 쓰기 가능</div>
+    </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-step" data-step="2" data-remarp-id="s12-step-1">
+      <div class="timeline-dot" style="width:2rem;height:2rem;font-size:0.9rem">2</div>
+      <div class="timeline-label" style="max-width:6rem">P1 — High (Week 3-4)</div>
+      <div class="timeline-desc">Auto-failover Lambda + EventBridge 구축 PodDisruptionBudget 전체 서비스 적용 RTO 15min → 2min 달성</div>
+    </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-step" data-step="3" data-remarp-id="s12-step-2">
+      <div class="timeline-dot" style="width:2rem;height:2rem;font-size:0.9rem">3</div>
+      <div class="timeline-label" style="max-width:6rem">P2 — Medium (Month 2)</div>
+      <div class="timeline-desc">CloudFront Origin Failover Group 설정 Route53 health check → /health/ready 변경 OpenSearch cross-cluster search 검토</div>
+    </div>
+    </div>
+  </div>
+  
+<script>(function() {
+  const slide = document.currentScript.closest('.slide');
+  if (!slide) return;
+  const steps = slide.querySelectorAll('.timeline-step');
+  const connectors = slide.querySelectorAll('.timeline-connector');
+  let current = 0;
+  function update() {
+    steps.forEach((s, i) => {
+      s.classList.remove('active', 'done');
+      if (i < current) s.classList.add('done');
+      else if (i === current) s.classList.add('active');
+    });
+    connectors.forEach((c, i) => {
+      c.classList.toggle('done', i < current);
+    });
+  }
+  update();
+  slide.__canvasStep = function(dir) {
+    if (dir === 'next' && current < 2) current++;
+    else if (dir === 'prev' && current > 0) current--;
+    else return (dir === 'next') ? false : false;
+    update();
+    return current;
+  };
+  slide.dataset.slideAction = 'canvas-step';
+  slide.dataset.canvasMaxStep = '2';
+})();</script>
+</div>
+
+<div class="slide" data-remarp-id="s13">
+  <div class="slide-header" data-remarp-id="s13-header"><h2>FIS Experiment Template</h2></div>
+  <div class="slide-body" data-remarp-id="s13-body">
+    <div class="columns">
+<div class="col">
+<h3>Drill Frequency</h3>
+<table style="font-size:0.85rem;">
+  <thead><tr><th>Type</th><th>Frequency</th><th>Scope</th></tr></thead>
+  <tbody>
+    <tr><td><span class="badge-green">Tabletop</span></td><td>Monthly</td><td>팀 전체 시나리오 리뷰</td></tr>
+    <tr><td><span class="badge-blue">Component</span></td><td>Bi-weekly</td><td>개별 DB failover 테스트</td></tr>
+    <tr><td><span class="badge-yellow">Full DR</span></td><td>Quarterly</td><td>전체 리전 failover 훈련</td></tr>
+    <tr><td><span class="badge-red">Chaos</span></td><td>Weekly</td><td>FIS 자동 실험</td></tr>
+  </tbody>
+</table>
+</div><div class="col">
+<h3>Tools & Automation</h3>
+<div class="card" style="padding:0.8rem; margin-bottom:0.6rem;">
+  <div style="font-weight:600; margin-bottom:0.4rem;">AWS FIS (Fault Injection Service)</div>
+  <ul style="margin:0; padding-left:1.2rem; font-size:0.8rem;">
+    <li>EKS pod termination experiments</li>
+    <li>Network latency injection</li>
+    <li>AZ failure simulation</li>
+  </ul>
+</div>
+<div class="card" style="padding:0.8rem;">
+  <div style="font-weight:600; margin-bottom:0.4rem;">Runbook Automation</div>
+  <ul style="margin:0; padding-left:1.2rem; font-size:0.8rem;">
+    <li>SSM Automation documents</li>
+    <li>Lambda failover handlers</li>
+    <li>Slack/PagerDuty integration</li>
+    <li>Post-drill report generation</li>
+  </ul>
+</div>
+</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s14">
+  <div class="slide-header" data-remarp-id="s14-header"><h2>Key Takeaways</h2></div>
+  <div class="slide-body" data-remarp-id="s14-body">
+    <p><!-- Slide 15: Key Takeaways --></p>
+<div class="col-2" style="gap:1.5rem;">
+  <div class="card" style="padding:1.2rem; border-left:3px solid var(--red);">
+    <h4 style="margin:0 0 0.8rem 0; color:var(--red);">Critical Risks</h4>
+    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
+      <li><strong>DSQL</strong>: Single region, total data loss risk</li>
+      <li><strong>MSK</strong>: No replication, event loss</li>
+      <li><strong>DocumentDB/ElastiCache</strong>: Manual CLI failover</li>
+      <li>Current RTO: <span style="color:#fdcb6e;">15min manual</span></li>
+    </ul>
+  </div>
+  <div class="card" style="padding:1.2rem; border-left:3px solid var(--green);">
+    <h4 style="margin:0 0 0.8rem 0; color:var(--green);">Solutions</h4>
+    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
+      <li><strong>P0</strong>: DSQL Linked Clusters + MSK Replicator</li>
+      <li><strong>P1</strong>: Lambda + EventBridge automation</li>
+      <li><strong>P1</strong>: PDB for all 20 services</li>
+      <li>Target RTO: <span style="color:var(--green);">2min automated</span></li>
+    </ul>
+  </div>
+  <div class="card" style="padding:1.2rem; border-left:3px solid var(--accent);">
+    <h4 style="margin:0 0 0.8rem 0; color:var(--accent);">Automation Pipeline</h4>
+    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
+      <li>CloudWatch Alarm → EventBridge → Lambda</li>
+      <li>Parallel DB failover execution</li>
+      <li>SNS notification to Ops team</li>
+      <li>ENABLE_AUTO_FAILOVER safety flag</li>
+    </ul>
+  </div>
+  <div class="card" style="padding:1.2rem; border-left:3px solid var(--cyan);">
+    <h4 style="margin:0 0 0.8rem 0; color:var(--cyan);">DR Drill Strategy</h4>
+    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
+      <li><strong>Quarterly</strong>: Full region failure simulation</li>
+      <li><strong>Monthly</strong>: Individual DB failover test</li>
+      <li><strong>Weekly</strong>: Replication lag + health checks</li>
+      <li>Tool: AWS Fault Injection Simulator</li>
+    </ul>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s15">
+  <div class="slide-header" data-remarp-id="s15-header"><h2>Knowledge Check</h2></div>
+  <div class="slide-body" data-remarp-id="s15-body" style="overflow-y:auto">
+    <div class="quiz" data-quiz="q1">
+      <div class="quiz-question">Q1: 현재 Multi-Region Mall에서 가장 심각한 DR 리스크는?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">Route53 Health Check 지연</button>
+<button class="quiz-option" data-correct="true">Aurora DSQL 단일 리전 구성</button>
+<button class="quiz-option" data-correct="false">ElastiCache 수동 failover</button>
+<button class="quiz-option" data-correct="false">S3 CRR 15분 지연</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q2">
+      <div class="quiz-question">Q2: DocumentDB Global Cluster failover CLI 명령은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">aws docdb promote-read-replica</button>
+<button class="quiz-option" data-correct="true">aws docdb switchover-global-cluster</button>
+<button class="quiz-option" data-correct="false">aws docdb failover-db-cluster</button>
+<button class="quiz-option" data-correct="false">aws rds failover-global-cluster</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q3">
+      <div class="quiz-question">Q3: 자동화 파이프라인에서 ENABLE_AUTO_FAILOVER 플래그의 목적은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">Failover 속도 향상</button>
+<button class="quiz-option" data-correct="false">로그 레벨 설정</button>
+<button class="quiz-option" data-correct="true">테스트 환경에서 실수 방지</button>
+<button class="quiz-option" data-correct="false">메트릭 수집 활성화</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="q4">
+      <div class="quiz-question">Q4: DR Drill에서 Full Region Failure 시뮬레이션 권장 주기는?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">매주</button>
+<button class="quiz-option" data-correct="false">매월</button>
+<button class="quiz-option" data-correct="true">분기별</button>
+<button class="quiz-option" data-correct="false">매년</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s16">
+  <div class="center-content" style="height:100%; gap:1.5rem;">
+    <h1 style="font-size:3rem; background:linear-gradient(135deg, var(--accent-light), var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Thank You</h1>
+    <p style="color:var(--text-secondary); font-size:1.1rem;">Thank You</p>
+    <p style="color:var(--text-muted); font-size:1rem; margin-top:0.5rem;">수고하셨습니다!</p>
+    <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+            <a href="index.html" class="btn btn-primary btn-sm" style="text-decoration:none;">← 목차로 돌아가기</a>
+    </div>
+  </div>
+</div>
+</div>
+<script src="./common/animation-utils.js"></script>
+<script src="./common/slide-framework.js"></script>
+<script src="./common/quiz-component.js"></script>
+<script src="./common/presenter-view.js"></script>
+
+<script>
+  
+  const presenterNotes = {
+    1: "[1min] Block 4에 오신 것을 환영합니다. 이번 블록에서는 Multi-Region Shopping Mall의 DR과 Failover Automation을 심층적으로 다루겠습니다.\n\n지금까지 아키텍처 개요, 데이터/마이크로서비스, 운영 최적화를 다뤘습니다. 이번 블록에서는 실제 장애 상황에서 시스템이 어떻게 대응하는지, 그리고 어떻게 개선해야 하는지를 구체적으로 살펴봅니다.\n\n30분 동안 DR 현황 분석, 장애 시나리오별 대응, 그리고 자동화 파이프라인 구축까지 다룰 예정입니다.\n\n\n먼저 현재 DR 상태의 리스크 평가부터 시작하겠습니다.",
+    2: "⏸️ [3min] 현재 DR 상태를 리스크 레벨별로 평가한 테이블입니다. 색상으로 위험도를 한눈에 파악할 수 있습니다.\n\n녹색 영역은 안전합니다. Route53 Latency-based routing이 자동으로 트래픽을 전환하고, S3 Cross-Region Replication이 활성화되어 있고, EKS는 Karpenter가 노드를 자동 복구합니다.\n\n노란색 영역은 수동 개입이 필요한 부분입니다. DocumentDB Global Cluster와 ElastiCache Global Datastore는 AWS CLI로 failover를 실행해야 합니다. 자동화되어 있지 않아서 RTO가 5-15분으로 늘어납니다.\n\n\n빨간색이 가장 심각합니다. Aurora DSQL은 현재 us-east-1 단일 리전에만 존재합니다. MSK도 리전별로 독립적이어서 Replicator가 설정되어 있지 않습니다. OpenSearch는 리전 간 복제가 없어서 장애 시 전체 인덱스를 다시 빌드해야 합니다.\n\n결론적으로 DSQL과 MSK가 Critical입니다. us-east-1 장애 시 6개 핵심 서비스의 트랜잭션 데이터와 이벤트 스트림이 완전히 손실됩니다.\n\n\n각 컴포넌트의 구체적인 RTO와 RPO를 살펴보겠습니다.",
+    3: "⏸️ [2min] RTO와 RPO 매트릭스입니다. RTO는 Recovery Time Objective — 서비스 복구까지 걸리는 시간, RPO는 Recovery Point Objective — 허용 가능한 데이터 손실 시간입니다.\n\nRoute53은 RTO 1-2분, RPO 0입니다. Health check가 30초 간격이고 DNS TTL이 60초라서 최대 2분 내에 트래픽이 전환됩니다.\n\nDocumentDB는 RTO 5-15분이지만 RPO는 1분 미만입니다. Global Cluster가 비동기로 복제하지만 지연이 매우 짧습니다. 문제는 수동 switchover 명령을 실행해야 한다는 점입니다.\n\nElastiCache는 RTO 1-5분, RPO 1초 미만으로 가장 빠릅니다. Global Datastore의 복제 지연이 매우 짧기 때문입니다. 하지만 역시 수동 promote가 필요합니다.\n\n\n빨간색 행이 문제입니다. DSQL과 MSK는 RTO/RPO가 N/A입니다. 복구가 아니라 데이터 손실이죠. MSK의 경우 Replicator가 비활성화되어 있어서 consumer offset도 동기화되지 않습니다. 장애 후 어디서부터 다시 consume해야 하는지 알 수 없습니다.\n\n\n이제 실제 장애 시나리오별로 어떤 일이 발생하는지 구체적으로 살펴보겠습니다.",
+    4: "⏸️ [3min] 시나리오 1: us-east-1 전체 리전 장애입니다. 가장 심각한 케이스죠.\n\n자동으로 복구되는 부분부터 보겠습니다. Route53 Health Check가 30초 내에 us-east-1 NLB 응답 실패를 감지하고, 트래픽을 자동으로 us-west-2로 전환합니다. CloudFront는 Route53을 따라가므로 별도 설정 없이 전환됩니다. S3는 이미 CRR이 설정되어 있어서 15분 이내 데이터는 us-west-2에 있습니다.\n\n\n수동 개입이 필요한 부분입니다. DocumentDB는 switchover-global-cluster 명령을 실행해야 합니다. us-west-2 클러스터를 primary로 승격시키는 작업이죠. 5-15분 걸립니다. ElastiCache도 마찬가지로 failover-global-replication-group 명령이 필요합니다.\n\n빨간색 박스가 가장 심각한 부분입니다. DSQL은 us-east-1에만 있어서 6개 서비스의 트랜잭션 데이터가 완전히 손실됩니다. 주문, 결제, 재고 — 쇼핑몰의 핵심 데이터죠. MSK도 이벤트 스트림이 끊기고 consumer offset이 동기화되지 않아서 정확히 어디서 재시작해야 하는지 알 수 없습니다.\n\n결론적으로, 현재 us-east-1이 죽으면 시스템은 \"반쪽짜리 복구\"만 가능합니다.\n\n\n개별 DB 장애 시나리오를 살펴보겠습니다.",
+    5: "⏸️ [3min] 시나리오 2: 개별 DB 장애입니다. 탭을 전환하면서 각 케이스를 설명하겠습니다.\n\n첫 번째 탭, DSQL 장애입니다. 현재 DSQL이 죽으면 6개 서비스가 connection timeout으로 실패합니다. 자동 fallback이 없어서 500 에러가 사용자에게 노출됩니다.\n\n권장하는 해결책은 Graceful Degradation입니다. MockFallbackEnabled 플래그를 두고, DB 연결 실패 시 mock 응답을 반환하는 방식입니다. 사용자는 일부 기능이 제한되지만 전체 서비스가 죽지는 않습니다.\n\n\n두 번째 탭, DocumentDB 장애입니다. 7개 서비스가 영향받지만, Global Cluster 덕분에 수동 failover로 복구 가능합니다. 화면에 보이는 CLI 명령을 실행하면 us-west-2가 primary로 승격됩니다. RTO 5-15분, RPO 1분 미만입니다.\n\n세 번째 탭, ElastiCache 장애입니다. cart 서비스만 직접 영향받습니다. 세션과 캐시 데이터가 들어있죠. 수동 promotion으로 1-5분 내에 복구 가능하고, 장바구니 데이터는 일시적으로 손실되지만 DB에서 재구축할 수 있습니다.\n\n\nEKS 클러스터 장애 시나리오를 보겠습니다.",
+    6: "⏸️ [2min] 시나리오 3: EKS 클러스터 장애입니다. 노드나 Pod 레벨 장애를 다룹니다.\n\n자동 복구 부분은 괜찮습니다. Karpenter가 2-5분 내에 새 노드를 프로비저닝하고, ArgoCD가 자동으로 워크로드를 재배포합니다. Deployment의 replicas 설정에 따라 Pod가 새 노드에 스케줄링되고, Service 엔드포인트가 업데이트됩니다.\n\n\n하지만 현재 Gap이 있습니다. PodDisruptionBudget이 정의되어 있지 않습니다.\n\nPDB가 없으면 무슨 일이 벌어지냐면, 노드 교체 중에 모든 Pod가 동시에 evict될 수 있습니다. api-gateway Pod 3개가 같은 노드에 있었다면, 그 노드가 drain될 때 3개가 동시에 사라집니다. 새 Pod가 뜨기 전까지 서비스가 완전히 중단됩니다.\n\nminAvailable: 1만 설정해도 최소 1개 Pod는 항상 유지되어서 zero downtime을 보장할 수 있습니다. 이건 Low effort로 빠르게 적용 가능한 개선사항입니다.\n\n\nDSQL의 단일 리전 리스크를 더 자세히 살펴보겠습니다.",
+    7: "⏸️ [2min] DSQL 단일 리전 리스크를 강조하는 슬라이드입니다. 이게 현재 아키텍처의 가장 큰 약점입니다.\n\n왼쪽을 보시면, Aurora DSQL이 us-east-1에만 존재합니다. 리전 장애가 발생하면 6개 핵심 서비스의 데이터가 완전히 손실됩니다. order, payment, inventory, user-account, shipping, warehouse — 모두 쇼핑몰의 핵심 비즈니스 로직을 담당하는 서비스입니다.\n\n\n오른쪽에 비즈니스 영향을 정리했습니다. 주문 처리 — 진행 중인 모든 주문이 사라집니다. 결제 기록 — 트랜잭션 히스토리를 조회할 수 없습니다. 재고 상태 — 현재 재고 수량을 알 수 없어서 과잉 판매 위험이 있습니다. 사용자 계정 — 로그인 자체가 불가능해집니다.\n\n이건 기술적 장애가 아니라 비즈니스 중단입니다. 복구가 아니라 처음부터 다시 시작해야 하는 상황이죠.\n\n\n이 문제의 해결책인 DSQL Linked Clusters를 살펴보겠습니다.",
+    8: "⏸️ [3min] DSQL 문제의 해결책입니다. 왼쪽이 최종 목표 상태, 오른쪽이 당장 적용할 수 있는 임시 완화책입니다.\n\n최종 목표는 Linked Clusters입니다. linked_cluster_arns 설정으로 us-east-1과 us-west-2를 양방향으로 연결합니다. 동기 복제라서 RPO가 0입니다. 리전 장애 시 자동 failover되고, 읽기는 가장 가까운 리전에서, 쓰기는 어느 리전에서든 가능합니다.\n\nTerraform 코드를 보시면, aws_dsql_cluster 리소스에 linked_cluster_arns만 추가하면 됩니다. 기존 클러스터에 적용할 수 있어서 마이그레이션 부담이 적습니다.\n\n\n하지만 Linked Clusters 구축에는 시간이 걸리므로, 당장은 임시 완화책을 적용해야 합니다.\n\n첫째, 일일 자동 스냅샷입니다. 매일 스냅샷을 찍고 us-west-2로 복사합니다. 최악의 경우 24시간 데이터 손실이지만, 전체 손실보다는 훨씬 낫습니다.\n\n둘째, 애플리케이션 Mock Fallback입니다. ENABLE_MOCK_FALLBACK 플래그를 두고, DB 연결 실패 시 캐시된 데이터나 mock 응답을 반환합니다. 서비스가 완전히 죽는 것보다 제한된 기능이라도 제공하는 게 낫습니다.\n\n셋째, Event Sourcing 패턴입니다. MSK 이벤트를 source of truth로 사용해서 상태를 재구축하는 방식입니다. 하지만 이건 MSK Replicator가 먼저 설정되어야 합니다.\n\n\n이제 자동화된 Failover 파이프라인 설계를 보겠습니다.",
+    9: "⏸️ [3min] 자동화된 Failover 파이프라인 아키텍처입니다. 단계별로 설명드리겠습니다.\n\n첫 번째, 트리거입니다. CloudWatch Alarm이 Route53 Health Check 상태를 모니터링합니다. us-east-1 NLB가 UNHEALTHY로 바뀌면 알람이 발생합니다.\n\n두 번째, EventBridge Rule이 알람 상태 변경 이벤트를 캐치합니다. cloudwatch.alarm.state_change 패턴을 매칭해서 Lambda를 트리거합니다.\n\n\n세 번째, Lambda 함수들이 병렬로 실행됩니다. DocumentDB Failover Lambda는 switchover-global-cluster API를 호출하고, ElastiCache Promotion Lambda는 failover-global-replication-group API를 호출합니다. 병렬 실행이라서 시간이 단축됩니다.\n\n네 번째, 후속 작업입니다. Route53은 이미 자동 전환되지만, 수동 override가 필요한 경우를 대비해 Lambda에서 업데이트할 수 있습니다. SNS로 Ops 팀에 알림을 보내서 상황을 인지하게 합니다.\n\n하단에 보시면 RTO가 수동 15분에서 자동화로 2분으로 단축됩니다. 이게 자동화의 핵심 가치입니다.\n\n\nLambda 코드 구현을 살펴보겠습니다.",
+    10: "⏸️ [2min] Lambda 함수 구현 코드입니다. Python으로 간단하게 작성됩니다.\n\n왼쪽 DocumentDB Failover Lambda를 보시면, boto3 클라이언트를 생성하고 switchover_global_cluster API를 호출합니다. GlobalClusterIdentifier와 TargetDbClusterIdentifier를 지정하면 us-west-2가 새로운 primary가 됩니다.\n\n오른쪽 ElastiCache Failover Lambda도 비슷합니다. failover_global_replication_group API를 호출하고 PrimaryRegion을 us-west-2로 지정합니다.\n\n\n중요한 건 ENABLE_AUTO_FAILOVER 안전 플래그입니다. 이 환경 변수가 설정되어 있지 않으면 Lambda가 아무것도 하지 않고 종료됩니다.\n\n왜 이게 필요하냐면, 테스트 환경에서 실수로 프로덕션 DB를 failover하는 걸 방지하기 위해서입니다. 프로덕션 Lambda에만 이 환경 변수를 설정하고, staging이나 dev에서는 비활성화합니다.\n\n\nDocumentDB failover의 구체적인 단계와 타임라인을 보겠습니다.",
+    11: "⏸️ [2min] DocumentDB failover의 단계별 타임라인입니다.\n\n상단에 실제 CLI 명령이 있습니다. switchover-global-cluster를 호출하고 global-cluster-identifier와 target-db-cluster-identifier를 지정합니다.\n\n타임라인을 보시면, 첫 번째 30초는 Route53 Health Check가 장애를 감지하는 시간입니다. 두 번째 10초는 EventBridge가 알람을 받아서 Lambda를 트리거하는 시간입니다.\n\n\n세 번째가 실제 failover 시간입니다. 5-15분으로 가장 깁니다. DocumentDB가 내부적으로 us-west-2 클러스터를 primary로 승격하고, 복제 방향을 역전시키고, 연결을 재설정하는 과정입니다.\n\n네 번째 30초는 DNS 전파 시간입니다. 새로운 엔드포인트가 활성화되면 애플리케이션이 자동으로 새 primary에 연결됩니다.\n\n하단에 엔드포인트 변경을 보여드렸습니다. us-east-1에서 us-west-2로 바뀝니다. 애플리케이션에서 Global Cluster 엔드포인트를 사용하면 이 변경이 투명하게 처리됩니다.\n\n\nElastiCache promotion 과정을 보겠습니다.",
+    12: "⏸️ [2min] ElastiCache promotion 과정입니다. DocumentDB보다 빠릅니다.\n\nCLI 명령은 failover-global-replication-group입니다. global-replication-group-id와 primary-region을 지정하면 됩니다.\n\n타임라인을 보시면, 감지 30초 후에 1-5분 내에 promotion이 완료됩니다. DocumentDB의 5-15분보다 훨씬 빠릅니다. ElastiCache는 인메모리 데이터베이스라서 상태 전환이 더 가볍기 때문입니다.\n\n\nCart 서비스에 미치는 영향을 정리했습니다. Failover 중에는 읽기가 stale 데이터를 반환할 수 있고, 쓰기는 실패합니다. 세션 데이터도 일부 손실될 수 있습니다.\n\nPromotion 완료 후에는 full read/write가 복원됩니다. RPO가 1초 미만이라서 거의 모든 데이터가 보존됩니다. 손실된 장바구니 데이터는 세션 쿠키나 DB에서 재구축할 수 있습니다.\n\n\n전체 DR 개선 로드맵을 정리해 보겠습니다.",
+    13: "⏸️ [2min] DR 개선 로드맵을 타임라인으로 정리했습니다. ↑↓ 키로 단계별로 이동할 수 있습니다.\n\nP0, Critical입니다. 첫 1-2주 안에 완료해야 합니다. DSQL Linked Clusters를 설정해서 us-west-2에 replica를 두고, MSK Replicator를 활성화해서 이벤트 복제를 시작합니다. 이게 완료되면 6개 핵심 서비스가 진정한 multi-region으로 동작합니다.\n\n\nP1, High입니다. 3-4주차에 자동화를 구축합니다. Auto-failover Lambda와 EventBridge 파이프라인을 배포하고, PDB를 전체 20개 서비스에 적용합니다. 이걸로 RTO가 수동 15분에서 자동 2분으로 단축됩니다.\n\nP2, Medium입니다. 2개월차에 세부 개선을 진행합니다. CloudFront Origin Failover Group을 설정해서 sub-second origin 전환을 가능하게 하고, Route53 health check를 /health/ready로 변경해서 더 정확한 상태를 감지합니다. OpenSearch cross-cluster search도 검토합니다.\n\n\nDR Drill 전략을 살펴보겠습니다.",
+    14: "⏸️ [2min] DR Drill 전략입니다. 정기적인 훈련 없이는 실제 장애 시 대응이 제대로 안 됩니다.\n\n왼쪽 Drill 주기를 보시면, 분기별로 Full Region Failure 시뮬레이션을 합니다. us-east-1 전체 장애를 가정하고 완전한 failover를 실행합니다. 실제 RTO/RPO를 측정하고 모든 서비스가 복구되는지 검증합니다.\n\n월별로 Individual DB Failover를 테스트합니다. DocumentDB, ElastiCache를 번갈아가며 테스트하고, 나중에 DSQL Linked Clusters가 설정되면 그것도 추가합니다. Lambda 자동화가 제대로 동작하는지, 애플리케이션이 자동 재연결하는지 확인합니다.\n\n주별로 Health Check를 수행합니다. 복제 지연 모니터링, 트래픽 흐름 확인, 엔드포인트 연결 테스트를 합니다.\n\n\n오른쪽에 도구와 자동화입니다. AWS FIS(Fault Injection Simulator)를 사용해서 장애를 주입합니다. EC2 인스턴스 중지, 네트워크 지연 주입 등을 자동화된 실험 템플릿으로 관리합니다.\n\nRunbook 체크리스트도 중요합니다. 이해관계자 알림부터 시작해서 ENABLE_AUTO_FAILOVER 활성화, CloudWatch 대시보드 모니터링, 서비스 상태 검증, 결과 문서화, RTO/RPO 메트릭 업데이트까지 단계별로 체크합니다.\n\n\n이번 블록의 핵심 내용을 정리하겠습니다.",
+    15: "[2min] Block 4의 핵심 내용을 네 가지로 정리합니다.\n\n첫째, Critical Risks입니다. DSQL 단일 리전과 MSK 무복제가 가장 심각합니다. DocumentDB와 ElastiCache는 수동 CLI가 필요하고, 현재 RTO는 수동으로 15분입니다.\n\n둘째, Solutions입니다. P0으로 DSQL Linked Clusters와 MSK Replicator를 설정하고, P1으로 Lambda 자동화와 PDB를 전체 적용합니다. 목표 RTO는 자동화로 2분입니다.\n\n셋째, Automation Pipeline입니다. CloudWatch Alarm이 EventBridge를 통해 Lambda를 트리거하고, DB failover를 병렬로 실행합니다. SNS로 Ops 팀에 알림을 보내고, ENABLE_AUTO_FAILOVER 안전 플래그로 실수를 방지합니다.\n\n넷째, DR Drill 전략입니다. 분기별 Full region failure, 월별 Individual DB failover, 주별 Health check를 수행합니다. AWS FIS를 활용해서 장애를 자동으로 주입하고 테스트합니다.\n\n\n마지막으로 퀴즈로 이번 블록 내용을 확인해 보겠습니다.",
+    16: "[2min] 4개 문제로 이번 블록 내용을 확인해 보겠습니다.\n\nQ1, 가장 심각한 DR 리스크입니다. 정답은 Aurora DSQL 단일 리전 구성입니다. Route53 지연이나 ElastiCache 수동 failover는 복구 가능하지만, DSQL은 데이터 손실이죠.\n\nQ2, DocumentDB failover CLI입니다. switchover-global-cluster가 정답입니다. promote-read-replica는 RDS Read Replica용이고, failover-db-cluster는 단일 클러스터 AZ failover입니다.\n\nQ3, ENABLE_AUTO_FAILOVER 목적입니다. 테스트 환경에서 실수로 프로덕션 DB를 failover하는 걸 방지합니다. 프로덕션에서만 이 플래그를 활성화합니다.\n\nQ4, Full Region Failure 시뮬레이션 주기입니다. 분기별이 정답입니다. 너무 자주하면 리스크가 크고, 너무 드물면 실제 장애 시 대응이 미숙합니다.\n\n\n이것으로 Block 4를 마무리합니다.",
+    17: "[30sec] Block 4를 마무리합니다. DR 현황 분석, 장애 시나리오, 자동화 파이프라인, 그리고 개선 로드맵까지 다뤘습니다.\n\n다음 Block 5에서는 Observability와 Operations를 다룹니다. 모니터링 스택, 알림 체계, 그리고 운영 자동화를 살펴보겠습니다.\n\n질문이 있으시면 지금 받겠습니다."
+  };
+  const deck = new SlideFramework({
+    
+    footer: 'Multi-Region Architecture Deep Dive — L300+',
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

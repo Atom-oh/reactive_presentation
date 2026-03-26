@@ -12,7 +12,6 @@ GitOps & Progressive Delivery
 
 오준석 (Junseok Oh)
 Sr. Solutions Architect, AWS
-화해 글로벌
 
 :::notes
 {timing: 1.5min}
@@ -132,7 +131,7 @@ spec:
   └─ No  → ACK 또는 Terraform
 ```
 
-**화해 현재 구조와 매핑**:
+**현재 구조와 매핑**:
 - `terraform/`: EKS, VPC, 공용 RDS, IAM → 유지
 - `terraform/applications/<app>/`: 앱 전용 SG, IAM → 유지 (보안상 Terraform 권장)
 - **신규**: 앱 전용 S3, SQS, SNS → ACK로 전환 검토
@@ -155,7 +154,7 @@ spec:
 
 :::notes
 {timing: 3.5min}
-Terraform, ArgoCD, ACK의 역할 분담 의사결정 가이드입니다. 핵심은 리소스의 생명주기입니다. 앱과 함께 생성/삭제되는 리소스는 ACK로 GitOps 통합하고, 인프라 수준의 장기 리소스는 Terraform으로 관리합니다. 화해의 현재 Terraform + ArgoCD 구조는 잘 설계되어 있으며, 여기에 ACK를 추가하면 앱 전용 S3, SQS 등을 더 효율적으로 관리할 수 있습니다. EKS Capabilities 중 VPC CNI, CoreDNS 등은 EKS Add-on으로, ALB Controller, Karpenter 등은 ArgoCD로 관리하는 것이 적합합니다.
+Terraform, ArgoCD, ACK의 역할 분담 의사결정 가이드입니다. 핵심은 리소스의 생명주기입니다. 앱과 함께 생성/삭제되는 리소스는 ACK로 GitOps 통합하고, 인프라 수준의 장기 리소스는 Terraform으로 관리합니다. 현재 Terraform + ArgoCD 구조는 잘 설계되어 있으며, 여기에 ACK를 추가하면 앱 전용 S3, SQS 등을 더 효율적으로 관리할 수 있습니다. EKS Capabilities 중 VPC CNI, CoreDNS 등은 EKS Add-on으로, ALB Controller, Karpenter 등은 ArgoCD로 관리하는 것이 적합합니다.
 
 {cue: question}
 💬 예상 질문:
@@ -660,7 +659,7 @@ spec:
 :::notes
 {timing: 2.5min}
 {cue: question}
-NGF와 Istio의 역할 분담입니다. 둘 다 사용할 필요가 있는지 질문을 많이 받는데요, 외부 트래픽 관리(NGF)와 내부 서비스 메시(Istio)는 다른 문제를 해결합니다. 화해처럼 Canary 배포가 필요한 경우 Istio가 필수입니다.
+NGF와 Istio의 역할 분담입니다. 둘 다 사용할 필요가 있는지 질문을 많이 받는데요, 외부 트래픽 관리(NGF)와 내부 서비스 메시(Istio)는 다른 문제를 해결합니다. Canary 배포가 필요한 경우 Istio가 필수입니다.
 
 예상 질문:
 - "Istio 없이 Canary 배포를 할 수 있는 방법은?" → NGINX Ingress나 ALB의 가중치 기반 라우팅으로 가능하지만, 메트릭 기반 자동 롤백은 Istio + Argo Rollouts 조합이 가장 성숙합니다.
@@ -717,7 +716,7 @@ GitBook 참고: https://atomoh.gitbook.io/kubernetes-docs/gitops/argocd/09-best-
 | **App 전용 AWS 리소스** | ArgoCD or ACK | App별 SQS Queue, S3 Bucket, IAM Policy | 높음 |
 
 :::callout-info
-**화해 현재 원칙과 일치**: "EKS 내 리소스는 ArgoCD, 공용 AWS 리소스는 Terraform"
+**현재 원칙과 일치**: "EKS 내 리소스는 ArgoCD, 공용 AWS 리소스는 Terraform"
 :::
 
 :::callout-warning

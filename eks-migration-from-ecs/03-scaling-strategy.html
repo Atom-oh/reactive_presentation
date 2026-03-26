@@ -34,7 +34,6 @@
   <div style="position:absolute; left:5%; top:76%;">
     <p style="font-size:1.05rem; color:#fff; font-weight:600; margin:0;">오준석 (Junseok Oh)</p>
     <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:6px 0 0 0;">Sr. Solutions Architect, AWS</p>
-    <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin:2px 0 0 0;">화해 글로벌</p>
   </div>
   <img src="common/pptx-theme/images/Picture_8.png" alt="" style="position:absolute; right:5%; bottom:10%; width:8%; pointer-events:none;" />
 </div>
@@ -42,29 +41,17 @@
 <div class="slide" data-remarp-id="s1">
   <div class="slide-header" data-remarp-id="s1-header"><h2>Scaling Pain Point</h2></div>
   <div class="slide-body" data-remarp-id="s1-body">
-    <blockquote><p>"노드/Pod 스케일링 전략 수립이 어려움"</p></blockquote>
-<blockquote><p>— ECS에서는 Auto Scaling이 간단했는데, EKS는 노드 그룹, HPA, VPA, Cluster Autoscaler 등 옵션이 너무 많습니다. 어떤 조합이 최적인지 모르겠습니다.</p></blockquote>
-<p><strong>화해 현황</strong>:</p>
-<ul><li>Cluster Autoscaler 사용 중 — 스케일 아웃에 5-7분 소요</li><li>노드 그룹 10개 이상 관리 복잡성</li><li>Spot Instance 활용률 낮음 (비용 최적화 기회 상실)</li></ul>
+    <div class="canvas-container" data-remarp-id="s1-canvas" style="flex:1">
+      <canvas id="scaling-pain-canvas"></canvas>
+    </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s2">
   <div class="slide-header" data-remarp-id="s2-header"><h2>Cluster Autoscaler vs Karpenter</h2></div>
-  <div class="slide-body" data-remarp-id="s2-body" data-compare-mode="side-by-side">
-    <div class="compare-toggle">
-            <button class="compare-btn active" data-compare="cluster-autoscaler">Cluster Autoscaler</button>
-      <button class="compare-btn" data-compare="karpenter">Karpenter</button>
-    </div>
-    <div class="col-2" style="flex:1">
-            <div class="card compare-content active compare-highlight" data-compare="cluster-autoscaler" data-remarp-id="s2-left">
-<h3 style="color:var(--text-accent);margin-bottom:.5rem">Cluster Autoscaler</h3>
-<ul><li>노드 그룹 기반 스케일링</li><li>ASG(Auto Scaling Group) 의존</li><li>스케일링 속도: <strong>분 단위</strong> (5-10분)</li><li>인스턴스 유형: 노드 그룹별 고정</li><li>Bin-packing 효율: 중간</li><li>구성 복잡도: 노드 그룹 수에 비례</li></ul>
-</div>
-      <div class="card compare-content active" data-compare="karpenter" data-remarp-id="s2-right">
-<h3 style="color:var(--text-accent);margin-bottom:.5rem">Karpenter</h3>
-<ul><li>워크로드 요구사항 기반 스케일링</li><li>EC2 Fleet API 직접 호출</li><li>스케일링 속도: <strong>초 단위</strong> (30-60초)</li><li>인스턴스 유형: 동적 선택 (최적 매칭)</li><li>Bin-packing 효율: 높음 (비용 30-50% 절감)</li><li>구성 복잡도: NodePool 1-2개로 단순화</li></ul>
-</div>
+  <div class="slide-body" data-remarp-id="s2-body">
+    <div class="canvas-container" data-remarp-id="s2-canvas" style="flex:1">
+      <canvas id="ca-vs-karpenter-canvas"></canvas>
     </div>
   </div>
 </div>
@@ -253,126 +240,9 @@
 <div class="slide" data-remarp-id="sN1">
   <div class="slide-header"><h2>Batch &amp; Schedule 워크로드 패턴</h2></div>
   <div class="slide-body">
-    <div class="tab-bar">
-      <button class="tab-btn active" data-tab="cronjob">Kubernetes CronJob</button>
-      <button class="tab-btn" data-tab="airflow">Airflow + KubernetesExecutor</button>
-      <button class="tab-btn" data-tab="jenkins">Jenkins + Kubernetes Plugin</button>
-      <button class="tab-btn" data-tab="keda-batch">KEDA + Batch 조합</button>
+    <div class="canvas-container" style="flex:1">
+      <canvas id="batch-pattern-canvas"></canvas>
     </div>
-    <div class="tab-content active" data-tab="cronjob">
-<p><strong>기본 패턴: CronJob으로 배치 스케줄링</strong></p>
-<div class="code-block"><span class="code-label">cronjob.yaml</span><span class="key">apiVersion</span>: batch/v1
-<span class="key">kind</span>: CronJob
-<span class="key">metadata</span>:
-  <span class="key">name</span>: daily-report
-  <span class="key">namespace</span>: batch
-<span class="key">spec</span>:
-  <span class="key">schedule</span>: <span class="string">"0 2 * * *"</span>        <span class="comment"># 매일 02:00 KST</span>
-  <span class="key">timeZone</span>: <span class="string">"Asia/Seoul"</span>
-  <span class="key">concurrencyPolicy</span>: Forbid     <span class="comment"># 중복 실행 방지</span>
-  <span class="key">jobTemplate</span>:
-    <span class="key">spec</span>:
-      <span class="key">backoffLimit</span>: 3
-      <span class="key">activeDeadlineSeconds</span>: 3600
-      <span class="key">template</span>:
-        <span class="key">spec</span>:
-          <span class="key">serviceAccountName</span>: batch-runner
-          <span class="key">containers</span>:
-            - name: report
-              <span class="key">image</span>: hwahae/daily-report:latest
-              <span class="key">resources</span>:
-                <span class="key">requests</span>:
-                  <span class="key">cpu</span>: <span class="string">"1"</span>
-                  <span class="key">memory</span>: <span class="string">"2Gi"</span>
-          <span class="key">restartPolicy</span>: Never
-          <span class="key">nodeSelector</span>:
-            karpenter.sh/capacity-type: spot</div>
-<p><strong>장점</strong>: 단순, K8s 네이티브, CronJob 내장 스케줄러</p>
-<p><strong>적합</strong>: 단일 작업, 의존성 없는 배치</p>
-</div>
-    <div class="tab-content" data-tab="airflow">
-<p><strong>패턴: Airflow UI + Pod 런타임</strong></p>
-<div class="code-block">Airflow Webserver (Deployment)
-    ↓
-Airflow Scheduler (Deployment)
-    ↓ DAG 트리거
-KubernetesExecutor
-    ↓ Pod 생성
-Task Pod (Ephemeral)
-    ↓ 실행 완료
-Pod 삭제 → 리소스 회수</div>
-<p><strong>핵심 설정</strong>:</p>
-<div class="code-block"><span class="code-label">airflow.cfg (Helm values)</span><span class="key">executor</span>: KubernetesExecutor
-<span class="key">kubernetes_executor</span>:
-  <span class="key">namespace</span>: airflow-tasks
-  <span class="key">worker_container_image_pull_policy</span>: Always
-  <span class="key">delete_worker_pods</span>: <span class="keyword">True</span>
-  <span class="key">delete_worker_pods_on_failure</span>: <span class="keyword">False</span>  <span class="comment"># 실패 시 디버깅용</span></div>
-<p><strong>장점</strong>: DAG 의존성 관리, UI 제공, 복잡한 워크플로우</p>
-<p><strong>적합</strong>: ETL 파이프라인, ML 학습, 다단계 배치</p>
-</div>
-    <div class="tab-content" data-tab="jenkins">
-<p><strong>패턴: Jenkins UI + 동적 Agent Pod</strong></p>
-<div class="code-block"><span class="code-label">Jenkinsfile</span>// Jenkinsfile
-pipeline {
-  agent {
-    kubernetes {
-      yaml '''
-        apiVersion: v1
-        kind: Pod
-        spec:
-          containers:
-          - name: gradle
-            image: gradle:8-jdk17
-            resources:
-              requests:
-                cpu: "2"
-                memory: "4Gi"
-          nodeSelector:
-            karpenter.sh/capacity-type: spot
-      '''
-    }
-  }
-  stages {
-    stage('Build') {
-      steps {
-        container('gradle') {
-          sh 'gradle build'
-        }
-      }
-    }
-  }
-}</div>
-<p><strong>장점</strong>: 기존 Jenkins 파이프라인 재활용, 동적 리소스 할당</p>
-<p><strong>적합</strong>: CI/CD 빌드, 기존 Jenkins 사용 팀</p>
-</div>
-    <div class="tab-content" data-tab="keda-batch">
-<p><strong>패턴: KEDA Cron Scaler로 예측 스케일링</strong></p>
-<div class="code-block"><span class="code-label">keda-batch.yaml</span><span class="comment"># 업무시간에 배치 처리 Worker 미리 확보</span>
-<span class="key">apiVersion</span>: keda.sh/v1alpha1
-<span class="key">kind</span>: ScaledObject
-<span class="key">metadata</span>:
-  <span class="key">name</span>: batch-worker-scaler
-<span class="key">spec</span>:
-  <span class="key">scaleTargetRef</span>:
-    <span class="key">name</span>: batch-worker
-  <span class="key">minReplicaCount</span>: 0           <span class="comment"># 비업무시간 Zero Scale</span>
-  <span class="key">maxReplicaCount</span>: 20
-  <span class="key">triggers</span>:
-    <span class="comment"># SQS 기반 동적 스케일링</span>
-    - type: aws-sqs-queue
-      <span class="key">metadata</span>:
-        <span class="key">queueURL</span>: https:<span class="comment">//sqs.../batch-jobs</span>
-        <span class="key">queueLength</span>: <span class="string">"3"</span>
-    <span class="comment"># 업무시간 최소 Pod 확보</span>
-    - type: cron
-      <span class="key">metadata</span>:
-        <span class="key">timezone</span>: Asia/Seoul
-        <span class="key">start</span>: 0 9 * * 1-5
-        <span class="key">end</span>: 0 22 * * 1-5
-        <span class="key">desiredReplicas</span>: <span class="string">"3"</span></div>
-<p><strong>장점</strong>: SQS 큐 기반 + 시간 기반 하이브리드, Zero Scaling으로 비용 최적화</p>
-</div>
   </div>
 </div>
 
@@ -1615,10 +1485,353 @@ initKedaCanvas();
 })();
 </script>
 <script>
+(function() {
+  const canvas = document.getElementById('scaling-pain-canvas');
+  if (!canvas) return;
+  const container = canvas.parentElement;
+  const BASE_W = 960, BASE_H = 400;
+
+  function resizeCanvas() {
+    const cw = container.clientWidth; const ch = container.clientHeight;
+    if (cw <= 0 || ch <= 0) { setupCanvas('scaling-pain-canvas', BASE_W, BASE_H); return; }
+    const dpr = window.devicePixelRatio || 1;
+    const scale = cw / BASE_W;
+    const scaledH = Math.min(Math.round(BASE_H * scale), ch);
+    canvas.width = Math.round(cw * dpr); canvas.height = Math.round(scaledH * dpr);
+    canvas.style.width = cw + 'px'; canvas.style.height = scaledH + 'px'; canvas.style.maxWidth = 'none';
+    const c = canvas.getContext('2d'); c.setTransform(1,0,0,1,0,0); c.scale(scale*dpr, scale*dpr);
+  }
+  resizeCanvas();
+  const ctx = canvas.getContext('2d');
+  let step = 0;
+  const MAX_STEP = 4;
+
+  function draw() {
+    ctx.clearRect(0, 0, BASE_W, BASE_H);
+    ctx.fillStyle = Colors.bg;
+    ctx.fillRect(0, 0, BASE_W, BASE_H);
+
+    const centerY = 160;
+    const spacing = 185;
+    const startX = 110;
+
+    drawText(ctx, 'Cluster Autoscaler Scaling Latency', BASE_W/2, 45, {size: 20, weight: '600', color: Colors.textPri});
+
+    // Timeline progress bar container
+    drawRoundRect(ctx, 50, 280, 860, 50, 10, Colors.surface, Colors.border);
+
+    let timeLabel = 'Waiting for scaling trigger...';
+    let progress = 0;
+    let barColor = Colors.textMuted;
+
+    if (step >= 1) {
+      drawBox(ctx, startX - 50, centerY - 30, 100, 60, 'Pending Pod', Colors.yellow);
+      drawBox(ctx, startX + spacing - 60, centerY - 30, 120, 60, 'CA Controller', Colors.orange);
+      drawArrow(ctx, startX + 55, centerY, startX + spacing - 65, centerY, Colors.textMuted);
+      drawText(ctx, 'detect (30s)', (startX + 55 + startX + spacing - 65) / 2, centerY - 15, {size: 11, color: Colors.textSec});
+      progress = 0.15;
+      timeLabel = '30s elapsed: Polling & Detection';
+      barColor = Colors.yellow;
+    }
+
+    if (step >= 2) {
+      const asgX = startX + spacing * 2;
+      drawBox(ctx, asgX - 50, centerY - 30, 100, 60, 'AWS ASG', Colors.orange);
+      drawArrow(ctx, startX + spacing + 65, centerY, asgX - 55, centerY, Colors.textMuted);
+      drawText(ctx, 'scale-out', (startX + spacing + 65 + asgX - 55) / 2, centerY - 15, {size: 11, color: Colors.textSec});
+      progress = 0.35;
+      timeLabel = '~1 min elapsed: Cloud API Request';
+      barColor = Colors.orange;
+    }
+
+    if (step >= 3) {
+      const ec2X = startX + spacing * 3;
+      drawBox(ctx, ec2X - 55, centerY - 30, 110, 60, 'EC2 Instance', Colors.orange);
+      drawArrow(ctx, startX + spacing * 2 + 55, centerY, ec2X - 60, centerY, Colors.textMuted);
+      drawText(ctx, 'launch', (startX + spacing * 2 + 55 + ec2X - 60) / 2, centerY - 15, {size: 11, color: Colors.textSec});
+      progress = 0.7;
+      timeLabel = '~3-5 min: OS Boot & Kubelet Init...';
+      barColor = Colors.orange;
+    }
+
+    if (step >= 4) {
+      const readyX = startX + spacing * 4;
+      drawBox(ctx, readyX - 55, centerY - 30, 110, 60, 'Pod Scheduled', Colors.green);
+      drawArrow(ctx, startX + spacing * 3 + 60, centerY, readyX - 60, centerY, Colors.textMuted);
+      drawText(ctx, 'register', (startX + spacing * 3 + 60 + readyX - 60) / 2, centerY - 15, {size: 11, color: Colors.textSec});
+      progress = 1.0;
+      timeLabel = '5-7 MINUTES TOTAL';
+      barColor = Colors.red;
+      drawText(ctx, 'Karpenter: 30-60 sec', BASE_W/2, 375, {size: 22, weight: '700', color: Colors.green});
+    }
+
+    // Progress bar fill
+    if (progress > 0) {
+      drawRoundRect(ctx, 50, 280, Math.round(860 * progress), 50, 10, barColor + '44', barColor);
+    }
+    drawText(ctx, timeLabel, BASE_W/2, 308, {size: 16, weight: '600', color: progress >= 1 ? Colors.red : Colors.textPri});
+  }
+
+  draw();
+  new ResizeObserver(() => { resizeCanvas(); draw(); }).observe(container);
+
+  const slide = canvas.closest('.slide');
+  if (slide) {
+    slide.dataset.slideAction = 'canvas-step';
+    slide.dataset.canvasMaxStep = String(MAX_STEP);
+    slide.__canvasStep = function(dir) {
+      if (dir === 'next' && step < MAX_STEP) step++;
+      if (dir === 'prev' && step > 0) step--;
+      draw();
+      return step;
+    };
+  }
+})();
+</script>
+<script>
+(function() {
+  const canvas = document.getElementById('ca-vs-karpenter-canvas');
+  if (!canvas) return;
+  const container = canvas.parentElement;
+  const BASE_W = 960, BASE_H = 400;
+
+  function resizeCanvas() {
+    const cw = container.clientWidth; const ch = container.clientHeight;
+    if (cw <= 0 || ch <= 0) { setupCanvas('ca-vs-karpenter-canvas', BASE_W, BASE_H); return; }
+    const dpr = window.devicePixelRatio || 1;
+    const scale = cw / BASE_W;
+    const scaledH = Math.min(Math.round(BASE_H * scale), ch);
+    canvas.width = Math.round(cw * dpr); canvas.height = Math.round(scaledH * dpr);
+    canvas.style.width = cw + 'px'; canvas.style.height = scaledH + 'px'; canvas.style.maxWidth = 'none';
+    const c = canvas.getContext('2d'); c.setTransform(1,0,0,1,0,0); c.scale(scale*dpr, scale*dpr);
+  }
+  resizeCanvas();
+  const ctx = canvas.getContext('2d');
+  let step = 0;
+  const MAX_STEP = 5;
+
+  function draw() {
+    ctx.clearRect(0, 0, BASE_W, BASE_H);
+    ctx.fillStyle = Colors.bg;
+    ctx.fillRect(0, 0, BASE_W, BASE_H);
+
+    const midX = BASE_W / 2;
+
+    // Step 1: Pending Pod
+    if (step >= 1) {
+      drawBox(ctx, midX - 60, 30, 120, 40, 'Pending Pod', Colors.yellow);
+    }
+
+    // Step 2: CA path (Left)
+    if (step >= 2) {
+      const lx = 220;
+      drawText(ctx, 'Cluster Autoscaler', lx, 80, {color: Colors.red, weight: '600', size: 14});
+      drawArrow(ctx, midX - 60, 50, lx + 50, 100, Colors.red);
+      drawBox(ctx, lx - 80, 100, 160, 40, 'CA Controller', Colors.red);
+      drawArrow(ctx, lx, 140, lx, 165, Colors.red);
+      drawBox(ctx, lx - 80, 165, 160, 40, 'Auto Scaling Group', Colors.red);
+      drawArrow(ctx, lx, 205, lx, 230, Colors.red);
+      drawBox(ctx, lx - 80, 230, 160, 40, 'EC2 Launch', Colors.red);
+      drawArrow(ctx, lx, 270, lx, 295, Colors.red);
+      drawBox(ctx, lx - 80, 295, 160, 40, 'Node Register', Colors.red);
+      drawText(ctx, '5-7 min', lx, 355, {color: Colors.red, weight: '700', size: 18});
+    }
+
+    // Step 3: Karpenter path (Right)
+    if (step >= 3) {
+      const rx = 740;
+      drawText(ctx, 'Karpenter', rx, 80, {color: Colors.green, weight: '600', size: 14});
+      drawArrow(ctx, midX + 60, 50, rx - 50, 100, Colors.green);
+      drawBox(ctx, rx - 80, 100, 160, 40, 'Karpenter Controller', Colors.green);
+      drawArrow(ctx, rx, 140, rx, 195, Colors.green);
+      drawBox(ctx, rx - 80, 195, 160, 40, 'EC2 Fleet API', Colors.green);
+      drawArrow(ctx, rx, 235, rx, 295, Colors.green);
+      drawBox(ctx, rx - 80, 295, 160, 40, 'Node Ready + Scheduled', Colors.green);
+      drawText(ctx, '30-60 sec', rx, 355, {color: Colors.green, weight: '700', size: 18});
+    }
+
+    // Step 4: Comparison bars
+    if (step >= 4) {
+      drawRoundRect(ctx, midX - 130, 120, 260, 130, 10, Colors.surface, Colors.border);
+      drawText(ctx, 'Provisioning Time', midX, 140, {size: 13, weight: '600', color: Colors.textPri});
+      drawText(ctx, 'CA', midX - 100, 170, {align: 'right', size: 12, color: Colors.textSec});
+      drawRoundRect(ctx, midX - 90, 160, 180, 18, 4, Colors.red + '66', Colors.red);
+      drawText(ctx, '360s', midX + 100, 170, {align: 'left', size: 11, color: Colors.red});
+      drawText(ctx, 'Karpenter', midX - 100, 200, {align: 'right', size: 12, color: Colors.textSec});
+      drawRoundRect(ctx, midX - 90, 190, 22, 18, 4, Colors.green + '66', Colors.green);
+      drawText(ctx, '45s', midX - 60, 200, {align: 'left', size: 11, color: Colors.green});
+      drawText(ctx, '8x', midX, 230, {size: 16, weight: '700', color: Colors.accent});
+    }
+
+    // Step 5: Conclusion
+    if (step >= 5) {
+      drawRoundRect(ctx, midX - 180, 260, 360, 50, 10, Colors.accent + '22', Colors.accent);
+      drawText(ctx, '10x FASTER PROVISIONING', midX, 288, {color: Colors.accentLt, weight: '700', size: 22});
+    }
+  }
+
+  draw();
+  new ResizeObserver(() => { resizeCanvas(); draw(); }).observe(container);
+
+  const slide = canvas.closest('.slide');
+  if (slide) {
+    slide.dataset.slideAction = 'canvas-step';
+    slide.dataset.canvasMaxStep = String(MAX_STEP);
+    slide.__canvasStep = function(dir) {
+      if (dir === 'next' && step < MAX_STEP) step++;
+      if (dir === 'prev' && step > 0) step--;
+      draw();
+      return step;
+    };
+  }
+})();
+</script>
+<script>
+(function() {
+  const canvas = document.getElementById('batch-pattern-canvas');
+  if (!canvas) return;
+  const container = canvas.parentElement;
+  const BASE_W = 960, BASE_H = 400;
+
+  function resizeCanvas() {
+    const cw = container.clientWidth; const ch = container.clientHeight;
+    if (cw <= 0 || ch <= 0) { setupCanvas('batch-pattern-canvas', BASE_W, BASE_H); return; }
+    const dpr = window.devicePixelRatio || 1;
+    const scale = cw / BASE_W;
+    const scaledH = Math.min(Math.round(BASE_H * scale), ch);
+    canvas.width = Math.round(cw * dpr); canvas.height = Math.round(scaledH * dpr);
+    canvas.style.width = cw + 'px'; canvas.style.height = scaledH + 'px'; canvas.style.maxWidth = 'none';
+    const c = canvas.getContext('2d'); c.setTransform(1,0,0,1,0,0); c.scale(scale*dpr, scale*dpr);
+  }
+  resizeCanvas();
+  const ctx = canvas.getContext('2d');
+  let step = 0;
+  const MAX_STEP = 4;
+
+  function draw() {
+    ctx.clearRect(0, 0, BASE_W, BASE_H);
+    ctx.fillStyle = Colors.bg;
+    ctx.fillRect(0, 0, BASE_W, BASE_H);
+
+    if (step === 0) {
+      drawText(ctx, 'Batch & Schedule Workload Patterns', BASE_W/2, BASE_H/2 - 20, {size: 28, weight: '700', color: Colors.accent});
+      drawText(ctx, 'Click to explore 4 patterns', BASE_W/2, BASE_H/2 + 25, {size: 16, color: Colors.textSec});
+    } else if (step === 1) {
+      drawCronJob();
+    } else if (step === 2) {
+      drawAirflow();
+    } else if (step === 3) {
+      drawJenkins();
+    } else if (step === 4) {
+      drawKEDA();
+    }
+  }
+
+  function drawCronJob() {
+    drawText(ctx, 'Kubernetes CronJob — Simple Periodic Execution', BASE_W/2, 45, {size: 22, weight: '700', color: Colors.blue});
+    // Clock
+    drawCircle(ctx, 130, 210, 45, Colors.blue + '22', Colors.blue);
+    drawText(ctx, '02:00', 130, 210, {size: 18, weight: '700', color: Colors.textPri});
+    drawText(ctx, 'Schedule', 130, 270, {size: 13, color: Colors.textSec});
+    // Flow
+    drawArrow(ctx, 180, 210, 270, 210, Colors.textMuted);
+    drawBox(ctx, 280, 185, 150, 50, 'CronJob Controller', Colors.cyan);
+    drawArrow(ctx, 440, 210, 530, 210, Colors.textMuted);
+    drawBox(ctx, 540, 185, 130, 50, 'Worker Pod', Colors.green);
+    drawArrow(ctx, 680, 210, 760, 210, Colors.textMuted, true);
+    drawBox(ctx, 770, 185, 130, 50, 'Completed', Colors.textMuted);
+    // Bottom note
+    drawText(ctx, 'Pros: K8s native, simple  |  Best for: single tasks, no dependencies', BASE_W/2, 340, {size: 14, color: Colors.textSec});
+  }
+
+  function drawAirflow() {
+    drawText(ctx, 'Airflow — DAG-based Complex Pipelines', BASE_W/2, 45, {size: 22, weight: '700', color: Colors.pink});
+    // DAG group
+    drawRoundRect(ctx, 60, 100, 330, 220, 12, Colors.pink + '11', Colors.pink);
+    drawText(ctx, 'Airflow DAG', 225, 125, {color: Colors.pink, weight: '600', size: 14});
+    drawBox(ctx, 90, 155, 90, 45, 'Task A', Colors.blue);
+    drawArrow(ctx, 185, 177, 220, 177, Colors.textMuted);
+    drawBox(ctx, 225, 155, 90, 45, 'Task B', Colors.blue);
+    drawArrow(ctx, 270, 200, 210, 240, Colors.textMuted);
+    drawBox(ctx, 145, 245, 130, 45, 'Task C (Agg)', Colors.blue);
+    // Executor
+    drawArrow(ctx, 400, 210, 470, 210, Colors.textMuted);
+    drawBox(ctx, 480, 170, 160, 80, 'K8s Executor', Colors.yellow);
+    // Pods
+    drawArrow(ctx, 650, 210, 720, 170, Colors.textMuted);
+    drawArrow(ctx, 650, 210, 720, 210, Colors.textMuted);
+    drawArrow(ctx, 650, 210, 720, 250, Colors.textMuted);
+    drawBox(ctx, 730, 145, 120, 40, 'Pod (A)', Colors.green);
+    drawBox(ctx, 730, 195, 120, 40, 'Pod (B)', Colors.green);
+    drawBox(ctx, 730, 245, 120, 40, 'Pod (C)', Colors.green);
+    drawText(ctx, 'Pros: DAG dependency, UI  |  Best for: ETL, ML training', BASE_W/2, 340, {size: 14, color: Colors.textSec});
+  }
+
+  function drawJenkins() {
+    drawText(ctx, 'Jenkins — Dynamic Agent Pods', BASE_W/2, 45, {size: 22, weight: '700', color: Colors.orange});
+    drawBox(ctx, 80, 150, 200, 100, 'Jenkins Controller', Colors.blue);
+    drawRoundRect(ctx, 100, 215, 160, 28, 6, Colors.cyan + '33', Colors.cyan);
+    drawText(ctx, 'Kubernetes Plugin', 180, 230, {size: 12, color: Colors.textPri});
+    drawArrow(ctx, 290, 200, 440, 200, Colors.textMuted);
+    drawText(ctx, 'JNLP / WebSocket', 365, 185, {size: 11, color: Colors.textSec});
+    drawRoundRect(ctx, 450, 140, 260, 120, 8, Colors.surface, Colors.border);
+    drawText(ctx, 'EKS Worker Node', 580, 160, {size: 12, color: Colors.textSec});
+    drawBox(ctx, 480, 175, 200, 60, 'Dynamic Agent Pod', Colors.green);
+    drawArrow(ctx, 720, 200, 820, 200, Colors.red, true);
+    drawText(ctx, 'Auto-Delete', 770, 185, {size: 12, color: Colors.red, weight: '600'});
+    drawCircle(ctx, 850, 200, 20, Colors.red + '22', Colors.red);
+    drawText(ctx, 'X', 850, 200, {color: Colors.red, size: 18, weight: '700'});
+    drawText(ctx, 'Pros: reuse existing pipelines  |  Best for: CI/CD builds', BASE_W/2, 340, {size: 14, color: Colors.textSec});
+  }
+
+  function drawKEDA() {
+    drawText(ctx, 'KEDA + Batch — Event-driven Zero Scaling', BASE_W/2, 45, {size: 22, weight: '700', color: Colors.accent});
+    // SQS Queue
+    drawRoundRect(ctx, 50, 120, 180, 150, 8, Colors.surface, Colors.yellow);
+    drawText(ctx, 'SQS Queue', 140, 145, {color: Colors.yellow, weight: '600', size: 14});
+    for(let i = 0; i < 6; i++) {
+      const h = 15 + Math.sin(i * 0.8) * 10 + 15;
+      drawRoundRect(ctx, 75 + i * 22, 250 - h, 15, h, 2, Colors.yellow + '88', null);
+    }
+    // KEDA
+    drawArrow(ctx, 240, 195, 320, 195, Colors.textMuted);
+    drawBox(ctx, 330, 145, 160, 100, 'KEDA Operator', Colors.accent);
+    // Cron overlay
+    drawCircle(ctx, 410, 120, 22, Colors.surface, Colors.blue);
+    drawText(ctx, '09:00', 410, 120, {size: 10, color: Colors.textPri});
+    drawText(ctx, 'Cron', 410, 95, {size: 11, color: Colors.blue});
+    // Worker pods
+    drawArrow(ctx, 500, 195, 580, 160, Colors.textMuted);
+    drawArrow(ctx, 500, 195, 580, 230, Colors.textMuted);
+    drawText(ctx, 'Scale 0->N', 700, 105, {size: 16, color: Colors.green, weight: '700'});
+    drawBox(ctx, 600, 120, 130, 55, 'Worker Pod 1', Colors.green);
+    drawBox(ctx, 750, 120, 130, 55, 'Worker Pod 2', Colors.green);
+    drawBox(ctx, 600, 200, 130, 55, 'Worker Pod 3', Colors.green);
+    drawBox(ctx, 750, 200, 130, 55, 'Worker Pod 4', Colors.green);
+    drawText(ctx, 'Pros: SQS + Cron hybrid, Zero Scaling  |  Best for: event-driven batch', BASE_W/2, 340, {size: 14, color: Colors.textSec});
+  }
+
+  draw();
+  new ResizeObserver(() => { resizeCanvas(); draw(); }).observe(container);
+
+  const slide = canvas.closest('.slide');
+  if (slide) {
+    slide.dataset.slideAction = 'canvas-step';
+    slide.dataset.canvasMaxStep = String(MAX_STEP);
+    slide.__canvasStep = function(dir) {
+      if (dir === 'next' && step < MAX_STEP) step++;
+      if (dir === 'prev' && step > 0) step--;
+      draw();
+      return step;
+    };
+  }
+})();
+</script>
+<script>
 
   const presenterNotes = {
     1: "[1min] Block 03에서는 EKS 환경의 스케일링 전략을 다룹니다.\nKarpenter를 통한 노드 프로비저닝과 KEDA를 통한 이벤트 기반 Pod 스케일링을 학습합니다.\n\n💬 예상 질문:\n• Karpenter와 KEDA를 동시에 도입해야 하나요? → 아니요, Karpenter(노드 스케일링)부터 도입하고 안정화 후 KEDA(Pod 스케일링)를 추가하는 것을 권장합니다.",
-    2: "[2min] 화해 팀이 겪고 있는 스케일링 관련 Pain Point입니다.\nCluster Autoscaler는 노드 그룹 기반으로 동작하기 때문에 스케일링 속도가 느리고, 인스턴스 유형 선택이 제한적입니다.\n오늘 다룰 Karpenter와 KEDA를 도입하면 이러한 문제를 대부분 해결할 수 있습니다.\n\n💬 예상 질문:\n• Cluster Autoscaler에서 5-7분 걸리는 이유가 뭔가요? → ASG 스케일링 → EC2 프로비저닝 → 노드 등록 → Pod 스케줄링 단계를 거치기 때문입니다. 각 단계에서 polling interval과 대기 시간이 누적됩니다.",
+    2: "[2min] 팀이 겪고 있는 스케일링 관련 Pain Point입니다.\nCluster Autoscaler는 노드 그룹 기반으로 동작하기 때문에 스케일링 속도가 느리고, 인스턴스 유형 선택이 제한적입니다.\n오늘 다룰 Karpenter와 KEDA를 도입하면 이러한 문제를 대부분 해결할 수 있습니다.\n\n💬 예상 질문:\n• Cluster Autoscaler에서 5-7분 걸리는 이유가 뭔가요? → ASG 스케일링 → EC2 프로비저닝 → 노드 등록 → Pod 스케줄링 단계를 거치기 때문입니다. 각 단계에서 polling interval과 대기 시간이 누적됩니다.",
     3: "[3min] Grafana Node Monitoring 대시보드입니다. Karpenter가 노드 스케일링 결정을 내리는 기준을 시각화합니다.\n\n버튼별 시나리오:\n• 노드 추가: 새 EC2 인스턴스가 프로비저닝되어 클러스터에 추가됩니다.\n• 워크로드 추가: 모든 노드에 Pod가 배포되어 CPU Requests가 증가합니다. Usage보다 Requests가 더 많이 증가하는 over-allocation 패턴을 보여줍니다.\n• 워크로드 삭제: 일부 노드의 워크로드가 감소하여 Low Req 상태가 됩니다.\n• Spot 인터럽트: Spot 노드에 ITN(Interruption Notice)이 발생하고, Karpenter가 자동으로 Cordon → Drain → 새 노드 프로비저닝 → Pod 재스케줄링 과정을 진행합니다.\n• Consolidation: Low Req 노드를 감지하여 Pod를 다른 노드로 이동시키고 해당 노드를 종료합니다.\n\n핵심 포인트: Karpenter는 CPU Usage가 아닌 CPU Requests를 기준으로 Consolidation을 결정합니다. 차트의 gap(Requests - Usage)이 클수록 리소스 낭비가 발생하고 있다는 의미입니다.\n\n💬 예상 질문:\n• 왜 Usage가 아닌 Requests 기준인가요? → Requests는 예약된 리소스이므로 다른 Pod가 사용할 수 없습니다. Usage가 낮아도 Requests가 높으면 실제로 활용할 수 있는 용량이 없습니다.",
     4: "[3min] Karpenter의 동작 흐름입니다. 각 단계를 클릭하며 설명합니다.\nStep 1: 스케줄링할 수 없는 Pending Pod가 발생합니다.\nStep 2: Karpenter Controller가 이를 감지합니다.\nStep 3: NodePool과 EC2NodeClass를 평가하여 요구사항을 분석합니다.\nStep 4: EC2 Fleet API를 직접 호출하여 최적의 인스턴스를 선택합니다. ASG를 거치지 않아서 빠릅니다.\nStep 5: 노드가 프로비저닝되고 Pending Pod가 스케줄링됩니다.\n전체 과정이 30-60초 내에 완료됩니다.\n\n💬 예상 질문:\n• EC2 Fleet API가 뭔가요? → 여러 인스턴스 유형/AZ에서 최적의 조합을 한 번의 API 호출로 요청하는 API입니다. Spot Instance 가용성과 가격을 고려한 선택이 가능합니다.\n• 30-60초면 Pod가 그동안 대기하나요? → 네, 하지만 기존 5-7분 대비 큰 개선입니다. 즉각적인 응답이 필요하면 Overprovisioning(빈 Pod로 노드 미리 확보) 패턴을 고려하세요.",
     5: "[2.5min] NodePool 설정 예시입니다.\n핵심 포인트:\n1. capacity-type에 spot과 on-demand를 모두 포함하여 Spot 우선, On-Demand 폴백 전략을 구현합니다.\n2. instance-family를 다양하게 지정하면 Karpenter가 가용성과 가격을 고려해 최적의 인스턴스를 선택합니다.\n3. disruption.consolidationPolicy를 WhenEmptyOrUnderutilized로 설정하면 유휴 노드를 자동으로 정리합니다.\n\n💬 예상 질문:\n• NodePool을 여러 개 만들어야 하나요? → 대부분의 경우 1-2개면 충분합니다. GPU 워크로드나 특수 요구사항이 있을 때만 별도 NodePool을 만드세요.\n• limits에서 cpu: 1000은 무슨 의미인가요? → 이 NodePool이 프로비저닝할 수 있는 총 vCPU 상한입니다. 예상치 못한 비용 폭증을 방지하는 안전장치입니다.",

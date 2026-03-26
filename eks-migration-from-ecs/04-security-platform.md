@@ -12,7 +12,6 @@ Security & Platform Engineering (20 min)
 
 **오준석 (Junseok Oh)**
 Sr. Solutions Architect, AWS
-화해 글로벌
 
 :::notes
 {timing: 1min}
@@ -356,7 +355,7 @@ IAM Role: BackendDevRole
   └─ RoleBinding: backend-deployer → backend NS 배포 권한
 ```
 
-**화해 권장 패턴**:
+**권장 패턴**:
 
 - **Platform Team**: `cluster-admin` ClusterRoleBinding
 - **Backend Team**: 자기 네임스페이스 `deployer` Role + 전체 `viewer` ClusterRole

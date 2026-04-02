@@ -141,7 +141,7 @@ NodePool이 설정됐습니다. 이제 실제 vLLM Pod를 배포하는 RayServic
 :::notes
 {timing: 2min}
 RayService 매니페스트의 핵심 부분을 설명하겠습니다.
-MODEL_ID는 HuggingFace 모델 ID입니다. GPU_MEMORY_UTILIZATION=0.9는 GPU VRAM의 90%를 KV Cache에 할당한다는 의미입니다. MAX_MODEL_LEN은 최대 입출력 시퀀스 길이입니다.
+MODEL_ID는 HuggingFace 모델 ID입니다. GPU_MEMORY_UTILIZATION=0.9는 vLLM 엔진 전체(모델 가중치 + KV Cache + Activation)가 사용할 GPU VRAM의 최대 비율입니다. KV Cache는 모델 가중치 로드 후 남은 공간을 사용합니다. MAX_MODEL_LEN은 최대 입출력 시퀀스 길이입니다.
 autoscaling_config가 RayServe의 오토스케일링 설정입니다. target_num_ongoing_requests_per_replica=20이 핵심입니다. 레플리카당 동시 처리 요청이 20개가 되면 레플리카를 추가합니다.
 {cue: pause}
 nodeSelector: NodeGroupType: g5-gpu-karpenter로 앞서 만든 Karpenter NodePool의 노드에 스케줄되도록 합니다.
@@ -171,7 +171,7 @@ tolerations에 nvidia.com/gpu NoSchedule toleration을 추가해야 GPU Taint가
       <td style="padding:8px;color:#41b3ff;font-weight:700;font-family:monospace;">GPU_MEMORY_UTILIZATION</td>
       <td style="padding:8px;color:#fff;text-align:center;">0.9</td>
       <td style="padding:8px;color:#06d6a0;text-align:center;">0.85~0.95</td>
-      <td style="padding:8px;color:#bbb;">KV Cache에 할당할 GPU 메모리 비율</td>
+      <td style="padding:8px;color:#bbb;">vLLM 엔진 전체가 사용할 VRAM 비율 (가중치+KV Cache+Activation)</td>
       <td style="padding:8px;color:#bbb;">높을수록 동시처리↑, OOM↑</td>
     </tr>
     <tr style="background:#15152a;">
@@ -214,7 +214,7 @@ tolerations에 nvidia.com/gpu NoSchedule toleration을 추가해야 GPU Taint가
 :::notes
 {timing: 2min}
 vLLM 파라미터 중 가장 중요한 것은 GPU_MEMORY_UTILIZATION입니다.
-0.9이면 GPU VRAM의 90%가 KV Cache에 할당됩니다. 모델 가중치가 VRAM의 60%를 차지한다면, 나머지 30%가 KV Cache입니다. KV Cache가 크면 동시에 처리할 수 있는 시퀀스 수가 늘어납니다.
+0.9이면 vLLM 엔진이 GPU VRAM의 90%를 사용할 수 있습니다. 이 공간에 모델 가중치가 먼저 로드되고, 그 이후 남은 공간이 KV Cache로 사용됩니다. 예를 들어 7B 모델 가중치가 14GB, VRAM이 24GB라면 KV Cache는 약 7GB(24×0.9 - 14 = 7.6GB)가 됩니다. KV Cache가 크면 동시에 처리할 수 있는 시퀀스 수가 늘어납니다.
 OOM이 자주 발생하면 0.85로 낮춰보세요. 반대로 GPU 메모리가 여유롭다면 0.95까지 올릴 수 있습니다.
 {cue: pause}
 MAX_MODEL_LEN은 실제 사용 패턴에 맞게 설정해야 합니다. DeepSeek R1 같은 CoT 모델은 출력이 2000 토큰이 넘을 수 있어서 32768이 필요합니다. 단순 채팅이라면 8192로도 충분합니다.
@@ -362,7 +362,7 @@ Step 4에서 kubectl로 상태를 확인하고 curl로 API를 테스트합니다
     <tr style="background:#1a283a;">
       <td style="padding:8px;color:#41b3ff;font-weight:700;">DeepSeek-R1-8B</td>
       <td style="padding:8px;color:#fff;text-align:center;">8B</td>
-      <td style="padding:8px;color:#bbb;">g5.4xlarge (1×A10G)</td>
+      <td style="padding:8px;color:#bbb;">g5.xlarge (1×A10G)</td>
       <td style="padding:8px;color:#fff;text-align:center;">1</td>
       <td style="padding:8px;color:#06d6a0;text-align:center;">0.90</td>
       <td style="padding:8px;color:#ff9900;text-align:center;">32768</td>
@@ -425,7 +425,7 @@ Step 4에서 kubectl로 상태를 확인하고 curl로 API를 테스트합니다
 :::notes
 {timing: 2min}
 주요 모델별 권장 설정을 정리했습니다.
-DeepSeek-R1 8B는 CoT(Chain of Thought) 추론 모델이라서 출력이 매우 깁니다. MAX_MODEL_LEN을 32768로 설정해야 합니다. g5.4xlarge를 권장하는 이유는 CoT 추론 중 메모리 사용량이 크기 때문입니다. g5.xlarge도 가능하지만 KV Cache가 부족해질 수 있습니다.
+DeepSeek-R1 8B는 CoT(Chain of Thought) 추론 모델이라서 출력이 매우 깁니다. MAX_MODEL_LEN을 32768로 설정해야 합니다. GPU는 g5.xlarge(1×A10G 24GB)로 충분합니다. 단, CoT 추론 시 시퀀스 길이가 길어지면 KV Cache 소모가 빠르므로 GPU_MEMORY_UTILIZATION은 0.9를 유지하세요.
 {cue: pause}
 DeepSeek-R1 671B는 파라미터가 671B이므로 BF16 기준으로 1342GB 이상이 필요합니다. p5.48xlarge 하나가 640GB이므로 두 개를 LeaderWorkerSet으로 연결해야 합니다.
 LWS는 다음 세션에서 더 자세히 다루겠습니다.

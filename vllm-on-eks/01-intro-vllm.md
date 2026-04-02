@@ -137,7 +137,7 @@ vLLM이 어떻게 이 문제들을 해결하는지 살펴보겠습니다.
     </div>
   </div>
   <div>
-    <div style="color:#00b4d8;font-size:15px;font-weight:700;margin-bottom:14px;">프레임워크 성능 비교 (8×H100, Llama-4 70B)</div>
+    <div style="color:#00b4d8;font-size:15px;font-weight:700;margin-bottom:14px;">프레임워크 성능 비교 (8×H100, Llama-3.1 70B)</div>
     <table style="width:100%;border-collapse:collapse;font-size:13px;">
       <thead>
         <tr style="background:#232f4a;">

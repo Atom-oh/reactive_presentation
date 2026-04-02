@@ -145,7 +145,7 @@
       <td style="padding:8px;color:#41b3ff;font-weight:700;font-family:monospace;">GPU_MEMORY_UTILIZATION</td>
       <td style="padding:8px;color:#fff;text-align:center;">0.9</td>
       <td style="padding:8px;color:#06d6a0;text-align:center;">0.85~0.95</td>
-      <td style="padding:8px;color:#bbb;">KV Cache에 할당할 GPU 메모리 비율</td>
+      <td style="padding:8px;color:#bbb;">vLLM 엔진 전체가 사용할 VRAM 비율 (가중치+KV Cache+Activation)</td>
       <td style="padding:8px;color:#bbb;">높을수록 동시처리↑, OOM↑</td>
     </tr>
     <tr style="background:#15152a;">
@@ -298,7 +298,7 @@
     <tr style="background:#1a283a;">
       <td style="padding:8px;color:#41b3ff;font-weight:700;">DeepSeek-R1-8B</td>
       <td style="padding:8px;color:#fff;text-align:center;">8B</td>
-      <td style="padding:8px;color:#bbb;">g5.4xlarge (1×A10G)</td>
+      <td style="padding:8px;color:#bbb;">g5.xlarge (1×A10G)</td>
       <td style="padding:8px;color:#fff;text-align:center;">1</td>
       <td style="padding:8px;color:#06d6a0;text-align:center;">0.90</td>
       <td style="padding:8px;color:#ff9900;text-align:center;">32768</td>
@@ -397,11 +397,11 @@
   const presenterNotes = {
     1: "[0.5min] Part 3에서는 실제 배포 코드를 중심으로 다룹니다.\nKarpenter NodePool 설정, RayService 매니페스트, vLLM 핵심 파라미터, 그리고 모델별 최적 설정까지 실무에 바로 적용 가능한 내용들입니다.\n\n시작합니다.",
     2: "⏸️ [2min] Karpenter NodePool 설정에서 중요한 부분 몇 가지를 짚겠습니다.\nNodeGroupType 라벨은 vLLM Pod의 nodeSelector가 이 NodePool의 노드를 찾을 때 사용합니다. GPU 전용 노드임을 명시합니다.\nnvidia.com/gpu NoSchedule Taint는 vLLM Pod처럼 GPU toleration을 설정한 Pod만 이 노드에 스케줄되도록 합니다. 일반 Pod이 실수로 GPU 노드에 올라가서 비용을 낭비하는 것을 막습니다.\n\nvalues에 여러 인스턴스 타입을 넣으면 Karpenter가 현재 Spot 가용성과 비용을 고려해서 최적의 타입을 자동으로 선택합니다. g5.xlarge Spot이 없으면 g5.2xlarge Spot을 선택하는 식입니다.\nlimits.gpu: \"8\"은 이 NodePool이 최대 GPU 8개까지만 프로비저닝하도록 제한합니다. 실수나 무한 스케일아웃을 방지하는 안전장치입니다.\n\nNodePool이 설정됐습니다. 이제 실제 vLLM Pod를 배포하는 RayService 매니페스트를 보겠습니다.",
-    3: "⏸️ [2min] RayService 매니페스트의 핵심 부분을 설명하겠습니다.\nMODEL_ID는 HuggingFace 모델 ID입니다. GPU_MEMORY_UTILIZATION=0.9는 GPU VRAM의 90%를 KV Cache에 할당한다는 의미입니다. MAX_MODEL_LEN은 최대 입출력 시퀀스 길이입니다.\nautoscaling_config가 RayServe의 오토스케일링 설정입니다. target_num_ongoing_requests_per_replica=20이 핵심입니다. 레플리카당 동시 처리 요청이 20개가 되면 레플리카를 추가합니다.\n\nnodeSelector: NodeGroupType: g5-gpu-karpenter로 앞서 만든 Karpenter NodePool의 노드에 스케줄되도록 합니다.\ntolerations에 nvidia.com/gpu NoSchedule toleration을 추가해야 GPU Taint가 있는 노드에 스케줄될 수 있습니다.\n\n이제 vLLM의 핵심 파라미터들을 살펴보겠습니다.",
-    4: "⏸️ [2min] vLLM 파라미터 중 가장 중요한 것은 GPU_MEMORY_UTILIZATION입니다.\n0.9이면 GPU VRAM의 90%가 KV Cache에 할당됩니다. 모델 가중치가 VRAM의 60%를 차지한다면, 나머지 30%가 KV Cache입니다. KV Cache가 크면 동시에 처리할 수 있는 시퀀스 수가 늘어납니다.\nOOM이 자주 발생하면 0.85로 낮춰보세요. 반대로 GPU 메모리가 여유롭다면 0.95까지 올릴 수 있습니다.\n\nMAX_MODEL_LEN은 실제 사용 패턴에 맞게 설정해야 합니다. DeepSeek R1 같은 CoT 모델은 출력이 2000 토큰이 넘을 수 있어서 32768이 필요합니다. 단순 채팅이라면 8192로도 충분합니다.\nTENSOR_PARALLEL_SIZE는 모델이 단일 GPU 메모리에 안 맞을 때 사용합니다. 70B 모델은 140GB가 필요하므로 A100 80GB 두 개(TP=2)가 필요합니다. GPU 간 통신 오버헤드가 있어서 무조건 크게 설정하면 오히려 느려집니다.\n\n오토스케일링 설정을 보겠습니다.",
+    3: "⏸️ [2min] RayService 매니페스트의 핵심 부분을 설명하겠습니다.\nMODEL_ID는 HuggingFace 모델 ID입니다. GPU_MEMORY_UTILIZATION=0.9는 vLLM 엔진 전체(모델 가중치 + KV Cache + Activation)가 사용할 GPU VRAM의 최대 비율입니다. KV Cache는 모델 가중치 로드 후 남은 공간을 사용합니다. MAX_MODEL_LEN은 최대 입출력 시퀀스 길이입니다.\nautoscaling_config가 RayServe의 오토스케일링 설정입니다. target_num_ongoing_requests_per_replica=20이 핵심입니다. 레플리카당 동시 처리 요청이 20개가 되면 레플리카를 추가합니다.\n\nnodeSelector: NodeGroupType: g5-gpu-karpenter로 앞서 만든 Karpenter NodePool의 노드에 스케줄되도록 합니다.\ntolerations에 nvidia.com/gpu NoSchedule toleration을 추가해야 GPU Taint가 있는 노드에 스케줄될 수 있습니다.\n\n이제 vLLM의 핵심 파라미터들을 살펴보겠습니다.",
+    4: "⏸️ [2min] vLLM 파라미터 중 가장 중요한 것은 GPU_MEMORY_UTILIZATION입니다.\n0.9이면 vLLM 엔진이 GPU VRAM의 90%를 사용할 수 있습니다. 이 공간에 모델 가중치가 먼저 로드되고, 그 이후 남은 공간이 KV Cache로 사용됩니다. 예를 들어 7B 모델 가중치가 14GB, VRAM이 24GB라면 KV Cache는 약 7GB(24×0.9 - 14 = 7.6GB)가 됩니다. KV Cache가 크면 동시에 처리할 수 있는 시퀀스 수가 늘어납니다.\nOOM이 자주 발생하면 0.85로 낮춰보세요. 반대로 GPU 메모리가 여유롭다면 0.95까지 올릴 수 있습니다.\n\nMAX_MODEL_LEN은 실제 사용 패턴에 맞게 설정해야 합니다. DeepSeek R1 같은 CoT 모델은 출력이 2000 토큰이 넘을 수 있어서 32768이 필요합니다. 단순 채팅이라면 8192로도 충분합니다.\nTENSOR_PARALLEL_SIZE는 모델이 단일 GPU 메모리에 안 맞을 때 사용합니다. 70B 모델은 140GB가 필요하므로 A100 80GB 두 개(TP=2)가 필요합니다. GPU 간 통신 오버헤드가 있어서 무조건 크게 설정하면 오히려 느려집니다.\n\n오토스케일링 설정을 보겠습니다.",
     5: "⏸️ [2min] RayServe 오토스케일링의 핵심은 target_num_ongoing_requests_per_replica입니다.\n이 값이 20이면 레플리카당 동시 요청 20개가 목표입니다. 현재 동시 요청이 60개면 3개의 레플리카가 필요합니다. 현재 1개면 2개를 더 만들어야 합니다.\nupscale_delay_s=30이라서 30초 후에 레플리카가 2개 더 생성됩니다. 그러면 Karpenter가 GPU 노드 2개를 더 프로비저닝합니다.\n\ndownscale_delay_s를 600(10분)으로 설정하는 이유가 있습니다. GPU 노드를 프로비저닝하는 데 2~5분이 걸립니다. 너무 빨리 축소했다가 트래픽이 다시 오면 사용자가 느린 응답을 경험합니다. 10분 정도는 여유를 두는 것이 좋습니다.\n\n배포 단계별 워크플로우를 정리하겠습니다.",
     6: "⏸️ [1.5min] 4단계로 배포가 완료됩니다.\nStep 1에서 Terraform으로 전체 인프라를 배포합니다. 약 20분이면 EKS, Karpenter, Prometheus, Grafana, NVIDIA Device Plugin이 모두 준비됩니다.\nStep 2에서 ai-on-eks Helm 레포를 추가합니다.\n\nStep 3에서 Helm 한 줄로 모델을 배포합니다. inference-charts에는 DeepSeek, Llama, Qwen3, Mistral 등의 프리셋이 있어서 values 파일만 선택하면 됩니다. 이미지 Pull과 모델 로딩에 약 10분이 걸립니다.\nStep 4에서 kubectl로 상태를 확인하고 curl로 API를 테스트합니다.\n\n이제 주요 모델별 권장 설정을 보겠습니다.",
-    7: "⏸️ [2min] 주요 모델별 권장 설정을 정리했습니다.\nDeepSeek-R1 8B는 CoT(Chain of Thought) 추론 모델이라서 출력이 매우 깁니다. MAX_MODEL_LEN을 32768로 설정해야 합니다. g5.4xlarge를 권장하는 이유는 CoT 추론 중 메모리 사용량이 크기 때문입니다. g5.xlarge도 가능하지만 KV Cache가 부족해질 수 있습니다.\n\nDeepSeek-R1 671B는 파라미터가 671B이므로 BF16 기준으로 1342GB 이상이 필요합니다. p5.48xlarge 하나가 640GB이므로 두 개를 LeaderWorkerSet으로 연결해야 합니다.\nLWS는 다음 세션에서 더 자세히 다루겠습니다.\n\nPart 3을 마칩니다. 다음은 운영 파트입니다.",
+    7: "⏸️ [2min] 주요 모델별 권장 설정을 정리했습니다.\nDeepSeek-R1 8B는 CoT(Chain of Thought) 추론 모델이라서 출력이 매우 깁니다. MAX_MODEL_LEN을 32768로 설정해야 합니다. GPU는 g5.xlarge(1×A10G 24GB)로 충분합니다. 단, CoT 추론 시 시퀀스 길이가 길어지면 KV Cache 소모가 빠르므로 GPU_MEMORY_UTILIZATION은 0.9를 유지하세요.\n\nDeepSeek-R1 671B는 파라미터가 671B이므로 BF16 기준으로 1342GB 이상이 필요합니다. p5.48xlarge 하나가 640GB이므로 두 개를 LeaderWorkerSet으로 연결해야 합니다.\nLWS는 다음 세션에서 더 자세히 다루겠습니다.\n\nPart 3을 마칩니다. 다음은 운영 파트입니다.",
     8: "[1min] Part 3을 정리하겠습니다.\nHelm inference-charts를 쓰면 values 파일 하나로 모델 배포가 됩니다. RayServe 오토스케일링은 target_num_ongoing_requests를 조정하는 것이 핵심입니다.\n모델별로 GPU 메모리 계산 공식을 적용해서 인스턴스와 파라미터를 설정하면 됩니다.\n\n마지막 파트에서는 프로덕션 운영에 필요한 모니터링, 장애 대응, 비용 최적화를 다루겠습니다."
   };
   const deck = new SlideFramework({

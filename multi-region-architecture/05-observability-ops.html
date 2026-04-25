@@ -27,97 +27,51 @@
 <div class="slide" data-remarp-id="s1">
   <div class="slide-header" data-remarp-id="s1-header"><h2>Observability Stack Overview</h2></div>
   <div class="slide-body" data-remarp-id="s1-body">
-    <div class="canvas-container" style="width:100%; max-width:1000px; margin:0 auto;">
-  <canvas></canvas>
+    <p><!-- Slide 2: Observability Stack Overview --></p>
+<div class="flow-h" style="flex-wrap:wrap; gap:0.8rem; justify-content:center; align-items:flex-start;">
+  <div class="flow-group bg-blue" style="min-width:140px;" data-fragment-index="1">
+    <div class="flow-group-label">App Pods (20 svc)</div>
+    <div class="flow-v" style="gap:0.3rem;">
+      <div class="flow-box" style="font-size:0.8rem;">OTLP export</div>
+    </div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-group bg-orange" style="min-width:180px;" data-fragment-index="2">
+    <div class="flow-group-label">OTel Collector</div>
+    <div class="flow-v" style="gap:0.3rem;">
+      <div class="flow-box" style="font-size:0.8rem;">DaemonSet</div>
+      <div class="flow-box" style="font-size:0.8rem;">ADOT 0.40.0</div>
+      <div class="flow-box" style="font-size:0.8rem;">tail_sampling</div>
+    </div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-col" style="gap:0.5rem;" data-fragment-index="3">
+    <div class="flow-group bg-purple" style="min-width:150px;">
+      <div class="flow-group-label">Traces</div>
+      <div class="flow-h" style="gap:0.3rem;">
+        <div class="icon-item sm"><img src="common/aws-icons/services/Arch_AWS-X-Ray_48.svg"><span>X-Ray</span></div>
+        <div class="flow-box" style="font-size:0.75rem;">Tempo→S3</div>
+      </div>
+    </div>
+    <div class="flow-group bg-green" style="min-width:150px;">
+      <div class="flow-group-label">Metrics</div>
+      <div class="icon-item sm"><img src="common/aws-icons/services/Arch_Amazon-Managed-Service-for-Prometheus_48.svg"><span>Prometheus</span></div>
+      <div class="flow-box" style="font-size:0.75rem;">kube-prom 68.4.0</div>
+    </div>
+    <div class="flow-group bg-pink" style="min-width:150px;">
+      <div class="flow-group-label">Logs</div>
+      <div class="icon-item sm"><img src="common/aws-icons/services/Arch_Amazon-CloudWatch_48.svg"><span>CloudWatch</span></div>
+    </div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-group bg-accent" style="min-width:120px;" data-fragment-index="4">
+    <div class="flow-group-label">Visualization</div>
+    <div class="flow-box" style="font-size:0.85rem;">Grafana</div>
+  </div>
 </div>
-<div class="canvas-controls" style="text-align:center; margin-top:4px;">
-  <span style="font-size:0.75rem; color:var(--text-muted);">Use arrow keys to step through animation</span>
-</div>
-<script>
-(function() {
-  const slide = document.currentScript.closest('.slide');
-  if (!slide) return;
-  const container = slide.querySelector('.canvas-container');
-  const canvas = container.querySelector('canvas');
-  const BASE_W = 1000, BASE_H = 380;
-  let ctx, scale = 1;
-
-  function init() {
-    const dpr = window.devicePixelRatio || 1;
-    const rect = container.getBoundingClientRect();
-    if (rect.width === 0) return;
-    scale = rect.width / BASE_W;
-    canvas.width = rect.width * dpr;
-    canvas.height = (BASE_H * scale) * dpr;
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = (BASE_H * scale) + 'px';
-    ctx = canvas.getContext('2d');
-    ctx.scale(dpr * scale, dpr * scale);
-    draw(currentStep);
-  }
-
-  let currentStep = 0;
-  const MAX_STEP = 3;
-
-  function draw(step) {
-    if (!ctx) return;
-    ctx.clearRect(0, 0, BASE_W, BASE_H);
-
-    // Step 0: App Pods Group
-    drawGroup(ctx, 40, 60, 220, 260, "App Pods (20+ Services)", Colors.border);
-    drawBox(ctx, 70, 100, 160, 45, "Traces (OTLP)", Colors.blue, "#fff");
-    drawBox(ctx, 70, 165, 160, 45, "Metrics (OTLP)", Colors.green, "#fff");
-    drawBox(ctx, 70, 230, 160, 45, "Logs (OTLP)", Colors.pink, "#fff");
-
-    // Step 1: OTel Collector
-    if (step >= 1) {
-      drawArrow(ctx, 260, 190, 370, 190, Colors.textMuted);
-      drawText(ctx, "OTLP gRPC:4317", 315, 175, { color: Colors.textMuted, size: 14, align: 'center' });
-      drawBox(ctx, 370, 130, 180, 120, "AWS Distro for\nOpenTelemetry", Colors.orange, "#fff");
-    }
-
-    // Step 2: Outputs
-    if (step >= 2) {
-      // Traces Path
-      drawArrow(ctx, 550, 160, 640, 70, Colors.blue);
-      drawBox(ctx, 640, 30, 140, 50, "Tempo (S3)", Colors.blue, "#fff");
-      drawBox(ctx, 790, 30, 100, 50, "AWS X-Ray", Colors.blue, "#fff");
-      drawArrow(ctx, 780, 55, 790, 55, Colors.blue);
-
-      // Metrics Path
-      drawArrow(ctx, 550, 190, 640, 190, Colors.green);
-      drawBox(ctx, 640, 165, 180, 50, "Prometheus (AMP)", Colors.green, "#fff");
-
-      // Logs Path
-      drawArrow(ctx, 550, 220, 640, 310, Colors.pink);
-      drawBox(ctx, 640, 285, 160, 50, "CloudWatch Logs", Colors.pink, "#fff");
-    }
-
-    // Step 3: Visualization
-    if (step >= 3) {
-      drawBox(ctx, 880, 130, 100, 120, "Grafana", Colors.accent, "#fff");
-      drawText(ctx, "Visualization", 930, 265, { color: Colors.accent, size: 14, align: 'center' });
-      
-      drawArrow(ctx, 780, 60, 880, 150, Colors.textMuted, true);
-      drawArrow(ctx, 820, 190, 880, 190, Colors.textMuted, true);
-      drawArrow(ctx, 800, 310, 880, 230, Colors.textMuted, true);
-    }
-  }
-
-  slide.__canvasStep = function(dir) {
-    if (dir === 'next' && currentStep < MAX_STEP) currentStep++;
-    else if (dir === 'prev' && currentStep > 0) currentStep--;
-    else return false;
-    draw(currentStep);
-    return currentStep;
-  };
-  slide.dataset.slideAction = 'canvas-step';
-  slide.dataset.canvasMaxStep = String(MAX_STEP);
-
-  new ResizeObserver(() => init()).observe(container);
-  init();
-})();
-</script>
+<p style="margin-top:16px; font-size:0.85rem; color:var(--text-muted); text-align:center;">
+  <strong>Dual Export</strong>: Tempo (S3 장기 저장) + X-Ray (managed, 서비스 맵)
+</p>
   </div>
 </div>
 
@@ -237,96 +191,64 @@
 <div class="slide" data-remarp-id="s4">
   <div class="slide-header" data-remarp-id="s4-header"><h2>Grafana Tempo Integration</h2></div>
   <div class="slide-body" data-remarp-id="s4-body">
-    <div class="canvas-container" style="width:100%; max-width:1000px; margin:0 auto;">
-  <canvas></canvas>
+    <p><!-- Slide 5: Grafana Tempo Integration --></p>
+<div class="col-2" style="gap:1.5rem;">
+  <div>
+    <h4 style="margin:0 0 0.75rem 0; color:var(--accent);">Architecture</h4>
+    <div class="flow-v" style="gap:0.5rem;">
+      <div class="flow-box bg-orange" style="width:100%;">OTel Collector</div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-box bg-purple" style="width:100%;">Tempo (Monolithic)</div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-group bg-blue" style="width:100%;">
+        <div class="flow-group-label">S3 Backend</div>
+        <div class="flow-box" style="font-size:0.8rem;">Parquet blocks</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:0.75rem; padding:0.75rem;">
+      <p style="margin:0; font-size:0.85rem;"><strong>Retention</strong>: 30 days hot, 90 days warm</p>
+      <p style="margin:0.25rem 0 0 0; font-size:0.85rem;"><strong>Compression</strong>: zstd (60% savings)</p>
+    </div>
+  </div>
+  <div>
+    <h4 style="margin:0 0 0.75rem 0; color:var(--cyan);">S3 Lifecycle Policy</h4>
+    <table class="data-table" style="width:100%; font-size:0.85rem;">
+      <thead>
+        <tr style="background:var(--bg-card);">
+          <th style="padding:8px; text-align:left;">Tier</th>
+          <th style="padding:8px; text-align:center;">Days</th>
+          <th style="padding:8px; text-align:right;">Cost/GB</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px;">S3 Standard</td>
+          <td style="padding:8px; text-align:center;">0-30</td>
+          <td style="padding:8px; text-align:right;">$0.023</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
+          <td style="padding:8px;">S3 IA</td>
+          <td style="padding:8px; text-align:center;">30-90</td>
+          <td style="padding:8px; text-align:right;">$0.0125</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px;">Glacier IR</td>
+          <td style="padding:8px; text-align:center;">90-365</td>
+          <td style="padding:8px; text-align:right;">$0.004</td>
+        </tr>
+        <tr style="background:var(--bg-card);">
+          <td style="padding:8px; color:var(--red);">Delete</td>
+          <td style="padding:8px; text-align:center;">365+</td>
+          <td style="padding:8px; text-align:right;">-</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:0.75rem; padding:8px 12px; background:var(--bg-card); border-radius:6px; text-align:center;">
+      <span style="font-size:0.85rem; color:var(--text-muted);">Est. Cost:</span>
+      <strong style="color:var(--accent); margin-left:8px;">~$185/mo per region</strong>
+    </div>
+  </div>
 </div>
-<div class="canvas-controls" style="text-align:center; margin-top:4px;">
-  <span style="font-size:0.75rem; color:var(--text-muted);">Use arrow keys to step through animation</span>
-</div>
-<script>
-(function() {
-  const slide = document.currentScript.closest('.slide');
-  if (!slide) return;
-  const container = slide.querySelector('.canvas-container');
-  const canvas = container.querySelector('canvas');
-  const BASE_W = 1000, BASE_H = 350;
-  let ctx, scale = 1;
-
-  function init() {
-    const dpr = window.devicePixelRatio || 1;
-    const rect = container.getBoundingClientRect();
-    if (rect.width === 0) return;
-    scale = rect.width / BASE_W;
-    canvas.width = rect.width * dpr;
-    canvas.height = (BASE_H * scale) * dpr;
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = (BASE_H * scale) + 'px';
-    ctx = canvas.getContext('2d');
-    ctx.scale(dpr * scale, dpr * scale);
-    draw(currentStep);
-  }
-
-  let currentStep = 0;
-  const MAX_STEP = 4;
-
-  function draw(step) {
-    if (!ctx) return;
-    ctx.clearRect(0, 0, BASE_W, BASE_H);
-
-    // Step 0: Core Architecture
-    drawBox(ctx, 240, 50, 160, 60, "Distributor", Colors.accent, "#fff");
-    drawBox(ctx, 480, 50, 160, 60, "Ingester", Colors.accent, "#fff");
-    drawBox(ctx, 720, 50, 160, 60, "Compactor", Colors.accent, "#fff");
-    drawBox(ctx, 240, 240, 640, 60, "Object Storage (Amazon S3) - Parquet Blocks", Colors.orange, "#fff");
-
-    // Step 1: Ingestion
-    if (step >= 1) {
-      drawBox(ctx, 30, 50, 140, 60, "OTel Collector", Colors.surface, Colors.textPri);
-      drawArrow(ctx, 170, 80, 240, 80, Colors.textPri);
-      drawText(ctx, "OTLP Push", 205, 70, { size: 12, align: 'center', color: Colors.textSec });
-    }
-
-    // Step 2: Write Path
-    if (step >= 2) {
-      drawArrow(ctx, 400, 80, 480, 80, Colors.accent);
-      drawText(ctx, "In-memory WAL", 440, 100, { size: 12, align: 'center', color: Colors.textSec });
-      drawArrow(ctx, 560, 110, 560, 240, Colors.accent);
-      drawText(ctx, "Flush Blocks", 570, 175, { size: 12, align: 'left', color: Colors.accent });
-    }
-
-    // Step 3: Query Path
-    if (step >= 3) {
-      drawBox(ctx, 480, 140, 160, 60, "Querier", Colors.cyan, "#000");
-      drawArrow(ctx, 560, 140, 560, 110, Colors.cyan); // To Ingester (Recent)
-      drawArrow(ctx, 640, 170, 750, 170, Colors.cyan, false, false); 
-      drawArrow(ctx, 750, 170, 750, 240, Colors.cyan); // To S3 (Historical)
-      
-      drawText(ctx, "TraceQL", 470, 175, { size: 14, weight: 'bold', align: 'right', color: Colors.cyan });
-    }
-
-    // Step 4: Compaction
-    if (step >= 4) {
-      drawArrow(ctx, 800, 240, 800, 110, Colors.yellow);
-      drawArrow(ctx, 800, 50, 840, 50, Colors.yellow, false, false);
-      drawArrow(ctx, 840, 50, 840, 240, Colors.yellow);
-      drawText(ctx, "Compaction Cycle", 850, 145, { size: 12, align: 'left', color: Colors.yellow });
-    }
-  }
-
-  slide.__canvasStep = function(dir) {
-    if (dir === 'next' && currentStep < MAX_STEP) currentStep++;
-    else if (dir === 'prev' && currentStep > 0) currentStep--;
-    else return false;
-    draw(currentStep);
-    return currentStep;
-  };
-  slide.dataset.slideAction = 'canvas-step';
-  slide.dataset.canvasMaxStep = String(MAX_STEP);
-
-  new ResizeObserver(() => init()).observe(container);
-  init();
-})();
-</script>
   </div>
 </div>
 

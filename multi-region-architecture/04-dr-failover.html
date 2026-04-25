@@ -174,106 +174,75 @@
 <div class="slide" data-remarp-id="s3">
   <div class="slide-header" data-remarp-id="s3-header"><h2>Scenario 1: Full Region Failure (us-east-1)</h2></div>
   <div class="slide-body" data-remarp-id="s3-body">
-    <div class="canvas-container" style="width:100%; max-width:1000px; margin:0 auto;">
-  <canvas></canvas>
+    <p><!-- Slide 4: Scenario 1 - Full Region Failure --></p>
+<div class="col-2" style="gap:1.5rem;">
+  <div>
+    <h4 style="margin:0 0 0.8rem 0; color:var(--green);">Auto Recovery (30s - 2min)</h4>
+    <div class="card" style="padding:0.8rem; margin-bottom:0.6rem; border-left:3px solid var(--green);">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <img src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" style="width:28px;">
+        <div>
+          <strong>Route53 Health Check</strong>
+          <div style="font-size:0.8rem; color:var(--text-muted);">30s detect → traffic switch to us-west-2</div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="padding:0.8rem; margin-bottom:0.6rem; border-left:3px solid var(--green);">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <img src="common/aws-icons/services/Arch_Amazon-CloudFront_48.svg" style="width:28px;">
+        <div>
+          <strong>CloudFront Origin</strong>
+          <div style="font-size:0.8rem; color:var(--text-muted);">Follows Route53, no config change</div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="padding:0.8rem; border-left:3px solid var(--green);">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <img src="common/aws-icons/services/Arch_Amazon-Simple-Storage-Service_48.svg" style="width:28px;">
+        <div>
+          <strong>S3 CRR</strong>
+          <div style="font-size:0.8rem; color:var(--text-muted);">Already replicated, RPO &lt;15min</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <h4 style="margin:0 0 0.8rem 0; color:#fdcb6e;">Manual Intervention (5-15min)</h4>
+    <div class="card" style="padding:0.8rem; margin-bottom:0.6rem; border-left:3px solid #fdcb6e;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <img src="common/aws-icons/services/Arch_Amazon-DocumentDB_48.svg" style="width:28px;">
+        <div>
+          <strong>DocumentDB Failover</strong>
+          <div style="font-size:0.8rem; color:var(--text-muted);">switchover-global-cluster CLI required</div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="padding:0.8rem; border-left:3px solid #fdcb6e;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <img src="common/aws-icons/services/Arch_Amazon-ElastiCache_48.svg" style="width:28px;">
+        <div>
+          <strong>ElastiCache Promotion</strong>
+          <div style="font-size:0.8rem; color:var(--text-muted);">failover-global-replication-group CLI</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-<div class="canvas-controls" style="text-align:center; margin-top:4px;">
-  <span style="font-size:0.75rem; color:var(--text-muted);">Use arrow keys to step through animation</span>
+
+<div style="margin-top:1rem; padding:0.8rem; background:rgba(255,107,107,0.1); border:1px solid var(--red); border-radius:8px;">
+  <h4 style="margin:0 0 0.5rem 0; color:var(--red);">DATA LOSS (Unrecoverable)</h4>
+  <div class="col-2" style="gap:1rem;">
+    <div style="font-size:0.85rem;">
+      <strong style="color:var(--red);">DSQL:</strong> 6 services lose ALL transaction data
+      <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">order, payment, inventory, user-account, shipping, warehouse</div>
+    </div>
+    <div style="font-size:0.85rem;">
+      <strong style="color:var(--red);">MSK:</strong> Unbounded event loss + offset desync
+      <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">notification, analytics, recommendation consumers affected</div>
+    </div>
+  </div>
 </div>
-<script>
-(function() {
-  const slide = document.currentScript.closest('.slide');
-  if (!slide) return;
-  const container = slide.querySelector('.canvas-container');
-  const canvas = container.querySelector('canvas');
-  const BASE_W = 1000, BASE_H = 400;
-  let ctx, scale = 1;
-
-  function init() {
-    const dpr = window.devicePixelRatio || 1;
-    const rect = container.getBoundingClientRect();
-    if (rect.width === 0) return;
-    scale = rect.width / BASE_W;
-    canvas.width = rect.width * dpr;
-    canvas.height = (BASE_H * scale) * dpr;
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = (BASE_H * scale) + 'px';
-    ctx = canvas.getContext('2d');
-    ctx.scale(dpr * scale, dpr * scale);
-    draw(currentStep);
-  }
-
-  let currentStep = 0;
-  const MAX_STEP = 4;
-
-  function draw(step) {
-    if (!ctx) return;
-    ctx.clearRect(0, 0, BASE_W, BASE_H);
-
-    const r1Color = step >= 1 ? Colors.red : Colors.green;
-    const r2Color = step >= 3 ? Colors.yellow : Colors.green;
-    
-    // Regions
-    drawGroup(ctx, 50, 80, 400, 260, "Primary: us-east-1", r1Color);
-    drawGroup(ctx, 550, 80, 400, 260, "Standby: us-west-2", r2Color);
-
-    // Route 53
-    drawBox(ctx, 450, 20, 100, 40, "Route 53", Colors.blue, "#fff");
-
-    // Region 1 Services
-    const s1Color = step >= 1 ? Colors.red : Colors.green;
-    drawBox(ctx, 150, 120, 200, 40, "App Cluster (EKS)", s1Color, "#fff");
-    drawBox(ctx, 100, 220, 140, 50, "DocumentDB", s1Color, "#fff");
-    drawBox(ctx, 260, 220, 140, 50, "ElastiCache", s1Color, "#fff");
-
-    // Region 2 Services
-    const s2DbColor = step >= 3 ? Colors.yellow : Colors.green;
-    const s2CacheColor = step >= 3 ? Colors.yellow : Colors.green;
-    drawBox(ctx, 650, 120, 200, 40, "App Cluster (EKS)", Colors.green, "#fff");
-    drawBox(ctx, 600, 220, 140, 50, step >= 3 ? "Manual Promote" : "DocumentDB", s2DbColor, step >= 3 ? "#000" : "#fff");
-    drawBox(ctx, 760, 220, 140, 50, step >= 3 ? "Manual Promote" : "ElastiCache", s2CacheColor, step >= 3 ? "#000" : "#fff");
-
-    // Traffic Arrows
-    if (step === 0) {
-      drawArrow(ctx, 450, 40, 250, 80, Colors.textSec, true);
-      drawArrow(ctx, 550, 40, 750, 80, Colors.textSec, true);
-    } else if (step >= 2) {
-      drawArrow(ctx, 550, 40, 750, 80, Colors.blue, false);
-      drawText(ctx, "DNS Failover Active", 550, 35, { color: Colors.blue, size: 14, align: 'left' });
-    }
-
-    // Failure Overlay
-    if (step >= 1) {
-      ctx.strokeStyle = Colors.red;
-      ctx.lineWidth = 10;
-      ctx.beginPath();
-      ctx.moveTo(100, 100); ctx.lineTo(400, 320);
-      ctx.moveTo(400, 100); ctx.lineTo(100, 320);
-      ctx.stroke();
-      drawText(ctx, "REGION OUTAGE", 250, 200, { color: Colors.red, size: 32, weight: 'bold', align: 'center' });
-    }
-
-    // Step 4 Warning
-    if (step >= 4) {
-      drawRoundRect(ctx, 200, 350, 600, 40, 5, Colors.red + '33', Colors.red);
-      drawText(ctx, "⚠️ DSQL: Single-region = DATA LOSS RISK | MSK: Event Loss Potential", 500, 375, { color: Colors.red, size: 16, weight: 'bold', align: 'center', baseline: 'middle' });
-    }
-  }
-
-  slide.__canvasStep = function(dir) {
-    if (dir === 'next' && currentStep < MAX_STEP) currentStep++;
-    else if (dir === 'prev' && currentStep > 0) currentStep--;
-    else return false;
-    draw(currentStep);
-    return currentStep;
-  };
-  slide.dataset.slideAction = 'canvas-step';
-  slide.dataset.canvasMaxStep = String(MAX_STEP);
-
-  new ResizeObserver(() => init()).observe(container);
-  init();
-})();
-</script>
   </div>
 </div>
 
@@ -394,44 +363,9 @@
   <div class="slide-body" data-remarp-id="s7-body">
     <div class="columns">
 <div class="col">
-<h3 style="color:var(--accent);">Future State: Multi-Region Active-Active</h3>
-<div class="card" style="padding:0.8rem; margin-bottom:0.6rem;">
-  <div style="font-weight:600; color:var(--green); margin-bottom:0.5rem;">DSQL Linked Clusters (Preview)</div>
-  <ul style="margin:0; padding-left:1.2rem; font-size:0.85rem;">
-    <li>Multi-region Active-Active writes</li>
-    <li>Strong consistency across regions</li>
-    <li>Automatic conflict resolution</li>
-    <li>RPO = 0, RTO &lt; 1min</li>
-  </ul>
-</div>
-<div class="card" style="padding:0.8rem;">
-  <div style="font-weight:600; color:var(--cyan); margin-bottom:0.5rem;">Architecture Change</div>
-  <ul style="margin:0; padding-left:1.2rem; font-size:0.85rem;">
-    <li>us-east-1 ↔ us-west-2 linked cluster</li>
-    <li>Both regions accept writes</li>
-    <li>No write forwarding latency</li>
-    <li>Automatic failover, no manual intervention</li>
-  </ul>
-</div>
+<h3>Future State: Multi-Region Active-Active</h3>
 </div><div class="col">
-<h3 style="color:#fdcb6e;">Interim Mitigation</h3>
-<div class="card" style="padding:0.8rem; margin-bottom:0.6rem; border-left:3px solid #fdcb6e;">
-  <div style="font-weight:600; margin-bottom:0.5rem;">Phase 1: Read Replica Fallback</div>
-  <ul style="margin:0; padding-left:1.2rem; font-size:0.85rem;">
-    <li>Aurora Global DB + Write Forwarding 유지</li>
-    <li>Read-only mode graceful degradation 구현</li>
-    <li>Queue writes during failure (MSK buffer)</li>
-  </ul>
-</div>
-<div class="card" style="padding:0.8rem; border-left:3px solid var(--red);">
-  <div style="font-weight:600; margin-bottom:0.5rem;">Phase 2: DSQL Migration</div>
-  <ul style="margin:0; padding-left:1.2rem; font-size:0.85rem;">
-    <li>DSQL Linked Clusters GA 대기</li>
-    <li>Schema compatibility 검증</li>
-    <li>성능 벤치마크 (write latency)</li>
-    <li>점진적 서비스 마이그레이션</li>
-  </ul>
-</div>
+<h3>Interim Mitigation</h3>
 </div>
 </div>
   </div>
@@ -440,100 +374,72 @@
 <div class="slide" data-remarp-id="s8">
   <div class="slide-header" data-remarp-id="s8-header"><h2>Automated Failover Pipeline</h2></div>
   <div class="slide-body" data-remarp-id="s8-body">
-    <div class="canvas-container" style="width:100%; max-width:1000px; margin:0 auto;">
-  <canvas></canvas>
+    <p><!-- Slide 9: Automated Failover Pipeline --></p>
+<div class="flow-v" style="gap:0.6rem; padding:0.5rem;">
+  <!-- Trigger Layer -->
+  <div class="flow-h" style="justify-content:center; gap:1rem;">
+    <div class="flow-group bg-red" style="padding:0.6rem 1rem;" data-fragment-index="1">
+      <div class="flow-group-label">Trigger</div>
+      <div class="icon-item">
+        <img src="common/aws-icons/services/Arch_Amazon-CloudWatch_48.svg" style="width:40px;">
+        <span>CloudWatch Alarm</span>
+      </div>
+      <div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">HealthCheckStatus = UNHEALTHY</div>
+    </div>
+  </div>
+
+  <div class="flow-arrow" style="font-size:1.2rem;" data-fragment-index="2">↓</div>
+
+  <!-- EventBridge Layer -->
+  <div class="flow-h" style="justify-content:center; gap:1rem;">
+    <div class="flow-group bg-orange" style="padding:0.6rem 1rem;" data-fragment-index="2">
+      <div class="flow-group-label">Orchestration</div>
+      <div class="icon-item">
+        <img src="common/aws-icons/services/Arch_Amazon-EventBridge_48.svg" style="width:40px;">
+        <span>EventBridge Rule</span>
+      </div>
+      <div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">Pattern: cloudwatch.alarm.state_change</div>
+    </div>
+  </div>
+
+  <div class="flow-arrow" style="font-size:1.2rem;" data-fragment-index="3">↓</div>
+
+  <!-- Lambda Layer -->
+  <div class="flow-h" style="justify-content:center; gap:1rem;">
+    <div class="flow-group bg-purple" style="padding:0.6rem 1rem;" data-fragment-index="3">
+      <div class="flow-group-label">Execution (Parallel)</div>
+      <div class="flow-h" style="gap:0.8rem;">
+        <div class="flow-box" style="min-width:140px;">
+          <img src="common/aws-icons/services/Arch_AWS-Lambda_48.svg" style="width:32px;">
+          <span style="font-size:0.8rem;">DocumentDB Failover</span>
+        </div>
+        <div class="flow-box" style="min-width:140px;">
+          <img src="common/aws-icons/services/Arch_AWS-Lambda_48.svg" style="width:32px;">
+          <span style="font-size:0.8rem;">ElastiCache Promotion</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow" style="font-size:1.2rem;" data-fragment-index="4">↓</div>
+
+  <!-- Post-actions Layer -->
+  <div class="flow-h" style="justify-content:center; gap:1rem;">
+    <div class="flow-box bg-blue" style="padding:0.6rem 1rem;" data-fragment-index="4">
+      <img src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" style="width:28px;">
+      <span style="font-size:0.8rem;">Route53 Update</span>
+      <div style="font-size:0.65rem; color:var(--text-muted);">(if manual override needed)</div>
+    </div>
+    <div class="flow-box bg-green" style="padding:0.6rem 1rem;" data-fragment-index="4">
+      <img src="common/aws-icons/services/Arch_Amazon-Simple-Notification-Service_48.svg" style="width:28px;">
+      <span style="font-size:0.8rem;">SNS Notification</span>
+      <div style="font-size:0.65rem; color:var(--text-muted);">Ops team alert</div>
+    </div>
+  </div>
 </div>
-<div class="canvas-controls" style="text-align:center; margin-top:4px;">
-  <span style="font-size:0.75rem; color:var(--text-muted);">Use arrow keys to step through animation</span>
+<div style="margin-top:0.8rem; padding:0.5rem 1rem; background:rgba(253,203,110,0.1); border-radius:6px; text-align:center; font-size:0.85rem;">
+  <strong style="color:#fdcb6e;">RTO Reduction:</strong> Manual 15min → Automated <strong style="color:var(--green);">2min</strong>
 </div>
-<script>
-(function() {
-  const slide = document.currentScript.closest('.slide');
-  if (!slide) return;
-  const container = slide.querySelector('.canvas-container');
-  const canvas = container.querySelector('canvas');
-  const BASE_W = 1000, BASE_H = 350;
-  let ctx, scale = 1;
-
-  function init() {
-    const dpr = window.devicePixelRatio || 1;
-    const rect = container.getBoundingClientRect();
-    if (rect.width === 0) return;
-    scale = rect.width / BASE_W;
-    canvas.width = rect.width * dpr;
-    canvas.height = (BASE_H * scale) * dpr;
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = (BASE_H * scale) + 'px';
-    ctx = canvas.getContext('2d');
-    ctx.scale(dpr * scale, dpr * scale);
-    draw(currentStep);
-  }
-
-  let currentStep = 0;
-  const MAX_STEP = 4;
-
-  function draw(step) {
-    if (!ctx) return;
-    ctx.clearRect(0, 0, BASE_W, BASE_H);
-
-    // Pipeline Boxes
-    const cwColor = step >= 1 ? Colors.red : Colors.surface;
-    drawBox(ctx, 50, 150, 150, 60, "CloudWatch\nAlarm", cwColor, "#fff");
-    
-    drawBox(ctx, 280, 150, 150, 60, "EventBridge", Colors.orange, "#fff");
-    
-    drawBox(ctx, 510, 150, 150, 60, "Lambda\nFailover Action", Colors.accent, "#fff");
-
-    // Target Services
-    const targetColor = step >= 4 ? Colors.green : Colors.surface;
-    const targetText = step >= 4 ? "Promoted Primary ✅" : "Global Cluster\n(Secondary)";
-    drawBox(ctx, 780, 80, 180, 70, "DocumentDB\n" + targetText, targetColor, "#fff");
-    drawBox(ctx, 780, 210, 180, 70, "ElastiCache\n" + targetText, targetColor, "#fff");
-
-    // Step 1: CW Pulse
-    if (step === 1) {
-      drawCircle(ctx, 125, 180, 45 + Math.sin(Date.now()/200)*5, null, Colors.red);
-      drawArrow(ctx, 200, 180, 280, 180, Colors.red, false);
-    }
-
-    // Step 2: EB Routing
-    if (step >= 2) {
-      drawArrow(ctx, 200, 180, 280, 180, Colors.orange, false);
-      drawArrow(ctx, 430, 180, 510, 180, Colors.orange, false);
-      drawText(ctx, "failover handler", 470, 170, { color: Colors.textSec, size: 12, align: 'center' });
-    }
-
-    // Step 3: Lambda Execution
-    if (step >= 3) {
-      drawArrow(ctx, 660, 170, 780, 115, Colors.accent, false);
-      drawArrow(ctx, 660, 190, 780, 245, Colors.accent, false);
-      drawText(ctx, "switchover-global-cluster", 720, 130, { color: Colors.accentLt, size: 11, align: 'center' });
-      drawText(ctx, "failover-global-replication-group", 720, 230, { color: Colors.accentLt, size: 11, align: 'center' });
-    }
-
-    // Step 4: Success label
-    if (step >= 4) {
-      drawText(ctx, "AUTOMATED FAILOVER COMPLETE", 500, 40, { color: Colors.green, size: 24, weight: 'bold', align: 'center' });
-      drawText(ctx, "RTO: ~30 seconds", 500, 70, { color: Colors.textSec, size: 16, align: 'center' });
-    }
-
-    if (step === 1) requestAnimationFrame(() => draw(currentStep));
-  }
-
-  slide.__canvasStep = function(dir) {
-    if (dir === 'next' && currentStep < MAX_STEP) currentStep++;
-    else if (dir === 'prev' && currentStep > 0) currentStep--;
-    else return false;
-    draw(currentStep);
-    return currentStep;
-  };
-  slide.dataset.slideAction = 'canvas-step';
-  slide.dataset.canvasMaxStep = String(MAX_STEP);
-
-  new ResizeObserver(() => init()).observe(container);
-  init();
-})();
-</script>
   </div>
 </div>
 
@@ -771,34 +677,8 @@ aws elasticache failover-global-replication-group \
     <div class="columns">
 <div class="col">
 <h3>Drill Frequency</h3>
-<table style="font-size:0.85rem;">
-  <thead><tr><th>Type</th><th>Frequency</th><th>Scope</th></tr></thead>
-  <tbody>
-    <tr><td><span class="badge-green">Tabletop</span></td><td>Monthly</td><td>팀 전체 시나리오 리뷰</td></tr>
-    <tr><td><span class="badge-blue">Component</span></td><td>Bi-weekly</td><td>개별 DB failover 테스트</td></tr>
-    <tr><td><span class="badge-yellow">Full DR</span></td><td>Quarterly</td><td>전체 리전 failover 훈련</td></tr>
-    <tr><td><span class="badge-red">Chaos</span></td><td>Weekly</td><td>FIS 자동 실험</td></tr>
-  </tbody>
-</table>
 </div><div class="col">
 <h3>Tools & Automation</h3>
-<div class="card" style="padding:0.8rem; margin-bottom:0.6rem;">
-  <div style="font-weight:600; margin-bottom:0.4rem;">AWS FIS (Fault Injection Service)</div>
-  <ul style="margin:0; padding-left:1.2rem; font-size:0.8rem;">
-    <li>EKS pod termination experiments</li>
-    <li>Network latency injection</li>
-    <li>AZ failure simulation</li>
-  </ul>
-</div>
-<div class="card" style="padding:0.8rem;">
-  <div style="font-weight:600; margin-bottom:0.4rem;">Runbook Automation</div>
-  <ul style="margin:0; padding-left:1.2rem; font-size:0.8rem;">
-    <li>SSM Automation documents</li>
-    <li>Lambda failover handlers</li>
-    <li>Slack/PagerDuty integration</li>
-    <li>Post-drill report generation</li>
-  </ul>
-</div>
 </div>
 </div>
   </div>

@@ -96,6 +96,12 @@
     <button class="btn" onclick="ExportUtils.exportPPTX({title:'Multi-Region Architecture Deep Dive'})">Export PPTX</button>
   </div>
 </div>
-<script src="./common/export-utils.js"></script>
+<script>
+  const ExportUtils = {
+    exportPDF: (opts) => { alert('PDF export requires export-utils.js'); },
+    downloadZIP: (opts) => { alert('ZIP export requires export-utils.js'); },
+    exportPPTX: (opts) => { alert('PPTX export requires export-utils.js'); }
+  };
+</script>
 </body>
 </html>

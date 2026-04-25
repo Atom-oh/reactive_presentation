@@ -73,8 +73,8 @@ class SlideFramework {
     const slide = this.slides[slideIndex];
     if (!slide) return;
 
-    const fragments = Array.from(slide.querySelectorAll('.fragment'));
-    // Sort by data-fragment-index if present, otherwise use DOM order
+    const fragments = Array.from(slide.querySelectorAll('.fragment, [data-fragment-index]'));
+    fragments.forEach(f => { if (!f.classList.contains('fragment')) f.classList.add('fragment'); });
     fragments.sort((a, b) => {
       const aIdx = parseInt(a.dataset.fragmentIndex, 10) || 0;
       const bIdx = parseInt(b.dataset.fragmentIndex, 10) || 0;

@@ -3,854 +3,337 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Multi-Region Architecture Deep Dive — Data Sync & Replication</title>
+  <title>Multi-Region Architecture Deep Dive</title>
   <meta name="generator" content="remarp">
   <meta name="remarp-version" content="1">
   <meta name="remarp-source" content="02-data-sync.md">
-  <meta name="remarp-block" content="data-sync">
+  <meta name="remarp-block" content="default">
   <link rel="stylesheet" href="./common/theme.css">
   <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
-
-  <style>
-    .db-icon { width: 40px; height: 40px; }
-    .repl-arrow { color: #00d68f; font-size: 1.4rem; }
-    .lag-badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
-    .lag-low { background: rgba(0,214,143,0.15); color: #00d68f; border: 1px solid rgba(0,214,143,0.3); }
-    .lag-med { background: rgba(255,153,0,0.15); color: #FF9900; border: 1px solid rgba(255,153,0,0.3); }
-    .lag-high { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
-  </style>
+  
+  
   <script>window.__remarpTheme = {"colors": {}, "footer": "Multi-Region Architecture Deep Dive \u2014 L300+", "pagination": true, "fonts": {}};</script>
 </head>
 <body>
 <div class="slide-deck">
-
-<!-- ==================== Slide 0: Cover ==================== -->
 <div class="slide" data-remarp-id="s0" style="background:linear-gradient(135deg, #1a1f35 0%, #0d1117 50%, #161b2e 100%); padding:0; overflow:hidden;">
   <div style="position:absolute; top:-20%; right:-10%; width:60%; height:80%; background:radial-gradient(ellipse, rgba(108,92,231,0.15) 0%, transparent 70%); pointer-events:none;"></div>
   <div style="position:absolute; left:5%; top:42%; width:80px; height:3px; background:linear-gradient(90deg, #6c5ce7, #a29bfe); border-radius:2px;"></div>
-  <h1 style="position:absolute; left:5%; top:45%; font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:60%; margin:0;">Data Sync & Replication</h1>
-  <p style="position:absolute; left:5%; top:60%; font-size:1.3rem; color:rgba(255,255,255,0.7); width:60%; margin:0;">Cross-Region Data Replication Strategies (30min)</p>
+  <h1 style="position:absolute; left:5%; top:45%; font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:60%; margin:0;">Multi-Region Architecture Deep Dive</h1>
+  <p style="position:absolute; left:5%; top:60%; font-size:1.3rem; color:rgba(255,255,255,0.7); width:60%; margin:0;">Data Sync & Replication (30min)</p>
   <div style="position:absolute; left:5%; top:75%;">
     <p style="font-size:1.05rem; color:#fff; font-weight:600; margin:0;">오준석 (Junseok Oh), Sr. Solutions Architect, AWS</p>
+    <p style="font-size:0.9rem; color:rgba(255,255,255,0.6); margin:6px 0 0 0;"></p>
+    <p style="font-size:0.9rem; color:rgba(255,255,255,0.6); margin:2px 0 0 0;"></p>
   </div>
 </div>
 
-<!-- ==================== Slide 1: Polyglot Persistence ==================== -->
 <div class="slide" data-remarp-id="s1">
   <div class="slide-header" data-remarp-id="s1-header"><h2>Polyglot Persistence Strategy</h2></div>
   <div class="slide-body" data-remarp-id="s1-body">
-    <table>
-      <thead><tr><th>Workload</th><th>Data Store</th><th>Replication</th><th>Services</th></tr></thead>
-      <tbody>
-        <tr class="fragment fade-in" data-fragment-index="0"><td><strong>ACID 트랜잭션</strong></td><td>Aurora PostgreSQL Global DB</td><td><span class="lag-badge lag-low">≤1s</span></td><td>order, payment, inventory, user-account</td></tr>
-        <tr class="fragment fade-in" data-fragment-index="1"><td><strong>유연한 스키마</strong></td><td>DocumentDB Global Cluster</td><td><span class="lag-badge lag-med">≤2s</span></td><td>product-catalog, user-profile, wishlist, review</td></tr>
-        <tr class="fragment fade-in" data-fragment-index="2"><td><strong>실시간 캐시</strong></td><td>ElastiCache Valkey Global</td><td><span class="lag-badge lag-low">&lt;1s</span></td><td>cart, session, rate-limiting, leaderboard</td></tr>
-        <tr class="fragment fade-in" data-fragment-index="3"><td><strong>전문 검색</strong></td><td>OpenSearch 2.17</td><td><span class="lag-badge lag-high">Minutes</span></td><td>search, analytics</td></tr>
-        <tr class="fragment fade-in" data-fragment-index="4"><td><strong>이벤트 스트리밍</strong></td><td>MSK Kafka 3.6</td><td><span class="lag-badge lag-med">MSK Replicator</span></td><td>event-bus, saga orchestration</td></tr>
-        <tr class="fragment fade-in" data-fragment-index="5"><td><strong>정적 자산</strong></td><td>S3 + CRR</td><td><span class="lag-badge lag-high">≤15min</span></td><td>CDN assets, Tempo traces</td></tr>
-      </tbody>
-    </table>
-    <div class="callout callout-info" style="margin-top:1rem;">
-      <strong>원칙</strong>: 각 데이터 스토어는 워크로드 특성에 최적화된 용도로 사용. 모든 것을 하나의 DB에 넣지 않는다.
-    </div>
+    <p><!-- Slide 2: Data Store Selection Matrix --></p>
+<table><thead><tr><th>Workload Type</th><th>Data Store</th><th>Replication</th><th>Services</th></tr></thead><tbody><tr><td><strong>ACID 트랜잭션</strong> (강한 일관성)</td><td>Aurora PostgreSQL Global DB</td><td>≤1s async</td><td>order, payment, inventory, user-account, shipping</td></tr><tr><td><strong>유연한 스키마</strong> (문서 모델)</td><td>DocumentDB Global Cluster</td><td>≤2s async</td><td>product-catalog, user-profile, wishlist, review</td></tr><tr><td><strong>실시간 캐시</strong> (밀리초 응답)</td><td>ElastiCache Valkey Global</td><td><1s async</td><td>cart, session, rate-limiting, leaderboard</td></tr><tr><td><strong>전문 검색</strong> (한국어 nori)</td><td>OpenSearch 2.17</td><td>Cross-cluster</td><td>search, analytics, notification-logs</td></tr><tr><td><strong>이벤트 스트리밍</strong> (비동기)</td><td>MSK Kafka 3.6</td><td>MSK Replicator</td><td>event-bus, saga orchestration</td></tr><tr><td><strong>정적 자산</strong> (객체)</td><td>S3 + CRR</td><td>Async</td><td>CDN assets, Tempo traces</td></tr></tbody></table>
+<blockquote><p><strong>원칙</strong>: 각 데이터 스토어는 워크로드 특성에 최적화된 용도로 사용. 모든 것을 하나의 DB에 넣지 않는다.</p></blockquote>
   </div>
 </div>
 
-<!-- ==================== Slide 2: Replication Patterns Overview ==================== -->
 <div class="slide" data-remarp-id="s2">
   <div class="slide-header" data-remarp-id="s2-header"><h2>Cross-Region Replication Patterns</h2></div>
   <div class="slide-body" data-remarp-id="s2-body">
-    <div class="canvas-container" style="width:100%; max-width:1000px; margin:0 auto;">
-  <canvas></canvas>
-</div>
-<div class="canvas-controls" style="text-align:center; margin-top:4px;">
-  <span style="font-size:0.75rem; color:var(--text-muted);">Use arrow keys to step through animation</span>
-</div>
-<script>
-(function() {
-  const slide = document.currentScript.closest('.slide');
-  if (!slide) return;
-  const container = slide.querySelector('.canvas-container');
-  const canvas = container.querySelector('canvas');
-  const BASE_W = 1000, BASE_H = 420;
-  let ctx, scale = 1;
-
-  function init() {
-    const dpr = window.devicePixelRatio || 1;
-    const rect = container.getBoundingClientRect();
-    if (rect.width === 0) return;
-    scale = rect.width / BASE_W;
-    canvas.width = rect.width * dpr;
-    canvas.height = (BASE_H * scale) * dpr;
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = (BASE_H * scale) + 'px';
-    ctx = canvas.getContext('2d');
-    ctx.scale(dpr * scale, dpr * scale);
-    draw(currentStep);
-  }
-
-  let currentStep = 0;
-  const MAX_STEP = 4;
-
-  const stores = [
-    { name: 'Aurora Global DB', sub: 'Writer (us-east-1)', name2: 'Aurora Secondary', sub2: 'Readers (us-west-2)', color: Colors.orange, method: 'Storage-level', lag: '≤1s' },
-    { name: 'DocumentDB Primary', sub: 'Writer + 2 Readers', name2: 'DocumentDB Secondary', sub2: '2 Readers (read-only)', color: Colors.cyan, method: 'Oplog-based', lag: '≤2s' },
-    { name: 'ElastiCache Primary', sub: '3 Shards × 2 Replicas', name2: 'ElastiCache Secondary', sub2: 'Read-only Global DS', color: Colors.pink, method: 'Async', lag: '<1s' },
-    { name: 'MSK (us-east-1)', sub: '6 Brokers, 35 Topics', name2: 'MSK (us-west-2)', sub2: 'Topic mirror', color: Colors.accent, method: 'MSK Replicator', lag: '100ms~5s' },
-  ];
-
-  function draw(step) {
-    if (!ctx) return;
-    ctx.clearRect(0, 0, BASE_W, BASE_H);
-
-    // Region labels
-    drawGroup(ctx, 50, 30, 380, 380, 'us-east-1 (Primary)', Colors.orange);
-    drawGroup(ctx, 570, 30, 380, 380, 'us-west-2 (Secondary)', Colors.cyan);
-
-    stores.forEach((s, i) => {
-      if (i > step) return;
-      const y = 60 + i * 90;
-      // Primary box
-      drawBox(ctx, 80, y, 320, 65, s.name + '\n' + s.sub, s.color, '#fff');
-      // Secondary box
-      drawBox(ctx, 600, y, 320, 65, s.name2 + '\n' + s.sub2, s.color, '#fff');
-      // Replication arrow
-      drawArrow(ctx, 400, y + 32, 600, y + 32, Colors.green, false, true);
-      // Labels
-      drawText(ctx, s.method, 500, y + 22, { color: s.color, size: 12, align: 'center' });
-      drawText(ctx, s.lag, 500, y + 45, { color: Colors.green, size: 11, align: 'center', weight: 'bold' });
-    });
-
-    // Footer note
-    if (step >= 4) {
-      drawRoundRect(ctx, 150, 385, 700, 30, 4, Colors.yellow + '22', Colors.yellow);
-      drawText(ctx, 'All cross-region replication is async. Strong consistency writes route to Primary.', 500, 400, { color: Colors.yellow, size: 13, align: 'center' });
-    }
-  }
-
-  slide.__canvasStep = function(dir) {
-    if (dir === 'next' && currentStep < MAX_STEP) currentStep++;
-    else if (dir === 'prev' && currentStep > 0) currentStep--;
-    else return false;
-    draw(currentStep);
-    return currentStep;
-  };
-  slide.dataset.slideAction = 'canvas-step';
-  slide.dataset.canvasMaxStep = String(MAX_STEP);
-
-  new ResizeObserver(() => init()).observe(container);
-  init();
-})();
-</script>
+    <p><!-- Slide 3: Replication Patterns Overview --></p>
+<p><canvas id="replication-topology" width="1100" height="420"></canvas></p>
+<p><div class="canvas-controls"></p>
+<p>  <button onclick="replicationAnim.play()" class="btn-play">▶ Play</button></p>
+<p>  <button onclick="replicationAnim.reset()" class="btn-reset">↺ Reset</button></p>
+<p></div></p>
   </div>
 </div>
 
-<!-- ==================== Slide 3: Aurora Global Database ==================== -->
 <div class="slide" data-remarp-id="s3">
   <div class="slide-header" data-remarp-id="s3-header"><h2>Aurora PostgreSQL Global Database</h2></div>
   <div class="slide-body" data-remarp-id="s3-body">
     <div class="columns">
-      <div class="col" data-remarp-id="s3-left">
-        <h3>Cluster Topology</h3>
-        <div class="canvas-container" style="width:100%; max-width:480px;">
-          <canvas></canvas>
-        </div>
-        <div style="text-align:center; margin-top:4px;">
-          <span style="font-size:0.7rem; color:var(--text-muted);">↑↓ step through</span>
-        </div>
-<script>
-(function() {
-  const slide = document.currentScript.closest('.slide');
-  if (!slide) return;
-  const container = slide.querySelector('.canvas-container');
-  const canvas = container.querySelector('canvas');
-  const BASE_W = 480, BASE_H = 420;
-  let ctx, scale = 1, currentStep = 0;
-  const MAX_STEP = 3;
-
-  function draw(step) {
-    ctx.clearRect(0, 0, BASE_W, BASE_H);
-
-    // Step 0: Primary Cluster
-    drawGroup(ctx, 20, 20, 440, 170, "us-east-1 (PRIMARY)", Colors.orange);
-    drawBox(ctx, 50, 55, 180, 50, "Writer (r6g.2xlarge)", Colors.orange, Colors.textPri);
-    drawBox(ctx, 260, 55, 170, 50, "Reader 1 (r6g.xlarge)", Colors.blue, Colors.textPri);
-    drawBox(ctx, 260, 115, 170, 50, "Reader 2 (r6g.xlarge)", Colors.blue, Colors.textPri);
-
-    // Step 1: Replication Arrow
-    if (step >= 1) {
-      drawArrow(ctx, 240, 190, 240, 245, Colors.green, false, true);
-      drawText(ctx, "Storage-level Replication", 250, 210, { color: Colors.green, size: 12, align: 'left' });
-      drawText(ctx, "≤1s lag", 250, 228, { color: Colors.green, size: 14, weight: 'bold', align: 'left' });
-    }
-
-    // Step 2: Secondary Cluster
-    if (step >= 2) {
-      drawGroup(ctx, 20, 250, 440, 150, "us-west-2 (SECONDARY)", Colors.cyan);
-      drawBox(ctx, 50, 285, 190, 50, "Reader 1 (r6g.xlarge)", Colors.cyan, Colors.textPri);
-      drawBox(ctx, 260, 285, 190, 50, "Reader 2 (r6g.xlarge)", Colors.cyan, Colors.textPri);
-      drawText(ctx, "(Read-only)", 240, 350, { color: Colors.textMuted, size: 12, align: 'center' });
-    }
-
-    // Step 3: Write Forwarding
-    if (step >= 3) {
-      drawArrow(ctx, 240, 250, 140, 105, Colors.orange, true, true);
-      drawText(ctx, "Write Forwarding", 120, 220, { color: Colors.orange, size: 12, align: 'right' });
-      drawText(ctx, "+60-80ms RTT", 120, 235, { color: Colors.textMuted, size: 10, align: 'right' });
-    }
-  }
-
-  function init() {
-    const dpr = window.devicePixelRatio || 1;
-    const rect = container.getBoundingClientRect();
-    if (rect.width === 0) return;
-    scale = rect.width / BASE_W;
-    canvas.width = rect.width * dpr;
-    canvas.height = (BASE_H * scale) * dpr;
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = (BASE_H * scale) + 'px';
-    ctx = canvas.getContext('2d');
-    ctx.scale(dpr * scale, dpr * scale);
-    draw(currentStep);
-  }
-
-  slide.__canvasStep = function(dir) {
-    if (dir === 'next' && currentStep < MAX_STEP) currentStep++;
-    else if (dir === 'prev' && currentStep > 0) currentStep--;
-    else return false;
-    draw(currentStep);
-    return currentStep;
-  };
-  slide.dataset.slideAction = 'canvas-step';
-  slide.dataset.canvasMaxStep = String(MAX_STEP);
-  new ResizeObserver(() => init()).observe(container);
-  init();
-})();
-</script>
-      </div>
-      <div class="col" data-remarp-id="s3-right">
-        <h3>Key Specifications</h3>
-        <table>
-          <tbody>
-            <tr><td>Engine</td><td>PostgreSQL 15.4</td></tr>
-            <tr><td>Instance</td><td>r6g.2xlarge (Writer)</td></tr>
-            <tr><td>Replication Lag</td><td><span class="lag-badge lag-low">≤1 second</span></td></tr>
-            <tr><td>RPO</td><td>~1 second</td></tr>
-            <tr><td>Failover RTO</td><td>&lt;1 minute (planned)</td></tr>
-            <tr><td>Max Secondary</td><td>5 regions</td></tr>
-          </tbody>
-        </table>
-        <h3 style="margin-top:1rem;">Services Using Aurora</h3>
-        <div style="display:flex; flex-wrap:wrap; gap:0.4rem;">
-          <span class="badge-blue">order</span>
-          <span class="badge-blue">payment</span>
-          <span class="badge-blue">inventory</span>
-          <span class="badge-blue">user-account</span>
-          <span class="badge-blue">shipping</span>
-          <span class="badge-blue">returns</span>
-        </div>
-      </div>
-    </div>
+<div class="col">
+<h3>Cluster Topology</h3>
+<div class="code-block">Global Cluster: aurora-global
+┌─────────────────────────┐
+│     us-east-1           │
+│   (PRIMARY CLUSTER)     │
+│                         │
+│  Writer (r6g.2xlarge)   │
+│  Reader 1 (r6g.xlarge)  │
+│  Reader 2 (r6g.xlarge)  │
+└───────────┬─────────────┘
+            │ Storage-level
+            │ Replication ≤1s
+            ▼
+┌─────────────────────────┐
+│     us-west-2           │
+│  (SECONDARY CLUSTER)    │
+│                         │
+│  Reader 1 (r6g.xlarge)  │
+│  Reader 2 (r6g.xlarge)  │
+└─────────────────────────┘</div>
+</div><div class="col">
+<h3>Key Specifications</h3>
+<table><thead><tr><th>Parameter</th><th>Value</th></tr></thead><tbody><tr><td>Engine</td><td>PostgreSQL 15.4</td></tr><tr><td>Instance Class</td><td>r6g.2xlarge (Writer)</td></tr><tr><td>Replication Lag</td><td>≤1 second (typical)</td></tr><tr><td>RPO</td><td>~1 second</td></tr><tr><td>Failover RTO</td><td><1 minute (planned)</td></tr><tr><td>Max Secondary Regions</td><td>5</td></tr><tr><td>Storage</td><td>Auto-scaling, encrypted</td></tr></tbody></table>
+<h3>Services Using Aurora</h3>
+<ul><li><code>order-service</code> — 주문 CRUD</li><li><code>payment-service</code> — 결제 트랜잭션</li><li><code>inventory-service</code> — 재고 관리</li><li><code>user-account-service</code> — 사용자 계정</li><li><code>shipping-service</code> — 배송 추적</li><li><code>returns-service</code> — 반품 처리</li></ul>
+</div>
+</div>
   </div>
 </div>
 
-<!-- ==================== Slide 4: Write Forwarding ==================== -->
 <div class="slide" data-remarp-id="s4">
   <div class="slide-header" data-remarp-id="s4-header"><h2>Aurora Global Write Forwarding</h2></div>
   <div class="slide-body" data-remarp-id="s4-body">
-    <div class="canvas-container" style="width:100%; max-width:1000px; margin:0 auto;">
-  <canvas></canvas>
-</div>
-<div class="canvas-controls" style="text-align:center; margin-top:4px;">
-  <span style="font-size:0.75rem; color:var(--text-muted);">Use arrow keys to step through animation</span>
-</div>
-<script>
-(function() {
-  const slide = document.currentScript.closest('.slide');
-  if (!slide) return;
-  const container = slide.querySelector('.canvas-container');
-  const canvas = container.querySelector('canvas');
-  const BASE_W = 1000, BASE_H = 350;
-  let ctx, scale = 1;
-
-  function init() {
-    const dpr = window.devicePixelRatio || 1;
-    const rect = container.getBoundingClientRect();
-    if (rect.width === 0) return;
-    scale = rect.width / BASE_W;
-    canvas.width = rect.width * dpr;
-    canvas.height = (BASE_H * scale) * dpr;
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = (BASE_H * scale) + 'px';
-    ctx = canvas.getContext('2d');
-    ctx.scale(dpr * scale, dpr * scale);
-    draw(currentStep);
-  }
-
-  let currentStep = 0;
-  const MAX_STEP = 3;
-
-  function draw(step) {
-    if (!ctx) return;
-    ctx.clearRect(0, 0, BASE_W, BASE_H);
-
-    // Base: 4 components
-    drawBox(ctx, 50, 130, 160, 70, 'us-west-2 App\nINSERT order', Colors.surface, Colors.textPri);
-    drawBox(ctx, 280, 130, 160, 70, 'Aurora Reader\nus-west-2', Colors.cyan, '#fff');
-    drawBox(ctx, 560, 130, 160, 70, 'Aurora Writer\nus-east-1', Colors.orange, '#fff');
-    drawBox(ctx, 790, 130, 160, 70, 'Reader Updated\nus-west-2', Colors.surface, Colors.textPri);
-
-    // Step 1: App → Reader
-    if (step >= 1) {
-      drawArrow(ctx, 210, 165, 280, 165, Colors.textPri, false, true);
-      drawText(ctx, 'INSERT order', 245, 148, { color: Colors.textSec, size: 11, align: 'center' });
-    }
-
-    // Step 2: Reader → Writer (forwarding)
-    if (step >= 2) {
-      drawArrow(ctx, 440, 155, 560, 155, Colors.orange, true, true);
-      drawText(ctx, 'Write Forwarding', 500, 135, { color: Colors.orange, size: 13, align: 'center', weight: 'bold' });
-      drawText(ctx, '+60-80ms RTT', 500, 180, { color: Colors.textMuted, size: 11, align: 'center' });
-      // Highlight writer
-      drawText(ctx, 'COMMIT', 640, 215, { color: Colors.green, size: 14, align: 'center', weight: 'bold' });
-    }
-
-    // Step 3: Writer → Replica (replication) + updated
-    if (step >= 3) {
-      drawArrow(ctx, 720, 175, 790, 175, Colors.green, false, true);
-      drawText(ctx, 'Replicate (≤1s)', 755, 155, { color: Colors.green, size: 11, align: 'center' });
-      // Updated highlight
-      drawRoundRect(ctx, 788, 128, 164, 74, 8, null, Colors.green);
-      drawText(ctx, 'Data visible', 870, 215, { color: Colors.green, size: 12, align: 'center' });
-    }
-
-    // Timeline at bottom
-    const labels = ['1. App sends write', '2. Forward to Primary', '3. Replicate back'];
-    const colors = [Colors.textPri, Colors.orange, Colors.green];
-    labels.forEach((l, i) => {
-      const x = 200 + i * 280;
-      const active = step >= i + 1;
-      drawRoundRect(ctx, x - 100, 280, 200, 30, 4, active ? colors[i] + '33' : Colors.surface, active ? colors[i] : Colors.border);
-      drawText(ctx, l, x, 295, { color: active ? colors[i] : Colors.textMuted, size: 12, align: 'center' });
-    });
-  }
-
-  slide.__canvasStep = function(dir) {
-    if (dir === 'next' && currentStep < MAX_STEP) currentStep++;
-    else if (dir === 'prev' && currentStep > 0) currentStep--;
-    else return false;
-    draw(currentStep);
-    return currentStep;
-  };
-  slide.dataset.slideAction = 'canvas-step';
-  slide.dataset.canvasMaxStep = String(MAX_STEP);
-
-  new ResizeObserver(() => init()).observe(container);
-  init();
-})();
-</script>
+    <p><!-- Slide 5: Aurora Write Forwarding --></p>
+<p><canvas id="write-forwarding" width="1100" height="400"></canvas></p>
+<p><div class="canvas-controls"></p>
+<p>  <button onclick="writeForwardAnim.play()" class="btn-play">▶ Play</button></p>
+<p>  <button onclick="writeForwardAnim.reset()" class="btn-reset">↺ Reset</button></p>
+<p></div></p>
   </div>
 </div>
 
-<!-- ==================== Slide 5: Write Forwarding Latency ==================== -->
 <div class="slide" data-remarp-id="s5">
   <div class="slide-header" data-remarp-id="s5-header"><h2>Write Forwarding Latency Analysis</h2></div>
   <div class="slide-body" data-remarp-id="s5-body">
-    <table>
-      <thead><tr><th>Operation</th><th>Local Region</th><th>With Write Forwarding</th><th>Overhead</th></tr></thead>
-      <tbody>
-        <tr class="fragment fade-in" data-fragment-index="0"><td>Simple INSERT</td><td>5-10ms</td><td>65-90ms</td><td><span class="badge-yellow">+60-80ms (1 RTT)</span></td></tr>
-        <tr class="fragment fade-in" data-fragment-index="1"><td>Batch INSERT (100 rows)</td><td>50-100ms</td><td>110-180ms</td><td><span class="badge-yellow">+60-80ms</span></td></tr>
-        <tr class="fragment fade-in" data-fragment-index="2"><td>UPDATE with index</td><td>3-8ms</td><td>63-88ms</td><td><span class="badge-yellow">+60-80ms</span></td></tr>
-        <tr class="fragment fade-in" data-fragment-index="3"><td>Transaction (3 stmts)</td><td>15-30ms</td><td>195-270ms</td><td><span class="badge-red">+180-240ms (3 RTT)</span></td></tr>
-      </tbody>
-    </table>
-    <h3 style="margin-top:1.2rem;">제약사항</h3>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
-      <div class="card" style="padding:0.8rem;" data-fragment-index="4">
-        <strong style="color:#ef4444;">Read-after-write</strong>
-        <div style="font-size:0.82rem; color:rgba(255,255,255,0.7); margin-top:0.3rem;">복제 지연(≤1s)까지 기다려야 최신 데이터 확인 가능</div>
-      </div>
-      <div class="card" style="padding:0.8rem;" data-fragment-index="5">
-        <strong style="color:#ef4444;">Transaction isolation</strong>
-        <div style="font-size:0.82rem; color:rgba(255,255,255,0.7); margin-top:0.3rem;">각 statement마다 RTT 추가 — 긴 트랜잭션은 비효율적</div>
-      </div>
-      <div class="card" style="padding:0.8rem;" data-fragment-index="6">
-        <strong style="color:#ef4444;">DDL 불가</strong>
-        <div style="font-size:0.82rem; color:rgba(255,255,255,0.7); margin-top:0.3rem;">CREATE/ALTER TABLE은 Primary에서 직접 실행</div>
-      </div>
-      <div class="card" style="padding:0.8rem;" data-fragment-index="7">
-        <strong style="color:#00d68f;">Best Practice</strong>
-        <div style="font-size:0.82rem; color:rgba(255,255,255,0.7); margin-top:0.3rem;">Write-heavy → Primary 리전, Read-heavy → 양 리전</div>
-      </div>
-    </div>
+    <p><!-- Slide 6: Write Forwarding Latency Analysis --></p>
+<table><thead><tr><th>Operation</th><th>Local Region</th><th>With Write Forwarding</th><th>Overhead</th></tr></thead><tbody><tr><td>Simple INSERT</td><td>5-10ms</td><td>65-90ms</td><td>+60-80ms (RTT)</td></tr><tr><td>Batch INSERT (100 rows)</td><td>50-100ms</td><td>110-180ms</td><td>+60-80ms</td></tr><tr><td>UPDATE with index</td><td>3-8ms</td><td>63-88ms</td><td>+60-80ms</td></tr><tr><td>Transaction (3 statements)</td><td>15-30ms</td><td>195-270ms</td><td>+180-240ms (3 RTT)</td></tr></tbody></table>
+<div class="fragment fade-in" data-fragment-index="0">
+<h3>중요 제약사항</h3>
+<table><thead><tr><th>Constraint</th><th>Detail</th></tr></thead><tbody><tr><td><strong>Read-after-write</strong></td><td>복제 지연(≤1s)까지 기다려야 최신 데이터 확인 가능</td></tr><tr><td><strong>Transaction isolation</strong></td><td>각 statement마다 RTT 추가, 긴 트랜잭션은 비효율적</td></tr><tr><td><strong>DDL 불가</strong></td><td>CREATE TABLE, ALTER TABLE 등은 Primary에서 직접 실행</td></tr><tr><td><strong>Temp table 불가</strong></td><td>임시 테이블 사용 불가</td></tr></tbody></table>
+</div>
+<blockquote><p><strong>Best Practice</strong>: Write-heavy 서비스는 Primary 리전에, Read-heavy 서비스는 양 리전에 배치</p></blockquote>
   </div>
 </div>
 
-<!-- ==================== Slide 6: DocumentDB Global Cluster ==================== -->
 <div class="slide" data-remarp-id="s6">
   <div class="slide-header" data-remarp-id="s6-header"><h2>DocumentDB Global Cluster</h2></div>
   <div class="slide-body" data-remarp-id="s6-body">
-    <div class="tab-bar">
-      <button class="tab-btn active" data-tab="docdb-primary">Primary (us-east-1)</button>
-      <button class="tab-btn" data-tab="docdb-secondary">Secondary (us-west-2)</button>
-    </div>
-    <div class="tab-content active" data-tab="docdb-primary">
-      <div class="columns">
-        <div class="col">
-          <h3>Writer + 2 Readers</h3>
-          <div class="code-block" style="font-size:0.78rem;">
-            <div><span class="key">"cluster"</span>: <span class="string">"docdb-global-us-east-1"</span></div>
-            <div><span class="key">"role"</span>: <span class="keyword">"PRIMARY"</span></div>
-            <div><span class="key">"engine"</span>: <span class="string">"docdb 5.0 (MongoDB 5.0)"</span></div>
-            <div><span class="key">"instances"</span>: [</div>
-            <div>  { <span class="key">"class"</span>: <span class="string">"db.r6g.2xlarge"</span>, <span class="key">"role"</span>: <span class="keyword">"writer"</span> }</div>
-            <div>  { <span class="key">"class"</span>: <span class="string">"db.r6g.xlarge"</span>, <span class="key">"role"</span>: <span class="keyword">"reader"</span> } × 2</div>
-            <div>]</div>
-          </div>
-        </div>
-        <div class="col">
-          <h3>Collections</h3>
-          <ul>
-            <li><strong>products</strong> — 150 items, 10 categories</li>
-            <li><strong>user_profiles</strong> — 프로필 + 선호도</li>
-            <li><strong>wishlists</strong> — 위시리스트</li>
-            <li><strong>reviews</strong> — 상품 리뷰 + 평점</li>
-            <li><strong>notifications</strong> — 알림 이력</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-    <div class="tab-content" data-tab="docdb-secondary">
-      <div class="columns">
-        <div class="col">
-          <h3>2 Readers (Read-Only)</h3>
-          <div class="code-block" style="font-size:0.78rem;">
-            <div><span class="key">"cluster"</span>: <span class="string">"docdb-global-us-west-2"</span></div>
-            <div><span class="key">"role"</span>: <span class="keyword">"SECONDARY"</span></div>
-            <div><span class="key">"replication_lag"</span>: <span class="string">"≤ 2 seconds (oplog)"</span></div>
-            <div><span class="key">"read_preference"</span>: <span class="string">"secondaryPreferred"</span></div>
-          </div>
-        </div>
-        <div class="col">
-          <h3>Key Differences from Aurora</h3>
-          <div class="callout callout-danger" style="font-size:0.85rem;">
-            <strong>Write Forwarding 미지원</strong><br>
-            Secondary에서 쓰기 불가. 애플리케이션이 직접 Primary 엔드포인트로 요청해야 함.
-          </div>
-          <table style="font-size:0.8rem;">
-            <tbody>
-              <tr><td>Replication</td><td>Oplog-based async</td></tr>
-              <tr><td>RPO</td><td>~2 seconds</td></tr>
-              <tr><td>Failover</td><td>Manual promotion</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    <p><!-- Slide 7: DocumentDB Global Cluster --></p>
+<p>::: tab Primary Cluster (us-east-1)</p>
+<h3>Writer + 2 Readers</h3>
+<div class="code-block">{
+  <span class="string">"cluster"</span>: <span class="string">"docdb-global-us-east-1"</span>,
+  <span class="string">"role"</span>: <span class="string">"PRIMARY"</span>,
+  <span class="string">"engine"</span>: <span class="string">"docdb 5.0 (MongoDB 5.0 compatible)"</span>,
+  <span class="string">"instances"</span>: [
+    { <span class="string">"id"</span>: <span class="string">"writer"</span>, <span class="string">"class"</span>: <span class="string">"db.r6g.2xlarge"</span>, <span class="string">"role"</span>: <span class="string">"writer"</span> },
+    { <span class="string">"id"</span>: <span class="string">"reader-1"</span>, <span class="string">"class"</span>: <span class="string">"db.r6g.xlarge"</span>, <span class="string">"role"</span>: <span class="string">"reader"</span> },
+    { <span class="string">"id"</span>: <span class="string">"reader-2"</span>, <span class="string">"class"</span>: <span class="string">"db.r6g.xlarge"</span>, <span class="string">"role"</span>: <span class="string">"reader"</span> }
+  ],
+  <span class="string">"encryption"</span>: <span class="string">"at-rest (KMS) + in-transit (TLS)"</span>,
+  <span class="string">"backup"</span>: <span class="string">"continuous, 35-day retention"</span>
+}</div>
+<h3>Collections</h3>
+<ul><li><strong>products</strong> (150 items, 10 categories) — 상품 카탈로그</li><li><strong>user_profiles</strong> — 프로필 + 선호도 + 배송지</li><li><strong>wishlists</strong> — 위시리스트</li><li><strong>reviews</strong> — 상품 리뷰 + 평점</li><li><strong>notifications</strong> — 알림 이력</li></ul>
+<p>:::</p>
+<p>::: tab Secondary Cluster (us-west-2)</p>
+<h3>2 Readers (Read-Only)</h3>
+<div class="code-block">{
+  <span class="string">"cluster"</span>: <span class="string">"docdb-global-us-west-2"</span>,
+  <span class="string">"role"</span>: <span class="string">"SECONDARY"</span>,
+  <span class="string">"engine"</span>: <span class="string">"docdb 5.0"</span>,
+  <span class="string">"instances"</span>: [
+    { <span class="string">"id"</span>: <span class="string">"reader-1"</span>, <span class="string">"class"</span>: <span class="string">"db.r6g.xlarge"</span>, <span class="string">"role"</span>: <span class="string">"reader"</span> },
+    { <span class="string">"id"</span>: <span class="string">"reader-2"</span>, <span class="string">"class"</span>: <span class="string">"db.r6g.xlarge"</span>, <span class="string">"role"</span>: <span class="string">"reader"</span> }
+  ],
+  <span class="string">"replication_lag"</span>: <span class="string">"≤ 2 seconds (oplog-based)"</span>,
+  <span class="string">"read_preference"</span>: <span class="string">"secondaryPreferred"</span>
+}</div>
+<h3>Replication Mechanism</h3>
+<ul><li><strong>oplog</strong> 기반 비동기 복제</li><li>Secondary는 <strong>read-only</strong> (Write Forwarding 미지원)</li><li>Failover 시 Secondary → Primary 승격 (manual)</li><li>RPO: ~2 seconds</li></ul>
+<p>:::</p>
   </div>
 </div>
 
-<!-- ==================== Slide 7: DocumentDB Schema ==================== -->
 <div class="slide" data-remarp-id="s7">
   <div class="slide-header" data-remarp-id="s7-header"><h2>DocumentDB Schema Design</h2></div>
   <div class="slide-body" data-remarp-id="s7-body">
-    <div class="columns">
-      <div class="col">
-        <div class="code-block" style="font-size:0.72rem;">
-          <div class="comment">// products collection</div>
-          <div>{</div>
-          <div>  <span class="key">"productId"</span>: <span class="string">"PROD-001"</span>,</div>
-          <div>  <span class="key">"name"</span>: <span class="string">"삼성 갤럭시 S25 울트라"</span>,</div>
-          <div>  <span class="key">"brand"</span>: <span class="string">"삼성전자"</span>,</div>
-          <div>  <span class="key">"category"</span>: {</div>
-          <div>    <span class="key">"id"</span>: <span class="string">"CAT-01"</span>,</div>
-          <div>    <span class="key">"name"</span>: <span class="string">"전자제품"</span></div>
-          <div>  },</div>
-          <div>  <span class="key">"price"</span>: <span class="value">1799000</span>,</div>
-          <div>  <span class="key">"salePrice"</span>: <span class="value">1439200</span>,</div>
-          <div>  <span class="key">"rating"</span>: <span class="value">4.5</span>,</div>
-          <div>  <span class="key">"stock"</span>: {</div>
-          <div>    <span class="key">"available"</span>: <span class="value">250</span>,</div>
-          <div>    <span class="key">"warehouse"</span>: <span class="string">"WH-EAST-1"</span></div>
-          <div>  }</div>
-          <div>}</div>
-        </div>
-      </div>
-      <div class="col">
-        <h3>Index Strategy</h3>
-        <table style="font-size:0.8rem;">
-          <thead><tr><th>Collection</th><th>Index</th><th>Purpose</th></tr></thead>
-          <tbody>
-            <tr><td>products</td><td><code>{ productId: 1 }</code> unique</td><td>PK lookup</td></tr>
-            <tr><td>products</td><td><code>{ category.slug: 1 }</code></td><td>카테고리 필터</td></tr>
-            <tr><td>products</td><td><code>{ rating: -1 }</code></td><td>평점 정렬</td></tr>
-            <tr><td>user_profiles</td><td><code>{ userId: 1 }</code></td><td>사용자 조회</td></tr>
-            <tr><td>reviews</td><td><code>{ productId: 1 }</code></td><td>상품별 리뷰</td></tr>
-            <tr><td>notifications</td><td><code>{ userId:1, sentAt:-1 }</code></td><td>최근 알림</td></tr>
-          </tbody>
-        </table>
-        <div class="callout callout-info" style="margin-top:0.8rem; font-size:0.82rem;">
-          <strong>임베디드 문서 패턴</strong>: category, stock을 별도 테이블로 분리하지 않고 문서에 포함 → 한 번의 쿼리로 모든 정보 조회
-        </div>
-      </div>
-    </div>
+    <p><!-- Slide 8: DocumentDB Schema Design --></p>
+<div class="code-block"><span class="comment">// products collection — 상품 카탈로그</span>
+{
+  <span class="string">"productId"</span>: <span class="string">"PROD-001"</span>,
+  <span class="string">"name"</span>: <span class="string">"삼성 갤럭시 S25 울트라"</span>,
+  <span class="string">"brand"</span>: <span class="string">"삼성전자"</span>,
+  <span class="string">"category"</span>: { <span class="string">"id"</span>: <span class="string">"CAT-01"</span>, <span class="string">"name"</span>: <span class="string">"전자제품"</span>, <span class="string">"slug"</span>: <span class="string">"electronics"</span> },
+  <span class="string">"price"</span>: 1799000,
+  <span class="string">"salePrice"</span>: 1439200,
+  <span class="string">"discount"</span>: 20,
+  <span class="string">"currency"</span>: <span class="string">"KRW"</span>,
+  <span class="string">"rating"</span>: 4.5,
+  <span class="string">"reviewCount"</span>: 342,
+  <span class="string">"tags"</span>: [<span class="string">"electronics"</span>, <span class="string">"삼성전자"</span>, <span class="string">"인기상품"</span>],
+  <span class="string">"attributes"</span>: { <span class="string">"weight"</span>: <span class="string">"0.5kg"</span>, <span class="string">"origin"</span>: <span class="string">"한국"</span> },
+  <span class="string">"stock"</span>: { <span class="string">"available"</span>: 250, <span class="string">"warehouse"</span>: <span class="string">"WH-EAST-1"</span> },
+  <span class="string">"status"</span>: <span class="string">"active"</span>
+}</div>
+<h3>Index Strategy</h3>
+<table><thead><tr><th>Collection</th><th>Index</th><th>Purpose</th></tr></thead><tbody><tr><td>products</td><td><code>{ productId: 1 }</code> unique</td><td>PK lookup</td></tr><tr><td>products</td><td><code>{ category.slug: 1 }</code></td><td>카테고리 필터</td></tr><tr><td>products</td><td><code>{ brand: 1 }</code>, <code>{ rating: -1 }</code></td><td>브랜드 필터, 평점 정렬</td></tr><tr><td>user_profiles</td><td><code>{ userId: 1 }</code> unique</td><td>사용자 조회</td></tr><tr><td>reviews</td><td><code>{ productId: 1 }</code>, <code>{ rating: -1 }</code></td><td>상품별 리뷰, 평점순</td></tr><tr><td>notifications</td><td><code>{ userId: 1, sentAt: -1 }</code></td><td>최근 알림 조회</td></tr></tbody></table>
   </div>
 </div>
 
-<!-- ==================== Slide 8: ElastiCache Global Datastore ==================== -->
 <div class="slide" data-remarp-id="s8">
   <div class="slide-header" data-remarp-id="s8-header"><h2>ElastiCache Valkey Global Datastore</h2></div>
   <div class="slide-body" data-remarp-id="s8-body">
-    <div class="columns">
-      <div class="col">
-        <div class="flow-v" style="gap:0.8rem;">
-          <!-- Primary cluster -->
-          <div class="card highlight" style="padding:0.8rem; text-align:center;" data-fragment-index="0">
-            <div style="font-weight:600; color:#e056fd; font-size:1.05rem;">Primary (us-east-1)</div>
-            <div style="display:flex; gap:0.5rem; justify-content:center; margin-top:0.5rem;">
-              <div class="badge-blue" style="font-size:0.7rem;">Shard 1<br>R/W</div>
-              <div class="badge-blue" style="font-size:0.7rem;">Shard 2<br>R/W</div>
-              <div class="badge-blue" style="font-size:0.7rem;">Shard 3<br>R/W</div>
-            </div>
-            <div style="font-size:0.7rem; color:rgba(255,255,255,0.5); margin-top:0.3rem;">각 Shard × 2 Replicas</div>
-          </div>
-          <div style="text-align:center; color:#00d68f;" data-fragment-index="1">↓ Async Replication &lt;1s ↓</div>
-          <!-- Secondary cluster -->
-          <div class="card" style="padding:0.8rem; text-align:center;" data-fragment-index="1">
-            <div style="font-weight:600; color:#e056fd; font-size:1.05rem;">Secondary (us-west-2)</div>
-            <div style="display:flex; gap:0.5rem; justify-content:center; margin-top:0.5rem;">
-              <div class="badge-green" style="font-size:0.7rem;">Shard 1<br>Read</div>
-              <div class="badge-green" style="font-size:0.7rem;">Shard 2<br>Read</div>
-              <div class="badge-green" style="font-size:0.7rem;">Shard 3<br>Read</div>
-            </div>
-            <div style="font-size:0.7rem; color:rgba(255,255,255,0.5); margin-top:0.3rem;">Read-only</div>
-          </div>
-        </div>
-      </div>
-      <div class="col">
-        <h3>Cluster Config</h3>
-        <table style="font-size:0.85rem;">
-          <tbody>
-            <tr><td>Engine</td><td>Valkey 7.2</td></tr>
-            <tr><td>Node Type</td><td>cache.r7g.xlarge</td></tr>
-            <tr><td>Shards</td><td>3 (num_node_groups)</td></tr>
-            <tr><td>Replicas/Shard</td><td>2</td></tr>
-            <tr><td>Cross-region lag</td><td><span class="lag-badge lag-low">&lt;1 second</span></td></tr>
-            <tr><td>Encryption</td><td>KMS + TLS</td></tr>
-          </tbody>
-        </table>
-        <div class="callout callout-warning" style="margin-top:0.8rem; font-size:0.82rem;" data-fragment-index="2">
-          <strong>Active-Active 미지원</strong>: ElastiCache Global Datastore는 Primary-Secondary 모델. 쓰기는 Primary에서만 가능.
-        </div>
-      </div>
-    </div>
+    <p><!-- Slide 9: ElastiCache Global Datastore --></p>
+<p><canvas id="elasticache-global" width="1100" height="400"></canvas></p>
+<p><div class="canvas-controls"></p>
+<p>  <button onclick="cacheAnim.play()" class="btn-play">▶ Play</button></p>
+<p>  <button onclick="cacheAnim.reset()" class="btn-reset">↺ Reset</button></p>
+<p></div></p>
+<h3>Cluster Configuration</h3>
+<table><thead><tr><th>Parameter</th><th>Value</th></tr></thead><tbody><tr><td>Engine</td><td>Valkey 7.2</td></tr><tr><td>Node Type</td><td>cache.r7g.xlarge</td></tr><tr><td>Shards</td><td>3 (num_node_groups)</td></tr><tr><td>Replicas/Shard</td><td>2</td></tr><tr><td>Cross-region lag</td><td>< 1 second</td></tr><tr><td>Encryption</td><td>At-rest (KMS) + In-transit (TLS)</td></tr></tbody></table>
   </div>
 </div>
 
-<!-- ==================== Slide 9: Cache Patterns ==================== -->
 <div class="slide" data-remarp-id="s9">
   <div class="slide-header" data-remarp-id="s9-header"><h2>Cache Patterns & TTL Strategy</h2></div>
   <div class="slide-body" data-remarp-id="s9-body">
-    <table style="font-size:0.82rem;">
-      <thead><tr><th>Key Pattern</th><th>TTL</th><th>Type</th><th>Pattern</th></tr></thead>
-      <tbody>
-        <tr><td><code>product:{id}</code></td><td>1h</td><td>Hash</td><td><span class="badge-blue">Cache-Aside</span></td></tr>
-        <tr><td><code>cache:categories</code></td><td>24h</td><td>String</td><td><span class="badge-blue">Refresh-Ahead</span></td></tr>
-        <tr><td><code>cart:{userId}</code></td><td>7d</td><td>Hash</td><td><span class="badge-green">Write-Through</span></td></tr>
-        <tr><td><code>session:{sessionId}</code></td><td>2h</td><td>Hash</td><td><span class="badge-green">Write-Through</span></td></tr>
-        <tr><td><code>ratelimit:api:{userId}</code></td><td>60s</td><td>Counter</td><td><span class="badge-yellow">INCR + EXPIRE</span></td></tr>
-        <tr><td><code>stock:{productId}</code></td><td><strong>∞</strong></td><td>Counter</td><td><span class="badge-red">Atomic DECR</span></td></tr>
-        <tr><td><code>leaderboard:popular</code></td><td><strong>∞</strong></td><td>Sorted Set</td><td><span class="badge-yellow">ZINCRBY</span></td></tr>
-      </tbody>
-    </table>
-    <h3 style="margin-top:1rem;">Invalidation Strategy</h3>
-    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0.6rem;">
-      <div class="card" style="padding:0.6rem; text-align:center;">
-        <strong style="color:#3b82f6;">Cache-Aside</strong>
-        <div style="font-size:0.72rem; color:rgba(255,255,255,0.6); margin-top:0.3rem;">읽기 빈번<br>쓰기 적은 데이터</div>
-      </div>
-      <div class="card" style="padding:0.6rem; text-align:center;">
-        <strong style="color:#00d68f;">Write-Through</strong>
-        <div style="font-size:0.72rem; color:rgba(255,255,255,0.6); margin-top:0.3rem;">즉시 일관성<br>필요</div>
-      </div>
-      <div class="card" style="padding:0.6rem; text-align:center;">
-        <strong style="color:#FF9900;">Event-Driven</strong>
-        <div style="font-size:0.72rem; color:rgba(255,255,255,0.6); margin-top:0.3rem;">Kafka 이벤트로<br>캐시 무효화</div>
-      </div>
-      <div class="card" style="padding:0.6rem; text-align:center;">
-        <strong style="color:#e056fd;">TTL-Based</strong>
-        <div style="font-size:0.72rem; color:rgba(255,255,255,0.6); margin-top:0.3rem;">결과적 일관성<br>자연 만료</div>
-      </div>
-    </div>
+    <p><!-- Slide 10: Cache Patterns & TTL Strategy --></p>
+<table><thead><tr><th>Key Pattern</th><th>TTL</th><th>Data Type</th><th>Access Pattern</th></tr></thead><tbody><tr><td><code>product:{id}</code></td><td>1h</td><td>Hash</td><td>Cache-Aside: DB 조회 후 캐시</td></tr><tr><td><code>cache:categories</code></td><td>24h</td><td>String (JSON)</td><td>Refresh-Ahead</td></tr><tr><td><code>cart:{userId}</code></td><td>7d</td><td>Hash</td><td>Write-Through: 즉시 반영</td></tr><tr><td><code>session:{sessionId}</code></td><td>2h</td><td>Hash</td><td>Write-Through</td></tr><tr><td><code>ratelimit:api:{userId}</code></td><td>60s</td><td>String (counter)</td><td>Increment + EXPIRE</td></tr><tr><td><code>stock:{productId}</code></td><td>- (no TTL)</td><td>String (counter)</td><td>DECR on purchase</td></tr><tr><td><code>leaderboard:popular</code></td><td>- (no TTL)</td><td>Sorted Set</td><td>ZINCRBY on view</td></tr><tr><td><code>search-history:{userId}</code></td><td>30d</td><td>List</td><td>LPUSH + LTRIM(50)</td></tr><tr><td><code>promo:flash-sale</code></td><td>24h</td><td>Hash</td><td>Write-Through</td></tr></tbody></table>
+<div class="fragment fade-in" data-fragment-index="0">
+<h3>Cache Invalidation Strategy</h3>
+<table><thead><tr><th>Pattern</th><th>When to Use</th><th>Implementation</th></tr></thead><tbody><tr><td><strong>Cache-Aside</strong></td><td>읽기 빈번, 쓰기 적은 데이터</td><td>App이 캐시 miss 시 DB 조회 → SET</td></tr><tr><td><strong>Write-Through</strong></td><td>즉시 일관성 필요</td><td>App이 DB + 캐시 동시 갱신</td></tr><tr><td><strong>Event-Driven</strong></td><td>비동기 일관성 OK</td><td>Kafka 이벤트로 캐시 무효화</td></tr><tr><td><strong>TTL-Based</strong></td><td>결과적 일관성 OK</td><td>자연 만료 후 DB에서 재로드</td></tr></tbody></table>
+</div>
   </div>
 </div>
 
-<!-- ==================== Slide 10: MSK Architecture ==================== -->
 <div class="slide" data-remarp-id="s10">
   <div class="slide-header" data-remarp-id="s10-header"><h2>MSK (Kafka) Event Architecture</h2></div>
   <div class="slide-body" data-remarp-id="s10-body">
-    <div class="columns">
-      <div class="col">
-        <div class="flow-v" style="gap:0.5rem;">
-          <h3 style="margin:0;">Producers</h3>
-          <div style="display:flex; flex-wrap:wrap; gap:0.3rem;">
-            <span class="badge-blue" style="font-size:0.7rem;">order-svc</span>
-            <span class="badge-blue" style="font-size:0.7rem;">payment-svc</span>
-            <span class="badge-blue" style="font-size:0.7rem;">inventory-svc</span>
-            <span class="badge-blue" style="font-size:0.7rem;">user-svc</span>
-            <span class="badge-blue" style="font-size:0.7rem;">product-svc</span>
-          </div>
-          <div style="text-align:center; font-size:1.2rem;">↓</div>
-          <div class="card highlight" style="padding:0.8rem; text-align:center;">
-            <div style="font-weight:700; color:#6c5ce7; font-size:1.1rem;">MSK Cluster</div>
-            <div style="font-size:0.8rem; margin-top:0.3rem;">kafka.m5.2xlarge × 6</div>
-            <div style="font-size:0.75rem; color:rgba(255,255,255,0.6);">35 Topics • 1TB/broker • SASL/SCRAM</div>
-          </div>
-          <div style="text-align:center; font-size:1.2rem;">↓</div>
-          <h3 style="margin:0;">Consumers</h3>
-          <div style="display:flex; flex-wrap:wrap; gap:0.3rem;">
-            <span class="badge-green" style="font-size:0.7rem;">notification</span>
-            <span class="badge-green" style="font-size:0.7rem;">analytics</span>
-            <span class="badge-green" style="font-size:0.7rem;">search</span>
-            <span class="badge-green" style="font-size:0.7rem;">recommendation</span>
-            <span class="badge-green" style="font-size:0.7rem;">warehouse</span>
-          </div>
-        </div>
-      </div>
-      <div class="col">
-        <h3>Topic Categories</h3>
-        <table style="font-size:0.8rem;">
-          <thead><tr><th>Category</th><th>Topics</th><th>Partitions</th><th>Retention</th></tr></thead>
-          <tbody>
-            <tr><td>Order</td><td>4</td><td>6 each</td><td>7d</td></tr>
-            <tr><td>Payment</td><td>4</td><td>6 each</td><td>7d</td></tr>
-            <tr><td>Inventory</td><td>4</td><td>4 each</td><td>7d</td></tr>
-            <tr><td>Notification</td><td>4</td><td>3 each</td><td>3d</td></tr>
-            <tr><td>User/Product</td><td>7</td><td>3-4</td><td>7d</td></tr>
-            <tr><td>Infra (DLQ)</td><td>2</td><td>1/6</td><td>30d</td></tr>
-          </tbody>
-        </table>
-        <div class="callout callout-info" style="margin-top:0.6rem; font-size:0.82rem;">
-          <strong>Saga Pattern</strong>: <code>saga.orchestrator</code> 토픽이 분산 트랜잭션 워크플로우 조율. 실패 시 <code>dlq.all</code>로 이동(30일 보관).
-        </div>
-      </div>
-    </div>
+    <p><!-- Slide 11: MSK Kafka Architecture --></p>
+<p><canvas id="msk-topology" width="1100" height="420"></canvas></p>
+<p><div class="canvas-controls"></p>
+<p>  <button onclick="mskAnim.play()" class="btn-play">▶ Play</button></p>
+<p>  <button onclick="mskAnim.reset()" class="btn-reset">↺ Reset</button></p>
+<p></div></p>
+<h3>Topic Summary</h3>
+<table><thead><tr><th>Category</th><th>Topics</th><th>Partitions</th><th>Retention</th></tr></thead><tbody><tr><td>Order</td><td>order.created/confirmed/shipped/delivered</td><td>6 each</td><td>7d</td></tr><tr><td>Payment</td><td>payment.completed/refunded/failed</td><td>6 each</td><td>7d</td></tr><tr><td>Inventory</td><td>inventory.reserved/released/restocked</td><td>4 each</td><td>7d</td></tr><tr><td>Notification</td><td>notification.email/push/sms</td><td>3 each</td><td>3d</td></tr><tr><td>Infrastructure</td><td>dlq.all, saga.orchestrator</td><td>1, 6</td><td>30d, 7d</td></tr></tbody></table>
   </div>
 </div>
 
-<!-- ==================== Slide 11: MSK Replicator ==================== -->
 <div class="slide" data-remarp-id="s11">
-  <div class="slide-header" data-remarp-id="s11-header"><h2>MSK Replicator: Cross-Region</h2></div>
+  <div class="slide-header" data-remarp-id="s11-header"><h2>MSK Replicator: Cross-Region Topic Replication</h2></div>
   <div class="slide-body" data-remarp-id="s11-body">
-    <div class="compare-toggle" style="margin-bottom:0.8rem;">
-      <button class="compare-btn active" data-target="msk-enabled">Replicator Enabled</button>
-      <button class="compare-btn" data-target="msk-disabled">Replicator Disabled</button>
-    </div>
-    <div class="compare-content active" data-id="msk-enabled">
-      <div class="columns">
-        <div class="col">
-          <div class="code-block" style="font-size:0.78rem; margin-bottom:0.8rem;">
-            <div>[us-east-1 MSK] ─── <span class="keyword">MSK Replicator</span> ──→ [us-west-2 MSK]</div>
-            <div>                    <span class="comment">(IAM Auth, async)</span></div>
-          </div>
-          <ul style="font-size:0.85rem;">
-            <li>복제 대상: 모든 토픽 (regex: <code>.*</code>)</li>
-            <li>Consumer Offset 동기화 가능</li>
-            <li>Compression: GZIP</li>
-            <li>Latency: 수백 ms ~ 수 초</li>
-          </ul>
-        </div>
-        <div class="col">
-          <h3 style="color:#00d68f;">장점</h3>
-          <ul style="font-size:0.85rem;">
-            <li>DR 시 Secondary에서 <strong>즉시 consume</strong> 가능</li>
-            <li>Consumer offset 동기화 → 이벤트 유실 최소화</li>
-            <li>토픽 구성 자동 동기화</li>
-          </ul>
-          <h3 style="color:#ef4444;">비용</h3>
-          <ul style="font-size:0.85rem;">
-            <li>데이터 전송: $0.02/GB (리전 간)</li>
-            <li>Replicator 시간당 요금 추가</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-    <div class="compare-content" data-id="msk-disabled">
-      <div class="columns">
-        <div class="col">
-          <div class="code-block" style="font-size:0.78rem; margin-bottom:0.8rem;">
-            <div>[us-east-1 MSK] ─── <span class="comment">(no replication)</span> ──→ [us-west-2 MSK]</div>
-          </div>
-          <ul style="font-size:0.85rem;">
-            <li>Secondary MSK: 독립 클러스터 (빈 토픽)</li>
-            <li>DR 시 Producer가 Secondary로 전환</li>
-          </ul>
-        </div>
-        <div class="col">
-          <h3 style="color:#00d68f;">장점</h3>
-          <ul style="font-size:0.85rem;">
-            <li>크로스리전 데이터 전송 비용 없음</li>
-            <li>구성 단순</li>
-          </ul>
-          <h3 style="color:#ef4444;">단점</h3>
-          <ul style="font-size:0.85rem;">
-            <li>DR 시 <strong>이벤트 유실 불가피</strong> (in-flight)</li>
-            <li>Consumer offset 재설정 필요</li>
-            <li>Failover 시간 증가</li>
-          </ul>
-        </div>
-      </div>
-    </div>
+    <p><!-- Slide 12: MSK Replicator --></p>
+<p>::: option-a MSK Replicator Enabled</p>
+<h3>Active Configuration</h3>
+<div class="code-block">[us-east-1 MSK] ─── MSK Replicator ──→ [us-west-2 MSK]
+                    (IAM Auth, <span class="keyword">async</span>)</div>
+<p><strong>복제 대상</strong>: 모든 토픽 (regex: <code>.*</code>)</p>
+<p><strong>Consumer Offset</strong>: 동기화 가능</p>
+<p><strong>Compression</strong>: GZIP</p>
+<p><strong>Latency</strong>: 수백 ms ~ 수 초</p>
+<h3>장점</h3>
+<ul><li>DR 시 Secondary에서 즉시 consume 가능</li><li>Consumer offset 동기화로 이벤트 유실 최소화</li><li>토픽 구성(partitions, configs) 자동 동기화</li></ul>
+<h3>비용</h3>
+<ul><li>데이터 전송: $0.02/GB (리전 간)</li><li>Replicator 시간당 요금 추가</li></ul>
+<p>:::</p>
+<p>::: option-b MSK Replicator Disabled</p>
+<h3>Passive Configuration</h3>
+<div class="code-block">[us-east-1 MSK] ─── (no replication) ──→ [us-west-2 MSK]</div>
+<p><strong>Secondary MSK</strong>: 독립 클러스터 (빈 토픽)</p>
+<p><strong>DR 시나리오</strong>: Producer가 Secondary로 전환</p>
+<h3>장점</h3>
+<ul><li>크로스리전 데이터 전송 비용 없음</li><li>구성 단순</li></ul>
+<h3>단점</h3>
+<ul><li>DR 시 이벤트 유실 불가피 (in-flight events)</li><li>Consumer offset 재설정 필요</li><li>Failover 시간 증가 (토픽 재생성 불필요하나 데이터 없음)</li></ul>
+<p>:::</p>
   </div>
 </div>
 
-<!-- ==================== Slide 12: Consistency Spectrum ==================== -->
 <div class="slide" data-remarp-id="s12">
   <div class="slide-header" data-remarp-id="s12-header"><h2>Consistency vs Latency Trade-offs</h2></div>
   <div class="slide-body" data-remarp-id="s12-body">
-    <div style="position:relative; padding:1.5rem 0;">
-      <!-- Spectrum bar -->
-      <div style="height:8px; background:linear-gradient(90deg, #3b82f6, #FF9900, #ef4444); border-radius:4px; margin:0 2rem;"></div>
-      <div style="display:flex; justify-content:space-between; margin:0.3rem 2rem 1.5rem; font-size:0.75rem; color:rgba(255,255,255,0.5);">
-        <span>Strong Consistency</span>
-        <span>Eventual Consistency</span>
-      </div>
-      <!-- Items on the spectrum -->
-      <div style="display:flex; justify-content:space-between; margin:0 1rem; gap:0.5rem;">
-        <div class="card" style="padding:0.6rem; text-align:center; flex:1;" data-fragment-index="0">
-          <div style="font-weight:600; color:#3b82f6; font-size:0.85rem;">Aurora<br>Primary Writer</div>
-          <div style="font-size:0.7rem; margin-top:0.3rem;">5-10ms</div>
-          <div style="font-size:0.65rem; color:rgba(255,255,255,0.5);">READ COMMITTED</div>
-        </div>
-        <div class="card" style="padding:0.6rem; text-align:center; flex:1;" data-fragment-index="1">
-          <div style="font-weight:600; color:#6c5ce7; font-size:0.85rem;">ElastiCache<br>Primary</div>
-          <div style="font-size:0.7rem; margin-top:0.3rem;">&lt;1ms</div>
-          <div style="font-size:0.65rem; color:rgba(255,255,255,0.5);">Single-region strong</div>
-        </div>
-        <div class="card" style="padding:0.6rem; text-align:center; flex:1;" data-fragment-index="2">
-          <div style="font-weight:600; color:#FF9900; font-size:0.85rem;">Aurora<br>Write Forwarding</div>
-          <div style="font-size:0.7rem; margin-top:0.3rem;">65-90ms</div>
-          <div style="font-size:0.65rem; color:rgba(255,255,255,0.5);">Bounded staleness</div>
-        </div>
-        <div class="card" style="padding:0.6rem; text-align:center; flex:1;" data-fragment-index="3">
-          <div style="font-weight:600; color:#FF9900; font-size:0.85rem;">DocumentDB<br>Secondary</div>
-          <div style="font-size:0.7rem; margin-top:0.3rem;">≤2s lag</div>
-          <div style="font-size:0.65rem; color:rgba(255,255,255,0.5);">Eventual</div>
-        </div>
-        <div class="card" style="padding:0.6rem; text-align:center; flex:1;" data-fragment-index="4">
-          <div style="font-weight:600; color:#ef4444; font-size:0.85rem;">MSK<br>Replicator</div>
-          <div style="font-size:0.7rem; margin-top:0.3rem;">100ms~5s</div>
-          <div style="font-size:0.65rem; color:rgba(255,255,255,0.5);">At-least-once</div>
-        </div>
-      </div>
-    </div>
-    <div class="callout callout-info" style="margin-top:0.5rem;">
-      <strong>핵심 원칙</strong>: 쓰기 경로는 <strong>일관성</strong>을 우선시하고, 읽기 경로는 <strong>레이턴시</strong>를 우선시한다.
-    </div>
+    <p><!-- Slide 13: Consistency vs Latency Trade-offs --></p>
+<p><canvas id="consistency-spectrum" width="1100" height="400"></canvas></p>
+<p><div class="canvas-controls"></p>
+<p>  <button onclick="consistencyAnim.play()" class="btn-play">▶ Play</button></p>
+<p>  <button onclick="consistencyAnim.reset()" class="btn-reset">↺ Reset</button></p>
+<p></div></p>
   </div>
 </div>
 
-<!-- ==================== Slide 13: RPO Matrix ==================== -->
 <div class="slide" data-remarp-id="s13">
   <div class="slide-header" data-remarp-id="s13-header"><h2>RPO & Replication Lag Matrix</h2></div>
   <div class="slide-body" data-remarp-id="s13-body">
-    <table>
-      <thead><tr><th>Data Store</th><th>Replication</th><th>Typical Lag</th><th>RPO</th><th>Risk</th></tr></thead>
-      <tbody>
-        <tr><td><strong>Aurora Global DB</strong></td><td>Storage-level async</td><td>≤ 1s</td><td>~1s</td><td><span class="badge-green">Low</span></td></tr>
-        <tr><td><strong>ElastiCache Global</strong></td><td>Async replication</td><td>&lt; 1s</td><td>~1s</td><td><span class="badge-green">Low</span></td></tr>
-        <tr><td><strong>DocumentDB Global</strong></td><td>Oplog-based async</td><td>≤ 2s</td><td>~2s</td><td><span class="badge-yellow">Medium</span></td></tr>
-        <tr><td><strong>MSK Replicator</strong></td><td>Topic-level async</td><td>100ms ~ 5s</td><td>~5s</td><td><span class="badge-yellow">Medium</span></td></tr>
-        <tr><td><strong>OpenSearch</strong></td><td>Cross-cluster (manual)</td><td>Minutes</td><td>Minutes</td><td><span class="badge-red">High</span></td></tr>
-        <tr><td><strong>S3 CRR</strong></td><td>Object-level async</td><td>≤ 15min</td><td>~15min</td><td><span class="badge-red">High</span></td></tr>
-      </tbody>
-    </table>
-    <h3 style="margin-top:1rem;">Failover 시 데이터 유실 시나리오</h3>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
-      <div class="card" style="padding:0.6rem;"><strong style="color:#FF9900;">Aurora</strong><span style="font-size:0.8rem; color:rgba(255,255,255,0.7);"> — ≤1s 미커밋 주문/결제 유실 → <strong>Idempotent retry + DLQ</strong></span></div>
-      <div class="card" style="padding:0.6rem;"><strong style="color:#00cec9;">DocumentDB</strong><span style="font-size:0.8rem; color:rgba(255,255,255,0.7);"> — ≤2s 프로필 업데이트 유실 → <strong>Event sourcing</strong></span></div>
-      <div class="card" style="padding:0.6rem;"><strong style="color:#e056fd;">ElastiCache</strong><span style="font-size:0.8rem; color:rgba(255,255,255,0.7);"> — ≤1s 세션/장바구니 유실 → <strong>Session reconstruction</strong></span></div>
-      <div class="card" style="padding:0.6rem;"><strong style="color:#6c5ce7;">MSK</strong><span style="font-size:0.8rem; color:rgba(255,255,255,0.7);"> — In-flight 이벤트 유실 → <strong>Consumer idempotency</strong></span></div>
-    </div>
+    <p><!-- Slide 14: RPO / Replication Lag Matrix --></p>
+<table><thead><tr><th>Data Store</th><th>Replication Method</th><th>Typical Lag</th><th>RPO</th><th>Risk Level</th></tr></thead><tbody><tr><td><strong>Aurora Global DB</strong></td><td>Storage-level async</td><td>≤ 1s</td><td>~1s</td><td>🟢 Low</td></tr><tr><td><strong>DocumentDB Global</strong></td><td>Oplog-based async</td><td>≤ 2s</td><td>~2s</td><td>🟡 Medium</td></tr><tr><td><strong>ElastiCache Global</strong></td><td>Async replication</td><td>< 1s</td><td>~1s</td><td>🟢 Low</td></tr><tr><td><strong>MSK Replicator</strong></td><td>Topic-level async</td><td>100ms ~ 5s</td><td>~5s</td><td>🟡 Medium</td></tr><tr><td><strong>OpenSearch</strong></td><td>Cross-cluster (manual)</td><td>Minutes</td><td>Minutes</td><td>🔴 High</td></tr><tr><td><strong>S3 CRR</strong></td><td>Object-level async</td><td>≤ 15min</td><td>~15min</td><td>🔴 High</td></tr></tbody></table>
+<div class="fragment fade-in" data-fragment-index="0">
+<h3>Data Loss Scenarios During Regional Failover</h3>
+<table><thead><tr><th>Scenario</th><th>Uncommitted Data</th><th>Impact</th><th>Mitigation</th></tr></thead><tbody><tr><td>Aurora Failover</td><td>≤1s of writes</td><td>최근 주문/결제 유실</td><td>Idempotent retry + DLQ</td></tr><tr><td>DocumentDB Failover</td><td>≤2s of writes</td><td>프로필/리뷰 업데이트 유실</td><td>Event sourcing + replay</td></tr><tr><td>ElastiCache Failover</td><td>≤1s of writes</td><td>세션/장바구니 유실</td><td>Session reconstruction</td></tr><tr><td>MSK Failover</td><td>In-flight events</td><td>이벤트 순서 보장 불가</td><td>Consumer idempotency</td></tr></tbody></table>
+</div>
+<blockquote><p><strong>핵심</strong>: 모든 서비스는 <strong>idempotent</strong>하게 설계하여 재시도 시 중복 처리를 방지해야 합니다.</p></blockquote>
   </div>
 </div>
 
-<!-- ==================== Slide 14: Key Takeaways ==================== -->
 <div class="slide" data-remarp-id="s14">
   <div class="slide-header" data-remarp-id="s14-header"><h2>Key Takeaways</h2></div>
   <div class="slide-body" data-remarp-id="s14-body">
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-      <div class="card highlight" style="padding:1.2rem;">
-        <h3 style="color:#FF9900; margin:0 0 0.5rem 0;">1. Polyglot Persistence</h3>
-        <p style="font-size:0.88rem; color:rgba(255,255,255,0.75); margin:0;">각 데이터 스토어는 워크로드 특성에 맞게 선택. Aurora(ACID), DocumentDB(문서), ElastiCache(캐시), MSK(이벤트)</p>
-      </div>
-      <div class="card" style="padding:1.2rem;">
-        <h3 style="color:#3b82f6; margin:0 0 0.5rem 0;">2. Write-Primary / Read-Local</h3>
-        <p style="font-size:0.88rem; color:rgba(255,255,255,0.75); margin:0;">모든 쓰기는 Primary 리전으로 라우팅. 읽기는 양 리전에서 서비스. Aurora Write Forwarding 활용.</p>
-      </div>
-      <div class="card" style="padding:1.2rem;">
-        <h3 style="color:#e056fd; margin:0 0 0.5rem 0;">3. Async Replication Trade-offs</h3>
-        <p style="font-size:0.88rem; color:rgba(255,255,255,0.75); margin:0;">모든 크로스리전 복제는 비동기. RPO는 1초(Aurora)~15분(S3). 강한 일관성 필요시 Primary에서 처리.</p>
-      </div>
-      <div class="card highlight" style="padding:1.2rem;">
-        <h3 style="color:#00d68f; margin:0 0 0.5rem 0;">4. Idempotency is King</h3>
-        <p style="font-size:0.88rem; color:rgba(255,255,255,0.75); margin:0;">Failover, 복제 지연, 네트워크 파티션 — 모든 상황에서 안전하려면 서비스의 idempotent 설계가 필수.</p>
-      </div>
-    </div>
+    <p><!-- Slide 15: Key Takeaways --></p>
+<p>:::card-grid</p>
+<p>:::card highlight</p>
+<h3>1. Polyglot Persistence</h3>
+<p>각 데이터 스토어는 워크로드 특성에 맞게 선택. Aurora(ACID), DocumentDB(문서), ElastiCache(캐시), MSK(이벤트)</p>
+<p>:::</p>
+<p>:::card</p>
+<h3>2. Write-Primary / Read-Local</h3>
+<p>모든 쓰기는 Primary 리전으로 라우팅. 읽기는 양 리전에서 서비스. Aurora Write Forwarding으로 Secondary에서도 쓰기 가능.</p>
+<p>:::</p>
+<p>:::card</p>
+<h3>3. Async Replication Trade-offs</h3>
+<p>모든 크로스리전 복제는 비동기. RPO는 1초(Aurora)부터 15분(S3)까지 다양. 강한 일관성이 필요하면 Primary에서 처리.</p>
+<p>:::</p>
+<p>:::card highlight</p>
+<h3>4. Idempotency is King</h3>
+<p>Failover, 복제 지연, 네트워크 파티션 — 모든 상황에서 안전하려면 서비스의 idempotent 설계가 필수.</p>
+<p>:::</p>
+<p>:::</p>
   </div>
 </div>
 
-<!-- ==================== Slide 15: Quiz ==================== -->
 <div class="slide" data-remarp-id="s15">
   <div class="slide-header" data-remarp-id="s15-header"><h2>Block 2 Quiz</h2></div>
-  <div class="slide-body" data-remarp-id="s15-body">
-    <div class="quiz" data-quiz="q1">
-      <p><strong>Q1.</strong> Aurora Global Write Forwarding에서 3개 statement 트랜잭션의 추가 레이턴시는?</p>
-      <div class="quiz-option" data-value="a">60-80ms (1 RTT)</div>
-      <div class="quiz-option" data-value="b">120-160ms (2 RTT)</div>
-      <div class="quiz-option" data-value="c" data-correct>180-240ms (3 RTT)</div>
-      <div class="quiz-option" data-value="d">240-320ms (4 RTT)</div>
-      <div class="quiz-feedback">각 statement마다 RTT가 추가됩니다. 3개 statement = 3 RTT ≈ 180-240ms.</div>
-    </div>
-    <div class="quiz" data-quiz="q2">
-      <p><strong>Q2.</strong> DocumentDB Global Cluster에서 Secondary 리전의 쓰기 처리 방식은?</p>
-      <div class="quiz-option" data-value="a">Write Forwarding으로 자동 포워딩</div>
-      <div class="quiz-option" data-value="b" data-correct>애플리케이션이 직접 Primary 엔드포인트로 요청</div>
-      <div class="quiz-option" data-value="c">Secondary에서 직접 쓰기 후 동기화</div>
-      <div class="quiz-option" data-value="d">Active-Active 양방향 쓰기</div>
-      <div class="quiz-feedback">DocumentDB는 Write Forwarding 미지원. 쓰기는 애플리케이션이 Primary로 직접 라우팅해야 합니다.</div>
-    </div>
-    <div class="quiz" data-quiz="q3">
-      <p><strong>Q3.</strong> 재고 카운터(stock)에 TTL을 설정하지 않는 이유는?</p>
-      <div class="quiz-option" data-value="a">비용 절감</div>
-      <div class="quiz-option" data-value="b" data-correct>원자적 DECR로 실시간 재고 관리</div>
-      <div class="quiz-option" data-value="c">Global Datastore가 TTL 미지원</div>
-      <div class="quiz-option" data-value="d">복제 시 TTL 동기화 불가</div>
-      <div class="quiz-feedback">재고는 DECR로 원자적 감소. TTL 만료 시 재고 데이터 유실 → 초과 판매 위험.</div>
-    </div>
-    <div class="quiz" data-quiz="q4">
-      <p><strong>Q4.</strong> 멀티리전 데이터 아키텍처에서 가장 중요한 설계 원칙은?</p>
-      <div class="quiz-option" data-value="a">강한 일관성 보장</div>
-      <div class="quiz-option" data-value="b">최소 레이턴시</div>
-      <div class="quiz-option" data-value="c" data-correct>Idempotent 설계</div>
-      <div class="quiz-option" data-value="d">동기식 복제</div>
-      <div class="quiz-feedback">분산 시스템의 모든 장애 상황에서 안전하려면 동일 요청을 여러 번 처리해도 결과가 같은 idempotent 설계가 필수.</div>
-    </div>
+  <div class="slide-body" data-remarp-id="s15-body" style="overflow-y:auto">
+    
   </div>
 </div>
-
-</div><!-- end slide-deck -->
-
+</div>
 <script src="./common/animation-utils.js"></script>
 <script src="./common/slide-framework.js"></script>
 <script src="./common/quiz-component.js"></script>
 <script src="./common/presenter-view.js"></script>
+
 <script>
+  
+  const presenterNotes = {
+    1: "[1min] 두 번째 블록인 Data Sync & Replication 세션에 오신 것을 환영합니다.\n\n이 블록에서는 멀티리전 아키텍처의 핵심 과제인 데이터 동기화와 복제 전략을 심층적으로 다룹니다. Aurora Global Database, DocumentDB Global Cluster, ElastiCache Global Datastore, MSK Replicator 등 각 데이터 스토어의 크로스리전 복제 메커니즘과 트레이드오프를 분석합니다.\n\n\n먼저 Polyglot Persistence 전략부터 살펴보겠습니다.",
+    2: "❓ [2min] 멀티리전 환경에서 Polyglot Persistence, 즉 다양한 데이터 스토어를 목적에 맞게 사용하는 전략이 핵심입니다.\n\nACID 트랜잭션이 필요한 주문, 결제, 재고 등은 Aurora PostgreSQL Global Database를 사용합니다. 1초 이내의 비동기 복제로 Secondary 리전에서 읽기를 제공합니다.\n\n유연한 스키마가 필요한 상품 카탈로그, 사용자 프로필 등은 DocumentDB Global Cluster를 사용합니다.\n\n실시간 캐시는 ElastiCache Valkey Global Datastore로, 세션, 장바구니, 레이트 리미팅 등을 처리합니다.\n\n이벤트 드리븐 아키텍처의 백본은 MSK Kafka이며, MSK Replicator로 크로스리전 토픽 복제를 합니다.\n\n\n혹시 현재 운영 중인 서비스에서 여러 데이터 스토어를 함께 사용하고 계신 분 계신가요?\n\n\n이제 각 데이터 스토어의 복제 패턴을 하나씩 살펴보겠습니다.",
+    3: "[3min] 이 다이어그램은 우리 아키텍처에서 사용하는 5가지 크로스리전 복제 패턴을 보여줍니다.\n\nStep 1: Aurora Global Database — Primary Writer가 us-east-1에 있고, Storage-level replication으로 us-west-2의 Secondary Cluster에 1초 이내로 복제됩니다. Write Forwarding을 통해 Secondary에서도 쓰기가 가능합니다.\n\nStep 2: DocumentDB Global Cluster — 마찬가지로 Primary/Secondary 구조이며, oplog 기반 복제로 2초 이내 동기화됩니다.\n\nStep 3: ElastiCache Global Datastore — Active-Active 읽기를 지원하되, 쓰기는 Primary에서만 가능합니다. Sub-second 복제 지연을 보장합니다.\n\nStep 4: MSK Replicator — Kafka 토픽을 리전 간 비동기로 복제합니다. Consumer offset도 함께 동기화 가능합니다.\n\nStep 5: S3 Cross-Region Replication — 객체 수준 비동기 복제, 15분 이내 SLA입니다.\n\n각 패턴의 공통점은 비동기(async) 복제라는 것입니다. 강한 일관성이 필요한 쓰기는 Primary 리전으로 라우팅하고, 읽기는 양 리전에서 서비스합니다.\n\n\n가장 중요한 Aurora부터 상세히 살펴보겠습니다.",
+    4: "[2min] Aurora Global Database는 Storage-level replication을 사용합니다. 이는 MySQL이나 PostgreSQL의 논리적 복제와 다릅니다.\n\n스토리지 레이어에서 직접 복제하기 때문에 Primary의 성능에 영향을 미치지 않으면서 1초 이내의 복제 지연을 달성합니다.\n\nPrimary Cluster는 us-east-1에 Writer 1대, Reader 2대로 구성됩니다. Secondary Cluster는 us-west-2에 Reader 2대입니다. Secondary에는 Writer가 없지만, Failover 시 Reader 중 하나가 Writer로 승격됩니다.\n\n주의할 점은 Aurora Global Database는 비동기 복제이므로 RPO가 0이 아닙니다. 최근 1초 이내의 데이터가 유실될 수 있습니다. 이 점이 Active-Active 쓰기를 직접 지원하지 않는 이유이기도 합니다.\n\n\n그럼 Secondary 리전에서의 쓰기는 어떻게 처리할까요? Write Forwarding입니다.",
+    5: "[3min] Write Forwarding은 Secondary 리전의 애플리케이션이 로컬 Aurora Reader에게 쓰기 요청을 보내면, Aurora가 자동으로 이를 Primary Writer로 포워딩하는 메커니즘입니다.\n\nStep 1: us-west-2의 order-service가 INSERT 쿼리를 로컬 Aurora Reader에 전송합니다.\n\nStep 2: Aurora Reader가 이 쓰기를 감지하고 Primary Writer(us-east-1)로 자동 포워딩합니다.\n\nStep 3: Primary Writer가 쓰기를 실행하고 커밋합니다.\n\nStep 4: Storage-level replication으로 1초 이내에 Secondary Reader에 반영됩니다.\n\nStep 5: 애플리케이션에게 성공 응답이 돌아옵니다.\n\n총 추가 레이턴시는 리전 간 네트워크 RTT(약 60-80ms) + Primary 쓰기 시간입니다. 읽기 요청은 여전히 로컬에서 처리되므로, Read-heavy 워크로드에서 매우 효과적입니다.\n\n\nWrite Forwarding 사용 시 주의: read-after-write consistency가 즉시 보장되지 않습니다. 쓰기 후 바로 읽으면 이전 값이 나올 수 있습니다.\n\n\nWrite Forwarding의 레이턴시를 좀 더 상세히 분석해보겠습니다.",
+    6: "[2min] Write Forwarding의 레이턴시를 분석해보면, 단일 쿼리는 리전 간 RTT인 60-80ms 정도의 오버헤드가 발생합니다.\n\n그런데 트랜잭션의 경우 각 statement마다 RTT가 추가됩니다. 3개의 statement로 구성된 트랜잭션은 3번의 RTT, 즉 180-240ms의 추가 지연이 발생합니다.\n\n따라서 Write Forwarding은 단발성 쓰기나 짧은 트랜잭션에 적합합니다. 복잡한 multi-statement 트랜잭션은 Primary 리전에서 직접 처리하는 것이 좋습니다.\n\n실무적으로는 주문 생성처럼 write-after-write 패턴이 많은 서비스는 Primary 리전에 배치하고, 상품 조회나 사용자 프로필 읽기처럼 read-heavy한 서비스만 양 리전에서 서비스합니다.\n\n\n다음은 DocumentDB Global Cluster를 살펴보겠습니다.",
+    7: "[2min] DocumentDB Global Cluster는 Aurora와 유사한 Primary/Secondary 구조입니다.\n\n핵심 차이점은 DocumentDB는 Write Forwarding을 지원하지 않는다는 것입니다. Secondary 리전에서 쓰기가 필요하면 애플리케이션이 직접 Primary 리전의 엔드포인트로 요청을 보내야 합니다.\n\n복제는 oplog 기반으로 이루어지며, 지연은 일반적으로 2초 이내입니다. Aurora의 Storage-level replication보다는 약간 느립니다.\n\nCollections을 보면, 상품 카탈로그는 주로 읽기 워크로드이므로 양 리전에서 서비스하기 적합합니다. 반면 위시리스트 추가, 리뷰 작성 등 쓰기는 Primary 리전으로 라우팅해야 합니다.\n\n\nDocumentDB의 스키마 설계와 인덱스 전략을 보겠습니다.",
+    8: "[2min] DocumentDB에서는 임베디드 문서 패턴을 적극 활용합니다. 상품의 카테고리, 속성 정보를 별도 테이블로 분리하지 않고 하나의 문서에 포함시킵니다.\n\n이 방식의 장점은 한 번의 쿼리로 상품의 모든 정보를 가져올 수 있다는 것입니다. JOIN이 없으므로 읽기 성능이 우수하고, 크로스리전 복제 시에도 문서 단위로 원자적 복제가 보장됩니다.\n\n인덱스는 읽기 패턴에 맞춰 설계합니다. 카테고리 필터, 평점 정렬, 브랜드 검색 등 주요 쿼리 패턴에 인덱스를 생성합니다.\n\n주의할 점은 DocumentDB는 MongoDB 5.0 호환이지만, 100% 호환은 아닙니다. Change Streams, Transactions는 지원하지만, $graphLookup이나 일부 집계 연산자는 제한됩니다.\n\n\n캐싱 계층인 ElastiCache를 살펴보겠습니다.",
+    9: "[3min] ElastiCache Global Datastore는 Valkey(Redis 호환) 클러스터를 리전 간 복제합니다.\n\nStep 1: Primary 클러스터(us-east-1)에 3개의 샤드, 각 샤드당 2개의 레플리카로 구성합니다.\n\nStep 2: Global Datastore를 설정하면 us-west-2에 Secondary 클러스터가 자동 생성됩니다.\n\nStep 3: Primary에서 쓰기(SET, HSET 등)가 발생하면, 1초 이내에 Secondary로 복제됩니다.\n\nStep 4: 양 리전에서 읽기(GET 등)가 가능합니다. 쓰기는 Primary에서만 가능합니다.\n\nGlobal Datastore는 Active-Active 모드를 지원하지 않습니다. 최근 Valkey는 Active-Active를 지원하기 시작했지만, AWS의 ElastiCache Global Datastore는 아직 Primary-Secondary 모델입니다.\n\n이 점이 장바구니(cart) 데이터를 처리할 때 주요 고려사항입니다. 사용자가 us-west-2에서 장바구니에 상품을 추가하면, Primary(us-east-1)로 쓰기가 라우팅되어야 합니다.\n\n\n캐시 패턴과 TTL 전략을 살펴보겠습니다.",
+    10: "[2min] 캐시 전략은 데이터 특성에 따라 4가지 패턴을 조합합니다.\n\n상품 정보처럼 읽기가 많고 쓰기가 적은 데이터는 Cache-Aside 패턴을 사용합니다. 캐시 미스 시에만 DB에서 조회하고 캐시에 저장합니다.\n\n장바구니나 세션처럼 즉시 일관성이 필요한 데이터는 Write-Through를 사용합니다. 쓰기 시 DB와 캐시를 동시에 갱신합니다.\n\n재고 카운터(stock)는 TTL 없이 영구 보관하며, 구매 시 DECR 명령으로 원자적으로 감소시킵니다. 이는 동시 구매 시 재고 초과 판매를 방지합니다.\n\n멀티리전에서 캐시 무효화의 핵심 과제는 Primary에서 데이터가 변경되었을 때 Secondary의 캐시도 갱신해야 한다는 것입니다. Global Datastore가 자동으로 처리하지만, 복제 지연(< 1s) 동안은 스테일 데이터를 읽을 수 있습니다.\n\n\n이벤트 스트리밍의 핵심인 MSK를 살펴보겠습니다.",
+    11: "[3min] MSK는 이벤트 드리븐 아키텍처의 백본입니다. 총 35개의 토픽으로 구성되어 있습니다.\n\nStep 1: 서비스들이 이벤트를 발행합니다. order-service가 주문을 생성하면 order.created 토픽에 이벤트를 발행합니다.\n\nStep 2: Consumer 서비스들이 관심 있는 토픽을 구독합니다. payment-service는 order.created를 구독하여 결제를 시작합니다.\n\nStep 3: Saga Pattern으로 분산 트랜잭션을 관리합니다. saga.orchestrator 토픽이 전체 워크플로우를 조율합니다.\n\nStep 4: 실패한 이벤트는 dlq.all(Dead Letter Queue)로 이동하며, 30일간 보관됩니다.\n\n클러스터 구성은 kafka.m5.2xlarge 6대, 브로커당 1TB EBS, SASL/SCRAM 인증을 사용합니다.\n\n\n크로스리전 토픽 복제를 담당하는 MSK Replicator를 보겠습니다.",
+    12: "[2min] MSK Replicator는 리전 간 Kafka 토픽 복제를 담당합니다. 활성화 여부에 따른 트레이드오프를 비교합니다.\n\nReplicator를 활성화하면 모든 토픽이 비동기로 Secondary 리전에 복제됩니다. DR 발생 시 Secondary의 Consumer가 즉시 복제된 토픽에서 메시지를 소비할 수 있습니다. Consumer offset도 동기화되므로 중복 처리가 최소화됩니다.\n\n비활성화하면 비용은 절감되지만, DR 시 in-flight 이벤트가 유실됩니다. Producer가 Secondary MSK로 전환된 후 발행하는 새 이벤트부터만 처리 가능합니다.\n\n우리 아키텍처에서는 Replicator를 활성화하되, 중요도가 낮은 토픽(analytics, notification-logs)은 제외하여 비용을 최적화합니다.\n\n\n이제 전체 데이터 계층의 일관성과 레이턴시 트레이드오프를 분석하겠습니다.",
+    13: "[3min] 이 다이어그램은 우리 아키텍처의 각 데이터 스토어를 일관성-레이턴시 스펙트럼에 매핑합니다.\n\n왼쪽은 Strong Consistency(강한 일관성)이고, 오른쪽은 Eventual Consistency(결과적 일관성)입니다.\n\nStep 1: Aurora Primary Writer — 가장 강한 일관성. 트랜잭션 격리 수준(READ COMMITTED)이 보장됩니다. 레이턴시는 5-10ms.\n\nStep 2: Aurora Secondary + Write Forwarding — 쓰기는 Primary로 포워딩되지만, Read-after-write는 복제 지연(≤1s)까지 기다려야 합니다. 쓰기 레이턴시 65-90ms.\n\nStep 3: ElastiCache Primary — 단일 리전 내에서는 강한 일관성. 레이턴시 <1ms. 하지만 Global Datastore를 통한 Secondary 읽기는 복제 지연 존재.\n\nStep 4: DocumentDB Secondary — oplog 기반 복제로 2초 이내 결과적 일관성. readPreference: secondaryPreferred 사용 시.\n\nStep 5: MSK Replicator — 가장 느슨한 결과적 일관성. 이벤트 전달은 수백 ms에서 수 초. 하지만 at-least-once delivery 보장.\n\n핵심 원칙은: 쓰기 경로는 일관성을 우선시하고, 읽기 경로는 레이턴시를 우선시한다는 것입니다.\n\n\n이를 RPO와 복제 지연 관점에서 정리해보겠습니다.",
+    14: "[2min] RPO(Recovery Point Objective)를 데이터 스토어별로 정리하면, Aurora와 ElastiCache가 가장 낮은 RPO(~1s)를 보이고, S3 CRR이 가장 높은 RPO(~15min)를 보입니다.\n\nOpenSearch는 현재 크로스리전 복제가 수동 구성이며, 실시간 동기화가 아닙니다. 이 점이 DR 상황에서의 주요 갭입니다.\n\nFailover 시 데이터 유실 시나리오를 보면, 가장 크리티컬한 것은 Aurora의 미커밋 주문/결제 데이터입니다. 이를 위해 모든 서비스를 idempotent하게 설계하고, 실패한 이벤트는 DLQ로 보내 후처리합니다.\n\n멀티리전에서 가장 중요한 설계 원칙 하나를 꼽자면, idempotency입니다. 네트워크 파티션, 복제 지연, 페일오버 등 모든 상황에서 동일한 요청을 여러 번 처리해도 결과가 같아야 합니다.\n\n\n이 블록의 핵심을 정리하겠습니다.",
+    15: "[1min] 이 블록의 핵심 네 가지를 정리합니다.\n\n첫째, Polyglot Persistence — 모든 것을 하나의 DB에 넣지 마세요. 워크로드에 맞는 최적의 데이터 스토어를 선택하세요.\n\n둘째, Write-Primary / Read-Local — 쓰기는 한 곳에서, 읽기는 가까운 곳에서. 이것이 멀티리전 데이터 아키텍처의 기본 원칙입니다.\n\n셋째, 비동기 복제의 트레이드오프를 이해하세요. RPO가 0인 크로스리전 복제는 없습니다. 각 데이터 스토어의 RPO를 알고, 그에 맞는 전략을 세우세요.\n\n넷째, Idempotency가 왕입니다. 분산 시스템의 모든 문제에 대한 첫 번째 방어선은 idempotent 설계입니다.\n\n\n마지막으로 퀴즈를 풀어보겠습니다.",
+    16: "[3min] 이 퀴즈는 이번 블록에서 다룬 핵심 개념을 확인합니다.\n\nQ1은 Write Forwarding의 레이턴시 특성을 테스트합니다. 각 statement마다 RTT가 추가되므로, 긴 트랜잭션은 Write Forwarding에 적합하지 않습니다.\n\nQ2는 Aurora와 DocumentDB의 Write Forwarding 지원 차이를 확인합니다. DocumentDB는 이 기능이 없으므로, 애플리케이션 수준에서 라우팅을 처리해야 합니다.\n\nQ3는 캐시 설계의 실무적 고려사항을 테스트합니다. 재고처럼 원자적 연산이 필요한 데이터는 TTL 없이 영구 관리합니다.\n\nQ4는 분산 시스템의 가장 중요한 원칙을 확인합니다. Idempotency는 모든 장애 시나리오의 안전망입니다.\n\n\n5분 휴식 후 Block 3 Traffic Routing & Edge로 이어가겠습니다."
+  };
   const deck = new SlideFramework({
-    footer: 'Multi-Region Architecture Deep Dive — Data Sync & Replication',
-    logoSrc: 'common/pptx-theme/images/logo_1.png',
-    presenterNotes: {},
+    
+    footer: 'Multi-Region Architecture Deep Dive — L300+',
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
     onSlideChange: (index, slide) => {}
   });
 </script>

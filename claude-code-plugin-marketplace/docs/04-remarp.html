@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 4: Remarp Framework</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="progress-bar"></div>
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="doc-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="doc-main">
+      <div class="doc-content">
+        <span class="reading-time">7분</span>
+        <h1>Remarp 프레임워크</h1>
+        <p class="lead">Remarp는 "Marp를 뒤집은 것"이라는 의미입니다. 마크다운으로 인터랙티브 프레젠테이션을 만드는 차세대 프레임워크로, 이 테크톡의 슬라이드 자체가 Remarp로 제작되었습니다.</p>
+
+        <h2 id="why">Marp의 한계 → Remarp 탄생</h2>
+        <table>
+          <thead><tr><th>기능</th><th>Marp</th><th>Remarp</th></tr></thead>
+          <tbody>
+            <tr><td>프래그먼트 애니메이션</td><td style="color:#F87171">불가</td><td style="color:#34D399"><code>{.click}</code> 인라인 프래그먼트</td></tr>
+            <tr><td>Canvas 애니메이션</td><td style="color:#F87171">불가</td><td style="color:#34D399"><code>:::canvas</code> DSL</td></tr>
+            <tr><td>스피커 노트</td><td style="color:#FACC15">제한적</td><td style="color:#34D399"><code>:::notes</code> + 타이밍/큐 마커</td></tr>
+            <tr><td>인터랙티브 요소</td><td style="color:#F87171">불가</td><td style="color:#34D399"><code>:::html</code> + <code>:::script</code></td></tr>
+            <tr><td>PPTX 테마 추출</td><td style="color:#F87171">불가</td><td style="color:#34D399">자동 CSS 변환</td></tr>
+            <tr><td>탭/비교/퀴즈</td><td style="color:#F87171">불가</td><td style="color:#34D399">내장 슬라이드 타입</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="format">Remarp 포맷</h2>
+        <p>Remarp는 마크다운에 디렉티브를 추가한 포맷입니다:</p>
+        <pre><code>---
+remarp: true
+block: talk
+---
+
+<!-- Slide 1: Cover -->
+@type: cover
+@background: ../common/pptx-theme/images/bg.png
+
+# 발표 제목
+부제목
+
+---
+<!-- Slide 2: Content with fragments -->
+@type: content
+
+## 왜 중요한가?
+
+- 첫 번째 포인트 {.click}
+- 두 번째 포인트 {.click}
+- 세 번째 포인트 {.click}
+
+:::notes
+{timing: 2min}
+이 슬라이드에서는 세 가지 핵심 포인트를 순차적으로 보여줍니다.
+{cue: transition}
+다음 슬라이드에서 구체적인 예시를 보겠습니다.
+:::</code></pre>
+
+        <h3>핵심 블록 타입</h3>
+        <table>
+          <thead><tr><th>블록</th><th>용도</th></tr></thead>
+          <tbody>
+            <tr><td><code>:::click</code></td><td>클릭 시 순차 등장하는 프래그먼트</td></tr>
+            <tr><td><code>:::left</code> / <code>:::right</code></td><td>2컬럼 레이아웃</td></tr>
+            <tr><td><code>:::notes</code></td><td>스피커 노트 (타이밍, 큐 마커 지원)</td></tr>
+            <tr><td><code>:::canvas</code></td><td>선언적 Canvas 애니메이션 DSL</td></tr>
+            <tr><td><code>:::html</code></td><td>Raw HTML (탭, 그리드 카드 등)</td></tr>
+            <tr><td><code>:::script</code></td><td>슬라이드별 JavaScript</td></tr>
+            <tr><td><code>:::css</code></td><td>슬라이드별 CSS 오버라이드</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="canvas">Canvas DSL</h2>
+        <p>선언적 문법으로 박스+화살표 애니메이션을 작성합니다:</p>
+        <pre><code>:::canvas
+box api "API Gateway" at 100,180 size 130,55 color #FF9900 step 1
+box lambda "Lambda" at 320,180 size 130,55 color #FF9900 step 2
+box db "DynamoDB" at 540,180 size 130,55 color #3B48CC step 3
+arrow api -> lambda "invoke" step 2
+arrow lambda -> db "query" step 3
+:::</code></pre>
+        <p>↑↓ 키로 step을 순차적으로 진행하며 설명할 수 있습니다.</p>
+
+        <h2 id="rejection-loop">Rejection Loop</h2>
+        <p>LLM은 텍스트 추론에는 뛰어나지만 <strong>공간 추론</strong>(요소 겹침, 정렬, 레이아웃)은 취약합니다. Rejection Loop는 이 한계를 기계적으로 보완합니다:</p>
+        <pre><code># 빌드 전 필수 실행
+python3 remarp_to_slides.py validate ./my-presentation/
+
+# 결과 예시
+❌ REJECT — 2 CRITICAL issue(s)
+  CONTENT_OVERFLOW: Slide 5 has 12 bullet items (max: 8)
+  CANVAS_OVERLAP: Slide 8 elements overlap (box A ∩ box B)</code></pre>
+
+        <h3>7가지 거절 규칙</h3>
+        <table>
+          <thead><tr><th>규칙</th><th>심각도</th><th>검사 내용</th></tr></thead>
+          <tbody>
+            <tr><td>CONTENT_OVERFLOW</td><td style="color:#F87171">CRITICAL</td><td>불릿 8개 이상 → 슬라이드 분할 필요</td></tr>
+            <tr><td>CANVAS_OVERLAP</td><td style="color:#F87171">CRITICAL</td><td>캔버스 요소 바운딩 박스 겹침</td></tr>
+            <tr><td>CANVAS_COMPLEXITY</td><td style="color:#F87171">CRITICAL/WARN</td><td>시각 요소 5+/8+ → HTML 전환 권장</td></tr>
+            <tr><td>INTERACTIVE_FIRST</td><td style="color:#FACC15">WARNING</td><td>불릿 4+ → 카드/탭 미사용</td></tr>
+            <tr><td>MISSING_NOTES</td><td style="color:#FACC15">WARNING</td><td>:::notes 블록 누락</td></tr>
+            <tr><td>STATIC_HTML</td><td style="color:#FACC15">WARNING</td><td>:::html 요소 3+ 이나 fragment 없음</td></tr>
+            <tr><td>FRAGMENT_ORDER</td><td style="color:#FACC15">WARNING</td><td>다단 레이아웃에 명시적 order 없음</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout danger">
+          <strong>CRITICAL 이슈가 있으면 빌드 금지</strong>
+          CRITICAL 이슈가 남아있는 상태에서 빌드하면 "프랑켄슈타인 레이아웃"이 생성됩니다. 반드시 수정 후 재검증해야 합니다.
+        </div>
+
+        <h2 id="build">빌드 파이프라인</h2>
+        <pre><code># 전체 빌드
+python3 remarp_to_slides.py build ./my-presentation/
+
+# 특정 블록만 빌드
+python3 remarp_to_slides.py build ./my-presentation/ --block 01-intro
+
+# 변경된 블록만 증분 빌드
+python3 remarp_to_slides.py sync ./my-presentation/</code></pre>
+
+        <div style="display:flex;justify-content:space-between;margin-top:48px">
+          <a href="03-harness.html" style="color:var(--text-secondary)">← 이전: 하네스 엔지니어링</a>
+          <a href="05-vscode-extension.html" style="color:var(--accent);font-weight:600">다음: VSCode Extension →</a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="shared.js"></script>
+</body>
+</html>

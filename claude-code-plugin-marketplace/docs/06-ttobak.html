@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 6: Ttobak AI Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="progress-bar"></div>
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="doc-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="doc-main">
+      <div class="doc-content">
+        <span class="reading-time">3분</span>
+        <h1>또박(Ttobak) — AI 미팅 어시스턴트</h1>
+        <p class="lead">SA 업무에서 미팅이 차지하는 비중은 큽니다. 또박은 회의 녹음부터 AI 요약, 고객 인텔리전스까지 미팅 전체 라이프사이클을 자동화합니다.</p>
+
+        <h2 id="features">핵심 기능</h2>
+
+        <h3>녹음 & 트랜스크립션</h3>
+        <ul>
+          <li>마이크/탭 오디오 캡처 (Web Speech API, Chrome getDisplayMedia)</li>
+          <li>AWS Transcribe + Nova Sonic <strong>A/B 비교</strong> — 두 STT 엔진의 결과를 나란히 비교</li>
+          <li>6개 국어 실시간 번역 (Amazon Translate)</li>
+          <li>오디오 파일 업로드 지원 (m4a, mp3, wav, webm)</li>
+        </ul>
+
+        <h3>AI 분석</h3>
+        <ul>
+          <li>Bedrock Claude Sonnet으로 <strong>미팅 요약</strong> 자동 생성</li>
+          <li><strong>액션 아이템 추출</strong> — 담당자, 우선순위 자동 태깅</li>
+          <li><strong>RAG Q&A</strong> — Bedrock Knowledge Base로 과거 미팅 내용 검색/질의</li>
+        </ul>
+
+        <h3>고객 인텔리전스</h3>
+        <ul>
+          <li><strong>뉴스 크롤링</strong> — 구독한 고객사의 Google News RSS 자동 수집</li>
+          <li><strong>AI 브리핑</strong> — Sonnet이 SA 관점의 분석을 생성</li>
+          <li><strong>Deep Research</strong> — Bedrock Agent가 다중 소스 리서치 수행</li>
+        </ul>
+
+        <h2 id="architecture">아키텍처</h2>
+        <pre><code>CloudFront (ttobak.atomai.click)
+  ├─ Lambda@Edge (JWT auth on /api/*)
+  ├─ S3 OAC (Next.js static export)
+  └─ HTTP API Gateway → ttobak-api Lambda (Go, chi router)
+
+Event-Driven Pipeline:
+  audio/ upload → EventBridge → ttobak-transcribe → AWS Transcribe
+  transcripts/ → EventBridge → ttobak-summarize → Bedrock Claude → DynamoDB
+
+Crawler Pipeline:
+  EventBridge (daily) → Step Functions → TechCrawler + NewsCrawler → S3 KB</code></pre>
+
+        <h2 id="mcp">MCP Server 연동</h2>
+        <p>또박은 MCP Server를 제공하여 Claude Code에서 직접 미팅 데이터에 접근할 수 있습니다:</p>
+        <ul>
+          <li><strong>OAuth PKCE 인증</strong> — 보안 토큰 기반 접근</li>
+          <li><strong>미팅 데이터 쿼리</strong> — "지난 미팅에서 고객이 언급한 기술 스택은?"</li>
+          <li><strong>요약/액션 아이템 조회</strong> — 프로그래밍적으로 활용 가능</li>
+        </ul>
+
+        <div class="callout success">
+          <strong>인프라</strong>
+          9개 CDK 스택으로 완전 자동화 배포. GitHub Actions + 셀프 호스팅 러너로 CI/CD 구성.
+        </div>
+
+        <div style="display:flex;justify-content:space-between;margin-top:48px">
+          <a href="05-vscode-extension.html" style="color:var(--text-secondary)">← 이전: VSCode Extension</a>
+          <a href="07-lessons.html" style="color:var(--accent);font-weight:600">다음: 배운 점 →</a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="shared.js"></script>
+</body>
+</html>

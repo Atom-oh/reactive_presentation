@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 1: Why — oh-my-cloud-skills</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="progress-bar"></div>
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="doc-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="doc-main">
+      <div class="doc-content">
+        <span class="reading-time">3분</span>
+        <h1>왜 만들었나 — oh-my-cloud-skills</h1>
+
+        <h2 id="pain">반복되는 고통</h2>
+        <p>Solutions Architect로 일하다 보면 반복적인 작업이 놀라울 정도로 많습니다:</p>
+        <ul>
+          <li><strong>EKS 트러블슈팅</strong> — 매번 같은 kubectl 명령어 조합을 검색하고, 같은 진단 절차를 반복</li>
+          <li><strong>프레젠테이션 제작</strong> — 새 발표마다 HTML 구조를 처음부터 작성</li>
+          <li><strong>아키텍처 다이어그램</strong> — 비슷한 패턴의 AWS 구성도를 매번 새로 그리기</li>
+          <li><strong>동료에게 같은 설명 반복</strong> — "이 경우엔 이렇게 하면 돼"를 n번째 설명</li>
+        </ul>
+
+        <div class="callout warning">
+          <strong>핵심 깨달음</strong>
+          처음에는 CLAUDE.md에 자주 쓰는 명령어를 메모하는 것으로 시작했습니다. 그런데 이 "메모장"이 점점 커지면서, 체계적으로 구조화하면 팀 전체가 활용할 수 있겠다는 생각이 들었습니다.
+        </div>
+
+        <h2 id="solution">플러그인이라는 해답</h2>
+        <p>Claude Code의 플러그인 시스템은 이 문제를 완벽하게 해결합니다:</p>
+        <ul>
+          <li>SA 노하우를 <strong>Agent + Skill</strong>로 캡슐화</li>
+          <li><code>/plugin marketplace add</code> 한 줄로 누구나 설치</li>
+          <li>팀 전체의 생산성 향상 — 개인 지식이 팀 자산으로</li>
+          <li>지식이 Git에서 버전 관리되며 축적</li>
+        </ul>
+
+        <h2 id="overview">oh-my-cloud-skills 구성</h2>
+        <p>최종적으로 세 개의 플러그인으로 구성됩니다:</p>
+        <table>
+          <thead><tr><th>플러그인</th><th>Agent</th><th>Skill</th><th>역할</th></tr></thead>
+          <tbody>
+            <tr><td><strong>aws-content-plugin</strong></td><td>8</td><td>5</td><td>프레젠테이션, 다이어그램, 문서, 워크숍</td></tr>
+            <tr><td><strong>aws-ops-plugin</strong></td><td>10</td><td>6</td><td>EKS, 네트워크, IAM, 모니터링, 스토리지</td></tr>
+            <tr><td><strong>kiro-power-converter</strong></td><td>1</td><td>1</td><td>Claude Code 플러그인 → Kiro IDE 변환</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout info">
+          <strong>설치 방법</strong>
+          <code>/plugin marketplace add aws-content-plugin</code> — 이 한 줄이면 8개 에이전트와 5개 스킬이 바로 활성화됩니다.
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;margin-top:48px">
+          <a href="02-plugin-structure.html" style="color:var(--accent);font-weight:600">다음: 플러그인 아키텍처 →</a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="shared.js"></script>
+</body>
+</html>

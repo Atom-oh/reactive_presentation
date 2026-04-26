@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>default</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="01-talk.md">
+  <meta name="remarp-block" content="default">
+  <link rel="stylesheet" href="./common/theme.css">
+  
+  
+  
+  
+</head>
+<body>
+<div class="slide-deck">
+<div class="slide" data-remarp-id="s0" style="background:url('./common/pptx-theme/images/Picture_13.png') center/cover no-repeat; padding:0; overflow:hidden;">
+  <h1 style="position:absolute; left:5%; top:48%; font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:53%; margin:0;">Claude Code 플러그인 마켓플레이스를 만들어보자</h1>
+  <p style="position:absolute; left:5%; top:62%; font-size:1.3rem; color:rgba(255,255,255,0.8); width:53%; margin:0;">Lightning Tech Talk — 15 min</p>
+  
+  <img src="./common/pptx-theme/images/Picture_8.png" alt="" style="position:absolute; right:5%; bottom:10%; width:8%; pointer-events:none;" />
+</div>
+
+<div class="slide" data-remarp-id="s1">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>오늘의 여정</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <div class="agenda-timeline">
+            <div class="agenda-step active">
+          <div class="agenda-dot">1</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>왜 만들었나 — oh-my-cloud-skills</strong>
+            <span>2min</span>
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">2</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>플러그인 구조 & 하네스 엔지니어링</strong>
+            <span>3min</span>
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">3</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>Remarp 프레임워크 — 프레젠테이션 혁신</strong>
+            <span>3min</span>
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">4</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>VSCode Extension 개발기</strong>
+            <span>3min</span>
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">5</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>또박(Ttobak) — AM과 함께 일하기</strong>
+            <span>2min</span>
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">6</div>
+          
+          <div class="agenda-label">
+            <strong>마무리 & 배운 점</strong>
+            <span>2min</span>
+          </div>
+        </div>
+    </div>
+    
+  </div>
+  
+<script>(function() {
+  const slide = document.currentScript.closest('.slide');
+  if (!slide) return;
+  const steps = slide.querySelectorAll('.agenda-step:not(.break)');
+  const connectors = slide.querySelectorAll('.agenda-connector');
+  let current = 0;
+  function update() {
+    steps.forEach((s, i) => {
+      s.classList.remove('active', 'done');
+      if (i < current) s.classList.add('done');
+      else if (i === current) s.classList.add('active');
+    });
+    connectors.forEach((c, i) => {
+      c.classList.toggle('done', i < current);
+    });
+  }
+  update();
+  slide.__canvasStep = function(dir) {
+    if (dir === 'next' && current < steps.length - 1) current++;
+    else if (dir === 'prev' && current > 0) current--;
+    else return false;
+    update();
+    return current;
+  };
+  slide.dataset.slideAction = 'canvas-step';
+  slide.dataset.canvasMaxStep = String(steps.length - 1);
+})();</script>
+</div>
+
+<div class="slide" data-remarp-id="s2">
+  <div class="slide-header" data-remarp-id="s2-header"><h2>왜 만들었나?</h2></div>
+  <div class="slide-body" data-remarp-id="s2-body">
+    <p><!-- Slide 3: Why — 동기 --></p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+  <div class="fragment fade-up" data-fragment-index="1" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:12px;padding:20px;">
+    <div style="font-size:1.4rem;margin-bottom:8px;">😤</div>
+    <div style="color:#ef4444;font-weight:bold;font-size:1.1rem;margin-bottom:8px;">반복되는 고통</div>
+    <div style="color:#8b95a5;font-size:0.85rem;line-height:1.6;">
+      AI로 PPT 만들면 레이아웃이 깨짐<br>
+      HTML 직접 작성하면 수정이 너무 어려움<br>
+      아키텍처 다이어그램은 한땀한땀<br>
+      고객 세션 준비는 항상 시간 부족
+    </div>
+  </div>
+  <div class="fragment fade-up" data-fragment-index="2" style="background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);border-radius:12px;padding:20px;">
+    <div style="font-size:1.4rem;margin-bottom:8px;">💡</div>
+    <div style="color:#00ff88;font-weight:bold;font-size:1.1rem;margin-bottom:8px;">플러그인으로 해결</div>
+    <div style="color:#8b95a5;font-size:0.85rem;line-height:1.6;">
+      SA 노하우를 Agent + Skill로 캡슐화<br>
+      누구나 설치해서 바로 사용<br>
+      팀 전체의 생산성 향상<br>
+      지식이 코드로 축적
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s3">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>oh-my-cloud-skills</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body">
+    <p><!-- Slide 4: oh-my-cloud-skills 개요 --></p>
+<div style="text-align:center;margin-bottom:16px;">
+  <span style="background:rgba(108,92,231,0.2);border:1px solid rgba(108,92,231,0.4);border-radius:20px;padding:6px 16px;font-size:0.85rem;color:#a29bfe;">Claude Code Plugin Marketplace</span>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+  <div class="fragment fade-up" data-fragment-index="1" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:12px;padding:14px;text-align:center;">
+    <div style="color:#00d4ff;font-weight:bold;font-size:1.0rem;margin-bottom:6px;">aws-content-plugin</div>
+    <div style="color:#8b95a5;font-size:0.78rem;">8 Agents · 5 Skills</div>
+    <div style="color:#666;font-size:0.73rem;margin-top:8px;">프레젠테이션, 다이어그램<br>문서, 워크숍</div>
+  </div>
+  <div class="fragment fade-up" data-fragment-index="2" style="background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);border-radius:12px;padding:14px;text-align:center;">
+    <div style="color:#00ff88;font-weight:bold;font-size:1.0rem;margin-bottom:6px;">aws-ops-plugin</div>
+    <div style="color:#8b95a5;font-size:0.78rem;">10 Agents · 6 Skills</div>
+    <div style="color:#666;font-size:0.73rem;margin-top:8px;">EKS, 네트워크, IAM<br>모니터링, 스토리지</div>
+  </div>
+  <div class="fragment fade-up" data-fragment-index="3" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);border-radius:12px;padding:14px;text-align:center;">
+    <div style="color:#a855f7;font-weight:bold;font-size:1.0rem;margin-bottom:6px;">kiro-power-converter</div>
+    <div style="color:#8b95a5;font-size:0.78rem;">1 Agent · 1 Skill</div>
+    <div style="color:#666;font-size:0.73rem;margin-top:8px;">Claude → Kiro<br>플러그인 변환</div>
+  </div>
+  <div class="fragment fade-up" data-fragment-index="4" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:14px;text-align:center;">
+    <div style="color:#f59e0b;font-weight:bold;font-size:1.0rem;margin-bottom:6px;">kiro-review</div>
+    <div style="color:#8b95a5;font-size:0.78rem;">1 Agent · 1 Skill</div>
+    <div style="color:#666;font-size:0.73rem;margin-top:8px;">코드 리뷰, 보안 감사<br>Well-Architected 평가</div>
+  </div>
+</div>
+<div class="fragment fade-up" data-fragment-index="5" style="text-align:center;margin-top:14px;">
+  <code style="color:#a29bfe;font-size:0.82rem;">/plugin marketplace add https://github.com/Atom-oh/oh-my-cloud-skills</code>
+</div>
+  </div>
+</div>
+
+<div class="slide title-slide">
+    <h1>하네스 엔지니어링</h1>
+</div>
+
+<div class="slide" data-remarp-id="s5">
+  <div class="slide-header" data-remarp-id="s5-header"><h2>플러그인 해부학</h2></div>
+  <div class="slide-body" data-remarp-id="s5-body">
+    <p><!-- Slide 6: Plugin Anatomy --></p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+  <div>
+    <div style="color:#a29bfe;font-weight:bold;margin-bottom:10px;font-size:0.95rem;">📁 디렉토리 구조</div>
+    <div style="background:rgba(15,22,41,0.8);border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:0.7rem;line-height:1.8;color:#c9d1d9;">
+      <span style="color:#00d4ff;">plugins/aws-content-plugin/</span><br>
+      ├── <span style="color:#00d4ff;">.claude-plugin/plugin.json</span><br>
+      ├── <span style="color:#00ff88;">CLAUDE.md</span><br>
+      ├── <span style="color:#a855f7;">agents/</span><br>
+      │   ├── presentation-agent.md<br>
+      │   ├── architecture-diagram-agent.md<br>
+      │   └── workshop-agent.md<br>
+      └── <span style="color:#f59e0b;">skills/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;└── reactive-presentation/<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── SKILL.md<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── scripts/
+    </div>
+  </div>
+  <div>
+    <div class="fragment fade-up" data-fragment-index="1" style="margin-bottom:12px;">
+      <div style="color:#00d4ff;font-weight:bold;font-size:0.85rem;margin-bottom:4px;">plugin.json — 매니페스트</div>
+      <div style="color:#8b95a5;font-size:0.78rem;">8 에이전트, 5 스킬, SessionStart 훅 선언</div>
+    </div>
+    <div class="fragment fade-up" data-fragment-index="2" style="margin-bottom:12px;">
+      <div style="color:#00ff88;font-weight:bold;font-size:0.85rem;margin-bottom:4px;">CLAUDE.md — 자동 라우팅</div>
+      <div style="color:#8b95a5;font-size:0.78rem;">"프레젠테이션 만들어" → presentation-agent<br>"아키텍처 그려줘" → architecture-diagram-agent</div>
+    </div>
+    <div class="fragment fade-up" data-fragment-index="3" style="margin-bottom:12px;">
+      <div style="color:#a855f7;font-weight:bold;font-size:0.85rem;margin-bottom:4px;">agents/*.md — 콘텐츠 전문 에이전트</div>
+      <div style="color:#8b95a5;font-size:0.78rem;">발표자료 · 다이어그램 · 워크숍 · GitBook<br>YAML frontmatter + 콘텐츠 생성 로직</div>
+    </div>
+    <div class="fragment fade-up" data-fragment-index="4" style="margin-bottom:12px;">
+      <div style="color:#f59e0b;font-weight:bold;font-size:0.85rem;margin-bottom:4px;">skills/reactive-presentation</div>
+      <div style="color:#8b95a5;font-size:0.78rem;">Remarp 워크플로우 + remarp_to_slides.py<br>PPTX 테마 추출 스크립트 포함</div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s6">
+  <div class="slide-header" data-remarp-id="s6-header"><h2>하네스 엔지니어링이란?</h2></div>
+  <div class="slide-body" data-remarp-id="s6-body">
+    <p><!-- Slide 7: Harness Engineering --></p>
+<div style="text-align:center;margin-bottom:12px;">
+  <span style="color:#f59e0b;font-size:0.9rem;font-weight:bold;">"AI가 잘 달릴 수 있는 레일을 깔아주는 것"</span>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
+  <div class="fragment harness-card" data-fragment-index="1" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:10px;padding:14px;">
+    <div style="color:#00d4ff;font-weight:bold;font-size:0.9rem;margin-bottom:8px;">CLAUDE.md</div>
+    <div style="color:#8b95a5;font-size:0.78rem;line-height:1.6;">
+      프로젝트 컨텍스트 제공<br>
+      빌드/테스트 명령어<br>
+      코딩 컨벤션 정의<br>
+      <span style="color:#00d4ff;">→ 매 세션 자동 로드</span>
+    </div>
+  </div>
+  <div class="fragment harness-card" data-fragment-index="2" style="background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);border-radius:10px;padding:14px;">
+    <div style="color:#00ff88;font-weight:bold;font-size:0.9rem;margin-bottom:8px;">Hooks</div>
+    <div style="color:#8b95a5;font-size:0.78rem;line-height:1.6;">
+      PostToolUse: 빌드 경고 감지<br>
+      SessionStart: 도메인 로드<br>
+      자동 검증 파이프라인<br>
+      <span style="color:#00ff88;">→ 실수 자동 차단</span>
+    </div>
+  </div>
+  <div class="fragment harness-card" data-fragment-index="3" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);border-radius:10px;padding:14px;">
+    <div style="color:#a855f7;font-weight:bold;font-size:0.9rem;margin-bottom:8px;">Quality Gate</div>
+    <div style="color:#8b95a5;font-size:0.78rem;line-height:1.6;">
+      content-review-agent<br>
+      100점 만점 평가 체계<br>
+      85점 미만 배포 차단<br>
+      <span style="color:#a855f7;">→ 품질 보장 자동화</span>
+    </div>
+  </div>
+</div>
+<div class="fragment plugin-row" data-fragment-index="4" style="background:rgba(15,22,41,0.7);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px 14px;">
+  <div style="color:#fff;font-size:0.78rem;font-weight:bold;margin-bottom:6px;">플러그인에서 활용되는 하네스</div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <span style="background:rgba(0,212,255,0.15);border:1px solid rgba(0,212,255,0.3);border-radius:6px;padding:4px 10px;font-size:0.72rem;color:#00d4ff;">aws-content-plugin → Quality Gate (≥85점)</span>
+    <span style="background:rgba(0,255,136,0.15);border:1px solid rgba(0,255,136,0.3);border-radius:6px;padding:4px 10px;font-size:0.72rem;color:#00ff88;">aws-ops-plugin → PostToolUse 보안 감지</span>
+    <span style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:6px;padding:4px 10px;font-size:0.72rem;color:#f59e0b;">kiro-review → SessionStart 자동 로드</span>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide title-slide">
+    <h1>프레젠테이션 프레임워크</h1>
+</div>
+
+<div class="slide" data-remarp-id="s8">
+  <div class="slide-header" data-remarp-id="s8-header"><h2>Marp의 한계 → Remarp 탄생</h2></div>
+  <div class="slide-body" data-remarp-id="s8-body">
+    <p><!-- Slide 9: Why Remarp --></p>
+<div style="text-align:center;margin-bottom:10px;">
+  <span style="background:rgba(108,92,231,0.2);border:1px solid rgba(108,92,231,0.4);border-radius:20px;padding:5px 14px;font-size:0.82rem;">
+    <span style="color:#a29bfe;font-weight:bold;">Re</span><span style="color:#666;">active </span><span style="color:#a29bfe;font-weight:bold;">Mar</span><span style="color:#666;">kdown </span><span style="color:#a29bfe;font-weight:bold;">P</span><span style="color:#666;">resentation — </span><span style="color:#00d4ff;font-size:0.78rem;">마크다운 → 동적 인터랙티브 HTML 생성</span>
+  </span>
+</div>
+<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start;">
+  <div class="fragment fade-up" data-fragment-index="1" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:14px;">
+    <div style="color:#ef4444;font-weight:bold;margin-bottom:8px;">Marp 😕</div>
+    <div style="color:#8b95a5;font-size:0.78rem;line-height:1.7;">
+      ✗ 프래그먼트 애니메이션 없음<br>
+      ✗ Canvas 애니메이션 불가<br>
+      ✗ 스피커 노트 제한적<br>
+      ✗ 인터랙티브 요소 불가<br>
+      ✗ 테마 커스터마이징 한계
+    </div>
+  </div>
+  <div class="fragment fade-up" data-fragment-index="2" style="color:#6c5ce7;font-size:2rem;padding-top:40px;">→</div>
+  <div class="fragment fade-up" data-fragment-index="3" style="background:rgba(108,92,231,0.1);border:1px solid rgba(108,92,231,0.3);border-radius:10px;padding:14px;">
+    <div style="color:#a29bfe;font-weight:bold;margin-bottom:8px;">Remarp ✨</div>
+    <div style="color:#8b95a5;font-size:0.78rem;line-height:1.7;">
+      ✓ <span style="color:#00d4ff;">{.click}</span> 인라인 프래그먼트<br>
+      ✓ <span style="color:#00d4ff;">::: canvas</span> DSL 애니메이션<br>
+      ✓ 풍부한 :::notes + 타이밍<br>
+      ✓ :::html + :::script 블록<br>
+      ✓ PPTX 테마 추출 + CSS
+    </div>
+  </div>
+</div>
+<div class="fragment fade-up" data-fragment-index="4" style="text-align:center;margin-top:12px;padding:10px;background:rgba(108,92,231,0.1);border-radius:8px;">
+  <code style="color:#a29bfe;font-size:0.8rem;">remarp_to_slides.py build → 마크다운을 <span style="color:#00d4ff;">동적 인터랙티브 HTML</span>로 변환</code>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s9">
+  <div class="slide-header" data-remarp-id="s9-header"><h2>Rejection Loop — AI의 공간 추론 한계 극복</h2></div>
+  <div class="slide-body" data-remarp-id="s9-body">
+    <p><!-- Slide 10: Rejection Loop --></p>
+<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:14px;">
+  <div class="fragment step-slide" data-fragment-index="1" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:10px;padding:14px 18px;text-align:center;min-width:130px;">
+    <div style="font-size:1.3rem;margin-bottom:4px;">✍️</div>
+    <div style="color:#00d4ff;font-weight:bold;font-size:0.9rem;">Remarp 작성</div>
+    <div style="color:#666;font-size:0.7rem;margin-top:4px;">마크다운 편집</div>
+  </div>
+  <div class="fragment step-arrow" data-fragment-index="2" style="color:#6c5ce7;font-size:1.8rem;flex-shrink:0;">→</div>
+  <div class="fragment step-slide" data-fragment-index="2" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:14px 18px;text-align:center;min-width:130px;">
+    <div style="font-size:1.3rem;margin-bottom:4px;">🔍</div>
+    <div style="color:#f59e0b;font-weight:bold;font-size:0.9rem;">validate</div>
+    <div style="color:#666;font-size:0.7rem;margin-top:4px;">7가지 규칙 검증</div>
+  </div>
+  <div class="fragment step-arrow" data-fragment-index="3" style="color:#6c5ce7;font-size:1.8rem;flex-shrink:0;">→</div>
+  <div class="fragment step-slide" data-fragment-index="3" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:14px 18px;text-align:center;min-width:130px;">
+    <div style="font-size:1.3rem;margin-bottom:4px;">🚨</div>
+    <div style="color:#ef4444;font-weight:bold;font-size:0.9rem;">CRITICAL?</div>
+    <div style="color:#666;font-size:0.7rem;margin-top:4px;">오버플로우, 겹침</div>
+  </div>
+  <div class="fragment step-arrow" data-fragment-index="4" style="color:#6c5ce7;font-size:1.8rem;flex-shrink:0;">→</div>
+  <div class="fragment step-slide" data-fragment-index="4" style="background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);border-radius:10px;padding:14px 18px;text-align:center;min-width:130px;">
+    <div style="font-size:1.3rem;margin-bottom:4px;">🏗️</div>
+    <div style="color:#00ff88;font-weight:bold;font-size:0.9rem;">build</div>
+    <div style="color:#666;font-size:0.7rem;margin-top:4px;">HTML 생성</div>
+  </div>
+</div>
+<div class="fragment fade-up" data-fragment-index="5" style="margin-top:4px;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <div style="background:rgba(15,22,41,0.8);border-radius:8px;padding:12px;">
+      <div style="color:#ef4444;font-weight:bold;font-size:0.8rem;margin-bottom:6px;">🔴 CRITICAL (빌드 차단)</div>
+      <div style="color:#8b95a5;font-size:0.73rem;line-height:1.6;">
+        CONTENT_OVERFLOW: 불릿 8개 이상<br>
+        CANVAS_OVERLAP: 요소 겹침<br>
+        CANVAS_COMPLEXITY: 시각 요소 8개+
+      </div>
+    </div>
+    <div style="background:rgba(15,22,41,0.8);border-radius:8px;padding:12px;">
+      <div style="color:#f59e0b;font-weight:bold;font-size:0.8rem;margin-bottom:6px;">🟡 WARNING (검토 권장)</div>
+      <div style="color:#8b95a5;font-size:0.73rem;line-height:1.6;">
+        INTERACTIVE_FIRST: 카드/탭 미사용<br>
+        MISSING_NOTES: 스피커 노트 누락<br>
+        STATIC_HTML: fragment 없는 HTML
+      </div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide title-slide">
+    <h1>개발기</h1>
+</div>
+
+<div class="slide" data-remarp-id="s11">
+  <div class="slide-header" data-remarp-id="s11-header"><h2>Remarp VSCode Extension</h2></div>
+  <div class="slide-body" data-remarp-id="s11-body">
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="preview-mode">Preview Mode</button>
+      <button class="tab-btn" data-tab="visual-edit">Visual Edit</button>
+      <button class="tab-btn" data-tab="issue-system">Issue System</button>
+    </div>
+        <div class="tab-content active" data-tab="preview-mode">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+  <div style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:10px;padding:14px;">
+    <div style="color:#00d4ff;font-weight:bold;margin-bottom:6px;">Markdown Preview</div>
+    <div style="color:#8b95a5;font-size:0.78rem;line-height:1.6;">
+      .remarp.md 실시간 렌더링<br>
+      슬라이드 파싱 → HTML 변환<br>
+      사이드바: 노트 + 이슈 배지<br>
+      ←→ 키보드 네비게이션
+    </div>
+  </div>
+  <div style="background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);border-radius:10px;padding:14px;">
+    <div style="color:#00ff88;font-weight:bold;margin-bottom:6px;">HTML Preview</div>
+    <div style="color:#8b95a5;font-size:0.78rem;line-height:1.6;">
+      빌드된 HTML 직접 로드<br>
+      리소스 경로 → webview URI<br>
+      CSP 자동 주입<br>
+      remarp-source 메타 연결
+    </div>
+  </div>
+</div>
+</div>
+    <div class="tab-content" data-tab="visual-edit">
+<div style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);border-radius:10px;padding:14px;">
+  <div style="color:#a855f7;font-weight:bold;margin-bottom:8px;">PPT-like 비주얼 편집 모드</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+    <div style="background:rgba(15,22,41,0.6);border-radius:6px;padding:8px;text-align:center;">
+      <div style="color:#00d4ff;font-size:0.8rem;font-weight:bold;">드래그</div>
+      <div style="color:#666;font-size:0.7rem;">요소 위치 이동</div>
+    </div>
+    <div style="background:rgba(15,22,41,0.6);border-radius:6px;padding:8px;text-align:center;">
+      <div style="color:#00ff88;font-size:0.8rem;font-weight:bold;">리사이즈</div>
+      <div style="color:#666;font-size:0.7rem;">크기 조절</div>
+    </div>
+    <div style="background:rgba(15,22,41,0.6);border-radius:6px;padding:8px;text-align:center;">
+      <div style="color:#f59e0b;font-size:0.8rem;font-weight:bold;">속성 패널</div>
+      <div style="color:#666;font-size:0.7rem;">폰트/색상/마진</div>
+    </div>
+  </div>
+  <div style="color:#8b95a5;font-size:0.75rem;margin-top:8px;text-align:center;">Cmd+Shift+E 또는 슬라이드 위 Edit 버튼 → 변경사항이 :::css / :::canvas 블록에 자동 기록</div>
+</div>
+</div>
+    <div class="tab-content" data-tab="issue-system">
+<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:14px;">
+  <div style="color:#f59e0b;font-weight:bold;margin-bottom:8px;">이슈 어노테이션 시스템</div>
+  <div style="display:grid;grid-template-columns:1fr;gap:8px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="background:rgba(245,158,11,0.3);border-radius:4px;padding:4px 8px;font-size:0.75rem;color:#f59e0b;font-weight:bold;white-space:nowrap;">1</div>
+      <div style="color:#8b95a5;font-size:0.78rem;">사이드바 프롬프트 바에서 이슈 입력 → <code style="color:#f59e0b;font-size:0.73rem;">&lt;!-- issue: 텍스트 --&gt;</code> 자동 삽입</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="background:rgba(245,158,11,0.3);border-radius:4px;padding:4px 8px;font-size:0.75rem;color:#f59e0b;font-weight:bold;white-space:nowrap;">2</div>
+      <div style="color:#8b95a5;font-size:0.78rem;">노란 배지로 시각화 → × 버튼으로 개별 제거 가능</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="background:rgba(245,158,11,0.3);border-radius:4px;padding:4px 8px;font-size:0.75rem;color:#f59e0b;font-weight:bold;white-space:nowrap;">3</div>
+      <div style="color:#8b95a5;font-size:0.78rem;">Claude Code에서 <code style="color:#a29bfe;font-size:0.73rem;">/slide-fix</code> → AI가 이슈 읽고 자동 수정 후 어노테이션 제거</div>
+    </div>
+  </div>
+</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s12">
+  <div class="slide-header" data-remarp-id="s12-header"><h2>또박(Ttobak) — 왜 만들었나</h2></div>
+  <div class="slide-body" data-remarp-id="s12-body">
+    <p><!-- Slide 13: Ttobak — 왜 만들었나 --></p>
+<div style="text-align:center;margin-bottom:16px;">
+  <span style="background:rgba(108,92,231,0.2);border:1px solid rgba(108,92,231,0.4);border-radius:20px;padding:6px 16px;font-size:0.85rem;color:#a29bfe;">SA + AM 협업을 위한 AI 미팅 어시스턴트</span>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+  <div>
+    <div class="fragment fade-up" data-fragment-index="1" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:14px;">
+      <div style="color:#ef4444;font-weight:bold;font-size:0.9rem;margin-bottom:6px;">SA + AM 협업의 현실</div>
+      <div style="color:#8b95a5;font-size:0.78rem;line-height:1.7;">
+        미팅 끝나면 기억이 다름<br>
+        액션 아이템 누가 맡았는지 불분명<br>
+        고객사 맥락이 각자 머릿속에만 존재<br>
+        뉴스/기술 동향을 따로따로 추적
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="fragment fade-up" data-fragment-index="2" style="background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);border-radius:10px;padding:14px;">
+      <div style="color:#00ff88;font-weight:bold;font-size:0.9rem;margin-bottom:6px;">함께 쓰는 도구로 해결</div>
+      <div style="color:#8b95a5;font-size:0.78rem;line-height:1.7;">
+        미팅 녹음 → AI가 동일한 요약 공유<br>
+        액션 아이템 자동 추출 + 담당자 지정<br>
+        고객 인텔리전스를 팀 KB로 축적<br>
+        뉴스 브리핑을 AM과 SA가 함께 확인
+      </div>
+    </div>
+  </div>
+</div>
+<div class="fragment fade-up" data-fragment-index="3" style="text-align:center;margin-top:14px;">
+  <span style="color:#a29bfe;font-size:0.85rem;">ttobak.atomai.click</span>
+  <span style="color:#666;font-size:0.8rem;margin-left:8px;">| Go + Next.js · 9 CDK Stacks · Bedrock Claude</span>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s13">
+  <div class="slide-header" data-remarp-id="s13-header"><h2>함께 일하는 방식</h2></div>
+  <div class="slide-body" data-remarp-id="s13-body">
+    <p><!-- Slide 14: Ttobak — 협업 워크플로우 --></p>
+<div style="display:grid;grid-template-columns:1fr;gap:10px;">
+  <div class="fragment fade-up" data-fragment-index="1" style="background:rgba(0,212,255,0.08);border-left:3px solid #00d4ff;border-radius:0 10px 10px 0;padding:14px 16px;display:flex;align-items:center;gap:14px;">
+    <div style="min-width:36px;height:36px;background:rgba(0,212,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">📝</div>
+    <div>
+      <div style="color:#00d4ff;font-weight:bold;font-size:0.88rem;">미팅 중 — 같은 기록을 공유</div>
+      <div style="color:#8b95a5;font-size:0.75rem;margin-top:3px;">한 명이 녹음하면 실시간 자막 + 번역이 팀 전체에 공유. 미팅 끝나면 AI 요약이 SA와 AM에게 동일하게 전달됩니다.</div>
+    </div>
+  </div>
+  <div class="fragment fade-up" data-fragment-index="2" style="background:rgba(0,255,136,0.08);border-left:3px solid #00ff88;border-radius:0 10px 10px 0;padding:14px 16px;display:flex;align-items:center;gap:14px;">
+    <div style="min-width:36px;height:36px;background:rgba(0,255,136,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">✅</div>
+    <div>
+      <div style="color:#00ff88;font-weight:bold;font-size:0.88rem;">미팅 후 — 액션 아이템이 명확</div>
+      <div style="color:#8b95a5;font-size:0.75rem;margin-top:3px;">AI가 대화에서 액션 아이템을 추출하고 담당자를 제안합니다. "네가 하는 거 아니었어?" 가 사라집니다.</div>
+    </div>
+  </div>
+  <div class="fragment fade-up" data-fragment-index="3" style="background:rgba(168,85,247,0.08);border-left:3px solid #a855f7;border-radius:0 10px 10px 0;padding:14px 16px;display:flex;align-items:center;gap:14px;">
+    <div style="min-width:36px;height:36px;background:rgba(168,85,247,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">🔍</div>
+    <div>
+      <div style="color:#a855f7;font-weight:bold;font-size:0.88rem;">고객 미팅 전 — 같은 맥락으로 준비</div>
+      <div style="color:#8b95a5;font-size:0.75rem;margin-top:3px;">고객사 뉴스 크롤링 + AI 브리핑이 팀 KB에 자동 축적. AM이 발견한 기회를 SA가 기술로 뒷받침하는 흐름이 자연스러워집니다.</div>
+    </div>
+  </div>
+  <div class="fragment fade-up" data-fragment-index="4" style="background:rgba(245,158,11,0.08);border-left:3px solid #f59e0b;border-radius:0 10px 10px 0;padding:14px 16px;display:flex;align-items:center;gap:14px;">
+    <div style="min-width:36px;height:36px;background:rgba(245,158,11,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">🔗</div>
+    <div>
+      <div style="color:#f59e0b;font-weight:bold;font-size:0.88rem;">도구 연결 — Claude Code에서 미팅 데이터 접근</div>
+      <div style="color:#8b95a5;font-size:0.75rem;margin-top:3px;">MCP Server로 연동하면 Claude Code에서 "지난 미팅에서 고객이 요청한 아키텍처가 뭐였지?" 같은 질문을 바로 할 수 있습니다.</div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s14">
+  <div class="slide-header" data-remarp-id="s14-header"><h2>배운 점</h2></div>
+  <div class="slide-body" data-remarp-id="s14-body">
+    <p><!-- Slide 15: Lessons Learned --></p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+  <div class="fragment fade-up" data-fragment-index="1" style="background:rgba(108,92,231,0.1);border:1px solid rgba(108,92,231,0.3);border-radius:12px;padding:16px;">
+    <div style="color:#a29bfe;font-size:1.3rem;margin-bottom:6px;">🎯</div>
+    <div style="color:#a29bfe;font-weight:bold;font-size:0.9rem;margin-bottom:6px;">제약이 품질을 만든다</div>
+    <div style="color:#8b95a5;font-size:0.78rem;line-height:1.6;">AI에게 자유를 주면 결과가 불안정합니다. Rejection Loop, Quality Gate, CLAUDE.md 같은 제약을 잘 설계하는 것이 핵심입니다.</div>
+  </div>
+  <div class="fragment fade-up" data-fragment-index="2" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:12px;padding:16px;">
+    <div style="color:#00d4ff;font-size:1.3rem;margin-bottom:6px;">🔄</div>
+    <div style="color:#00d4ff;font-weight:bold;font-size:0.9rem;margin-bottom:6px;">Dogfooding의 힘</div>
+    <div style="color:#8b95a5;font-size:0.78rem;line-height:1.6;">자기가 만든 도구를 직접 쓰면 개선점이 명확하게 보입니다. 이 발표도 Remarp로 만들면서 버그를 3개 잡았습니다.</div>
+  </div>
+  <div class="fragment fade-up" data-fragment-index="3" style="background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);border-radius:12px;padding:16px;">
+    <div style="color:#00ff88;font-size:1.3rem;margin-bottom:6px;">📦</div>
+    <div style="color:#00ff88;font-weight:bold;font-size:0.9rem;margin-bottom:6px;">지식을 코드로 축적</div>
+    <div style="color:#8b95a5;font-size:0.78rem;line-height:1.6;">노하우가 문서에 머물면 찾기 어렵습니다. Agent와 Skill로 캡슐화하면 팀 누구나 한 줄로 활용할 수 있습니다.</div>
+  </div>
+  <div class="fragment fade-up" data-fragment-index="4" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:16px;">
+    <div style="color:#f59e0b;font-size:1.3rem;margin-bottom:6px;">🤝</div>
+    <div style="color:#f59e0b;font-weight:bold;font-size:0.9rem;margin-bottom:6px;">공유가 성장을 가속</div>
+    <div style="color:#8b95a5;font-size:0.78rem;line-height:1.6;">혼자 쓰려고 만들었지만, 공유하니까 피드백으로 더 좋아졌습니다. 오늘 이 톡도 그 과정의 일부입니다.</div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s15">
+  <div class="slide-header" data-remarp-id="s15-header"><h2>감사합니다!</h2></div>
+  <div class="slide-body" data-remarp-id="s15-body">
+    <p><!-- Slide 16: Thank You --></p>
+<div style="text-align:center;margin-top:20px;">
+  <div style="display:inline-flex;gap:16px;flex-wrap:wrap;justify-content:center;">
+    <div style="background:rgba(108,92,231,0.15);border:1px solid rgba(108,92,231,0.3);border-radius:8px;padding:10px 18px;">
+      <div style="color:#a29bfe;font-size:0.8rem;font-weight:bold;">oh-my-cloud-skills</div>
+      <div style="color:#666;font-size:0.7rem;">github.com/Atom-oh</div>
+    </div>
+    <div style="background:rgba(0,212,255,0.15);border:1px solid rgba(0,212,255,0.3);border-radius:8px;padding:10px 18px;">
+      <div style="color:#00d4ff;font-size:0.8rem;font-weight:bold;">또박(Ttobak)</div>
+      <div style="color:#666;font-size:0.7rem;">ttobak.atomai.click</div>
+    </div>
+  </div>
+  <div style="color:#8b95a5;font-size:0.85rem;margin-top:20px;">
+    "만들어 보고, 직접 쓰고, 공유하자"
+  </div>
+  <div style="color:#666;font-size:0.75rem;margin-top:8px;">
+    오준석 (Junseok Oh) · Sr. Solutions Architect · AWS
+  </div>
+</div>
+  </div>
+</div>
+</div>
+<script src="./common/animation-utils.js"></script>
+<script src="./common/slide-framework.js"></script>
+<script src="./common/quiz-component.js"></script>
+<script src="./common/presenter-view.js"></script>
+
+<script>
+  
+  const presenterNotes = {
+    2: "[0.5min] 안녕하세요, 오준석입니다. 오늘은 제가 Claude Code 위에서 플러그인 마켓플레이스를 만들어본 경험을 공유하려고 합니다. 참고로 지금 보고 계신 이 슬라이드도 제가 만든 Remarp라는 도구로 생성했습니다. 15분 동안 빠르게 진행하겠습니다.\n\n먼저 왜 이걸 만들게 됐는지부터 말씀드리겠습니다.",
+    3: "[1.5min] 저도 처음에는 CLAUDE.md에 제가 자주 쓰는 명령어나 패턴을 적어두는 것부터 시작했습니다. 그런데 하다 보니까 이게 점점 커지더라고요. EKS 트러블슈팅할 때 매번 같은 kubectl 명령어 조합을 찾고, 프레젠테이션 만들 때마다 HTML 구조를 처음부터 짜고. 이걸 플러그인으로 만들면 팀 전체가 쓸 수 있겠다는 생각이 들었습니다.\n\n그래서 만든 게 oh-my-cloud-skills 입니다.",
+    4: "[1.5min] oh-my-cloud-skills는 세 개의 플러그인으로 구성되어 있습니다. content 플러그인은 발표자료나 다이어그램같은 콘텐츠를 만들고, ops 플러그인은 EKS 트러블슈팅이나 Well-Architected 리뷰 같은 운영 업무를 지원합니다. 그리고 최근에 추가한 kiro-power-converter는 이 플러그인들을 Kiro IDE 포맷으로도 변환할 수 있게 해줍니다. 설치는 단 한 줄이면 됩니다.\n\n그러면 이 플러그인의 내부 구조를 한번 살펴보겠습니다.",
+    6: "[1.5min] 플러그인의 구조는 심플합니다. plugin.json이 매니페스트 역할을 하고, CLAUDE.md가 키워드 기반으로 어떤 에이전트를 호출할지 라우팅합니다. 예를 들어 사용자가 \"EKS 노드 문제\"라고 말하면 자동으로 eks-agent가 활성화됩니다. 에이전트는 마크다운 파일인데, YAML frontmatter에 이름, 설명, 사용 도구를 선언하고, 본문에 진단 로직을 넣습니다. 스킬은 재사용 가능한 워크플로우로, references 디렉토리에 실제 운영 지식을 증류해서 담아둡니다.\n\n핵심은 하네스 엔지니어링인데요.",
+    7: "[1.5min] 하네스 엔지니어링이라는 표현은 제가 이 작업을 하면서 계속 느낀 핵심 개념입니다. AI 에이전트는 자유도가 높으면 오히려 결과가 불안정해집니다. CLAUDE.md로 프로젝트 컨텍스트를 매 세션 주입하고, Hooks로 빌드 경고나 보안 위반을 자동 감지하고, Quality Gate로 품질 미달 결과물의 배포를 차단합니다. 중요한 건 이 세 가지가 모두 선언적이라는 점입니다. 마크다운과 JSON만으로 AI의 행동 범위를 정의할 수 있습니다.\n\n이제 제가 가장 많은 시간을 쏟은 Remarp에 대해 이야기하겠습니다.",
+    9: "[1.5min] Marp는 마크다운으로 슬라이드를 만드는 훌륭한 도구이지만, 실무 발표에서 필수적인 프래그먼트 애니메이션이나 인터랙티브 요소를 넣을 수 없었습니다. 그래서 Remarp를 만들었습니다. Remarp는 \"Marp를 뒤집은 것\"이라는 의미인데요. 마크다운 안에서 중괄호 .click으로 프래그먼트를 제어하고, :::canvas 블록으로 Canvas 애니메이션을 선언적으로 작성할 수 있습니다. 이 모든 것이 Python 스크립트 하나로 HTML로 변환됩니다. 실제로 지금 이 슬라이드가 바로 Remarp로 만든 것입니다.\n\nRemarp의 핵심 컨셉 중 하나인 Rejection Loop에 대해 알려드리겠습니다.",
+    10: "[1.5min] LLM은 텍스트 기반 추론에는 뛰어나지만, 2D 캔버스 위에서 요소가 겹치는지, 정렬이 맞는지 같은 공간적 판단은 잘 못합니다. 그래서 Rejection Loop라는 외부 검증 시스템을 만들었습니다. validate 명령을 실행하면 7가지 규칙으로 마크다운을 검사합니다. CRITICAL 이슈가 있으면 빌드 자체가 차단됩니다. 이걸 통해 AI가 만든 결과물의 품질을 기계적으로 보장할 수 있습니다. 프랑켄슈타인 레이아웃을 방지하는 안전장치라고 생각하시면 됩니다.\n\n이제 VSCode Extension 이야기로 넘어가겠습니다.",
+    12: "[3min] VSCode Extension은 세 가지 핵심 기능이 있습니다.\n\n첫째, Preview 모드입니다. 마크다운과 빌드된 HTML 모두 실시간으로 프리뷰할 수 있고, 사이드바에 스피커 노트와 이슈 배지가 표시됩니다.\n\n둘째, Visual Edit 모드입니다. Cmd+Shift+E를 누르면 PPT처럼 요소를 드래그해서 위치를 바꾸거나 크기를 조절할 수 있고, 변경사항이 자동으로 소스 마크다운의 :::css나 :::canvas 블록에 기록됩니다.\n\n셋째, Issue Annotation 시스템입니다. 이게 제가 가장 자랑하고 싶은 기능인데요. 프리뷰 사이드바에서 \"이 다이어그램 너무 복잡해\" 같은 이슈를 입력하면, 소스에 HTML 주석으로 자동 삽입됩니다. 그리고 Claude Code에서 /slide-fix를 실행하면 AI가 이슈를 읽고 자동으로 수정해줍니다. 사람과 AI 사이의 피드백 루프를 Extension 안에서 완성한 거죠.\n\n그런데 생산성 도구를 프레젠테이션만으로 끝내기엔 아쉬웠습니다. 동료인 AM과 함께 일하는 방식도 바꿔보고 싶었거든요.",
+    13: "[1min] 프레젠테이션 도구를 만들면서 생산성이 많이 올랐는데, 한 가지 더 해결하고 싶은 문제가 있었습니다. 바로 동료 AM과의 협업이었어요.\n\nSA와 AM이 같은 고객 미팅에 들어가는데, 미팅이 끝나면 서로 기억하는 내용이 다릅니다. 액션 아이템도 \"그거 네가 하는 거 아니었어?\" 같은 상황이 생기고요. 고객사에 대한 맥락도 각자 머릿속에만 있어서, 한 명이 휴가 가면 이어받기가 어렵습니다.\n\n그래서 미팅 녹음부터 요약, 액션 아이템 추출, 고객 인텔리전스까지 SA와 AM이 같은 도구를 보면서 일할 수 있는 프로젝트를 만들었습니다. 이름은 또박입니다.\n\n구체적으로 어떻게 함께 일하는지 보여드리겠습니다.",
+    14: "[1min] 또박의 워크플로우는 SA와 AM이 같은 정보를 보는 것에서 시작합니다.\n\n미팅 중에는 녹음과 실시간 자막이 공유되고, 미팅이 끝나면 AI 요약이 둘 다에게 전달됩니다. 액션 아이템도 AI가 추출해서 담당자를 제안하니까, 후속 조치가 명확해집니다.\n\n특히 고객 인텔리전스가 핵심인데요, 고객사 관련 뉴스를 매일 크롤링해서 AI가 SA 관점의 브리핑을 만들어줍니다. AM이 영업 기회를 발견하면 SA가 기술 맥락을 이미 알고 있는 상태에서 바로 뒷받침할 수 있습니다.\n\n그리고 이 모든 데이터를 MCP Server로 Claude Code에서도 접근할 수 있어서, 프레젠테이션 준비할 때 미팅 내용을 바로 참조할 수 있습니다.\n\n마지막으로 이 경험에서 배운 점을 정리하겠습니다.",
+    15: "[1.5min] 이 프로젝트를 하면서 가장 크게 배운 것은 네 가지입니다.\n\n첫째, AI에게는 자유보다 잘 설계된 제약이 중요합니다. Rejection Loop, Quality Gate 같은 메커니즘이 결과 품질을 만듭니다.\n\n둘째, Dogfooding의 힘입니다. 이 발표 자체를 Remarp로 만들면서 실제로 버그도 발견하고 개선점도 찾았습니다.\n\n셋째, 노하우를 문서가 아닌 코드로 축적하면 팀 전체가 활용할 수 있습니다.\n\n넷째, 공유하면 피드백이 돌아오고, 그 피드백이 도구를 더 좋게 만듭니다.\n\n마지막 슬라이드입니다.",
+    16: "[0.5min] 오늘 보여드린 플러그인과 또박 모두 GitHub에 있으니 관심 있으시면 살펴보시고, 궁금한 점은 편하게 물어봐 주세요. 감사합니다!"
+  };
+  const deck = new SlideFramework({
+    
+    
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

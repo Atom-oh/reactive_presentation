@@ -1,0 +1,472 @@
+---
+remarp: true
+block: 03-deployment
+---
+
+---
+<!-- Slide 1: Part 3 섹션 헤더 (Section) -->
+@type: section
+
+# Part 3 — Ray-vLLM 배포 딥다이브
+
+Helm Chart, RayService 매니페스트, 파라미터 튜닝, 모델별 최적 설정
+
+:::notes
+{timing: 0.5min}
+Part 3에서는 실제 배포 코드를 중심으로 다룹니다.
+Karpenter NodePool 설정, RayService 매니페스트, vLLM 핵심 파라미터, 그리고 모델별 최적 설정까지 실무에 바로 적용 가능한 내용들입니다.
+{cue: transition}
+시작합니다.
+:::
+
+---
+<!-- Slide 2: Karpenter NodePool 설정 (Code Block) -->
+@type: content
+@title: Karpenter NodePool 설정: GPU 전용 노드 관리
+
+:::html
+<div style="display:grid;grid-template-columns:1fr auto;gap:20px;">
+  <div style="background:#0d1117;border:1px solid #333;border-radius:8px;padding:16px;font-family:monospace;font-size:12px;line-height:1.8;overflow:auto;">
+    <div style="color:#ff9900;margin-bottom:4px;">apiVersion: karpenter.sh/v1</div>
+    <div style="color:#ff9900;">kind: NodePool</div>
+    <div style="color:#41b3ff;">metadata:</div>
+    <div style="color:#bbb;">&nbsp;&nbsp;name: g5-gpu-karpenter</div>
+    <div style="color:#41b3ff;">spec:</div>
+    <div style="color:#41b3ff;">&nbsp;&nbsp;template:</div>
+    <div style="color:#41b3ff;">&nbsp;&nbsp;&nbsp;&nbsp;metadata:</div>
+    <div style="color:#bbb;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;labels:</div>
+    <div style="color:#06d6a0;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NodeGroupType: g5-gpu-karpenter</div>
+    <div style="color:#41b3ff;">&nbsp;&nbsp;&nbsp;&nbsp;spec:</div>
+    <div style="color:#41b3ff;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;requirements:</div>
+    <div style="color:#bbb;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- key: node.kubernetes.io/instance-type</div>
+    <div style="color:#bbb;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;operator: In</div>
+    <div style="color:#06d6a0;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;values: ["g5.xlarge","g5.2xlarge","g5.4xlarge"]</div>
+    <div style="color:#bbb;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- key: karpenter.sh/capacity-type</div>
+    <div style="color:#bbb;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;operator: In</div>
+    <div style="color:#06d6a0;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;values: ["on-demand", "spot"]</div>
+    <div style="color:#41b3ff;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;taints:</div>
+    <div style="color:#bbb;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- key: nvidia.com/gpu</div>
+    <div style="color:#06d6a0;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;effect: NoSchedule</div>
+    <div style="color:#41b3ff;">&nbsp;&nbsp;limits:</div>
+    <div style="color:#bbb;">&nbsp;&nbsp;&nbsp;&nbsp;resources:</div>
+    <div style="color:#ff9900;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nvidia.com/gpu: "8"</div>
+    <div style="color:#41b3ff;">&nbsp;&nbsp;disruption:</div>
+    <div style="color:#bbb;">&nbsp;&nbsp;&nbsp;&nbsp;consolidationPolicy: WhenEmpty</div>
+  </div>
+  <div style="min-width:210px;">
+    <div style="color:#ff9900;font-weight:700;font-size:14px;margin-bottom:12px;">핵심 포인트</div>
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;">
+      <div data-fragment-index="1" style="background:#1a1a2e;border-left:3px solid #06d6a0;padding:10px;border-radius:4px;">
+        <div style="color:#06d6a0;font-weight:700;font-size:12px;">NodeGroupType 라벨</div>
+        <div style="color:#bbb;font-size:12px;margin-top:3px;">Pod nodeSelector로 GPU 전용 노드 타겟</div>
+      </div>
+      <div data-fragment-index="2" style="background:#1a1a2e;border-left:3px solid #ff9900;padding:10px;border-radius:4px;">
+        <div style="color:#ff9900;font-weight:700;font-size:12px;">GPU Taint</div>
+        <div style="color:#bbb;font-size:12px;margin-top:3px;">nvidia.com/gpu NoSchedule로 일반 Pod 방지</div>
+      </div>
+      <div data-fragment-index="3" style="background:#1a1a2e;border-left:3px solid #41b3ff;padding:10px;border-radius:4px;">
+        <div style="color:#41b3ff;font-weight:700;font-size:12px;">Spot + On-Demand 혼합</div>
+        <div style="color:#bbb;font-size:12px;margin-top:3px;">비용 절감 + 가용성 확보</div>
+      </div>
+      <div data-fragment-index="4" style="background:#1a1a2e;border-left:3px solid #ad5cff;padding:10px;border-radius:4px;">
+        <div style="color:#ad5cff;font-weight:700;font-size:12px;">limits.gpu: "8"</div>
+        <div style="color:#bbb;font-size:12px;margin-top:3px;">과다 프로비저닝 방지 상한</div>
+      </div>
+      <div data-fragment-index="5" style="background:#1a1a2e;border-left:3px solid #06d6a0;padding:10px;border-radius:4px;">
+        <div style="color:#06d6a0;font-weight:700;font-size:12px;">WhenEmpty Consolidation</div>
+        <div style="color:#bbb;font-size:12px;margin-top:3px;">빈 GPU 노드 즉시 종료</div>
+      </div>
+    </div>
+  </div>
+</div>
+:::
+
+:::notes
+{timing: 2min}
+Karpenter NodePool 설정에서 중요한 부분 몇 가지를 짚겠습니다.
+NodeGroupType 라벨은 vLLM Pod의 nodeSelector가 이 NodePool의 노드를 찾을 때 사용합니다. GPU 전용 노드임을 명시합니다.
+nvidia.com/gpu NoSchedule Taint는 vLLM Pod처럼 GPU toleration을 설정한 Pod만 이 노드에 스케줄되도록 합니다. 일반 Pod이 실수로 GPU 노드에 올라가서 비용을 낭비하는 것을 막습니다.
+{cue: pause}
+values에 여러 인스턴스 타입을 넣으면 Karpenter가 현재 Spot 가용성과 비용을 고려해서 최적의 타입을 자동으로 선택합니다. g5.xlarge Spot이 없으면 g5.2xlarge Spot을 선택하는 식입니다.
+limits.gpu: "8"은 이 NodePool이 최대 GPU 8개까지만 프로비저닝하도록 제한합니다. 실수나 무한 스케일아웃을 방지하는 안전장치입니다.
+{cue: transition}
+NodePool이 설정됐습니다. 이제 실제 vLLM Pod를 배포하는 RayService 매니페스트를 보겠습니다.
+:::
+
+---
+<!-- Slide 3: RayService 매니페스트 (Code Block Tabs) -->
+@type: content
+@title: RayService 배포 매니페스트 워크스루
+
+:::html
+<div style="background:#0d1117;border:1px solid #333;border-radius:8px;padding:14px;font-family:monospace;font-size:11px;line-height:1.75;height:460px;overflow:auto;">
+  <div style="color:#888;margin-bottom:8px;">apiVersion: ray.io/v1</div>
+  <div style="color:#ff9900;">kind: RayService</div>
+  <div style="color:#41b3ff;">metadata:</div>
+  <div style="color:#bbb;">&nbsp;&nbsp;name: vllm</div>
+  <div style="color:#bbb;">&nbsp;&nbsp;namespace: rayserve-vllm</div>
+  <div style="color:#41b3ff;">spec:</div>
+  <div style="color:#41b3ff;">&nbsp;&nbsp;serveConfigV2: |</div>
+  <div style="color:#41b3ff;">&nbsp;&nbsp;&nbsp;&nbsp;applications:</div>
+  <div style="color:#bbb;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- name: mistral</div>
+  <div style="color:#bbb;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;import_path: "vllm_serve:deployment"</div>
+  <div style="color:#41b3ff;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;runtime_env:</div>
+  <div style="color:#41b3ff;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;env_vars:</div>
+  <div style="color:#06d6a0;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MODEL_ID: "mistralai/Mistral-7B-Instruct-v0.2"</div>
+  <div style="color:#06d6a0;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GPU_MEMORY_UTILIZATION: "0.9"</div>
+  <div style="color:#06d6a0;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MAX_MODEL_LEN: "8192"</div>
+  <div style="color:#41b3ff;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;deployments:</div>
+  <div style="color:#bbb;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- name: mistral-deployment</div>
+  <div style="color:#ff9900;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;autoscaling_config:</div>
+  <div style="color:#ff9900;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;min_replicas: 1</div>
+  <div style="color:#ff9900;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;max_replicas: 4</div>
+  <div style="color:#ff9900;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;target_num_ongoing_requests_per_replica: 20</div>
+  <div style="color:#41b3ff;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ray_actor_options:</div>
+  <div style="color:#06d6a0;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;num_gpus: 1</div>
+  <div style="color:#41b3ff;">&nbsp;&nbsp;rayClusterConfig:</div>
+  <div style="color:#41b3ff;">&nbsp;&nbsp;&nbsp;&nbsp;workerGroupSpecs:</div>
+  <div style="color:#bbb;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- replicas: 1</div>
+  <div style="color:#bbb;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;minReplicas: 1</div>
+  <div style="color:#bbb;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;maxReplicas: 4</div>
+  <div style="color:#41b3ff;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;template:</div>
+  <div style="color:#41b3ff;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;spec:</div>
+  <div style="color:#ff9900;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nodeSelector:</div>
+  <div style="color:#ff9900;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NodeGroupType: g5-gpu-karpenter</div>
+  <div style="color:#ff9900;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tolerations:</div>
+  <div style="color:#ff9900;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- key: "nvidia.com/gpu"</div>
+  <div style="color:#ff9900;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;effect: "NoSchedule"</div>
+</div>
+:::
+
+:::notes
+{timing: 2min}
+RayService 매니페스트의 핵심 부분을 설명하겠습니다.
+MODEL_ID는 HuggingFace 모델 ID입니다. GPU_MEMORY_UTILIZATION=0.9는 vLLM 엔진 전체(모델 가중치 + KV Cache + Activation)가 사용할 GPU VRAM의 최대 비율입니다. KV Cache는 모델 가중치 로드 후 남은 공간을 사용합니다. MAX_MODEL_LEN은 최대 입출력 시퀀스 길이입니다.
+autoscaling_config가 RayServe의 오토스케일링 설정입니다. target_num_ongoing_requests_per_replica=20이 핵심입니다. 레플리카당 동시 처리 요청이 20개가 되면 레플리카를 추가합니다.
+{cue: pause}
+nodeSelector: NodeGroupType: g5-gpu-karpenter로 앞서 만든 Karpenter NodePool의 노드에 스케줄되도록 합니다.
+tolerations에 nvidia.com/gpu NoSchedule toleration을 추가해야 GPU Taint가 있는 노드에 스케줄될 수 있습니다.
+{cue: transition}
+이제 vLLM의 핵심 파라미터들을 살펴보겠습니다.
+:::
+
+---
+<!-- Slide 4: vLLM 파라미터 튜닝 (Table + Interactive) -->
+@type: content
+@title: vLLM 핵심 파라미터 튜닝 가이드
+
+:::html
+<table style="width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:14px;">
+  <thead>
+    <tr style="background:#232f4a;">
+      <th style="padding:8px;color:#ff9900;text-align:left;">파라미터</th>
+      <th style="padding:8px;color:#ff9900;text-align:center;">기본값</th>
+      <th style="padding:8px;color:#ff9900;text-align:center;">권장 범위</th>
+      <th style="padding:8px;color:#ff9900;text-align:left;">설명</th>
+      <th style="padding:8px;color:#ff9900;text-align:left;">영향</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="background:#1a283a;border:1px solid #41b3ff22;">
+      <td style="padding:8px;color:#41b3ff;font-weight:700;font-family:monospace;">GPU_MEMORY_UTILIZATION</td>
+      <td style="padding:8px;color:#fff;text-align:center;">0.9</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;">0.85~0.95</td>
+      <td style="padding:8px;color:#bbb;">vLLM 엔진 전체가 사용할 VRAM 비율 (가중치+KV Cache+Activation)</td>
+      <td style="padding:8px;color:#bbb;">높을수록 동시처리↑, OOM↑</td>
+    </tr>
+    <tr style="background:#15152a;">
+      <td style="padding:8px;color:#ddd;font-family:monospace;">MAX_MODEL_LEN</td>
+      <td style="padding:8px;color:#fff;text-align:center;">8192</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;">2048~32768</td>
+      <td style="padding:8px;color:#bbb;">최대 입출력 시퀀스 길이</td>
+      <td style="padding:8px;color:#bbb;">길수록 메모리↑, 유연성↑</td>
+    </tr>
+    <tr style="background:#1a1a2e;">
+      <td style="padding:8px;color:#ddd;font-family:monospace;">TENSOR_PARALLEL_SIZE</td>
+      <td style="padding:8px;color:#fff;text-align:center;">1</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;">1/2/4/8</td>
+      <td style="padding:8px;color:#bbb;">모델을 분산할 GPU 수</td>
+      <td style="padding:8px;color:#bbb;">GPU 수에 맞게 설정</td>
+    </tr>
+    <tr style="background:#15152a;">
+      <td style="padding:8px;color:#ddd;font-family:monospace;">MAX_NUM_SEQ</td>
+      <td style="padding:8px;color:#fff;text-align:center;">256</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;">32~256</td>
+      <td style="padding:8px;color:#bbb;">동시 처리 시퀀스 수</td>
+      <td style="padding:8px;color:#bbb;">높을수록 처리량↑, 레이턴시↑</td>
+    </tr>
+    <tr style="background:#1a1a2e;">
+      <td style="padding:8px;color:#ddd;font-family:monospace;">dtype</td>
+      <td style="padding:8px;color:#fff;text-align:center;">auto</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;">bfloat16</td>
+      <td style="padding:8px;color:#bbb;">추론 정밀도</td>
+      <td style="padding:8px;color:#bbb;">bfloat16 권장 (H100+)</td>
+    </tr>
+  </tbody>
+</table>
+<div style="background:#1a2a1a;border:1px solid #06d6a0;border-radius:8px;padding:14px;font-size:13px;color:#bbb;line-height:1.9;">
+  <b style="color:#06d6a0;">튜닝 시작점:</b> GPU_MEMORY_UTILIZATION=0.9에서 시작 → OOM 발생 시 0.85로 낮춤<br>
+  <b style="color:#ff9900;">메모리 계산:</b> 모델 크기(GB) ≈ 파라미터 수(B) × 2 (BF16 기준). 나머지가 KV Cache<br>
+  <b style="color:#41b3ff;">Prefix Caching:</b> 반복 프롬프트(RAG, 시스템 프롬프트)가 많으면 <code>--enable-prefix-caching</code> 추가
+</div>
+:::
+
+:::notes
+{timing: 2min}
+vLLM 파라미터 중 가장 중요한 것은 GPU_MEMORY_UTILIZATION입니다.
+0.9이면 vLLM 엔진이 GPU VRAM의 90%를 사용할 수 있습니다. 이 공간에 모델 가중치가 먼저 로드되고, 그 이후 남은 공간이 KV Cache로 사용됩니다. 예를 들어 7B 모델 가중치가 14GB, VRAM이 24GB라면 KV Cache는 약 7GB(24×0.9 - 14 = 7.6GB)가 됩니다. KV Cache가 크면 동시에 처리할 수 있는 시퀀스 수가 늘어납니다.
+OOM이 자주 발생하면 0.85로 낮춰보세요. 반대로 GPU 메모리가 여유롭다면 0.95까지 올릴 수 있습니다.
+{cue: pause}
+MAX_MODEL_LEN은 실제 사용 패턴에 맞게 설정해야 합니다. DeepSeek R1 같은 CoT 모델은 출력이 2000 토큰이 넘을 수 있어서 32768이 필요합니다. 단순 채팅이라면 8192로도 충분합니다.
+TENSOR_PARALLEL_SIZE는 모델이 단일 GPU 메모리에 안 맞을 때 사용합니다. 70B 모델은 140GB가 필요하므로 A100 80GB 두 개(TP=2)가 필요합니다. GPU 간 통신 오버헤드가 있어서 무조건 크게 설정하면 오히려 느려집니다.
+{cue: transition}
+오토스케일링 설정을 보겠습니다.
+:::
+
+---
+<!-- Slide 5: RayServe 오토스케일링 (Code + Explanation) -->
+@type: content
+@title: RayServe 오토스케일링: target_num_ongoing_requests가 핵심
+
+:::html
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+  <div>
+    <div style="background:#0d1117;border:1px solid #333;border-radius:8px;padding:14px;font-family:monospace;font-size:12px;line-height:1.8;margin-bottom:14px;">
+      <div style="color:#41b3ff;">autoscaling_config:</div>
+      <div style="color:#bbb;">&nbsp;&nbsp;metrics_interval_s: 0.2</div>
+      <div style="color:#bbb;">&nbsp;&nbsp;min_replicas: 1</div>
+      <div style="color:#bbb;">&nbsp;&nbsp;max_replicas: 4</div>
+      <div style="color:#bbb;">&nbsp;&nbsp;look_back_period_s: 2</div>
+      <div style="color:#ff9900;">&nbsp;&nbsp;downscale_delay_s: 600</div>
+      <div style="color:#06d6a0;">&nbsp;&nbsp;upscale_delay_s: 30</div>
+      <div style="color:#41b3ff;">&nbsp;&nbsp;target_num_ongoing_requests_per_replica: 20</div>
+    </div>
+    <div style="background:#1a1a2e;border-left:3px solid #ff9900;padding:12px;border-radius:4px;font-size:13px;">
+      <div style="color:#ff9900;font-weight:700;margin-bottom:6px;">스케일링 시나리오</div>
+      <div style="color:#bbb;line-height:1.8;">
+        요청 60개 유입 → target=20<br>
+        필요 replicas = 60 ÷ 20 = <b style="color:#fff;">3</b><br>
+        현재 1개 → <b style="color:#06d6a0;">30초 후 3개로 확장</b><br>
+        → Karpenter가 g5 노드 2개 추가 (2~5분)
+      </div>
+    </div>
+  </div>
+  <div>
+    <div style="color:#41b3ff;font-size:15px;font-weight:700;margin-bottom:14px;">파라미터별 의미</div>
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;">
+      <div data-fragment-index="1" style="background:#1a1a2e;border-radius:6px;padding:10px;">
+        <div style="color:#41b3ff;font-weight:700;font-family:monospace;">target_num_ongoing_requests</div>
+        <div style="color:#bbb;margin-top:4px;">레플리카당 목표 동시 요청 수. 낮으면 빠른 확장(비용↑), 높으면 느린 확장(레이턴시↑). 권장: 15~25</div>
+      </div>
+      <div data-fragment-index="2" style="background:#1a1a2e;border-radius:6px;padding:10px;">
+        <div style="color:#ff9900;font-weight:700;font-family:monospace;">downscale_delay_s: 600</div>
+        <div style="color:#bbb;margin-top:4px;">트래픽 감소 후 10분 기다렸다가 축소. GPU 노드 프로비저닝 비용 고려 (절대 값 낮추지 말 것)</div>
+      </div>
+      <div data-fragment-index="3" style="background:#1a1a2e;border-radius:6px;padding:10px;">
+        <div style="color:#06d6a0;font-weight:700;font-family:monospace;">upscale_delay_s: 30</div>
+        <div style="color:#bbb;margin-top:4px;">트래픽 급증 시 30초 후 확장. 지나치게 낮으면 불안정한 스케일링 발생</div>
+      </div>
+      <div data-fragment-index="4" style="background:#1a1a2e;border-radius:6px;padding:10px;">
+        <div style="color:#bbb;font-weight:700;font-family:monospace;">metrics_interval_s: 0.2</div>
+        <div style="color:#bbb;margin-top:4px;">200ms마다 메트릭 수집. 빠른 반응 + 안정적 판단을 위해 look_back_period_s: 2와 조합</div>
+      </div>
+    </div>
+  </div>
+</div>
+:::
+
+:::notes
+{timing: 2min}
+RayServe 오토스케일링의 핵심은 target_num_ongoing_requests_per_replica입니다.
+이 값이 20이면 레플리카당 동시 요청 20개가 목표입니다. 현재 동시 요청이 60개면 3개의 레플리카가 필요합니다. 현재 1개면 2개를 더 만들어야 합니다.
+upscale_delay_s=30이라서 30초 후에 레플리카가 2개 더 생성됩니다. 그러면 Karpenter가 GPU 노드 2개를 더 프로비저닝합니다.
+{cue: pause}
+downscale_delay_s를 600(10분)으로 설정하는 이유가 있습니다. GPU 노드를 프로비저닝하는 데 2~5분이 걸립니다. 너무 빨리 축소했다가 트래픽이 다시 오면 사용자가 느린 응답을 경험합니다. 10분 정도는 여유를 두는 것이 좋습니다.
+{cue: transition}
+배포 단계별 워크플로우를 정리하겠습니다.
+:::
+
+---
+<!-- Slide 6: 배포 단계 워크플로우 (Timeline) -->
+@type: content
+@title: 4단계 배포 워크플로우
+
+:::html
+<div style="display:flex;flex-direction:column;gap:14px;height:440px;">
+  <div data-fragment-index="1" style="display:grid;grid-template-columns:100px 1fr auto;gap:14px;align-items:center;background:#1a1a2e;border-radius:10px;padding:14px;">
+    <div style="background:#41b3ff;color:#000;font-size:13px;font-weight:700;padding:6px;border-radius:6px;text-align:center;">Step 1<br><span style="font-size:11px;">~20분</span></div>
+    <div>
+      <div style="color:#41b3ff;font-weight:700;font-size:14px;margin-bottom:4px;">인프라 배포</div>
+      <code style="color:#06d6a0;font-size:12px;background:#0d1117;padding:4px 8px;border-radius:3px;">terraform apply -var-file=blueprint.tfvars</code>
+    </div>
+    <div style="color:#bbb;font-size:12px;text-align:right;">EKS + Karpenter<br>+ 모니터링 + GPU 플러그인</div>
+  </div>
+  <div data-fragment-index="2" style="display:grid;grid-template-columns:100px 1fr auto;gap:14px;align-items:center;background:#1a1a2e;border-radius:10px;padding:14px;">
+    <div style="background:#06d6a0;color:#000;font-size:13px;font-weight:700;padding:6px;border-radius:6px;text-align:center;">Step 2<br><span style="font-size:11px;">~2분</span></div>
+    <div>
+      <div style="color:#06d6a0;font-weight:700;font-size:14px;margin-bottom:4px;">Helm Repo 추가</div>
+      <code style="color:#06d6a0;font-size:11px;background:#0d1117;padding:4px 8px;border-radius:3px;">helm repo add ai-on-eks https://awslabs.github.io/ai-on-eks-charts/</code>
+    </div>
+    <div style="color:#bbb;font-size:12px;text-align:right;">KubeRay Operator<br>자동 포함</div>
+  </div>
+  <div data-fragment-index="3" style="display:grid;grid-template-columns:100px 1fr auto;gap:14px;align-items:center;background:#1a1a2e;border-radius:10px;padding:14px;">
+    <div style="background:#ff9900;color:#000;font-size:13px;font-weight:700;padding:6px;border-radius:6px;text-align:center;">Step 3<br><span style="font-size:11px;">~10분</span></div>
+    <div>
+      <div style="color:#ff9900;font-weight:700;font-size:14px;margin-bottom:4px;">모델 배포</div>
+      <code style="color:#06d6a0;font-size:11px;background:#0d1117;padding:4px 8px;border-radius:3px;">helm install deepseek ai-on-eks/inference-charts --values values-deepseek-r1.yaml</code>
+    </div>
+    <div style="color:#bbb;font-size:12px;text-align:right;">이미지 Pull<br>+ 모델 로딩</div>
+  </div>
+  <div data-fragment-index="4" style="display:grid;grid-template-columns:100px 1fr auto;gap:14px;align-items:center;background:#1a1a2e;border-radius:10px;padding:14px;">
+    <div style="background:#ad5cff;color:#fff;font-size:13px;font-weight:700;padding:6px;border-radius:6px;text-align:center;">Step 4<br><span style="font-size:11px;">즉시</span></div>
+    <div>
+      <div style="color:#ad5cff;font-weight:700;font-size:14px;margin-bottom:4px;">검증</div>
+      <code style="color:#06d6a0;font-size:11px;background:#0d1117;padding:4px 8px;border-radius:3px;">kubectl get rayservice -n default && curl http://localhost:8000/v1/chat/completions</code>
+    </div>
+    <div style="color:#bbb;font-size:12px;text-align:right;">서비스 상태<br>+ API 테스트</div>
+  </div>
+</div>
+:::
+
+:::notes
+{timing: 1.5min}
+4단계로 배포가 완료됩니다.
+Step 1에서 Terraform으로 전체 인프라를 배포합니다. 약 20분이면 EKS, Karpenter, Prometheus, Grafana, NVIDIA Device Plugin이 모두 준비됩니다.
+Step 2에서 ai-on-eks Helm 레포를 추가합니다.
+{cue: pause}
+Step 3에서 Helm 한 줄로 모델을 배포합니다. inference-charts에는 DeepSeek, Llama, Qwen3, Mistral 등의 프리셋이 있어서 values 파일만 선택하면 됩니다. 이미지 Pull과 모델 로딩에 약 10분이 걸립니다.
+Step 4에서 kubectl로 상태를 확인하고 curl로 API를 테스트합니다.
+{cue: transition}
+이제 주요 모델별 권장 설정을 보겠습니다.
+:::
+
+---
+<!-- Slide 7: 모델별 최적 설정 (Table) -->
+@type: content
+@title: 주요 모델별 권장 vLLM 설정
+
+:::html
+<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px;">
+  <thead>
+    <tr style="background:#232f4a;">
+      <th style="padding:9px;color:#ff9900;text-align:left;">모델</th>
+      <th style="padding:9px;color:#ff9900;text-align:center;">크기</th>
+      <th style="padding:9px;color:#ff9900;">권장 인스턴스</th>
+      <th style="padding:9px;color:#ff9900;text-align:center;">TP</th>
+      <th style="padding:9px;color:#ff9900;text-align:center;">GPU MEM</th>
+      <th style="padding:9px;color:#ff9900;text-align:center;">MAX LEN</th>
+      <th style="padding:9px;color:#ff9900;">특이사항</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="background:#1a283a;">
+      <td style="padding:8px;color:#41b3ff;font-weight:700;">DeepSeek-R1-8B</td>
+      <td style="padding:8px;color:#fff;text-align:center;">8B</td>
+      <td style="padding:8px;color:#bbb;">g5.xlarge (1×A10G)</td>
+      <td style="padding:8px;color:#fff;text-align:center;">1</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;">0.90</td>
+      <td style="padding:8px;color:#ff9900;text-align:center;">32768</td>
+      <td style="padding:8px;color:#bbb;">CoT 추론, 긴 출력 필수</td>
+    </tr>
+    <tr style="background:#15152a;">
+      <td style="padding:8px;color:#ddd;">Llama-3.1-8B</td>
+      <td style="padding:8px;color:#fff;text-align:center;">8B</td>
+      <td style="padding:8px;color:#bbb;">g5.xlarge (1×A10G)</td>
+      <td style="padding:8px;color:#fff;text-align:center;">1</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;">0.90</td>
+      <td style="padding:8px;color:#bbb;text-align:center;">8192</td>
+      <td style="padding:8px;color:#bbb;">기본 채팅, 범용</td>
+    </tr>
+    <tr style="background:#1a1a2e;">
+      <td style="padding:8px;color:#ddd;">Llama-3.1-70B</td>
+      <td style="padding:8px;color:#fff;text-align:center;">70B</td>
+      <td style="padding:8px;color:#bbb;">p4d.24xlarge (8×A100)</td>
+      <td style="padding:8px;color:#ff9900;text-align:center;">8</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;">0.90</td>
+      <td style="padding:8px;color:#bbb;text-align:center;">8192</td>
+      <td style="padding:8px;color:#bbb;">TP=8 필수, 고성능</td>
+    </tr>
+    <tr style="background:#15152a;">
+      <td style="padding:8px;color:#ddd;">Qwen3-7B</td>
+      <td style="padding:8px;color:#fff;text-align:center;">7B</td>
+      <td style="padding:8px;color:#bbb;">g5.xlarge (1×A10G)</td>
+      <td style="padding:8px;color:#fff;text-align:center;">1</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;">0.90</td>
+      <td style="padding:8px;color:#ff9900;text-align:center;">32768</td>
+      <td style="padding:8px;color:#bbb;">Thinking mode 지원</td>
+    </tr>
+    <tr style="background:#1a1a2e;">
+      <td style="padding:8px;color:#ddd;">Mistral-7B</td>
+      <td style="padding:8px;color:#fff;text-align:center;">7B</td>
+      <td style="padding:8px;color:#bbb;">g5.xlarge (1×A10G)</td>
+      <td style="padding:8px;color:#fff;text-align:center;">1</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;">0.90</td>
+      <td style="padding:8px;color:#bbb;text-align:center;">8192</td>
+      <td style="padding:8px;color:#bbb;">Function Calling 강점</td>
+    </tr>
+    <tr style="background:#15152a;">
+      <td style="padding:8px;color:#ef476f;font-weight:700;">DeepSeek-R1 671B</td>
+      <td style="padding:8px;color:#fff;text-align:center;">671B</td>
+      <td style="padding:8px;color:#ef476f;">LWS: 2×p5.48xlarge</td>
+      <td style="padding:8px;color:#ef476f;text-align:center;">16</td>
+      <td style="padding:8px;color:#bbb;text-align:center;">0.85</td>
+      <td style="padding:8px;color:#ff9900;text-align:center;">32768</td>
+      <td style="padding:8px;color:#ef476f;">멀티노드 필수</td>
+    </tr>
+  </tbody>
+</table>
+<div style="background:#0d1117;border-radius:8px;padding:12px;font-size:13px;color:#bbb;">
+  <b style="color:#ff9900;">VRAM 공식:</b> 모델 크기(GB) ≈ 파라미터(B) × 2 (BF16) &nbsp;|&nbsp;
+  <b style="color:#06d6a0;">KV Cache = (GPU VRAM × GPU_MEM_UTIL) - 모델 크기</b> &nbsp;|&nbsp;
+  <b style="color:#41b3ff;">DeepSeek-R1 8B: 모델 15GB + KV Cache 5GB = 총 20GB (A10G 24GB에 딱 맞음)</b>
+</div>
+:::
+
+:::notes
+{timing: 2min}
+주요 모델별 권장 설정을 정리했습니다.
+DeepSeek-R1 8B는 CoT(Chain of Thought) 추론 모델이라서 출력이 매우 깁니다. MAX_MODEL_LEN을 32768로 설정해야 합니다. GPU는 g5.xlarge(1×A10G 24GB)로 충분합니다. 단, CoT 추론 시 시퀀스 길이가 길어지면 KV Cache 소모가 빠르므로 GPU_MEMORY_UTILIZATION은 0.9를 유지하세요.
+{cue: pause}
+DeepSeek-R1 671B는 파라미터가 671B이므로 BF16 기준으로 1342GB 이상이 필요합니다. p5.48xlarge 하나가 640GB이므로 두 개를 LeaderWorkerSet으로 연결해야 합니다.
+LWS는 다음 세션에서 더 자세히 다루겠습니다.
+{cue: transition}
+Part 3을 마칩니다. 다음은 운영 파트입니다.
+:::
+
+---
+<!-- Slide 8: Part 3 마무리 (Thank You) -->
+@type: content
+@title: Part 3 핵심 정리
+
+:::html
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;">
+  <div style="background:#1a1a2e;border-top:3px solid #ff9900;border-radius:8px;padding:16px;text-align:center;">
+    <div style="font-size:28px;margin-bottom:8px;">⚙️</div>
+    <div style="color:#ff9900;font-weight:700;font-size:13px;margin-bottom:6px;">Helm Chart 배포</div>
+    <div style="color:#bbb;font-size:12px;line-height:1.5;">inference-charts로<br>3줄 배포 완성</div>
+  </div>
+  <div style="background:#1a1a2e;border-top:3px solid #41b3ff;border-radius:8px;padding:16px;text-align:center;">
+    <div style="font-size:28px;margin-bottom:8px;">📊</div>
+    <div style="color:#41b3ff;font-weight:700;font-size:13px;margin-bottom:6px;">오토스케일링</div>
+    <div style="color:#bbb;font-size:12px;line-height:1.5;">target_requests=20<br>RayServe 내장</div>
+  </div>
+  <div style="background:#1a1a2e;border-top:3px solid #06d6a0;border-radius:8px;padding:16px;text-align:center;">
+    <div style="font-size:28px;margin-bottom:8px;">🎯</div>
+    <div style="color:#06d6a0;font-weight:700;font-size:13px;margin-bottom:6px;">모델별 최적 설정</div>
+    <div style="color:#bbb;font-size:12px;line-height:1.5;">GPU_MEM × 크기별<br>TP/MAX_LEN 조정</div>
+  </div>
+</div>
+<div style="text-align:center;padding:16px;background:#0d1117;border-radius:8px;">
+  <a href="index.html" style="color:#bbb;font-size:13px;text-decoration:none;margin-right:24px;">← 목차로 돌아가기</a>
+  <a href="04-operations.html" style="color:#ff9900;font-size:14px;font-weight:700;text-decoration:none;">다음: 운영 & 최적화 →</a>
+</div>
+:::
+
+:::notes
+{timing: 1min}
+Part 3을 정리하겠습니다.
+Helm inference-charts를 쓰면 values 파일 하나로 모델 배포가 됩니다. RayServe 오토스케일링은 target_num_ongoing_requests를 조정하는 것이 핵심입니다.
+모델별로 GPU 메모리 계산 공식을 적용해서 인스턴스와 파라미터를 설정하면 됩니다.
+{cue: transition}
+마지막 파트에서는 프로덕션 운영에 필요한 모니터링, 장애 대응, 비용 최적화를 다루겠습니다.
+:::

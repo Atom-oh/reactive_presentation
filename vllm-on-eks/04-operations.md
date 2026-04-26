@@ -1,0 +1,513 @@
+---
+remarp: true
+block: 04-operations
+---
+
+---
+<!-- Slide 1: Part 4 섹션 헤더 (Section) -->
+@type: section
+
+# Part 4 — 운영 & 최적화
+
+모니터링, 비용 최적화, 장애 대응, OpenAI 마이그레이션
+
+:::notes
+{timing: 0.5min}
+마지막 파트입니다. 프로덕션에서 vLLM을 운영할 때 필요한 모니터링 메트릭, 비용 최적화 전략, 장애 시나리오별 대응, 그리고 OpenAI API에서 vLLM으로 마이그레이션하는 방법을 다룹니다.
+{cue: transition}
+시작합니다.
+:::
+
+---
+<!-- Slide 2: vLLM 핵심 메트릭 (Content with cards) -->
+@type: content
+@title: vLLM 핵심 메트릭 4가지: 프로덕션 SLO 기준
+
+:::html
+<div style="display:flex;flex-direction:column;gap:12px;height:440px;">
+  <div data-fragment-index="1" style="background:#1a1a2e;border:1px solid #41b3ff;border-radius:8px;padding:14px;display:grid;grid-template-columns:auto 1fr 1fr;gap:16px;align-items:center;">
+    <div style="width:110px;">
+      <div style="color:#41b3ff;font-weight:700;font-size:14px;">TTFT</div>
+      <div style="color:#888;font-size:11px;">Time to First Token</div>
+    </div>
+    <div>
+      <code style="color:#06d6a0;font-size:11px;background:#0d1117;padding:3px 8px;border-radius:3px;">vllm:time_to_first_token_seconds</code>
+      <div style="color:#bbb;font-size:12px;margin-top:4px;">첫 토큰 생성까지 시간. 사용자 체감 응답성 핵심 지표</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="color:#06d6a0;font-size:13px;">목표: p50 &lt; 2s</div>
+      <div style="color:#ff9900;font-size:13px;">경고: p99 &gt; 5s</div>
+    </div>
+  </div>
+  <div data-fragment-index="2" style="background:#1a1a2e;border:1px solid #06d6a0;border-radius:8px;padding:14px;display:grid;grid-template-columns:auto 1fr 1fr;gap:16px;align-items:center;">
+    <div style="width:110px;">
+      <div style="color:#06d6a0;font-weight:700;font-size:14px;">TPOT / ITL</div>
+      <div style="color:#888;font-size:11px;">Inter-Token Latency</div>
+    </div>
+    <div>
+      <code style="color:#06d6a0;font-size:11px;background:#0d1117;padding:3px 8px;border-radius:3px;">vllm:time_per_output_token_seconds</code>
+      <div style="color:#bbb;font-size:12px;margin-top:4px;">토큰 간 생성 간격. 스트리밍 품질 결정</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="color:#06d6a0;font-size:13px;">목표: &lt; 100ms</div>
+      <div style="color:#ff9900;font-size:13px;">경고: &gt; 200ms</div>
+    </div>
+  </div>
+  <div data-fragment-index="3" style="background:#1a1a2e;border:1px solid #ff9900;border-radius:8px;padding:14px;display:grid;grid-template-columns:auto 1fr 1fr;gap:16px;align-items:center;">
+    <div style="width:110px;">
+      <div style="color:#ff9900;font-weight:700;font-size:14px;">Queue Time</div>
+      <div style="color:#888;font-size:11px;">대기 시간</div>
+    </div>
+    <div>
+      <code style="color:#06d6a0;font-size:11px;background:#0d1117;padding:3px 8px;border-radius:3px;">vllm:request_queue_time_seconds</code>
+      <div style="color:#bbb;font-size:12px;margin-top:4px;">요청 대기 시간. 서버 과부하 지표</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="color:#06d6a0;font-size:13px;">목표: p95 &lt; 2s</div>
+      <div style="color:#ef476f;font-size:13px;">급증 시 replica↑</div>
+    </div>
+  </div>
+  <div data-fragment-index="4" style="background:#1a1a2e;border:1px solid #ef476f;border-radius:8px;padding:14px;display:grid;grid-template-columns:auto 1fr 1fr;gap:16px;align-items:center;">
+    <div style="width:110px;">
+      <div style="color:#ef476f;font-weight:700;font-size:14px;">Preemptions</div>
+      <div style="color:#888;font-size:11px;">KV Cache 부족</div>
+    </div>
+    <div>
+      <code style="color:#06d6a0;font-size:11px;background:#0d1117;padding:3px 8px;border-radius:3px;">vllm:num_preemptions_total</code>
+      <div style="color:#bbb;font-size:12px;margin-top:4px;">KV Cache 부족으로 요청 중단. 발생 시 즉시 조치</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="color:#06d6a0;font-size:13px;">목표: 0</div>
+      <div style="color:#ef476f;font-size:13px;">발생 시 MEM↓/LEN↓</div>
+    </div>
+  </div>
+</div>
+:::
+
+:::notes
+{timing: 2min}
+프로덕션에서 반드시 모니터링해야 하는 4가지 메트릭입니다.
+첫째 TTFT는 사용자 체감 응답성과 직결됩니다. 첫 토큰이 2초 안에 오면 사용자는 빠르다고 느낍니다. 5초를 넘기면 불만을 표출하기 시작합니다.
+둘째 TPOT(ITL)은 스트리밍 품질입니다. 100ms마다 토큰이 오면 자연스러운 타이핑 속도처럼 보입니다. 200ms를 넘기면 버벅거려 보입니다.
+{cue: pause}
+셋째 Queue Time이 급증한다는 것은 서버가 과부하 상태라는 신호입니다. Replica를 늘려야 합니다.
+넷째 Preemptions는 가장 심각한 문제입니다. KV Cache가 부족해서 이미 처리 중인 요청을 강제로 중단하고 다시 처리해야 합니다. 사용자 입장에서는 응답이 갑자기 끊깁니다.
+{cue: transition}
+이 메트릭들을 Grafana 대시보드로 시각화할 수 있습니다.
+:::
+
+---
+<!-- Slide 3: 비용 최적화 전략 (Content) -->
+@type: content
+@title: 비용 최적화 전략: 4가지 레이어
+
+:::html
+<div style="display:flex;flex-direction:column;gap:14px;height:440px;">
+  <div data-fragment-index="1" style="display:flex;align-items:flex-start;gap:14px;background:#1a2a1a;border-left:4px solid #06d6a0;border-radius:8px;padding:14px;">
+    <div style="color:#06d6a0;font-weight:700;font-size:14px;min-width:180px;">Karpenter Spot 인스턴스</div>
+    <div style="color:#bbb;font-size:13px;line-height:1.7;">
+      g5 Spot: On-Demand 대비 <b style="color:#06d6a0;">60~70% 할인</b> |
+      capacity-type: [on-demand, spot] 혼합 전략 |
+      vLLM Stateless → Spot 중단 시 빠른 재시작 가능
+    </div>
+  </div>
+  <div data-fragment-index="2" style="display:flex;align-items:flex-start;gap:14px;background:#1a1a2a;border-left:4px solid #41b3ff;border-radius:8px;padding:14px;">
+    <div style="color:#41b3ff;font-weight:700;font-size:14px;min-width:180px;">Consolidation 정책</div>
+    <div style="color:#bbb;font-size:13px;line-height:1.7;">
+      WhenEmpty: 빈 GPU 노드 즉시 제거 (기본 권장) |
+      downscale_delay_s=600으로 불필요한 축소 방지 |
+      야간/주말 min_replicas=0 설정 고려
+    </div>
+  </div>
+  <div data-fragment-index="3" style="display:flex;align-items:flex-start;gap:14px;background:#2a1a1a;border-left:4px solid #ff9900;border-radius:8px;padding:14px;">
+    <div style="color:#ff9900;font-weight:700;font-size:14px;min-width:180px;">Right-sizing</div>
+    <div style="color:#bbb;font-size:13px;line-height:1.7;">
+      g5.xlarge(7B) → g5.2xlarge(13B) → g5.12xlarge(34B) |
+      모델 크기에 딱 맞는 인스턴스 선택이 핵심 |
+      오버프로비저닝 = 비용 낭비 (GPU 활용률 모니터링)
+    </div>
+  </div>
+  <div data-fragment-index="4" style="display:flex;align-items:flex-start;gap:14px;background:#1a1a1a;border-left:4px solid #ad5cff;border-radius:8px;padding:14px;">
+    <div style="color:#ad5cff;font-weight:700;font-size:14px;min-width:180px;">Multi-LoRA 서빙</div>
+    <div style="color:#bbb;font-size:13px;line-height:1.7;">
+      Base 모델 1개 + N개 LoRA Adapter 동시 서빙 |
+      --enable-lora --max-loras 4 설정 |
+      3개 태스크 = GPU 1개 (기존 3개 필요) → <b style="color:#ad5cff;">비용 66% 절감</b>
+    </div>
+  </div>
+</div>
+:::
+
+:::notes
+{timing: 2min}
+비용 최적화는 4가지 레이어에서 할 수 있습니다.
+첫째, Spot 인스턴스입니다. g5.xlarge Spot은 On-Demand 대비 60~70% 저렴합니다. 시간당 약 0.30달러입니다. vLLM은 Stateless라서 Spot이 중단되면 새 노드에서 모델만 다시 로딩하면 됩니다.
+{cue: pause}
+둘째, Karpenter Consolidation입니다. downscale_delay_s를 너무 짧게 설정하면 트래픽이 다시 오를 때 사용자가 느린 응답을 경험합니다. 600초(10분)이 적당합니다. 하지만 야간이나 주말에는 min_replicas=0으로 완전히 내릴 수 있습니다.
+셋째, 모델 크기에 맞는 인스턴스를 선택하는 것입니다. 7B 모델에 p4d.24xlarge를 쓰는 것은 엄청난 낭비입니다.
+넷째, Multi-LoRA가 가장 강력한 비용 절감 방법입니다. 하나의 Base 모델 위에 여러 LoRA Adapter를 올리면 태스크별로 GPU를 따로 쓸 필요가 없습니다.
+{cue: transition}
+비용 ROI를 구체적으로 계산해 보겠습니다.
+:::
+
+---
+<!-- Slide 4: ROI 계산 (Interactive Calculator) -->
+@type: content
+@title: 비용 ROI 분석: Self-hosted vs 관리형 API
+
+:::html
+<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px;">
+  <thead>
+    <tr style="background:#232f4a;">
+      <th style="padding:9px;color:#ff9900;text-align:left;">비교 항목</th>
+      <th style="padding:9px;color:#ff9900;text-align:center;">OpenAI GPT-4o</th>
+      <th style="padding:9px;color:#ff9900;text-align:center;">Claude 3.5 Sonnet</th>
+      <th style="padding:9px;color:#ff9900;text-align:center;">vLLM Llama-3 70B</th>
+      <th style="padding:9px;color:#ff9900;text-align:center;">vLLM Llama-3 8B</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="background:#1a1a2e;">
+      <td style="padding:8px;color:#bbb;">입력 토큰 (1M)</td>
+      <td style="padding:8px;color:#ef476f;text-align:center;">$5.00</td>
+      <td style="padding:8px;color:#ef476f;text-align:center;">$3.00</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;">~$0.35</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;">~$0.07</td>
+    </tr>
+    <tr style="background:#15152a;">
+      <td style="padding:8px;color:#bbb;">출력 토큰 (1M)</td>
+      <td style="padding:8px;color:#ef476f;text-align:center;">$15.00</td>
+      <td style="padding:8px;color:#ef476f;text-align:center;">$15.00</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;">~$0.35</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;">~$0.07</td>
+    </tr>
+    <tr style="background:#1a1a2e;">
+      <td style="padding:8px;color:#bbb;">일 1억 토큰</td>
+      <td style="padding:8px;color:#ef476f;text-align:center;">~$500/day</td>
+      <td style="padding:8px;color:#ef476f;text-align:center;">~$400/day</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;">~$84/day</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;">~$17/day</td>
+    </tr>
+    <tr style="background:#1a283a;border:2px solid #41b3ff;">
+      <td style="padding:8px;color:#41b3ff;font-weight:700;">월 비용</td>
+      <td style="padding:8px;color:#ef476f;text-align:center;font-weight:700;">~$15,000</td>
+      <td style="padding:8px;color:#ef476f;text-align:center;font-weight:700;">~$12,000</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;font-weight:700;">~$2,520</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;font-weight:700;">~$510</td>
+    </tr>
+    <tr style="background:#1a2816;">
+      <td style="padding:8px;color:#06d6a0;font-weight:700;">월 절감액 (vs GPT-4o)</td>
+      <td style="padding:8px;text-align:center;color:#555;">—</td>
+      <td style="padding:8px;color:#bbb;text-align:center;">$3,000</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;font-weight:700;">~$12,480</td>
+      <td style="padding:8px;color:#06d6a0;text-align:center;font-weight:700;">~$14,490</td>
+    </tr>
+  </tbody>
+</table>
+<div style="background:#1a2a1a;border:1px solid #06d6a0;border-radius:8px;padding:14px;font-size:13px;color:#bbb;line-height:1.9;">
+  <b style="color:#06d6a0;">ROI 전제:</b> g5.xlarge On-Demand $1.01/hr × 24hr = $24.24/day (Spot 적용 시 ~$7/day)<br>
+  <b style="color:#ff9900;">Break-even:</b> 초기 구축 비용 $5,000 기준, Llama-3 8B 대비 약 10일<br>
+  <b style="color:#ef476f;">주의:</b> 모델 품질 트레이드오프 필수 검토 | 운영 인건비(SRE) 포함 시 ROI 재계산
+</div>
+:::
+
+:::notes
+{timing: 2min}
+구체적인 숫자로 비용을 비교해 보겠습니다.
+하루에 1억 토큰을 처리한다고 가정하면, OpenAI GPT-4o는 하루에 500달러, 한 달에 1만 5천 달러입니다.
+같은 트래픽을 Llama-3 8B on EKS로 처리하면 g5.xlarge 24시간 × 3대 정도가 필요합니다. 하루에 약 17달러, 한 달에 510달러입니다.
+{cue: pause}
+단순 계산으로는 매달 1만 4천 달러를 절감할 수 있습니다. 초기 구축 비용이 5천 달러라고 해도 약 10일이면 Break-even이 됩니다.
+하지만 주의할 점이 있습니다. 오픈소스 모델이 GPT-4o만큼 좋지 않을 수 있습니다. 모델 품질 트레이드오프를 반드시 검토해야 합니다. 또한 SRE 운영 인건비가 추가됩니다.
+일반적으로 일 1억 토큰 이상이면 Self-hosted가 유리합니다.
+{cue: transition}
+이제 OpenAI API에서 vLLM으로 마이그레이션하는 방법을 보겠습니다.
+:::
+
+---
+<!-- Slide 5: OpenAI → vLLM 마이그레이션 (Code Compare) -->
+@type: content
+@title: OpenAI API → vLLM 마이그레이션: 코드 2줄만 변경
+
+:::html
+<div style="margin-bottom:12px;background:#1a2816;border:1px solid #06d6a0;border-radius:6px;padding:10px;text-align:center;font-size:13px;color:#06d6a0;font-weight:700;">
+  vLLM은 OpenAI 호환 API 제공 → base_url + api_key 2줄 변경만으로 전환 완료
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+  <div>
+    <div style="background:#ef476f22;border:1px solid #ef476f;border-radius:6px 6px 0 0;padding:8px 14px;font-size:13px;color:#ef476f;font-weight:700;">BEFORE — OpenAI API</div>
+    <div style="background:#0d1117;border:1px solid #333;border-radius:0 0 6px 6px;padding:14px;font-family:monospace;font-size:12px;line-height:1.8;">
+      <div style="color:#888;">import openai</div>
+      <div style="margin-top:8px;color:#41b3ff;">client = openai.OpenAI(</div>
+      <div style="color:#ef476f;">&nbsp;&nbsp;api_key=<span style="color:#06d6a0;">"sk-proj-xxxxxxxxx"</span></div>
+      <div style="color:#41b3ff;">)</div>
+      <div style="margin-top:8px;color:#41b3ff;">response = client.chat.completions.create(</div>
+      <div style="color:#bbb;">&nbsp;&nbsp;model=<span style="color:#06d6a0;">"gpt-4o"</span>,</div>
+      <div style="color:#bbb;">&nbsp;&nbsp;messages=[<span style="color:#06d6a0;">{"role": "user", "content": "안녕"}</span>],</div>
+      <div style="color:#bbb;">&nbsp;&nbsp;stream=<span style="color:#ff9900;">True</span>,</div>
+      <div style="color:#bbb;">&nbsp;&nbsp;temperature=<span style="color:#ff9900;">0.7</span></div>
+      <div style="color:#41b3ff;">)</div>
+      <div style="margin-top:10px;color:#888;"># GPT-4o: $5/1M input + $15/1M output</div>
+      <div style="color:#888;"># 일 1억 토큰 → ~$500/day</div>
+    </div>
+  </div>
+  <div>
+    <div style="background:#06d6a022;border:1px solid #06d6a0;border-radius:6px 6px 0 0;padding:8px 14px;font-size:13px;color:#06d6a0;font-weight:700;">AFTER — Self-hosted vLLM</div>
+    <div style="background:#0d1117;border:1px solid #333;border-radius:0 0 6px 6px;padding:14px;font-family:monospace;font-size:12px;line-height:1.8;">
+      <div style="color:#888;">import openai</div>
+      <div style="margin-top:8px;color:#41b3ff;">client = openai.OpenAI(</div>
+      <div style="color:#06d6a0;">&nbsp;&nbsp;api_key=<span style="color:#06d6a0;">"EMPTY"</span>, <span style="color:#888;"># vLLM 인증 불필요</span></div>
+      <div style="color:#06d6a0;">&nbsp;&nbsp;base_url=<span style="color:#06d6a0;">"http://vllm-svc:8000/v1"</span></div>
+      <div style="color:#41b3ff;">)</div>
+      <div style="margin-top:8px;color:#41b3ff;">response = client.chat.completions.create(</div>
+      <div style="color:#bbb;">&nbsp;&nbsp;model=<span style="color:#06d6a0;">"Llama-3.1-8B-Instruct"</span>,</div>
+      <div style="color:#bbb;">&nbsp;&nbsp;messages=[<span style="color:#06d6a0;">{"role": "user", "content": "안녕"}</span>],</div>
+      <div style="color:#bbb;">&nbsp;&nbsp;stream=<span style="color:#ff9900;">True</span>,</div>
+      <div style="color:#bbb;">&nbsp;&nbsp;temperature=<span style="color:#ff9900;">0.7</span></div>
+      <div style="color:#41b3ff;">)</div>
+      <div style="margin-top:10px;color:#888;"># GPU 인스턴스 비용만 발생</div>
+      <div style="color:#888;"># g5.xlarge: ~$1.01/hr (Spot: ~$0.30)</div>
+    </div>
+  </div>
+</div>
+<div style="margin-top:12px;background:#0d1117;border-radius:6px;padding:10px;font-size:12px;color:#bbb;">
+  <b style="color:#ff9900;">호환 API:</b> /v1/chat/completions | /v1/completions | /v1/embeddings | /v1/models — Function Calling / Streaming / Logprobs 모두 지원
+</div>
+:::
+
+:::notes
+{timing: 2min}
+마이그레이션이 이렇게 쉽습니다. api_key를 "EMPTY"로 바꾸고 base_url을 vLLM 서비스 주소로 바꾸면 끝입니다.
+나머지 코드는 그대로입니다. 스트리밍도 됩니다. Function Calling도 됩니다. Logprobs도 됩니다.
+{cue: pause}
+주의할 점이 하나 있습니다. model 이름을 vLLM에 올린 모델 이름으로 변경해야 합니다. "gpt-4o" 대신 "Llama-3.1-8B-Instruct"처럼 HuggingFace 모델 ID나 별칭을 사용합니다.
+프로덕션에서는 vLLM 서비스 앞에 API Gateway나 Nginx를 두어서 인증, Rate Limiting, 로깅을 처리하는 것이 좋습니다.
+{cue: transition}
+마지막으로 장애 시나리오별 대응 가이드입니다.
+:::
+
+---
+<!-- Slide 6: Troubleshooting 가이드 (Table) -->
+@type: content
+@title: Troubleshooting: 주요 장애 시나리오 즉시 대응 가이드
+
+:::html
+<table style="width:100%;border-collapse:collapse;font-size:11.5px;">
+  <thead>
+    <tr style="background:#232f4a;">
+      <th style="padding:8px;color:#ff9900;text-align:left;">증상</th>
+      <th style="padding:8px;color:#ff9900;text-align:left;">원인</th>
+      <th style="padding:8px;color:#ff9900;text-align:left;">진단</th>
+      <th style="padding:8px;color:#ff9900;text-align:left;">해결</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="background:#2a1a1a;">
+      <td style="padding:8px;color:#ef476f;font-weight:700;">Pod OOMKilled</td>
+      <td style="padding:8px;color:#bbb;">GPU VRAM 초과</td>
+      <td style="padding:8px;color:#06d6a0;font-family:monospace;font-size:11px;">kubectl describe pod</td>
+      <td style="padding:8px;color:#bbb;">GPU_MEM_UTIL 0.9→0.85<br>MAX_LEN 축소</td>
+    </tr>
+    <tr style="background:#1a1a2e;">
+      <td style="padding:8px;color:#ff9900;font-weight:700;">TTFT &gt; 10초</td>
+      <td style="padding:8px;color:#bbb;">요청 큐 과부하</td>
+      <td style="padding:8px;color:#06d6a0;font-family:monospace;font-size:11px;">vllm:request_queue_time</td>
+      <td style="padding:8px;color:#bbb;">max_replicas 증가<br>target_requests 낮춤</td>
+    </tr>
+    <tr style="background:#2a1a1a;">
+      <td style="padding:8px;color:#ef476f;font-weight:700;">Preemptions 급증</td>
+      <td style="padding:8px;color:#bbb;">MAX_MODEL_LEN 실제 사용 초과</td>
+      <td style="padding:8px;color:#06d6a0;font-family:monospace;font-size:11px;">vllm:num_preemptions</td>
+      <td style="padding:8px;color:#bbb;">MAX_LEN 실측에 맞춤<br>MAX_NUM_SEQ 줄임</td>
+    </tr>
+    <tr style="background:#1a1a2e;">
+      <td style="padding:8px;color:#ff9900;font-weight:700;">GPU 노드 미생성</td>
+      <td style="padding:8px;color:#bbb;">EC2 가용성 부족</td>
+      <td style="padding:8px;color:#06d6a0;font-family:monospace;font-size:11px;">kubectl get nodeclaim</td>
+      <td style="padding:8px;color:#bbb;">NodePool에 인스턴스 타입 추가<br>Multi-AZ 확장</td>
+    </tr>
+    <tr style="background:#2a1a1a;">
+      <td style="padding:8px;color:#ef476f;font-weight:700;">ImagePullBackOff</td>
+      <td style="padding:8px;color:#bbb;">ECR 권한 없음</td>
+      <td style="padding:8px;color:#06d6a0;font-family:monospace;font-size:11px;">kubectl describe pod</td>
+      <td style="padding:8px;color:#bbb;">IRSA 역할 권한 확인<br>ECR 이미지 존재 확인</td>
+    </tr>
+    <tr style="background:#1a1a2e;">
+      <td style="padding:8px;color:#ff9900;font-weight:700;">모델 로딩 실패</td>
+      <td style="padding:8px;color:#bbb;">HF Token 없음</td>
+      <td style="padding:8px;color:#06d6a0;font-family:monospace;font-size:11px;">kubectl logs &lt;pod&gt;</td>
+      <td style="padding:8px;color:#bbb;">K8s Secret 확인<br>모델 ID 오타 확인</td>
+    </tr>
+    <tr style="background:#2a1a1a;">
+      <td style="padding:8px;color:#ef476f;font-weight:700;">RayService Unhealthy</td>
+      <td style="padding:8px;color:#bbb;">Worker CrashLoop</td>
+      <td style="padding:8px;color:#06d6a0;font-family:monospace;font-size:11px;">kubectl get rayservice</td>
+      <td style="padding:8px;color:#bbb;">ray status 확인<br>Head Pod logs 분석</td>
+    </tr>
+  </tbody>
+</table>
+<div style="margin-top:10px;background:#0d1117;border-radius:6px;padding:10px;font-family:monospace;font-size:12px;color:#ff9900;">
+  빠른 진단: kubectl get events -n &lt;ns&gt; --sort-by=.lastTimestamp | tail -20
+</div>
+:::
+
+:::notes
+{timing: 2min}
+자주 발생하는 장애 시나리오와 대응 방법을 정리했습니다.
+가장 흔한 것이 OOMKilled입니다. GPU VRAM이 가득 차서 컨테이너가 강제 종료되는 것입니다. GPU_MEMORY_UTILIZATION을 낮추거나 MAX_MODEL_LEN을 줄이면 됩니다.
+{cue: pause}
+TTFT가 급증한다면 요청이 큐에서 너무 오래 대기하는 것입니다. RayServe의 replica 수를 늘려야 합니다.
+GPU 노드가 안 생기는 경우는 EC2 인스턴스의 특정 AZ/타입 가용성 문제입니다. kubectl get nodeclaim으로 Karpenter가 뭘 시도하는지 확인하고, NodePool에 다른 인스턴스 타입을 추가하세요.
+{cue: transition}
+세션의 마무리로 도입 체크리스트를 드리겠습니다.
+:::
+
+---
+<!-- Slide 7: 도입 체크리스트 (Checklist) -->
+@type: content
+@title: vLLM on EKS 도입 체크리스트
+
+:::html
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;height:440px;">
+  <div>
+    <div style="color:#06d6a0;font-weight:700;font-size:14px;margin-bottom:12px;">준비 단계</div>
+    <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
+      <div data-fragment-index="1" style="display:flex;gap:10px;align-items:flex-start;background:#1a2a1a;padding:9px;border-radius:6px;">
+        <span style="color:#06d6a0;font-weight:700;min-width:20px;">1</span>
+        <div><b style="color:#fff;">GPU 요구사항 분석</b><br><span style="color:#888;">모델 크기, 동시 사용자 수, SLO (TTFT/TPOT 목표)</span></div>
+      </div>
+      <div data-fragment-index="2" style="display:flex;gap:10px;align-items:flex-start;background:#1a2a1a;padding:9px;border-radius:6px;">
+        <span style="color:#06d6a0;font-weight:700;min-width:20px;">2</span>
+        <div><b style="color:#fff;">인스턴스 타입 선정</b><br><span style="color:#888;">모델 크기 × 2 = VRAM 필요량, Spot 가용성 확인</span></div>
+      </div>
+      <div data-fragment-index="3" style="display:flex;gap:10px;align-items:flex-start;background:#1a2a1a;padding:9px;border-radius:6px;">
+        <span style="color:#06d6a0;font-weight:700;min-width:20px;">3</span>
+        <div><b style="color:#fff;">EKS 클러스터 구축</b><br><span style="color:#888;">terraform apply (inference-ready-cluster)</span></div>
+      </div>
+      <div data-fragment-index="4" style="display:flex;gap:10px;align-items:flex-start;background:#1a2a1a;padding:9px;border-radius:6px;">
+        <span style="color:#06d6a0;font-weight:700;min-width:20px;">4</span>
+        <div><b style="color:#fff;">Karpenter NodePool 설정</b><br><span style="color:#888;">GPU/CPU NodePool, Spot 혼합, limits 설정</span></div>
+      </div>
+      <div data-fragment-index="5" style="display:flex;gap:10px;align-items:flex-start;background:#1a2a1a;padding:9px;border-radius:6px;">
+        <span style="color:#06d6a0;font-weight:700;min-width:20px;">5</span>
+        <div><b style="color:#fff;">NVIDIA Device Plugin 확인</b><br><span style="color:#888;">GPU 리소스 광고, NFD/DCGM Exporter 설치</span></div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div style="color:#ff9900;font-weight:700;font-size:14px;margin-bottom:12px;">배포 & 운영 단계</div>
+    <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
+      <div data-fragment-index="6" style="display:flex;gap:10px;align-items:flex-start;background:#2a1a0a;padding:9px;border-radius:6px;">
+        <span style="color:#ff9900;font-weight:700;min-width:20px;">6</span>
+        <div><b style="color:#fff;">Ray-vLLM 서비스 배포</b><br><span style="color:#888;">inference-charts Helm Chart, values 설정</span></div>
+      </div>
+      <div data-fragment-index="7" style="display:flex;gap:10px;align-items:flex-start;background:#2a1a0a;padding:9px;border-radius:6px;">
+        <span style="color:#ff9900;font-weight:700;min-width:20px;">7</span>
+        <div><b style="color:#fff;">모니터링 스택 구성</b><br><span style="color:#888;">ServiceMonitor + Grafana 대시보드 import</span></div>
+      </div>
+      <div data-fragment-index="8" style="display:flex;gap:10px;align-items:flex-start;background:#2a1a0a;padding:9px;border-radius:6px;">
+        <span style="color:#ff9900;font-weight:700;min-width:20px;">8</span>
+        <div><b style="color:#fff;">벤치마크 실행</b><br><span style="color:#888;">Inference Perf: Baseline → Saturation 테스트</span></div>
+      </div>
+      <div data-fragment-index="9" style="display:flex;gap:10px;align-items:flex-start;background:#2a1a0a;padding:9px;border-radius:6px;">
+        <span style="color:#ff9900;font-weight:700;min-width:20px;">9</span>
+        <div><b style="color:#fff;">Alert 규칙 설정</b><br><span style="color:#888;">TTFT, Queue Time, Preemptions, GPU Temp</span></div>
+      </div>
+      <div data-fragment-index="10" style="display:flex;gap:10px;align-items:flex-start;background:#2a1a0a;padding:9px;border-radius:6px;">
+        <span style="color:#ff9900;font-weight:700;min-width:20px;">10</span>
+        <div><b style="color:#fff;">프로덕션 트래픽 전환</b><br><span style="color:#888;">Canary → Blue-Green, base_url 변경으로 전환</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+:::
+
+:::notes
+{timing: 1.5min}
+10단계 체크리스트입니다.
+준비 단계에서 가장 중요한 것은 1번, GPU 요구사항 분석입니다. 모델 크기, 동시 사용자 수, TTFT/TPOT SLO를 먼저 정해야 인스턴스 선택과 파라미터 튜닝이 따라옵니다.
+{cue: pause}
+운영 단계에서 가장 많이 놓치는 것이 8번 벤치마크입니다. Inference Perf로 Baseline부터 Saturation까지 테스트해서 실제 최대 처리량을 파악해야 합니다. 그래야 오토스케일링 target_requests 값을 적절히 설정할 수 있습니다.
+{cue: transition}
+세션을 마무리하겠습니다.
+:::
+
+---
+<!-- Slide 8: 참고 리소스 (Content) -->
+@type: content
+@title: 참고 리소스 & 시작하기
+
+:::html
+<div style="display:flex;flex-direction:column;gap:12px;height:420px;">
+  <div data-fragment-index="1" style="display:flex;gap:16px;background:#1a1a2e;border-radius:8px;padding:14px;align-items:center;">
+    <div style="width:6px;height:50px;background:#41b3ff;border-radius:3px;flex-shrink:0;"></div>
+    <div>
+      <div style="color:#41b3ff;font-weight:700;font-size:14px;">GitHub Repository</div>
+      <code style="color:#06d6a0;font-size:12px;">github.com/awslabs/ai-on-eks</code>
+      <div style="color:#888;font-size:12px;margin-top:3px;">전체 Terraform, 블루프린트, Helm Charts, 문서 포함 | Apache 2.0</div>
+    </div>
+  </div>
+  <div data-fragment-index="2" style="display:flex;gap:16px;background:#1a1a2e;border-radius:8px;padding:14px;align-items:center;">
+    <div style="width:6px;height:50px;background:#ff9900;border-radius:3px;flex-shrink:0;"></div>
+    <div>
+      <div style="color:#ff9900;font-weight:700;font-size:14px;">Hands-on Workshop</div>
+      <code style="color:#06d6a0;font-size:12px;">genai.eksworkshop.com</code>
+      <div style="color:#888;font-size:12px;margin-top:3px;">EKS Auto Mode + AMP + Grafana + vLLM 실습 | 무료</div>
+    </div>
+  </div>
+  <div data-fragment-index="3" style="display:flex;gap:16px;background:#1a1a2e;border-radius:8px;padding:14px;align-items:center;">
+    <div style="width:6px;height:50px;background:#06d6a0;border-radius:3px;flex-shrink:0;"></div>
+    <div>
+      <div style="color:#06d6a0;font-weight:700;font-size:14px;">Inference Charts (Helm)</div>
+      <code style="color:#06d6a0;font-size:12px;">github.com/awslabs/ai-on-eks-charts</code>
+      <div style="color:#888;font-size:12px;margin-top:3px;">DeepSeek, Llama, Qwen3, Mistral 프리셋 포함</div>
+    </div>
+  </div>
+  <div data-fragment-index="4" style="display:flex;gap:16px;background:#1a1a2e;border-radius:8px;padding:14px;align-items:center;">
+    <div style="width:6px;height:50px;background:#ad5cff;border-radius:3px;flex-shrink:0;"></div>
+    <div>
+      <div style="color:#ad5cff;font-weight:700;font-size:14px;">Grafana Dashboard</div>
+      <code style="color:#06d6a0;font-size:12px;">vllm-dashboard.json (ai-on-eks 레포 포함)</code>
+      <div style="color:#888;font-size:12px;margin-top:3px;">8개 패널: TTFT, TPOT, Queue Time, Preemptions 등</div>
+    </div>
+  </div>
+  <div data-fragment-index="5" style="display:flex;gap:16px;background:#1a1a2e;border-radius:8px;padding:14px;align-items:center;">
+    <div style="width:6px;height:50px;background:#ef476f;border-radius:3px;flex-shrink:0;"></div>
+    <div>
+      <div style="color:#ef476f;font-weight:700;font-size:14px;">Observability Reference</div>
+      <code style="color:#06d6a0;font-size:12px;">github.com/awslabs/ai-ml-observability-reference-architecture</code>
+      <div style="color:#888;font-size:12px;margin-top:3px;">Prometheus + Grafana + OpenSearch 전체 관측 스택 자동 배포</div>
+    </div>
+  </div>
+</div>
+:::
+
+:::notes
+{timing: 1min}
+참고 리소스를 정리했습니다.
+ai-on-eks GitHub 레포가 시작점입니다. Terraform, Helm Chart, 블루프린트가 모두 있습니다.
+genai.eksworkshop.com에서 핸즈온 실습을 무료로 할 수 있습니다. 클러스터 생성부터 모델 배포, 모니터링까지 단계별로 따라할 수 있습니다.
+{cue: pause}
+오늘 세션에서 보여드린 모든 내용은 ai-on-eks 레포에서 실제 코드로 확인하실 수 있습니다. 질문이 있으시면 GitHub Issues로 남겨주시거나, 워크샵 참여하시면 더 자세히 실습해 보실 수 있습니다.
+{cue: transition}
+세션을 마무리하겠습니다.
+:::
+
+---
+<!-- Slide 9: Q&A 마무리 (Cover) -->
+@type: cover
+
+# Q & A
+
+감사합니다
+
+github.com/awslabs/ai-on-eks | genai.eksworkshop.com
+
+:::notes
+{timing: 15min}
+오늘 1시간 세션에서 다룬 내용을 한 줄로 정리하면:
+PagedAttention + Continuous Batching으로 메모리와 GPU를 최대 효율로 쓰고, Karpenter로 필요할 때만 GPU 인스턴스를 쓰면, 기존 LLM API 대비 비용을 90% 이상 절감할 수 있습니다.
+오늘 세션에서 다루지 못한 내용들, 예를 들어 멀티노드 LWS 배포나 Disaggregated Serving 구성, 또는 특정 모델에 대한 설정 질문이 있으시면 지금 여쭤봐도 됩니다.
+{cue: pause}
+질문을 받겠습니다. 어떤 것이든 편하게 질문해 주세요.
+:::

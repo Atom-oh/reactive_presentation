@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 2: Plugin Architecture</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="progress-bar"></div>
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="doc-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="doc-main">
+      <div class="doc-content">
+        <span class="reading-time">5분</span>
+        <h1>플러그인 아키텍처</h1>
+
+        <h2 id="directory">디렉토리 구조</h2>
+        <p>모든 플러그인은 동일한 구조를 따릅니다:</p>
+        <pre><code>plugins/aws-ops-plugin/
+├── .claude-plugin/
+│   └── plugin.json        # 매니페스트: agents[], skills[], mcpServers{}, hooks{}
+├── CLAUDE.md              # 키워드 → 에이전트 라우팅 테이블
+├── agents/
+│   ├── eks-agent.md       # EKS 전문가 에이전트
+│   ├── network-agent.md   # 네트워크 진단 에이전트
+│   └── iam-agent.md       # IAM/RBAC 에이전트
+└── skills/
+    └── ops-troubleshoot/
+        ├── SKILL.md        # 진입점 (트리거 키워드 정의)
+        └── references/     # 증류된 운영 지식</code></pre>
+
+        <h2 id="manifest">plugin.json — 매니페스트</h2>
+        <p>플러그인의 모든 구성요소를 선언하는 단일 진실 원천(Single Source of Truth)입니다:</p>
+        <pre><code>{
+  "name": "aws-ops-plugin",
+  "version": "1.4.0",
+  "description": "AWS infrastructure operations & troubleshooting",
+  "agents": [
+    "./agents/eks-agent.md",
+    "./agents/network-agent.md",
+    "./agents/iam-agent.md"
+  ],
+  "skills": [
+    "./skills/ops-troubleshoot",
+    "./skills/ops-health-check"
+  ],
+  "mcpServers": {
+    "awsdocs": { "command": "uvx", "args": ["awslabs.aws-documentation-mcp-server@latest"] },
+    "awsapi":  { "command": "uvx", "args": ["awslabs.aws-api-mcp-server@latest"] }
+  },
+  "hooks": { ... }
+}</code></pre>
+
+        <h2 id="agent">Agent 파일 포맷</h2>
+        <p>에이전트는 마크다운 파일이며, YAML frontmatter에 메타데이터를 선언합니다:</p>
+        <pre><code>---
+name: eks-agent
+description: "EKS cluster management, node groups, upgrades, add-ons.
+  Triggers on: EKS troubleshoot, cluster issue, node NotReady, pod crash"
+tools: Read, Write, Glob, Grep, Bash, AskUserQuestion
+---
+
+## Core Capabilities
+- Cluster lifecycle management
+- Node group troubleshooting (NotReady, OOM, IP exhaustion)
+- Add-on version management
+
+## Decision Tree
+```mermaid
+graph TD
+    A[EKS Issue] --> B{Node Level?}
+    B -->|Yes| C[kubectl describe node]
+    B -->|No| D{Pod Level?}
+    D -->|Yes| E[kubectl logs + events]
+```
+
+## Error → Solution Table
+| Error | Diagnosis | Fix |
+|-------|-----------|-----|
+| NodeNotReady | kubelet stopped | systemctl restart kubelet |</code></pre>
+
+        <h2 id="skill">Skill 파일 포맷</h2>
+        <p>스킬은 디렉토리 단위이며, <code>SKILL.md</code>가 진입점입니다:</p>
+        <pre><code>---
+name: ops-troubleshoot
+description: "Systematic EKS/AWS troubleshooting workflow"
+triggers:
+  - troubleshoot
+  - 트러블슈팅
+  - diagnose
+  - 진단
+---
+
+## Workflow
+1. Gather symptoms
+2. Check cluster health
+3. Diagnose root cause
+4. Apply fix
+5. Verify resolution</code></pre>
+        <p><code>references/</code> 디렉토리에는 공식 문서에서 증류(distill)한 운영 지식을 담습니다. 명령어 중심, Mermaid 의사결정 트리, 에러→솔루션 테이블 형식입니다.</p>
+
+        <h2 id="auto-invocation">Auto-Invocation (자동 라우팅)</h2>
+        <p>각 플러그인의 <code>CLAUDE.md</code>에 키워드→에이전트 매핑 테이블을 정의합니다:</p>
+        <table>
+          <thead><tr><th>키워드</th><th>에이전트</th></tr></thead>
+          <tbody>
+            <tr><td>EKS, 클러스터, node NotReady, pod crash</td><td>eks-agent</td></tr>
+            <tr><td>VPC, ALB, NLB, DNS, security group</td><td>network-agent</td></tr>
+            <tr><td>IRSA, Pod Identity, RBAC, aws-auth</td><td>iam-agent</td></tr>
+            <tr><td>프레젠테이션, 슬라이드, 발표자료</td><td>reactive-presentation-agent</td></tr>
+          </tbody>
+        </table>
+        <p>한국어와 영어 키워드를 모두 등록하여 어떤 언어로 질문해도 올바른 에이전트가 활성화됩니다.</p>
+
+        <div style="display:flex;justify-content:space-between;margin-top:48px">
+          <a href="01-why.html" style="color:var(--text-secondary)">← 이전: 왜 만들었나</a>
+          <a href="03-harness.html" style="color:var(--accent);font-weight:600">다음: 하네스 엔지니어링 →</a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="shared.js"></script>
+</body>
+</html>

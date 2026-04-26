@@ -74,9 +74,7 @@ class SlideFramework {
     if (!slide) return;
 
     const fragments = Array.from(slide.querySelectorAll('.fragment, [data-fragment-index]'));
-    // Auto-add fragment class to elements that only have data-fragment-index
     fragments.forEach(f => { if (!f.classList.contains('fragment')) f.classList.add('fragment'); });
-    // Deduplicate (querySelectorAll already deduplicates) and sort by index
     fragments.sort((a, b) => {
       const aIdx = parseInt(a.dataset.fragmentIndex, 10) || 0;
       const bIdx = parseInt(b.dataset.fragmentIndex, 10) || 0;

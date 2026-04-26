@@ -64,6 +64,16 @@ const ExportUtils = {
     return parts[parts.length - 1] || 'presentation';
   },
 
+  _resolveCommonPath: function() {
+    var tags = document.querySelectorAll('link[href*="common/"], script[src*="common/"]');
+    for (var i = 0; i < tags.length; i++) {
+      var attr = tags[i].getAttribute('href') || tags[i].getAttribute('src') || '';
+      var idx = attr.indexOf('common/');
+      if (idx !== -1) return attr.substring(0, idx + 7);
+    }
+    return './common/';
+  },
+
   /**
    * Export all slides as PDF via browser print dialog.
    * Fetches all block HTML files, extracts slides, opens a print-optimized view.
@@ -104,12 +114,13 @@ const ExportUtils = {
       this.updateProgress('Building print view (' + slideCount + ' slides)...', 75);
 
       var baseURL = window.location.href;
+      var commonPath = this._resolveCommonPath();
       var printHTML = '<!DOCTYPE html>\n<html lang="ko">\n<head>\n' +
         '<meta charset="UTF-8">\n' +
         '<base href="' + this._escapeHTML(baseURL) + '">\n' +
         '<title>' + this._escapeHTML(title) + ' - PDF Export</title>\n' +
-        '<link rel="stylesheet" href="../common/theme.css">\n' +
-        '<link rel="stylesheet" href="../common/theme-override.css">\n' +
+        '<link rel="stylesheet" href="' + commonPath + 'theme.css">\n' +
+        '<link rel="stylesheet" href="' + commonPath + 'theme-override.css">\n' +
         '<style>\n' +
         '@page { size: 16in 9in landscape; margin: 0; }\n' +
         'html, body { margin: 0; padding: 0; background: #000; overflow: visible !important; display: block !important; height: auto !important; }\n' +

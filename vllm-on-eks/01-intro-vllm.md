@@ -13,7 +13,6 @@ DevOps를 위한 LLM 서빙 도입 가이드
 
 Amazon EKS + vLLM + RayServe를 활용한 프로덕션 레벨 LLM 추론 인프라 구축 | 1시간 세션
 
-<!-- issue: 비율이상해 -->
 :::notes
 {timing: 1min}
 안녕하세요. 오늘은 vLLM on EKS를 주제로 1시간 세션을 진행하겠습니다.

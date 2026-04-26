@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 5: VSCode Extension</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="progress-bar"></div>
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="doc-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="doc-main">
+      <div class="doc-content">
+        <span class="reading-time">5분</span>
+        <h1>VSCode Extension 개발기</h1>
+        <p class="lead">Remarp 마크다운을 작성하고 프리뷰하는 것만으로는 부족했습니다. PPT처럼 시각적으로 편집하고, 리뷰어가 이슈를 남기면 AI가 자동으로 수정하는 워크플로우를 만들고 싶었습니다.</p>
+
+        <h2 id="preview">Preview Mode</h2>
+        <p>두 가지 프리뷰 모드를 지원합니다:</p>
+        <table>
+          <thead><tr><th>모드</th><th>파일</th><th>특징</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Markdown Preview</strong></td><td><code>.remarp.md</code></td><td>슬라이드 파싱 → HTML 변환, 사이드바에 노트 + 이슈 배지</td></tr>
+            <tr><td><strong>HTML Preview</strong></td><td>빌드된 <code>.html</code></td><td>직접 로드, 리소스 경로 → webview URI 변환, CSP 주입</td></tr>
+          </tbody>
+        </table>
+        <p>←→ 키보드 네비게이션, Scroll Sync(커서 위치 ↔ 프리뷰 슬라이드 동기화)를 지원합니다.</p>
+
+        <h2 id="visual-edit">Visual Edit Mode</h2>
+        <p><code>Cmd+Shift+E</code> 또는 슬라이드 위 Edit 버튼으로 활성화됩니다:</p>
+        <ul>
+          <li><strong>드래그</strong> — 요소를 마우스로 잡아 위치 이동</li>
+          <li><strong>리사이즈</strong> — 핸들을 잡아 크기 조절</li>
+          <li><strong>속성 패널</strong> — 폰트, 색상, 마진 조절</li>
+        </ul>
+        <div class="callout info">
+          <strong>CSS Writeback</strong>
+          비주얼 에디터에서 변경한 내용은 소스 마크다운의 <code>:::css</code> 블록에 자동으로 기록됩니다. Canvas 요소의 경우 <code>:::canvas</code> DSL 좌표가 업데이트됩니다. 소스와 시각적 표현이 항상 동기화됩니다.
+        </div>
+
+        <h2 id="issue-system">Issue Annotation System</h2>
+        <p>이것이 Extension의 가장 핵심적인 기능입니다. 사람과 AI 사이의 피드백 루프를 Extension 안에서 완성합니다:</p>
+
+        <h3>워크플로우</h3>
+        <ol>
+          <li><strong>이슈 입력</strong> — 사이드바 프롬프트 바에서 "다이어그램이 너무 복잡해" 입력</li>
+          <li><strong>자동 삽입</strong> — 소스에 <code>&lt;!-- issue: 다이어그램이 너무 복잡해 --&gt;</code> 자동 추가</li>
+          <li><strong>시각화</strong> — 프리뷰에서 노란색 배지로 표시, × 버튼으로 개별 제거 가능</li>
+          <li><strong>AI 수정</strong> — Claude Code에서 <code>/slide-fix</code> 실행 → AI가 이슈를 읽고 자동 수정</li>
+          <li><strong>정리</strong> — 수정 완료 후 <code>&lt;!-- issue: --&gt;</code> 주석 자동 제거</li>
+        </ol>
+
+        <pre><code># 이슈 목록 확인
+python3 remarp_to_slides.py issues ./my-presentation/
+
+# JSON 형식으로 추출 (프로그래밍적 접근)
+python3 remarp_to_slides.py issues ./my-presentation/ --json</code></pre>
+
+        <h2 id="key-files">주요 파일 구조</h2>
+        <pre><code>tools/remarp-vscode/
+├── src/
+│   ├── extension.ts       # 진입점: 명령 등록, 파일 감지
+│   ├── preview.ts         # 프리뷰 패널: MD/HTML 렌더링
+│   ├── htmlPreview.ts     # HTML 전용 프리뷰 핸들러
+│   ├── outline.ts         # 슬라이드 아웃라인 프로바이더
+│   ├── completions.ts     # 자동완성: @디렉티브, :::블록
+│   ├── cssEditor.ts       # CSS 편집: :::css 블록 파싱/업데이트
+│   ├── canvasEditor.ts    # Canvas 편집: :::canvas DSL 좌표 업데이트
+│   └── visualEditor.ts    # 비주얼 에디터 컨트롤러
+├── media/
+│   ├── edit-mode.js       # Webview: 드래그/리사이즈/속성 패널
+│   ├── canvas-editor.js   # Webview: Canvas SVG 오버레이
+│   └── prompt-bar.js      # Webview: AI 프롬프트 바 UI
+└── package.json           # Extension 매니페스트</code></pre>
+
+        <div style="display:flex;justify-content:space-between;margin-top:48px">
+          <a href="04-remarp.html" style="color:var(--text-secondary)">← 이전: Remarp 프레임워크</a>
+          <a href="06-ttobak.html" style="color:var(--accent);font-weight:600">다음: 또박 AI 어시스턴트 →</a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="shared.js"></script>
+</body>
+</html>

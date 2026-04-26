@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 7: Lessons Learned</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="progress-bar"></div>
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="doc-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="doc-main">
+      <div class="doc-content">
+        <span class="reading-time">3분</span>
+        <h1>배운 점 & 마무리</h1>
+
+        <h2 id="lesson1">1. 제약이 품질을 만든다</h2>
+        <p>AI 에이전트에게 자유를 주면 결과가 불안정해집니다. 이 프로젝트에서 가장 크게 배운 점은 <strong>잘 설계된 제약</strong>이 품질을 보장한다는 것입니다:</p>
+        <ul>
+          <li><strong>Rejection Loop</strong> — 7가지 규칙으로 빌드 전 기계적 검증</li>
+          <li><strong>Quality Gate</strong> — 85점 미만은 배포 차단</li>
+          <li><strong>CLAUDE.md</strong> — 선언적 행동 범위 정의</li>
+        </ul>
+        <div class="callout info">
+          <strong>비유</strong>
+          고속도로에 가드레일이 있어야 안전하게 빠르게 달릴 수 있습니다. 가드레일 없는 AI는 탈선할 확률이 높습니다.
+        </div>
+
+        <h2 id="lesson2">2. Dogfooding의 힘</h2>
+        <p>자기가 만든 도구를 직접 쓰면 개선점이 명확하게 보입니다:</p>
+        <ul>
+          <li>이 테크톡 슬라이드를 Remarp로 만들면서 버그 3개 발견</li>
+          <li>VSCode Extension 프리뷰를 매일 쓰면서 UX 개선점 도출</li>
+          <li>"만들기만 하고 안 쓰는 도구"와 "매일 쓰는 도구"의 품질 차이는 극명</li>
+        </ul>
+
+        <h2 id="lesson3">3. 지식을 코드로 축적</h2>
+        <p>노하우가 문서(Confluence, Wiki)에만 머물면:</p>
+        <ul>
+          <li>찾기 어려움 — "어딘가에 있는데 어디였지?"</li>
+          <li>실행이 번거로움 — "이 가이드의 명령어를 하나씩 복붙해야 해"</li>
+          <li>업데이트 지연 — "이거 옛날 버전 문서 아니야?"</li>
+        </ul>
+        <p>반면 Agent와 Skill로 캡슐화하면:</p>
+        <ul>
+          <li>한 줄 명령으로 즉시 실행</li>
+          <li>Git으로 버전 관리 → 항상 최신 상태</li>
+          <li>팀 누구나 동일한 품질로 활용</li>
+        </ul>
+
+        <h2 id="lesson4">4. 공유가 성장을 가속</h2>
+        <p>혼자 쓰려고 만들었지만, 공유하니까 피드백으로 더 좋아졌습니다:</p>
+        <ul>
+          <li>동료의 "이 기능이 있으면 좋겠다"가 다음 버전의 로드맵</li>
+          <li>다른 사람의 사용 패턴에서 예상치 못한 버그 발견</li>
+          <li>오늘 이 테크톡도 그 공유 과정의 일부</li>
+        </ul>
+
+        <div class="callout success">
+          <strong>한 줄 요약</strong>
+          "만들어 보고, 직접 쓰고, 공유하자" — 이 사이클이 도구와 만든 사람 모두를 성장시킵니다.
+        </div>
+
+        <h2 id="resources">리소스</h2>
+        <table>
+          <thead><tr><th>리소스</th><th>설명</th></tr></thead>
+          <tbody>
+            <tr><td><strong>oh-my-cloud-skills</strong></td><td>플러그인 마켓플레이스 소스코드 (github.com/Atom-oh)</td></tr>
+            <tr><td><strong>또박(Ttobak)</strong></td><td>AI 미팅 어시스턴트 (ttobak.atomai.click)</td></tr>
+            <tr><td><strong>발표 슬라이드</strong></td><td><a href="../01-talk.html">Remarp로 제작한 인터랙티브 슬라이드</a></td></tr>
+          </tbody>
+        </table>
+
+        <div style="text-align:center;margin-top:64px;padding:32px;background:var(--bg-card);border-radius:16px;border:1px solid var(--border)">
+          <h2 style="margin:0 0 8px;border:none;padding:0">감사합니다!</h2>
+          <p style="color:var(--text-secondary);margin:0">오준석 (Junseok Oh) · Sr. Solutions Architect · AWS</p>
+        </div>
+
+        <div style="display:flex;justify-content:flex-start;margin-top:48px">
+          <a href="06-ttobak.html" style="color:var(--text-secondary)">← 이전: 또박 AI 어시스턴트</a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="shared.js"></script>
+</body>
+</html>

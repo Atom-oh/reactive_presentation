@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 3: Harness Engineering</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="progress-bar"></div>
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="doc-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="doc-main">
+      <div class="doc-content">
+        <span class="reading-time">5분</span>
+        <h1>하네스 엔지니어링</h1>
+        <p class="lead">"AI가 잘 달릴 수 있는 레일을 깔아주는 것" — AI 에이전트는 자유도가 높으면 오히려 결과가 불안정합니다. 선언적 제약으로 AI의 행동 범위를 정의하는 것이 핵심입니다.</p>
+
+        <h2 id="claude-md">CLAUDE.md — 컨텍스트 주입</h2>
+        <p>CLAUDE.md는 매 세션 시작 시 자동으로 로드되어 AI에게 프로젝트 컨텍스트를 제공합니다:</p>
+        <ul>
+          <li><strong>프로젝트 구조</strong> — "이 레포에는 3개 플러그인이 있고, 각각 이런 역할을 한다"</li>
+          <li><strong>빌드/테스트 명령어</strong> — "검증은 이 명령어로 해라"</li>
+          <li><strong>코딩 컨벤션</strong> — "한/영 이중 키워드를 사용하라"</li>
+          <li><strong>보안 규칙</strong> — "SG에 0.0.0.0/0 인바운드 절대 금지"</li>
+        </ul>
+        <div class="callout info">
+          <strong>계층 구조</strong>
+          <code>~/.claude/CLAUDE.md</code> (글로벌 보안 규칙) → <code>프로젝트/CLAUDE.md</code> (프로젝트 컨벤션) → <code>플러그인/CLAUDE.md</code> (에이전트 라우팅). 세 계층이 합쳐져서 매 세션에 주입됩니다.
+        </div>
+
+        <h2 id="hooks">Hooks — 자동 검증</h2>
+        <p>Hooks는 특정 이벤트에 자동 실행되는 셸 명령입니다:</p>
+        <table>
+          <thead><tr><th>이벤트</th><th>동작</th><th>예시</th></tr></thead>
+          <tbody>
+            <tr><td><strong>PostToolUse (Bash)</strong></td><td>빌드 출력에서 경고 패턴 감지</td><td><code>remarp_to_slides.py</code> 출력에서 CRITICAL 발견 시 경고</td></tr>
+            <tr><td><strong>PostToolUse (Edit/Write)</strong></td><td>파일 변경 시 포맷 검증</td><td>Remarp frontmatter 누락, 스피커 노트 미작성 감지</td></tr>
+            <tr><td><strong>SessionStart</strong></td><td>플러그인 로드 시 도메인 안내</td><td>"AWS Ops Plugin loaded. Domains: EKS, Network, IAM..."</td></tr>
+          </tbody>
+        </table>
+        <pre><code>// plugin.json hooks 예시
+"hooks": {
+  "PostToolUse": [{
+    "type": "command",
+    "pattern": "Bash",
+    "command": "python3 check_build_warnings.py"
+  }],
+  "SessionStart": [{
+    "type": "command",
+    "command": "echo 'AWS Ops Plugin loaded.'"
+  }]
+}</code></pre>
+
+        <h2 id="quality-gate">Quality Gate — 품질 보장</h2>
+        <p>모든 콘텐츠는 배포 전에 <strong>content-review-agent</strong>의 품질 심사를 통과해야 합니다:</p>
+        <table>
+          <thead><tr><th>판정</th><th>조건</th><th>결과</th></tr></thead>
+          <tbody>
+            <tr><td style="color:#34D399"><strong>PASS</strong></td><td>Critical 0, Warning ≤3, Score ≥85</td><td>배포 승인</td></tr>
+            <tr><td style="color:#FACC15"><strong>REVIEW</strong></td><td>Critical 0, Warning 4-10, Score 70-84</td><td>수정 후 재심사</td></tr>
+            <tr><td style="color:#F87171"><strong>FAIL</strong></td><td>Critical ≥1 or Score &lt;70</td><td>배포 차단</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout danger">
+          <strong>절대 규칙</strong>
+          Quality Gate를 건너뛰고 배포하는 것은 금지됩니다. 이 규칙은 CLAUDE.md에 명시되어 있어 AI가 자의적으로 무시할 수 없습니다.
+        </div>
+
+        <h2 id="three-pillars">세 기둥의 시너지</h2>
+        <p>CLAUDE.md, Hooks, Quality Gate — 이 세 가지 메커니즘의 핵심은 모두 <strong>선언적</strong>이라는 점입니다:</p>
+        <ul>
+          <li>마크다운과 JSON만으로 AI의 행동 범위를 정의</li>
+          <li>코드를 작성하지 않아도 제약을 추가/수정 가능</li>
+          <li>제약 자체가 문서이자 규칙 — 누구나 읽고 이해 가능</li>
+        </ul>
+
+        <div style="display:flex;justify-content:space-between;margin-top:48px">
+          <a href="02-plugin-structure.html" style="color:var(--text-secondary)">← 이전: 플러그인 아키텍처</a>
+          <a href="04-remarp.html" style="color:var(--accent);font-weight:600">다음: Remarp 프레임워크 →</a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="shared.js"></script>
+</body>
+</html>

@@ -5,7 +5,6 @@ speaker: Junseok Oh
 role: Sr. Solutions Architect
 company: Amazon Web Services
 duration: 40min
-blocks: 4
 slides: 52
 ---
 
@@ -145,11 +144,12 @@ slides: 52
 
 도입 전 반드시 확인해야 할 사항
 
-- **IPv4 전용** - IPv6 네트워크는 현재 미지원
+- **IPv4 전용** - IPv6 네트워크는 현재 미지원 *(2025년 기준, 현행 문서 재검증 권장)*
 - **Remote Network CIDR** - 클러스터당 최대 15개까지 등록 가능
-- **VPC CNI 미지원** - Cilium 또는 Calico 사용 필수
+- **VPC CNI 미지원** - Cilium 사용 필수 (Calico는 AWS 공식 레퍼런스 경로 외)
 - **vCPU 기반 과금** - Hybrid Node당 $0.02/vCPU/시간
 - **엔드포인트 모드 제한** - "Public and Private" 동시 사용 불가
+- **Gateway HA** - EKS Hybrid Nodes Gateway 사용 시 EC2 노드 최소 2대 필요
 
 > 네트워크 설계 시 CIDR 제한과 CNI 요구사항을 미리 검토하세요.
 
@@ -159,11 +159,12 @@ slides: 52
 
 | 항목 | 지원 사양 |
 |------|-----------|
-| 운영 체제 | Ubuntu 20.04/22.04/24.04, RHEL 8/9, Amazon Linux 2023, Bottlerocket |
+| 운영 체제 | Ubuntu 20.04/22.04/24.04, RHEL 8/9, Amazon Linux 2023 |
+| 운영 체제 (vSphere) | Bottlerocket 1.37+ (VMware vSphere 전용, nodeadm 불필요) |
 | 아키텍처 | x86_64, arm64 (ARMv8.2+) |
 | EKS 버전 | 1.31+ |
 | 리전 | 대부분의 AWS 상용 리전 지원 |
-| CNI | Cilium (공식 지원), Calico (공식 미지원) |
+| CNI | Cilium (공식 지원 — Gateway 통합 포함) |
 | Container Runtime | containerd 1.6+ |
 | 최소 하드웨어 | 1 vCPU, 1 GiB Memory, 50 GB Disk |
 
@@ -317,9 +318,21 @@ cilium status --verbose  # NAT 정책 확인
 
 ## Pattern 4: Control Plane -> Pod (Webhooks)
 
-Admission Webhook 호출 — **Routable Pod CIDR 필수**
+Admission Webhook 호출 — **두 가지 경로 선택**
 
-> 중요: Remote Pod CIDR이 라우팅 가능해야만 동작합니다. BGP 또는 Static Route 필수.
+<!-- toggle: 직접 라우팅 모드 | EKS Hybrid Nodes Gateway 모드 -->
+
+### 직접 라우팅 모드 (기존)
+- Remote Pod CIDR이 VPC에서 라우팅 가능해야 함
+- BGP 또는 Static Route 필수
+- 온프렘 네트워크 팀 협조 필요
+
+### EKS Hybrid Nodes Gateway 모드 (2026.04 신규)
+- **Pod CIDR 라우팅 불필요** — VXLAN 캡슐화로 자동 처리
+- EC2 Gateway 노드가 VPC ↔ Hybrid Node 간 터널 유지
+- Cilium VTEP(CiliumVTEPConfig) 통해 트래픽 자동 전달
+
+> Gateway 모드를 사용하면 온프렘 네트워크 변경 없이 Webhook이 동작합니다.
 
 ---
 
@@ -341,11 +354,56 @@ iptables -A INPUT -p udp --dport 8472 -j ACCEPT
 
 EC2 Pod와 Hybrid Node Pod 간 Cross-boundary 통신
 
-- 필수 설정: Pod CIDR 라우팅 + VPC 라우트 테이블에 온프렘 CIDR 추가
+<!-- toggle: 직접 라우팅 모드 | Gateway 모드 -->
+
+### 직접 라우팅 모드
+- Pod CIDR 라우팅 + VPC 라우트 테이블에 온프렘 CIDR 추가
 
 ```bash
 aws ec2 create-route --route-table-id rtb-xxx \
   --destination 10.85.0.0/16 --transit-gateway-id tgw-xxx
+```
+
+### Gateway 모드 (2026.04 신규)
+- VPC 라우트 테이블은 Gateway가 자동 관리
+- 온프렘 Pod CIDR의 VPC 가시성 불필요
+
+---
+
+## EKS Hybrid Nodes Gateway
+
+온프렘 Pod CIDR 라우팅 없이 하이브리드 네트워킹 자동화 (2026.04)
+
+<!-- canvas: gatewayCanvas, 1100x420 -->
+
+### 아키텍처 컴포넌트
+- **EC2 Gateway 노드** (VPC 내, 최소 2대 HA) — Helm 배포
+- **VXLAN 인터페이스** `hybrid_vxlan0` — VNI 2, UDP 8472
+- **Cilium VTEP** — `CiliumVTEPConfig` CRD로 Hybrid Node에 터널 엔드포인트 전달
+- **VPC 라우트 테이블** — Gateway가 워크로드 스케일에 따라 자동 갱신
+
+### 자동 활성화되는 연결
+| 기능 | 기존(직접 라우팅) | Gateway 모드 |
+|------|-----------------|-------------|
+| CP → Webhook | BGP/Static Route 필수 | **자동** |
+| Cloud Pod ↔ Hybrid Pod | Pod CIDR 라우팅 필수 | **자동** |
+| ALB/NLB → Hybrid Workload | 추가 설정 필요 | **자동** |
+| Amazon Managed Prometheus | 수동 설정 | **자동** |
+
+> 비용: Gateway 서비스 자체는 무료. EC2 인스턴스 비용 + 데이터 전송 비용만 발생.
+
+```bash
+# Gateway Helm 설치
+helm install eks-hybrid-nodes-gateway \
+  oci://public.ecr.aws/eks/eks-hybrid-nodes-gateway \
+  --namespace kube-system \
+  --values gateway-values.yaml
+
+# Cilium VTEP 활성화 (기존 Cilium 업데이트)
+helm upgrade cilium oci://public.ecr.aws/eks/cilium/cilium \
+  --set vtep.enabled=true \
+  --set l7Proxy=false \
+  --reuse-values
 ```
 
 ---
@@ -354,13 +412,23 @@ aws ec2 create-route --route-table-id rtb-xxx \
 
 네트워크 팀과 사전 조율이 필요한 포트 목록
 
+### 공통 (모든 모드)
 | 포트 | 프로토콜 | 방향 | 용도 |
 |------|----------|------|------|
-| 443 | TCP | On-Prem -> AWS | Kubelet -> API Server |
-| 10250 | TCP | AWS -> On-Prem | API Server -> Kubelet |
-| 8472 | UDP | 양방향 | Cilium VXLAN |
+| 443 | TCP | On-Prem → AWS | Kubelet → API Server |
+| 10250 | TCP | AWS → On-Prem | API Server → Kubelet |
 | 4240 | TCP | 양방향 | Cilium Health Check |
 | 53 | TCP/UDP | 양방향 | CoreDNS |
+
+### 직접 라우팅 모드 추가 포트
+| 포트 | 프로토콜 | 방향 | 용도 |
+|------|----------|------|------|
+| 8472 | UDP | 양방향 | Cilium VXLAN (노드 간) |
+
+### Gateway 모드 추가 포트
+| 포트 | 프로토콜 | 방향 | 용도 |
+|------|----------|------|------|
+| 8472 | UDP | EC2 Gateway ↔ On-Prem | Gateway VXLAN 터널 |
 
 > Tip: 초기 테스트 시에는 넓은 범위로 열고, 안정화 후 최소 권한으로 제한
 
@@ -434,12 +502,14 @@ Block 2 핵심 요약:
 
 ### 공식 문서
 - **EKS Hybrid Nodes - Networking**: 네트워크 전제조건, CIDR 설계, 트래픽 패턴 가이드
+- **EKS Hybrid Nodes Gateway**: Gateway 아키텍처, Helm 설치, Cilium VTEP 설정 (2026.04)
 - **VPC Endpoints for EKS**: Private 연결을 위한 VPC 엔드포인트 설정 가이드
 - **EKS Hybrid Nodes - Firewall**: 필수 방화벽 포트 및 네트워크 요구사항
 
 ### 추가 리소스
 - **Cilium Documentation**: VXLAN 터널링, IPAM, 네트워크 정책 심층 가이드
-- **AWS Blog - EKS Hybrid Nodes**: 실전 사례와 아키텍처 패턴 블로그
+- **AWS Blog - Simplify hybrid Kubernetes networking with EKS Hybrid Nodes gateway** (2026.04)
+- **GitHub - aws/eks-hybrid-nodes-gateway**: Gateway 소스 및 E2E 테스트
 
 ---
 
@@ -474,6 +544,8 @@ sudo nodeadm debug
 ```
 
 주요 명령어: `install`, `init`, `upgrade`, `debug`
+
+> **Bottlerocket (VMware vSphere)**: nodeadm 불필요. Bottlerocket 1.37+ 이미지에 kubelet/containerd/aws-iam-authenticator가 포함되어 있으며, NodeConfig 설정 후 VM 부팅 시 자동으로 클러스터에 조인됩니다.
 
 ---
 
@@ -522,18 +594,19 @@ spec:
 왜 Cilium인가?
 
 ### Cilium (공식 지원)
-- eBPF 기반 데이터 플레인 - iptables 불필요
+- eBPF 기반 데이터 플레인 — iptables 불필요
 - AWS ECR Public에서 공식 빌드 제공
 - VXLAN 오버레이 내장
 - Hubble로 네트워크 observability
 - BGP, Ingress, LB IPAM, kube-proxy replacement
+- **EKS Hybrid Nodes Gateway VTEP 통합** (2026.04) — `CiliumVTEPConfig` CRD로 Gateway와 자동 연동
 
-### Calico (공식 미지원)
+### Calico (AWS 공식 레퍼런스 경로 외)
 - iptables 기반 데이터 플레인
-- AWS 공식 문서에서 제거됨
-- AWS 기술 지원 범위 밖
+- AWS Hybrid Nodes 공식 레퍼런스 가이드에서 제거됨
+- AWS 기술 지원 범위 밖 (기술적으로 동작할 수 있으나 지원 없음)
 
-> Calico는 더 이상 AWS 공식 지원 대상이 아닙니다. 신규 배포는 반드시 Cilium을 사용하세요.
+> 신규 배포는 반드시 Cilium을 사용하세요. Gateway 기능은 Cilium 전용입니다.
 
 ---
 
@@ -651,7 +724,25 @@ sudo nodeadm init --config-source file://nodeconfig.yaml
 
 자주 발생하는 문제와 해결 방법
 
-<!-- tabs: NotReady | ImagePull | DNS -->
+**Step 1: EKS Configuration Insights 먼저 확인 (2025.05 GA)**
+
+```bash
+# CLI로 클러스터 인사이트 조회
+aws eks list-insights --cluster-name <cluster>
+# EKS 콘솔 → 클러스터 → Observability 탭 → Configuration Insights
+```
+
+| 상태 | 의미 |
+|------|------|
+| Error | 클러스터 기능에 영향을 주는 구성 오류 |
+| Warning | 권장 구성과 다름 (동작은 가능) |
+| Passing | 이상 없음 |
+
+주요 탐지 항목: CP → Webhook 통신 불가, kubectl exec/logs 실패, IAM 역할 누락
+
+---
+
+<!-- tabs: NotReady | ImagePull | DNS | Webhook -->
 
 ### NotReady
 - 원인: CNI 미설치, kubelet 설정 오류, 네트워크 연결 실패
@@ -664,6 +755,11 @@ sudo nodeadm init --config-source file://nodeconfig.yaml
 ### DNS
 - 원인: CoreDNS Pod 미배포, toleration 누락
 - 해결: CoreDNS tolerations 확인, topologySpreadConstraints로 분산 배치
+
+### Webhook 실패
+- 원인: Remote Pod CIDR 미라우팅, Gateway 미설정
+- 해결 (Gateway 미사용 시): Pod CIDR BGP/Static Route 설정 또는 Webhook을 클라우드 노드로 이동
+- 해결 (Gateway 사용 시): `kubectl get ciliumpvtepconfigs` 로 VTEP 상태 확인
 
 ---
 
@@ -697,9 +793,11 @@ sudo nodeadm init --config-source file://nodeconfig.yaml
 - **nodeadm CLI Reference**: nodeadm 부트스트랩 가이드
 - **NodeConfig YAML Reference**: cluster, hybrid, kubelet, containerd 4개 섹션 상세 스펙
 - **Credential Providers**: SSM vs IAM Roles Anywhere 비교
+- **Bottlerocket for Hybrid Nodes (vSphere)**: v1.37+, nodeadm 없는 부트스트랩 가이드 (2025.04)
+- **EKS Configuration Insights**: Error/Warning/Passing 인사이트 조회 및 대응 (2025.05)
 
 ### 추가 리소스
-- **Cilium Install Guide for EKS**: Helm values, IPAM, VXLAN 설정
+- **Cilium Install Guide for EKS**: Helm values, IPAM, VXLAN 설정, VTEP 활성화
 - **Air-Gapped Environment Setup**: 오프라인 설치 가이드
 
 ---
@@ -857,6 +955,7 @@ AgentCore Runtime + MCP Servers가 클라우드에서 오케스트레이션
 |------|------|
 | **$0.02/vCPU/hr** | EKS Hybrid Nodes 추가 비용 |
 | **$0.10/hr** | EKS 클러스터 비용 (CP 관리) |
+| **무료** | EKS Hybrid Nodes Gateway 서비스 요금 (EC2 비용만 발생) |
 | **100%** | 기존 하드웨어 활용, GPU 투자 보존 |
 | **On-Demand** | 피크 시에만 클라우드 버스팅 |
 
@@ -876,6 +975,7 @@ Tanzu(VKS) / OpenShift 대비 전략적 장점
 | 운영 | etcd 직접 운영 | CP 자체 관리 | AWS 관리형 99.95% SLA | 인력 60% 절감 |
 | 비용 | vSphere 라이센스 | $13K+/yr per node | $0.02/vCPU/hr | CapEx->OpEx |
 | 최신기술 | vSphere 버전 락인 | K8s 3-6개월 지연 | 최신 드라이버 즉시 | TensorRT-LLM |
+| 네트워킹 | 수동 구성 | 수동 구성 | Gateway로 자동화 | 온프렘 라우팅 변경 불필요 |
 
 ---
 

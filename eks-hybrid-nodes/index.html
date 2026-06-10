@@ -291,6 +291,121 @@
     .section-divider.active ~ .slide-counter,
     .section-divider.active ~ .nav-hint { display: none; }
 
+    /* ===== LIGHT THEME: Section Divider ===== */
+    .slide.section-divider {
+      background: linear-gradient(145deg, #e8f0fe 0%, #f0f7ff 40%, #fff9f0 100%) !important;
+      overflow: hidden;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 4% 7% !important;
+    }
+    .slide.section-divider::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 6px;
+      background: linear-gradient(180deg, #FF9900, #0073e6, #00c8ff);
+      border-radius: 0 3px 3px 0;
+    }
+    .slide.section-divider::after {
+      content: '';
+      position: absolute;
+      right: -120px; top: -120px;
+      width: 400px; height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,115,230,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .slide.section-divider h1 {
+      font-size: 3.5rem !important;
+      font-weight: 800 !important;
+      color: #0a1628 !important;
+      background: linear-gradient(135deg, #0052cc 0%, #0073e6 50%, #00a3ff 100%) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      background-clip: text !important;
+      animation: none !important;
+      line-height: 1.15 !important;
+      margin-bottom: 0.5rem !important;
+    }
+    .slide.section-divider .subtitle {
+      color: #374151 !important;
+      font-size: 1.15rem !important;
+      font-weight: 400 !important;
+      opacity: 1 !important;
+    }
+
+    /* ===== LIGHT THEME: Quiz Slides ===== */
+    .slide.slide-quiz {
+      background: linear-gradient(160deg, #f8faff 0%, #eef3ff 60%, #f5f9ff 100%) !important;
+    }
+    .slide.slide-quiz .slide-header {
+      border-bottom: 2px solid rgba(0,82,204,0.15) !important;
+      padding-bottom: 6px !important;
+      margin-bottom: 12px !important;
+    }
+    .slide.slide-quiz .slide-header h2 {
+      color: #0a1628 !important;
+      -webkit-text-fill-color: #0a1628 !important;
+    }
+    .slide.slide-quiz .slide-header .subtitle {
+      color: #6b7280 !important;
+    }
+    .slide.slide-quiz .quiz-question {
+      color: #1a2340 !important;
+      font-weight: 600 !important;
+      background: rgba(0,82,204,0.06) !important;
+      border: none !important;
+      border-left: 3px solid #0052cc !important;
+      border-radius: 0 6px 6px 0 !important;
+      padding: 8px 12px !important;
+      margin-bottom: 8px !important;
+    }
+    .slide.slide-quiz .quiz-option {
+      background: #ffffff !important;
+      color: #1a2340 !important;
+      border: 1.5px solid #d1d9ea !important;
+      border-radius: 6px !important;
+      transition: all 0.15s ease !important;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+    }
+    .slide.slide-quiz .quiz-option:hover {
+      background: rgba(0,82,204,0.07) !important;
+      border-color: #0052cc !important;
+      color: #0a1628 !important;
+    }
+    .slide.slide-quiz .quiz-option.correct,
+    .slide.slide-quiz .quiz-option[data-correct="true"].selected {
+      background: rgba(10,122,58,0.1) !important;
+      border-color: #0a7a3a !important;
+      color: #053d18 !important;
+    }
+    .slide.slide-quiz .quiz-option.incorrect {
+      background: rgba(220,38,38,0.08) !important;
+      border-color: #dc2626 !important;
+      color: #7f1d1d !important;
+    }
+    .slide.slide-quiz .quiz-feedback {
+      color: #374151 !important;
+      font-size: 0.82rem !important;
+    }
+    .slide.slide-quiz .quiz {
+      background: rgba(255,255,255,0.75) !important;
+      border: 1px solid rgba(0,82,204,0.18) !important;
+      border-radius: 10px !important;
+      padding: 12px 14px 10px !important;
+      margin-bottom: 10px !important;
+      box-shadow: 0 2px 8px rgba(0,52,180,0.06) !important;
+    }
+    .slide.slide-quiz .quiz-options {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 6px !important;
+    }
+    .slide.slide-quiz .quiz-result { color: #1a2340 !important; }
+    .slide.slide-quiz .quiz-result.correct { color: #053d18 !important; }
+    .slide.slide-quiz .quiz-result.wrong { color: #7f1d1d !important; }
+
 
     /* === Block 2: Networking Styles === */
     .diagram-wrapper {
@@ -1143,19 +1258,22 @@
     <div class="slide-body">
       <div class="constraint-list">
         <div class="constraint-item">
-          <strong>IPv4 전용</strong> - IPv6 네트워크는 현재 미지원
+          <strong>IPv4 전용</strong> - IPv6 네트워크는 현재 미지원 <span style="color:var(--text-muted);font-size:0.85em;">(2025년 기준, 현행 문서 재검증 권장)</span>
         </div>
         <div class="constraint-item">
           <strong>Remote Network CIDR</strong> - 클러스터당 최대 15개까지 등록 가능
         </div>
         <div class="constraint-item">
-          <strong>VPC CNI 미지원</strong> - Cilium 또는 Calico 사용 필수
+          <strong>VPC CNI 미지원</strong> - Cilium 사용 필수 (Calico는 AWS 공식 레퍼런스 경로 외)
         </div>
         <div class="constraint-item">
           <strong>vCPU 기반 과금</strong> - Hybrid Node당 $0.02/vCPU/시간
         </div>
         <div class="constraint-item">
           <strong>엔드포인트 모드 제한</strong> - "Public and Private" 동시 사용 불가, 반드시 하나만 선택
+        </div>
+        <div class="constraint-item">
+          <strong>Gateway HA</strong> - EKS Hybrid Nodes Gateway 사용 시 EC2 노드 최소 2대 필요
         </div>
       </div>
       <div class="callout callout-warning" style="margin-top: 1rem;">
@@ -1185,7 +1303,7 @@
               <span class="badge badge-green">Ubuntu 20.04/22.04/24.04</span>
               <span class="badge badge-green">RHEL 8/9</span>
               <span class="badge badge-green">Amazon Linux 2023</span>
-              <span class="badge badge-blue">Bottlerocket (VMware)</span>
+              <span class="badge badge-blue">Bottlerocket 1.37+ <span style="font-size:0.8em;">(vSphere 전용, nodeadm 불필요)</span></span>
             </td>
           </tr>
           <tr>
@@ -1197,7 +1315,7 @@
           </tr>
           <tr>
             <td><strong>EKS 버전</strong></td>
-            <td><span class="badge badge-green">1.31+</span></td>
+            <td><span class="badge badge-green">1.29+</span> <span class="badge badge-blue">최신: 1.36</span></td>
           </tr>
           <tr>
             <td><strong>리전</strong></td>
@@ -1206,8 +1324,8 @@
           <tr>
             <td><strong>CNI</strong></td>
             <td>
-              <span class="badge badge-green">Cilium (공식 지원)</span>
-              <span class="badge badge-yellow">Calico (공식 미지원)</span>
+              <span class="badge badge-green">Cilium (공식 지원 + Gateway VTEP 통합)</span>
+              <span class="badge badge-red">Calico (AWS 레퍼런스 경로 외)</span>
             </td>
           </tr>
           <tr>
@@ -1296,7 +1414,7 @@
 
 
   <!-- Slide 12: Quiz -->
-  <div class="slide">
+  <div class="slide slide-quiz">
     <div class="slide-header">
       <h2>Block 1 Quiz</h2>
       <p class="subtitle">학습 내용을 확인해 봅시다</p>
@@ -1530,20 +1648,183 @@
   <div class="slide">
     <div class="slide-header">
       <h2>Pattern 4: Control Plane → Pod (Webhooks)</h2>
-      <p class="subtitle">Admission Webhook 호출 — Routable Pod CIDR 필수</p>
+      <p class="subtitle">Admission Webhook 호출 — 두 가지 경로 선택</p>
     </div>
     <div class="slide-body">
-      <div class="diagram-wrapper">
-        <object data="images/hybrid-nodes-cp-to-pod.svg" type="image/svg+xml" class="diagram-svg"></object>
+      <div class="tab-bar" style="display:flex;gap:8px;margin-bottom:12px;">
+        <button class="tab-btn active" style="padding:6px 14px;border:none;border-radius:6px;background:#00d4ff;color:#0a0e1a;font-weight:bold;cursor:pointer;" onclick="(function(b,i){var p=b.closest('.slide-body');p.querySelectorAll('.pat4-tc').forEach(function(c,j){c.style.display=j===i?'block':'none'});b.parentNode.querySelectorAll('.tab-btn').forEach(function(x){x.style.background='#1a2540';x.style.color='#b0b0b0'});b.style.background='#00d4ff';b.style.color='#0a0e1a'})(this,0)">직접 라우팅 모드 (기존)</button>
+        <button class="tab-btn" style="padding:6px 14px;border:none;border-radius:6px;background:#1a2540;color:#b0b0b0;font-weight:bold;cursor:pointer;" onclick="(function(b,i){var p=b.closest('.slide-body');p.querySelectorAll('.pat4-tc').forEach(function(c,j){c.style.display=j===i?'block':'none'});b.parentNode.querySelectorAll('.tab-btn').forEach(function(x){x.style.background='#1a2540';x.style.color='#b0b0b0'});b.style.background='#00d4ff';b.style.color='#0a0e1a'})(this,1)">🆕 EKS Hybrid Nodes Gateway (2026.04)</button>
       </div>
-      <div class="svg-legend">
-        <div class="legend-item" onclick="togglePath('main', this)">
-          <span class="legend-dot" style="background:#DD344C;"></span>
-          CP → Webhook Pod
+      <div class="pat4-tc" style="display:block;">
+        <div class="diagram-wrapper">
+          <object data="images/hybrid-nodes-cp-to-pod.svg" type="image/svg+xml" class="diagram-svg"></object>
+        </div>
+        <div class="callout callout-warning" style="margin-top:0.5rem;">
+          <strong>조건:</strong> Remote Pod CIDR이 VPC에서 라우팅 가능해야 함 — BGP 또는 Static Route 필수. 온프렘 네트워크팀 협조 필요.
         </div>
       </div>
-      <div class="callout callout-warning" style="margin-top:0.75rem;">
-        <strong>중요:</strong> Remote Pod CIDR이 라우팅 가능해야만 동작합니다. BGP 또는 Static Route 필수.
+      <div class="pat4-tc" style="display:none;">
+        <!-- Animated SVG: EKS Hybrid Nodes Gateway — Webhook 트래픽 흐름 -->
+        <svg viewBox="0 0 840 228" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:8px;display:block;">
+          <defs>
+            <marker id="p4ArrowR" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#DD344C" opacity="0.6"/></marker>
+            <marker id="p4ArrowB" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#147EBA" opacity="0.6"/></marker>
+          </defs>
+
+          <!-- Background -->
+          <rect width="840" height="228" fill="#0b0f1a" rx="8"/>
+
+          <!-- AWS VPC region -->
+          <rect x="8" y="8" width="418" height="212" rx="7" fill="rgba(0,131,176,0.07)" stroke="#0083b0" stroke-width="1.2" stroke-dasharray="5,3"/>
+          <text x="20" y="24" font-size="10" fill="#00d4ff" font-weight="bold" font-family="monospace">☁ AWS VPC</text>
+
+          <!-- VPN/DX tunnel region -->
+          <rect x="430" y="60" width="58" height="90" rx="20" fill="rgba(168,85,247,0.1)" stroke="rgba(168,85,247,0.4)" stroke-width="1" stroke-dasharray="3,2"/>
+          <text x="459" y="103" font-size="8" fill="#a855f7" text-anchor="middle" font-family="monospace" transform="rotate(-90,459,103)">VPN/DX</text>
+
+          <!-- On-Premises region -->
+          <rect x="492" y="8" width="340" height="212" rx="7" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.45)" stroke-width="1.2" stroke-dasharray="5,3"/>
+          <text x="504" y="24" font-size="10" fill="#f59e0b" font-weight="bold" font-family="monospace">🏢 On-Premises</text>
+
+          <!-- === COMPONENT BOXES === -->
+
+          <!-- EKS Control Plane -->
+          <rect x="18" y="88" width="110" height="58" rx="6" fill="rgba(0,212,255,0.12)" stroke="#00d4ff" stroke-width="1.5"/>
+          <text x="73" y="109" font-size="10" fill="#00d4ff" text-anchor="middle" font-weight="bold" font-family="sans-serif">EKS Control</text>
+          <text x="73" y="122" font-size="10" fill="#00d4ff" text-anchor="middle" font-weight="bold" font-family="sans-serif">Plane</text>
+          <text x="73" y="136" font-size="8.5" fill="#8b95a5" text-anchor="middle" font-family="sans-serif">Webhook 호출</text>
+
+          <!-- EKS CP pulse -->
+          <circle cx="73" cy="117" r="6" fill="none" stroke="#00d4ff" stroke-width="1" opacity="0.4">
+            <animate attributeName="r" values="6;22;6" dur="3s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.5;0;0.5" dur="3s" repeatCount="indefinite"/>
+          </circle>
+
+          <!-- Route between EKS CP and Route Table -->
+          <line x1="128" y1="117" x2="158" y2="117" stroke="#666" stroke-width="1.5" stroke-dasharray="3,2"/>
+
+          <!-- VPC Route Table -->
+          <rect x="158" y="85" width="130" height="64" rx="6" fill="rgba(245,158,11,0.1)" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="223" y="105" font-size="10" fill="#f59e0b" text-anchor="middle" font-weight="bold" font-family="sans-serif">VPC Route Table</text>
+          <text x="223" y="118" font-size="8.5" fill="#8b95a5" text-anchor="middle" font-family="sans-serif">10.85.0.0/16 → GW ENI</text>
+          <text x="223" y="131" font-size="8" fill="#00ff88" text-anchor="middle" font-family="sans-serif">★ CiliumNode watch</text>
+          <text x="223" y="143" font-size="8" fill="#00ff88" text-anchor="middle" font-family="sans-serif">→ 자동 갱신</text>
+
+          <!-- Route between Route Table and EC2 GW -->
+          <line x1="288" y1="117" x2="308" y2="117" stroke="#666" stroke-width="1.5" stroke-dasharray="3,2"/>
+
+          <!-- Cloud Worker Node (EKS cloud EC2) wrapper -->
+          <rect x="299" y="62" width="130" height="108" rx="7" fill="rgba(0,40,0,0.12)" stroke="rgba(0,220,100,0.35)" stroke-width="1.2" stroke-dasharray="5,3"/>
+          <text x="304" y="73" font-size="7.5" fill="rgba(0,220,100,0.75)" font-family="monospace" font-weight="bold">Cloud Worker Node (EC2)</text>
+
+          <!-- Gateway Pod (inside the Cloud Worker Node) -->
+          <rect x="305" y="77" width="118" height="86" rx="6" fill="rgba(0,255,136,0.1)" stroke="#00ff88" stroke-width="1.8"/>
+          <!-- ⬡ Pod icon + label -->
+          <text x="313" y="93" font-size="12" fill="#00ff88" font-family="sans-serif">⬡</text>
+          <text x="328" y="93" font-size="9" fill="#00ff88" font-weight="bold" font-family="sans-serif">Gateway Pod</text>
+          <text x="364" y="105" font-size="7.5" fill="#a0f0b0" text-anchor="middle" font-family="monospace">hostNetwork: true</text>
+          <text x="364" y="116" font-size="8" fill="#8b95a5" text-anchor="middle" font-family="sans-serif">hybrid_vxlan0 · VNI 2</text>
+          <text x="364" y="127" font-size="8" fill="#8b95a5" text-anchor="middle" font-family="sans-serif">UDP 8472 · FDB+ARP</text>
+          <text x="349" y="154" font-size="8" fill="#00ff88" text-anchor="middle" font-family="sans-serif">Active</text>
+          <text x="378" y="154" font-size="8" fill="#666" text-anchor="middle" font-family="sans-serif">Standby</text>
+
+          <!-- Gateway Pod pulse -->
+          <circle cx="364" cy="115" r="6" fill="none" stroke="#00ff88" stroke-width="1" opacity="0.4">
+            <animate attributeName="r" values="6;24;6" dur="3.5s" repeatCount="indefinite" begin="0.5s"/>
+            <animate attributeName="opacity" values="0.5;0;0.5" dur="3.5s" repeatCount="indefinite" begin="0.5s"/>
+          </circle>
+
+          <!-- VXLAN dashed tunnel line -->
+          <line x1="426" y1="110" x2="432" y2="110" stroke="#a855f7" stroke-width="2" stroke-dasharray="4,3"/>
+          <line x1="487" y1="110" x2="492" y2="110" stroke="#a855f7" stroke-width="2" stroke-dasharray="4,3"/>
+          <text x="459" y="188" font-size="8" fill="#a855f7" text-anchor="middle" font-family="monospace">UDP 8472</text>
+
+          <!-- CiliumVTEPConfig (small, below Cilium) -->
+          <rect x="502" y="170" width="130" height="40" rx="5" fill="rgba(168,85,247,0.1)" stroke="#a855f7" stroke-width="1.2"/>
+          <text x="567" y="187" font-size="9" fill="#a855f7" text-anchor="middle" font-weight="bold" font-family="sans-serif">CiliumVTEPConfig</text>
+          <text x="567" y="200" font-size="7.5" fill="#8b95a5" text-anchor="middle" font-family="sans-serif">GW IP + MAC · Gateway가 생성</text>
+
+          <!-- Arrow CiliumVTEPConfig → Cilium Agent -->
+          <line x1="567" y1="170" x2="567" y2="157" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.8"/>
+          <polygon points="563,161 567,154 571,161" fill="#a855f7" opacity="0.7"/>
+
+          <!-- Cilium Agent -->
+          <rect x="502" y="82" width="130" height="72" rx="6" fill="rgba(0,212,255,0.1)" stroke="#00d4ff" stroke-width="1.5"/>
+          <text x="567" y="102" font-size="10" fill="#00d4ff" text-anchor="middle" font-weight="bold" font-family="sans-serif">Cilium Agent</text>
+          <rect x="524" y="107" width="86" height="17" rx="4" fill="rgba(0,212,255,0.2)"/>
+          <text x="567" y="119" font-size="9.5" fill="#00d4ff" text-anchor="middle" font-weight="bold" font-family="sans-serif">v1.18.x / v1.19.x</text>
+          <text x="567" y="134" font-size="8" fill="#8b95a5" text-anchor="middle" font-family="sans-serif">vtep.enabled=true</text>
+          <text x="567" y="145" font-size="8" fill="#8b95a5" text-anchor="middle" font-family="sans-serif">VXLAN 수신 + 복원</text>
+
+          <!-- Cilium pulse -->
+          <circle cx="567" cy="118" r="5" fill="none" stroke="#00d4ff" stroke-width="1" opacity="0.4">
+            <animate attributeName="r" values="5;20;5" dur="3.5s" repeatCount="indefinite" begin="1.4s"/>
+            <animate attributeName="opacity" values="0.5;0;0.5" dur="3.5s" repeatCount="indefinite" begin="1.4s"/>
+          </circle>
+
+          <!-- Arrow Cilium Agent → Webhook Pod -->
+          <line x1="632" y1="117" x2="652" y2="117" stroke="#666" stroke-width="1.5" stroke-dasharray="3,2"/>
+
+          <!-- Hybrid Node wrapper -->
+          <rect x="642" y="78" width="136" height="74" rx="7" fill="rgba(245,158,11,0.05)" stroke="rgba(245,158,11,0.35)" stroke-width="1.2" stroke-dasharray="5,3"/>
+          <text x="648" y="89" font-size="7.5" fill="rgba(245,158,11,0.75)" font-family="monospace" font-weight="bold">Hybrid Node</text>
+
+          <!-- Webhook Pod (inside Hybrid Node) -->
+          <rect x="648" y="93" width="124" height="52" rx="6" fill="rgba(0,255,136,0.1)" stroke="#00ff88" stroke-width="1.5"/>
+          <!-- ⬡ Pod icon + label -->
+          <text x="655" y="110" font-size="12" fill="#00ff88" font-family="sans-serif">⬡</text>
+          <text x="670" y="110" font-size="9" fill="#00ff88" font-weight="bold" font-family="sans-serif">Webhook Pod</text>
+          <text x="710" y="123" font-size="8.5" fill="#8b95a5" text-anchor="middle" font-family="sans-serif">10.85.0.x</text>
+          <text x="710" y="135" font-size="8.5" fill="#00ff88" text-anchor="middle" font-family="sans-serif">✓ 응답 반환</text>
+
+          <!-- Webhook Pod pulse -->
+          <circle cx="710" cy="119" r="5" fill="none" stroke="#00ff88" stroke-width="1" opacity="0.4">
+            <animate attributeName="r" values="5;18;5" dur="3.5s" repeatCount="indefinite" begin="2.1s"/>
+            <animate attributeName="opacity" values="0.5;0;0.5" dur="3.5s" repeatCount="indefinite" begin="2.1s"/>
+          </circle>
+
+          <!-- === ANIMATION PATHS === -->
+
+          <!-- Request path (red dots): EKS CP → Route Table → EC2 GW → VXLAN → Cilium → Webhook Pod -->
+          <path id="p4req" d="M128,110 L158,110 L288,110 L308,110 L426,110 C440,110 449,110 459,110 C469,110 478,110 492,110 L502,110 L632,110 L652,110 L770,110" fill="none" stroke="none"/>
+
+          <!-- Response path (blue dots): Pod → Cilium → VXLAN → EC2 GW → Route Table → EKS CP -->
+          <path id="p4resp" d="M770,126 L652,126 L632,126 L502,126 L492,126 C478,126 469,126 459,126 C449,126 440,126 426,126 L308,126 L288,126 L158,126 L128,126" fill="none" stroke="none"/>
+
+          <!-- Red request dot 1 -->
+          <circle r="5.5" fill="#DD344C" filter="url(#glow)">
+            <animateMotion dur="3.5s" repeatCount="indefinite" begin="0s">
+              <mpath href="#p4req"/>
+            </animateMotion>
+            <animate attributeName="opacity" values="0;1;1;1;0" keyTimes="0;0.05;0.5;0.95;1" dur="3.5s" repeatCount="indefinite"/>
+          </circle>
+
+          <!-- Red request dot 2 (offset) -->
+          <circle r="4" fill="#FF9900" opacity="0.75">
+            <animateMotion dur="3.5s" repeatCount="indefinite" begin="1.75s">
+              <mpath href="#p4req"/>
+            </animateMotion>
+            <animate attributeName="opacity" values="0;0.75;0.75;0.75;0" keyTimes="0;0.05;0.5;0.95;1" dur="3.5s" repeatCount="indefinite" begin="1.75s"/>
+          </circle>
+
+          <!-- Blue response dot -->
+          <circle r="5.5" fill="#147EBA">
+            <animateMotion dur="3.5s" repeatCount="indefinite" begin="1.0s">
+              <mpath href="#p4resp"/>
+            </animateMotion>
+            <animate attributeName="opacity" values="0;1;1;1;0" keyTimes="0;0.05;0.5;0.95;1" dur="3.5s" repeatCount="indefinite" begin="1.0s"/>
+          </circle>
+
+          <!-- === LEGEND === -->
+          <circle cx="310" cy="215" r="4" fill="#DD344C"/>
+          <text x="320" y="219" font-size="9" fill="#DD344C" font-family="sans-serif">Webhook 요청 (VXLAN 캡슐화)</text>
+          <circle cx="530" cy="215" r="4" fill="#147EBA"/>
+          <text x="540" y="219" font-size="9" fill="#147EBA" font-family="sans-serif">응답 반환</text>
+          <text x="700" y="219" font-size="8" fill="#8b95a5" font-family="sans-serif">Pod CIDR 라우팅 불필요</text>
+        </svg>
+        <div style="margin-top:6px;background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.25);border-radius:6px;padding:6px 10px;font-size:0.78rem;">
+          <strong style="color:#00ff88;">핵심:</strong> Pod CIDR을 온프렘 라우터에 광고할 필요 없음 — Gateway가 VXLAN으로 Webhook 트래픽을 자동 전달. <code style="font-size:0.72rem;">CiliumNode</code> watch로 VPC Route Table 자동 관리.
+        </div>
       </div>
     </div>
   </div>
@@ -1584,22 +1865,170 @@
       <p class="subtitle">EC2 Pod와 Hybrid Node Pod 간 Cross-boundary 통신</p>
     </div>
     <div class="slide-body">
-      <div class="diagram-wrapper">
-        <object data="images/hybrid-nodes-east-west.svg" type="image/svg+xml" class="diagram-svg"></object>
-      </div>
-      <div class="svg-legend">
-        <div class="legend-item" onclick="togglePath('cloud', this)">
-          <span class="legend-dot" style="background:#DD344C;"></span>
-          Cloud → Hybrid
+      <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;">
+        <div style="background:rgba(15,22,41,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:14px;">
+          <div style="color:#fdcb6e;font-weight:bold;margin-bottom:10px;">직접 라우팅 모드 (기존)</div>
+          <div style="text-align:center;background:rgba(255,255,255,0.05);border-radius:6px;padding:8px;">
+            <img src="images/hybrid-nodes-east-west.svg" alt="East-West 라우팅 다이어그램"
+              style="width:100%;height:auto;min-height:220px;object-fit:contain;border-radius:4px;">
+          </div>
+          <div style="font-size:0.82rem;color:#8b95a5;margin-top:10px;">Pod CIDR 라우팅 + VPC 라우트 테이블에 온프렘 CIDR 수동 추가</div>
+          <code style="font-size:0.72rem;color:var(--cyan);display:block;margin-top:6px;">aws ec2 create-route --destination 10.85.0.0/16 --transit-gateway-id tgw-xxx</code>
         </div>
-        <div class="legend-item" onclick="togglePath('hybrid', this)">
-          <span class="legend-dot" style="background:#147EBA;"></span>
-          Hybrid → Cloud
+        <div style="background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.3);border-radius:8px;padding:14px;">
+          <div style="color:#00ff88;font-weight:bold;margin-bottom:8px;">🆕 Gateway 모드 (2026.04)</div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+            <div style="background:rgba(0,212,255,0.1);border-radius:6px;padding:10px;font-size:0.82rem;"><span style="color:#00d4ff;">VPC 라우트 테이블</span><br><span style="color:#8b95a5;font-size:0.78rem;">Gateway가 자동 관리 (수동 불필요)</span></div>
+            <div style="background:rgba(0,212,255,0.1);border-radius:6px;padding:10px;font-size:0.82rem;"><span style="color:#00d4ff;">온프렘 Pod CIDR</span><br><span style="color:#8b95a5;font-size:0.78rem;">VPC에 라우팅 광고 불필요</span></div>
+            <div style="background:rgba(0,212,255,0.1);border-radius:6px;padding:10px;font-size:0.82rem;"><span style="color:#00d4ff;">ALB/NLB → Hybrid</span><br><span style="color:#8b95a5;font-size:0.78rem;">자동 활성화</span></div>
+            <div style="background:rgba(0,212,255,0.1);border-radius:6px;padding:10px;font-size:0.82rem;"><span style="color:#00d4ff;">AMP Scraping</span><br><span style="color:#8b95a5;font-size:0.78rem;">자동 활성화</span></div>
+          </div>
         </div>
       </div>
-      <div class="note-box" style="border-left-color: #fdcb6e;">
-        <strong>필수 설정:</strong> Pod CIDR 라우팅 + VPC 라우트 테이블에 온프렘 CIDR 추가
-        <div style="margin-top:6px;"><code style="font-size:0.78rem; color:var(--cyan);">aws ec2 create-route --route-table-id rtb-xxx --destination 10.85.0.0/16 --transit-gateway-id tgw-xxx</code></div>
+    </div>
+  </div>
+
+
+  <!-- Slide 9b: EKS Hybrid Nodes Gateway (NEW) -->
+  <div class="slide">
+    <div class="slide-header">
+      <h2>EKS Hybrid Nodes Gateway</h2>
+      <p class="subtitle">온프렘 Pod CIDR 라우팅 없이 하이브리드 네트워킹 자동화 <span class="badge badge-green" style="font-size:0.75rem;">2026.04 출시</span></p>
+    </div>
+    <div class="slide-body">
+      <!-- Tab bar -->
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <button class="gw-tb active" style="padding:6px 14px;border:none;border-radius:6px;background:#00d4ff;color:#0a0e1a;font-weight:bold;cursor:pointer;font-size:0.82rem;" onclick="(function(b,i){var p=b.closest('.slide-body');p.querySelectorAll('.gw-tc').forEach(function(c,j){c.style.display=j===i?'block':'none'});b.parentNode.querySelectorAll('.gw-tb').forEach(function(x){x.style.background='#1a2540';x.style.color='#b0b0b0'});b.style.background='#00d4ff';b.style.color='#0a0e1a'})(this,0)">동작 원리</button>
+        <button class="gw-tb" style="padding:6px 14px;border:none;border-radius:6px;background:#1a2540;color:#b0b0b0;font-weight:bold;cursor:pointer;font-size:0.82rem;" onclick="(function(b,i){var p=b.closest('.slide-body');p.querySelectorAll('.gw-tc').forEach(function(c,j){c.style.display=j===i?'block':'none'});b.parentNode.querySelectorAll('.gw-tb').forEach(function(x){x.style.background='#1a2540';x.style.color='#b0b0b0'});b.style.background='#00d4ff';b.style.color='#0a0e1a'})(this,1)">구성 요소 &amp; 설치</button>
+      </div>
+
+      <!-- Tab 1: 동작 원리 다이어그램 -->
+      <div class="gw-tc" style="display:block;">
+        <!-- AWS VPC Region -->
+        <div style="border:2px solid rgba(0,212,255,0.35);border-radius:10px;padding:10px 14px;margin-bottom:6px;background:rgba(0,212,255,0.03);">
+          <div style="color:#00d4ff;font-size:0.72rem;font-weight:700;letter-spacing:0.05em;margin-bottom:8px;">☁️ AWS VPC</div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;">
+            <!-- EKS CP -->
+            <div style="background:rgba(0,212,255,0.12);border:1px solid rgba(0,212,255,0.35);border-radius:8px;padding:8px 12px;text-align:center;min-width:120px;flex-shrink:0;">
+              <div style="color:#00d4ff;font-size:0.8rem;font-weight:700;">EKS</div>
+              <div style="color:#00d4ff;font-size:0.8rem;font-weight:700;">Control Plane</div>
+              <div style="color:#8b95a5;font-size:0.68rem;margin-top:2px;">API Server</div>
+            </div>
+            <!-- Arrow with label -->
+            <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+              <div style="color:#8b95a5;font-size:0.65rem;white-space:nowrap;">Pod CIDR watch</div>
+              <div style="color:#00d4ff;font-size:1.1rem;line-height:1;">→</div>
+            </div>
+            <!-- VPC Route Table -->
+            <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.35);border-radius:8px;padding:8px 12px;text-align:center;min-width:140px;flex-shrink:0;">
+              <div style="color:#f59e0b;font-size:0.8rem;font-weight:700;">VPC Route Table</div>
+              <div style="color:#8b95a5;font-size:0.68rem;margin-top:2px;">10.85.0.0/16 →</div>
+              <div style="color:#00ff88;font-size:0.68rem;">Gateway ENI</div>
+              <div style="color:#00ff88;font-size:0.63rem;margin-top:2px;background:rgba(0,255,136,0.1);border-radius:3px;padding:1px 4px;">자동 갱신</div>
+            </div>
+            <div style="color:#00d4ff;font-size:1.1rem;flex-shrink:0;">→</div>
+            <!-- EKS Hybrid Nodes Gateway -->
+            <div style="background:rgba(0,255,136,0.1);border:2px solid rgba(0,255,136,0.45);border-radius:8px;padding:8px 12px;text-align:center;min-width:150px;flex-shrink:0;">
+              <div style="color:#00ff88;font-size:0.8rem;font-weight:700;">EKS Hybrid Nodes Gateway</div>
+              <div style="color:#8b95a5;font-size:0.68rem;margin-top:3px;"><code style="color:#a8d8a8;font-size:0.65rem;">hybrid_vxlan0</code></div>
+              <div style="color:#8b95a5;font-size:0.68rem;">VNI 2 · UDP 8472</div>
+              <div style="display:flex;gap:4px;justify-content:center;margin-top:4px;">
+                <span style="background:rgba(0,255,136,0.15);border-radius:3px;padding:1px 5px;font-size:0.62rem;color:#00ff88;">Active</span>
+                <span style="background:rgba(100,100,100,0.2);border-radius:3px;padding:1px 5px;font-size:0.62rem;color:#8b95a5;">Standby</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- VPN/DX tunnel bar -->
+        <div style="display:flex;align-items:center;gap:8px;padding:0 20px;margin-bottom:6px;">
+          <div style="flex:1;border-top:2px dashed rgba(168,85,247,0.5);"></div>
+          <div style="background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.4);border-radius:20px;padding:4px 14px;white-space:nowrap;">
+            <span style="color:#a855f7;font-size:0.72rem;font-weight:600;">🔒 VPN / Direct Connect &nbsp;—&nbsp; VXLAN UDP 8472 (FDB + ARP entries)</span>
+          </div>
+          <div style="flex:1;border-top:2px dashed rgba(168,85,247,0.5);"></div>
+        </div>
+        <!-- On-Premises -->
+        <div style="border:2px solid rgba(245,158,11,0.3);border-radius:10px;padding:10px 14px;background:rgba(245,158,11,0.02);">
+          <div style="color:#f59e0b;font-size:0.72rem;font-weight:700;letter-spacing:0.05em;margin-bottom:8px;">🏢 On-Premises</div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;">
+            <!-- CiliumVTEPConfig -->
+            <div style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.35);border-radius:8px;padding:8px 12px;text-align:center;min-width:145px;flex-shrink:0;">
+              <div style="color:#a855f7;font-size:0.78rem;font-weight:700;">CiliumVTEPConfig</div>
+              <div style="color:#8b95a5;font-size:0.68rem;margin-top:2px;">CRD (Gateway가 생성)</div>
+              <div style="color:#8b95a5;font-size:0.68rem;">Gateway IP + MAC 포함</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+              <div style="color:#8b95a5;font-size:0.65rem;">watch &amp; apply</div>
+              <div style="color:#a855f7;font-size:1.1rem;line-height:1;">→</div>
+            </div>
+            <!-- Cilium Agent -->
+            <div style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.35);border-radius:8px;padding:8px 12px;text-align:center;min-width:145px;flex-shrink:0;">
+              <div style="color:#00d4ff;font-size:0.8rem;font-weight:700;">Cilium Agent</div>
+              <div style="background:rgba(0,212,255,0.2);border-radius:4px;padding:2px 8px;display:inline-block;margin-top:3px;">
+                <span style="color:#00d4ff;font-size:0.7rem;font-weight:700;">v1.18.x</span>
+                <span style="color:#8b95a5;font-size:0.65rem;"> / </span>
+                <span style="color:#00d4ff;font-size:0.7rem;font-weight:700;">v1.19.x</span>
+              </div>
+              <div style="color:#8b95a5;font-size:0.65rem;margin-top:3px;"><code style="font-size:0.62rem;">vtep.enabled=true</code></div>
+              <div style="color:#8b95a5;font-size:0.65rem;"><code style="font-size:0.62rem;">l7Proxy=false</code></div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+              <div style="color:#8b95a5;font-size:0.65rem;">decapsulate</div>
+              <div style="color:#00d4ff;font-size:1.1rem;line-height:1;">→</div>
+            </div>
+            <!-- Pods -->
+            <div style="background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.35);border-radius:8px;padding:8px 12px;text-align:center;min-width:110px;flex-shrink:0;">
+              <div style="color:#00ff88;font-size:0.8rem;font-weight:700;">Hybrid Pods</div>
+              <div style="color:#8b95a5;font-size:0.68rem;margin-top:3px;">Pod CIDR</div>
+              <div style="color:#8b95a5;font-size:0.68rem;">10.85.0.0/16</div>
+            </div>
+          </div>
+        </div>
+        <!-- Flow caption -->
+        <div style="margin-top:7px;font-size:0.72rem;color:#8b95a5;text-align:center;">
+          VPC 트래픽 → Route Table → Gateway EC2 → VXLAN 캡슐화 → VPN/DX → Cilium(VTEP) → Pod 전달
+        </div>
+      </div>
+
+      <!-- Tab 2: 구성 요소 & 설치 -->
+      <div class="gw-tc" style="display:none;">
+        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:14px;">
+          <div>
+            <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:8px;font-weight:600;">아키텍처 컴포넌트</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:7px;padding:9px;font-size:0.79rem;"><strong style="color:#00d4ff;">EKS Hybrid Nodes Gateway</strong> — <strong style="color:#00ff88;">EKS 클러스터 내 Pod</strong>로 동작 (<code>hostNetwork: true</code>), Deployment 2 Pods, 클라우드 워커 노드에 스케줄링, Lease 기반 Active/Standby</div>
+              <div style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:7px;padding:9px;font-size:0.79rem;"><strong style="color:#00d4ff;">VXLAN</strong> <code>hybrid_vxlan0</code> — VNI 2, UDP 8472. FDB+ARP 엔트리로 각 Hybrid Node 터널 유지</div>
+              <div style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);border-radius:7px;padding:9px;font-size:0.79rem;"><strong style="color:#a855f7;">Cilium VTEP</strong> (<strong style="color:#00d4ff;">v1.18.8-1+ / v1.19.2-1+</strong>) — <code>CiliumVTEPConfig</code> CRD로 Gateway IP+MAC을 Cilium에 전달</div>
+              <div style="background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);border-radius:7px;padding:9px;font-size:0.79rem;"><strong style="color:#00ff88;">VPC Route Table</strong> — <code>CiliumNode</code> watch → Pod CIDR → Gateway ENI 자동 등록</div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:8px;font-weight:600;">설치 명령어</div>
+            <pre style="background:rgba(0,0,0,0.35);border:1px solid rgba(0,212,255,0.2);border-radius:7px;padding:10px;font-size:0.72rem;margin-bottom:10px;overflow:hidden;"><code style="color:#00d4ff;"># 1. Gateway 설치
+helm install eks-hybrid-nodes-gateway \
+  oci://public.ecr.aws/eks/eks-hybrid-nodes-gateway \
+  --namespace kube-system \
+  --values gateway-values.yaml
+
+# 2. Cilium VTEP 활성화 (기존 Cilium 업데이트)
+helm upgrade cilium \
+  oci://public.ecr.aws/eks/cilium/cilium \
+  --set vtep.enabled=true \
+  --set l7Proxy=false \
+  --reuse-values</code></pre>
+            <table style="width:100%;font-size:0.75rem;border-collapse:collapse;">
+              <thead><tr style="color:var(--text-muted);border-bottom:1px solid rgba(255,255,255,0.1);"><th style="text-align:left;padding:4px;">기능</th><th style="padding:4px;text-align:center;">기존</th><th style="padding:4px;text-align:center;">Gateway</th></tr></thead>
+              <tbody>
+                <tr style="border-top:1px solid rgba(255,255,255,0.07);"><td style="padding:4px 4px;">CP → Webhook</td><td style="padding:4px;color:#fdcb6e;text-align:center;">BGP 필수</td><td style="padding:4px;color:#00ff88;text-align:center;">✓ 자동</td></tr>
+                <tr style="border-top:1px solid rgba(255,255,255,0.07);"><td style="padding:4px 4px;">Cloud ↔ Hybrid Pod</td><td style="padding:4px;color:#fdcb6e;text-align:center;">라우팅 필수</td><td style="padding:4px;color:#00ff88;text-align:center;">✓ 자동</td></tr>
+                <tr style="border-top:1px solid rgba(255,255,255,0.07);"><td style="padding:4px 4px;">ALB/NLB → Hybrid</td><td style="padding:4px;color:#fdcb6e;text-align:center;">수동 설정</td><td style="padding:4px;color:#00ff88;text-align:center;">✓ 자동</td></tr>
+              </tbody>
+            </table>
+            <div style="margin-top:8px;font-size:0.75rem;color:#8b95a5;background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.2);border-radius:6px;padding:7px;">
+              <strong style="color:#00ff88;">비용:</strong> Gateway 서비스 요금 없음 — EC2 인스턴스 + 데이터 전송 비용만 발생
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1612,49 +2041,41 @@
       <p class="subtitle">네트워크 팀과 사전 조율이 필요한 포트 목록</p>
     </div>
     <div class="slide-body">
-      <table class="firewall-table">
-        <thead>
-          <tr>
-            <th>포트</th>
-            <th>프로토콜</th>
-            <th>방향</th>
-            <th>용도</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><strong>443</strong></td>
-            <td><span class="protocol-badge protocol-tcp">TCP</span></td>
-            <td>On-Prem → AWS</td>
-            <td>Kubelet → API Server 통신</td>
-          </tr>
-          <tr>
-            <td><strong>10250</strong></td>
-            <td><span class="protocol-badge protocol-tcp">TCP</span></td>
-            <td>AWS → On-Prem</td>
-            <td>API Server → Kubelet (exec, logs, webhooks)</td>
-          </tr>
-          <tr>
-            <td><strong>8472</strong></td>
-            <td><span class="protocol-badge protocol-udp">UDP</span></td>
-            <td>양방향</td>
-            <td>Cilium VXLAN 터널링</td>
-          </tr>
-          <tr>
-            <td><strong>4240</strong></td>
-            <td><span class="protocol-badge protocol-tcp">TCP</span></td>
-            <td>양방향</td>
-            <td>Cilium Health Check</td>
-          </tr>
-          <tr>
-            <td><strong>53</strong></td>
-            <td><span class="protocol-badge protocol-tcp">TCP</span> <span class="protocol-badge protocol-udp">UDP</span></td>
-            <td>양방향</td>
-            <td>CoreDNS 쿼리</td>
-          </tr>
-        </tbody>
-      </table>
-      <div class="callout callout-info" style="margin-top:1rem;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <div style="font-size:0.82rem;color:var(--text-muted);font-weight:600;margin-bottom:6px;">공통 (모든 모드)</div>
+          <table class="firewall-table" style="font-size:0.8rem;">
+            <thead><tr><th>포트</th><th>프로토콜</th><th>방향</th><th>용도</th></tr></thead>
+            <tbody>
+              <tr><td><strong>443</strong></td><td><span class="protocol-badge protocol-tcp">TCP</span></td><td>On-Prem → AWS</td><td>Kubelet → API Server</td></tr>
+              <tr><td><strong>10250</strong></td><td><span class="protocol-badge protocol-tcp">TCP</span></td><td>AWS → On-Prem</td><td>API Server → Kubelet</td></tr>
+              <tr><td><strong>4240</strong></td><td><span class="protocol-badge protocol-tcp">TCP</span></td><td>양방향</td><td>Cilium Health Check</td></tr>
+              <tr><td><strong>53</strong></td><td><span class="protocol-badge protocol-tcp">TCP</span><span class="protocol-badge protocol-udp">UDP</span></td><td>양방향</td><td>CoreDNS</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div>
+            <div style="font-size:0.82rem;color:#fdcb6e;font-weight:600;margin-bottom:6px;">직접 라우팅 모드 추가 포트</div>
+            <table class="firewall-table" style="font-size:0.8rem;">
+              <thead><tr><th>포트</th><th>프로토콜</th><th>방향</th><th>용도</th></tr></thead>
+              <tbody>
+                <tr><td><strong>8472</strong></td><td><span class="protocol-badge protocol-udp">UDP</span></td><td>양방향</td><td>Cilium VXLAN (노드 간)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <div style="font-size:0.82rem;color:#00ff88;font-weight:600;margin-bottom:6px;">🆕 Gateway 모드 추가 포트</div>
+            <table class="firewall-table" style="font-size:0.8rem;">
+              <thead><tr><th>포트</th><th>프로토콜</th><th>방향</th><th>용도</th></tr></thead>
+              <tbody>
+                <tr><td><strong>8472</strong></td><td><span class="protocol-badge protocol-udp">UDP</span></td><td>EKS HN Gateway ↔ On-Prem</td><td>Gateway VXLAN 터널</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-info" style="margin-top:0.75rem;font-size:0.82rem;">
         <strong>Tip:</strong> 초기 테스트 시에는 넓은 범위로 열고, 안정화 후 최소 권한으로 제한
       </div>
     </div>
@@ -1720,7 +2141,7 @@
 
 
   <!-- Slide 12: Quiz -->
-  <div class="slide">
+  <div class="slide slide-quiz">
     <div class="slide-header">
       <h2>Block 2 Quiz</h2>
       <p class="subtitle">네트워킹 핵심 개념 점검</p>
@@ -1877,13 +2298,13 @@
 <span class="keyword">chmod</span> +x nodeadm && <span class="keyword">sudo</span> mv nodeadm /usr/local/bin/
 
 <span class="comment"># 의존성 설치 (kubelet, containerd 등)</span>
-<span class="keyword">sudo</span> nodeadm install <span class="number">1.31</span> --credential-provider ssm
+<span class="keyword">sudo</span> nodeadm install <span class="number">1.36</span> --credential-provider ssm
 
 <span class="comment"># 노드 초기화 (클러스터에 조인)</span>
 <span class="keyword">sudo</span> nodeadm init --config-source <span class="string">file://nodeconfig.yaml</span>
 
 <span class="comment"># 노드 업그레이드</span>
-<span class="keyword">sudo</span> nodeadm upgrade <span class="number">1.32</span> --config-source <span class="string">file://nodeconfig.yaml</span>
+<span class="keyword">sudo</span> nodeadm upgrade <span class="number">1.36</span> --config-source <span class="string">file://nodeconfig.yaml</span>
 
 <span class="comment"># 디버그 정보 수집</span>
 <span class="keyword">sudo</span> nodeadm debug</div>
@@ -1904,6 +2325,9 @@
             <li><strong>iam-ra</strong> - IAM Roles Anywhere</li>
           </ul>
         </div>
+      </div>
+      <div class="callout callout-info" style="margin-top:10px;font-size:0.85rem;">
+        <strong>Bottlerocket (VMware vSphere):</strong> nodeadm 불필요. Bottlerocket 1.37+ 이미지에 kubelet/containerd/aws-iam-authenticator가 포함되어 있으며 VM 부팅 시 자동으로 클러스터에 조인됩니다.
       </div>
     </div>
   </div>
@@ -2064,24 +2488,25 @@
             <li><strong>VXLAN 오버레이</strong> 내장 — 온프렘 네트워크 호환</li>
             <li><strong>Hubble</strong>로 네트워크 observability 내장</li>
             <li>BGP, Ingress, LB IPAM, kube-proxy replacement 지원</li>
-            <li>지원 버전: <code>v1.17.x</code>, <code>v1.18.x</code></li>
+            <li>지원 버전: <code>v1.17.x</code>, <code>v1.18.x</code>, <code>v1.19.x</code></li>
+            <li><strong style="color:#00d4ff;">EKS Hybrid Nodes Gateway VTEP 통합</strong> (2026.04) — <code>CiliumVTEPConfig</code> CRD로 Gateway와 자동 연동</li>
           </ul>
         </div>
         <div class="card">
-          <div class="card-title"><span class="badge badge-yellow">공식 미지원</span> Calico</div>
+          <div class="card-title"><span class="badge badge-red">AWS 레퍼런스 경로 외</span> Calico</div>
           <ul>
             <li>iptables 기반 데이터 플레인</li>
-            <li>AWS 공식 문서에서 <strong>제거됨</strong> (examples repo에 설정 존재)</li>
-            <li>별도 IP pool 관리 필요</li>
-            <li>AWS 기술 지원 범위 밖 (커뮤니티 지원)</li>
+            <li>AWS Hybrid Nodes 공식 레퍼런스 가이드에서 제거됨</li>
+            <li>AWS 기술 지원 범위 밖 (기술적으로 동작 가능하나 지원 없음)</li>
+            <li><strong>Gateway 기능 사용 불가</strong> (Cilium 전용)</li>
           </ul>
         </div>
       </div>
       <div class="callout callout-warning" style="margin-top: 12px;">
-        Calico는 더 이상 AWS 공식 지원 대상이 아닙니다. 신규 배포는 반드시 Cilium을 사용하세요.
+        신규 배포는 반드시 Cilium을 사용하세요. Gateway 기능(Pod CIDR 라우팅 자동화)은 Cilium 전용입니다.
       </div>
       <div class="callout callout-info" style="margin-top: 8px;">
-        Cilium v1.18.x는 Linux kernel &ge; 5.10 필요 — Ubuntu 20.04, RHEL 8 미지원
+        Cilium v1.18.x+, v1.19.x 는 Linux kernel ≥ 5.10 필요 — Ubuntu 20.04 LTS, RHEL 8 미지원 (Ubuntu 22.04+, RHEL 9 권장)
       </div>
     </div>
   </div>
@@ -2096,7 +2521,7 @@
     <div class="slide-body">
       <div class="code-block"><span class="code-label">Helm Install</span><span class="comment"># Cilium 설치 - AWS ECR Public 공식 빌드</span>
 <span class="keyword">helm</span> install cilium <span class="string">oci://public.ecr.aws/eks/cilium/cilium</span> \
-  --version <span class="number">1.18.3-0</span> \
+  --version <span class="number">1.19.2-1</span> \
   --namespace kube-system \
   --values <span class="string">cilium-values.yaml</span></div>
       <div class="col-2" style="margin-top: 20px;">
@@ -2194,8 +2619,8 @@ ip route add 10.85.0.128/25 via 192.168.1.102</div>
       <div class="terminal-output">
 <span class="prompt">$</span> <span class="command">kubectl get nodes</span>
 <span class="output">NAME              STATUS   ROLES    AGE   VERSION</span>
-<span class="highlight">hybrid-node-001</span>   <span style="color:#00ff88;">Ready</span>    &lt;none&gt;   5m    v1.31.2-eks
-<span class="highlight">hybrid-node-002</span>   <span style="color:#00ff88;">Ready</span>    &lt;none&gt;   3m    v1.31.2-eks
+<span class="highlight">hybrid-node-001</span>   <span style="color:#00ff88;">Ready</span>    &lt;none&gt;   5m    v1.36.0-eks
+<span class="highlight">hybrid-node-002</span>   <span style="color:#00ff88;">Ready</span>    &lt;none&gt;   3m    v1.36.0-eks
 
 <span class="prompt">$</span> <span class="command">kubectl describe node hybrid-node-001 | grep -A5 Labels</span>
 <span class="output">Labels:</span>   <span class="label-value">eks.amazonaws.com/compute-type=hybrid</span>
@@ -2205,8 +2630,8 @@ ip route add 10.85.0.128/25 via 192.168.1.102</div>
 
 <span class="prompt">$</span> <span class="command">kubectl get nodes -l eks.amazonaws.com/compute-type=hybrid</span>
 <span class="output">NAME              STATUS   ROLES    AGE   VERSION</span>
-<span class="highlight">hybrid-node-001</span>   <span style="color:#00ff88;">Ready</span>    &lt;none&gt;   5m    v1.31.2-eks
-<span class="highlight">hybrid-node-002</span>   <span style="color:#00ff88;">Ready</span>    &lt;none&gt;   3m    v1.31.2-eks
+<span class="highlight">hybrid-node-001</span>   <span style="color:#00ff88;">Ready</span>    &lt;none&gt;   5m    v1.36.0-eks
+<span class="highlight">hybrid-node-002</span>   <span style="color:#00ff88;">Ready</span>    &lt;none&gt;   3m    v1.36.0-eks
 
 <span class="prompt">$</span> <span class="command">kubectl get pods -n kube-system -l k8s-app=cilium -o wide</span>
 <span class="output">NAME           READY   STATUS    NODE</span>
@@ -2241,7 +2666,7 @@ kubectl drain hybrid-node-001 \
   --ignore-daemonsets
 
 <span class="comment"># 2. 업그레이드</span>
-sudo nodeadm upgrade 1.32 \
+sudo nodeadm upgrade 1.36 \
   --config-source file://nodeconfig.yaml
 
 <span class="comment"># 3. uncordon</span>
@@ -2273,7 +2698,7 @@ kubectl uncordon hybrid-node-001</div>
 sudo nodeadm uninstall
 
 <span class="comment"># 2. 이전 버전 재설치</span>
-sudo nodeadm install 1.31 \
+sudo nodeadm install 1.35 \
   --credential-provider ssm
 
 <span class="comment"># 3. 다시 조인</span>
@@ -2305,7 +2730,7 @@ sudo nodeadm init \
           </ul>
           <div class="code-block" style="font-size: 0.72rem; padding: 10px;">
 <span class="comment"># 아티팩트 다운로드 &amp; S3 업로드</span>
-nodeadm install 1.31 --credential-provider ssm
+nodeadm install 1.36 --credential-provider ssm
 aws s3 sync ./artifacts/ \
   s3://hybrid-assets-bucket/</div>
           <div class="code-block" style="font-size: 0.72rem; padding: 10px; margin-top: 8px;">
@@ -2357,6 +2782,12 @@ hybrid-assets.eks.amazonaws.com
       <p class="subtitle">자주 발생하는 문제와 해결 방법</p>
     </div>
     <div class="slide-body">
+      <div class="callout callout-info" style="margin-bottom:10px;font-size:0.82rem;">
+        <strong>Step 1: EKS Configuration Insights 먼저 확인</strong> (2025.05 GA) —
+        <code style="font-size:0.78rem;">aws eks list-insights --cluster-name &lt;cluster&gt;</code>
+        또는 EKS 콘솔 → Observability → Configuration Insights.
+        상태: <span style="color:#ff4757;">Error</span> (기능 영향) · <span style="color:#fdcb6e;">Warning</span> (권장 구성 아님) · <span style="color:#00ff88;">Passing</span> (이상 없음)
+      </div>
       <div class="tab-bar">
         <button class="tab-btn active" data-tab="ts-notready">NotReady</button>
         <button class="tab-btn" data-tab="ts-imagepull">ImagePull</button>
@@ -2488,7 +2919,7 @@ sudo iptables -L -n | grep 53</div>
 
 
   <!-- Slide 11: Quiz -->
-  <div class="slide">
+  <div class="slide slide-quiz">
     <div class="slide-header">
       <h2>Block 3 퀴즈</h2>
       <p class="subtitle">학습 내용 확인</p>
@@ -2928,6 +3359,11 @@ sudo iptables -L -n | grep 53</div>
           <div class="cost-label">클라우드 버스팅</div>
           <div class="cost-desc">피크 시에만 클라우드 리소스 사용<br/>유휴 비용 최소화</div>
         </div>
+        <div class="cost-card" style="border-color:rgba(0,255,136,0.4);">
+          <div class="cost-value" style="color: var(--green);">무료</div>
+          <div class="cost-label">Gateway 서비스</div>
+          <div class="cost-desc">EKS Hybrid Nodes Gateway<br/>서비스 요금 없음 (EC2 비용만)</div>
+        </div>
       </div>
       <div class="callout callout-info" style="margin-top: 20px;">
         <strong>비용 철학:</strong> 기존 인프라 투자를 보존하면서 AWS Managed Services의 가치를 더하는 접근 - CapEx는 유지, OpEx는 최적화
@@ -3026,9 +3462,24 @@ sudo iptables -L -n | grep 53</div>
           </div>
           <div class="vs-cell metric" style="flex:0.7;">Flash Attention<br/>TensorRT-LLM</div>
         </div>
+        <div class="vs-row">
+          <div class="vs-cell tanzu" style="flex:1.1;">
+            <span class="vs-label">네트워킹</span>
+            <span class="vs-desc">수동 구성 필수</span>
+          </div>
+          <div class="vs-cell tanzu" style="flex:1.1;">
+            <span class="vs-label">네트워킹</span>
+            <span class="vs-desc">수동 구성 필수</span>
+          </div>
+          <div class="vs-cell eks" style="flex:1.1;">
+            <span class="vs-label">네트워킹</span>
+            <span class="vs-desc">Gateway로 자동화 (2026.04)</span>
+          </div>
+          <div class="vs-cell metric" style="flex:0.7;">온프렘 라우팅<br/>변경 불필요</div>
+        </div>
       </div>
       <div class="callout callout-success" style="margin-top: 12px;">
-        <strong>결론:</strong> Tanzu는 vSphere 락인, OpenShift는 높은 구독 비용과 업그레이드 복잡성 — EKS Hybrid Nodes는 성능·유연성·운영·비용·기술 모든 축에서 개선
+        <strong>결론:</strong> Tanzu는 vSphere 락인, OpenShift는 높은 구독 비용과 업그레이드 복잡성 — EKS Hybrid Nodes는 성능·유연성·운영·비용·기술·네트워킹 모든 축에서 개선
       </div>
     </div>
     <a href="https://atomoh.gitbook.io/kubernetes-docs/eks-hybrid-nodes" target="_blank" class="ref-link">📖 참고 문서</a>
@@ -3487,7 +3938,7 @@ sudo iptables -L -n | grep 53</div>
     const details = [
       { text: 'SSM Activation 또는 IAM Roles Anywhere로 자격 증명 준비', cmd: 'aws ssm create-activation --iam-role HybridNodeRole' },
       { text: 'hybrid-assets.eks.amazonaws.com에서 nodeadm 바이너리 다운로드', cmd: 'curl -OL https://hybrid-assets.eks...' },
-      { text: 'kubelet, containerd 등 K8s 컴포넌트 자동 설치', cmd: 'sudo nodeadm install 1.31 --credential-provider ssm' },
+      { text: 'kubelet, containerd 등 K8s 컴포넌트 자동 설치', cmd: 'sudo nodeadm install 1.36 --credential-provider ssm' },
       { text: 'cluster, hybrid, kubelet, containerd 4개 섹션 설정', cmd: 'vi nodeconfig.yaml  # cluster.name, hybrid.ssm' },
       { text: 'IAM Roles Anywhere: Trust Anchor CA + 노드 X.509 인증서 설치 (SSM은 불필요)', cmd: 'sudo cp ca.pem /etc/iam/pki/  # RA 방식만 해당' },
       { text: 'kubelet 시작 → API Server 연결 → CSR 자동 승인', cmd: 'kubectl get csr  # Approved 확인' },

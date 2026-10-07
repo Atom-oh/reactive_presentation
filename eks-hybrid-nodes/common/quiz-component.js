@@ -30,35 +30,56 @@ class QuizManager {
       options.forEach(opt => {
         opt.addEventListener('click', () => {
           if (state.answered) return;
-          if (opt.classList.contains('wrong')) return; // already tried this option
+          state.answered = true;
           const isCorrect = opt.dataset.correct === 'true';
+          state.correct = isCorrect;
 
-          if (isCorrect) {
-            state.answered = true;
-            state.correct = true;
-            // Mark all options disabled, highlight correct
-            options.forEach(o => {
-              o.classList.add('disabled');
-              if (o.dataset.correct === 'true') o.classList.add('correct');
-            });
-            // Show success feedback
-            if (feedback) {
-              const explanation = opt.dataset.explain || quiz.dataset.explain || '';
+          // Mark all options
+          options.forEach(o => {
+            o.classList.add('disabled');
+            if (o.dataset.correct === 'true' && isCorrect) {
+              o.classList.add('correct');
+            } else if (o === opt && !isCorrect) {
+              o.classList.add('wrong');
+            }
+          });
+
+          // Show feedback
+          if (feedback) {
+            const explanation = opt.dataset.explain || quiz.dataset.explain || '';
+            if (isCorrect) {
               feedback.innerHTML = `<div class="quiz-result correct">
                 <span class="quiz-icon">&#10003;</span> 정답입니다!
                 ${explanation ? `<div class="quiz-explain">${explanation}</div>` : ''}
               </div>`;
-              feedback.classList.add('show');
-            }
-          } else {
-            // Mark this option as wrong but keep quiz open
-            opt.classList.add('wrong', 'disabled');
-            if (feedback) {
+            } else {
               feedback.innerHTML = `<div class="quiz-result wrong">
-                <span class="quiz-icon">&#10007;</span> 다시 생각해보세요.
+                <span class="quiz-icon">&#10007;</span> 오답입니다. 다시 생각해보세요.
+                ${explanation ? `<div class="quiz-explain">${explanation}</div>` : ''}
               </div>`;
-              feedback.classList.add('show');
             }
+            feedback.classList.add('show');
+          }
+
+          // Wrong answer: allow retry after brief feedback
+          if (!isCorrect) {
+            setTimeout(() => {
+              state.answered = false;
+              state.correct = false;
+              options.forEach(o => {
+                o.classList.remove('disabled', 'correct');
+                // Keep wrong class on selected option briefly visible, then remove
+                if (o === opt) {
+                  o.classList.add('wrong-fade');
+                  setTimeout(() => o.classList.remove('wrong', 'wrong-fade'), 300);
+                } else {
+                  o.classList.remove('wrong');
+                }
+              });
+              if (feedback) {
+                feedback.classList.remove('show');
+              }
+            }, 1500);
           }
         });
       });
@@ -150,6 +171,10 @@ const quizManager = new QuizManager();
       background: var(--red-bg) !important;
       color: var(--red) !important;
       opacity: 1 !important;
+    }
+    .quiz-option.wrong-fade {
+      transition: all 300ms ease-out;
+      opacity: 0.5 !important;
     }
     .quiz-feedback {
       overflow: hidden;

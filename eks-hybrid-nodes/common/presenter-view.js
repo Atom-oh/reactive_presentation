@@ -111,7 +111,7 @@ ${styleSheets}
   .presenter-timer {
     font-family: 'JetBrains Mono', monospace;
     font-size: 1.5rem;
-    color: #6c5ce7;
+    color: var(--accent, #ec7211);
   }
   .presenter-counter {
     font-family: 'JetBrains Mono', monospace;
@@ -175,16 +175,16 @@ ${styleSheets}
     position: absolute;
     top: 0;
     left: 0;
-    width: 1280px;
-    height: 720px;
+    width: 960px;
+    height: 540px;
     transform-origin: top left;
     overflow: hidden;
     background: var(--bg-primary, #0f1117);
     border-radius: 4px;
   }
   .slide-scaler .slide-deck {
-    width: 1280px !important;
-    height: 720px !important;
+    width: 960px !important;
+    height: 540px !important;
     max-width: none !important;
     max-height: none !important;
     position: relative !important;
@@ -218,7 +218,7 @@ ${styleSheets}
     transition: background 150ms;
   }
   .splitter-v:hover, .splitter-v.dragging {
-    background: #6c5ce7;
+    background: var(--accent, #ec7211);
   }
   .splitter-v::after {
     content: '';
@@ -241,7 +241,7 @@ ${styleSheets}
     transition: background 150ms;
   }
   .splitter-h:hover, .splitter-h.dragging {
-    background: #6c5ce7;
+    background: var(--accent, #ec7211);
   }
   .splitter-h::after {
     content: '';
@@ -280,11 +280,11 @@ ${styleSheets}
     align-items: center;
     gap: 4px;
     padding: 4px 10px;
-    background: rgba(108, 92, 231, 0.2);
-    border: 1px solid #6c5ce7;
+    background: var(--accent-subtle, rgba(236, 114, 17, 0.15));
+    border: 1px solid var(--accent, #ec7211);
     border-radius: 12px;
     font-size: 0.75rem;
-    color: #a29bfe;
+    color: var(--accent, #ec7211);
     font-family: 'JetBrains Mono', monospace;
   }
   .presenter-notes .notes-content {
@@ -301,7 +301,7 @@ ${styleSheets}
   .presenter-notes .notes-content li { margin: 0.3em 0; }
   .presenter-notes .notes-content strong { color: #fff; font-weight: 600; }
   .presenter-notes .notes-content code {
-    background: rgba(108, 92, 231, 0.2);
+    background: var(--accent-subtle, rgba(236, 114, 17, 0.15));
     padding: 2px 6px;
     border-radius: 4px;
     font-family: 'JetBrains Mono', monospace;
@@ -340,9 +340,9 @@ ${styleSheets}
     border: 1px solid rgba(0, 184, 148, 0.3);
   }
   .cue-marker.transition {
-    background: rgba(162, 155, 254, 0.15);
-    color: #a29bfe;
-    border: 1px solid rgba(162, 155, 254, 0.3);
+    background: var(--accent-subtle, rgba(236, 114, 17, 0.15));
+    color: var(--accent, #ec7211);
+    border: 1px solid var(--accent, #ec7211);
   }
 
   /* === Nav === */
@@ -366,8 +366,8 @@ ${styleSheets}
     transition: all 150ms ease;
   }
   .presenter-nav button:hover {
-    background: #2d3250;
-    border-color: #6c5ce7;
+    background: var(--accent-subtle, rgba(236, 114, 17, 0.15));
+    border-color: var(--accent, #ec7211);
   }
   .end-message {
     display: flex;
@@ -705,9 +705,9 @@ ${styleSheets}
   }
 
   _applyScale(scaler, containerW, containerH) {
-    const scale = Math.min(containerW / 1280, containerH / 720);
-    const scaledW = 1280 * scale;
-    const scaledH = 720 * scale;
+    const scale = Math.min(containerW / 960, containerH / 540);
+    const scaledW = 960 * scale;
+    const scaledH = 540 * scale;
     const offsetX = (containerW - scaledW) / 2;
     const offsetY = (containerH - scaledH) / 2;
     scaler.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;

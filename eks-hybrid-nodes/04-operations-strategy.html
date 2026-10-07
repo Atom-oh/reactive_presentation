@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>운영·워크로드·보안 & 전략</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="04-operations-strategy.md">
+  <meta name="remarp-block" content="04-operations-strategy">
+  <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
+  <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
+  
+  <script>window.__remarpTheme = {"colors": {"dk1": "#000000", "lt1": "#FFFFFF", "dk2": "#161D26", "lt2": "#F3F3F7", "accent1": "#41B3FF", "accent2": "#AD5CFF", "accent3": "#00E500", "accent4": "#FF5C85", "accent5": "#FF693C", "accent6": "#FBD332", "hlink": "#41B1E8", "folHlink": "#41B1E8"}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}};</script>
+</head>
+<body>
+<div class="slide-deck theme-dark">
+<div class="slide theme-dark" data-remarp-id="s0" style="background:linear-gradient(135deg, #16212f 0%, #0f1b2a 55%, #14243a 100%); padding:0; overflow:hidden;">
+  <div style="position:absolute; top:-20%; right:-10%; width:60%; height:80%; background:radial-gradient(ellipse, rgba(255,153,0,0.10) 0%, transparent 70%); pointer-events:none;"></div>
+  <div style="position:absolute; left:5%; top:42%; width:80px; height:3px; background:linear-gradient(90deg, var(--accent, #ff9900), rgba(255,153,0,0.25)); border-radius:2px;"></div>
+  <h1 style="position:absolute; left:5%; top:45%; font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:60%; margin:0;">운영·워크로드·보안 & 전략</h1>
+  <p style="position:absolute; left:5%; top:60%; font-size:1.3rem; color:rgba(255,255,255,0.7); width:60%; margin:0;">Block 4 — 배치, GPU, 관측성, 망분리 검토, 비용과 도입 판단</p>
+  
+</div>
+
+<div class="slide" data-remarp-id="s1">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>배치는 label 하나에서 시작한다</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="nodeselector">nodeSelector</button>
+      <button class="tab-btn" data-tab="nodeaffinity">nodeAffinity</button>
+      <button class="tab-btn" data-tab="taint">Taint (선택)</button>
+      <button class="tab-btn" data-tab="topologyspread">topologySpread</button>
+    </div>
+        <div class="tab-content active" data-tab="nodeselector">
+<p>Hybrid 노드에는 <code>eks.amazonaws.com/compute-type=hybrid</code> label이 자동으로 붙습니다. 위치 label(<code>example.com/location</code>)은 노드 소유자가 직접 부여합니다.</p>
+<div class="code-block"><span class="key">nodeSelector</span>:
+  eks.amazonaws.com/compute-type: hybrid
+  example.com/location: onprem
+<span class="key">tolerations</span>:            # hybrid taint를 쓰는 경우에만 필요
+  - key: eks.amazonaws.com/compute-type
+    <span class="key">operator</span>: Equal
+    <span class="key">value</span>: hybrid
+    <span class="key">effect</span>: NoSchedule</div>
+</div>
+    <div class="tab-content" data-tab="nodeaffinity">
+<div class="code-block"><span class="key">affinity</span>:
+  <span class="key">nodeAffinity</span>:
+    <span class="key">requiredDuringSchedulingIgnoredDuringExecution</span>:
+      <span class="key">nodeSelectorTerms</span>:          # term끼리 OR, term 안은 AND
+        - matchExpressions:
+            - {key: eks.amazonaws.com/compute-type, operator: In, values: [hybrid]}
+            - {key: example.com/location, operator: In, values: [onprem]}
+        - matchExpressions:
+            - {key: example.com/location, operator: In, values: [cloud]}
+            - {key: karpenter.sh/nodepool, operator: In, values: [cloud-burst-pool]}
+    <span class="key">preferredDuringSchedulingIgnoredDuringExecution</span>:
+      - weight: 100
+        <span class="key">preference</span>:
+          <span class="key">matchExpressions</span>:
+            - {key: example.com/location, operator: In, values: [onprem]}</div>
+</div>
+    <div class="tab-content" data-tab="taint">
+<p>Hybrid taint는 <strong>선택 사항</strong>입니다. 자동으로 붙지 않으며, 추가 전에 CNI·DNS·GPU 인프라 Pod의 toleration부터 확인합니다.</p>
+<div class="code-block">kubectl taint node <span class="string">"$NODE_NAME"</span> \
+  eks.amazonaws.com/compute-type=hybrid:NoSchedule</div>
+<p><code>NoSchedule</code>은 새 스케줄링에만 영향을 줍니다. label이나 required affinity를 바꿔도 이미 실행 중인 Pod는 자동으로 이동하지 않습니다.</p>
+</div>
+    <div class="tab-content" data-tab="topologyspread">
+<div class="code-block"><span class="key">topologySpreadConstraints</span>:
+  - maxSkew: 2
+    <span class="key">topologyKey</span>: topology.kubernetes.io/zone
+    <span class="key">whenUnsatisfiable</span>: ScheduleAnyway
+    <span class="key">labelSelector</span>:
+      <span class="key">matchLabels</span>:
+        <span class="key">app</span>: hybrid-burst-app</div>
+<p><code>ScheduleAnyway</code>는 점수 선호이며 <code>maxSkew</code>를 넘을 수 있습니다. zone label은 실제 장애 도메인에만 부여하고, 모든 Hybrid 호스트를 AWS AZ로 표시하지 않습니다.</p>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s2">
+  <div class="slide-header" data-remarp-id="s2-header"><h2>버스팅은 Pending Pod가 트리거</h2></div>
+  <div class="slide-body" data-remarp-id="s2-body">
+    <p><!-- Slide 3: 클라우드 버스팅 --></p>
+<style>
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+.flow-h { margin: 0 0 var(--space-4); }
+</style>
+<div class="flow-h">
+  <div class="flow-box fragment fade-up" data-fragment-index="1">온프레미스 용량 부족<br><span class="on-surface-muted">스케줄 불가 Pod</span></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box fragment fade-up" data-fragment-index="2">Pod = Pending<br><span class="on-surface-muted">toleration 보유</span></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box fragment fade-up" data-fragment-index="3">Karpenter NodePool<br><span class="on-surface-muted">requirements 매칭</span></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box fragment fade-up" data-fragment-index="4">EC2 노드 생성<br><span class="on-surface-muted">cloud-burst-pool</span></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box fragment fade-up" data-fragment-index="5">Pod 스케줄</div>
+</div>
+<div class="card-grid">
+  <div class="callout callout-warning fragment fade-up" data-fragment-index="6"><strong class="text-warning">자동 복귀 없음</strong><div class="on-surface-muted">온프레미스 용량이 돌아와도 실행 중인 cloud Pod는 자동으로 돌아오지 않습니다.</div></div>
+  <div class="callout callout-info fragment fade-up" data-fragment-index="7"><strong class="text-info">포화 감지기가 아님</strong><div class="on-surface-muted">Karpenter는 조건에 맞는 Pending Pod에 반응합니다. 온프레미스 슬롯을 먼저 채우는 것도 보장하지 않습니다.</div></div>
+  <div class="callout callout-danger fragment fade-up" data-fragment-index="8"><strong class="text-danger">버전 요구</strong><div class="on-surface-muted">Kubernetes 1.36은 Karpenter 1.13 이상이 필요합니다.</div></div>
+  <div class="callout callout-info fragment fade-up" data-fragment-index="9"><strong class="text-info">막힐 수 있는 곳</strong><div class="on-surface-muted">AWS quota, 인스턴스 가용성, subnet IP, IAM, 노드 bootstrap, 워크로드 의존성.</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s3">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>스케일-인 순서는 선호일 뿐</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body">
+    <p><!-- Slide 4: 스케일-인 순서 --></p>
+<style>
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+</style>
+<div class="card-grid">
+  <div class="metric-card fragment fade-up" data-fragment-index="1"><strong class="text-accent">1. 할당 상태</strong><div class="on-surface-muted">미할당 Pod가 할당된 Pod보다 먼저</div></div>
+  <div class="metric-card fragment fade-up" data-fragment-index="2"><strong class="text-accent">2. Pod 단계</strong><div class="on-surface-muted">Pending, Unknown, Running 순서</div></div>
+  <div class="metric-card fragment fade-up" data-fragment-index="3"><strong class="text-accent">3. Ready 여부</strong><div class="on-surface-muted">NotReady가 Ready보다 먼저</div></div>
+  <div class="metric-card fragment fade-up" data-fragment-index="4"><strong class="text-success">4. deletion cost</strong><div class="on-surface-muted">그 뒤에야 낮은 값이 먼저 제거</div></div>
+</div>
+<div class="card-grid">
+  <div class="callout callout-danger fragment fade-up" data-fragment-index="5"><strong class="text-danger">CREATE webhook은 비권장</strong><div class="on-surface-muted">CREATE 시점의 Pod에는 최종 노드(spec.nodeName)가 아직 없어 위치를 신뢰성 있게 알 수 없습니다.</div></div>
+  <div class="callout callout-success fragment fade-up" data-fragment-index="6"><strong class="text-success">대안: 스케줄 후 패치</strong><div class="on-surface-muted">바인딩 뒤 소유한 Pod 한 개에 annotation을 부여하고, UID, resourceVersion, nodeName을 test로 검사합니다.</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s4">
+  <div class="slide-header" data-remarp-id="s4-header"><h2>GPU마다 할당 관리자는 하나</h2></div>
+  <div class="slide-body" data-remarp-id="s4-body">
+    <p><!-- Slide 5: GPU 할당 방식 --></p>
+<table><thead><tr><th>경로</th><th>할당 방식</th></tr></thead><tbody><tr><td>독립 NVIDIA device plugin</td><td><code>nvidia.com/gpu</code> 등 확장 리소스 게시</td></tr><tr><td>독립 DRA driver</td><td>ResourceSlice 게시, DeviceClass/ResourceClaim으로 할당</td></tr><tr><td>GPU Operator + <code>ClusterPolicy</code></td><td>Operator가 관리하는 device-plugin 방식</td></tr><tr><td>GPU Operator 26.7 + <code>GPUCluster</code></td><td>신규 설치용 Operator 관리 DRA, <code>ClusterPolicy</code>와 상호 배타적</td></tr></tbody></table>
+<style>
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+</style>
+<div class="card-grid">
+  <div class="callout callout-success fragment fade-up" data-fragment-index="1"><strong class="text-success">DRA 권고</strong><div class="on-surface-muted">AWS는 신규 EKS 1.34 이상에 DRA를 권고합니다.</div></div>
+  <div class="callout callout-danger fragment fade-up" data-fragment-index="2"><strong class="text-danger">Auto Mode는 DRA 미지원</strong><div class="on-surface-muted">Auto Mode는 GPU device plugin을 자체 관리합니다.</div></div>
+  <div class="metric-card fragment fade-up" data-fragment-index="3"><strong class="text-accent">확인한 버전</strong><div class="on-surface-muted">GPU Operator 26.7.0, DRA driver 0.5.0, device plugin 0.20.0</div></div>
+  <div class="metric-card fragment fade-up" data-fragment-index="4"><strong class="text-accent">DRA 0.5.0 요구</strong><div class="on-surface-muted">K8s 1.34.2+, driver 565+, toolkit 1.18+, CDI. Operator 관리 DRA는 driver 580+</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s5">
+  <div class="slide-header" data-remarp-id="s5-header"><h2>MIG는 격리, time-slicing은 공유</h2></div>
+  <div class="slide-body" data-remarp-id="s5-body">
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="mig">MIG</button>
+      <button class="tab-btn" data-tab="time-slicing">time-slicing</button>
+      <button class="tab-btn" data-tab="h100-vs-h200">H100 vs H200</button>
+    </div>
+        <div class="tab-content active" data-tab="mig">
+<p>MIG는 GPU를 하드웨어 기반 compute·memory 인스턴스로 나눕니다. 아래는 <strong>A100 40 GB</strong> profile입니다.</p>
+<table><thead><tr><th>Profile</th><th>명목 메모리</th><th>최대 인스턴스</th></tr></thead><tbody><tr><td><code>1g.5gb</code></td><td>5 GB</td><td>7</td></tr><tr><td><code>2g.10gb</code></td><td>10 GB</td><td>3</td></tr><tr><td><code>3g.20gb</code></td><td>20 GB</td><td>2</td></tr><tr><td><code>4g.20gb</code></td><td>20 GB</td><td>1</td></tr><tr><td><code>7g.40gb</code></td><td>40 GB</td><td>1</td></tr></tbody></table>
+<p><code>4g.40gb</code>는 A100 80 GB의 profile입니다. MIG 활성화·재구성은 GPU 워크로드를 중단할 수 있는 유지보수 작업이며, Pod 요청만 <code>nvidia.com/mig-1g.5gb</code>로 바꿔도 인스턴스가 생기지 않습니다.</p>
+</div>
+    <div class="tab-content" data-tab="time-slicing">
+<div class="code-block"><span class="comment"># device-plugin 설정 조각 (Kubernetes 리소스가 아님)</span>
+<span class="key">version</span>: v1
+<span class="key">sharing</span>:
+  <span class="key">timeSlicing</span>:
+    <span class="key">renameByDefault</span>: <span class="keyword">true</span>
+    <span class="key">failRequestsGreaterThanOne</span>: <span class="keyword">true</span>
+    <span class="key">resources</span>:
+      - name: nvidia.com/gpu
+        <span class="key">replicas</span>: 4</div>
+<p><code>renameByDefault: true</code>이면 <code>nvidia.com/gpu.shared</code>로 게시됩니다. replica 4개는 독립 메모리 영역 4개가 아니며, replica 사이에 메모리·장애 격리가 없습니다.</p>
+</div>
+    <div class="tab-content" data-tab="h100-vs-h200">
+<table><thead><tr><th>NVIDIA 사양</th><th>H100 <strong>SXM</strong></th><th>H200 <strong>SXM</strong></th></tr></thead><tbody><tr><td>GPU 메모리</td><td>80 GB HBM3</td><td>141 GB HBM3e</td></tr><tr><td>메모리 대역폭</td><td>3.35 TB/s</td><td>4.8 TB/s</td></tr><tr><td>MIG</td><td>최대 7개</td><td>최대 7개</td></tr></tbody></table>
+<p>공급자 사양이며 이 환경의 실측값이 아닙니다. NVL/PCIe variant는 값이 다르므로 SXM 행을 모든 H100에 일반화하지 않습니다.</p>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s6">
+  <div class="slide-header" data-remarp-id="s6-header"><h2>hybrid 지표는 relabel로 구분</h2></div>
+  <div class="slide-body" data-remarp-id="s6-body">
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="servicemonitor">ServiceMonitor</button>
+      <button class="tab-btn" data-tab="dcgm">DCGM 쿼리</button>
+      <button class="tab-btn" data-tab="container-insights">Container Insights</button>
+      <button class="tab-btn" data-tab="cloudwatch-agent">CloudWatch agent</button>
+    </div>
+        <div class="tab-content active" data-tab="servicemonitor">
+<div class="code-block"><span class="key">apiVersion</span>: monitoring.coreos.com/v1
+<span class="key">kind</span>: ServiceMonitor
+<span class="key">metadata</span>:
+  <span class="key">name</span>: hybrid-node-exporter
+  <span class="key">namespace</span>: monitoring
+  <span class="key">labels</span>:
+    <span class="key">release</span>: kube-prom
+<span class="key">spec</span>:
+  <span class="key">attachMetadata</span>:
+    <span class="key">node</span>: <span class="keyword">true</span>
+<span class="comment">  # selector, namespaceSelector 생략</span>
+  <span class="key">endpoints</span>:
+  - port: http-metrics
+    <span class="key">relabelings</span>:
+    - sourceLabels: [__meta_kubernetes_node_label_eks_amazonaws_com_compute_type]
+      <span class="key">regex</span>: hybrid
+      <span class="key">action</span>: keep
+    - targetLabel: compute_type
+      <span class="key">replacement</span>: hybrid</div>
+</div>
+    <div class="tab-content" data-tab="dcgm">
+<div class="code-block"><span class="comment"># GPU utilization (이미 percent)</span>
+DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
+
+<span class="comment"># GPU framebuffer 사용률: used / (used + free)</span>
+100 * DCGM_FI_DEV_FB_USED{compute_type=<span class="string">"hybrid"</span>} /
+(DCGM_FI_DEV_FB_USED{compute_type=<span class="string">"hybrid"</span>} + DCGM_FI_DEV_FB_FREE{compute_type=<span class="string">"hybrid"</span>})</div>
+<p><code>node_cpu_seconds_total</code> 등 호스트 지표는 kubelet이 아니라 Node Exporter가 제공합니다. DCGM exporter는 별도로 설치되어 있어야 합니다.</p>
+</div>
+    <div class="tab-content" data-tab="container-insights">
+<p>Hybrid에서는 cluster, workload, Pod, container 지표를 지원합니다. node-level 지표는 EC2 IMDS에 의존하는데 Hybrid 호스트에는 없어서 <strong>제공되지 않습니다.</strong> 호스트 CPU·메모리는 Node Exporter와 Prometheus로 보완합니다.</p>
+</div>
+    <div class="tab-content" data-tab="cloudwatch-agent">
+<p>Pod Identity 환경에서도 Hybrid 호환을 위해 <code>RUN_WITH_IRSA</code> 변수가 필요합니다. 기존 <code>AmazonCloudWatchAgent</code>의 <code>spec.env</code> 목록에 추가하고 기존 항목은 보존합니다.</p>
+<div class="code-block"><span class="comment"># 기존 AmazonCloudWatchAgent.spec.env 목록에 항목 추가</span>
+- name: RUN_WITH_IRSA
+  <span class="key">value</span>: <span class="string">"True"</span></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s7">
+  <div class="slide-header" data-remarp-id="s7-header"><h2>CoreDNS는 양쪽에 최소 1개</h2></div>
+  <div class="slide-body" data-remarp-id="s7-body">
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="tab-0">애드온 배치</button>
+      <button class="tab-btn" data-tab="tab-1">최소 버전</button>
+      <button class="tab-btn" data-tab="coredns">CoreDNS 분산</button>
+    </div>
+        <div class="tab-content active" data-tab="tab-0">
+<table><thead><tr><th>애드온</th><th>이 설계의 배치</th></tr></thead><tbody><tr><td>AWS Load Balancer Controller</td><td>cloud node (webhook 접근, routable Hybrid IP target)</td></tr><tr><td>CloudWatch agent/operator</td><td>agent는 지원 노드, operator webhook은 cloud 권장</td></tr><tr><td>cert-manager</td><td>webhook cloud 권장, routable이면 Hybrid 가능</td></tr><tr><td>Metrics Server</td><td>cloud 또는 도달 가능한 Hybrid Pod endpoint</td></tr><tr><td>Cilium/Calico</td><td>Hybrid Node (cloud node는 VPC CNI 유지)</td></tr></tbody></table>
+</div>
+    <div class="tab-content" data-tab="tab-1">
+<p>호환 기준이며 설치 target 버전이 아닙니다.</p>
+<table><thead><tr><th>Add-on</th><th>Hybrid 호환 기준</th></tr></thead><tbody><tr><td>Node monitoring agent</td><td>1.2.0-eksbuild.1</td></tr><tr><td>External DNS</td><td>0.19.0-eksbuild.1</td></tr><tr><td>FSx CSI</td><td>1.7.0-eksbuild.1</td></tr><tr><td>Secrets Store provider</td><td>2.1.1-eksbuild.1</td></tr><tr><td>Pod Identity Agent</td><td>1.3.3-eksbuild.1 (Bottlerocket 1.3.7-eksbuild.2)</td></tr></tbody></table>
+</div>
+    <div class="tab-content" data-tab="coredns">
+<div class="code-block"><span class="comment"># CoreDNS Deployment.spec.template.spec 조각</span>
+<span class="key">nodeSelector</span>:
+  infrastructure.example.com/dns-eligible: <span class="string">"true"</span>
+<span class="key">topologySpreadConstraints</span>:
+- maxSkew: 1
+  <span class="key">minDomains</span>: 2
+  <span class="key">topologyKey</span>: example.com/location
+  <span class="key">whenUnsatisfiable</span>: DoNotSchedule
+  <span class="key">labelSelector</span>:
+    <span class="key">matchLabels</span>:
+      <span class="key">k8s-app</span>: kube-dns</div>
+<p>적격 노드에 <code>location</code> 값 <code>cloud</code> 또는 <code>onprem</code>을 부여합니다. 한 도메인에 용량이 없으면 새 replica가 Pending일 수 있어 가용성 절충이며 failover 보장이 아닙니다.</p>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s8">
+  <div class="slide-header" data-remarp-id="s8-header"><h2>외부 노출은 IP target과 BGP로</h2></div>
+  <div class="slide-body" data-remarp-id="s8-body">
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="alb-nlb-ip-target">ALB/NLB (IP target)</button>
+      <button class="tab-btn" data-tab="cilium-lb-ipam">Cilium LB IPAM</button>
+      <button class="tab-btn" data-tab="bgp">BGP 광고</button>
+      <button class="tab-btn" data-tab="tab-3">제약</button>
+    </div>
+        <div class="tab-content active" data-tab="alb-nlb-ip-target">
+<p>자체 관리형 AWS Load Balancer Controller는 도달 가능한 Hybrid Pod IP를 target으로 등록할 수 있습니다. ALB는 <code>alb.ingress.kubernetes.io/target-type: ip</code>, NLB는 <code>service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip</code>와 <code>loadBalancerClass: service.k8s.aws/nlb</code>를 사용합니다.</p>
+<p>route, 반환 경로, security group/firewall, remote Pod network 구성이 맞아야 합니다. 컨트롤러는 cloud node에 두는 설계를 권장합니다.</p>
+<div class="code-block"><span class="key">nodeSelector</span>:
+  example.com/location: cloud</div>
+</div>
+    <div class="tab-content" data-tab="cilium-lb-ipam">
+<div class="code-block"><span class="key">apiVersion</span>: cilium.io/v2
+<span class="key">kind</span>: CiliumLoadBalancerIPPool
+<span class="key">metadata</span>:
+  <span class="key">name</span>: on-prem-pool
+<span class="key">spec</span>:
+  <span class="key">blocks</span>:
+  - cidr: <span class="string">"10.90.0.0/24"</span>
+  <span class="key">serviceSelector</span>:
+    <span class="key">matchLabels</span>:
+      <span class="key">exposure</span>: onprem-bgp</div>
+<p>예시 CIDR은 인벤토리에서 예약한 비중복 대역으로 바꿉니다. IP 할당이 라우터 광고나 통신 성공을 보장하지는 않습니다.</p>
+</div>
+    <div class="tab-content" data-tab="bgp">
+<div class="code-block"><span class="key">apiVersion</span>: cilium.io/v2alpha1
+<span class="key">kind</span>: CiliumBGPAdvertisement
+<span class="key">metadata</span>:
+  <span class="key">name</span>: hybrid-service-advertisement
+  <span class="key">labels</span>:
+    <span class="key">advertise</span>: hybrid-services
+<span class="key">spec</span>:
+  <span class="key">advertisements</span>:
+  - advertisementType: Service
+    <span class="key">service</span>:
+      <span class="key">addresses</span>: [LoadBalancerIP]
+    <span class="key">selector</span>:
+      <span class="key">matchLabels</span>:
+        <span class="key">exposure</span>: onprem-bgp</div>
+<p><code>CiliumBGPClusterConfig</code>, <code>CiliumBGPPeerConfig</code>와 함께 구성합니다. 세션, 수락된 라우트, next hop, 반환 경로를 확인해야 완성입니다.</p>
+</div>
+    <div class="tab-content" data-tab="tab-3">
+<p>Cilium Ingress와 Gateway API는 L7 proxy가 필요합니다. 그러나 Hybrid Nodes Gateway의 필수 설정은 <code>vtep.enabled=true</code>, <code>l7Proxy=false</code>이므로 <strong>같은 Cilium 설치에 함께 적용할 수 없습니다.</strong> 기능을 켜기 전에 네트워크 설계를 먼저 선택합니다.</p>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s9">
+  <div class="slide-header" data-remarp-id="s9-header"><h2>Pod Identity는 6단계 체크</h2></div>
+  <div class="slide-body" data-remarp-id="s9-body">
+    <ul class="checklist">
+            <li class="has-detail" data-remarp-id="s9-li-0"><span class="check"></span> <span class="checklist-text">호스트 NodeConfig에 credentials file 활성화</span>
+      <div class="checklist-detail"><div class="code-block">  <span class="key">spec</span>:
+    <span class="key">hybrid</span>:
+      <span class="key">enableCredentialsFile</span>: <span class="keyword">true</span></div></div></li>
+      <li class="" data-remarp-id="s9-li-1"><span class="check"></span> <span class="checklist-text">호스트마다 계획된 <code>nodeadm init</code>을 다시 실행 (한 호스트씩 검증)</span></li>
+      <li class="has-detail" data-remarp-id="s9-li-2"><span class="check"></span> <span class="checklist-text">Pod Identity Agent add-on에 Hybrid DaemonSet 활성화</span>
+      <div class="checklist-detail"><div class="code-block">  {<span class="string">"daemonsets"</span>: {<span class="string">"hybrid"</span>: {<span class="string">"create"</span>: <span class="keyword">true</span>}}}</div></div></li>
+      <li class="" data-remarp-id="s9-li-3"><span class="check"></span> <span class="checklist-text">add-on 버전 확인: 일반 OS 1.3.3-eksbuild.1 이상, Bottlerocket은 add-on 1.3.7-eksbuild.2 이상 + OS 1.39.0 이상</span></li>
+      <li class="" data-remarp-id="s9-li-4"><span class="check"></span> <span class="checklist-text"><code>eks-auth</code> 서비스 경로 + 노드 역할의 <code>eks-auth:AssumeRoleForPodIdentity</code> 권한</span></li>
+      <li class="" data-remarp-id="s9-li-5"><span class="check"></span> <span class="checklist-text">워크로드별 Pod Identity association (namespace, ServiceAccount, IAM role 신뢰·권한)</span></li>
+    </ul>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s10">
+  <div class="slide-header" data-remarp-id="s10-header"><h2>'endpoint'는 세 가지를 뜻한다</h2></div>
+  <div class="slide-body" data-remarp-id="s10-body">
+    <p><!-- Slide 11: 망분리 1 — endpoint 세 가지 --></p>
+<style>
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+</style>
+<div class="card-grid">
+  <div class="metric-card fragment fade-up" data-fragment-index="1"><strong class="text-accent">Kubernetes API private endpoint</strong><div class="on-surface-muted">kubelet, Pod, 운영자가 TCP 443으로 접근하는 사설 진입점. control plane의 온프레미스행 연결을 없애지 않습니다.</div></div>
+  <div class="metric-card fragment fade-up" data-fragment-index="2"><strong class="text-accent">EKS control-plane ENI</strong><div class="on-surface-muted">API server와 VPC, remote node/Pod network 사이의 연결 지점. DLP나 망연계 장비가 아닙니다.</div></div>
+  <div class="metric-card fragment fade-up" data-fragment-index="3"><strong class="text-accent">interface VPC endpoint (PrivateLink)</strong><div class="on-surface-muted">eks, ssm, rolesanywhere 등 AWS 서비스 API용. kubelet 연결의 중계 서비스가 아닙니다.</div></div>
+</div>
+<div class="flow-v">
+  <div class="callout callout-info fragment fade-up" data-fragment-index="4"><strong class="text-info">세션 A: 노드가 시작</strong> kubelet → API (TCP 443)</div>
+  <div class="callout callout-warning fragment fade-up" data-fragment-index="5"><strong class="text-warning">세션 B: API server가 시작</strong> API → kubelet (TCP 10250), 사용 시 webhook 포트도 온프레미스 inbound</div>
+</div>
+<div class="callout callout-danger fragment fade-up" data-fragment-index="6"><strong class="text-danger">private endpoint ≠ 망분리 준수</strong> 노드가 먼저 연결했다는 이유로 control plane발 연결이 사라지지 않습니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s11">
+  <div class="slide-header" data-remarp-id="s11-header"><h2>망분리는 요건별로 따진다</h2></div>
+  <div class="slide-body" data-remarp-id="s11-body">
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="tab-0">요구사항 → 설계</button>
+      <button class="tab-btn" data-tab="tab-1">전송 구간 암호화</button>
+      <button class="tab-btn" data-tab="nodes-proxy-rbac">nodes/proxy RBAC</button>
+      <button class="tab-btn" data-tab="tab-3">증빙 체크리스트</button>
+    </div>
+        <div class="tab-content active" data-tab="tab-0">
+<table><thead><tr><th>고객 요구</th><th>이 설계의 판단</th></tr></thead><tbody><tr><td>인터넷 비노출, 승인된 사설 관리 통신 허용</td><td>검토 가능한 후보 (증명 필요)</td></tr><tr><td>물리 단절, 외부 CP와 실시간 연결 불가</td><td>연결 전제와 충돌</td></tr><tr><td>클라우드발 신규 연결 전면 금지</td><td>kubelet·webhook 흐름과 충돌</td></tr><tr><td>업무 영역별 관리 주체·권한 독립</td><td>공통 cluster 관리자 범위 심사, 필요 시 cluster 분리</td></tr><tr><td>K8s 객체·Secret·로그까지 온프레미스에만</td><td>AWS control plane 구성과 충돌 가능</td></tr></tbody></table>
+</div>
+    <div class="tab-content" data-tab="tab-1">
+<p>Direct Connect는 <strong>기본적으로 전송 중 암호화를 제공하지 않습니다.</strong> Kubernetes API·kubelet의 TLS와 인증을 유지하고, 회선 구간 암호화가 필요하면 IPsec over DX 또는 MACsec 적용 범위를 검토합니다.</p>
+<p>MACsec은 지원 DX 연결의 링크 보호이며 종단 간 TLS와 범위가 다릅니다. Hybrid Nodes Gateway(VXLAN)도 자체 암호화가 없습니다.</p>
+</div>
+    <div class="tab-content" data-tab="nodes-proxy-rbac">
+<p><code>get nodes/proxy</code>를 단순 조회 권한으로 분류하지 않습니다. kubelet API를 통한 컨테이너 명령 실행이 가능할 수 있고, Kubernetes audit·admission 경로를 우회할 수 있습니다.</p>
+<p><code>pods/log</code>, <code>pods/exec</code>, <code>pods/attach</code>, <code>pods/portforward</code>, <code>nodes/proxy</code>와 workload 생성 권한을 함께 검토합니다.</p>
+</div>
+    <div class="tab-content" data-tab="tab-3">
+<p>다음은 <strong>준비할 증거 목록</strong>이며 점검 결과가 아닙니다.</p>
+<table><thead><tr><th>심사 질문</th><th>증거</th></tr></thead><tbody><tr><td>private-only가 실제 적용됐는가</td><td>endpoint 설정, DNS 응답, DX 경로, 경계 flow 기록</td></tr><tr><td>AWS에서 어디까지 접근 가능한가</td><td>ENI/subnet, remote CIDR, route, SG·firewall 대응표</td></tr><tr><td>누가 어떤 API 작업을 했는가</td><td>EKS audit 로그, CloudTrail</td></tr><tr><td>무엇이 망을 통과했는가</td><td>VPC Flow Logs, 방화벽 기록</td></tr></tbody></table>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s12">
+  <div class="slide-header" data-remarp-id="s12-header"><h2>규제 대응은 증거로 말한다</h2></div>
+  <div class="slide-body" data-remarp-id="s12-body">
+    <p><!-- Slide 13: 규제 대응 --></p>
+<style>
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+</style>
+<div class="card-grid">
+  <div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="text-info">AWS에 있는 것</strong><div class="on-surface-muted">Kubernetes API 객체 (Pod 사양, ConfigMap, Secret) 와 control-plane metadata. 노드 임시 자격 증명 발급도 AWS 서비스를 거칩니다.</div></div>
+  <div class="callout callout-success fragment fade-up" data-fragment-index="2"><strong class="text-success">온프레미스에 있는 것</strong><div class="on-surface-muted">워크로드 실행과 Pod가 처리하는 대용량 업무 데이터. 자동으로 AWS에 복제되지 않습니다.</div></div>
+  <div class="callout callout-warning fragment fade-up" data-fragment-index="3"><strong class="text-warning">경계를 넘을 수 있는 것</strong><div class="on-surface-muted">앱이 출력한 logs, 허가된 exec/cp/port-forward, 애플리케이션 egress, SSM 관리 경로.</div></div>
+</div>
+<div class="callout callout-danger fragment fade-up" data-fragment-index="4"><strong class="text-danger">"충족" 대신 "검토 범위와 조건"</strong> node selector나 label만으로 데이터 주권·규정 준수가 입증되지 않습니다. 업무 데이터, API 객체, 로그, 이미지, 자격 증명을 각각 분류해 저장 위치와 조회 권한을 기록합니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s13">
+  <div class="slide-header" data-remarp-id="s13-header"><h2>비용은 vCPU-hour 구간 과금</h2></div>
+  <div class="slide-body" data-remarp-id="s13-body">
+    <div class="columns">
+<div class="col">
+<table><thead><tr><th>월 사용량 구간 (vCPU-hour)</th><th>요금</th></tr></thead><tbody><tr><td>처음 576,000</td><td>$0.020</td></tr><tr><td>다음 576,000</td><td>$0.014</td></tr><tr><td>다음 4,608,000</td><td>$0.010</td></tr><tr><td>다음 5,760,000</td><td>$0.008</td></tr><tr><td>11,520,000 초과</td><td>$0.006</td></tr></tbody></table>
+</div><div class="col">
+<table><thead><tr><th>노드</th><th>월 vCPU-h</th><th>연환산 노드 요금</th><th>+ 클러스터 1개</th></tr></thead><tbody><tr><td>10</td><td>233,600</td><td>$56,064</td><td>$56,940</td></tr><tr><td>50</td><td>1,168,000</td><td>$236,928</td><td>$237,804</td></tr><tr><td>100</td><td>2,336,000</td><td>$377,088</td><td>$377,964</td></tr></tbody></table>
+</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s14">
+  <div class="slide-header" data-remarp-id="s14-header"><h2>도입 판단은 제약 확인부터</h2></div>
+  <div class="slide-body" data-remarp-id="s14-body">
+    <p><!-- Slide 15: 도입 판단 --></p>
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+</style>
+<div class="card-grid">
+  <div class="callout callout-success fragment fade-up" data-fragment-index="1"><strong class="text-success">Hybrid Nodes가 맞는 신호</strong><div class="on-surface-muted">온프레미스 GPU, 대규모 로컬 데이터, edge 처리, 기존 하드웨어 활용. AWS와 안정적인 사설 양방향 연결을 유지할 수 있는 경우.</div></div>
+  <div class="callout callout-warning fragment fade-up" data-fragment-index="2"><strong class="text-warning">먼저 확인할 제약</strong><div class="on-surface-muted">IPv4만 지원. 간헐적·단절(DDIL) 환경용이 아님. GovCloud(US)와 중국 리전 제외. OS·아키텍처·CNI 조합 확인.</div></div>
+  <div class="callout callout-danger fragment fade-up" data-fragment-index="3"><strong class="text-danger">맞지 않는 경우</strong><div class="on-surface-muted">완전 단절이 필요하거나 클라우드발 신규 연결이 전면 금지된 정책. AWS Region, Local Zone, Outposts, 타사 클라우드를 hybrid 인프라로 쓰는 것은 미지원.</div></div>
+  <div class="callout callout-info fragment fade-up" data-fragment-index="4"><strong class="text-info">운영 책임</strong><div class="on-surface-muted">Control plane은 AWS가 관리하지만 host, OS, 연결, workload 운영은 계속 사용자 책임입니다.</div></div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="5"><strong class="text-info">대안과의 비교</strong> 동등한 가용성·지원 범위로 자체 TCO 모델을 만들어 비교하세요. 이 자료는 특정 대안의 우열을 주장하지 않습니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s15">
+  <div class="slide-header" data-remarp-id="s15-header"><h2>핵심 요약: 4개 블록, 6가지</h2></div>
+  <div class="slide-body" data-remarp-id="s15-body">
+    <p><!-- Slide 16: 핵심 요약 --></p>
+<style>
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+</style>
+<div class="card-grid">
+  <div class="metric-card fragment fade-up" data-fragment-index="1"><strong class="text-accent">1. 구조와 전제</strong><div class="on-surface-muted">AWS가 control plane을, 사용자가 host·연결·workload를 운영합니다. AWS와의 사설 양방향 연결이 필수입니다.</div></div>
+  <div class="metric-card fragment fade-up" data-fragment-index="2"><strong class="text-accent">2. 네트워크</strong><div class="on-surface-muted">kubelet 10250과 webhook은 AWS에서 시작하는 inbound입니다. Gateway는 선택이며 직접 라우팅도 유효합니다.</div></div>
+  <div class="metric-card fragment fade-up" data-fragment-index="3"><strong class="text-accent">3. 라이프사이클</strong><div class="on-surface-muted">nodeadm으로 설치·join·업그레이드합니다. in-place 업그레이드는 롤백이 아니라 호스트 교체를 우선합니다.</div></div>
+  <div class="metric-card fragment fade-up" data-fragment-index="4"><strong class="text-success">4. 워크로드 배치</strong><div class="on-surface-muted">compute-type label로 배치하고, 버스팅은 Pending Pod가 트리거하며 자동 복귀는 없습니다.</div></div>
+  <div class="metric-card fragment fade-up" data-fragment-index="5"><strong class="text-success">5. GPU와 관측성</strong><div class="on-surface-muted">GPU마다 할당 관리자는 하나, 신규 1.34 이상은 DRA 권고. hybrid 지표는 relabel로 구분합니다.</div></div>
+  <div class="metric-card fragment fade-up" data-fragment-index="6"><strong class="text-warning">6. 보안과 비용</strong><div class="on-surface-muted">private endpoint는 망분리 준수의 증거가 아닙니다. 비용은 보고된 vCPU-hour 구간 과금입니다.</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s16">
+  <div class="slide-header" data-remarp-id="s16-header"><h2>Knowledge Check (1/2)</h2></div>
+  <div class="slide-body" data-remarp-id="s16-body" style="overflow-y:auto">
+    <div class="quiz" data-quiz="s16-q1">
+      <div class="quiz-question">Q1: Karpenter 클라우드 버스팅의 트리거는 무엇인가요?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">온프레미스 CPU 사용률이 임계값을 넘을 때</button>
+<button class="quiz-option" data-correct="true">조건에 맞는 Pod가 Pending일 때</button>
+<button class="quiz-option" data-correct="false">온프레미스 용량이 돌아왔을 때</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="s16-q2">
+      <div class="quiz-question">Q2: 하나의 물리 GPU에 대한 설명으로 맞는 것은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">device plugin과 DRA driver를 함께 설치한다</button>
+<button class="quiz-option" data-correct="true">할당 관리자(device plugin, DRA, GPU Operator)는 하나만 선택한다</button>
+<button class="quiz-option" data-correct="false">time-slicing replica는 메모리를 독립적으로 보장한다</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s17">
+  <div class="slide-header" data-remarp-id="s17-header"><h2>Knowledge Check (2/2)</h2></div>
+  <div class="slide-body" data-remarp-id="s17-body" style="overflow-y:auto">
+    <div class="quiz" data-quiz="s17-q3">
+      <div class="quiz-question">Q3: pod-deletion-cost에 대한 설명으로 맞는 것은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">값이 큰 Pod는 절대 삭제되지 않는다</button>
+<button class="quiz-option" data-correct="true">best-effort 선호도이며 할당·단계·Ready 여부가 먼저 비교된다</button>
+<button class="quiz-option" data-correct="false">CREATE 시점 webhook으로 신뢰성 있게 부여할 수 있다</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="s17-q4">
+      <div class="quiz-question">Q4: "private endpoint를 쓰므로 망분리를 준수한다"는 주장은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">맞다. 모든 통신이 사설 주소를 쓰기 때문이다</button>
+<button class="quiz-option" data-correct="true">성립하지 않는다. 세션 방향·권한·데이터 경계의 증거가 필요하다</button>
+<button class="quiz-option" data-correct="false">맞다. DX가 기본 암호화를 제공하기 때문이다</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s18">
+  <div class="slide-header" data-remarp-id="s18-header"><h2>참고 자료 & Q&A</h2></div>
+  <div class="slide-body" data-remarp-id="s18-body">
+    <p><!-- Slide 19: References + Q&A --></p>
+<style>
+.text-accent { color: var(--accent); font-weight: var(--weight-bold); }
+.text-info   { color: var(--info);   font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+</style>
+<div class="card-grid">
+  <div class="metric-card fragment fade-up" data-fragment-index="1"><strong class="text-accent">AWS 공식 문서</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/<br>hybrid-nodes-overview.html<br>hybrid-nodes-networking.html<br>hybrid-nodes-add-ons.html<br>hybrid-nodes-webhooks.html<br>hybrid-nodes-gateway-cni.html</div></div>
+  <div class="metric-card fragment fade-up" data-fragment-index="2"><strong class="text-accent">GPU</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/<br>device-management-nvidia.html<br>NVIDIA GPU Operator 문서 (platform-support)</div></div>
+  <div class="metric-card fragment fade-up" data-fragment-index="3"><strong class="text-accent">비용·스케줄링</strong><div class="on-surface-muted">aws.amazon.com/eks/pricing/<br>karpenter.sh/docs/upgrading/compatibility/<br>kubernetes.io ReplicaSet pod-deletion-cost</div></div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="4"><strong class="text-info">Q&A</strong> 이 자료의 예제는 검토 기준(EKS 1.36, nodeadm 1.0.20)이며 대부분 실제 클러스터에서 실행한 결과가 아닙니다. 적용 전 최신 AWS 문서로 지원 조합을 확인하세요.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s19">
+  <div class="center-content" style="height:100%; gap:1.5rem;">
+    <h1 style="font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:3rem; color:var(--text-primary);">Thank You</h1>
+    <p style="color:var(--text-secondary); font-size:1.1rem;">운영·워크로드·보안 & 전략 — 감사합니다</p>
+    <p style="color:var(--text-muted); font-size:1rem; margin-top:0.5rem;">수고하셨습니다!</p>
+    <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+            <a href="toc.html" class="btn btn-primary btn-sm" style="text-decoration:none;">← 목차로 돌아가기</a>
+    </div>
+  </div>
+</div>
+</div>
+<script src="./common/animation-utils.js"></script>
+<script src="./common/slide-framework.js"></script>
+<script src="./common/quiz-component.js"></script>
+<script src="./common/presenter-view.js"></script>
+
+<script>
+  
+  const presenterNotes = {
+    1: "[0.5min] [\uc694\uc57d]\n\u2022 Block 4\ub294 \"\ubd99\uc778 \ub2e4\uc74c \uc5b4\ub5bb\uac8c \uc6b4\uc601\ud558\uace0 \ud310\ub2e8\ud560 \uac83\uc778\uac00\"\ub97c \ub2e4\ub8f8\n\u2022 \ubc30\uce58 \u2192 GPU \u2192 \uad00\uce21\uc131 \u2192 \uc678\ubd80 \ud2b8\ub798\ud53d \u2192 \ubcf4\uc548\u00b7\uaddc\uc81c \u2192 \ube44\uc6a9\u00b7\ub3c4\uc785 \ud310\ub2e8 \uc21c\uc11c\n\u2022 \ub9c8\uc9c0\ub9c9\uc5d0 4\uac1c \ube14\ub85d \uc804\uccb4 \ud575\uc2ec \uc694\uc57d\uacfc \ud034\uc988\n\n\uc55e\uc120 \uc138 \ube14\ub85d\uc5d0\uc11c Hybrid Nodes\ub97c \ubd99\uc774\ub294 \ubc29\ubc95\uc744 \ubd24\ub2e4\uba74, \uc774\ubc88 \ube14\ub85d\uc740 \ubd99\uc778 \ub4a4\uc758 \uc774\uc57c\uae30\uc785\ub2c8\ub2e4.\n\uc6cc\ud06c\ub85c\ub4dc\ub97c \uc5b4\ub514\uc5d0 \ub193\uc744\uc9c0, GPU\ub294 \uc5b4\ub5bb\uac8c \ub098\ub20c\uc9c0, \uc5b4\ub5bb\uac8c \uad00\uce21\ud558\uace0, \ubcf4\uc548\ud300\uc5d0\ub294 \ubb34\uc5c7\uc744 \uc124\uba85\ud574\uc57c \ud558\ub294\uc9c0, \ub9c8\uc9c0\ub9c9\uc73c\ub85c \ube44\uc6a9\uacfc \ub3c4\uc785 \ud310\ub2e8\uae4c\uc9c0 30\ubd84 \uc548\uc5d0 \ud6d1\uc5b4\ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uba3c\uc800 \uc6cc\ud06c\ub85c\ub4dc \ubc30\uce58 \uc6d0\uce59\ubd80\ud130 \uc2dc\uc791\ud569\ub2c8\ub2e4.",
+    2: "\u2753 \u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 compute-type=hybrid label\ub9cc \uc790\ub3d9, \uc704\uce58 label\uc740 \ub178\ub4dc \uc18c\uc720\uc790\uac00 \ubd80\uc5ec\n\u2022 nodeAffinity\uc5d0\uc11c term\ub07c\ub9ac\ub294 OR, term \uc548 expression\uc740 AND\n\u2022 taint\ub294 \uc120\ud0dd \uc0ac\ud56d\uc774\uba70 \uc790\ub3d9 \ubd80\uc5ec\ub418\uc9c0 \uc54a\uc74c\n\u2022 topologySpread\uc758 ScheduleAnyway\ub294 \uc120\ud638\ub3c4\uc77c \ubfd0 \ubcf4\uc7a5\uc774 \uc544\ub2d8\n\n\uac00\uc7a5 \uba3c\uc800 \uae30\uc5b5\ud558\uc2e4 \uac83\uc740 Hybrid \ub178\ub4dc\uc5d0 \uc790\ub3d9\uc73c\ub85c \ubd99\ub294 label\uc774 compute-type=hybrid \ud558\ub098\ubfd0\uc774\ub77c\ub294 \uc810\uc785\ub2c8\ub2e4. \uc628\ud504\ub808\ubbf8\uc2a4, \ud074\ub77c\uc6b0\ub4dc \uac19\uc740 \uc704\uce58 \uad6c\ubd84\uc740 \ub178\ub4dc \uc18c\uc720\uc790\uac00 \uc9c1\uc811 label\ub85c \ubd99\uc5ec\uc57c \ud569\ub2c8\ub2e4.\nnodeAffinity \ud0ed\uc758 \uc608\uc81c\ub294 \"\uc2b9\uc778\ub41c \uc628\ud504\ub808\ubbf8\uc2a4 \uc9d1\ud569 \ub610\ub294 \uc2b9\uc778\ub41c \ud074\ub77c\uc6b0\ub4dc \ud480\"\uc774\ub77c\ub294 OR \uc870\uac74\uc744 \ub9cc\ub4e4\uace0, \uc628\ud504\ub808\ubbf8\uc2a4\ub97c \uc120\ud638\ud558\ub3c4\ub85d weight\ub97c \uc90d\ub2c8\ub2e4. \ub2e4\ub9cc weight\ub294 \uc2a4\ucf00\uc904\ub9c1 \uc810\uc218\uc774\uc9c0 \uc6a9\ub7c9 \ube44\uc728\uc774 \uc544\ub2d9\ub2c8\ub2e4.\n\ntaint \ud0ed\uc5d0\uc11c \uc911\uc694\ud55c \uac74, Hybrid taint\uac00 \uc790\ub3d9\uc73c\ub85c \ubd99\uc9c0 \uc54a\ub294\ub2e4\ub294 \uc810\uc785\ub2c8\ub2e4. \ud544\uc694\ud558\uba74 \uc9c1\uc811 \ubd99\uc774\ub418 CNI\ub098 DNS \uac19\uc740 \uc778\ud504\ub77c Pod\uc758 toleration\uc744 \uba3c\uc800 \ud655\uc778\ud558\uc138\uc694.\n\n\ud639\uc2dc \uc9c0\uae08 \uc6b4\uc601 \uc911\uc778 \ud074\ub7ec\uc2a4\ud130\uc5d0\uc11c \"\ud074\ub77c\uc6b0\ub4dc \ub178\ub4dc = compute-type label \uc5c6\uc74c\"\uc774\ub77c\uace0 \uac00\uc815\ud558\ub294 \uc140\ub809\ud130\uac00 \uc788\ub098\uc694? \uadf8\uac74 \uc548\uc804\ud558\uc9c0 \uc54a\uc740 \uac00\uc815\uc785\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 D/06 \uc6cc\ud06c\ub85c\ub4dc \ubc30\uce58 \uc804\ub7b5 (\ubc30\uce58 \uc81c\uc57d\uacfc \ud5c8\uc6a9, \ud1a0\ud3f4\ub85c\uc9c0\uc640 \ub370\uc774\ud130 locality)",
+    3: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n\u2022 Karpenter\ub294 Pending Pod\uc5d0 \ubc18\uc751\ud574 EC2 \uc6a9\ub7c9\uc744 \ub9cc\ub4e4\uba70, \uc628\ud504\ub808\ubbf8\uc2a4 \uc11c\ubc84\ub97c \ucd94\uac00\ud558\uc9c0 \uc54a\uc74c\n\u2022 \ud074\ub77c\uc6b0\ub4dc \ud480\uc740 opt-in taint\uc640 toleration\uc73c\ub85c \ubc94\uc704\ub97c \uc81c\ud55c\n\u2022 \ud074\ub77c\uc6b0\ub4dc Pod\uc758 \uc790\ub3d9 \ubcf5\uadc0\ub294 \uc5c6\uace0 \ubcc4\ub3c4 \ud1b5\uc81c\ub41c \uc7ac\ubc30\uce58\uac00 \ud544\uc694\n\u2022 Kubernetes 1.36\uc5d0\ub294 Karpenter 1.13 \uc774\uc0c1 \ud544\uc694\n\n\ud754\ud55c \uc624\ud574\uac00 \"\uc628\ud504\ub808\ubbf8\uc2a4\uac00 \uac00\ub4dd \ucc28\uba74 Karpenter\uac00 \uac10\uc9c0\ud574\uc11c \ud074\ub77c\uc6b0\ub4dc\ub85c \ub118\uae34\ub2e4\"\ub294 \uc124\uba85\uc785\ub2c8\ub2e4. \uc2e4\uc81c\ub85c\ub294 \uc2a4\ucf00\uc904\ub418\uc9c0 \ubabb\ud574 Pending\uc774 \ub41c Pod, \uadf8\uac83\ub3c4 NodePool \uc870\uac74\uacfc toleration\uc774 \ub9de\ub294 Pod\uc5d0 \ubc18\uc751\ud558\ub294 \uac83\uc785\ub2c8\ub2e4.\n\n\uadf8\ub9ac\uace0 \uc628\ud504\ub808\ubbf8\uc2a4 \uc6a9\ub7c9\uc774 \ub2e4\uc2dc \uc0dd\uaca8\ub3c4 \uc774\ubbf8 \ub72c \ud074\ub77c\uc6b0\ub4dc Pod\ub294 \ub3cc\uc544\uc624\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ub418\ub3cc\ub9ac\ub824\uba74 \ub370\uc774\ud130\uc640 \uac00\uc6a9\uc131\uc744 \uace0\ub824\ud55c \ubcc4\ub3c4\uc758 rollout\uc774\ub098 eviction \uc815\ucc45\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.\n\ubc84\uc804\ub3c4 \ud655\uc778\ud558\uc138\uc694. \ubb38\uc11c \uae30\uc900\uc73c\ub85c Kubernetes 1.36\uc740 Karpenter 1.13 \uc774\uc0c1\uc774 \ud544\uc694\ud558\uace0, \uc608\uc81c CRD\ub294 1.14.1\ub85c \ud655\uc778\ud588\ub2e4\uace0 \ub418\uc5b4 \uc788\uc2b5\ub2c8\ub2e4. \ub610 EC2NodeClass\uc758 instance profile\uc740 SSM\uc774\ub098 Roles Anywhere\uc6a9 Hybrid \uc5ed\ud560\uc774 \uc544\ub2c8\ub77c \ubcc4\ub3c4\ub85c \uc900\ube44\ud55c EC2 \ub178\ub4dc profile\uc785\ub2c8\ub2e4.\n\n\ub2e4\uc74c\uc740 \ubc18\ub300 \ubc29\ud5a5, \uc904\uc77c \ub54c \uc5b4\ub5a4 Pod\uac00 \uba3c\uc800 \uc0ac\ub77c\uc9c0\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 D/06 \"Cloud burst pool \uc900\ube44\" (Karpenter \ud638\ud658\uc131 1.36 \u2192 \u22651.13, \uc608\uc81c 1.14.1)",
+    4: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n\u2022 pod-deletion-cost\ub294 ReplicaSet \ucd95\uc18c \uc2dc best-effort \uc120\ud638\ub3c4\n\u2022 \ud560\ub2f9, \ub2e8\uacc4, Ready \uc5ec\ubd80\uac00 \uba3c\uc800 \ube44\uad50\ub418\uace0 \uadf8 \ub4a4\uc5d0 cost\ub97c \ube44\uad50\n\u2022 \ube44\uc815\uc0c1 \uc628\ud504\ub808\ubbf8\uc2a4 Pod\uac00 \uc815\uc0c1 cloud Pod\ubcf4\ub2e4 \uba3c\uc800 \uc81c\uac70\ub420 \uc218 \uc788\uc74c\n\u2022 CREATE \uc2dc\uc810 mutating webhook \ubc29\uc2dd\uc740 \uc6b4\uc601 \ud574\ubc95\uc774 \uc544\ub2d8\n\ncontroller.kubernetes.io/pod-deletion-cost annotation\uc740 ReplicaSet\uc744 \uc904\uc77c \ub54c \ub0ae\uc740 \uac12\uc744 best-effort\ub85c \uba3c\uc800 \uc9c0\uc6b0\ub294 \uc120\ud638\ub3c4\uc785\ub2c8\ub2e4. \uae30\ubcf8\uac12\uc740 0\uc774\uace0 \uc74c\uc218\ub3c4 \ub429\ub2c8\ub2e4.\n\ud558\uc9c0\ub9cc \ube44\uad50 \uc21c\uc11c\uc5d0\uc11c deletion cost\ub294 \ub124 \ubc88\uc9f8\uc785\ub2c8\ub2e4. \uadf8\ub798\uc11c cost 1000\uc744 \uc900 \uc628\ud504\ub808\ubbf8\uc2a4 Pod\ub77c\ub3c4 NotReady \uc0c1\ud0dc\ub77c\uba74 cost 0\uc778 \uc815\uc0c1 \ud074\ub77c\uc6b0\ub4dc Pod\ubcf4\ub2e4 \uba3c\uc800 \uc81c\uac70\ub420 \uc218 \uc788\uc2b5\ub2c8\ub2e4. cost 1000\uc740 eviction\uc774\ub098 \ub178\ub4dc \uc7a5\uc560\ub85c\ubd80\ud130\uc758 \ubcf4\ud638\uac00 \uc544\ub2d9\ub2c8\ub2e4.\n\n\uadf8\ub7fc \"Pod\uac00 \ub9cc\ub4e4\uc5b4\uc9c8 \ub54c webhook\uc73c\ub85c \ub178\ub4dc \uc704\uce58\ub97c \ubcf4\uace0 cost\ub97c \uc790\ub3d9\uc73c\ub85c \ub123\uc790\"\ub294 \uc544\uc774\ub514\uc5b4\ub294 \uc5b4\ub5a8\uae4c\uc694? CREATE \uc694\uccad \uc2dc\uc810\uc5d0\ub294 \uc544\uc9c1 spec.nodeName\uc774 \uc5c6\uc2b5\ub2c8\ub2e4. \ucd5c\uc885 \ub178\ub4dc\ub97c \uc54c \uc218 \uc5c6\uc73c\ub2c8 \uc6b4\uc601 \ud574\ubc95\uc73c\ub85c \uc124\uce58\ud558\uc9c0 \uc54a\ub294\ub2e4\ub294 \uac83\uc774 \ubb38\uc11c\uc758 \uacb0\ub860\uc785\ub2c8\ub2e4.\n\ub300\uc548\uc740 \uc2a4\ucf00\uc904\ub9c1 \uc774\ud6c4\uc5d0 \uc18c\uc720\ud55c Pod \ud558\ub098\uc529 patch\ud558\ub294 \ubc29\uc2dd\uc785\ub2c8\ub2e4. \ubb38\uc11c\uc758 \uc608\uc81c\ub294 Pod UID, resourceVersion, nodeName\uc744 test\ub85c \uac78\uc5b4\uc11c \ub3d9\uc2dc \ubcc0\uacbd \uc2dc \uc548\uc804\ud558\uac8c \uc2e4\ud328\ud558\ub3c4\ub85d \ud569\ub2c8\ub2e4. Karpenter 1.14.1\ub3c4 pod-deletion-cost\ub97c eviction-cost \uacc4\uc0b0\uc5d0 \uc4f0\uc9c0\ub9cc \uc774\ub294 \ud734\ub9ac\uc2a4\ud2f1\uc774\uc9c0 \uae08\uc9c0 \uaddc\uce59\uc740 \uc544\ub2d9\ub2c8\ub2e4.\n\n\uc774\uc81c GPU \ucabd\uc73c\ub85c \ub118\uc5b4\uac00\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 D/06 \"Pod deletion cost\ub294 \uc120\ud638\ub3c4\" (L311-320), \"Binding \ud6c4 \uc18c\uc720\ud55c Pod \ud558\ub098\uc5d0 cost \ubd80\uc5ec\" (L328)",
+    5: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 \uac19\uc740 \ubb3c\ub9ac GPU\ub97c \uac8c\uc2dc\ud558\ub294 \ud560\ub2f9 \uad00\ub9ac\uc790\ub294 \ud558\ub098\ub9cc \uc120\ud0dd\n\u2022 \uc2e0\uaddc EKS 1.34 \uc774\uc0c1\uc740 DRA \uad8c\uace0, Auto Mode\ub294 DRA \ubbf8\uc9c0\uc6d0\n\u2022 GPUCluster\uc640 ClusterPolicy\ub294 \uac19\uc740 \ud074\ub7ec\uc2a4\ud130\uc5d0\uc11c \uacf5\uc874 \ubd88\uac00\n\u2022 \ud45c\uc758 \ubc84\uc804\uc740 \ud638\ud658\uc131 \ud558\ud55c\uc774\uba70 \ud604\uc7ac \uad8c\uc7a5 \ud328\uce58\uac00 \uc544\ub2d8\n\nGPU\ub97c Kubernetes\uc5d0 \ub178\ucd9c\ud558\ub294 \uae38\uc740 \ub124 \uac00\uc9c0\uc785\ub2c8\ub2e4. \uc911\uc694\ud55c \uc6d0\uce59\uc740 \ud558\ub098\uc758 GPU\uc5d0 \ud560\ub2f9 \uad00\ub9ac\uc790\ub3c4 \ud558\ub098\ub77c\ub294 \uac83\uc785\ub2c8\ub2e4. device plugin\uacfc DRA driver, \ud639\uc740 Operator\uac00 \uac19\uc740 \ubb3c\ub9ac GPU\ub97c \ub3d9\uc2dc\uc5d0 \uac8c\uc2dc\ud558\uc9c0 \uc54a\ub3c4\ub85d \ub178\ub4dc \uc9d1\ud569\uc744 label\ub85c \ub098\ub215\ub2c8\ub2e4.\nAWS\ub294 \uc2e0\uaddc EKS 1.34 \uc774\uc0c1 \ubc30\ud3ec\uc5d0 DRA\ub97c \uad8c\uace0\ud569\ub2c8\ub2e4. \ub2e8, EKS Auto Mode\ub294 \uc544\uc9c1 DRA\ub97c \uc9c0\uc6d0\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\n\uc22b\uc790 \uba87 \uac00\uc9c0\ub97c \uc8fc\uc758\ud574\uc11c \uc77d\uc5b4\uc8fc\uc138\uc694. DRA 0.5.0\uc740 Kubernetes 1.34.2 \uc774\uc0c1, \ub4dc\ub77c\uc774\ubc84 565 \uc774\uc0c1, toolkit 1.18 \uc774\uc0c1\uc774 \ud544\uc694\ud558\uace0 Operator \uad00\ub9ac DRA\ub294 \ub4dc\ub77c\uc774\ubc84 580 \uc774\uc0c1\uc785\ub2c8\ub2e4. \uc774\uac74 \ud638\ud658\uc131 \ud558\ud55c\uc774\uc9c0 \uad8c\uc7a5 \ubc84\uc804\uc774 \uc544\ub2d9\ub2c8\ub2e4. \uadf8\ub9ac\uace0 \ubb38\uc11c \uc791\uc131 \uc2dc\uc810\uc5d0 \uc2e4\uc81c GPU \uc2e4\ud589\uc774\ub098 \ubca4\uce58\ub9c8\ud06c\ub294 \uc218\ud589\ud558\uc9c0 \uc54a\uc558\ub2e4\uace0 \uba85\uc2dc\ub418\uc5b4 \uc788\uc2b5\ub2c8\ub2e4.\n\n[\uc57d\uc5b4]\n\u2022 DRA: Dynamic Resource Allocation, ResourceClaim \uae30\ubc18 \uc7a5\uce58 \ud560\ub2f9\n\u2022 CDI: Container Device Interface\n\n[\ucd9c\ucc98]\n\u2022 D/05 \"GPU\ub9c8\ub2e4 \ud560\ub2f9 \uad00\ub9ac\uc790 \ud558\ub098 \uc120\ud0dd\", \ud638\uc2a4\ud2b8 \uad6c\uc131 \uc870\ud569 (\ud655\uc778 \uae30\uc900 2026-09)",
+    6: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n\u2022 MIG\ub294 \ud558\ub4dc\uc6e8\uc5b4 \ubd84\ud560\ub85c time-slicing\ubcf4\ub2e4 \uac15\ud55c \uaca9\ub9ac, \ub2e8 \uc7ac\uad6c\uc131\uc740 \uc911\ub2e8 \uc791\uc5c5\n\u2022 A100 40GB\uc640 80GB\uc758 profile \uc9d1\ud569\uc774 \ub2e4\ub974\ubbc0\ub85c \ud45c\ub97c \uc11e\uc9c0 \uc54a\uc74c\n\u2022 time-slicing\uc740 \ub17c\ub9ac\uc801 \uc2ac\ub86f\uc774\uba70 \uba54\ubaa8\ub9ac\u00b7\uc7a5\uc560 \uaca9\ub9ac \uc5c6\uc74c\n\u2022 H100/H200 \uc218\uce58\ub294 SXM \uc0ac\uc591\uc774\uba70 \uc2e4\uce21\uc774 \uc544\ub2d8\n\nMIG\uc640 time-slicing\uc740 \"GPU\ub97c \ub098\ub220 \uc4f4\ub2e4\"\ub294 \uac19\uc740 \ubaa9\uc801\uc774\uc9c0\ub9cc \uc131\uaca9\uc774 \ub2e4\ub985\ub2c8\ub2e4. MIG\ub294 \ud558\ub4dc\uc6e8\uc5b4 \ud30c\ud2f0\uc158\uc774\ub77c \uaca9\ub9ac\uac00 \uac15\ud558\uace0, time-slicing\uc740 \uc5ec\ub7ec \ub17c\ub9ac \uc2ac\ub86f\uc744 \uac8c\uc2dc\ud560 \ubfd0\uc785\ub2c8\ub2e4.\nMIG \ud0ed\uc758 \ud45c\ub294 A100 40GB \uae30\uc900\uc785\ub2c8\ub2e4. 4g.40gb\ub294 A100 80GB\uc758 profile \uc9d1\ud569\uc5d0 \uc18d\ud558\ub2c8 \ub450 SKU \ud45c\ub97c \uc11e\uc9c0 \ub9c8\uc138\uc694.\n\ntime-slicing \ud0ed\uc758 replicas 4\ub294 \uba54\ubaa8\ub9ac\ub97c 4\ub4f1\ubd84\ud55c\ub2e4\ub294 \ub73b\uc774 \uc544\ub2d9\ub2c8\ub2e4. \uacbd\ud569\uc774 \uc0dd\uae30\uba74 \uc9c0\uc5f0\uc774 \ub2ec\ub77c\uc9c8 \uc218 \uc788\uc73c\ub2c8 \uce21\uc815\ud558\uc154\uc57c \ud569\ub2c8\ub2e4.\nH100\uacfc H200 \ube44\uad50\ub294 NVIDIA\uac00 \uacf5\uac1c\ud55c SXM \uc0ac\uc591\uc785\ub2c8\ub2e4. \uba54\ubaa8\ub9ac \uc6a9\ub7c9\uc774 \ub298\uba74 \uc218\uc6a9 \uac00\ub2a5\ud55c \ubaa8\ub378\uc774 \ub2ec\ub77c\uc9c8 \uc218 \uc788\uc9c0\ub9cc \uc2e4\uc81c \uc131\ub2a5\uc740 \ubaa8\ub378, \uc815\ubc00\ub3c4, \ubc30\uce58, interconnect\uc5d0 \ub530\ub77c \ub2ec\ub77c\uc9d1\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 D/05 \"MIG\uc640 time-slicing\", \"H100/H200 \uc0ac\uc591\uc758 \ubc94\uc704\" (NVIDIA \uacf5\uac1c \uc0ac\uc591)",
+    7: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 ServiceMonitor\uc640 PodMonitor\uc758 relabel\ub85c compute_type=hybrid label\uc744 \ubd80\uc5ec\n\u2022 \ud638\uc2a4\ud2b8 \uc9c0\ud45c\ub294 Node Exporter, GPU \uc9c0\ud45c\ub294 DCGM exporter\uac00 \uc81c\uacf5\n\u2022 Container Insights\ub294 Hybrid\uc5d0\uc11c node-level \uc9c0\ud45c\ub97c \uc81c\uacf5\ud558\uc9c0 \uc54a\uc74c\n\u2022 CloudWatch agent\ub294 Pod Identity\uc5d0\uc11c\ub3c4 RUN_WITH_IRSA \ud544\uc694\n\nPrometheus\uc5d0\uc11c\ub294 attachMetadata.node\ub97c \ucf1c\uace0, node label\uc744 \uae30\uc900\uc73c\ub85c keep relabel\uc744 \uac78\uc5b4\uc11c \uc2e4\uc81c hybrid \ub178\ub4dc\ub9cc \uc218\uc9d1\ud558\uace0 compute_type \ub77c\ubca8\uc744 \ubd99\uc785\ub2c8\ub2e4. \uc774 label\uc774 \uc788\uc5b4\uc57c Grafana\uc5d0\uc11c hybrid\ub9cc \ub530\ub85c \ubcfc \uc218 \uc788\uc2b5\ub2c8\ub2e4. SSM \ub178\ub4dc \uc774\ub984\uc758 \uc811\ub450\uc0ac\ub85c hybrid \uc5ec\ubd80\ub97c \ucd94\uce21\ud558\uc9c0 \uc54a\ub294 \uac83\uc774 \ubb38\uc11c\uc758 \uc9c0\uce68\uc785\ub2c8\ub2e4.\n\nServiceMonitor\ub294 Prometheus 2.37 \uc774\uc0c1, PodMonitor\ub294 2.35 \uc774\uc0c1\uc774 \ud544\uc694\ud558\uace0, Prometheus ServiceAccount\uc5d0 Node list/watch \uad8c\ud55c\uc774 \uc788\uc5b4\uc57c \ud569\ub2c8\ub2e4.\nContainer Insights\ub294 EC2 IMDS\ub97c \uc4f0\uae30 \ub54c\ubb38\uc5d0 Hybrid \ud638\uc2a4\ud2b8\uc758 node-level \uc9c0\ud45c\ub97c \uc5bb\uc744 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \uc774 \ube48\uce78\uc744 Node Exporter\uac00 \ucc44\uc6c1\ub2c8\ub2e4.\nCloudWatch agent\ub294 \uc774\ub984\uacfc \ub2ec\ub9ac Pod Identity \ud658\uacbd\uc5d0\uc11c\ub3c4 RUN_WITH_IRSA\uac00 \ud544\uc694\ud558\ub2e4\ub294 \uc810\uc774 \ud5f7\uac08\ub9ac\ub294 \ubd80\ubd84\uc785\ub2c8\ub2e4. \ubb38\uc11c\uc758 \ucffc\ub9ac\uc640 YAML\uc740 \ub85c\uceec \uac80\uc99d \uc218\uc900\uc774\uba70 \uc774 \ud658\uacbd\uc5d0\uc11c \uc218\uc9d1\uc744 \uc2e4\ud589\ud55c \uacb0\uacfc\ub294 \uc544\ub2d9\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 D/08 \"Prometheus \uba54\ud2b8\ub9ad \uc218\uc9d1\", \"CloudWatch Observability Agent\" (kube-prometheus-stack 90.0.0 \uae30\uc900 \uc608\uc2dc)",
+    8: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n\u2022 \uc6f9\ud6c5\u00b7operator\ub958\ub294 cloud node \ubc30\uce58\ub97c \uad8c\uc7a5, \ubaa8\ub4e0 Pod\ub97c cloud\uc5d0 \ub458 \ud544\uc694\ub294 \uc5c6\uc74c\n\u2022 \uc560\ub4dc\uc628 \ucd5c\uc18c \ubc84\uc804\uc740 \ud638\ud658 \uae30\uc900\uc774\uc9c0 \uc124\uce58 target\uc774 \uc544\ub2d8\n\u2022 AWS\ub294 CoreDNS\ub97c cloud\uc640 Hybrid \uc591\ucabd\uc5d0 \uac01 1\uac1c \uc774\uc0c1 \uad8c\uc7a5\n\u2022 minDomains 2\uc640 DoNotSchedule\uc740 \uc5c4\uaca9\ud558\uc9c0\ub9cc Pending \uc704\ud5d8\uc774 \uc788\uc74c\n\n\uc560\ub4dc\uc628\uc740 \uc5b4\ub514\uc5d0 \ub193\uc744\uc9c0\uac00 \ud575\uc2ec\uc785\ub2c8\ub2e4. \ucee8\ud2b8\ub864 \ud50c\ub808\uc778\uc774 \ud638\ucd9c\ud558\ub294 webhook\uc740 Hybrid Pod CIDR\uc5d0 \uc811\uadfc\ud560 \uc218 \uc5c6\ub2e4\uba74 cloud node\uc5d0 \ub450\ub294 \uac83\uc774 \uc548\uc804\ud569\ub2c8\ub2e4. \ud558\uc9c0\ub9cc \uc774\uac83\uc774 \"\ubaa8\ub4e0 \uac83\uc744 \ud074\ub77c\uc6b0\ub4dc\uc5d0\"\ub77c\ub294 \ub73b\uc740 \uc544\ub2d9\ub2c8\ub2e4.\n\ucd5c\uc18c \ubc84\uc804 \ud0ed\uc758 \uc22b\uc790\ub294 Hybrid \ud638\ud658 \uae30\uc900\uc785\ub2c8\ub2e4. \uc774 \ubc84\uc804\uc744 \uc124\uce58\ud558\ub77c\ub294 \ub9d0\uc774 \uc544\ub2c8\ub77c \uc774\ubcf4\ub2e4 \ub0ae\uc73c\uba74 \uc548 \ub41c\ub2e4\ub294 \ud558\ud55c\uc785\ub2c8\ub2e4.\n\nCoreDNS\ub294 cloud\uc640 Hybrid \uc591\ucabd\uc5d0 \ucd5c\uc18c \ud558\ub098\uc529 \ub450\ub294 \uac83\uc744 AWS\uac00 \uad8c\uc7a5\ud569\ub2c8\ub2e4. maxSkew 1\ub9cc\uc73c\ub85c\ub294 \ub450 \ub3c4\uba54\uc778\uc774 \uc0dd\uae30\uc9c0 \uc54a\uae30 \ub54c\ubb38\uc5d0 minDomains 2\ub97c \ud568\uaed8 \uc501\ub2c8\ub2e4. \ub2e8, \ud55c\ucabd \uc6a9\ub7c9\uc774 \uc5c6\uc73c\uba74 Pending\uc774 \ub418\ub2c8 DNS \ud574\uc11d\uc744 \uc2e4\uc81c\ub85c \uc2dc\ud5d8\ud558\uc138\uc694.\n\n[\ucd9c\ucc98]\n\u2022 D/08 \"CoreDNS \ubc30\uce58\", \"\uc560\ub4dc\uc628\ubcc4 \ubc30\uce58 \uac00\uc774\ub4dc\"; D/01 Add-on \ud45c",
+    9: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n\u2022 ALB/NLB IP target\uc740 Hybrid Pod IP\uac00 \ub3c4\ub2ec \uac00\ub2a5\ud574\uc57c \ub3d9\uc791\n\u2022 Cilium LB IPAM\uc740 \uc8fc\uc18c \ud560\ub2f9, BGP\ub294 \uadf8 \uc8fc\uc18c\ub97c \uad11\uace0\ud558\ub294 \ubcc4\uac1c\uc758 \ub2e8\uacc4\n\u2022 Advertisement\uc758 selector\uc640 Service label, peer \uc124\uc815\uc774 \uc77c\uce58\ud574\uc57c \ud568\n\u2022 Cilium Ingress/Gateway API(L7 proxy)\uc640 Hybrid Nodes Gateway(l7Proxy=false)\ub294 \uac19\uc740 \uc124\uce58\uc5d0\uc11c \ucda9\ub3cc\n\n\uc678\ubd80\uc5d0\uc11c \ub4e4\uc5b4\uc624\ub294 \ud2b8\ub798\ud53d\uc740 \ub450 \uac00\uc9c0 \uae38\uc774 \uc788\uc2b5\ub2c8\ub2e4. \ud558\ub098\ub294 AWS Load Balancer Controller\ub85c ALB\ub098 NLB\ub97c \ub9cc\ub4e4\uace0 IP target\uc73c\ub85c Hybrid Pod\ub97c \uc9c1\uc811 \ub4f1\ub85d\ud558\ub294 \ubc29\uc2dd\uc785\ub2c8\ub2e4. \uc774\ub54c Pod IP\uc5d0 AWS\uc5d0\uc11c \ub3c4\ub2ec\ud560 \uc218 \uc788\uc5b4\uc57c \ud569\ub2c8\ub2e4.\n\ub2e4\ub978 \ud558\ub098\ub294 \uc628\ud504\ub808\ubbf8\uc2a4\uc5d0\uc11c Cilium LB IPAM\uc73c\ub85c \uc8fc\uc18c\ub97c \ud560\ub2f9\ud558\uace0 BGP\ub85c \uad11\uace0\ud558\ub294 \ubc29\uc2dd\uc785\ub2c8\ub2e4. IPPool\ub9cc\uc73c\ub85c\ub294 \uad11\uace0\uac00 \uc77c\uc5b4\ub098\uc9c0 \uc54a\uace0, Advertisement\uc758 selector\uc640 Service label, PeerConfig\uae4c\uc9c0 \ub9de\uc544\uc57c \ud569\ub2c8\ub2e4.\n\n\ub9c8\uc9c0\ub9c9 \ud0ed\uc774 \ud568\uc815\uc785\ub2c8\ub2e4. Cilium Ingress\ub098 Gateway API\ub294 L7 proxy\uac00 \ucf1c\uc838 \uc788\uc5b4\uc57c \ud558\ub294\ub370, Hybrid Nodes Gateway\ub294 l7Proxy=false\ub97c \uc694\uad6c\ud569\ub2c8\ub2e4. \ub450 \uae30\ub2a5\uc740 \uac19\uc740 Cilium \uc124\uce58\uc5d0\uc11c \uac19\uc774 \uc4f8 \uc218 \uc5c6\uc73c\ub2c8 \uc124\uacc4 \ub2e8\uacc4\uc5d0\uc11c \uc120\ud0dd\ud558\uc138\uc694.\n\n[\ucd9c\ucc98]\n\u2022 D/08 \"Ingress \uad6c\uc131\", \"LoadBalancer IPAM\", \"\ub85c\ub4dc \ubc38\ub7f0\uc2f1\" (L200-282), Cilium 1.18.3 CRD \uae30\uc900 \uc608\uc2dc",
+    10: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n\u2022 Hybrid\uc5d0\uc11c Pod Identity\ub294 credentials file, init \uc7ac\uc2e4\ud589, add-on \uc124\uc815\uc774 \ubaa8\ub450 \ud544\uc694\n\u2022 Bottlerocket\uc740 nodeadm\uc774 \uc544\ub2c8\ub77c OS \uc124\uc815 \uacbd\ub85c\ub97c \uc0ac\uc6a9\n\u2022 \ud504\ub77c\uc774\ube57 \uad6c\uc131\uc5d0\ub294 eks-auth \uc5d4\ub4dc\ud3ec\uc778\ud2b8\uc640 AssumeRoleForPodIdentity \uad8c\ud55c \ud544\uc694\n\u2022 \uc5d0\uc774\uc804\ud2b8 \uc124\uce58\ub9cc\uc73c\ub85c \uc6cc\ud06c\ub85c\ub4dc association\uc774 \uc0dd\uae30\uc9c0 \uc54a\uc74c\n\nHybrid\uc5d0\uc11c Pod Identity\ub97c \uc4f0\ub824\uba74 \ub2e8\uacc4\uac00 \uba87 \uac00\uc9c0 \uc788\uc2b5\ub2c8\ub2e4. \uba3c\uc800 NodeConfig\uc5d0 enableCredentialsFile\uc744 \ucf1c\uace0, \uc774\ubbf8 \uac00\uc785\ud55c \ub178\ub4dc\ub3c4 nodeadm init\uc744 \ub2e4\uc2dc \ub3cc\ub824\uc57c \ud569\ub2c8\ub2e4. \uc6b4\uc601 \ub178\ub4dc\ub97c \ud55c\uaebc\ubc88\uc5d0 \uc7ac\ucd08\uae30\ud654\ud558\uc9c0 \ub9d0\uace0 \ud55c \ud638\uc2a4\ud2b8\uc529 \uac80\uc99d\ud558\ub77c\ub294 \uac83\uc774 \ubb38\uc11c\uc758 \uc9c0\uce68\uc785\ub2c8\ub2e4.\nadd-on \ucabd\uc5d0\uc11c\ub294 daemonsets.hybrid.create\ub97c true\ub85c \uc124\uc815\ud569\ub2c8\ub2e4. \uc784\uc2dc \uc790\uaca9 \uc99d\uba85 \ud30c\uc77c \uc704\uce58\ub294 \uc77c\ubc18 OS\ub294 /eks-hybrid/.aws/credentials, Bottlerocket\uc740 /var/eks-hybrid/.aws/credentials\ub85c \ub2e4\ub985\ub2c8\ub2e4.\n\n\ub9c8\uc9c0\ub9c9\uc73c\ub85c \ub9ce\uc774 \ub193\uce58\ub294 \ubd80\ubd84\uc774, \uc5d0\uc774\uc804\ud2b8\uac00 \ub5a0 \uc788\ub2e4\uace0 \ud574\uc11c \uc560\ud50c\ub9ac\ucf00\uc774\uc158\uc6a9 association\uc774 \uc790\ub3d9 \uc0dd\uc131\ub418\uc9c0 \uc54a\ub294\ub2e4\ub294 \uc810\uc785\ub2c8\ub2e4. namespace, ServiceAccount, \uc5ed\ud560 \uc2e0\ub8b0 \uc815\ucc45\uae4c\uc9c0 \ud655\uc778\ud574\uc57c \uc2e4\uc81c\ub85c \uc778\uac00\uac00 \uc131\uacf5\ud569\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 D/08 \"EKS Pod Identity Agent\"; D/04 \"\uc560\ub4dc\uc628 \ubc30\uce58\uc640 Pod Identity\" (L400-415)",
+    11: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 endpoint\ub294 API private endpoint, \ud074\ub7ec\uc2a4\ud130 ENI, PrivateLink \uc138 \uac00\uc9c0\ub85c \uad6c\ubd84\n\u2022 \uc138\uc158 A\ub294 \ub178\ub4dc \uc2dc\uc791(443), \uc138\uc158 B\ub294 API server \uc2dc\uc791(10250)\n\u2022 com.amazonaws.region.eks endpoint\ub294 kubelet \uc5f0\uacb0\uacfc \ubb34\uad00\n\u2022 private endpoint\ub97c \uc4f4\ub2e4\uace0 \ub9dd\ubd84\ub9ac\ub97c \uc900\uc218\ud558\ub294 \uac83\uc740 \uc544\ub2d8\n\n\ubcf4\uc548\ud300\uacfc \uc774\uc57c\uae30\ud560 \ub54c \uac00\uc7a5 \uba3c\uc800 \uc815\ub9ac\ud574\uc57c \ud560 \uac83\uc774 \"endpoint\"\ub77c\ub294 \ub9d0\uc785\ub2c8\ub2e4. Kubernetes API\uc758 private endpoint, \ud074\ub7ec\uc2a4\ud130 VPC\uc5d0 \uc0dd\uae30\ub294 EKS ENI, \uadf8\ub9ac\uace0 eks\ub098 ssm \uac19\uc740 AWS \uc11c\ube44\uc2a4\uc6a9 PrivateLink\ub294 \uc11c\ub85c \ub2e4\ub978 \uac83\uc785\ub2c8\ub2e4. endpoint policy\ub85c TCP 10250 \uc5f0\uacb0\uc744 \ud1b5\uc81c\ud558\uace0 \uc788\ub2e4\uace0 \ucc29\uac01\ud558\uba74 \uc548 \ub429\ub2c8\ub2e4.\n\n\uc138\uc158 \ubc29\ud5a5\ub3c4 \uad6c\ubd84\ud558\uc138\uc694. \ub178\ub4dc\uc5d0\uc11c API\ub85c \uac00\ub294 443\uc740 \uc628\ud504\ub808\ubbf8\uc2a4\uc5d0\uc11c \uc2dc\uc791\ud569\ub2c8\ub2e4. \ubc18\uba74 logs\ub098 exec\uc5d0 \uc4f0\uc774\ub294 API server\uc5d0\uc11c kubelet 10250\uc73c\ub85c\uc758 \uc5f0\uacb0\uc740 AWS \ucabd\uc5d0\uc11c \uc2dc\uc791\ud558\ub294 \ubcc4\uac1c\uc758 \uc138\uc158\uc774\uace0, \uc628\ud504\ub808\ubbf8\uc2a4 \ubc29\ud654\ubcbd\uc5d0\uc11c\ub294 inbound\uc785\ub2c8\ub2e4. \ub178\ub4dc\uac00 \uba3c\uc800 \uc5f0\uacb0\ud588\ub2e4\uace0 \ud574\uc11c outbound-only \ud130\ub110\uc774 \ub418\ub294 \uac83\uc740 \uc544\ub2d9\ub2c8\ub2e4.\n\uadf8\ub798\uc11c \uacb0\ub860\uc740 \ub2e8\uc21c\ud569\ub2c8\ub2e4. private endpoint\ub97c \uc4f0\ub2c8\uae4c \ub9dd\ubd84\ub9ac\ub97c \uc900\uc218\ud55c\ub2e4\ub294 \uc8fc\uc7a5\uc740 \uc131\ub9bd\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ubb34\uc5c7\uc774 \uc5b4\ub5a4 \ubc29\ud5a5\uc73c\ub85c \ud5c8\uc6a9\ub418\ub294\uc9c0\ub97c \uc124\uba85\ud574\uc57c \ud569\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 D/11 \"Endpoint\ub77c\ub294 \ub9d0\ub85c \ubb36\uc73c\uba74 \uc548 \ub418\ub294 \uc138 \uac00\uc9c0\", \"\uc2e4\uc81c\ub85c \ub204\uac00 \uc5f0\uacb0\uc744 \uc2dc\uc791\ud558\ub294\uac00\"",
+    12: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 \ub9dd\ubd84\ub9ac \uc694\uad6c \ubb38\uc7a5\uc744 \uba3c\uc800 \ud655\uc815\ud55c \ub4a4 \uc124\uacc4 \uc801\ud569\uc131\uc744 \uc694\uac74\ubcc4\ub85c \ud310\ub2e8\n\u2022 \uc644\uc804 \ub2e8\uc808\uc774\ub098 \ud074\ub77c\uc6b0\ub4dc\ubc1c \uc2e0\uaddc \uc5f0\uacb0 \uc804\uba74 \uae08\uc9c0 \uc694\uad6c\uc640\ub294 \ucda9\ub3cc\n\u2022 DX\ub294 \uae30\ubcf8 \uc554\ud638\ud654\uac00 \uc5c6\uc73c\ubbc0\ub85c MACsec \ub610\ub294 IPsec \uac80\ud1a0\n\u2022 nodes/proxy\ub294 \ub2e8\uc21c \uc870\ud68c \uad8c\ud55c\uc774 \uc544\ub2c8\uba70 \uc99d\ube59\uc740 \uc900\ube44 \ubaa9\ub85d\uc73c\ub85c \uc81c\uc2dc\n\n\ud45c\uc758 \uccab \ud589\ucc98\ub7fc \"\uc2b9\uc778\ub41c \uc0ac\uc124 \uacbd\ub85c\uc758 \uad00\ub9ac \ud1b5\uc2e0\uc744 \ud5c8\uc6a9\ud55c\ub2e4\"\ub294 \uc815\ucc45\uc774\ub77c\uba74 \uac80\ud1a0 \uac00\ub2a5\ud55c \ud6c4\ubcf4\uac00 \ub429\ub2c8\ub2e4. \ubc18\ub300\ub85c \ubb3c\ub9ac \ub2e8\uc808\uc774\ub098 \ud074\ub77c\uc6b0\ub4dc\ubc1c \uc2e0\uaddc \uc5f0\uacb0 \uc804\uba74 \uae08\uc9c0\ucc98\ub7fc Hybrid Nodes\uc758 \uc5f0\uacb0 \uc804\uc81c\uc640 \ucda9\ub3cc\ud558\ub294 \uc694\uad6c\ub3c4 \uc788\uc2b5\ub2c8\ub2e4. \uc774 \ud45c\ub294 \ubc95\ub839 \ud574\uc11d\uc774 \uc544\ub2c8\ub77c \uae30\uc220 \uc694\uad6c\uc640 \uc124\uacc4\uc758 \uc77c\uce58 \uc5ec\ubd80\ub97c \ubcf4\ub294 \uae30\uc900\uc785\ub2c8\ub2e4.\n\n\uc554\ud638\ud654 \ud0ed\uc5d0\uc11c, Direct Connect\ub294 \uae30\ubcf8\uc73c\ub85c \uc554\ud638\ud654\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ud544\uc694\ud558\uba74 MACsec\uc774\ub098 IPsec\uc744 \uac80\ud1a0\ud558\ub418, \ubc94\uc704\uac00 \uc885\ub2e8 \uac04 TLS\uc640 \ub2e4\ub974\ub2e4\ub294 \uc810\uc744 \uc124\uba85\ud558\uc154\uc57c \ud569\ub2c8\ub2e4.\nRBAC \ud0ed\uc758 nodes/proxy\ub294 \ud2b9\ud788 \uac15\uc870\ud558\uace0 \uc2f6\uc2b5\ub2c8\ub2e4. \uc870\ud68c \uad8c\ud55c\ucc98\ub7fc \ubcf4\uc774\uc9c0\ub9cc kubelet\uc744 \ud1b5\ud574 \uba85\ub839 \uc2e4\ud589\uc73c\ub85c \uc774\uc5b4\uc9c8 \uc218 \uc788\uace0 audit\uc744 \uc6b0\ud68c\ud560 \uc218\ub3c4 \uc788\uc2b5\ub2c8\ub2e4.\n\uc99d\ube59 \uccb4\ud06c\ub9ac\uc2a4\ud2b8\ub294 \uc81c\ucd9c \uc804 \uc900\ube44 \ud56d\ubaa9\uc774\uc9c0 \uc810\uac80\uc774 \ub05d\ub0ac\ub2e4\ub294 \ub73b\uc774 \uc544\ub2d9\ub2c8\ub2e4. \uc2e4\uc81c \uac80\uc99d\uc740 \ube44\uc6b4\uc601 \ud658\uacbd\uacfc \ud569\uc131 \ub370\uc774\ud130\ub85c \ud558\uc2dc\uae38 \uad8c\ud569\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 D/11 \"\ub9dd\ubd84\ub9ac \uc694\uad6c\ub97c \uc124\uacc4 \uc870\uac74\uc73c\ub85c \ubc14\uafb8\uae30\" (L73-80), \"\uc554\ud638\ud654\uc640 \uc2e0\uc6d0\u00b7\uad8c\ud55c\", nodes/proxy (L108), \uc99d\uac70 \ud45c (L116-123)",
+    13: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n\u2022 control plane\uc758 K8s \uac1d\uccb4\ub294 AWS, \uc6cc\ud06c\ub85c\ub4dc\uc640 \uc5c5\ubb34 \ub370\uc774\ud130\ub294 \uc628\ud504\ub808\ubbf8\uc2a4\n\u2022 Secret\uc774\ub098 \ubbfc\uac10 \ub370\uc774\ud130\ub97c Pod \uc0ac\uc591\u00b7ConfigMap\uc5d0 \ub123\uc73c\uba74 API \uac1d\uccb4\ub85c AWS\uc5d0\uc11c \uad00\ub9ac\ub428\n\u2022 logs, exec, egress, SSM \uacbd\ub85c\ub3c4 \ub370\uc774\ud130 \uacbd\uacc4\uc5d0 \ud3ec\ud568\ud574 \ubd84\ub958\n\u2022 \uaddc\uc815 \"\ucda9\uc871\"\uc744 \uc120\uc5b8\ud558\uc9c0 \uc54a\uace0 \uac80\ud1a0 \ubc94\uc704\uc640 \uc870\uac74\uc744 \uae30\ub85d\n\n\ub370\uc774\ud130 \ub808\uc9c0\ub358\uc2dc\ub97c \ub9d0\ud560 \ub54c \uc815\uc9c1\ud558\uac8c \uad6c\ubd84\ud574\uc57c \ud560 \uac83\uc774 \uc788\uc2b5\ub2c8\ub2e4. Kubernetes API \uac1d\uccb4\ub294 AWS\uac00 \uad00\ub9ac\ud558\ub294 control plane\uc5d0 \uc800\uc7a5\ub429\ub2c8\ub2e4. \uadf8\ub798\uc11c ConfigMap\uc774\ub098 Secret\uc5d0 \ubbfc\uac10\ud55c \uac12\uc744 \ub123\uc73c\uba74 \uadf8 \ub0b4\uc6a9\ub3c4 \uad00\ub9ac \ub300\uc0c1 \ub370\uc774\ud130\uac00 \ub429\ub2c8\ub2e4. \ubc18\uba74 \uc628\ud504\ub808\ubbf8\uc2a4 Pod\uac00 \ucc98\ub9ac\ud558\ub294 \ub300\uc6a9\ub7c9 \uc5c5\ubb34 \ub370\uc774\ud130\uac00 \uc800\uc808\ub85c AWS\ub85c \ubcf5\uc81c\ub418\uc9c0\ub294 \uc54a\uc2b5\ub2c8\ub2e4.\n\n\uadf8\ub807\ub2e4\uace0 control traffic\uc774\ub77c\uc11c \uc5c5\ubb34 \ub370\uc774\ud130\uac00 \uc808\ub300 \uc9c0\ub098\uac00\uc9c0 \uc54a\ub294\ub2e4\uace0 \ub9d0\ud558\uba74 \uc548 \ub429\ub2c8\ub2e4. logs\ub294 \uc560\ud50c\ub9ac\ucf00\uc774\uc158\uc774 \ucd9c\ub825\ud55c \ub0b4\uc6a9\uc744 \uc804\ub2ec\ud558\uace0, exec\ub098 cp\ub294 \ud5c8\uac00\ub41c \uc0ac\uc6a9\uc790\uc758 \ub370\uc774\ud130 \uc811\uadfc \uacbd\ub85c\uac00 \ub420 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\uadf8\ub798\uc11c \"\uae08\uc735\uad8c \uac00\uc774\ub4dc\ub77c\uc778\uc744 \ucda9\uc871\ud55c\ub2e4\" \uac19\uc740 \ubb38\uad6c\ub294 \uc4f0\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uc815\ucc45\uc774 \ud5c8\uc6a9\ud558\ub294 \ubc94\uc704\uc640 \uc99d\uac70\uac00 \uc788\uc744 \ub54c \uadf8 \uac80\ud1a0 \ubc94\uc704\uc640 \uc870\uac74\uc744 \ud568\uaed8 \uae30\ub85d\ud558\ub294 \ubc29\uc2dd\uc73c\ub85c \ub9d0\uc500\ud558\uc138\uc694.\n\n[\ucd9c\ucc98]\n\u2022 D/11 \"\ub370\uc774\ud130\uc640 \uad00\ub9ac\uc790 \uad8c\ud55c\uc758 \uacbd\uacc4\" (L104-110), \"\ucd5c\uc885\uc801\uc73c\ub85c \ub9dd\ubd84\ub9ac \uc704\ubc18\uc774 \uc544\ub2c8\ub77c\ub294 \ubb38\uad6c\" FAQ; D/README \"\uc0ac\uc6a9 \uc0ac\ub840\uc640 \ub370\uc774\ud130 \uacbd\uacc4\"",
+    14: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 \uacfc\uae08\uc740 \ub178\ub4dc\uac00 \ubcf4\uace0\ud55c vCPU-hour \uae30\uc900\uc758 \uc6d4\ubcc4 \uad6c\uac04 \uc694\uae08\n\u2022 \ub178\ub4dc\uac00 \uc870\uc778\ub41c \uc2dc\uc810\ubd80\ud130 \uc81c\uac70 \uc2dc\uae4c\uc9c0 \uacfc\uae08\ub418\uba70 idle\uc774\uc5b4\ub3c4 \uacc4\uc18d\ub428\n\u2022 \ud45c\ub294 32 vCPU\u00b7730\uc2dc\uac04 \uac00\uc815\uc758 \uacc4\uc0b0 \ubaa8\ub378\uc774\uc9c0 \uccad\uad6c\uc11c\uac00 \uc544\ub2d8\n\u2022 \uacbd\uc7c1 \uc194\ub8e8\uc158 \uc218\uce58\ub294 \ucd9c\ucc98 \ubd88\uba85\uc774\ub77c \uc758\ub3c4\uc801\uc73c\ub85c \uc81c\uc678\n\n\uc694\uae08\uc740 \ub178\ub4dc\uac00 \ubcf4\uace0\ud55c vCPU-hour\uc5d0 \ub300\ud55c \uc6d4\ubcc4 \uad6c\uac04 \uc694\uae08\uc785\ub2c8\ub2e4. \ucc98\uc74c 576,000 vCPU-hour\ub294 0.020\ub2ec\ub7ec, \uc774\ud6c4 \uad6c\uac04\uc774 \ub0b4\ub824\uac00\ub294 \uad6c\uc870\uc774\uace0 \ubaa8\ub4e0 \uc0ac\uc6a9\ub7c9\uc5d0 \uace0\uc815 0.01\ub2ec\ub7ec\uac00 \ubd99\ub294 \uac83\uc774 \uc544\ub2d9\ub2c8\ub2e4. \ud558\uc774\ud37c\uc2a4\ub808\ub529\ub41c \ucf54\uc5b4\ub294 vCPU 2\uac1c\ub85c \ubcf4\uace0\ub420 \uc218 \uc788\uace0, \uba38\uc2e0\ub2f9 32 vCPU\ub97c \ub118\uc73c\uba74 account team\uacfc \uc0c1\uc758\ud558\ub77c\uace0 \uc548\ub0b4\ub418\uc5b4 \uc788\uc2b5\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd \ud45c\ub294 \ubb38\uc11c\uc758 \uacc4\uc0b0 \ubaa8\ub378\uc785\ub2c8\ub2e4. 50\ub178\ub4dc\ub97c \uc608\ub85c \uac80\uc99d\ud574 \ubcf4\uba74 1,168,000 vCPU-hour\uc5d0\uc11c \uccab 576,000\uc740 0.020, \ub2e4\uc74c 576,000\uc740 0.014, \ub0a8\uc740 16,000\uc740 0.010\uc774\ub77c \uc6d4 19,744\ub2ec\ub7ec\uac00 \ub418\uace0, \uc5f4\ub450 \ubc88 \ubc18\ubcf5\ud55c \uc5f0\ud658\uc0b0\uc774 236,928\ub2ec\ub7ec\uc785\ub2c8\ub2e4. \uc5ec\uae30\uc5d0 \ud074\ub7ec\uc2a4\ud130 \uc694\uae08 876\ub2ec\ub7ec\ub97c \ub354\ud558\uba74 237,804\ub2ec\ub7ec\uc785\ub2c8\ub2e4.\n\ub2e4\ub978 \uc11c\ube44\uc2a4, \ud560\uc778, \uc138\uae08, \ud558\ub4dc\uc6e8\uc5b4, \uc804\ub825, OS \uad6c\ub3c5, \uc778\ub825\uc740 \ubaa8\ub450 \uc81c\uc678\ub41c \uc22b\uc790\uc785\ub2c8\ub2e4. \uadf8\ub798\uc11c \uacbd\uc7c1 \uc194\ub8e8\uc158\uacfc\uc758 \ube44\uad50\ud45c\ub294 \uc77c\ubd80\ub7ec \ube7c\uace0, \uc5ec\ub7ec\ubd84 \uc870\uc9c1\uc758 TCO \ubaa8\ub378\uc5d0 \uc774 \uc22b\uc790\ub97c \ub123\uc73c\uc2dc\ub77c\uace0 \uad8c\ud569\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 D/09 \ube44\uc6a9 \uacc4\uc0b0 \ubaa8\ub378 (L40-53), EKS pricing https://aws.amazon.com/eks/pricing/ (\ud655\uc778\uc77c 2026-09-16)",
+    15: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n\u2022 \uc628\ud504\ub808\ubbf8\uc2a4 GPU, \ub85c\uceec \ub370\uc774\ud130, edge\uac00 \ub300\ud45c\uc801\uc778 \uc120\ud0dd \uc774\uc720\n\u2022 \uc0ac\uc124 \uc591\ubc29\ud5a5 \uc5f0\uacb0 \ud544\uc694, IPv4 \uc804\uc6a9, DDIL \uc6a9\ub3c4 \uc544\ub2d8\n\u2022 \uc644\uc804 \ub2e8\uc808\uc774\ub098 \ud074\ub77c\uc6b0\ub4dc\ubc1c \uc5f0\uacb0 \uae08\uc9c0 \uc815\ucc45\uacfc\ub294 \ucda9\ub3cc\n\u2022 \ub300\uc548 \ube44\uad50\ub294 \uc870\uc9c1\uc758 TCO \uae30\uc900\uc73c\ub85c, \uc774 \uc790\ub8cc\ub294 \uc6b0\uc5f4\uc744 \uc8fc\uc7a5\ud558\uc9c0 \uc54a\uc74c\n\n\ub3c4\uc785 \ud310\ub2e8\uc740 \uc7a5\uc810 \ub098\uc5f4\ubcf4\ub2e4 \uc81c\uc57d \ud655\uc778\uc5d0\uc11c \uc2dc\uc791\ud558\ub294 \uac83\uc774 \uc548\uc804\ud569\ub2c8\ub2e4. \ubb38\uc11c\uac00 \uaf3d\ub294 \uc120\ud0dd \uc774\uc720\ub294 \uc628\ud504\ub808\ubbf8\uc2a4 GPU, \ub300\uaddc\ubaa8 \ub85c\uceec \ub370\uc774\ud130, edge \ucc98\ub9ac, \uae30\uc874 \ud558\ub4dc\uc6e8\uc5b4\uc785\ub2c8\ub2e4. \ub2e4\ub9cc data locality\uc5d0\ub294 \uc560\ud50c\ub9ac\ucf00\uc774\uc158, \uc2a4\ud1a0\ub9ac\uc9c0, egress, \ub85c\uae45 \ud1b5\uc81c\ub3c4 \ud568\uaed8 \ud544\uc694\ud569\ub2c8\ub2e4.\n\n\ubc18\ub300\ub85c IPv4\ub9cc \uc9c0\uc6d0\ud558\uace0, AWS\uc640\uc758 \uc548\uc815\uc801\uc778 \uc0ac\uc124 \uc591\ubc29\ud5a5 \uc5f0\uacb0\uc774 \ud544\uc218\uc774\uba70, \ub2e8\uc808\u00b7\uac04\ud5d0 \uc5f0\uacb0 \ud658\uacbd\uc6a9\uc774 \uc544\ub2d9\ub2c8\ub2e4. AWS Region\uc774\ub098 Outposts \uac19\uc740 AWS \uc778\ud504\ub77c\ub97c hybrid \ub178\ub4dc\ub85c \ub4f1\ub85d\ud558\ub294 \uac83\ub3c4 \uc9c0\uc6d0 \ub300\uc0c1\uc774 \uc544\ub2d9\ub2c8\ub2e4.\n\ub300\uc548\uacfc\uc758 \ube44\uad50\ub294 \uc77c\ubd80\ub7ec \uc22b\uc790\ub97c \uc2e3\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \ub3d9\ub4f1\ud55c \uac00\uc6a9\uc131\uacfc \uc9c0\uc6d0 \ubc94\uc704\ub85c \uc9c1\uc811 \uacc4\uc0b0\ud558\uc2dc\uae30 \ubc14\ub78d\ub2c8\ub2e4.\n\n\uc774\uc81c \ub124 \ube14\ub85d \uc804\uccb4\ub97c \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 D/README \"\uacc4\ud68d\uc5d0 \ubc18\uc601\ud560 \uc81c\uc57d\", \"\uc0ac\uc6a9 \uc0ac\ub840\uc640 \ub370\uc774\ud130 \uacbd\uacc4\"; D/09 TCO \uace0\ub824 \uc0ac\ud56d",
+    16: "[1.5min] [\uc694\uc57d]\n\u2022 \uad6c\uc870: AWS control plane + \uc0ac\uc6a9\uc790 \uc6b4\uc601 host, \uc0ac\uc124 \uc591\ubc29\ud5a5 \uc5f0\uacb0 \ud544\uc218\n\u2022 \ub124\ud2b8\uc6cc\ud06c: \uc138\uc158 \ubc29\ud5a5\uacfc \ud3ec\ud2b8\ub97c \uc124\uba85\ud560 \uc218 \uc788\uc5b4\uc57c \ud568\n\u2022 \ub77c\uc774\ud504\uc0ac\uc774\ud074: nodeadm, \ud638\uc2a4\ud2b8 \uad50\uccb4 \uc6b0\uc120\n\u2022 \ubc30\uce58\u00b7GPU\u00b7\uad00\uce21\uc131\u00b7\ubcf4\uc548\u00b7\ube44\uc6a9\uc740 \uac01\uac01 \"\ubcf4\uc7a5\ud558\uc9c0 \uc54a\ub294 \uac83\"\uae4c\uc9c0 \uae30\uc5b5\n\n\ub124 \uac1c \ube14\ub85d\uc744 \uc5ec\uc12f \uac00\uc9c0\ub85c \uc555\ucd95\ud588\uc2b5\ub2c8\ub2e4. \uccab\uc9f8, Hybrid Nodes\ub294 AWS \uad00\ub9ac\ud615 control plane\uc5d0 \uc0ac\uc6a9\uc790\uac00 \uc6b4\uc601\ud558\ub294 \ub178\ub4dc\ub97c \ubd99\uc774\ub294 \uad6c\uc870\uc774\uace0 \uc5f0\uacb0\uc774 \ub04a\uae30\ub294 \ud658\uacbd\uc6a9\uc774 \uc544\ub2d9\ub2c8\ub2e4.\n\ub458\uc9f8, \ub124\ud2b8\uc6cc\ud06c\uc5d0\uc11c\ub294 \uc138\uc158 \ubc29\ud5a5\uc744 \uc124\uba85\ud560 \uc218 \uc788\uc5b4\uc57c \ud569\ub2c8\ub2e4. \uc14b\uc9f8, nodeadm\uc73c\ub85c \ub178\ub4dc\ub97c \ub2e4\ub8e8\ub418 in-place \uc5c5\uadf8\ub808\uc774\ub4dc\ub97c \ub864\ubc31 \uc218\ub2e8\uc73c\ub85c \ubcf4\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\ub137\uc9f8\uc5d0\uc11c \uc5ec\uc12f\uc9f8\uac00 \uc774\ubc88 \ube14\ub85d \ub0b4\uc6a9\uc785\ub2c8\ub2e4. \ubc30\uce58\ub294 label\uacfc affinity, \ubc84\uc2a4\ud305\uc740 Pending \ud2b8\ub9ac\uac70, GPU\ub294 \ud560\ub2f9 \uad00\ub9ac\uc790 \ud558\ub098, \ubcf4\uc548\uc740 private endpoint\uac00 \uace7 \uc900\uc218\ub294 \uc544\ub2c8\ub77c\ub294 \uac83, \ube44\uc6a9\uc740 \uad6c\uac04 \uacfc\uae08\uc774\ub77c\ub294 \uc810\uc785\ub2c8\ub2e4.\n\n\uac04\ub2e8\ud55c \ud034\uc988\ub85c \ud655\uc778\ud574 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    17: "[1.5min] [\uc694\uc57d]\n\u2022 Q1 Pending Pod\uac00 \ubc84\uc2a4\ud305 \ud2b8\ub9ac\uac70\n\u2022 Q2 GPU\ub9c8\ub2e4 \ud560\ub2f9 \uad00\ub9ac\uc790\ub294 \ud558\ub098\n\u2022 \uc624\ub2f5\uc774\uba74 \uc2ac\ub77c\uc774\ub4dc 3, 5\ub85c \ub3cc\uc544\uac00 \ud655\uc778\n\n\ub450 \ubb38\uc81c\ub97c \uba3c\uc800 \ud480\uc5b4\ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \uc774\ubc88 \ube14\ub85d\uc5d0\uc11c \uc624\ud574\ud558\uae30 \uc26c\uc6b4 \uc9c0\uc810\uc5d0\uc11c \ub0c8\uc2b5\ub2c8\ub2e4.\n\n1\ubc88\uc740 Pending Pod, 2\ubc88\uc740 \ud560\ub2f9 \uad00\ub9ac\uc790 \ud558\ub098\uc785\ub2c8\ub2e4. \uc628\ud504\ub808\ubbf8\uc2a4 CPU \uc0ac\uc6a9\ub960 \uac19\uc740 \uc784\uacc4\uac12\uc740 \ud2b8\ub9ac\uac70\uac00 \uc544\ub2c8\uace0, time-slicing replica\ub294 \uba54\ubaa8\ub9ac \uaca9\ub9ac\ub97c \ubcf4\uc7a5\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.",
+    18: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n\u2022 Q3 deletion cost\ub294 best-effort\uc774\uace0 \uc55e\uc120 \ube44\uad50 \uae30\uc900\uc774 \uc788\uc74c\n\u2022 Q4 private endpoint\ub294 \ub9dd\ubd84\ub9ac \uc900\uc218\uc758 \uc99d\uac70\uac00 \uc544\ub2d8\n\u2022 DX\ub294 \uae30\ubcf8 \uc554\ud638\ud654\uac00 \uc5c6\uc74c\n\n3\ubc88\uc740 deletion cost\uac00 \ub124 \ubc88\uc9f8 \ube44\uad50 \uae30\uc900\uc774\ub77c\ub294 \uc810, 4\ubc88\uc740 private endpoint\uc640 \ub9dd\ubd84\ub9ac \uc900\uc218\uac00 \ub2e4\ub978 \uc774\uc57c\uae30\ub77c\ub294 \uc810\uc785\ub2c8\ub2e4. Direct Connect\ub294 \uae30\ubcf8 \uc554\ud638\ud654\ub97c \uc81c\uacf5\ud558\uc9c0 \uc54a\uc73c\ubbc0\ub85c \uc138 \ubc88\uc9f8 \ubcf4\uae30\ub3c4 \ud2c0\ub9bd\ub2c8\ub2e4.\n\n\ud2c0\ub9b0 \ubb38\ud56d\uc740 \uc2ac\ub77c\uc774\ub4dc 4\uc640 11\uc744 \ub2e4\uc2dc \ud655\uc778\ud558\uc138\uc694.",
+    19: "\u2753 [1min] [\uc694\uc57d]\n\u2022 \ubc84\uc804\u00b7\uac00\uaca9\u00b7\ud55c\ub3c4\ub294 \ubaa8\ub450 \uacf5\uc2dd \ubb38\uc11c\ub85c \uc7ac\ud655\uc778 \ud544\uc694\n\u2022 \uc608\uc81c\ub294 \ub85c\uceec \uac80\uc99d \uc218\uc900\uc774\uba70 \uc6b4\uc601 \uc2e4\ud589 \uacb0\uacfc\uac00 \uc544\ub2d8\n\u2022 \uc9c8\ubb38\uc740 \ubc30\uce58, GPU, \ubcf4\uc548 \uac80\ud1a0, \ube44\uc6a9 \uc21c\uc73c\ub85c \ubc1b\uc74c\n\n\ucc38\uace0 \uc790\ub8cc\ub294 AWS \uacf5\uc2dd \ubb38\uc11c\uc640 NVIDIA, Karpenter, Kubernetes \ubb38\uc11c\uc785\ub2c8\ub2e4. \uc624\ub298 \ubcf4\uc5ec\ub4dc\ub9b0 \ubc84\uc804\uacfc \uac00\uaca9\uc740 2026\ub144 9\uc6d4 \uae30\uc900 \uac80\ud1a0 \uc790\ub8cc\uc774\ubbc0\ub85c \uc801\uc6a9 \uc804\uc5d0 \ub2e4\uc2dc \ud655\uc778\ud574 \uc8fc\uc138\uc694. \ubb38\uc11c \uc2a4\uc2a4\ub85c\ub3c4 \ub9ce\uc740 \uc608\uc81c\ub97c \uc2e4\uc81c \ud074\ub7ec\uc2a4\ud130\uc5d0\uc11c \uc2e4\ud589\ud558\uc9c0 \uc54a\uc558\ub2e4\uace0 \ubc1d\ud788\uace0 \uc788\uc2b5\ub2c8\ub2e4.\n\n\uc9c8\ubb38 \uc788\uc73c\uc2dc\uba74 \ub9d0\uc500\ud574 \uc8fc\uc138\uc694. \ubc30\uce58, GPU, \ub9dd\ubd84\ub9ac \uac80\ud1a0, \ube44\uc6a9 \uc911 \uc5b4\ub514\ubd80\ud130 \uc774\uc57c\uae30\ud560\uae4c\uc694?\n\n[\ucd9c\ucc98]\n\u2022 D/README \uc9c0\uc6d0 \ubc84\uc804\u00b7\uac80\ud1a0 \ubc94\uc704, \uac01 D \ubb38\uc11c\uc758 \"\uacf5\uc2dd \ucc38\uace0 \uc790\ub8cc\"",
+    20: "[0.5min] [\uc694\uc57d]\n\u2022 4\uac1c \ube14\ub85d \uc804\uccb4 \ub9c8\ubb34\ub9ac\n\u2022 \ubaa9\ucc28\ub85c \ub3cc\uc544\uac00 \ud544\uc694\ud55c \ube14\ub85d\uc744 \ub2e4\uc2dc \ud655\uc778\n\n\uc624\ub298 \uc138\uc158 \ub4e4\uc5b4\uc8fc\uc154\uc11c \uac10\uc0ac\ud569\ub2c8\ub2e4. \ud544\uc694\ud55c \ubd80\ubd84\uc740 \ubaa9\ucc28\ub85c \ub3cc\uc544\uac00 \ub2e4\uc2dc \ud655\uc778\ud558\uc2dc\uae30 \ubc14\ub78d\ub2c8\ub2e4."
+  };
+  const deck = new SlideFramework({
+    logoSrc: "./common/pptx-theme/images/logo_1.png",
+    
+    footer: "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.",
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

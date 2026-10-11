@@ -113,18 +113,18 @@ remoteNetworkConfig:
 .text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="card-grid">
-  <div class="metric-card fragment fade-up" data-fragment-index="1"><strong class="text-accent">install</strong><div class="on-surface-muted">kubelet, containerd, SSM agent 등 의존성 설치</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="2"><strong class="text-accent">config check</strong><div class="on-surface-muted">로컬 NodeConfig 검사 (조인 시험 아님)</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="3"><strong class="text-accent">init</strong><div class="on-surface-muted">호스트 구성 + EKS 조인</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="4"><strong class="text-accent">upgrade</strong><div class="on-surface-muted">in-place 버전 변경 (중단 작업)</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="5"><strong class="text-accent">uninstall</strong><div class="on-surface-muted">구성 요소 제거 + SSM 등록 해제</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="6"><strong class="text-accent">debug</strong><div class="on-surface-muted">AWS/클러스터 연결·자격 증명 진단</div></div>
+<div class="card-grid" data-reveal="stagger" data-reveal-pace="fast">
+  <div class="metric-card"><strong class="text-accent">install</strong><div class="on-surface-muted">kubelet, containerd, SSM agent 등 의존성 설치</div></div>
+  <div class="metric-card"><strong class="text-accent">config check</strong><div class="on-surface-muted">로컬 NodeConfig 검사 (조인 시험 아님)</div></div>
+  <div class="metric-card"><strong class="text-accent">init</strong><div class="on-surface-muted">호스트 구성 + EKS 조인</div></div>
+  <div class="metric-card"><strong class="text-accent">upgrade</strong><div class="on-surface-muted">in-place 버전 변경 (중단 작업)</div></div>
+  <div class="metric-card"><strong class="text-accent">uninstall</strong><div class="on-surface-muted">구성 요소 제거 + SSM 등록 해제</div></div>
+  <div class="metric-card"><strong class="text-accent">debug</strong><div class="on-surface-muted">AWS/클러스터 연결·자격 증명 진단</div></div>
 </div>
-<div class="callout callout-info fragment fade-up" data-fragment-index="7"><strong class="text-info">v1.0.20</strong> — 저장소 <code>aws/eks-hybrid</code> (EC2용 amazon-eks-ami의 nodeadm과 다름). SSM 신규 설치·업그레이드는 <strong>1.0.19 이상</strong> 필요.</div>
-<div class="callout callout-warning fragment fade-up" data-fragment-index="8"><strong class="text-warning">없는 것</strong> — <code>upgrade --rollback</code>, <code>reset</code>, <code>init --dry-run</code>은 존재하지 않습니다.</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">v1.0.20</strong> — 저장소 <code>aws/eks-hybrid</code> (EC2용 amazon-eks-ami의 nodeadm과 다름). SSM 신규 설치·업그레이드는 <strong>1.0.19 이상</strong> 필요.</div>
+<div class="callout callout-warning fragment zoom-in" data-fragment-index="1"><strong class="text-warning">없는 것</strong> — <code>upgrade --rollback</code>, <code>reset</code>, <code>init --dry-run</code>은 존재하지 않습니다.</div>
 :::
 
 ```bash
@@ -142,7 +142,7 @@ sudo install -m 0755 "$STAGING_DIR/nodeadm" /usr/local/bin/nodeadm
 • rollback, reset, init --dry-run은 없다
 • releases/latest 대신 버전을 고정하고 checksum을 검증
 
-nodeadm 명령은 여섯 개입니다. install, config check, init, upgrade, uninstall, debug입니다.
+nodeadm 명령은 여섯 개입니다. install, config check, init, upgrade, uninstall, debug입니다. 제한망 설치는 별도 명령이 아니라 install과 init의 manifest-override, private-mode 옵션으로 처리하며 뒤에서 다룹니다.
 {cue: pause}
 자주 받는 질문이 롤백 명령이 있느냐, reset이 있느냐, 드라이런이 있느냐인데요, 세 가지 모두 없습니다. 업그레이드가 잘못되면 어떻게 하는지는 뒤에서 따로 말씀드리겠습니다.
 설치할 때는 최신 릴리스를 그냥 받지 마시고, 승인한 버전을 고정하고 체크섬을 대조한 뒤 설치하세요. SSM 공급자를 쓰신다면 1.0.19 이상이어야 합니다. 오래된 SSM 서명 키 문제 때문입니다.
@@ -155,16 +155,29 @@ nodeadm 명령은 여섯 개입니다. install, config check, init, upgrade, uni
 
 ---
 <!-- Slide 4: 부트스트랩 워크플로우 -->
-@type: timeline
+@type: content
 @title: 부트스트랩은 다섯 걸음
 
 ## 부트스트랩은 다섯 걸음
 
-1. **install** — 의존성 설치
-2. **config check** — NodeConfig 로컬 검사
-3. **init** — 호스트 구성 + EKS 조인
-4. **CNI** — 설치 전까지 NotReady 가능
-5. **Ready 검증** — UID·라벨·DNS·이미지·자격 증명
+:::html
+<style>
+.hn-boot { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-3); }
+.hn-boot-no { display: inline-block; min-width: 1.6em; margin-right: var(--space-2); text-align: center; border-radius: 50%; background: var(--accent); color: var(--surface-1); font-weight: var(--weight-bold); }
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="hn-boot">
+  <div class="card fragment fade-right" data-fragment-index="1"><span class="hn-boot-no">1</span><strong class="text-accent">install</strong><div class="on-surface-muted">kubelet, containerd 등 의존성 설치. 등록은 하지 않음</div></div>
+  <div class="card fragment fade-right" data-fragment-index="2"><span class="hn-boot-no">2</span><strong class="text-accent">config check</strong><div class="on-surface-muted">NodeConfig 로컬 검사. 통과해도 조인을 보증하지 않음 (dry-run 아님)</div></div>
+  <div class="card fragment fade-right" data-fragment-index="3"><span class="hn-boot-no">3</span><strong class="text-accent">init</strong><div class="on-surface-muted">호스트 구성, SSM 등록 등 자격 증명 설정, EKS 조인</div></div>
+  <div class="card fragment fade-right" data-fragment-index="4"><span class="hn-boot-no">4</span><strong class="text-warning">CNI</strong><div class="on-surface-muted">CNI 설치 전까지 Node가 NotReady인 것은 정상일 수 있음</div></div>
+  <div class="card fragment fade-right" data-fragment-index="5"><span class="hn-boot-no">5</span><strong class="text-success">Ready 검증</strong><div class="on-surface-muted">노드 UID 대조, 라벨, DNS, 이미지 풀, 자격 증명 갱신</div></div>
+</div>
+<div class="callout callout-info fragment zoom-in" data-fragment-index="6"><strong class="text-accent">Ready는 필요 조건일 뿐</strong> — 실제 워크로드까지 확인한 뒤에 서비스에 투입합니다.</div>
+:::
 
 :::notes
 {timing: 2min}
@@ -265,22 +278,26 @@ IAM Roles Anywhere 탭에는 nodeName과 인증서, 개인 키 경로가 추가�
 ---
 <!-- Slide 6: Bottlerocket -->
 @type: content
+@layout: two-column
 @title: Bottlerocket은 nodeadm이 없다
 
 ## Bottlerocket은 nodeadm이 없다
 
+::: left
 :::html
 <style>
 .text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="on-surface-muted fragment fade-up" data-fragment-index="1"><strong class="text-accent">범위</strong> VMware variant · x86_64 · OS 1.37.0+ (vSphere 전용) &nbsp;|&nbsp; <strong class="text-accent">방식</strong> settings.toml + <code>eks-hybrid-setup</code> bootstrap container, <code>guestinfo.userdata.encoding=base64</code></div>
+<div class="on-surface-muted fragment fade-up" data-fragment-index="1"><strong class="text-accent">범위</strong> VMware variant · x86_64 · OS 1.37.0+ (vSphere 전용)<br><strong class="text-accent">방식</strong> settings.toml + <code>eks-hybrid-setup</code> bootstrap container, <code>guestinfo.userdata.encoding=base64</code></div>
+<div class="on-surface-muted fragment fade-up" data-fragment-index="1">오른쪽은 공통 조각입니다. 공급자별 설정은 AWS 가이드에서 조합하고, <code>api-server</code>·CA는 자동 조회되지 않으므로 직접 기입합니다.</div>
 <div class="callout callout-warning fragment fade-up" data-fragment-index="2"><strong class="text-warning">주의</strong> — base64는 암호화가 아닙니다. 활성화 비밀과 개인 키가 들어갈 수 있으니 VM 구성·guestinfo를 보호하고, 등록된 VM을 템플릿으로 복제하지 않습니다.</div>
 :::
+:::
 
+::: right
 ```toml
-# 공통 조각만 표시. 공급자별 설정은 AWS 가이드에서 조합. api-server·CA는 자동 조회되지 않으므로 직접 기입
 [settings.kubernetes]
 cluster-name = "my-hybrid-cluster"
 api-server = "https://REPLACE_WITH_CLUSTER_ENDPOINT"
@@ -298,6 +315,7 @@ region = "ap-northeast-2"
 mode = "always"
 user-data = "REPLACE_WITH_BASE64_PROVIDER_BOOTSTRAP_INPUT"
 ```
+:::
 
 
 :::notes
@@ -333,13 +351,13 @@ VM을 처음 켜기 전에 settings.toml을 base64로 인코딩해서 guestinfo�
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
 .text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="card-grid">
-  <div class="callout callout-success fragment fade-up" data-fragment-index="1"><strong class="text-success">Ubuntu / AL2023</strong><div class="on-surface-muted"><code>distro</code> (기본)</div></div>
-  <div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">RHEL</strong><div class="on-surface-muted"><code>docker</code> 또는 <code>none</code> — <code>distro</code>는 무효</div></div>
-  <div class="callout callout-danger fragment fade-up" data-fragment-index="3"><strong class="text-danger">AL2023</strong><div class="on-surface-muted"><code>docker</code> 사용 불가</div></div>
-  <div class="callout callout-warning fragment fade-up" data-fragment-index="4"><strong class="text-warning">none</strong><div class="on-surface-muted">containerd 설치를 건너뜀 — 미리 설치·관리해야 함</div></div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="callout callout-success"><strong class="text-success">Ubuntu / AL2023</strong><div class="on-surface-muted"><code>distro</code> (기본)</div></div>
+  <div class="callout callout-info"><strong class="text-info">RHEL</strong><div class="on-surface-muted"><code>docker</code> 또는 <code>none</code> — <code>distro</code>는 무효</div></div>
+  <div class="callout callout-danger"><strong class="text-danger">AL2023</strong><div class="on-surface-muted"><code>docker</code> 사용 불가</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">none</strong><div class="on-surface-muted">containerd 설치를 건너뜀 — 미리 설치·관리해야 함</div></div>
 </div>
 :::
 
@@ -380,14 +398,14 @@ Kubernetes 버전은 새 노드라면 컨트롤 플레인의 현재 마이너를
 <style>
 .text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="card-grid">
-  <div class="metric-card fragment fade-up" data-fragment-index="1"><strong class="text-accent">Packer</strong><div class="on-surface-muted"><code>hybrid-nodes-template.pkr.hcl</code> — vSphere OVA, QEMU qcow2/raw</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="2"><strong class="text-accent">Ubuntu Autoinstall</strong><div class="on-surface-muted">Subiquity YAML(cloud-init). 디스크는 승인한 serial로만 지정</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="3"><strong class="text-accent">RHEL Kickstart</strong><div class="on-surface-muted"><code>ignoredisk</code>와 <code>clearpart</code>를 같은 디스크로 제한</div></div>
+<div class="card-grid" data-reveal="stagger">
+  <div class="metric-card"><strong class="text-accent">Packer</strong><div class="on-surface-muted"><code>hybrid-nodes-template.pkr.hcl</code> — vSphere OVA, QEMU qcow2/raw</div></div>
+  <div class="metric-card"><strong class="text-accent">Ubuntu Autoinstall</strong><div class="on-surface-muted">Subiquity YAML(cloud-init). 디스크는 승인한 serial로만 지정</div></div>
+  <div class="metric-card"><strong class="text-accent">RHEL Kickstart</strong><div class="on-surface-muted"><code>ignoredisk</code>와 <code>clearpart</code>를 같은 디스크로 제한</div></div>
 </div>
-<div class="callout callout-warning fragment fade-up" data-fragment-index="4"><strong class="text-warning">K8S_VERSION 검증</strong> — v1.0.20 템플릿은 1.26–1.31만 허용합니다. 템플릿 때문에 버전을 낮추지 말고 검토한 포크를 유지하세요.</div>
+<div class="callout callout-warning fragment zoom-in" data-fragment-index="1"><strong class="text-warning">K8S_VERSION 검증</strong> — v1.0.20 템플릿은 1.26–1.31만 허용합니다. 템플릿 때문에 버전을 낮추지 말고 검토한 포크를 유지하세요.</div>
 :::
 
 ```bash
@@ -469,7 +487,7 @@ helm install cilium oci://public.ecr.aws/eks/cilium/cilium \
 ```
 - **AWS 지원 범위는 AWS 유지 관리 빌드**(`oci://public.ecr.aws/eks/cilium/cilium`)
 - 공식 CNI 페이지: **1.17.x / 1.18.x** (예: 1.17.9-0, 1.18.3-0)
-- Gateway 문서는 VTEP 최소 버전으로 **1.19.2-1** 이상까지 언급
+- Hybrid Nodes Gateway를 쓰면 branch별 VTEP 최소 **1.17.13-1 · 1.18.8-1 · 1.19.2-1** — 위 예시 버전으로는 Gateway 불가
 - 1.18.3은 커널 요구로 **Ubuntu 20.04, RHEL 8 제외**
 - 업스트림 최신 차트를 임의로 쓰지 않습니다
 ::::
@@ -480,18 +498,18 @@ helm install cilium oci://public.ecr.aws/eks/cilium/cilium \
 • AWS가 지원하는 Cilium은 AWS 유지 관리 OCI 차트 (public.ecr.aws/eks/cilium/cilium)
 • agent와 operator 모두 compute-type=hybrid affinity로 하이브리드 노드에만 배치
 • cluster-pool IPAM, envoy 비활성, kubeProxyReplacement는 "false"
-• 공식 CNI 페이지는 1.17/1.18, Gateway 문서는 1.19.2-1+ 언급
+• 공식 CNI 페이지는 1.17/1.18, Gateway 사용 시 branch별 최소 1.17.13-1·1.18.8-1·1.19.2-1
 
 첫 탭은 agent affinity와 IPAM입니다. compute-type이 hybrid인 노드에만 agent를 올리고, 클라우드 노드는 기존 VPC CNI가 계속 관리합니다. Pod CIDR 리스트는 앞에서 remoteNetworkConfig에 넣은 값과 맞아야 하고, 노드/VPC/Service 대역과 겹치면 안 됩니다. 값은 최초 설치 전에 정하세요.
 {cue: pause}
 두 번째 탭은 operator 쪽입니다. operator에도 같은 affinity를 줍니다. envoy는 끄고 kubeProxyReplacement는 문자열 false입니다.
-세 번째 탭은 버전 이야기입니다. 공식 CNI 페이지는 아직 1.17과 1.18만 명시하고 있습니다. 반면 Gateway 문서는 VTEP 최소 버전으로 1.19.2-1을 언급합니다. 즉 1.19 AWS 빌드가 존재하지만 CNI 페이지에는 아직 반영되지 않은 상태로 보시면 됩니다. 업스트림 최신 Cilium이 자동으로 AWS 지원 대상이 되는 것은 아닙니다. 그리고 1.18.3은 커널 요구 때문에 Ubuntu 20.04와 RHEL 8을 명시적으로 제외합니다.
+세 번째 탭은 버전 이야기입니다. 공식 CNI 페이지는 아직 1.17과 1.18만 명시하고 있습니다. 반면 Gateway CNI 문서는 VTEP 기능의 branch별 최소 버전을 1.17.13-1, 1.18.8-1, 1.19.2-1로 제시합니다. CNI 페이지 예시인 1.17.9-0과 1.18.3-0은 이 최소 버전보다 낮으므로, Gateway를 쓸 계획이라면 처음부터 최소 버전 이상의 AWS 빌드를 선택하세요. 업스트림 최신 Cilium이 자동으로 AWS 지원 대상이 되는 것은 아닙니다. 그리고 1.18.3은 커널 요구 때문에 Ubuntu 20.04와 RHEL 8을 명시적으로 제외합니다.
 {cue: transition}
 IPAM의 마스크 값이 노드당 Pod 수를 결정합니다. 다음 슬라이드에서 보겠습니다.
 
 [출처]
 • D/04 "Cilium CNI" 섹션; https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html
-• 1.19.2-1 언급: Gateway 문서(D/10 기준 fact sheet)
+• Gateway 최소 버전: D/10 "Cilium VTEP 활성화"; https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html
 :::
 
 ---
@@ -506,9 +524,9 @@ IPAM의 마스크 값이 노드당 Pod 수를 결정합니다. 다음 슬라이�
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
 .text-success { color: var(--success); font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<table class="fragment fade-up" data-fragment-index="1">
+<table>
   <thead><tr><th>MaskSize</th><th>전체 IPv4</th><th>사용 가능 (−2 예약)</th><th>maxPods 산정 예</th></tr></thead>
   <tbody>
     <tr><td>/26</td><td>64</td><td>62</td><td>50</td></tr>
@@ -516,11 +534,11 @@ IPAM의 마스크 값이 노드당 Pod 수를 결정합니다. 다음 슬라이�
     <tr><td>/24</td><td>256</td><td>254</td><td>240</td></tr>
   </tbody>
 </table>
-<div class="card-grid">
-  <div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">AWS 공식 가이드</strong><div class="on-surface-muted">설치 후 <code>clusterPoolIPv4PodCIDRList</code>와 <code>MaskSize</code>를 변경하지 않는다</div></div>
-  <div class="callout callout-success fragment fade-up" data-fragment-index="3"><strong class="text-success">Cilium 문서 기준</strong><div class="on-surface-muted">기존 항목·MaskSize는 수정 금지. 확장은 <strong>새 CIDR 항목 추가</strong></div></div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="callout callout-info"><strong class="text-info">AWS 공식 가이드</strong><div class="on-surface-muted">설치 후 <code>clusterPoolIPv4PodCIDRList</code>와 <code>MaskSize</code>를 변경하지 않는다</div></div>
+  <div class="callout callout-success"><strong class="text-success">Cilium 문서 기준</strong><div class="on-surface-muted">기존 항목·MaskSize는 수정 금지. 확장은 <strong>새 CIDR 항목 추가</strong></div></div>
 </div>
-<div class="callout callout-warning fragment fade-up" data-fragment-index="4"><strong class="text-warning">산정 예일 뿐</strong> — maxPods 값은 검증된 권장값이 아닙니다. hostNetwork Pod, 데몬, CPU/메모리 여유를 함께 검토하세요.</div>
+<div class="callout callout-warning fragment fade-up" data-fragment-index="2"><strong class="text-warning">산정 예일 뿐</strong> — maxPods 값은 검증된 권장값이 아닙니다. hostNetwork Pod, 데몬, CPU/메모리 여유를 함께 검토하세요.</div>
 :::
 
 
@@ -562,12 +580,12 @@ kubectl -n kube-system get pods -o wide | grep cilium
 .text-success { color: var(--success); font-weight: var(--weight-bold); }
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
 <div class="card-grid">
   <div class="callout callout-success fragment fade-up" data-fragment-index="1"><strong class="text-success">자동 라벨</strong><div class="on-surface-muted"><code>eks.amazonaws.com/compute-type=hybrid</code> 하나뿐. <code>--node-labels</code>로 따로 넣을 필요 없음</div></div>
   <div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">추가 라벨</strong><div class="on-surface-muted">NodeConfig <code>kubelet.flags</code>의 <code>--node-labels=...</code></div></div>
-  <div class="callout callout-warning fragment fade-up" data-fragment-index="3"><strong class="text-warning">테인트</strong><div class="on-surface-muted">자동 부여 없음. 선택 사항이며 쓰면 워크로드·CNI에 toleration 필요</div></div>
+  <div class="callout callout-warning fragment zoom-in" data-fragment-index="3"><strong class="text-warning">테인트</strong><div class="on-surface-muted">자동 부여 없음. 선택 사항이며 쓰면 워크로드·CNI에 toleration 필요</div></div>
 </div>
 :::
 
@@ -740,7 +758,7 @@ kubelet 버전은 API 서버보다 새로울 수 없고, 최대 n-3까지 뒤처
 - 제한망 = **퍼블릭 인터넷은 제한**, 하지만 EKS 컨트롤 플레인과 자격 증명용 AWS 서비스 연결은 계속 필요
 - 물리적 단절(DDIL)은 Hybrid Nodes의 지원 운영 모델이 아님 — IAM Roles Anywhere도 CreateSession 호출이 필요
 - 온프레미스에서 S3에는 **Interface 엔드포인트** 사용 (gateway 엔드포인트는 온프레미스에서 직접 접근 불가)
-- 소프트웨어는 승인한 manifest를 자체 HTTPS 미러에 올려 사용
+- 소프트웨어는 승인한 manifest를 자체 미러에서 사용 — artifact와 manifest는 검토한 절차로 직접 준비 (nodeadm은 SigV4 서명 없는 HTTP(S)로 다운로드)
 ::::
 
 ::::tab "명령"
@@ -798,7 +816,7 @@ sudo journalctl -u kubelet --since '-15 min' --lines 200 --no-pager
 ```
 - 노드 IP가 EKS **remote node CIDR** 안에 있는가
 - DNS·라우팅·TCP 443 반환 경로, 의도한 Hybrid 역할, `HYBRID_LINUX` access entry
-- 엔드포인트를 public과 private 동시 활성화하지 않았는가 (join 실패 가능)
+- 엔드포인트가 "Public and Private"로 설정되지 않았는가 (public IP로 해석되어 join 실패 가능)
 - `eks:DescribeCluster` 권한 여부
 ::::
 
@@ -986,15 +1004,15 @@ trust anchor는 언제 바꿀까요? 같은 CA에서 leaf 인증서만 갱신한
 :::html
 <style>
 .text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-sm); word-break: break-all; }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="card-grid">
-  <div class="metric-card fragment fade-up" data-fragment-index="1"><strong class="text-accent">nodeadm 레퍼런스</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="2"><strong class="text-accent">자격 증명</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="3"><strong class="text-accent">Hybrid CNI</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="4"><strong class="text-accent">Bottlerocket</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="5"><strong class="text-accent">업그레이드</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-upgrade.html</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="6"><strong class="text-accent">nodeadm 소스</strong><div class="on-surface-muted">github.com/aws/eks-hybrid (v1.0.20)</div></div>
+<div class="card-grid" data-reveal="static">
+  <div class="metric-card"><strong class="text-accent">nodeadm 레퍼런스</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html</div></div>
+  <div class="metric-card"><strong class="text-accent">자격 증명</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html</div></div>
+  <div class="metric-card"><strong class="text-accent">Hybrid CNI</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html</div></div>
+  <div class="metric-card"><strong class="text-accent">Bottlerocket</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html</div></div>
+  <div class="metric-card"><strong class="text-accent">업그레이드</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-upgrade.html</div></div>
+  <div class="metric-card"><strong class="text-accent">nodeadm 소스</strong><div class="on-surface-muted">github.com/aws/eks-hybrid (v1.0.20)</div></div>
 </div>
 :::
 

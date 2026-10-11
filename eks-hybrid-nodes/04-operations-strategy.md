@@ -119,25 +119,27 @@ taint 탭에서 중요한 건, Hybrid taint가 자동으로 붙지 않는다는 
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
 .text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 .flow-h { margin: 0 0 var(--space-4); }
+.flow-h .flow-box { min-width: min-content; overflow-wrap: normal; }
+.hn-flow-sub { display: block; color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: break-word; }
 </style>
 <div class="flow-h">
-  <div class="flow-box fragment fade-up" data-fragment-index="1">온프레미스 용량 부족<br><span class="on-surface-muted">스케줄 불가 Pod</span></div>
-  <div class="flow-arrow">→</div>
-  <div class="flow-box fragment fade-up" data-fragment-index="2">Pod = Pending<br><span class="on-surface-muted">toleration 보유</span></div>
-  <div class="flow-arrow">→</div>
-  <div class="flow-box fragment fade-up" data-fragment-index="3">Karpenter NodePool<br><span class="on-surface-muted">requirements 매칭</span></div>
-  <div class="flow-arrow">→</div>
-  <div class="flow-box fragment fade-up" data-fragment-index="4">EC2 노드 생성<br><span class="on-surface-muted">cloud-burst-pool</span></div>
-  <div class="flow-arrow">→</div>
-  <div class="flow-box fragment fade-up" data-fragment-index="5">Pod 스케줄</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="1">온프레미스 용량 부족<br><span class="hn-flow-sub">스케줄 불가 Pod</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="2">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="2">Pod = Pending<br><span class="hn-flow-sub">toleration 보유</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="3">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="3">Karpenter NodePool<br><span class="hn-flow-sub">requirements 매칭</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="4">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="4">EC2 노드 생성<br><span class="hn-flow-sub">cloud-burst-pool</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="5">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="5">Pod 스케줄</div>
 </div>
-<div class="card-grid">
-  <div class="callout callout-warning fragment fade-up" data-fragment-index="6"><strong class="text-warning">자동 복귀 없음</strong><div class="on-surface-muted">온프레미스 용량이 돌아와도 실행 중인 cloud Pod는 자동으로 돌아오지 않습니다.</div></div>
-  <div class="callout callout-info fragment fade-up" data-fragment-index="7"><strong class="text-info">포화 감지기가 아님</strong><div class="on-surface-muted">Karpenter는 조건에 맞는 Pending Pod에 반응합니다. 온프레미스 슬롯을 먼저 채우는 것도 보장하지 않습니다.</div></div>
-  <div class="callout callout-danger fragment fade-up" data-fragment-index="8"><strong class="text-danger">버전 요구</strong><div class="on-surface-muted">Kubernetes 1.36은 Karpenter 1.13 이상이 필요합니다.</div></div>
-  <div class="callout callout-info fragment fade-up" data-fragment-index="9"><strong class="text-info">막힐 수 있는 곳</strong><div class="on-surface-muted">AWS quota, 인스턴스 가용성, subnet IP, IAM, 노드 bootstrap, 워크로드 의존성.</div></div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="6">
+  <div class="callout callout-warning"><strong class="text-warning">자동 복귀 없음</strong><div class="on-surface-muted">온프레미스 용량이 돌아와도 실행 중인 cloud Pod는 자동으로 돌아오지 않습니다.</div></div>
+  <div class="callout callout-info"><strong class="text-info">포화 감지기가 아님</strong><div class="on-surface-muted">Karpenter는 조건에 맞는 Pending Pod에 반응합니다. 온프레미스 슬롯을 먼저 채우는 것도 보장하지 않습니다.</div></div>
+  <div class="callout callout-danger"><strong class="text-danger">버전 요구</strong><div class="on-surface-muted">Kubernetes 1.36은 Karpenter 1.13 이상이 필요합니다.</div></div>
+  <div class="callout callout-info"><strong class="text-info">막힐 수 있는 곳</strong><div class="on-surface-muted">AWS quota, 인스턴스 가용성, subnet IP, IAM, 노드 bootstrap, 워크로드 의존성.</div></div>
 </div>
 :::
 
@@ -173,17 +175,17 @@ taint 탭에서 중요한 건, Hybrid taint가 자동으로 붙지 않는다는 
 .text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
 .text-success { color: var(--success); font-weight: var(--weight-bold); }
 .text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="card-grid">
-  <div class="metric-card fragment fade-up" data-fragment-index="1"><strong class="text-accent">1. 할당 상태</strong><div class="on-surface-muted">미할당 Pod가 할당된 Pod보다 먼저</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="2"><strong class="text-accent">2. Pod 단계</strong><div class="on-surface-muted">Pending, Unknown, Running 순서</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="3"><strong class="text-accent">3. Ready 여부</strong><div class="on-surface-muted">NotReady가 Ready보다 먼저</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="4"><strong class="text-success">4. deletion cost</strong><div class="on-surface-muted">그 뒤에야 낮은 값이 먼저 제거</div></div>
+<div class="card-grid fragment" data-reveal="stagger" data-reveal-anim="right" data-reveal-pace="slow" data-fragment-index="1">
+  <div class="metric-card"><strong class="text-accent">1. 할당 상태</strong><div class="on-surface-muted">미할당 Pod가 할당된 Pod보다 먼저</div></div>
+  <div class="metric-card"><strong class="text-accent">2. Pod 단계</strong><div class="on-surface-muted">Pending, Unknown, Running 순서</div></div>
+  <div class="metric-card"><strong class="text-accent">3. Ready 여부</strong><div class="on-surface-muted">NotReady가 Ready보다 먼저</div></div>
+  <div class="metric-card"><strong class="text-success">4. deletion cost</strong><div class="on-surface-muted">그 뒤에야 낮은 값이 먼저 제거</div></div>
 </div>
 <div class="card-grid">
-  <div class="callout callout-danger fragment fade-up" data-fragment-index="5"><strong class="text-danger">CREATE webhook은 비권장</strong><div class="on-surface-muted">CREATE 시점의 Pod에는 최종 노드(spec.nodeName)가 아직 없어 위치를 신뢰성 있게 알 수 없습니다.</div></div>
-  <div class="callout callout-success fragment fade-up" data-fragment-index="6"><strong class="text-success">대안: 스케줄 후 패치</strong><div class="on-surface-muted">바인딩 뒤 소유한 Pod 한 개에 annotation을 부여하고, UID, resourceVersion, nodeName을 test로 검사합니다.</div></div>
+  <div class="callout callout-danger fragment fade-up" data-fragment-index="2"><strong class="text-danger">CREATE webhook은 비권장</strong><div class="on-surface-muted">CREATE 시점의 Pod에는 최종 노드(spec.nodeName)가 아직 없어 위치를 신뢰성 있게 알 수 없습니다.</div></div>
+  <div class="callout callout-success fragment zoom-in" data-fragment-index="3"><strong class="text-success">대안: 스케줄 후 패치</strong><div class="on-surface-muted">바인딩 뒤 소유한 Pod 한 개에 annotation을 부여하고, UID, resourceVersion, nodeName을 test로 검사합니다.</div></div>
 </div>
 :::
 
@@ -227,13 +229,13 @@ controller.kubernetes.io/pod-deletion-cost annotation은 ReplicaSet을 줄일 �
 .text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
 .text-success { color: var(--success); font-weight: var(--weight-bold); }
 .text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="card-grid">
-  <div class="callout callout-success fragment fade-up" data-fragment-index="1"><strong class="text-success">DRA 권고</strong><div class="on-surface-muted">AWS는 신규 EKS 1.34 이상에 DRA를 권고합니다.</div></div>
-  <div class="callout callout-danger fragment fade-up" data-fragment-index="2"><strong class="text-danger">Auto Mode는 DRA 미지원</strong><div class="on-surface-muted">Auto Mode는 GPU device plugin을 자체 관리합니다.</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="3"><strong class="text-accent">확인한 버전</strong><div class="on-surface-muted">GPU Operator 26.7.0, DRA driver 0.5.0, device plugin 0.20.0</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="4"><strong class="text-accent">DRA 0.5.0 요구</strong><div class="on-surface-muted">K8s 1.34.2+, driver 565+, toolkit 1.18+, CDI. Operator 관리 DRA는 driver 580+</div></div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="callout callout-success"><strong class="text-success">DRA 권고</strong><div class="on-surface-muted">AWS는 신규 EKS 1.34 이상에 DRA를 권고합니다.</div></div>
+  <div class="callout callout-danger"><strong class="text-danger">Auto Mode는 DRA 미지원</strong><div class="on-surface-muted">Auto Mode는 GPU device plugin을 자체 관리합니다.</div></div>
+  <div class="metric-card"><strong class="text-accent">확인한 버전</strong><div class="on-surface-muted">GPU Operator 26.7.0, DRA driver 0.5.0, device plugin 0.20.0</div></div>
+  <div class="metric-card"><strong class="text-accent">DRA 0.5.0 요구</strong><div class="on-surface-muted">K8s 1.34.2+, driver 565+, toolkit 1.18+, CDI. Operator 관리 DRA는 driver 580+</div></div>
 </div>
 :::
 
@@ -337,10 +339,9 @@ metadata:
   namespace: monitoring
   labels:
     release: kube-prom
-spec:
+spec:  # selector, namespaceSelector 생략
   attachMetadata:
     node: true
-  # selector, namespaceSelector 생략
   endpoints:
   - port: http-metrics
     relabelings:
@@ -489,7 +490,7 @@ spec:
 
 ### BGP 광고
 ```yaml
-apiVersion: cilium.io/v2alpha1
+apiVersion: cilium.io/v2
 kind: CiliumBGPAdvertisement
 metadata:
   name: hybrid-service-advertisement
@@ -534,7 +535,7 @@ Cilium Ingress와 Gateway API는 L7 proxy가 필요합니다. 그러나 Hybrid N
 
 ## Pod Identity는 6단계 체크
 
-- [ ] 호스트 NodeConfig에 credentials file 활성화
+- [ ] (Ubuntu·RHEL·AL2023) 호스트 NodeConfig에 credentials file 활성화
   ```yaml
   spec:
     hybrid:
@@ -545,7 +546,7 @@ Cilium Ingress와 Gateway API는 L7 proxy가 필요합니다. 그러나 Hybrid N
   ```json
   {"daemonsets": {"hybrid": {"create": true}}}
   ```
-- [ ] add-on 버전 확인: 일반 OS 1.3.3-eksbuild.1 이상, Bottlerocket은 add-on 1.3.7-eksbuild.2 이상 + OS 1.39.0 이상
+- [ ] add-on 버전 확인: 일반 OS 1.3.3-eksbuild.1 이상. Bottlerocket은 add-on 1.3.7-eksbuild.2 + OS 1.39.0 이상이며, 1–3 대신 bootstrap 명령에 `--enable-credentials-file=true`, DaemonSet 키는 `hybrid-bottlerocket`
 - [ ] `eks-auth` 서비스 경로 + 노드 역할의 `eks-auth:AssumeRoleForPodIdentity` 권한
 - [ ] 워크로드별 Pod Identity association (namespace, ServiceAccount, IAM role 신뢰·권한)
 
@@ -579,18 +580,18 @@ add-on 쪽에서는 daemonsets.hybrid.create를 true로 설정합니다. 임시 
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
 .text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="card-grid">
-  <div class="metric-card fragment fade-up" data-fragment-index="1"><strong class="text-accent">Kubernetes API private endpoint</strong><div class="on-surface-muted">kubelet, Pod, 운영자가 TCP 443으로 접근하는 사설 진입점. control plane의 온프레미스행 연결을 없애지 않습니다.</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="2"><strong class="text-accent">EKS control-plane ENI</strong><div class="on-surface-muted">API server와 VPC, remote node/Pod network 사이의 연결 지점. DLP나 망연계 장비가 아닙니다.</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="3"><strong class="text-accent">interface VPC endpoint (PrivateLink)</strong><div class="on-surface-muted">eks, ssm, rolesanywhere 등 AWS 서비스 API용. kubelet 연결의 중계 서비스가 아닙니다.</div></div>
+<div class="card-grid" data-reveal="stagger" data-reveal-anim="zoom">
+  <div class="metric-card"><strong class="text-accent">Kubernetes API private endpoint</strong><div class="on-surface-muted">kubelet, Pod, 운영자가 TCP 443으로 접근하는 사설 진입점. control plane의 온프레미스행 연결을 없애지 않습니다.</div></div>
+  <div class="metric-card"><strong class="text-accent">EKS control-plane ENI</strong><div class="on-surface-muted">API server와 VPC, remote node/Pod network 사이의 연결 지점. DLP나 망연계 장비가 아닙니다.</div></div>
+  <div class="metric-card"><strong class="text-accent">interface VPC endpoint (PrivateLink)</strong><div class="on-surface-muted">eks, ssm, rolesanywhere 등 AWS 서비스 API용. kubelet 연결의 중계 서비스가 아닙니다.</div></div>
 </div>
 <div class="flow-v">
-  <div class="callout callout-info fragment fade-up" data-fragment-index="4"><strong class="text-info">세션 A: 노드가 시작</strong> kubelet → API (TCP 443)</div>
-  <div class="callout callout-warning fragment fade-up" data-fragment-index="5"><strong class="text-warning">세션 B: API server가 시작</strong> API → kubelet (TCP 10250), 사용 시 webhook 포트도 온프레미스 inbound</div>
+  <div class="callout callout-info fragment fade-right" data-fragment-index="1"><strong class="text-info">세션 A: 노드가 시작</strong> kubelet → API (TCP 443)</div>
+  <div class="callout callout-warning fragment fade-right" data-fragment-index="2"><strong class="text-warning">세션 B: API server가 시작</strong> API → kubelet (TCP 10250), 사용 시 webhook 포트도 온프레미스 inbound</div>
 </div>
-<div class="callout callout-danger fragment fade-up" data-fragment-index="6"><strong class="text-danger">private endpoint ≠ 망분리 준수</strong> 노드가 먼저 연결했다는 이유로 control plane발 연결이 사라지지 않습니다.</div>
+<div class="callout callout-danger fragment zoom-in" data-fragment-index="3"><strong class="text-danger">private endpoint ≠ 망분리 준수</strong> 노드가 먼저 연결했다는 이유로 control plane발 연결이 사라지지 않습니다.</div>
 :::
 
 
@@ -678,14 +679,14 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 .text-success { color: var(--success); font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
 .text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="card-grid">
-  <div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="text-info">AWS에 있는 것</strong><div class="on-surface-muted">Kubernetes API 객체 (Pod 사양, ConfigMap, Secret) 와 control-plane metadata. 노드 임시 자격 증명 발급도 AWS 서비스를 거칩니다.</div></div>
-  <div class="callout callout-success fragment fade-up" data-fragment-index="2"><strong class="text-success">온프레미스에 있는 것</strong><div class="on-surface-muted">워크로드 실행과 Pod가 처리하는 대용량 업무 데이터. 자동으로 AWS에 복제되지 않습니다.</div></div>
-  <div class="callout callout-warning fragment fade-up" data-fragment-index="3"><strong class="text-warning">경계를 넘을 수 있는 것</strong><div class="on-surface-muted">앱이 출력한 logs, 허가된 exec/cp/port-forward, 애플리케이션 egress, SSM 관리 경로.</div></div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="callout callout-info"><strong class="text-info">AWS에 있는 것</strong><div class="on-surface-muted">Kubernetes API 객체 (Pod 사양, ConfigMap, Secret) 와 control-plane metadata. 노드 임시 자격 증명 발급도 AWS 서비스를 거칩니다.</div></div>
+  <div class="callout callout-success"><strong class="text-success">온프레미스에 있는 것</strong><div class="on-surface-muted">워크로드 실행과 Pod가 처리하는 대용량 업무 데이터. 자동으로 AWS에 복제되지 않습니다.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">경계를 넘을 수 있는 것</strong><div class="on-surface-muted">앱이 출력한 logs, 허가된 exec/cp/port-forward, 애플리케이션 egress, SSM 관리 경로.</div></div>
 </div>
-<div class="callout callout-danger fragment fade-up" data-fragment-index="4"><strong class="text-danger">"충족" 대신 "검토 범위와 조건"</strong> node selector나 label만으로 데이터 주권·규정 준수가 입증되지 않습니다. 업무 데이터, API 객체, 로그, 이미지, 자격 증명을 각각 분류해 저장 위치와 조회 권한을 기록합니다.</div>
+<div class="callout callout-danger fragment zoom-in" data-fragment-index="2"><strong class="text-danger">"충족" 대신 "검토 범위와 조건"</strong> node selector나 label만으로 데이터 주권·규정 준수가 입증되지 않습니다. 업무 데이터, API 객체, 로그, 이미지, 자격 증명을 각각 분류해 저장 위치와 조회 권한을 기록합니다.</div>
 :::
 
 
@@ -737,7 +738,7 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 <style>
 .text-info { color: var(--info); font-weight: var(--weight-bold); }
 </style>
-<div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="text-info">경쟁 솔루션 비교는 의도적으로 싣지 않았습니다</strong> 출처를 확인하지 못한 과거 추정치는 폐기했습니다. 하드웨어, 전력, OS 구독, 인력, 이전 비용이 포함된 자체 TCO 모델로 비교하세요.</div>
+<div class="callout callout-info fragment zoom-in" data-fragment-index="1"><strong class="text-info">경쟁 솔루션 비교는 의도적으로 싣지 않았습니다</strong> 출처를 확인하지 못한 과거 추정치는 폐기했습니다. 하드웨어, 전력, OS 구독, 인력, 이전 비용이 포함된 자체 TCO 모델로 비교하세요.</div>
 :::
 
 
@@ -771,15 +772,15 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
 .text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="card-grid">
-  <div class="callout callout-success fragment fade-up" data-fragment-index="1"><strong class="text-success">Hybrid Nodes가 맞는 신호</strong><div class="on-surface-muted">온프레미스 GPU, 대규모 로컬 데이터, edge 처리, 기존 하드웨어 활용. AWS와 안정적인 사설 양방향 연결을 유지할 수 있는 경우.</div></div>
-  <div class="callout callout-warning fragment fade-up" data-fragment-index="2"><strong class="text-warning">먼저 확인할 제약</strong><div class="on-surface-muted">IPv4만 지원. 간헐적·단절(DDIL) 환경용이 아님. GovCloud(US)와 중국 리전 제외. OS·아키텍처·CNI 조합 확인.</div></div>
-  <div class="callout callout-danger fragment fade-up" data-fragment-index="3"><strong class="text-danger">맞지 않는 경우</strong><div class="on-surface-muted">완전 단절이 필요하거나 클라우드발 신규 연결이 전면 금지된 정책. AWS Region, Local Zone, Outposts, 타사 클라우드를 hybrid 인프라로 쓰는 것은 미지원.</div></div>
-  <div class="callout callout-info fragment fade-up" data-fragment-index="4"><strong class="text-info">운영 책임</strong><div class="on-surface-muted">Control plane은 AWS가 관리하지만 host, OS, 연결, workload 운영은 계속 사용자 책임입니다.</div></div>
+<div class="card-grid fragment" data-reveal="stagger" data-reveal-pace="slow" data-fragment-index="1">
+  <div class="callout callout-success"><strong class="text-success">Hybrid Nodes가 맞는 신호</strong><div class="on-surface-muted">온프레미스 GPU, 대규모 로컬 데이터, edge 처리, 기존 하드웨어 활용. AWS와 안정적인 사설 양방향 연결을 유지할 수 있는 경우.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">먼저 확인할 제약</strong><div class="on-surface-muted">IPv4만 지원. 간헐적·단절(DDIL) 환경용이 아님. GovCloud(US)와 중국 리전 제외. OS·아키텍처·CNI 조합 확인.</div></div>
+  <div class="callout callout-danger"><strong class="text-danger">맞지 않는 경우</strong><div class="on-surface-muted">완전 단절이 필요하거나 클라우드발 신규 연결이 전면 금지된 정책. AWS Region, Local Zone, Outposts, 타사 클라우드를 hybrid 인프라로 쓰는 것은 미지원.</div></div>
+  <div class="callout callout-info"><strong class="text-info">운영 책임</strong><div class="on-surface-muted">Control plane은 AWS가 관리하지만 host, OS, 연결, workload 운영은 계속 사용자 책임입니다.</div></div>
 </div>
-<div class="callout callout-info fragment fade-up" data-fragment-index="5"><strong class="text-info">대안과의 비교</strong> 동등한 가용성·지원 범위로 자체 TCO 모델을 만들어 비교하세요. 이 자료는 특정 대안의 우열을 주장하지 않습니다.</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">대안과의 비교</strong> 동등한 가용성·지원 범위로 자체 TCO 모델을 만들어 비교하세요. 이 자료는 특정 대안의 우열을 주장하지 않습니다.</div>
 :::
 
 
@@ -814,15 +815,15 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 .text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
 .text-success { color: var(--success); font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="card-grid">
-  <div class="metric-card fragment fade-up" data-fragment-index="1"><strong class="text-accent">1. 구조와 전제</strong><div class="on-surface-muted">AWS가 control plane을, 사용자가 host·연결·workload를 운영합니다. AWS와의 사설 양방향 연결이 필수입니다.</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="2"><strong class="text-accent">2. 네트워크</strong><div class="on-surface-muted">kubelet 10250과 webhook은 AWS에서 시작하는 inbound입니다. Gateway는 선택이며 직접 라우팅도 유효합니다.</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="3"><strong class="text-accent">3. 라이프사이클</strong><div class="on-surface-muted">nodeadm으로 설치·join·업그레이드합니다. in-place 업그레이드는 롤백이 아니라 호스트 교체를 우선합니다.</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="4"><strong class="text-success">4. 워크로드 배치</strong><div class="on-surface-muted">compute-type label로 배치하고, 버스팅은 Pending Pod가 트리거하며 자동 복귀는 없습니다.</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="5"><strong class="text-success">5. GPU와 관측성</strong><div class="on-surface-muted">GPU마다 할당 관리자는 하나, 신규 1.34 이상은 DRA 권고. hybrid 지표는 relabel로 구분합니다.</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="6"><strong class="text-warning">6. 보안과 비용</strong><div class="on-surface-muted">private endpoint는 망분리 준수의 증거가 아닙니다. 비용은 보고된 vCPU-hour 구간 과금입니다.</div></div>
+<div class="card-grid fragment" data-reveal="stagger" data-reveal-anim="zoom" data-reveal-pace="slow" data-fragment-index="1">
+  <div class="metric-card"><strong class="text-accent">1. 구조와 전제</strong><div class="on-surface-muted">AWS가 control plane을, 사용자가 host·연결·workload를 운영합니다. AWS와의 사설 양방향 연결이 필수입니다.</div></div>
+  <div class="metric-card"><strong class="text-accent">2. 네트워크</strong><div class="on-surface-muted">kubelet 10250과 webhook은 AWS에서 시작하는 inbound입니다. Gateway는 선택이며 직접 라우팅도 유효합니다.</div></div>
+  <div class="metric-card"><strong class="text-accent">3. 라이프사이클</strong><div class="on-surface-muted">nodeadm으로 설치·join·업그레이드합니다. rollback 명령이 없으므로 업그레이드·복구 모두 in-place보다 호스트 교체를 우선합니다.</div></div>
+  <div class="metric-card"><strong class="text-success">4. 워크로드 배치</strong><div class="on-surface-muted">compute-type label로 배치하고, 버스팅은 Pending Pod가 트리거하며 자동 복귀는 없습니다.</div></div>
+  <div class="metric-card"><strong class="text-success">5. GPU와 관측성</strong><div class="on-surface-muted">GPU마다 할당 관리자는 하나, 신규 1.34 이상은 DRA 권고. hybrid 지표는 relabel로 구분합니다.</div></div>
+  <div class="metric-card"><strong class="text-warning">6. 보안과 비용</strong><div class="on-surface-muted">private endpoint는 망분리 준수의 증거가 아닙니다. 비용은 보고된 vCPU-hour 구간 과금입니다.</div></div>
 </div>
 :::
 
@@ -911,14 +912,14 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 <style>
 .text-accent { color: var(--accent); font-weight: var(--weight-bold); }
 .text-info   { color: var(--info);   font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="card-grid">
-  <div class="metric-card fragment fade-up" data-fragment-index="1"><strong class="text-accent">AWS 공식 문서</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/<br>hybrid-nodes-overview.html<br>hybrid-nodes-networking.html<br>hybrid-nodes-add-ons.html<br>hybrid-nodes-webhooks.html<br>hybrid-nodes-gateway-cni.html</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="2"><strong class="text-accent">GPU</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/<br>device-management-nvidia.html<br>NVIDIA GPU Operator 문서 (platform-support)</div></div>
-  <div class="metric-card fragment fade-up" data-fragment-index="3"><strong class="text-accent">비용·스케줄링</strong><div class="on-surface-muted">aws.amazon.com/eks/pricing/<br>karpenter.sh/docs/upgrading/compatibility/<br>kubernetes.io ReplicaSet pod-deletion-cost</div></div>
+<div class="card-grid" data-reveal="static">
+  <div class="metric-card"><strong class="text-accent">AWS 공식 문서</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/<br>hybrid-nodes-overview.html<br>hybrid-nodes-networking.html<br>hybrid-nodes-add-ons.html<br>hybrid-nodes-webhooks.html<br>hybrid-nodes-gateway-cni.html</div></div>
+  <div class="metric-card"><strong class="text-accent">GPU</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/<br>device-management-nvidia.html<br>NVIDIA GPU Operator 문서 (platform-support)</div></div>
+  <div class="metric-card"><strong class="text-accent">비용·스케줄링</strong><div class="on-surface-muted">aws.amazon.com/eks/pricing/<br>karpenter.sh/docs/upgrading/compatibility/<br>kubernetes.io ReplicaSet pod-deletion-cost</div></div>
 </div>
-<div class="callout callout-info fragment fade-up" data-fragment-index="4"><strong class="text-info">Q&A</strong> 이 자료의 예제는 검토 기준(EKS 1.36, nodeadm 1.0.20)이며 대부분 실제 클러스터에서 실행한 결과가 아닙니다. 적용 전 최신 AWS 문서로 지원 조합을 확인하세요.</div>
+<div class="callout callout-info fragment zoom-in" data-fragment-index="1"><strong class="text-info">Q&A</strong> 이 자료의 예제는 검토 기준(EKS 1.36, nodeadm 1.0.20)이며 대부분 실제 클러스터에서 실행한 결과가 아닙니다. 적용 전 최신 AWS 문서로 지원 조합을 확인하세요.</div>
 :::
 
 

@@ -17,7 +17,7 @@
 <body>
 <div class="slide-deck theme-dark">
 <div class="slide theme-dark" data-remarp-id="s0" style="background:linear-gradient(135deg, #16212f 0%, #0f1b2a 55%, #14243a 100%); padding:0; overflow:hidden;">
-  <div style="position:absolute; top:-20%; right:-10%; width:60%; height:80%; background:radial-gradient(ellipse, rgba(255,153,0,0.10) 0%, transparent 70%); pointer-events:none;"></div>
+  <div style="position:absolute; top:0; right:0; width:50%; height:60%; background:radial-gradient(ellipse, rgba(255,153,0,0.10) 0%, transparent 70%); pointer-events:none;"></div>
   <div style="position:absolute; left:5%; top:42%; width:80px; height:3px; background:linear-gradient(90deg, var(--accent, #ff9900), rgba(255,153,0,0.25)); border-radius:2px;"></div>
   <h1 style="position:absolute; left:5%; top:45%; font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:60%; margin:0;">EKS Hybrid Nodes</h1>
   <p style="position:absolute; left:5%; top:60%; font-size:1.3rem; color:rgba(255,255,255,0.7); width:60%; margin:0;">온프레미스를 EKS로 확장하는 가이드</p>
@@ -103,30 +103,30 @@
     <p><!-- Slide 3: 온프렘 K8s 운영의 현실 --></p>
 <style>
 .text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); word-break: keep-all; overflow-wrap: anywhere; }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="card-grid">
-  <div class="card fragment fade-up" data-fragment-index="1">
+<div class="card-grid" data-reveal="stagger">
+  <div class="card">
     <strong class="text-accent">컨트롤 플레인 직접 운영</strong>
     <div class="on-surface-muted">etcd 백업·복구, API server 가용성, 인증서 갱신을 팀이 직접 책임</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="2">
+  <div class="card">
     <strong class="text-accent">버전 업그레이드 부담</strong>
     <div class="on-surface-muted">마이너 버전마다 컨트롤 플레인과 노드를 순서대로 올려야 하고, 실패 시 영향 범위가 큼</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="3">
+  <div class="card">
     <strong class="text-accent">클러스터 파편화</strong>
     <div class="on-surface-muted">클라우드와 온프렘이 서로 다른 도구·정책·버전으로 따로 운영되기 쉬움</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="4">
+  <div class="card">
     <strong class="text-accent">인증·감사 이원화</strong>
     <div class="on-surface-muted">IAM 기반 클라우드 권한 체계와 온프렘 인증 체계를 각각 관리</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="5">
+  <div class="card">
     <strong class="text-accent">GPU·데이터 근접성</strong>
     <div class="on-surface-muted">기존 하드웨어와 대규모 로컬 데이터 때문에 워크로드를 클라우드로 옮기기 어려움</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="6">
+  <div class="card">
     <strong class="text-accent">가시성 도구 분산</strong>
     <div class="on-surface-muted">모니터링·로깅이 환경별로 나뉘어 한 화면에서 보기 어려움</div>
   </div>
@@ -139,7 +139,7 @@
   <div class="slide-body" data-remarp-id="s3-body">
     <p><!-- Slide 4: Hybrid/Edge 포트폴리오 비교 --></p>
 <table><thead><tr><th>옵션</th><th>컨트롤 플레인</th><th>워커 노드</th><th>인프라 소유</th></tr></thead><tbody><tr><td>EKS (클라우드)</td><td>AWS 관리</td><td>AWS Region의 컴퓨팅</td><td>AWS</td></tr><tr><td>EKS on Local Zones</td><td>AWS 관리 (Region)</td><td>Local Zone의 AWS 인프라</td><td>AWS</td></tr><tr><td>EKS on Outposts</td><td>확장 클러스터는 Region, 로컬 클러스터는 Outposts에서 AWS 관리</td><td>고객 시설에 설치된 AWS 인프라</td><td>AWS 제공</td></tr><tr><td>EKS Anywhere</td><td>고객이 직접 운영</td><td>고객 인프라</td><td>고객</td></tr><tr><td>EKS Hybrid Nodes</td><td>AWS 관리 (EKS)</td><td>고객 소유 온프레미스·엣지 호스트</td><td>고객</td></tr></tbody></table>
-<div class="callout callout-info fragment fade-up" data-fragment-index="1">
+<div class="callout callout-info fragment zoom-in" data-fragment-index="1">
   Local Zone·Outposts·다른 클라우드의 머신을 <strong>hybrid node 인프라로 등록하는 것은 지원하지 않습니다.</strong> 이 비교는 개념 수준이며, 상세 지원 범위는 각 서비스의 공식 문서로 확인하세요.
 </div>
   </div>
@@ -150,30 +150,30 @@
   <div class="slide-body" data-remarp-id="s4-body">
     <p><!-- Slide 5: EKS Hybrid Nodes란 --></p>
 <style>
-.hn-split { display: grid; grid-template-columns: 1fr 1.1fr; gap: var(--space-4); align-items: center; }
+.hn-split-img { display: grid; grid-template-columns: 1fr 1.1fr; gap: var(--space-4); align-items: center; }
 .hn-stack { display: flex; flex-direction: column; gap: var(--space-3); }
-.hn-split img { width: 100%; height: auto; }
+.hn-split-img img { width: 100%; height: auto; }
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
 .text-success { color: var(--success); font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); word-break: keep-all; overflow-wrap: anywhere; }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="hn-split">
-  <div class="hn-stack">
-    <div class="callout callout-info fragment fade-up" data-fragment-index="1">
+<div class="hn-split-img">
+  <div class="hn-stack fragment" data-reveal="stagger" data-reveal-anim="left" data-fragment-index="1">
+    <div class="callout callout-info">
       <strong class="text-info">What</strong>
       <div class="on-surface-muted">온프레미스·엣지 노드를 AWS 관리형 EKS 컨트롤 플레인에 연결하는 기능</div>
     </div>
-    <div class="callout callout-success fragment fade-up" data-fragment-index="2">
+    <div class="callout callout-success">
       <strong class="text-success">Why</strong>
       <div class="on-surface-muted">클라우드와 온프렘을 같은 EKS API, 같은 도구로 운영하고 컨트롤 플레인 운영 부담을 줄임</div>
     </div>
-    <div class="callout callout-warning fragment fade-up" data-fragment-index="3">
+    <div class="callout callout-warning">
       <strong class="text-warning">단, 책임은 남는다</strong>
       <div class="on-surface-muted">Host·OS·연결·워크로드 운영은 계속 고객 몫</div>
     </div>
   </div>
-  <div class="fragment fade-up" data-fragment-index="4">
+  <div class="fragment zoom-in" data-fragment-index="2">
     <img src="diagrams/hybrid-nodes-highlevel-network.png" alt="AWS 컨트롤 플레인 ENI와 온프레미스 하이브리드 노드를 연결하는 네트워크 개요">
   </div>
 </div>
@@ -189,30 +189,30 @@
 .hn-no { display: inline-block; min-width: 1.6em; margin-right: var(--space-2); text-align: center; border-radius: 50%; background: var(--accent); color: var(--surface-1); font-weight: var(--weight-bold); }
 .text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
 .text-success { color: var(--success); font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-sm); margin-top: var(--space-2); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
 <div class="hn-steps">
-  <div class="card fragment fade-up" data-fragment-index="1">
+  <div class="card fragment fade-right" data-fragment-index="1">
     <span class="hn-no">1</span><strong class="text-accent">nodeadm install · init</strong>
     <div class="on-surface-muted">의존성 설치와 구성. nodeadm은 상시 에이전트가 아닌 설치/bootstrap/upgrade CLI</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="2">
+  <div class="card fragment fade-right" data-fragment-index="2">
     <span class="hn-no">2</span><strong class="text-accent">자격 증명 획득</strong>
     <div class="on-surface-muted">SSM 또는 IAM Roles Anywhere로 임시 자격 증명 확보 (AWS 연결 필요)</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="3">
+  <div class="card fragment fade-right" data-fragment-index="3">
     <span class="hn-no">3</span><strong class="text-accent">kubelet 기동</strong>
     <div class="on-surface-muted">label eks.amazonaws.com/compute-type=hybrid 자동 부여, taint는 자동 아님</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="4">
+  <div class="card fragment fade-right" data-fragment-index="4">
     <span class="hn-no">4</span><strong class="text-accent">EKS API 인증</strong>
     <div class="on-surface-muted">Node IAM role의 HYBRID_LINUX access entry로 system:node 신원 매핑</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="5">
+  <div class="card fragment fade-right" data-fragment-index="5">
     <span class="hn-no">5</span><strong class="text-accent">CNI 설치</strong>
     <div class="on-surface-muted">Cilium 또는 Calico 필요. VPC CNI는 hybrid node를 관리하지 않음</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="6">
+  <div class="card fragment fade-right" data-fragment-index="6">
     <span class="hn-no">6</span><strong class="text-success">Ready</strong>
     <div class="on-surface-muted">Pod 스케줄 가능. Pod Identity 등 add-on은 별도 구성</div>
   </div>
@@ -229,10 +229,10 @@
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
 .text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); word-break: keep-all; overflow-wrap: anywhere; }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
 <div class="hn-two">
-  <div class="card fragment fade-up" data-fragment-index="1">
+  <div class="card fragment fade-right" data-fragment-index="1">
     <strong class="text-info">AWS 책임</strong>
     <ul class="on-surface-muted">
       <li>EKS API server, etcd, scheduler, controller</li>
@@ -240,7 +240,7 @@
       <li>컨트롤 플레인 가용성 관리</li>
     </ul>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="2">
+  <div class="card fragment fade-left" data-fragment-index="2">
     <strong class="text-warning">고객 책임</strong>
     <ul class="on-surface-muted">
       <li>Host, OS, 보안 패치, kubelet·containerd 운영</li>
@@ -249,7 +249,7 @@
     </ul>
   </div>
 </div>
-<div class="callout callout-danger fragment fade-up" data-fragment-index="3">
+<div class="callout callout-danger fragment zoom-in" data-fragment-index="3">
   <strong class="text-danger">데이터 경계 주의</strong> — Secrets, Kubernetes 객체, 로그 등 컨트롤 플레인 데이터는 AWS에 저장됩니다. Private endpoint를 쓴다고 망분리 규정 준수가 입증되지는 않으며, Direct Connect 자체는 기본 암호화를 제공하지 않습니다.
 </div>
   </div>
@@ -262,30 +262,30 @@
 <style>
 .text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); word-break: keep-all; overflow-wrap: anywhere; }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="card-grid">
-  <div class="card fragment fade-up" data-fragment-index="1">
+<div class="card-grid fragment" data-reveal="stagger" data-reveal-anim="zoom" data-reveal-pace="slow" data-fragment-index="1">
+  <div class="card">
     <strong class="text-accent">IPv4 전용</strong>
     <div class="on-surface-muted">Remote node·Pod CIDR은 RFC1918 또는 CGNAT(100.64.0.0/10)이며 VPC·service CIDR과 겹치면 안 됨</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="2">
+  <div class="card">
     <strong class="text-accent">CIDR 개수 상한</strong>
     <div class="on-surface-muted">클러스터당 remote node CIDR 15개, remote Pod CIDR 15개까지. 기존 클러스터에도 추가 가능</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="3">
+  <div class="card">
     <strong class="text-accent">연결형 환경 전제</strong>
     <div class="on-surface-muted">AWS와 안정적인 private 양방향 연결 필요. 단절·간헐 연결(DDIL) 용도 아님</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="4">
+  <div class="card">
     <strong class="text-accent">권장 연결 품질</strong>
     <div class="on-surface-muted">일반 권장: 100 Mbps 이상, RTT 200 ms 이하 (엄격한 최소값은 아님)</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="5">
-    <strong class="text-warning">API endpoint는 하나만</strong>
-    <div class="on-surface-muted">Public과 private를 동시에 켜면 VPC 밖 노드의 join이 실패할 수 있어 AWS는 하나만 권장</div>
+  <div class="card">
+    <strong class="text-warning">API endpoint는 하나만 권장</strong>
+    <div class="on-surface-muted">Public-only 또는 Private-only 권장. "Public and Private"는 VPC 밖 노드에서 endpoint가 public IP로 해석되어 join이 실패할 수 있음</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="6">
+  <div class="card">
     <strong class="text-warning">노드는 유휴여도 과금</strong>
     <div class="on-surface-muted">Join부터 제거까지 vCPU-hour로 과금. Workload가 idle이어도 자동 중단되지 않음</div>
   </div>
@@ -309,7 +309,7 @@
 <table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody><tr><td>K8s 버전</td><td>EKS와 동일한 버전 지원 (기준일 2026-10-07: 표준 1.34–1.37, 확장 1.31–1.33)</td></tr><tr><td>nodeadm</td><td>현재 v1.0.20, SSM 사용 시 <strong>1.0.19 이상</strong> 필요</td></tr><tr><td>설치 권장</td><td><code>releases/latest</code> 대신 릴리스를 고정하고 checksum 검증</td></tr><tr><td>리전</td><td>GovCloud (US)·중국 리전을 제외한 모든 AWS 리전</td></tr></tbody></table>
 </div>
     <div class="tab-content" data-tab="cni-cilium">
-<table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody><tr><td>AWS 지원 범위</td><td>AWS 빌드 <code>oci://public.ecr.aws/eks/cilium/cilium</code></td></tr><tr><td>공식 CNI 페이지</td><td>v1.17.x, v1.18.x 명시 (Gateway 문서는 1.19.2-1+ 언급)</td></tr><tr><td>커널</td><td>Cilium 1.18.3은 kernel 5.10+ 필요 → Ubuntu 20.04, RHEL 8 미지원</td></tr><tr><td>주의</td><td>업스트림 최신 Cilium이 자동으로 AWS 지원 대상은 아님</td></tr><tr><td>지원 범위</td><td>IPv4, VXLAN, Cluster Scope IPAM 등</td></tr></tbody></table>
+<table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody><tr><td>AWS 지원 범위</td><td>AWS 빌드 <code>oci://public.ecr.aws/eks/cilium/cilium</code></td></tr><tr><td>공식 CNI 페이지</td><td>v1.17.x, v1.18.x 명시 (Gateway 사용 시 최소 1.17.13-1 · 1.18.8-1 · 1.19.2-1)</td></tr><tr><td>커널</td><td>Cilium 1.18.3은 kernel 5.10+ 필요 → Ubuntu 20.04, RHEL 8 미지원</td></tr><tr><td>주의</td><td>업스트림 최신 Cilium이 자동으로 AWS 지원 대상은 아님</td></tr><tr><td>지원 범위</td><td>IPv4, VXLAN, Cluster Scope IPAM 등</td></tr></tbody></table>
 </div>
   </div>
 </div>
@@ -324,7 +324,7 @@
 .text-success { color: var(--success); font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
 .text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); word-break: keep-all; overflow-wrap: anywhere; }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
 <div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
   <button class="tab-btn active">SSM hybrid activation</button>
@@ -332,11 +332,11 @@
   <button class="tab-btn">공통 주의</button>
 </div>
 <div class="tc">
-  <div class="card-grid">
-    <div class="card fragment fade-up" data-fragment-index="1"><strong class="text-accent">세션 수명</strong><div class="on-surface-muted">고정 1시간, SSM이 자동 갱신</div></div>
-    <div class="card fragment fade-up" data-fragment-index="2"><strong class="text-accent">Activation</strong><div class="on-surface-muted">기본 24시간, 최대 30일, RegistrationLimit 1–1000</div></div>
-    <div class="card fragment fade-up" data-fragment-index="3"><strong class="text-accent">노드 이름</strong><div class="on-surface-muted">SSM이 생성하는 mi-... 이름</div></div>
-    <div class="card fragment fade-up" data-fragment-index="4"><strong class="text-accent">언제 선택</strong><div class="on-surface-muted">기존 PKI가 없고 간단한 등록이 필요할 때</div></div>
+  <div class="card-grid" data-reveal="static">
+    <div class="card"><strong class="text-accent">세션 수명</strong><div class="on-surface-muted">고정 1시간, SSM이 자동 갱신</div></div>
+    <div class="card"><strong class="text-accent">Activation</strong><div class="on-surface-muted">기본 24시간, 최대 30일, RegistrationLimit 1–1000</div></div>
+    <div class="card"><strong class="text-accent">노드 이름</strong><div class="on-surface-muted">SSM이 생성하는 mi-... 이름</div></div>
+    <div class="card"><strong class="text-accent">언제 선택</strong><div class="on-surface-muted">기존 PKI가 없고 간단한 등록이 필요할 때</div></div>
   </div>
 </div>
 <div class="tc" hidden>
@@ -366,10 +366,10 @@
 <style>
 .hn-price-notes { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-3); }
 </style>
-<div class="hn-price-notes">
-  <div class="callout callout-info fragment fade-up" data-fragment-index="1">노드가 <strong>join된 시점부터 제거될 때까지</strong> 과금되며 workload가 idle이어도 요금은 유지됩니다.</div>
-  <div class="callout callout-warning fragment fade-up" data-fragment-index="2">Hyperthreading된 bare-metal core는 vCPU 2개로 보고될 수 있습니다. <strong>머신당 32 vCPU 초과</strong> 시 account team과 상담하세요.</div>
-  <div class="callout callout-danger fragment fade-up" data-fragment-index="3">모든 사용량에 적용되는 고정 요금이 아닙니다. 클러스터 요금, 네트워크, 로그, 스토리지, OS 요금은 별도입니다.</div>
+<div class="hn-price-notes fragment" data-reveal="stagger" data-reveal-anim="right" data-fragment-index="1">
+  <div class="callout callout-info">노드가 <strong>join된 시점부터 제거될 때까지</strong> 과금되며 workload가 idle이어도 요금은 유지됩니다.</div>
+  <div class="callout callout-warning">Hyperthreading된 bare-metal core는 vCPU 2개로 보고될 수 있습니다. <strong>머신당 32 vCPU 초과</strong> 시 account team과 상담하세요.</div>
+  <div class="callout callout-danger">모든 사용량에 적용되는 고정 요금이 아닙니다. 클러스터 요금, 네트워크, 로그, 스토리지, OS 요금은 별도입니다.</div>
 </div>
   </div>
 </div>
@@ -382,9 +382,16 @@
 .hn-calc { display: flex; flex-direction: column; gap: var(--space-3); }
 .hn-controls { display: flex; flex-direction: column; gap: var(--space-2); }
 .hn-row { display: grid; grid-template-columns: 8rem 1fr; align-items: center; gap: var(--space-3); }
-.hn-row label { color: var(--on-surface-muted); }
+.hn-row label { color: var(--text-secondary); }
 .hn-presets { display: flex; gap: var(--space-2); }
-.hn-break { color: var(--on-surface-muted); font-size: var(--text-sm); }
+.hn-presets .btn { color: var(--on-surface); }
+.hn-smt { display: flex; align-items: center; gap: var(--space-3); }
+.hn-smt label { display: inline-flex; align-items: center; gap: var(--space-2); }
+.hn-smt input { accent-color: var(--accent); }
+.hn-calc .slider-value { min-width: 6rem; }
+.hn-calc .metric-value { font-size: var(--fs-subtitle); white-space: nowrap; }
+.hn-calc .callout-warning { color: var(--on-surface); background: color-mix(in srgb, var(--warning) 12%, var(--surface-1)); }
+.hn-break { color: var(--text-secondary); font-size: var(--fs-caption); }
 </style>
 <div class="hn-calc">
   <div class="hn-controls">
@@ -396,27 +403,36 @@
       </div>
     </div>
     <div class="hn-row">
-      <label for="hn-vcpu">노드당 vCPU</label>
+      <label for="hn-cores">CPU 코어/노드</label>
       <div class="slider-container">
-        <input type="range" id="hn-vcpu" min="2" max="32" step="2" value="32">
-        <span class="slider-value" id="hn-vcpu-v">32</span>
+        <input type="range" id="hn-cores" min="32" max="216" step="8" value="128" aria-describedby="hn-core-guide">
+        <span class="slider-value" id="hn-cores-v">128코어</span>
       </div>
     </div>
+    <div class="hn-row">
+      <label for="hn-smt">SMT / HT</label>
+      <div class="hn-smt">
+        <label><input type="checkbox" id="hn-smt" checked> 코어당 2 vCPU</label>
+        <span class="hn-break" id="hn-vcpu-v" aria-live="polite">과금 기준: 256 vCPU/노드</span>
+      </div>
+    </div>
+    <div class="hn-break" id="hn-core-guide">GPU 서버 가정: 물리 CPU 32~216코어 · 기본 128코어 · SMT 해제 시 코어당 1 vCPU</div>
     <div class="hn-presets">
-      <button class="btn btn-sm" id="hn-p10">10 노드 × 32</button>
-      <button class="btn btn-sm" id="hn-p50">50 노드 × 32</button>
-      <button class="btn btn-sm" id="hn-p100">100 노드 × 32</button>
+      <button class="btn btn-sm" id="hn-p10">10 GPU 노드</button>
+      <button class="btn btn-sm" id="hn-p50">50 GPU 노드</button>
+      <button class="btn btn-sm" id="hn-p100">100 GPU 노드</button>
     </div>
   </div>
-  <div class="card-grid fragment fade-up" data-fragment-index="1">
+  <div class="card-grid">
     <div class="metric-card"><div class="metric-value" id="hn-hours">-</div><div class="metric-label">월 vCPU-hours</div></div>
     <div class="metric-card"><div class="metric-value" id="hn-month">-</div><div class="metric-label">월 노드 요금</div></div>
     <div class="metric-card"><div class="metric-value" id="hn-year">-</div><div class="metric-label">연환산 노드 요금</div></div>
     <div class="metric-card"><div class="metric-value" id="hn-year-cl">-</div><div class="metric-label">연환산 + 클러스터 1개</div></div>
   </div>
   <div class="hn-break" id="hn-break"></div>
-  <div class="callout callout-warning fragment fade-up" data-fragment-index="2">
-    <strong>추정치입니다.</strong> 가정: 월 730시간, 동일 리전·계정 합산, 같은 월을 12번 반복한 연환산. 마지막 카드는 기본 tier 표준 지원 클러스터 1개($0.10/시간 × 730 × 12 = $876)만 더했으며, 네트워크·로그·스토리지·EC2·OS·하드웨어·인력 비용은 제외입니다.
+  <div class="hn-break">공개 요율 기반 계산 · 32 vCPU/머신 초과는 account team에 요금 확인 · 실제 노드가 보고한 CPU 수 기준</div>
+  <div class="callout callout-warning fragment fade-up" data-fragment-index="1">
+    <strong>추정치입니다.</strong> 월 730시간, 동일 리전·계정 합산, 같은 월을 12번 반복한 연환산입니다. 마지막 카드는 표준 지원 클러스터 1개($876/년)를 더합니다. GPU 구매·전력·네트워크·로그·스토리지·EC2·OS·인력 비용은 제외입니다.
   </div>
 </div>
   </div>
@@ -486,7 +502,7 @@
       <div class="quiz-question">Q4: 클러스터 API endpoint 설정으로 옳은 것은?</div>
       <div class="quiz-options">
         <button class="quiz-option" data-correct="false">Public과 private를 모두 켜는 것이 필수다</button>
-<button class="quiz-option" data-correct="true">둘 다 켜면 VPC 밖 노드의 join이 실패할 수 있어 하나만 권장된다</button>
+<button class="quiz-option" data-correct="true">Public-only 또는 Private-only가 권장이며, 둘 다 켜면 join이 실패할 수 있다</button>
 <button class="quiz-option" data-correct="false">Public endpoint를 쓰면 control plane에서 kubelet으로의 private 연결이 필요 없다</button>
       </div>
       <div class="quiz-feedback"></div>
@@ -500,30 +516,30 @@
     <p><!-- Slide 16: References + Q&A --></p>
 <style>
 .text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-sm); word-break: break-all; }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="card-grid">
-  <div class="card fragment fade-up" data-fragment-index="1">
+<div class="card-grid" data-reveal="static">
+  <div class="card">
     <strong class="text-accent">Overview</strong>
     <div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="2">
+  <div class="card">
     <strong class="text-accent">nodeadm</strong>
     <div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="3">
+  <div class="card">
     <strong class="text-accent">Networking</strong>
     <div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="4">
+  <div class="card">
     <strong class="text-accent">OS · Credentials</strong>
     <div class="on-surface-muted">hybrid-nodes-os.html · hybrid-nodes-creds.html</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="5">
+  <div class="card">
     <strong class="text-accent">CNI · Troubleshooting</strong>
     <div class="on-surface-muted">hybrid-nodes-cni.html · hybrid-nodes-troubleshooting.html</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="6">
+  <div class="card">
     <strong class="text-accent">Pricing</strong>
     <div class="on-surface-muted">aws.amazon.com/eks/pricing</div>
   </div>
@@ -533,12 +549,12 @@
 
 <div class="slide" data-remarp-id="s16">
   <div class="center-content" style="height:100%; gap:1.5rem;">
-    <h1 style="font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:3rem; color:var(--text-primary);">Thank You</h1>
-    <p style="color:var(--text-secondary); font-size:1.1rem;">Block 1 — 개요 & 아키텍처 완료</p>
+    <h1 style="font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:calc(var(--fs-title) * 1.5); color:var(--text-primary);">Thank You</h1>
+    <p style="color:var(--text-secondary); font-size:var(--fs-subtitle);">Block 1 — 개요 & 아키텍처 완료</p>
     
     <div style="display:flex; gap:1rem; margin-top:1.5rem;">
-            <a href="toc.html" class="btn btn-sm" style="text-decoration:none;">← 목차로 돌아가기</a>
-      <a href="02-networking-gateway.html" class="btn btn-primary btn-sm" style="text-decoration:none;">다음: 네트워킹 & Gateway →</a>
+            <a href="toc.html" class="btn" style="text-decoration:none;">← 목차로 돌아가기</a>
+      <a href="02-networking-gateway.html" class="btn btn-primary" style="text-decoration:none;">다음: 네트워킹 & Gateway →</a>
     </div>
   </div>
 </div>
@@ -550,7 +566,8 @@
 <script>
 (function(){
 var NODES = document.getElementById('hn-nodes');
-var VCPU = document.getElementById('hn-vcpu');
+var CORES = document.getElementById('hn-cores');
+var SMT = document.getElementById('hn-smt');
 var TIERS = [[576000, 0.020], [576000, 0.014], [4608000, 0.010], [5760000, 0.008], [Infinity, 0.006]];
 var HOURS = 730;
 var CLUSTER_YEAR = 0.10 * HOURS * 12;
@@ -568,20 +585,23 @@ function calc(vcpuHours) {
 }
 function update() {
   var n = parseInt(NODES.value, 10);
-  var v = parseInt(VCPU.value, 10);
+  var cores = parseInt(CORES.value, 10);
+  var v = cores * (SMT.checked ? 2 : 1);
   var hours = n * v * HOURS;
   var r = calc(hours);
   document.getElementById('hn-nodes-v').textContent = n;
-  document.getElementById('hn-vcpu-v').textContent = v;
+  document.getElementById('hn-cores-v').textContent = cores + '코어';
+  document.getElementById('hn-vcpu-v').textContent = '과금 기준: ' + v + ' vCPU/노드';
   document.getElementById('hn-hours').textContent = fmtInt(hours);
   document.getElementById('hn-month').textContent = fmtUsd(r.total);
   document.getElementById('hn-year').textContent = fmtUsd(r.total * 12);
   document.getElementById('hn-year-cl').textContent = fmtUsd(r.total * 12 + CLUSTER_YEAR);
   document.getElementById('hn-break').textContent = '구간 계산: ' + r.parts.join(' + ');
 }
-function preset(n) { NODES.value = n; VCPU.value = 32; update(); }
+function preset(n) { NODES.value = n; update(); }
 NODES.addEventListener('input', update);
-VCPU.addEventListener('input', update);
+CORES.addEventListener('input', update);
+SMT.addEventListener('change', update);
 document.getElementById('hn-p10').addEventListener('click', function () { preset(10); });
 document.getElementById('hn-p50').addEventListener('click', function () { preset(50); });
 document.getElementById('hn-p100').addEventListener('click', function () { preset(100); });
@@ -598,14 +618,14 @@ update();
     5: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- Hybrid Nodes = \uace0\uac1d\uc774 \uc6b4\uc601\ud558\ub294 \uc628\ud504\ub808\ubbf8\uc2a4\u00b7\uc5e3\uc9c0 \ub178\ub4dc\ub97c AWS \uad00\ub9ac\ud615 EKS \ucee8\ud2b8\ub864 \ud50c\ub808\uc778\uc5d0 \uc5f0\uacb0\n- \uac19\uc740 \ud074\ub7ec\uc2a4\ud130\uc5d0 \uc77c\ubc18 AWS \ub178\ub4dc\uc640 hybrid node\ub97c \ud568\uaed8 \ub458 \uc218 \uc788\uc74c\n- Host, OS, \uc5f0\uacb0, \uc6cc\ud06c\ub85c\ub4dc \uc6b4\uc601 \ucc45\uc784\uc740 \uacc4\uc18d \uace0\uac1d\uc5d0\uac8c \uc788\uc74c\n- \uc548\uc815\uc801\uc778 private \uc591\ubc29\ud5a5 \uc5f0\uacb0\uc774 \uc804\uc81c\n\n\ud55c \ubb38\uc7a5\uc73c\ub85c \ub9d0\ud558\uba74, \ub0b4 \ub370\uc774\ud130\uc13c\ud130\uc758 \uc11c\ubc84\ub97c AWS\uac00 \uc6b4\uc601\ud558\ub294 EKS \ucee8\ud2b8\ub864 \ud50c\ub808\uc778\uc5d0 \ub178\ub4dc\ub85c \ubd99\uc774\ub294 \uae30\ub2a5\uc785\ub2c8\ub2e4. \uc624\ub978\ucabd \uadf8\ub9bc\ucc98\ub7fc AWS \ucabd\uc5d0\ub294 \ucee8\ud2b8\ub864 \ud50c\ub808\uc778\uacfc VPC\uac00 \uc788\uace0, \uc628\ud504\ub808\ubbf8\uc2a4\uc758 hybrid node\uac00 VPN\uc774\ub098 Direct Connect \uac19\uc740 private \uc5f0\uacb0\ub85c \uc774\uc5b4\uc9d1\ub2c8\ub2e4.\n\n\uadf8\ub9bc\uc5d0\ub294 \ub77c\uc6b0\ud130\uc640 \uac8c\uc774\ud2b8\uc6e8\uc774\uac00 \ubcf4\uc774\ub294\ub370, \uc774 \uc5f0\uacb0\uacfc \ub77c\uc6b0\ud305\uc740 \uace0\uac1d\uc774 \uc900\ube44\ud574\uc57c \ud569\ub2c8\ub2e4. Hybrid Nodes\uac00 \ub124\ud2b8\uc6cc\ud06c\ub97c \uc790\ub3d9\uc73c\ub85c \ub9cc\ub4e4\uc5b4\uc8fc\uc9c0\ub294 \uc54a\uc2b5\ub2c8\ub2e4. \uc774 \ubd80\ubd84\uc740 Block 2\uc5d0\uc11c \uc790\uc138\ud788 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: kubernetes-docs/ko/eks-hybrid-nodes/README.md \uac1c\uc694 \ubc0f diagrams/hybrid-nodes-highlevel-network.png (\ub0b4\uc6a9\uc774 fact sheet\uc640 \uc77c\uce58\ud568\uc744 \ud655\uc778).\n\n\ub2e4\uc74c\uc740 \ub178\ub4dc\uac00 \uc5b4\ub5bb\uac8c \ub4f1\ub85d\ub418\ub294\uc9c0 \ud750\ub984\uc73c\ub85c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     6: "\u23f8\ufe0f [3min] [\uc694\uc57d]\n- nodeadm install/init\uc73c\ub85c \uc758\uc874\uc131 \uc124\uce58\uc640 \uad6c\uc131\uc744 \ub9c8\uce69\ub2c8\ub2e4.\n- \uc790\uaca9 \uc99d\uba85(SSM \ub610\ub294 IAM Roles Anywhere)\uc774 \uc788\uc5b4\uc57c EKS API \uc778\uc99d\uc774 \uac00\ub2a5\ud569\ub2c8\ub2e4.\n- HYBRID_LINUX access entry\uac00 node IAM role\uc744 system:node \uc2e0\uc6d0\uc73c\ub85c \ub9e4\ud551\ud569\ub2c8\ub2e4.\n- CNI\ub97c \uc124\uce58\ud574\uc57c \ub178\ub4dc\uac00 Ready\uac00 \ub429\ub2c8\ub2e4.\n- \uc790\ub3d9 label\uc740 compute-type=hybrid \ud558\ub098\ubfd0\uc774\uace0 taint\ub294 \uc790\ub3d9 \ubd80\uc5ec\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\n\uc5ec\uc12f \ub2e8\uacc4\ub85c \uc21c\uc11c\ub300\ub85c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \uccab\uc9f8, nodeadm\uc774 \uc758\uc874\uc131\uc744 \uc124\uce58\ud558\uace0 \uad6c\uc131\ud569\ub2c8\ub2e4. nodeadm\uc740 \uacc4\uc18d \ub5a0 \uc788\ub294 \uc5d0\uc774\uc804\ud2b8\uac00 \uc544\ub2c8\ub77c \uc124\uce58, \ubd80\ud2b8\uc2a4\ud2b8\ub7a9, \uc5c5\uadf8\ub808\uc774\ub4dc\uc6a9 CLI\ub77c\ub294 \uc810\uc744 \uae30\uc5b5\ud574\uc8fc\uc138\uc694.\n\n\ub458\uc9f8\uc640 \uc14b\uc9f8, \uc790\uaca9 \uc99d\uba85\uc744 \ud655\ubcf4\ud558\uace0 kubelet\uc744 \uae30\ub3d9\ud569\ub2c8\ub2e4. \uc774\ub54c \ubd99\ub294 label\uc740 eks.amazonaws.com/compute-type=hybrid \ud558\ub098\ubfd0\uc774\uace0, taint\ub294 \uc790\ub3d9\uc73c\ub85c \ubd99\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ud544\uc694\ud558\uba74 \uc9c1\uc811 \uc124\uacc4\ud574\uc57c \ud569\ub2c8\ub2e4.\n\ub137\uc9f8, EKS \ucabd\uc5d0\ub294 node IAM role\uc5d0 \ub300\ud55c HYBRID_LINUX access entry\uac00 \uc788\uc5b4\uc57c \ud558\uace0 \uc774 entry\uac00 system:node \uc2e0\uc6d0\uc73c\ub85c \ub9e4\ud551\ub429\ub2c8\ub2e4. \ub2e4\uc12f\uc9f8, CNI\ub97c \uc124\uce58\ud574\uc57c Ready\uac00 \ub429\ub2c8\ub2e4. Bottlerocket VMware \ubcc0\ud615\uc740 nodeadm \ub300\uc2e0 \uc790\uccb4 bootstrap \uacbd\ub85c\ub97c \uc4f4\ub2e4\ub294 \uc810\ub3c4 \ucc38\uace0\ud558\uc138\uc694.\n\uadfc\uac70: D/01-prerequisites.md \"Cluster Access\uc640 \uc0dd\uc131 \uacc4\ud68d\", D/README.md \"\uc544\ud0a4\ud14d\ucc98\uc640 \uc6b4\uc601 \ucc45\uc784\", D/04-node-bootstrap.md (label/taint). CNI \uc124\uce58 \uc804 NotReady \ub3d9\uc791\uc740 \uacf5\uc2dd CNI \ubb38\uc11c(hybrid-nodes-cni.html) \uae30\uc900\uc774\uba70 \ub85c\uceec \ubb38\uc11c\uc5d0\uc11c \uc9c1\uc811 \uc7ac\ud655\uc778\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.\n\n\uc774 \uad6c\uc870\uc5d0\uc11c \ub204\uac00 \ubb34\uc5c7\uc744 \ucc45\uc784\uc9c0\ub294\uc9c0 \uc815\ub9ac\ud574\ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     7: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- \ucee8\ud2b8\ub864 \ud50c\ub808\uc778\uc740 AWS, \ub178\ub4dc \uc774\ud558\ub294 \uace0\uac1d \ucc45\uc784\uc785\ub2c8\ub2e4.\n- \uc790\uaca9 \uc99d\uba85 \uc11c\ube44\uc2a4\ub294 AWS\uc9c0\ub9cc, \uc778\uc99d\uc11c\u00b7PKI\u00b7activation \uc900\ube44\ub294 \uace0\uac1d \ubaab\uc785\ub2c8\ub2e4.\n- Secrets, K8s \uac1d\uccb4, \ub85c\uadf8\ub294 AWS \ucee8\ud2b8\ub864 \ud50c\ub808\uc778\uc5d0 \uc800\uc7a5\ub429\ub2c8\ub2e4.\n- Private endpoint\uac00 \ub9dd\ubd84\ub9ac \uaddc\uc815 \uc900\uc218\ub97c \uc790\ub3d9\uc73c\ub85c \ub73b\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n- Direct Connect\ub294 \uae30\ubcf8 \uc554\ud638\ud654\uac00 \uc5c6\uc5b4 MACsec \ub610\ub294 IPsec \uac80\ud1a0\uac00 \ud544\uc694\ud569\ub2c8\ub2e4.\n\n\uc67c\ucabd\uc740 AWS\uac00 \ucc45\uc784\uc9c0\ub294 \uc601\uc5ed, \uc624\ub978\ucabd\uc740 \uace0\uac1d\uc774 \ucc45\uc784\uc9c0\ub294 \uc601\uc5ed\uc785\ub2c8\ub2e4. \ucee8\ud2b8\ub864 \ud50c\ub808\uc778 \uad6c\uc131\uc694\uc18c\uc640 \uc790\uaca9 \uc99d\uba85 \uc11c\ube44\uc2a4\ub294 AWS\uac00 \uc6b4\uc601\ud558\uc9c0\ub9cc, \ub178\ub4dc OS \ud328\uce58\uc640 kubelet, containerd, CNI, \uadf8\ub9ac\uace0 \uc628\ud504\ub818\uacfc AWS \uc0ac\uc774\uc758 \uc5f0\uacb0\uc740 \ubaa8\ub450 \uace0\uac1d\uc774 \uc6b4\uc601\ud569\ub2c8\ub2e4.\n\n\ubcf4\uc548 \ub2f4\ub2f9\uc790\ubd84\ub4e4\uc774 \uaf2d \uc9da\uc73c\uc154\uc57c \ud560 \ubd80\ubd84\uc774 \uc544\ub798 \ube68\uac04 \ubc15\uc2a4\uc785\ub2c8\ub2e4. Kubernetes API \uac1d\uccb4\uc640 Secrets, \ub85c\uadf8\ub294 AWS\uac00 \uad00\ub9ac\ud558\ub294 \ucee8\ud2b8\ub864 \ud50c\ub808\uc778\uc5d0 \uc800\uc7a5\ub429\ub2c8\ub2e4. \uadf8\ub798\uc11c node selector\ub85c \uc6cc\ud06c\ub85c\ub4dc\ub97c \uc628\ud504\ub818\uc5d0 \ubd99\uc600\ub2e4\uace0 \ud574\uc11c \ub370\uc774\ud130 \uc8fc\uad8c\uc774 \uc785\uc99d\ub418\uc9c0\ub294 \uc54a\uc2b5\ub2c8\ub2e4.\nDirect Connect\ub9cc\uc73c\ub85c\ub294 \uc554\ud638\ud654\uac00 \ubcf4\uc7a5\ub418\uc9c0 \uc54a\uae30 \ub54c\ubb38\uc5d0 MACsec \ub610\ub294 IPsec \uac19\uc740 \ucd94\uac00 \ubcf4\ud638\ub97c \uac80\ud1a0\ud574\uc57c \ud569\ub2c8\ub2e4. \uc774 \uc8fc\uc81c\ub294 Block 4\uc5d0\uc11c \ub9dd\ubd84\ub9ac \uad00\uc810\uc73c\ub85c \ub2e4\uc2dc \ub2e4\ub8f9\ub2c8\ub2e4.\n\uadfc\uac70: D/README.md \"\uc0ac\uc6a9 \uc0ac\ub840\uc640 \ub370\uc774\ud130 \uacbd\uacc4\", \"\uc544\ud0a4\ud14d\ucc98\uc640 \uc6b4\uc601 \ucc45\uc784\"; D/11-network-separation-security.md.\n\n\uc774\uc81c \ub3c4\uc785 \uc804\uc5d0 \ud655\uc778\ud574\uc57c \ud560 \uc81c\uc57d\uc744 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
-    8: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- \uc8fc\uc18c\ub294 IPv4, RFC1918 \ub610\ub294 CGNAT, \uc11c\ub85c \uacb9\uce58\uba74 \uc548 \ub429\ub2c8\ub2e4.\n- \ud074\ub7ec\uc2a4\ud130\ub2f9 node CIDR 15\uac1c, Pod CIDR 15\uac1c\uae4c\uc9c0 \uc9c0\uc6d0\ud569\ub2c8\ub2e4.\n- \uc548\uc815\uc801\uc778 private \uc591\ubc29\ud5a5 \uc5f0\uacb0\uc774 \ud544\uc694\ud558\uba70 DDIL \uc6a9\ub3c4\ub294 \uc544\ub2d9\ub2c8\ub2e4.\n- 100 Mbps / RTT 200 ms\ub294 \uc77c\ubc18 \uad8c\uc7a5\uc774\uc9c0 \uc5c4\uaca9\ud55c \ucd5c\uc18c\uac12\uc774 \uc544\ub2d9\ub2c8\ub2e4.\n- API endpoint\ub294 public-only \ub610\ub294 private-only\ub97c \uad8c\uc7a5\ud569\ub2c8\ub2e4.\n\n\uc5ec\uc12f \uac00\uc9c0 \uc81c\uc57d\uc785\ub2c8\ub2e4. \uc704\ucabd \ub124 \uac1c\ub294 \ub124\ud2b8\uc6cc\ud06c \uc804\uc81c\ub85c, \uc8fc\uc18c\ub294 IPv4\uc5d0 RFC1918\uc774\ub098 CGNAT \ubc94\uc704\uc5ec\uc57c \ud558\uace0 node, Pod, VPC, service CIDR\uc774 \uc11c\ub85c \uacb9\uce58\uba74 \uc548 \ub429\ub2c8\ub2e4.\n\n\uc5f0\uacb0 \ud488\uc9c8\uc740 \"100 Mbps, RTT 200 ms \uc774\ud558\"\uac00 \uc77c\ubc18 \uad8c\uc7a5\uc785\ub2c8\ub2e4. \uc608\uc804 \uc790\ub8cc\uc5d0 \ub098\uc624\ub358 100ms\ub098 Direct Connect 10ms \uac19\uc740 \uc218\uce58\ub294 \uadfc\uac70\ub97c \ud655\uc778\ud558\uc9c0 \ubabb\ud574\uc11c \uc0ac\uc6a9\ud558\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \uc544\ub798 \ub450 \uac1c\ub294 \uc2e4\uc218\ud558\uae30 \uc26c\uc6b4 \ud56d\ubaa9\uc785\ub2c8\ub2e4. endpoint\ub97c public\uacfc private \ubaa8\ub450 \ucf1c\uba74 join\uc774 \uc2e4\ud328\ud560 \uc218 \uc788\uace0, \ub178\ub4dc\ub294 workload\uac00 \ub180\uc544\ub3c4 vCPU-hour \uacfc\uae08\uc774 \uacc4\uc18d\ub429\ub2c8\ub2e4.\n\uadfc\uac70: D/README.md \"\uacc4\ud68d\uc5d0 \ubc18\uc601\ud560 \uc81c\uc57d\", D/01-prerequisites.md \"Network\u00b7CIDR\u00b7MTU\".\n\n\ub2e4\uc74c\uc740 \uc9c0\uc6d0 \ubc94\uc704 \ub9e4\ud2b8\ub9ad\uc2a4\uc785\ub2c8\ub2e4.",
-    9: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- OS\ub294 Ubuntu 20.04/22.04/24.04, RHEL 8/9, AL2023(\uac00\uc0c1\ud654 \ud55c\uc815), Bottlerocket VMware \ubcc0\ud615(x86_64 \ud55c\uc815)\n- K8s \ubc84\uc804\uc740 EKS \uc9c0\uc6d0 \ubc84\uc804\uacfc \ub3d9\uc77c\n- Cilium\uc740 AWS\uac00 \uc720\uc9c0\ud558\ub294 \ube4c\ub4dc\uac00 \uc9c0\uc6d0 \ubc94\uc704\uc774\uba70, \uc5c5\uc2a4\ud2b8\ub9bc \ucd5c\uc2e0\uc774 \uc790\ub3d9 \uc9c0\uc6d0\uc740 \uc544\ub2d8\n- \ub9ac\uc804\uc740 GovCloud(US)\uc640 \uc911\uad6d\uc744 \uc81c\uc678\ud55c \uc804\uccb4\n\n\ud0ed \uc138 \uac1c\ub85c \ub098\ub234\uc2b5\ub2c8\ub2e4. OS \ud0ed\uc5d0\uc11c \uc8fc\uc758\ud560 \uc810\uc740 AL2023\uc774 \uc628\ud504\ub818 \uac00\uc0c1\ud654 \ud658\uacbd \uc804\uc6a9\uc774\ub77c\ub294 \uc810\uacfc, Bottlerocket\uc740 VMware \ubcc0\ud615\uc5d0 x86_64\ub9cc \uc9c0\uc6d0\ud558\uace0 nodeadm \ub300\uc2e0 \uc790\uccb4 bootstrap\uc744 \uc4f4\ub2e4\ub294 \uc810\uc785\ub2c8\ub2e4. RHEL 10\uc774\ub098 Ubuntu 26.04\ub294 \uc544\uc9c1 \ubaa9\ub85d\uc5d0 \uc5c6\uc2b5\ub2c8\ub2e4.\n\n\ub450 \ubc88\uc9f8 \ud0ed\uc5d0\uc11c \ubc84\uc804\uc740 EKS\uc640 \uac19\uc740 \ubc84\uc804\uc744 \uc9c0\uc6d0\ud55c\ub2e4\uace0 \ub9d0\uc500\ub4dc\ub9ac\ub418, 1.37\uc5d0\uc11c hybrid \uc804\uc6a9 \uac80\uc99d\uc744 \ud588\ub294\uc9c0\ub294 \ub2e8\uc815\ud558\uc9c0 \uc54a\uaca0\uc2b5\ub2c8\ub2e4. SSM\uc744 \uc4f8 \ub54c\ub294 nodeadm 1.0.19 \uc774\uc0c1\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.\n\uc138 \ubc88\uc9f8 \ud0ed\uc758 Cilium\uc740 AWS \ube4c\ub4dc\uac00 \uc9c0\uc6d0 \ubc94\uc704\uc785\ub2c8\ub2e4. \uacf5\uc2dd CNI \ud398\uc774\uc9c0\ub294 1.17\uacfc 1.18\uc744 \uba85\uc2dc\ud558\uace0 Gateway \ubb38\uc11c\uc5d0\ub294 1.19.2-1 \uc774\uc0c1\uc774 \uc5b8\uae09\ub418\uc5b4\uc11c \ub450 \ubb38\uc11c \uc0ac\uc774\uc5d0 \ucc28\uc774\uac00 \uc788\uc2b5\ub2c8\ub2e4. \uc5c5\uc2a4\ud2b8\ub9bc Cilium \ucd5c\uc2e0 \ubc84\uc804\uc744 \uadf8\ub300\ub85c \uc4f0\uba74 AWS \uc9c0\uc6d0 \ub300\uc0c1\uc774 \uc544\ub2d0 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: D/01-prerequisites.md \"OS\uc640 Runtime\", D/README.md \"\uacc4\ud68d\uc5d0 \ubc18\uc601\ud560 \uc81c\uc57d\", fact sheet(EKS \uc9c0\uc6d0 \ubc84\uc804 2026-10-07 \uae30\uc900), D/04-node-bootstrap.md. \ubc84\uc804 \uc22b\uc790\ub294 \uc2dc\uc810\uc5d0 \ub530\ub77c \ubc14\ub00c\ubbc0\ub85c \ubc1c\ud45c \uc804 \uacf5\uc2dd \ubb38\uc11c\ub85c \uc7ac\ud655\uc778 \ud544\uc694.\n\n\ub2e4\uc74c\uc740 \uc790\uaca9 \uc99d\uba85 \ud504\ub85c\ubc14\uc774\ub354 \uc120\ud0dd\uc785\ub2c8\ub2e4.",
+    8: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- \uc8fc\uc18c\ub294 IPv4, RFC1918 \ub610\ub294 CGNAT, \uc11c\ub85c \uacb9\uce58\uba74 \uc548 \ub429\ub2c8\ub2e4.\n- \ud074\ub7ec\uc2a4\ud130\ub2f9 node CIDR 15\uac1c, Pod CIDR 15\uac1c\uae4c\uc9c0 \uc9c0\uc6d0\ud569\ub2c8\ub2e4.\n- \uc548\uc815\uc801\uc778 private \uc591\ubc29\ud5a5 \uc5f0\uacb0\uc774 \ud544\uc694\ud558\uba70 DDIL \uc6a9\ub3c4\ub294 \uc544\ub2d9\ub2c8\ub2e4.\n- 100 Mbps / RTT 200 ms\ub294 \uc77c\ubc18 \uad8c\uc7a5\uc774\uc9c0 \uc5c4\uaca9\ud55c \ucd5c\uc18c\uac12\uc774 \uc544\ub2d9\ub2c8\ub2e4.\n- API endpoint\ub294 Public-only \ub610\ub294 Private-only\uac00 \uad8c\uc7a5\uc774\uba70, \"Public and Private\"\ub294 join \uc2e4\ud328 \uc704\ud5d8\uc774 \uc788\uc2b5\ub2c8\ub2e4.\n\n\uc5ec\uc12f \uac00\uc9c0 \uc81c\uc57d\uc785\ub2c8\ub2e4. \uc704\ucabd \ub124 \uac1c\ub294 \ub124\ud2b8\uc6cc\ud06c \uc804\uc81c\ub85c, \uc8fc\uc18c\ub294 IPv4\uc5d0 RFC1918\uc774\ub098 CGNAT \ubc94\uc704\uc5ec\uc57c \ud558\uace0 node, Pod, VPC, service CIDR\uc774 \uc11c\ub85c \uacb9\uce58\uba74 \uc548 \ub429\ub2c8\ub2e4.\n\n\uc5f0\uacb0 \ud488\uc9c8\uc740 \"100 Mbps, RTT 200 ms \uc774\ud558\"\uac00 \uc77c\ubc18 \uad8c\uc7a5\uc785\ub2c8\ub2e4. \uc608\uc804 \uc790\ub8cc\uc5d0 \ub098\uc624\ub358 100ms\ub098 Direct Connect 10ms \uac19\uc740 \uc218\uce58\ub294 \uadfc\uac70\ub97c \ud655\uc778\ud558\uc9c0 \ubabb\ud574\uc11c \uc0ac\uc6a9\ud558\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \uc544\ub798 \ub450 \uac1c\ub294 \uc2e4\uc218\ud558\uae30 \uc26c\uc6b4 \ud56d\ubaa9\uc785\ub2c8\ub2e4. endpoint\ub294 public \ub610\ub294 private \ud558\ub098\ub9cc \ucf1c\ub294 \uac83\uc774 \uad8c\uc7a5\uc774\uace0(\ub458 \ub2e4 \ucf1c\uba74 join\uc774 \uc2e4\ud328\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. API\uac00 \uac70\ubd80\ud558\ub294 \uad6c\uc131\uc740 \uc544\ub2d9\ub2c8\ub2e4), \ub178\ub4dc\ub294 workload\uac00 \ub180\uc544\ub3c4 vCPU-hour \uacfc\uae08\uc774 \uacc4\uc18d\ub429\ub2c8\ub2e4.\n\uadfc\uac70: D/README.md \"\uacc4\ud68d\uc5d0 \ubc18\uc601\ud560 \uc81c\uc57d\", D/01-prerequisites.md \"Network\u00b7CIDR\u00b7MTU\".\n\n\ub2e4\uc74c\uc740 \uc9c0\uc6d0 \ubc94\uc704 \ub9e4\ud2b8\ub9ad\uc2a4\uc785\ub2c8\ub2e4.",
+    9: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- OS\ub294 Ubuntu 20.04/22.04/24.04, RHEL 8/9, AL2023(\uac00\uc0c1\ud654 \ud55c\uc815), Bottlerocket VMware \ubcc0\ud615(x86_64 \ud55c\uc815)\n- K8s \ubc84\uc804\uc740 EKS \uc9c0\uc6d0 \ubc84\uc804\uacfc \ub3d9\uc77c\n- Cilium\uc740 AWS\uac00 \uc720\uc9c0\ud558\ub294 \ube4c\ub4dc\uac00 \uc9c0\uc6d0 \ubc94\uc704\uc774\uba70, \uc5c5\uc2a4\ud2b8\ub9bc \ucd5c\uc2e0\uc774 \uc790\ub3d9 \uc9c0\uc6d0\uc740 \uc544\ub2d8\n- \ub9ac\uc804\uc740 GovCloud(US)\uc640 \uc911\uad6d\uc744 \uc81c\uc678\ud55c \uc804\uccb4\n\n\ud0ed \uc138 \uac1c\ub85c \ub098\ub234\uc2b5\ub2c8\ub2e4. OS \ud0ed\uc5d0\uc11c \uc8fc\uc758\ud560 \uc810\uc740 AL2023\uc774 \uc628\ud504\ub818 \uac00\uc0c1\ud654 \ud658\uacbd \uc804\uc6a9\uc774\ub77c\ub294 \uc810\uacfc, Bottlerocket\uc740 VMware \ubcc0\ud615\uc5d0 x86_64\ub9cc \uc9c0\uc6d0\ud558\uace0 nodeadm \ub300\uc2e0 \uc790\uccb4 bootstrap\uc744 \uc4f4\ub2e4\ub294 \uc810\uc785\ub2c8\ub2e4. RHEL 10\uc774\ub098 Ubuntu 26.04\ub294 \uc544\uc9c1 \ubaa9\ub85d\uc5d0 \uc5c6\uc2b5\ub2c8\ub2e4.\n\n\ub450 \ubc88\uc9f8 \ud0ed\uc5d0\uc11c \ubc84\uc804\uc740 EKS\uc640 \uac19\uc740 \ubc84\uc804\uc744 \uc9c0\uc6d0\ud55c\ub2e4\uace0 \ub9d0\uc500\ub4dc\ub9ac\ub418, 1.37\uc5d0\uc11c hybrid \uc804\uc6a9 \uac80\uc99d\uc744 \ud588\ub294\uc9c0\ub294 \ub2e8\uc815\ud558\uc9c0 \uc54a\uaca0\uc2b5\ub2c8\ub2e4. SSM\uc744 \uc4f8 \ub54c\ub294 nodeadm 1.0.19 \uc774\uc0c1\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.\n\uc138 \ubc88\uc9f8 \ud0ed\uc758 Cilium\uc740 AWS \ube4c\ub4dc\uac00 \uc9c0\uc6d0 \ubc94\uc704\uc785\ub2c8\ub2e4. \uacf5\uc2dd CNI \ud398\uc774\uc9c0\ub294 1.17\uacfc 1.18\uc744 \uba85\uc2dc\ud558\uace0, Hybrid Nodes Gateway\ub97c \uc4f0\ub824\uba74 branch\ubcc4\ub85c 1.17.13-1, 1.18.8-1, 1.19.2-1 \uc774\uc0c1\uc774 \ud544\uc694\ud569\ub2c8\ub2e4. CNI \ud398\uc774\uc9c0 \uc608\uc2dc \ubc84\uc804\uc740 \uc774\ubcf4\ub2e4 \ub0ae\uc73c\ub2c8 Gateway \uacc4\ud68d\uc774 \uc788\ub2e4\uba74 \ubc84\uc804\uc744 \uba3c\uc800 \ub9de\ucd94\uc138\uc694. \uc5c5\uc2a4\ud2b8\ub9bc Cilium \ucd5c\uc2e0 \ubc84\uc804\uc744 \uadf8\ub300\ub85c \uc4f0\uba74 AWS \uc9c0\uc6d0 \ub300\uc0c1\uc774 \uc544\ub2d0 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: D/01-prerequisites.md \"OS\uc640 Runtime\", D/README.md \"\uacc4\ud68d\uc5d0 \ubc18\uc601\ud560 \uc81c\uc57d\", fact sheet(EKS \uc9c0\uc6d0 \ubc84\uc804 2026-10-07 \uae30\uc900), D/04-node-bootstrap.md. \ubc84\uc804 \uc22b\uc790\ub294 \uc2dc\uc810\uc5d0 \ub530\ub77c \ubc14\ub00c\ubbc0\ub85c \ubc1c\ud45c \uc804 \uacf5\uc2dd \ubb38\uc11c\ub85c \uc7ac\ud655\uc778 \ud544\uc694.\n\n\ub2e4\uc74c\uc740 \uc790\uaca9 \uc99d\uba85 \ud504\ub85c\ubc14\uc774\ub354 \uc120\ud0dd\uc785\ub2c8\ub2e4.",
     10: "\u23f8\ufe0f [2.5min] [\uc694\uc57d]\n- SSM: \uc138\uc158 1\uc2dc\uac04 \uace0\uc815, \ubcc4\ub3c4 PKI \uc5c6\uc774 \uc2dc\uc791\ud558\uae30 \uc26c\uc6c0\n- IAM Roles Anywhere: \uc138\uc158 \uae30\ubcf8 1\uc2dc\uac04, 15\ubd84~12\uc2dc\uac04, \uae30\uc874 PKI\uac00 \uc788\uc744 \ub54c \uc801\ud569\n- \ub450 \ubc29\uc2dd \ubaa8\ub450 AWS \uc5f0\uacb0 \uc5c6\uc774\ub294 \uc790\uaca9 \uc99d\uba85\uc744 \uac31\uc2e0\ud560 \uc218 \uc5c6\uc74c\n- SSM Advanced Instances tier\ub294 2026\ub144 6\uc6d4 30\uc77c \ud3d0\uc9c0, SSM \uc0ac\uc6a9 \uc2dc nodeadm 1.0.19 \uc774\uc0c1\n- \ud55c fleet\uc5d0\uc11c\ub294 \ud55c provider\ub97c \uc77c\uad00\ub418\uac8c \uc4f0\ub294 \uac83\uc744 \uad8c\uc7a5\n\n\ud0ed\uc744 \ub20c\ub7ec\uac00\uba70 \ube44\uad50\ud574\ubcf4\uaca0\uc2b5\ub2c8\ub2e4. SSM\uc740 activation\uc73c\ub85c \ub178\ub4dc\ub97c \ub4f1\ub85d\ud558\uace0 \uc138\uc158\uc740 1\uc2dc\uac04\uc73c\ub85c \uace0\uc815\uc774\uba70 SSM\uc774 \uac31\uc2e0\ud569\ub2c8\ub2e4. \uc778\uc99d\uc11c \uc778\ud504\ub77c\uac00 \uc5c6\uc5b4\ub3c4 \uc2dc\uc791\ud560 \uc218 \uc788\uc5b4\uc11c \uac00\uc7a5 \ub2e8\uc21c\ud569\ub2c8\ub2e4. \ub178\ub4dc \uc774\ub984\uc740 SSM\uc774 \ub9cc\ub4dc\ub294 mi-\ub85c \uc2dc\uc791\ud558\ub294 \uc774\ub984\uc774 \ub429\ub2c8\ub2e4.\n\nIAM Roles Anywhere\ub294 PKI\uc640 \ub178\ub4dc\ubcc4 \uc778\uc99d\uc11c, trust anchor, profile\uc774 \ud544\uc694\ud569\ub2c8\ub2e4. \uc138\uc158\uc740 \uae30\ubcf8 1\uc2dc\uac04\uc774\uace0 15\ubd84\uc5d0\uc11c 12\uc2dc\uac04 \uc0ac\uc774\ub85c \uc124\uc815\ud558\ub418 role\uc758 \ucd5c\ub300\uac12\uc744 \ub118\uc73c\uba74 \uc548 \ub429\ub2c8\ub2e4. \uae30\uc874\uc5d0 \uc778\uc99d\uc11c \uc218\uba85 \uad00\ub9ac \uccb4\uacc4\ub97c \uac16\uace0 \uacc4\uc2e0 \ud300\uc5d0 \ub9de\uc2b5\ub2c8\ub2e4.\n\uacf5\ud1b5\uc73c\ub85c \uae30\uc5b5\ud560 \uc810\uc740, \ub85c\uceec CA\ub97c \ub454\ub2e4\uace0 \ud574\uc11c AWS \uc5c6\uc774 \uc790\uaca9 \uc99d\uba85\uc744 \ubc1c\uae09\ubc1b\uc744 \uc218 \uc788\ub294 \uac83\uc740 \uc544\ub2c8\ub77c\ub294 \uc810\uc785\ub2c8\ub2e4. \ub458 \ub2e4 \uac31\uc2e0\ud560 \ub54c AWS \uc5f0\uacb0\uc774 \ud544\uc694\ud569\ub2c8\ub2e4. \ub610 SSM Advanced Instances tier\ub294 2026\ub144 6\uc6d4 30\uc77c \ud3d0\uc9c0\ub418\uc5c8\uace0, SSM\uc744 \uc4f0\ub824\uba74 nodeadm 1.0.19 \uc774\uc0c1\uc774\uc5b4\uc57c \ud569\ub2c8\ub2e4.\n\uadfc\uac70: D/README.md \"\uc790\uaca9 \uc99d\uba85 \ud504\ub85c\ubc14\uc774\ub354\", D/01-prerequisites.md \"Provider\ubcc4 \uc790\uaca9 \uc99d\uba85\", D/04-node-bootstrap.md(NodeConfig), \ud65c\uc131\ud654 \uae30\ubcf8 24\uc2dc\uac04/\ucd5c\ub300 30\uc77c/RegistrationLimit\uc740 fact sheet \uae30\uc900.\n\n\uc774\uc81c \uac00\uc7a5 \uad81\uae08\ud574\ud558\uc2dc\ub294 \uac00\uaca9\uc744 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     11: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- \uc6d4 \ub2e8\uc704 vCPU-hours \ub204\uc801 \uad6c\uac04\ubcc4 \uc694\uae08: $0.020 \u2192 $0.014 \u2192 $0.010 \u2192 $0.008 \u2192 $0.006\n- Join\ubd80\ud130 \uc81c\uac70\uae4c\uc9c0 \uacfc\uae08, idle\uc774\uc5b4\ub3c4 \uacc4\uc18d\n- Hyperthreading\ub41c core\ub294 vCPU 2\uac1c\ub85c \ubcf4\uace0\ub420 \uc218 \uc788\uc74c\n- \ud074\ub7ec\uc2a4\ud130, \ub124\ud2b8\uc6cc\ud06c, \ub85c\uadf8, \uc2a4\ud1a0\ub9ac\uc9c0, OS \uc694\uae08\uc740 \ubcc4\ub3c4\n\n\uc694\uae08\ud45c\uc785\ub2c8\ub2e4. \ub178\ub4dc\uac00 \ubcf4\uace0\ud558\ub294 vCPU-hours\ub97c \uc6d4 \ub2e8\uc704\ub85c \ub204\uc801\ud574\uc11c \uad6c\uac04\ubcc4\ub85c \uc694\uae08\uc744 \uacc4\uc0b0\ud569\ub2c8\ub2e4. \ucc98\uc74c 57\ub9cc 6\ucc9c vCPU-hours\uae4c\uc9c0\ub294 0.020\ub2ec\ub7ec\uc774\uace0, \uc0ac\uc6a9\ub7c9\uc774 \ub298\uc218\ub85d \ub2e8\uac00\uac00 \ub0b4\ub824\uac00\uc11c 1,152\ub9cc \ucd08\uacfc\ubd84\uc740 0.006\ub2ec\ub7ec\uc785\ub2c8\ub2e4.\n\n\uc608\uc804 \uc790\ub8cc\uc5d0 \ub4f1\uc7a5\ud558\ub358 \"vCPU\ub2f9 \uc2dc\uac04\ub2f9 0.01\ub2ec\ub7ec \uace0\uc815\" \uac19\uc740 \ub2e8\uc21c\ud654\ub294 \ud2c0\ub9bd\ub2c8\ub2e4. \uad6c\uac04\uc81c\uc774\uace0, \ub178\ub4dc\uac00 \ud074\ub7ec\uc2a4\ud130\uc5d0 \uc5f0\uacb0\ub418\uc5b4 \uc788\ub294 \ub3d9\uc548\uc740 workload\uac00 \uc5c6\uc5b4\ub3c4 \uacfc\uae08\ub429\ub2c8\ub2e4. \ub610 hyperthreading\uc744 \ucf20 \ubca0\uc5b4\uba54\ud0c8\uc740 \ucf54\uc5b4 \ud558\ub098\uac00 vCPU 2\uac1c\ub85c \uc7a1\ud790 \uc218 \uc788\uc5b4\uc11c \uc0ac\uc774\uc9d5\ud560 \ub54c \ud655\uc778\ud574\uc57c \ud569\ub2c8\ub2e4.\n\uadfc\uac70: https://aws.amazon.com/eks/pricing/ \ubc0f D/09-bare-metal-os-setup.md \u300c\ube44\uc6a9 \ube44\uad50 \ubd84\uc11d\u300d(\uc694\uae08 \ud655\uc778\uc77c 2026-09-16). \ubc1c\ud45c \uc9c1\uc804\uc5d0 \ucd5c\uc2e0 \uc694\uae08\ud45c \uc7ac\ud655\uc778 \ud544\uc694.\n\n\uc9c1\uc811 \uc22b\uc790\ub97c \ub123\uc5b4\uc11c \uacc4\uc0b0\ud574\ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
-    12: "\u23f8\ufe0f \ud83c\udfac [3min] [\uc694\uc57d]\n- \uc2ac\ub77c\uc774\ub354\ub85c \ub178\ub4dc \uc218\uc640 \ub178\ub4dc\ub2f9 vCPU\ub97c \ubc14\uafb8\uba74 \uad6c\uac04 \uc694\uae08\uc744 \uc801\uc6a9\ud55c \uc6d4\u00b7\uc5f0 \uc694\uae08\uc774 \uacc4\uc0b0\ub429\ub2c8\ub2e4.\n- \ud504\ub9ac\uc14b \uac80\uc99d\uac12: 10\ub178\ub4dc \uc5f0 $56,064 / 50\ub178\ub4dc $236,928 / 100\ub178\ub4dc $377,088 (32 vCPU, 730\uc2dc\uac04)\n- \ud074\ub7ec\uc2a4\ud130 1\uac1c \uc694\uae08($876/\ub144)\uc744 \ub354\ud558\uba74 $56,940 / $237,804 / $377,964\n- \uc774 \uac12\uc740 \ucd94\uc815\uce58\uc774\uba70 \ub124\ud2b8\uc6cc\ud06c, \ub85c\uadf8, \uc2a4\ud1a0\ub9ac\uc9c0, EC2, OS, \ud558\ub4dc\uc6e8\uc5b4, \uc778\ub825 \ube44\uc6a9\uc740 \uc81c\uc678\n\n\uc704\uc758 \ud504\ub9ac\uc14b \ubc84\ud2bc\uc744 \ub20c\ub7ec\ubcf4\uaca0\uc2b5\ub2c8\ub2e4. 10\ub178\ub4dc\uc5d0 \ub178\ub4dc\ub2f9 32 vCPU, \uc6d4 730\uc2dc\uac04\uc73c\ub85c \uacc4\uc0b0\ud558\uba74 \uc6d4 233,600 vCPU-hours\uc774\uace0 \uc804\ubd80 \uccab \uad6c\uac04\uc774\ub77c \uc6d4 4,672\ub2ec\ub7ec, \uc5f0 56,064\ub2ec\ub7ec\uc785\ub2c8\ub2e4. \uc5ec\uae30\uc5d0 \uae30\ubcf8 tier \ud074\ub7ec\uc2a4\ud130 1\uac1c \uc694\uae08 876\ub2ec\ub7ec\ub97c \ub354\ud558\uba74 56,940\ub2ec\ub7ec\uac00 \ub429\ub2c8\ub2e4. 50\ub178\ub4dc\ub294 \uc5f0 236,928\ub2ec\ub7ec, 100\ub178\ub4dc\ub294 \uc5f0 377,088\ub2ec\ub7ec\uc774\uace0 \ud074\ub7ec\uc2a4\ud130 \uc694\uae08\uc744 \ub354\ud558\uba74 \uac01\uac01 237,804\ub2ec\ub7ec, 377,964\ub2ec\ub7ec\uc785\ub2c8\ub2e4.\n\n\uc2ac\ub77c\uc774\ub354\ub97c \uc6c0\uc9c1\uc5ec\uc11c \uad6c\uac04\uc774 \ub118\uc5b4\uac00\ub294 \uc9c0\uc810\uc744 \ubcf4\uc5ec\uc8fc\uc138\uc694. \uc544\ub798 \"\uad6c\uac04 \uacc4\uc0b0\" \uc904\uc5d0 \uc5b4\ub290 \uad6c\uac04\uc5d0\uc11c \uc5bc\ub9c8\uac00 \uc801\uc6a9\ub410\ub294\uc9c0 \ud45c\uc2dc\ub429\ub2c8\ub2e4.\n\n\uc774 \uac12\uc740 \uccad\uad6c\uc11c\ub098 \uc2e4\uce21\uc774 \uc544\ub2c8\ub77c \uacc4\uc0b0 \ubaa8\ub378\uc785\ub2c8\ub2e4. \uc2e4\uc81c \uc6d4 \uae38\uc774, \uad6c\uac04 \ucd08\uae30\ud654 \uc2dc\uc810, \ud560\uc778\uacfc \uc138\uae08\uc774 \ub2ec\ub77c\uc9c8 \uc218 \uc788\uace0, \ud558\ub4dc\uc6e8\uc5b4, \uc804\ub825, OS \uad6c\ub3c5, \uc778\ub825\uacfc \uc774\uc804 \ube44\uc6a9\uc740 \ube44\uad50\ud558\ub824\uba74 \ubcc4\ub3c4\ub85c \ub354\ud574\uc57c \ud569\ub2c8\ub2e4. \ub178\ub4dc\ub2f9 32 vCPU\ub97c \ub118\ub294 \uba38\uc2e0\uc740 account team\uacfc \uc0c1\ub2f4\ud558\ub77c\ub294 \uc548\ub0b4\uac00 \uc788\uc5b4\uc11c \uc2ac\ub77c\uc774\ub354 \ucd5c\ub300\ub97c 32\ub85c \ub450\uc5c8\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: D/09-bare-metal-os-setup.md \u300c\uaddc\ubaa8\ubcc4 \uc5f0\uac04 \ube44\uc6a9 \ube44\uad50\u300d(L45-53), \uc9c1\uc811 \uc7ac\uacc4\uc0b0\uc73c\ub85c \ud655\uc778 (10\ub178\ub4dc 233,600h\u00d7$0.020=$4,672; 50\ub178\ub4dc 576,000\u00d70.020+576,000\u00d70.014+16,000\u00d70.010=$19,744; 100\ub178\ub4dc 11,520+8,064+1,184,000\u00d70.010=$31,424).\n\n\ube44\uc6a9\uc744 \uc774\ud574\ud558\uc168\uc73c\uba74 \ub3c4\uc785 \uc804 \uc900\ube44 \uc0ac\ud56d\uc744 \uccb4\ud06c\ub9ac\uc2a4\ud2b8\ub85c \uc810\uac80\ud574\ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    12: "\u23f8\ufe0f \ud83c\udfac [3min] [\uc694\uc57d]\n- GPU \uc11c\ubc84\ub97c \uac00\uc815\ud574 \ubb3c\ub9ac CPU \ucf54\uc5b4\ub97c 32~216 \ubc94\uc704\uc5d0\uc11c 8\ucf54\uc5b4 \ub2e8\uc704\ub85c \uc120\ud0dd\ud569\ub2c8\ub2e4. \uae30\ubcf8\uc740 128\ucf54\uc5b4\uc785\ub2c8\ub2e4.\n- SMT / HT \uc0ac\uc6a9 \uc2dc \ucf54\uc5b4\ub2f9 2 vCPU, \ud574\uc81c \uc2dc 1 vCPU\ub85c \ud658\uc0b0\ud569\ub2c8\ub2e4. \uc2e4\uc81c \uacfc\uae08\uc740 Kubernetes\uc5d0 \ubcf4\uace0\ub41c CPU \uc218 \uae30\uc900\uc785\ub2c8\ub2e4.\n- \ud504\ub9ac\uc14b\uc740 \ucf54\uc5b4\uc640 SMT \uc124\uc815\uc744 \uc720\uc9c0\ud55c \ucc44 \ub178\ub4dc \uc218\ub9cc \ubcc0\uacbd\ud569\ub2c8\ub2e4. \uae30\ubcf8 \uc124\uc815(128\ucf54\uc5b4, SMT \uc0ac\uc6a9, 730\uc2dc\uac04)\uc5d0\uc11c 10/50/100\ub178\ub4dc \uc5f0 \uc694\uae08\uc740 $321,024 / $1,132,032 / $1,857,024\uc785\ub2c8\ub2e4.\n- \ud074\ub7ec\uc2a4\ud130 1\uac1c \uc694\uae08($876/\ub144)\uc744 \ub354\ud558\uba74 $321,900 / $1,132,908 / $1,857,900\uc785\ub2c8\ub2e4. GPU \ud558\ub4dc\uc6e8\uc5b4\u00b7\uc804\ub825 \ub4f1\uc740 \uc81c\uc678\ud569\ub2c8\ub2e4.\n\n\uc628\ud504\ub808\ubbf8\uc2a4 GPU \uc11c\ubc84\uc758 CPU \uaddc\ubaa8\ub97c \ube44\uad50\ud558\uae30 \uc704\ud55c \uacc4\uc0b0\uae30\uc785\ub2c8\ub2e4. 32~216\ucf54\uc5b4\ub294 \uc2dc\ubbac\ub808\uc774\uc158 \uc785\ub825 \ubc94\uc704\uc774\uba70 \ud2b9\uc815 GPU \ubaa8\ub378\uc758 \ud544\uc218 \uc0ac\uc591\uc774\ub098 EKS\uc758 \uc9c0\uc6d0 \ud55c\ub3c4\ub97c \ub73b\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uae30\ubcf8\uc740 \ubb3c\ub9ac CPU 128\ucf54\uc5b4\uc5d0 SMT\ub97c \uc0ac\uc6a9\ud55c \uad6c\uc131\uc73c\ub85c, Kubernetes\uac00 \ub178\ub4dc\ub2f9 256 vCPU\ub97c \ubcf4\uace0\ud55c\ub2e4\uace0 \uac00\uc815\ud569\ub2c8\ub2e4. GPU \uc5f0\uc0b0 \ucf54\uc5b4 \uc218\ub97c \uc785\ub825\ud558\ub294 \uac83\uc774 \uc544\ub2d9\ub2c8\ub2e4.\n\n10 GPU \ub178\ub4dc \ud504\ub9ac\uc14b\uc744 \ub20c\ub7ec\ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \uc6d4 1,868,800 vCPU-hours\uc774\uace0, \uad6c\uac04 \uc694\uc728\uc744 \uc801\uc6a9\ud558\uba74 \uc6d4 26,752\ub2ec\ub7ec, \uc5f0 321,024\ub2ec\ub7ec\uc785\ub2c8\ub2e4. \ud45c\uc900 \uc9c0\uc6d0 \ud074\ub7ec\uc2a4\ud130 1\uac1c\uc758 \uc5f0 \uc694\uae08 876\ub2ec\ub7ec\ub97c \ub354\ud558\uba74 321,900\ub2ec\ub7ec\uc785\ub2c8\ub2e4. \uac19\uc740 CPU \uc124\uc815\uc5d0\uc11c 50\ub178\ub4dc\ub294 \uc5f0 1,132,032\ub2ec\ub7ec, 100\ub178\ub4dc\ub294 \uc5f0 1,857,024\ub2ec\ub7ec\uc785\ub2c8\ub2e4.\n\n\ucf54\uc5b4 \uc2ac\ub77c\uc774\ub354\ub97c 32, 64, 128, 216\uc73c\ub85c \uc6c0\uc9c1\uc774\uace0 SMT \uccb4\ud06c\ub97c \ud574\uc81c\ud574\ubcf4\uc138\uc694. \ub178\ub4dc\ub2f9 \uacfc\uae08 \uae30\uc900\uc774 32~216 vCPU \ub610\ub294 64~432 vCPU\ub85c \ubc14\ub00c\uba70 \ubaa8\ub4e0 \ube44\uc6a9 \uce74\ub4dc\uac00 \uc989\uc2dc \uc7ac\uacc4\uc0b0\ub429\ub2c8\ub2e4. \ub178\ub4dc \uc218 \ud504\ub9ac\uc14b\uc744 \ub20c\ub7ec\ub3c4 \ucf54\uc5b4\uc640 SMT \uc120\ud0dd\uc740 \uc720\uc9c0\ub429\ub2c8\ub2e4. \uc544\ub798 \"\uad6c\uac04 \uacc4\uc0b0\" \uc904\uc5d0\uc11c \uac01 \uc694\uc728\uc5d0 \uc801\uc6a9\ub41c \uc0ac\uc6a9\ub7c9\uc744 \ud655\uc778\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\n\uc774 \uac12\uc740 \uacf5\uac1c \uad6c\uac04 \uc694\uc728\uc744 \ud655\uc7a5 \uc801\uc6a9\ud55c \ucd94\uc815\uce58\uc785\ub2c8\ub2e4. AWS\ub294 \uba38\uc2e0\ub2f9 32 vCPU\ub97c \ub118\uc73c\uba74 account team\uc5d0 \ucd94\uac00 \uc694\uae08 \uc815\ubcf4\ub97c \ud655\uc778\ud558\ub3c4\ub85d \uc548\ub0b4\ud569\ub2c8\ub2e4. \uc2e4\uc81c \ub178\ub4dc\uac00 \ubcf4\uace0\ud558\ub294 CPU \uc218\uc640 \uacc4\uc57d \uc870\uac74\uc73c\ub85c \ucd5c\uc885 \uacac\uc801\uc744 \ud655\uc778\ud574\uc57c \ud569\ub2c8\ub2e4. GPU \uad6c\ub9e4\ube44, \uc804\ub825, OS \uad6c\ub3c5, \ub124\ud2b8\uc6cc\ud06c, \uc778\ub825\uacfc \uc774\uc804 \ube44\uc6a9\uc740 \ubcc4\ub3c4\ub85c \ub354\ud574\uc57c \ud569\ub2c8\ub2e4.\n\uadfc\uac70: https://aws.amazon.com/eks/pricing/ \u300cAmazon EKS Hybrid Nodes pricing\u300d(\ud655\uc778\uc77c 2026-10-11). \uc9c1\uc811 \uc7ac\uacc4\uc0b0: 10\ub178\ub4dc \uc6d4 576,000\u00d70.020+576,000\u00d70.014+716,800\u00d70.010=$26,752; 50\ub178\ub4dc \uc6d4 $94,336; 100\ub178\ub4dc \uc6d4 $154,752.\n\n\ube44\uc6a9\uc744 \uc774\ud574\ud558\uc168\uc73c\uba74 \ub3c4\uc785 \uc804 \uc900\ube44 \uc0ac\ud56d\uc744 \uccb4\ud06c\ub9ac\uc2a4\ud2b8\ub85c \uc810\uac80\ud574\ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     13: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- Access entry(HYBRID_LINUX)\uc640 remoteNetworkConfig\ub294 EKS \ucabd \ud544\uc218 \uc900\ube44\uc785\ub2c8\ub2e4.\n- \ub178\ub4dc IAM role\uc5d0 eks:DescribeCluster \uad8c\ud55c\uc774 \uc788\uc5b4\uc57c \ud558\uba70 AmazonEKSWorkerNodeMinimalPolicy\ub9cc\uc73c\ub85c\ub294 \ubd80\uc871\ud569\ub2c8\ub2e4.\n- CIDR\uc740 IPv4\uc774\uace0 \uc11c\ub85c \uacb9\uce58\uba74 \uc548 \ub429\ub2c8\ub2e4.\n- Remote CIDR\uc744 \uc120\uc5b8\ud588\ub2e4\uace0 \ud574\uc11c route\uc640 firewall\uc774 \uc790\ub3d9 \uc0dd\uc131\ub418\uc9c0\ub294 \uc54a\uc2b5\ub2c8\ub2e4.\n\n\uccb4\ud06c\ubc15\uc2a4\ub97c \ub20c\ub7ec \uac00\uba70 \ud655\uc778\ud574\ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \uccab \ubc88\uc9f8 \ud56d\ubaa9\uc740 access entry\uc785\ub2c8\ub2e4. node IAM role\uc5d0 HYBRID_LINUX \ud0c0\uc785\uc73c\ub85c \ub9cc\ub4ed\ub2c8\ub2e4. \ub450 \ubc88\uc9f8\ub294 remoteNetworkConfig\ub85c, \uc628\ud504\ub818 \ub178\ub4dc\uc640 Pod CIDR\uc744 \ud074\ub7ec\uc2a4\ud130\uc5d0 \uc54c\ub824\uc8fc\ub294 \uc124\uc815\uc785\ub2c8\ub2e4.\n\nIAM\uc5d0\uc11c \uc790\uc8fc \ub193\uce58\ub294 \ubd80\ubd84\uc740 AmazonEKSWorkerNodeMinimalPolicy\uc5d0 eks:DescribeCluster\uac00 \uc5c6\ub2e4\ub294 \uc810\uc785\ub2c8\ub2e4. \ub530\ub85c \ucd94\uac00\ud574\uc57c \ud569\ub2c8\ub2e4. \ub9c8\uc9c0\ub9c9\uc73c\ub85c \uc774 CIDR \uc120\uc5b8\uc774 \ub77c\uc6b0\ud2b8\uc640 \ubc29\ud654\ubcbd \uaddc\uce59\uc744 \uc790\ub3d9\uc73c\ub85c \ub9cc\ub4e4\uc5b4\uc8fc\uc9c0\ub294 \uc54a\uc2b5\ub2c8\ub2e4. VPC\uc640 \uc628\ud504\ub818 \uc591\ucabd \ub77c\uc6b0\ud305\uc740 \uc9c1\uc811 \uad6c\uc131\ud574\uc57c \ud569\ub2c8\ub2e4. \ucf54\ub4dc \uc870\uac01\uc740 \ubb38\uc11c\uc758 \uc608\uc2dc\uac12\uc774\uba70 \uc2e4\uc81c \ud074\ub7ec\uc2a4\ud130\uc5d0\uc11c \uc2e4\ud589\ud574\ubcf8 \uacb0\uacfc\uac00 \uc544\ub2d9\ub2c8\ub2e4.\n\uadfc\uac70: D/01-prerequisites.md \"Cluster Access\uc640 \uc0dd\uc131 \uacc4\ud68d\" \ubc0f \"Provider\ubcc4 \uc790\uaca9 \uc99d\uba85\", \"Network\u00b7CIDR\u00b7MTU\".\n\n\ubc30\uc6b4 \ub0b4\uc6a9\uc744 \ud034\uc988\ub85c \ud655\uc778\ud574\ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     14: "\u23f8\ufe0f [1.25min] [\uc694\uc57d]\n- Q1 \uc815\ub2f5: SSM \uc138\uc158\uc740 1\uc2dc\uac04 \uace0\uc815\uc785\ub2c8\ub2e4.\n- Q2 \uc815\ub2f5: AL2023\uc740 \uc628\ud504\ub818 \uac00\uc0c1\ud654 \ud658\uacbd\uc5d0\uc11c \uc9c0\uc6d0\ub429\ub2c8\ub2e4 (Bottlerocket\uc740 x86_64\ub9cc, RHEL 10\uc740 \ubaa9\ub85d\uc5d0 \uc5c6\uc74c).\n\n\ubb38\uc81c\ub97c \ud480\uc5b4\ubcf4\uaca0\uc2b5\ub2c8\ub2e4. 1\ubc88\uc740 SSM \uc138\uc158 \uc218\uba85\uc73c\ub85c 1\uc2dc\uac04 \uace0\uc815\uc785\ub2c8\ub2e4. 2\ubc88\uc740 AL2023\uc774 \uc628\ud504\ub818 \uac00\uc0c1\ud654 \ud658\uacbd\uc5d0\uc11c\ub9cc \uc9c0\uc6d0\ub41c\ub2e4\ub294 \uc810\uc744 \ubb3b\uace0 \uc788\uc2b5\ub2c8\ub2e4. Bottlerocket\uc740 VMware \ubcc0\ud615\uc5d0 x86_64\ub9cc \uc9c0\uc6d0\ud558\uace0 RHEL 10\uc740 \ubaa9\ub85d\uc5d0 \uc5c6\uc2b5\ub2c8\ub2e4.\n\n\uc815\ub2f5\uc744 \ud655\uc778\ud558\uace0 \ub2e4\uc74c \ub450 \ubb38\uc81c\ub85c \ub118\uc5b4\uac00\uaca0\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: D/README.md, D/01-prerequisites.md.\n\n\uc774\uc5b4\uc11c 3\ubc88, 4\ubc88\uc785\ub2c8\ub2e4.",
-    15: "\u23f8\ufe0f [1.25min] [\uc694\uc57d]\n- Q3 \uc815\ub2f5: \uc6d4 \ub204\uc801 \uad6c\uac04\uc81c\uc774\uba70 \ucc98\uc74c 576,000 vCPU-hours\ub294 $0.020\uc785\ub2c8\ub2e4.\n- Q4 \uc815\ub2f5: \ub458 \ub2e4 \ucf1c\uba74 join\uc774 \uc2e4\ud328\ud560 \uc218 \uc788\uc5b4 \ud558\ub098\ub9cc \uad8c\uc7a5\ub429\ub2c8\ub2e4. \ubcf4\ud3b8\uc801\uc778 API \uae08\uc9c0\ub294 \uc544\ub2d9\ub2c8\ub2e4.\n\n3\ubc88\uc740 \uad6c\uac04\uc81c \uc694\uae08\uc73c\ub85c, \ubaa8\ub4e0 \uc0ac\uc6a9\ub7c9\uc5d0 \uace0\uc815 \ub2e8\uac00\uac00 \uc801\uc6a9\ub418\uc9c0 \uc54a\uace0 idle\uc774\uc5b4\ub3c4 \uacfc\uae08\ub429\ub2c8\ub2e4. 4\ubc88\uc740 endpoint \ubaa8\ub4dc\uc785\ub2c8\ub2e4. \ub458 \ub2e4 \ucf1c\uba74 \uc2e4\ud328\ud560 \uc218 \uc788\uc5b4\uc11c AWS\uac00 \ud558\ub098\ub9cc \uc4f0\ub3c4\ub85d \uad8c\uc7a5\ud558\uba70, public endpoint\ub97c \uc368\ub3c4 control plane\uc5d0\uc11c \ub178\ub4dc\ub85c\uc758 private \uc5f0\uacb0 \uc694\uad6c\ub294 \uc0ac\ub77c\uc9c0\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\n\uadfc\uac70: D/README.md, D/01-prerequisites.md, \uc694\uae08\ud45c(aws.amazon.com/eks/pricing).\n\n\ub9c8\uc9c0\ub9c9\uc73c\ub85c \ucc38\uace0 \uc790\ub8cc\uc640 \uc9c8\ubb38 \uc2dc\uac04\uc785\ub2c8\ub2e4.",
+    15: "\u23f8\ufe0f [1.25min] [\uc694\uc57d]\n- Q3 \uc815\ub2f5: \uc6d4 \ub204\uc801 \uad6c\uac04\uc81c\uc774\uba70 \ucc98\uc74c 576,000 vCPU-hours\ub294 $0.020\uc785\ub2c8\ub2e4.\n- Q4 \uc815\ub2f5: Hybrid Nodes \ud074\ub7ec\uc2a4\ud130\ub294 Public-only \ub610\ub294 Private-only\uac00 \uad8c\uc7a5\uc774\uba70, \"Public and Private\"\ub294 join \uc2e4\ud328 \uc704\ud5d8\uc774 \uc788\uc2b5\ub2c8\ub2e4.\n\n3\ubc88\uc740 \uad6c\uac04\uc81c \uc694\uae08\uc73c\ub85c, \ubaa8\ub4e0 \uc0ac\uc6a9\ub7c9\uc5d0 \uace0\uc815 \ub2e8\uac00\uac00 \uc801\uc6a9\ub418\uc9c0 \uc54a\uace0 idle\uc774\uc5b4\ub3c4 \uacfc\uae08\ub429\ub2c8\ub2e4. 4\ubc88\uc740 endpoint \ubaa8\ub4dc\uc785\ub2c8\ub2e4. \ub458 \ub2e4 \ucf1c\ub294 \uad6c\uc131 \uc790\uccb4\ub97c API\uac00 \ub9c9\uc9c0\ub294 \uc54a\uc9c0\ub9cc, VPC \ubc16 \ub178\ub4dc\uc5d0\uc11c API endpoint\uac00 public IP\ub85c \ud574\uc11d\ub418\uc5b4 join\uc774 \uc2e4\ud328\ud560 \uc218 \uc788\uc73c\ubbc0\ub85c \ud558\ub098\ub9cc \ucf1c\ub294 \uac83\uc774 \uad8c\uc7a5\uc785\ub2c8\ub2e4. \ub610 public endpoint\ub97c \uc368\ub3c4 control plane\uc5d0\uc11c \ub178\ub4dc\ub85c\uc758 private \uc5f0\uacb0 \uc694\uad6c\ub294 \uc0ac\ub77c\uc9c0\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\n\uadfc\uac70: D/README.md, D/01-prerequisites.md, \uc694\uae08\ud45c(aws.amazon.com/eks/pricing).\n\n\ub9c8\uc9c0\ub9c9\uc73c\ub85c \ucc38\uace0 \uc790\ub8cc\uc640 \uc9c8\ubb38 \uc2dc\uac04\uc785\ub2c8\ub2e4.",
     16: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- \uacf5\uc2dd \ubb38\uc11c\ub294 hybrid-nodes-* \uc2dc\ub9ac\uc988\ub97c \uae30\uc900\uc73c\ub85c \ud655\uc778\ud569\ub2c8\ub2e4.\n- \uc694\uae08\uc740 EKS \uc694\uae08 \ud398\uc774\uc9c0\uac00 \uae30\uc900\uc785\ub2c8\ub2e4.\n- Block 2\uc5d0\uc11c\ub294 \ub124\ud2b8\uc6cc\ud0b9\uacfc Hybrid Nodes Gateway\ub97c \ub2e4\ub8f9\ub2c8\ub2e4.\n\n\uc624\ub298 \ub2e4\ub8ec \ub0b4\uc6a9\uc758 \uacf5\uc2dd \ucd9c\ucc98\uc785\ub2c8\ub2e4. \ubc84\uc804\uacfc \uc694\uae08\uc740 \uc2dc\uc810\uc5d0 \ub530\ub77c \ubc14\ub00c\uae30 \ub54c\ubb38\uc5d0, \uc2e4\uc81c \ub3c4\uc785 \uc804\uc5d0\ub294 \ubc18\ub4dc\uc2dc \uacf5\uc2dd \ubb38\uc11c\ub85c \uc7ac\ud655\uc778\ud558\uc2dc\uae30 \ubc14\ub78d\ub2c8\ub2e4.\n\n\uc5ec\uae30\uae4c\uc9c0 \uc9c8\ubb38 \uc788\uc73c\uc2e0\uac00\uc694? \ud2b9\ud788 \ucc45\uc784 \uacbd\uacc4\ub098 \uc694\uae08 \ubaa8\ub378, \uc9c0\uc6d0 OS\uc5d0 \ub300\ud55c \uc9c8\ubb38\uc744 \ud658\uc601\ud569\ub2c8\ub2e4.\n\n\uc774\uc5b4\uc11c \ub2e4\uc74c \ube14\ub85d\uc5d0\uc11c\ub294 \ub124\ud2b8\uc6cc\ud0b9\uacfc Hybrid Nodes Gateway\ub97c \ub2e4\ub8e8\uaca0\uc2b5\ub2c8\ub2e4.",
     17: "[0.5min] [\uc694\uc57d]\n- Block 1 \ub9c8\ubb34\ub9ac\n- \ub2e4\uc74c \ube14\ub85d\uc740 \ub124\ud2b8\uc6cc\ud0b9 & Hybrid Nodes Gateway\n\nBlock 1\uc744 \ub9c8\ubb34\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4. \uc7a0\uc2dc \uc26c\uc5c8\ub2e4\uac00 Block 2\uc5d0\uc11c \ub124\ud2b8\uc6cc\ud0b9 \uc694\uad6c\uc0ac\ud56d\uacfc Gateway\ub97c \uc0b4\ud3b4\ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uac10\uc0ac\ud569\ub2c8\ub2e4."
   };

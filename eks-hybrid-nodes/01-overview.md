@@ -66,30 +66,30 @@ Block 1 — 개요 & 아키텍처 | 30분
 :::html
 <style>
 .text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); word-break: keep-all; overflow-wrap: anywhere; }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="card-grid">
-  <div class="card fragment fade-up" data-fragment-index="1">
+<div class="card-grid" data-reveal="stagger">
+  <div class="card">
     <strong class="text-accent">컨트롤 플레인 직접 운영</strong>
     <div class="on-surface-muted">etcd 백업·복구, API server 가용성, 인증서 갱신을 팀이 직접 책임</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="2">
+  <div class="card">
     <strong class="text-accent">버전 업그레이드 부담</strong>
     <div class="on-surface-muted">마이너 버전마다 컨트롤 플레인과 노드를 순서대로 올려야 하고, 실패 시 영향 범위가 큼</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="3">
+  <div class="card">
     <strong class="text-accent">클러스터 파편화</strong>
     <div class="on-surface-muted">클라우드와 온프렘이 서로 다른 도구·정책·버전으로 따로 운영되기 쉬움</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="4">
+  <div class="card">
     <strong class="text-accent">인증·감사 이원화</strong>
     <div class="on-surface-muted">IAM 기반 클라우드 권한 체계와 온프렘 인증 체계를 각각 관리</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="5">
+  <div class="card">
     <strong class="text-accent">GPU·데이터 근접성</strong>
     <div class="on-surface-muted">기존 하드웨어와 대규모 로컬 데이터 때문에 워크로드를 클라우드로 옮기기 어려움</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="6">
+  <div class="card">
     <strong class="text-accent">가시성 도구 분산</strong>
     <div class="on-surface-muted">모니터링·로깅이 환경별로 나뉘어 한 화면에서 보기 어려움</div>
   </div>
@@ -129,7 +129,7 @@ Block 1 — 개요 & 아키텍처 | 30분
 | EKS Hybrid Nodes | AWS 관리 (EKS) | 고객 소유 온프레미스·엣지 호스트 | 고객 |
 
 :::html
-<div class="callout callout-info fragment fade-up" data-fragment-index="1">
+<div class="callout callout-info fragment zoom-in" data-fragment-index="1">
   Local Zone·Outposts·다른 클라우드의 머신을 <strong>hybrid node 인프라로 등록하는 것은 지원하지 않습니다.</strong> 이 비교는 개념 수준이며, 상세 지원 범위는 각 서비스의 공식 문서로 확인하세요.
 </div>
 :::
@@ -158,30 +158,30 @@ Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 
 
 :::html
 <style>
-.hn-split { display: grid; grid-template-columns: 1fr 1.1fr; gap: var(--space-4); align-items: center; }
+.hn-split-img { display: grid; grid-template-columns: 1fr 1.1fr; gap: var(--space-4); align-items: center; }
 .hn-stack { display: flex; flex-direction: column; gap: var(--space-3); }
-.hn-split img { width: 100%; height: auto; }
+.hn-split-img img { width: 100%; height: auto; }
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
 .text-success { color: var(--success); font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); word-break: keep-all; overflow-wrap: anywhere; }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="hn-split">
-  <div class="hn-stack">
-    <div class="callout callout-info fragment fade-up" data-fragment-index="1">
+<div class="hn-split-img">
+  <div class="hn-stack fragment" data-reveal="stagger" data-reveal-anim="left" data-fragment-index="1">
+    <div class="callout callout-info">
       <strong class="text-info">What</strong>
       <div class="on-surface-muted">온프레미스·엣지 노드를 AWS 관리형 EKS 컨트롤 플레인에 연결하는 기능</div>
     </div>
-    <div class="callout callout-success fragment fade-up" data-fragment-index="2">
+    <div class="callout callout-success">
       <strong class="text-success">Why</strong>
       <div class="on-surface-muted">클라우드와 온프렘을 같은 EKS API, 같은 도구로 운영하고 컨트롤 플레인 운영 부담을 줄임</div>
     </div>
-    <div class="callout callout-warning fragment fade-up" data-fragment-index="3">
+    <div class="callout callout-warning">
       <strong class="text-warning">단, 책임은 남는다</strong>
       <div class="on-surface-muted">Host·OS·연결·워크로드 운영은 계속 고객 몫</div>
     </div>
   </div>
-  <div class="fragment fade-up" data-fragment-index="4">
+  <div class="fragment zoom-in" data-fragment-index="2">
     <img src="diagrams/hybrid-nodes-highlevel-network.png" alt="AWS 컨트롤 플레인 ENI와 온프레미스 하이브리드 노드를 연결하는 네트워크 개요">
   </div>
 </div>
@@ -217,30 +217,30 @@ Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 
 .hn-no { display: inline-block; min-width: 1.6em; margin-right: var(--space-2); text-align: center; border-radius: 50%; background: var(--accent); color: var(--surface-1); font-weight: var(--weight-bold); }
 .text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
 .text-success { color: var(--success); font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-sm); margin-top: var(--space-2); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
 <div class="hn-steps">
-  <div class="card fragment fade-up" data-fragment-index="1">
+  <div class="card fragment fade-right" data-fragment-index="1">
     <span class="hn-no">1</span><strong class="text-accent">nodeadm install · init</strong>
     <div class="on-surface-muted">의존성 설치와 구성. nodeadm은 상시 에이전트가 아닌 설치/bootstrap/upgrade CLI</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="2">
+  <div class="card fragment fade-right" data-fragment-index="2">
     <span class="hn-no">2</span><strong class="text-accent">자격 증명 획득</strong>
     <div class="on-surface-muted">SSM 또는 IAM Roles Anywhere로 임시 자격 증명 확보 (AWS 연결 필요)</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="3">
+  <div class="card fragment fade-right" data-fragment-index="3">
     <span class="hn-no">3</span><strong class="text-accent">kubelet 기동</strong>
     <div class="on-surface-muted">label eks.amazonaws.com/compute-type=hybrid 자동 부여, taint는 자동 아님</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="4">
+  <div class="card fragment fade-right" data-fragment-index="4">
     <span class="hn-no">4</span><strong class="text-accent">EKS API 인증</strong>
     <div class="on-surface-muted">Node IAM role의 HYBRID_LINUX access entry로 system:node 신원 매핑</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="5">
+  <div class="card fragment fade-right" data-fragment-index="5">
     <span class="hn-no">5</span><strong class="text-accent">CNI 설치</strong>
     <div class="on-surface-muted">Cilium 또는 Calico 필요. VPC CNI는 hybrid node를 관리하지 않음</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="6">
+  <div class="card fragment fade-right" data-fragment-index="6">
     <span class="hn-no">6</span><strong class="text-success">Ready</strong>
     <div class="on-surface-muted">Pod 스케줄 가능. Pod Identity 등 add-on은 별도 구성</div>
   </div>
@@ -279,10 +279,10 @@ Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
 .text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); word-break: keep-all; overflow-wrap: anywhere; }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
 <div class="hn-two">
-  <div class="card fragment fade-up" data-fragment-index="1">
+  <div class="card fragment fade-right" data-fragment-index="1">
     <strong class="text-info">AWS 책임</strong>
     <ul class="on-surface-muted">
       <li>EKS API server, etcd, scheduler, controller</li>
@@ -290,7 +290,7 @@ Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 
       <li>컨트롤 플레인 가용성 관리</li>
     </ul>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="2">
+  <div class="card fragment fade-left" data-fragment-index="2">
     <strong class="text-warning">고객 책임</strong>
     <ul class="on-surface-muted">
       <li>Host, OS, 보안 패치, kubelet·containerd 운영</li>
@@ -299,7 +299,7 @@ Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 
     </ul>
   </div>
 </div>
-<div class="callout callout-danger fragment fade-up" data-fragment-index="3">
+<div class="callout callout-danger fragment zoom-in" data-fragment-index="3">
   <strong class="text-danger">데이터 경계 주의</strong> — Secrets, Kubernetes 객체, 로그 등 컨트롤 플레인 데이터는 AWS에 저장됩니다. Private endpoint를 쓴다고 망분리 규정 준수가 입증되지는 않으며, Direct Connect 자체는 기본 암호화를 제공하지 않습니다.
 </div>
 :::
@@ -334,30 +334,30 @@ Direct Connect만으로는 암호화가 보장되지 않기 때문에 MACsec 또
 <style>
 .text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); word-break: keep-all; overflow-wrap: anywhere; }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="card-grid">
-  <div class="card fragment fade-up" data-fragment-index="1">
+<div class="card-grid fragment" data-reveal="stagger" data-reveal-anim="zoom" data-reveal-pace="slow" data-fragment-index="1">
+  <div class="card">
     <strong class="text-accent">IPv4 전용</strong>
     <div class="on-surface-muted">Remote node·Pod CIDR은 RFC1918 또는 CGNAT(100.64.0.0/10)이며 VPC·service CIDR과 겹치면 안 됨</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="2">
+  <div class="card">
     <strong class="text-accent">CIDR 개수 상한</strong>
     <div class="on-surface-muted">클러스터당 remote node CIDR 15개, remote Pod CIDR 15개까지. 기존 클러스터에도 추가 가능</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="3">
+  <div class="card">
     <strong class="text-accent">연결형 환경 전제</strong>
     <div class="on-surface-muted">AWS와 안정적인 private 양방향 연결 필요. 단절·간헐 연결(DDIL) 용도 아님</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="4">
+  <div class="card">
     <strong class="text-accent">권장 연결 품질</strong>
     <div class="on-surface-muted">일반 권장: 100 Mbps 이상, RTT 200 ms 이하 (엄격한 최소값은 아님)</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="5">
-    <strong class="text-warning">API endpoint는 하나만</strong>
-    <div class="on-surface-muted">Public과 private를 동시에 켜면 VPC 밖 노드의 join이 실패할 수 있어 AWS는 하나만 권장</div>
+  <div class="card">
+    <strong class="text-warning">API endpoint는 하나만 권장</strong>
+    <div class="on-surface-muted">Public-only 또는 Private-only 권장. "Public and Private"는 VPC 밖 노드에서 endpoint가 public IP로 해석되어 join이 실패할 수 있음</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="6">
+  <div class="card">
     <strong class="text-warning">노드는 유휴여도 과금</strong>
     <div class="on-surface-muted">Join부터 제거까지 vCPU-hour로 과금. Workload가 idle이어도 자동 중단되지 않음</div>
   </div>
@@ -372,11 +372,11 @@ Direct Connect만으로는 암호화가 보장되지 않기 때문에 MACsec 또
 - 클러스터당 node CIDR 15개, Pod CIDR 15개까지 지원합니다.
 - 안정적인 private 양방향 연결이 필요하며 DDIL 용도는 아닙니다.
 - 100 Mbps / RTT 200 ms는 일반 권장이지 엄격한 최소값이 아닙니다.
-- API endpoint는 public-only 또는 private-only를 권장합니다.
+- API endpoint는 Public-only 또는 Private-only가 권장이며, "Public and Private"는 join 실패 위험이 있습니다.
 
 여섯 가지 제약입니다. 위쪽 네 개는 네트워크 전제로, 주소는 IPv4에 RFC1918이나 CGNAT 범위여야 하고 node, Pod, VPC, service CIDR이 서로 겹치면 안 됩니다.
 {cue: pause}
-연결 품질은 "100 Mbps, RTT 200 ms 이하"가 일반 권장입니다. 예전 자료에 나오던 100ms나 Direct Connect 10ms 같은 수치는 근거를 확인하지 못해서 사용하지 않았습니다. 아래 두 개는 실수하기 쉬운 항목입니다. endpoint를 public과 private 모두 켜면 join이 실패할 수 있고, 노드는 workload가 놀아도 vCPU-hour 과금이 계속됩니다.
+연결 품질은 "100 Mbps, RTT 200 ms 이하"가 일반 권장입니다. 예전 자료에 나오던 100ms나 Direct Connect 10ms 같은 수치는 근거를 확인하지 못해서 사용하지 않았습니다. 아래 두 개는 실수하기 쉬운 항목입니다. endpoint는 public 또는 private 하나만 켜는 것이 권장이고(둘 다 켜면 join이 실패할 수 있습니다. API가 거부하는 구성은 아닙니다), 노드는 workload가 놀아도 vCPU-hour 과금이 계속됩니다.
 근거: D/README.md "계획에 반영할 제약", D/01-prerequisites.md "Network·CIDR·MTU".
 {cue: transition}
 다음은 지원 범위 매트릭스입니다.
@@ -413,7 +413,7 @@ Direct Connect만으로는 암호화가 보장되지 않기 때문에 MACsec 또
 | 항목 | 내용 |
 |------|------|
 | AWS 지원 범위 | AWS 빌드 `oci://public.ecr.aws/eks/cilium/cilium` |
-| 공식 CNI 페이지 | v1.17.x, v1.18.x 명시 (Gateway 문서는 1.19.2-1+ 언급) |
+| 공식 CNI 페이지 | v1.17.x, v1.18.x 명시 (Gateway 사용 시 최소 1.17.13-1 · 1.18.8-1 · 1.19.2-1) |
 | 커널 | Cilium 1.18.3은 kernel 5.10+ 필요 → Ubuntu 20.04, RHEL 8 미지원 |
 | 주의 | 업스트림 최신 Cilium이 자동으로 AWS 지원 대상은 아님 |
 | 지원 범위 | IPv4, VXLAN, Cluster Scope IPAM 등 |
@@ -429,7 +429,7 @@ Direct Connect만으로는 암호화가 보장되지 않기 때문에 MACsec 또
 탭 세 개로 나눴습니다. OS 탭에서 주의할 점은 AL2023이 온프렘 가상화 환경 전용이라는 점과, Bottlerocket은 VMware 변형에 x86_64만 지원하고 nodeadm 대신 자체 bootstrap을 쓴다는 점입니다. RHEL 10이나 Ubuntu 26.04는 아직 목록에 없습니다.
 {cue: pause}
 두 번째 탭에서 버전은 EKS와 같은 버전을 지원한다고 말씀드리되, 1.37에서 hybrid 전용 검증을 했는지는 단정하지 않겠습니다. SSM을 쓸 때는 nodeadm 1.0.19 이상이 필요합니다.
-세 번째 탭의 Cilium은 AWS 빌드가 지원 범위입니다. 공식 CNI 페이지는 1.17과 1.18을 명시하고 Gateway 문서에는 1.19.2-1 이상이 언급되어서 두 문서 사이에 차이가 있습니다. 업스트림 Cilium 최신 버전을 그대로 쓰면 AWS 지원 대상이 아닐 수 있습니다.
+세 번째 탭의 Cilium은 AWS 빌드가 지원 범위입니다. 공식 CNI 페이지는 1.17과 1.18을 명시하고, Hybrid Nodes Gateway를 쓰려면 branch별로 1.17.13-1, 1.18.8-1, 1.19.2-1 이상이 필요합니다. CNI 페이지 예시 버전은 이보다 낮으니 Gateway 계획이 있다면 버전을 먼저 맞추세요. 업스트림 Cilium 최신 버전을 그대로 쓰면 AWS 지원 대상이 아닐 수 있습니다.
 근거: D/01-prerequisites.md "OS와 Runtime", D/README.md "계획에 반영할 제약", fact sheet(EKS 지원 버전 2026-10-07 기준), D/04-node-bootstrap.md. 버전 숫자는 시점에 따라 바뀌므로 발표 전 공식 문서로 재확인 필요.
 {cue: transition}
 다음은 자격 증명 프로바이더 선택입니다.
@@ -449,7 +449,7 @@ Direct Connect만으로는 암호화가 보장되지 않기 때문에 MACsec 또
 .text-success { color: var(--success); font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
 .text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-base); word-break: keep-all; overflow-wrap: anywhere; }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
 <div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
   <button class="tab-btn active">SSM hybrid activation</button>
@@ -457,11 +457,11 @@ Direct Connect만으로는 암호화가 보장되지 않기 때문에 MACsec 또
   <button class="tab-btn">공통 주의</button>
 </div>
 <div class="tc">
-  <div class="card-grid">
-    <div class="card fragment fade-up" data-fragment-index="1"><strong class="text-accent">세션 수명</strong><div class="on-surface-muted">고정 1시간, SSM이 자동 갱신</div></div>
-    <div class="card fragment fade-up" data-fragment-index="2"><strong class="text-accent">Activation</strong><div class="on-surface-muted">기본 24시간, 최대 30일, RegistrationLimit 1–1000</div></div>
-    <div class="card fragment fade-up" data-fragment-index="3"><strong class="text-accent">노드 이름</strong><div class="on-surface-muted">SSM이 생성하는 mi-... 이름</div></div>
-    <div class="card fragment fade-up" data-fragment-index="4"><strong class="text-accent">언제 선택</strong><div class="on-surface-muted">기존 PKI가 없고 간단한 등록이 필요할 때</div></div>
+  <div class="card-grid" data-reveal="static">
+    <div class="card"><strong class="text-accent">세션 수명</strong><div class="on-surface-muted">고정 1시간, SSM이 자동 갱신</div></div>
+    <div class="card"><strong class="text-accent">Activation</strong><div class="on-surface-muted">기본 24시간, 최대 30일, RegistrationLimit 1–1000</div></div>
+    <div class="card"><strong class="text-accent">노드 이름</strong><div class="on-surface-muted">SSM이 생성하는 mi-... 이름</div></div>
+    <div class="card"><strong class="text-accent">언제 선택</strong><div class="on-surface-muted">기존 PKI가 없고 간단한 등록이 필요할 때</div></div>
   </div>
 </div>
 <div class="tc" hidden>
@@ -520,10 +520,10 @@ IAM Roles Anywhere는 PKI와 노드별 인증서, trust anchor, profile이 필�
 <style>
 .hn-price-notes { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-3); }
 </style>
-<div class="hn-price-notes">
-  <div class="callout callout-info fragment fade-up" data-fragment-index="1">노드가 <strong>join된 시점부터 제거될 때까지</strong> 과금되며 workload가 idle이어도 요금은 유지됩니다.</div>
-  <div class="callout callout-warning fragment fade-up" data-fragment-index="2">Hyperthreading된 bare-metal core는 vCPU 2개로 보고될 수 있습니다. <strong>머신당 32 vCPU 초과</strong> 시 account team과 상담하세요.</div>
-  <div class="callout callout-danger fragment fade-up" data-fragment-index="3">모든 사용량에 적용되는 고정 요금이 아닙니다. 클러스터 요금, 네트워크, 로그, 스토리지, OS 요금은 별도입니다.</div>
+<div class="hn-price-notes fragment" data-reveal="stagger" data-reveal-anim="right" data-fragment-index="1">
+  <div class="callout callout-info">노드가 <strong>join된 시점부터 제거될 때까지</strong> 과금되며 workload가 idle이어도 요금은 유지됩니다.</div>
+  <div class="callout callout-warning">Hyperthreading된 bare-metal core는 vCPU 2개로 보고될 수 있습니다. <strong>머신당 32 vCPU 초과</strong> 시 account team과 상담하세요.</div>
+  <div class="callout callout-danger">모든 사용량에 적용되는 고정 요금이 아닙니다. 클러스터 요금, 네트워크, 로그, 스토리지, OS 요금은 별도입니다.</div>
 </div>
 :::
 
@@ -556,9 +556,16 @@ IAM Roles Anywhere는 PKI와 노드별 인증서, trust anchor, profile이 필�
 .hn-calc { display: flex; flex-direction: column; gap: var(--space-3); }
 .hn-controls { display: flex; flex-direction: column; gap: var(--space-2); }
 .hn-row { display: grid; grid-template-columns: 8rem 1fr; align-items: center; gap: var(--space-3); }
-.hn-row label { color: var(--on-surface-muted); }
+.hn-row label { color: var(--text-secondary); }
 .hn-presets { display: flex; gap: var(--space-2); }
-.hn-break { color: var(--on-surface-muted); font-size: var(--text-sm); }
+.hn-presets .btn { color: var(--on-surface); }
+.hn-smt { display: flex; align-items: center; gap: var(--space-3); }
+.hn-smt label { display: inline-flex; align-items: center; gap: var(--space-2); }
+.hn-smt input { accent-color: var(--accent); }
+.hn-calc .slider-value { min-width: 6rem; }
+.hn-calc .metric-value { font-size: var(--fs-subtitle); white-space: nowrap; }
+.hn-calc .callout-warning { color: var(--on-surface); background: color-mix(in srgb, var(--warning) 12%, var(--surface-1)); }
+.hn-break { color: var(--text-secondary); font-size: var(--fs-caption); }
 </style>
 <div class="hn-calc">
   <div class="hn-controls">
@@ -570,34 +577,44 @@ IAM Roles Anywhere는 PKI와 노드별 인증서, trust anchor, profile이 필�
       </div>
     </div>
     <div class="hn-row">
-      <label for="hn-vcpu">노드당 vCPU</label>
+      <label for="hn-cores">CPU 코어/노드</label>
       <div class="slider-container">
-        <input type="range" id="hn-vcpu" min="2" max="32" step="2" value="32">
-        <span class="slider-value" id="hn-vcpu-v">32</span>
+        <input type="range" id="hn-cores" min="32" max="216" step="8" value="128" aria-describedby="hn-core-guide">
+        <span class="slider-value" id="hn-cores-v">128코어</span>
       </div>
     </div>
+    <div class="hn-row">
+      <label for="hn-smt">SMT / HT</label>
+      <div class="hn-smt">
+        <label><input type="checkbox" id="hn-smt" checked> 코어당 2 vCPU</label>
+        <span class="hn-break" id="hn-vcpu-v" aria-live="polite">과금 기준: 256 vCPU/노드</span>
+      </div>
+    </div>
+    <div class="hn-break" id="hn-core-guide">GPU 서버 가정: 물리 CPU 32~216코어 · 기본 128코어 · SMT 해제 시 코어당 1 vCPU</div>
     <div class="hn-presets">
-      <button class="btn btn-sm" id="hn-p10">10 노드 × 32</button>
-      <button class="btn btn-sm" id="hn-p50">50 노드 × 32</button>
-      <button class="btn btn-sm" id="hn-p100">100 노드 × 32</button>
+      <button class="btn btn-sm" id="hn-p10">10 GPU 노드</button>
+      <button class="btn btn-sm" id="hn-p50">50 GPU 노드</button>
+      <button class="btn btn-sm" id="hn-p100">100 GPU 노드</button>
     </div>
   </div>
-  <div class="card-grid fragment fade-up" data-fragment-index="1">
+  <div class="card-grid">
     <div class="metric-card"><div class="metric-value" id="hn-hours">-</div><div class="metric-label">월 vCPU-hours</div></div>
     <div class="metric-card"><div class="metric-value" id="hn-month">-</div><div class="metric-label">월 노드 요금</div></div>
     <div class="metric-card"><div class="metric-value" id="hn-year">-</div><div class="metric-label">연환산 노드 요금</div></div>
     <div class="metric-card"><div class="metric-value" id="hn-year-cl">-</div><div class="metric-label">연환산 + 클러스터 1개</div></div>
   </div>
   <div class="hn-break" id="hn-break"></div>
-  <div class="callout callout-warning fragment fade-up" data-fragment-index="2">
-    <strong>추정치입니다.</strong> 가정: 월 730시간, 동일 리전·계정 합산, 같은 월을 12번 반복한 연환산. 마지막 카드는 기본 tier 표준 지원 클러스터 1개($0.10/시간 × 730 × 12 = $876)만 더했으며, 네트워크·로그·스토리지·EC2·OS·하드웨어·인력 비용은 제외입니다.
+  <div class="hn-break">공개 요율 기반 계산 · 32 vCPU/머신 초과는 account team에 요금 확인 · 실제 노드가 보고한 CPU 수 기준</div>
+  <div class="callout callout-warning fragment fade-up" data-fragment-index="1">
+    <strong>추정치입니다.</strong> 월 730시간, 동일 리전·계정 합산, 같은 월을 12번 반복한 연환산입니다. 마지막 카드는 표준 지원 클러스터 1개($876/년)를 더합니다. GPU 구매·전력·네트워크·로그·스토리지·EC2·OS·인력 비용은 제외입니다.
   </div>
 </div>
 :::
 
 :::script
 var NODES = document.getElementById('hn-nodes');
-var VCPU = document.getElementById('hn-vcpu');
+var CORES = document.getElementById('hn-cores');
+var SMT = document.getElementById('hn-smt');
 var TIERS = [[576000, 0.020], [576000, 0.014], [4608000, 0.010], [5760000, 0.008], [Infinity, 0.006]];
 var HOURS = 730;
 var CLUSTER_YEAR = 0.10 * HOURS * 12;
@@ -615,20 +632,23 @@ function calc(vcpuHours) {
 }
 function update() {
   var n = parseInt(NODES.value, 10);
-  var v = parseInt(VCPU.value, 10);
+  var cores = parseInt(CORES.value, 10);
+  var v = cores * (SMT.checked ? 2 : 1);
   var hours = n * v * HOURS;
   var r = calc(hours);
   document.getElementById('hn-nodes-v').textContent = n;
-  document.getElementById('hn-vcpu-v').textContent = v;
+  document.getElementById('hn-cores-v').textContent = cores + '코어';
+  document.getElementById('hn-vcpu-v').textContent = '과금 기준: ' + v + ' vCPU/노드';
   document.getElementById('hn-hours').textContent = fmtInt(hours);
   document.getElementById('hn-month').textContent = fmtUsd(r.total);
   document.getElementById('hn-year').textContent = fmtUsd(r.total * 12);
   document.getElementById('hn-year-cl').textContent = fmtUsd(r.total * 12 + CLUSTER_YEAR);
   document.getElementById('hn-break').textContent = '구간 계산: ' + r.parts.join(' + ');
 }
-function preset(n) { NODES.value = n; VCPU.value = 32; update(); }
+function preset(n) { NODES.value = n; update(); }
 NODES.addEventListener('input', update);
-VCPU.addEventListener('input', update);
+CORES.addEventListener('input', update);
+SMT.addEventListener('change', update);
 document.getElementById('hn-p10').addEventListener('click', function () { preset(10); });
 document.getElementById('hn-p50').addEventListener('click', function () { preset(50); });
 document.getElementById('hn-p100').addEventListener('click', function () { preset(100); });
@@ -639,17 +659,19 @@ update();
 :::notes
 {timing: 3min}
 [요약]
-- 슬라이더로 노드 수와 노드당 vCPU를 바꾸면 구간 요금을 적용한 월·연 요금이 계산됩니다.
-- 프리셋 검증값: 10노드 연 $56,064 / 50노드 $236,928 / 100노드 $377,088 (32 vCPU, 730시간)
-- 클러스터 1개 요금($876/년)을 더하면 $56,940 / $237,804 / $377,964
-- 이 값은 추정치이며 네트워크, 로그, 스토리지, EC2, OS, 하드웨어, 인력 비용은 제외
+- GPU 서버를 가정해 물리 CPU 코어를 32~216 범위에서 8코어 단위로 선택합니다. 기본은 128코어입니다.
+- SMT / HT 사용 시 코어당 2 vCPU, 해제 시 1 vCPU로 환산합니다. 실제 과금은 Kubernetes에 보고된 CPU 수 기준입니다.
+- 프리셋은 코어와 SMT 설정을 유지한 채 노드 수만 변경합니다. 기본 설정(128코어, SMT 사용, 730시간)에서 10/50/100노드 연 요금은 $321,024 / $1,132,032 / $1,857,024입니다.
+- 클러스터 1개 요금($876/년)을 더하면 $321,900 / $1,132,908 / $1,857,900입니다. GPU 하드웨어·전력 등은 제외합니다.
 
-위의 프리셋 버튼을 눌러보겠습니다. 10노드에 노드당 32 vCPU, 월 730시간으로 계산하면 월 233,600 vCPU-hours이고 전부 첫 구간이라 월 4,672달러, 연 56,064달러입니다. 여기에 기본 tier 클러스터 1개 요금 876달러를 더하면 56,940달러가 됩니다. 50노드는 연 236,928달러, 100노드는 연 377,088달러이고 클러스터 요금을 더하면 각각 237,804달러, 377,964달러입니다.
+온프레미스 GPU 서버의 CPU 규모를 비교하기 위한 계산기입니다. 32~216코어는 시뮬레이션 입력 범위이며 특정 GPU 모델의 필수 사양이나 EKS의 지원 한도를 뜻하지 않습니다. 기본은 물리 CPU 128코어에 SMT를 사용한 구성으로, Kubernetes가 노드당 256 vCPU를 보고한다고 가정합니다. GPU 연산 코어 수를 입력하는 것이 아닙니다.
+
+10 GPU 노드 프리셋을 눌러보겠습니다. 월 1,868,800 vCPU-hours이고, 구간 요율을 적용하면 월 26,752달러, 연 321,024달러입니다. 표준 지원 클러스터 1개의 연 요금 876달러를 더하면 321,900달러입니다. 같은 CPU 설정에서 50노드는 연 1,132,032달러, 100노드는 연 1,857,024달러입니다.
 {cue: demo}
-슬라이더를 움직여서 구간이 넘어가는 지점을 보여주세요. 아래 "구간 계산" 줄에 어느 구간에서 얼마가 적용됐는지 표시됩니다.
+코어 슬라이더를 32, 64, 128, 216으로 움직이고 SMT 체크를 해제해보세요. 노드당 과금 기준이 32~216 vCPU 또는 64~432 vCPU로 바뀌며 모든 비용 카드가 즉시 재계산됩니다. 노드 수 프리셋을 눌러도 코어와 SMT 선택은 유지됩니다. 아래 "구간 계산" 줄에서 각 요율에 적용된 사용량을 확인할 수 있습니다.
 {cue: pause}
-이 값은 청구서나 실측이 아니라 계산 모델입니다. 실제 월 길이, 구간 초기화 시점, 할인과 세금이 달라질 수 있고, 하드웨어, 전력, OS 구독, 인력과 이전 비용은 비교하려면 별도로 더해야 합니다. 노드당 32 vCPU를 넘는 머신은 account team과 상담하라는 안내가 있어서 슬라이더 최대를 32로 두었습니다.
-근거: D/09-bare-metal-os-setup.md 「규모별 연간 비용 비교」(L45-53), 직접 재계산으로 확인 (10노드 233,600h×$0.020=$4,672; 50노드 576,000×0.020+576,000×0.014+16,000×0.010=$19,744; 100노드 11,520+8,064+1,184,000×0.010=$31,424).
+이 값은 공개 구간 요율을 확장 적용한 추정치입니다. AWS는 머신당 32 vCPU를 넘으면 account team에 추가 요금 정보를 확인하도록 안내합니다. 실제 노드가 보고하는 CPU 수와 계약 조건으로 최종 견적을 확인해야 합니다. GPU 구매비, 전력, OS 구독, 네트워크, 인력과 이전 비용은 별도로 더해야 합니다.
+근거: https://aws.amazon.com/eks/pricing/ 「Amazon EKS Hybrid Nodes pricing」(확인일 2026-10-11). 직접 재계산: 10노드 월 576,000×0.020+576,000×0.014+716,800×0.010=$26,752; 50노드 월 $94,336; 100노드 월 $154,752.
 {cue: transition}
 비용을 이해하셨으면 도입 전 준비 사항을 체크리스트로 점검해보겠습니다.
 :::
@@ -740,16 +762,16 @@ IAM에서 자주 놓치는 부분은 AmazonEKSWorkerNodeMinimalPolicy에 eks:Des
 
 **Q4: 클러스터 API endpoint 설정으로 옳은 것은?**
 - [ ] Public과 private를 모두 켜는 것이 필수다
-- [x] 둘 다 켜면 VPC 밖 노드의 join이 실패할 수 있어 하나만 권장된다
+- [x] Public-only 또는 Private-only가 권장이며, 둘 다 켜면 join이 실패할 수 있다
 - [ ] Public endpoint를 쓰면 control plane에서 kubelet으로의 private 연결이 필요 없다
 
 :::notes
 {timing: 1.25min}
 [요약]
 - Q3 정답: 월 누적 구간제이며 처음 576,000 vCPU-hours는 $0.020입니다.
-- Q4 정답: 둘 다 켜면 join이 실패할 수 있어 하나만 권장됩니다. 보편적인 API 금지는 아닙니다.
+- Q4 정답: Hybrid Nodes 클러스터는 Public-only 또는 Private-only가 권장이며, "Public and Private"는 join 실패 위험이 있습니다.
 
-3번은 구간제 요금으로, 모든 사용량에 고정 단가가 적용되지 않고 idle이어도 과금됩니다. 4번은 endpoint 모드입니다. 둘 다 켜면 실패할 수 있어서 AWS가 하나만 쓰도록 권장하며, public endpoint를 써도 control plane에서 노드로의 private 연결 요구는 사라지지 않습니다.
+3번은 구간제 요금으로, 모든 사용량에 고정 단가가 적용되지 않고 idle이어도 과금됩니다. 4번은 endpoint 모드입니다. 둘 다 켜는 구성 자체를 API가 막지는 않지만, VPC 밖 노드에서 API endpoint가 public IP로 해석되어 join이 실패할 수 있으므로 하나만 켜는 것이 권장입니다. 또 public endpoint를 써도 control plane에서 노드로의 private 연결 요구는 사라지지 않습니다.
 {cue: pause}
 근거: D/README.md, D/01-prerequisites.md, 요금표(aws.amazon.com/eks/pricing).
 {cue: transition}
@@ -766,30 +788,30 @@ IAM에서 자주 놓치는 부분은 AmazonEKSWorkerNodeMinimalPolicy에 eks:Des
 :::html
 <style>
 .text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--on-surface-muted); font-size: var(--text-sm); word-break: break-all; }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="card-grid">
-  <div class="card fragment fade-up" data-fragment-index="1">
+<div class="card-grid" data-reveal="static">
+  <div class="card">
     <strong class="text-accent">Overview</strong>
     <div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="2">
+  <div class="card">
     <strong class="text-accent">nodeadm</strong>
     <div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="3">
+  <div class="card">
     <strong class="text-accent">Networking</strong>
     <div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="4">
+  <div class="card">
     <strong class="text-accent">OS · Credentials</strong>
     <div class="on-surface-muted">hybrid-nodes-os.html · hybrid-nodes-creds.html</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="5">
+  <div class="card">
     <strong class="text-accent">CNI · Troubleshooting</strong>
     <div class="on-surface-muted">hybrid-nodes-cni.html · hybrid-nodes-troubleshooting.html</div>
   </div>
-  <div class="card fragment fade-up" data-fragment-index="6">
+  <div class="card">
     <strong class="text-accent">Pricing</strong>
     <div class="on-surface-muted">aws.amazon.com/eks/pricing</div>
   </div>

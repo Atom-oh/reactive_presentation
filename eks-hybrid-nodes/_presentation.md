@@ -1,12 +1,12 @@
 ---
 remarp: true
 version: 1
-title: "EKS Hybrid Nodes — 온프레미스를 EKS로 확장하는 가이드"
+title: "EKS Hybrid Nodes, 온프레미스를 EKS로 확장하는 가이드"
 ratio: "16:9"
 date: 2026-10-07
 lang: ko
 level: 300
-audience: "클라우드/플랫폼 엔지니어, 인프라·네트워크·보안 담당자"
+audience: "클라우드/플랫폼 엔지니어, 인프라, 네트워크, 보안 담당자"
 quiz: true
 duration: 120
 
@@ -32,6 +32,6 @@ blocks:
     title: "노드 부트스트랩 & 라이프사이클"
     duration: 30
   - name: 04-operations-strategy
-    title: "운영·워크로드·보안 & 전략"
+    title: "운영, 워크로드, 보안 & 전략"
     duration: 30
 ---

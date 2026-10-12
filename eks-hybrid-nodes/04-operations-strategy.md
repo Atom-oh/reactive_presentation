@@ -6,17 +6,17 @@ block: 04-operations-strategy
 ---
 <!-- Slide 1: Block 4 커버 -->
 @type: cover
-@title: 운영·워크로드·보안 & 전략
+@title: 운영, 워크로드, 보안 & 전략
 
-# 운영·워크로드·보안 & 전략
+# 운영, 워크로드, 보안 & 전략
 
-## Block 4 — 배치, GPU, 관측성, 망분리 검토, 비용과 도입 판단
+## Block 4: 배치, GPU, 관측성, 망분리 검토, 비용과 도입 판단
 
 :::notes
 {timing: 0.5min}
 [요약]
 • Block 4는 "붙인 다음 어떻게 운영하고 판단할 것인가"를 다룸
-• 배치 → GPU → 관측성 → 외부 트래픽 → 보안·규제 → 비용·도입 판단 순서
+• 배치 → GPU → 관측성 → 외부 트래픽 → 보안, 규제 → 비용, 도입 판단 순서
 • 마지막에 4개 블록 전체 핵심 요약과 퀴즈
 
 앞선 세 블록에서 Hybrid Nodes를 붙이는 방법을 봤다면, 이번 블록은 붙인 뒤의 이야기입니다.
@@ -66,7 +66,7 @@ affinity:
 ```
 
 ### Taint (선택)
-Hybrid taint는 **선택 사항**입니다. 자동으로 붙지 않으며, 추가 전에 CNI·DNS·GPU 인프라 Pod의 toleration부터 확인합니다.
+Hybrid taint는 **선택 사항**입니다. 자동으로 붙지 않으며, 추가 전에 CNI, DNS, GPU 인프라 Pod의 toleration부터 확인합니다.
 
 ```bash
 kubectl taint node "$NODE_NAME" \
@@ -269,7 +269,7 @@ AWS는 신규 EKS 1.34 이상 배포에 DRA를 권고합니다. 단, EKS Auto Mo
 ## MIG는 격리, time-slicing은 공유
 
 ### MIG
-MIG는 GPU를 하드웨어 기반 compute·memory 인스턴스로 나눕니다. 아래는 **A100 40 GB** profile입니다.
+MIG는 GPU를 하드웨어 기반 compute, memory 인스턴스로 나눕니다. 아래는 **A100 40 GB** profile입니다.
 
 | Profile | 명목 메모리 | 최대 인스턴스 |
 |---|---|---|
@@ -279,7 +279,7 @@ MIG는 GPU를 하드웨어 기반 compute·memory 인스턴스로 나눕니다. 
 | `4g.20gb` | 20 GB | 1 |
 | `7g.40gb` | 40 GB | 1 |
 
-`4g.40gb`는 A100 80 GB의 profile입니다. MIG 활성화·재구성은 GPU 워크로드를 중단할 수 있는 유지보수 작업이며, Pod 요청만 `nvidia.com/mig-1g.5gb`로 바꿔도 인스턴스가 생기지 않습니다.
+`4g.40gb`는 A100 80 GB의 profile입니다. MIG 활성화, 재구성은 GPU 워크로드를 중단할 수 있는 유지보수 작업이며, Pod 요청만 `nvidia.com/mig-1g.5gb`로 바꿔도 인스턴스가 생기지 않습니다.
 
 ### time-slicing
 ```yaml
@@ -294,7 +294,7 @@ sharing:
         replicas: 4
 ```
 
-`renameByDefault: true`이면 `nvidia.com/gpu.shared`로 게시됩니다. replica 4개는 독립 메모리 영역 4개가 아니며, replica 사이에 메모리·장애 격리가 없습니다.
+`renameByDefault: true`이면 `nvidia.com/gpu.shared`로 게시됩니다. replica 4개는 독립 메모리 영역 4개가 아니며, replica 사이에 메모리, 장애 격리가 없습니다.
 
 ### H100 vs H200
 | NVIDIA 사양 | H100 **SXM** | H200 **SXM** |
@@ -310,7 +310,7 @@ sharing:
 [요약]
 • MIG는 하드웨어 분할로 time-slicing보다 강한 격리, 단 재구성은 중단 작업
 • A100 40GB와 80GB의 profile 집합이 다르므로 표를 섞지 않음
-• time-slicing은 논리적 슬롯이며 메모리·장애 격리 없음
+• time-slicing은 논리적 슬롯이며 메모리, 장애 격리 없음
 • H100/H200 수치는 SXM 사양이며 실측이 아님
 
 MIG와 time-slicing은 "GPU를 나눠 쓴다"는 같은 목적이지만 성격이 다릅니다. MIG는 하드웨어 파티션이라 격리가 강하고, time-slicing은 여러 논리 슬롯을 게시할 뿐입니다.
@@ -365,7 +365,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type="hybrid"}
 `node_cpu_seconds_total` 등 호스트 지표는 kubelet이 아니라 Node Exporter가 제공합니다. DCGM exporter는 별도로 설치되어 있어야 합니다.
 
 ### Container Insights
-Hybrid에서는 cluster, workload, Pod, container 지표를 지원합니다. node-level 지표는 EC2 IMDS에 의존하는데 Hybrid 호스트에는 없어서 **제공되지 않습니다.** 호스트 CPU·메모리는 Node Exporter와 Prometheus로 보완합니다.
+Hybrid에서는 cluster, workload, Pod, container 지표를 지원합니다. node-level 지표는 EC2 IMDS에 의존하는데 Hybrid 호스트에는 없어서 **제공되지 않습니다.** 호스트 CPU, 메모리는 Node Exporter와 Prometheus로 보완합니다.
 
 ### CloudWatch agent
 Pod Identity 환경에서도 Hybrid 호환을 위해 `RUN_WITH_IRSA` 변수가 필요합니다. 기존 `AmazonCloudWatchAgent`의 `spec.env` 목록에 추가하고 기존 항목은 보존합니다.
@@ -441,7 +441,7 @@ topologySpreadConstraints:
 :::notes
 {timing: 1.5min}
 [요약]
-• 웹훅·operator류는 cloud node 배치를 권장, 모든 Pod를 cloud에 둘 필요는 없음
+• 웹훅, operator류는 cloud node 배치를 권장, 모든 Pod를 cloud에 둘 필요는 없음
 • 애드온 최소 버전은 호환 기준이지 설치 target이 아님
 • AWS는 CoreDNS를 cloud와 Hybrid 양쪽에 각 1개 이상 권장
 • minDomains 2와 DoNotSchedule은 엄격하지만 Pending 위험이 있음
@@ -538,7 +538,7 @@ Cilium Ingress와 Gateway API는 L7 proxy가 필요합니다. 그러나 Hybrid N
 
 ## Pod Identity는 6단계 체크
 
-- [ ] (Ubuntu·RHEL·AL2023) 호스트 NodeConfig에 credentials file 활성화
+- [ ] (Ubuntu, RHEL, AL2023) 호스트 NodeConfig에 credentials file 활성화
   ```yaml
   spec:
     hybrid:
@@ -551,7 +551,7 @@ Cilium Ingress와 Gateway API는 L7 proxy가 필요합니다. 그러나 Hybrid N
   ```
 - [ ] add-on 버전 확인: 일반 OS 1.3.3-eksbuild.1 이상. Bottlerocket은 add-on 1.3.7-eksbuild.2 + OS 1.39.0 이상이며, 1–3 대신 bootstrap 명령에 `--enable-credentials-file=true`, DaemonSet 키는 `hybrid-bottlerocket`
 - [ ] `eks-auth` 서비스 경로 + 노드 역할의 `eks-auth:AssumeRoleForPodIdentity` 권한
-- [ ] 워크로드별 Pod Identity association (namespace, ServiceAccount, IAM role 신뢰·권한)
+- [ ] 워크로드별 Pod Identity association (namespace, ServiceAccount, IAM role 신뢰, 권한)
 
 :::notes
 {timing: 1.5min}
@@ -571,7 +571,7 @@ add-on 쪽에서는 daemonsets.hybrid.create를 true로 설정합니다. 임시 
 :::
 
 ---
-<!-- Slide 11: 망분리 1 — endpoint 세 가지 -->
+<!-- Slide 11: 망분리 1, endpoint 세 가지 -->
 @type: content
 @title: 'endpoint'는 세 가지를 뜻한다
 
@@ -616,7 +616,7 @@ add-on 쪽에서는 daemonsets.hybrid.create를 true로 설정합니다. 임시 
 :::
 
 ---
-<!-- Slide 12: 망분리 2 — 요구사항 매핑 -->
+<!-- Slide 12: 망분리 2, 요구사항 매핑 -->
 @type: tabs
 @title: 망분리는 요건별로 따진다
 
@@ -627,17 +627,17 @@ add-on 쪽에서는 daemonsets.hybrid.create를 true로 설정합니다. 임시 
 |---|---|
 | 인터넷 비노출, 승인된 사설 관리 통신 허용 | 검토 가능한 후보 (증명 필요) |
 | 물리 단절, 외부 CP와 실시간 연결 불가 | 연결 전제와 충돌 |
-| 클라우드발 신규 연결 전면 금지 | kubelet·webhook 흐름과 충돌 |
-| 업무 영역별 관리 주체·권한 독립 | 공통 cluster 관리자 범위 심사, 필요 시 cluster 분리 |
-| K8s 객체·Secret·로그까지 온프레미스에만 | AWS control plane 구성과 충돌 가능 |
+| 클라우드발 신규 연결 전면 금지 | kubelet, webhook 흐름과 충돌 |
+| 업무 영역별 관리 주체, 권한 독립 | 공통 cluster 관리자 범위 심사, 필요 시 cluster 분리 |
+| K8s 객체, Secret, 로그까지 온프레미스에만 | AWS control plane 구성과 충돌 가능 |
 
 ### 전송 구간 암호화
-Direct Connect는 **기본적으로 전송 중 암호화를 제공하지 않습니다.** Kubernetes API·kubelet의 TLS와 인증을 유지하고, 회선 구간 암호화가 필요하면 IPsec over DX 또는 MACsec 적용 범위를 검토합니다.
+Direct Connect는 **기본적으로 전송 중 암호화를 제공하지 않습니다.** Kubernetes API, kubelet의 TLS와 인증을 유지하고, 회선 구간 암호화가 필요하면 IPsec over DX 또는 MACsec 적용 범위를 검토합니다.
 
 MACsec은 지원 DX 연결의 링크 보호이며 종단 간 TLS와 범위가 다릅니다. Hybrid Nodes Gateway(VXLAN)도 자체 암호화가 없습니다.
 
 ### nodes/proxy RBAC
-`get nodes/proxy`를 단순 조회 권한으로 분류하지 않습니다. kubelet API를 통한 컨테이너 명령 실행이 가능할 수 있고, Kubernetes audit·admission 경로를 우회할 수 있습니다.
+`get nodes/proxy`를 단순 조회 권한으로 분류하지 않습니다. kubelet API를 통한 컨테이너 명령 실행이 가능할 수 있고, Kubernetes audit, admission 경로를 우회할 수 있습니다.
 
 `pods/log`, `pods/exec`, `pods/attach`, `pods/portforward`, `nodes/proxy`와 workload 생성 권한을 함께 검토합니다.
 
@@ -647,7 +647,7 @@ MACsec은 지원 DX 연결의 링크 보호이며 종단 간 TLS와 범위가 �
 | 심사 질문 | 증거 |
 |---|---|
 | private-only가 실제 적용됐는가 | endpoint 설정, DNS 응답, DX 경로, 경계 flow 기록 |
-| AWS에서 어디까지 접근 가능한가 | ENI/subnet, remote CIDR, route, SG·firewall 대응표 |
+| AWS에서 어디까지 접근 가능한가 | ENI/subnet, remote CIDR, route, SG, firewall 대응표 |
 | 누가 어떤 API 작업을 했는가 | EKS audit 로그, CloudTrail |
 | 무엇이 망을 통과했는가 | VPC Flow Logs, 방화벽 기록 |
 
@@ -666,7 +666,7 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 증빙 체크리스트는 제출 전 준비 항목이지 점검이 끝났다는 뜻이 아닙니다. 실제 검증은 비운영 환경과 합성 데이터로 하시길 권합니다.
 
 [출처]
-• D/11 "망분리 요구를 설계 조건으로 바꾸기" (L73-80), "암호화와 신원·권한", nodes/proxy (L108), 증거 표 (L116-123)
+• D/11 "망분리 요구를 설계 조건으로 바꾸기" (L73-80), "암호화와 신원, 권한", nodes/proxy (L108), 증거 표 (L116-123)
 :::
 
 ---
@@ -689,7 +689,7 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
   <div class="callout callout-success"><strong class="text-success">온프레미스에 있는 것</strong><div class="on-surface-muted">워크로드 실행과 Pod가 처리하는 대용량 업무 데이터. 자동으로 AWS에 복제되지 않습니다.</div></div>
   <div class="callout callout-warning"><strong class="text-warning">경계를 넘을 수 있는 것</strong><div class="on-surface-muted">앱이 출력한 logs, 허가된 exec/cp/port-forward, 애플리케이션 egress, SSM 관리 경로.</div></div>
 </div>
-<div class="callout callout-danger fragment zoom-in" data-fragment-index="2"><strong class="text-danger">"충족" 대신 "검토 범위와 조건"</strong> node selector나 label만으로 데이터 주권·규정 준수가 입증되지 않습니다. 업무 데이터, API 객체, 로그, 이미지, 자격 증명을 각각 분류해 저장 위치와 조회 권한을 기록합니다.</div>
+<div class="callout callout-danger fragment zoom-in" data-fragment-index="2"><strong class="text-danger">"충족" 대신 "검토 범위와 조건"</strong> node selector나 label만으로 데이터 주권, 규정 준수가 입증되지 않습니다. 업무 데이터, API 객체, 로그, 이미지, 자격 증명을 각각 분류해 저장 위치와 조회 권한을 기록합니다.</div>
 :::
 
 
@@ -697,7 +697,7 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 {timing: 1.5min}
 [요약]
 • control plane의 K8s 객체는 AWS, 워크로드와 업무 데이터는 온프레미스
-• Secret이나 민감 데이터를 Pod 사양·ConfigMap에 넣으면 API 객체로 AWS에서 관리됨
+• Secret이나 민감 데이터를 Pod 사양, ConfigMap에 넣으면 API 객체로 AWS에서 관리됨
 • logs, exec, egress, SSM 경로도 데이터 경계에 포함해 분류
 • 규정 "충족"을 선언하지 않고 검토 범위와 조건을 기록
 
@@ -750,7 +750,7 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 [요약]
 • 과금은 노드가 보고한 vCPU-hour 기준의 월별 구간 요금
 • 노드가 조인된 시점부터 제거 시까지 과금되며 idle이어도 계속됨
-• 표는 32 vCPU·730시간 가정의 계산 모델이지 청구서가 아님
+• 표는 32 vCPU, 730시간 가정의 계산 모델이지 청구서가 아님
 • 경쟁 솔루션 수치는 출처 불명이라 의도적으로 제외
 
 요금은 노드가 보고한 vCPU-hour에 대한 월별 구간 요금입니다. 처음 576,000 vCPU-hour는 0.020달러, 이후 구간이 내려가는 구조이고 모든 사용량에 고정 0.01달러가 붙는 것이 아닙니다. 하이퍼스레딩된 코어는 vCPU 2개로 보고될 수 있고, 머신당 32 vCPU를 넘으면 account team과 상의하라고 안내되어 있습니다.
@@ -779,11 +779,11 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 </style>
 <div class="card-grid fragment" data-reveal="stagger" data-reveal-pace="slow" data-fragment-index="1">
   <div class="callout callout-success"><strong class="text-success">Hybrid Nodes가 맞는 신호</strong><div class="on-surface-muted">온프레미스 GPU, 대규모 로컬 데이터, edge 처리, 기존 하드웨어 활용. AWS와 안정적인 사설 양방향 연결을 유지할 수 있는 경우.</div></div>
-  <div class="callout callout-warning"><strong class="text-warning">먼저 확인할 제약</strong><div class="on-surface-muted">IPv4만 지원. 간헐적·단절(DDIL) 환경용이 아님. GovCloud(US)와 중국 리전 제외. OS·아키텍처·CNI 조합 확인.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">먼저 확인할 제약</strong><div class="on-surface-muted">IPv4만 지원. 간헐적, 단절(DDIL) 환경용이 아님. GovCloud(US)와 중국 리전 제외. OS, 아키텍처, CNI 조합 확인.</div></div>
   <div class="callout callout-danger"><strong class="text-danger">맞지 않는 경우</strong><div class="on-surface-muted">완전 단절이 필요하거나 클라우드발 신규 연결이 전면 금지된 정책. AWS Region, Local Zone, Outposts, 타사 클라우드를 hybrid 인프라로 쓰는 것은 미지원.</div></div>
   <div class="callout callout-info"><strong class="text-info">운영 책임</strong><div class="on-surface-muted">Control plane은 AWS가 관리하지만 host, OS, 연결, workload 운영은 계속 사용자 책임입니다.</div></div>
 </div>
-<div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">대안과의 비교</strong> 동등한 가용성·지원 범위로 자체 TCO 모델을 만들어 비교하세요. 이 자료는 특정 대안의 우열을 주장하지 않습니다.</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">대안과의 비교</strong> 동등한 가용성, 지원 범위로 자체 TCO 모델을 만들어 비교하세요. 이 자료는 특정 대안의 우열을 주장하지 않습니다.</div>
 :::
 
 
@@ -797,7 +797,7 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 
 도입 판단은 장점 나열보다 제약 확인에서 시작하는 것이 안전합니다. 문서가 꼽는 선택 이유는 온프레미스 GPU, 대규모 로컬 데이터, edge 처리, 기존 하드웨어입니다. 다만 data locality에는 애플리케이션, 스토리지, egress, 로깅 통제도 함께 필요합니다.
 {cue: pause}
-반대로 IPv4만 지원하고, AWS와의 안정적인 사설 양방향 연결이 필수이며, 단절·간헐 연결 환경용이 아닙니다. AWS Region이나 Outposts 같은 AWS 인프라를 hybrid 노드로 등록하는 것도 지원 대상이 아닙니다.
+반대로 IPv4만 지원하고, AWS와의 안정적인 사설 양방향 연결이 필수이며, 단절, 간헐 연결 환경용이 아닙니다. AWS Region이나 Outposts 같은 AWS 인프라를 hybrid 노드로 등록하는 것도 지원 대상이 아닙니다.
 대안과의 비교는 일부러 숫자를 싣지 않았습니다. 동등한 가용성과 지원 범위로 직접 계산하시기 바랍니다.
 {cue: transition}
 이제 네 블록 전체를 정리하겠습니다.
@@ -821,9 +821,9 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 .on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
 <div class="card-grid fragment" data-reveal="stagger" data-reveal-anim="zoom" data-reveal-pace="slow" data-fragment-index="1">
-  <div class="metric-card"><strong class="text-accent">1. 구조와 전제</strong><div class="on-surface-muted">AWS가 control plane을, 사용자가 host·연결·workload를 운영합니다. AWS와의 사설 양방향 연결이 필수입니다.</div></div>
+  <div class="metric-card"><strong class="text-accent">1. 구조와 전제</strong><div class="on-surface-muted">AWS가 control plane을, 사용자가 host, 연결, workload를 운영합니다. AWS와의 사설 양방향 연결이 필수입니다.</div></div>
   <div class="metric-card"><strong class="text-accent">2. 네트워크</strong><div class="on-surface-muted">kubelet 10250과 webhook은 AWS에서 시작하는 inbound입니다. Gateway는 선택이며 직접 라우팅도 유효합니다.</div></div>
-  <div class="metric-card"><strong class="text-accent">3. 라이프사이클</strong><div class="on-surface-muted">nodeadm으로 설치·join·업그레이드합니다. rollback 명령이 없으므로 업그레이드·복구 모두 in-place보다 호스트 교체를 우선합니다.</div></div>
+  <div class="metric-card"><strong class="text-accent">3. 라이프사이클</strong><div class="on-surface-muted">nodeadm으로 설치, join, 업그레이드합니다. rollback 명령이 없으므로 업그레이드, 복구 모두 in-place보다 호스트 교체를 우선합니다.</div></div>
   <div class="metric-card"><strong class="text-success">4. 워크로드 배치</strong><div class="on-surface-muted">compute-type label로 배치하고, 버스팅은 Pending Pod가 트리거하며 자동 복귀는 없습니다.</div></div>
   <div class="metric-card"><strong class="text-success">5. GPU와 관측성</strong><div class="on-surface-muted">GPU마다 할당 관리자는 하나, 신규 1.34 이상은 DRA 권고. hybrid 지표는 relabel로 구분합니다.</div></div>
   <div class="metric-card"><strong class="text-warning">6. 보안과 비용</strong><div class="on-surface-muted">private endpoint는 망분리 준수의 증거가 아닙니다. 비용은 보고된 vCPU-hour 구간 과금입니다.</div></div>
@@ -837,7 +837,7 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 • 구조: AWS control plane + 사용자 운영 host, 사설 양방향 연결 필수
 • 네트워크: 세션 방향과 포트를 설명할 수 있어야 함
 • 라이프사이클: nodeadm, 호스트 교체 우선
-• 배치·GPU·관측성·보안·비용은 각각 "보장하지 않는 것"까지 기억
+• 배치, GPU, 관측성, 보안, 비용은 각각 "보장하지 않는 것"까지 기억
 
 네 개 블록을 여섯 가지로 압축했습니다. 첫째, Hybrid Nodes는 AWS 관리형 control plane에 사용자가 운영하는 노드를 붙이는 구조이고 연결이 끊기는 환경용이 아닙니다.
 둘째, 네트워크에서는 세션 방향을 설명할 수 있어야 합니다. 셋째, nodeadm으로 노드를 다루되 in-place 업그레이드를 롤백 수단으로 보지 않습니다.
@@ -868,7 +868,7 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 [요약]
 • Q1 Pending Pod가 버스팅 트리거
 • Q2 GPU마다 할당 관리자는 하나
-• 오답이면 "버스팅"·"GPU 할당 관리자" 슬라이드로 돌아가 확인
+• 오답이면 "버스팅", "GPU 할당 관리자" 슬라이드로 돌아가 확인
 
 두 문제를 먼저 풀어보겠습니다. 이번 블록에서 오해하기 쉬운 지점에서 냈습니다.
 {cue: poll}
@@ -884,12 +884,12 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 
 **Q3: pod-deletion-cost에 대한 설명으로 맞는 것은?**
 - [ ] 값이 큰 Pod는 절대 삭제되지 않는다
-- [x] best-effort 선호도이며 할당·단계·Ready 여부가 먼저 비교된다
+- [x] best-effort 선호도이며 할당, 단계, Ready 여부가 먼저 비교된다
 - [ ] CREATE 시점 webhook으로 신뢰성 있게 부여할 수 있다
 
 **Q4: "private endpoint를 쓰므로 망분리를 준수한다"는 주장은?**
 - [ ] 맞다. 모든 통신이 사설 주소를 쓰기 때문이다
-- [x] 성립하지 않는다. 세션 방향·권한·데이터 경계의 증거가 필요하다
+- [x] 성립하지 않는다. 세션 방향, 권한, 데이터 경계의 증거가 필요하다
 - [ ] 맞다. DX가 기본 암호화를 제공하기 때문이다
 
 :::notes
@@ -920,7 +920,7 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 <div class="card-grid" data-reveal="static">
   <div class="metric-card"><strong class="text-accent">AWS 공식 문서</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/<br>hybrid-nodes-overview.html<br>hybrid-nodes-networking.html<br>hybrid-nodes-add-ons.html<br>hybrid-nodes-webhooks.html<br>hybrid-nodes-gateway-cni.html</div></div>
   <div class="metric-card"><strong class="text-accent">GPU</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/<br>device-management-nvidia.html<br>NVIDIA GPU Operator 문서 (platform-support)</div></div>
-  <div class="metric-card"><strong class="text-accent">비용·스케줄링</strong><div class="on-surface-muted">aws.amazon.com/eks/pricing/<br>karpenter.sh/docs/upgrading/compatibility/<br>kubernetes.io ReplicaSet pod-deletion-cost</div></div>
+  <div class="metric-card"><strong class="text-accent">비용, 스케줄링</strong><div class="on-surface-muted">aws.amazon.com/eks/pricing/<br>karpenter.sh/docs/upgrading/compatibility/<br>kubernetes.io ReplicaSet pod-deletion-cost</div></div>
 </div>
 <div class="callout callout-info fragment zoom-in" data-fragment-index="1"><strong class="text-info">Q&A</strong> 이 자료의 예제는 검토 기준(EKS 1.36, nodeadm 1.0.20)이며 대부분 실제 클러스터에서 실행한 결과가 아닙니다. 적용 전 최신 AWS 문서로 지원 조합을 확인하세요.</div>
 :::
@@ -929,7 +929,7 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 :::notes
 {timing: 1min}
 [요약]
-• 버전·가격·한도는 모두 공식 문서로 재확인 필요
+• 버전, 가격, 한도는 모두 공식 문서로 재확인 필요
 • 예제는 로컬 검증 수준이며 운영 실행 결과가 아님
 • 질문은 배치, GPU, 보안 검토, 비용 순으로 받음
 
@@ -938,14 +938,14 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 질문 있으시면 말씀해 주세요. 배치, GPU, 망분리 검토, 비용 중 어디부터 이야기할까요?
 
 [출처]
-• D/README 지원 버전·검토 범위, 각 D 문서의 "공식 참고 자료"
+• D/README 지원 버전, 검토 범위, 각 D 문서의 "공식 참고 자료"
 :::
 
 ---
 <!-- Slide 20: Thank You -->
 @type: thankyou
 @toc: toc.html
-@message: 운영·워크로드·보안 & 전략 — 감사합니다
+@message: 운영, 워크로드, 보안 & 전략, 감사합니다
 
 # Thank You
 

@@ -7,7 +7,7 @@ block: 02-networking-gateway
 <!-- Slide 1: 블록 커버 (Section) -->
 @type: section
 
-# Block 2 — 네트워킹 & Hybrid Nodes Gateway
+# Block 2: 네트워킹 & Hybrid Nodes Gateway
 
 누가 세션을 열고, Pod CIDR은 어떻게 도달하며, Gateway는 언제 쓰는가
 
@@ -87,7 +87,7 @@ Hybrid Nodes는 온프레미스 노드가 AWS 컨트롤 플레인에 붙는 구�
 
 - [ ] Remote node CIDR 최대 15개, remote Pod CIDR 최대 15개
 - [ ] IPv4 전용, RFC1918 또는 CGNAT(`100.64.0.0/10`) 범위
-- [ ] node/Pod CIDR끼리, 그리고 VPC·Service CIDR과도 겹치지 않을 것
+- [ ] node/Pod CIDR끼리, 그리고 VPC, Service CIDR과도 겹치지 않을 것
 - [ ] 기존 클러스터에도 remote network 구성을 추가할 수 있음 (생성 시점 전용 아님)
   ```json
   "remoteNetworkConfig": {
@@ -95,14 +95,14 @@ Hybrid Nodes는 온프레미스 노드가 AWS 컨트롤 플레인에 붙는 구�
     "remotePodNetworks":  [{ "cidrs": ["10.85.0.0/16"] }]
   }
   ```
-- [ ] Pod CIDR을 라우팅 가능하게 만들지(BGP/static) 결정 — webhook·Cloud↔Hybrid Pod 통신이 여기에 달림
-- [ ] Cilium cluster-pool: 기존 항목·MaskSize 변경 금지, 확장은 새 항목 추가 (Cilium 문서 기준)
+- [ ] Pod CIDR을 라우팅 가능하게 만들지(BGP/static) 결정, webhook, Cloud↔Hybrid Pod 통신이 여기에 달림
+- [ ] Cilium cluster-pool: 기존 항목, MaskSize 변경 금지, 확장은 새 항목 추가 (Cilium 문서 기준)
 
 :::notes
 {timing: 1min}
 [요약]
 • remote node/Pod CIDR은 각각 최대 15개, IPv4, RFC1918 또는 CGNAT
-• VPC CIDR·Service CIDR과 겹치면 안 됨
+• VPC CIDR, Service CIDR과 겹치면 안 됨
 • 기존 클러스터에도 remote network를 추가할 수 있음
 • Pod CIDR을 routable로 둘지가 이후 선택(BGP/static/Gateway)을 결정
 체크리스트를 하나씩 눌러 가면서 보겠습니다. 가장 흔한 사고는 Service CIDR이나 VPC CIDR과 Pod CIDR이 겹치는 경우입니다. 나중에 바꾸기 어렵기 때문에 설계 단계에서 확정해야 합니다.
@@ -129,7 +129,7 @@ CIDR이 정해졌으면, 이제 누가 먼저 연결을 여는지를 볼 차례�
     <div class="hn-cap">그림 속 Gateway도 사설 연결 게이트웨이입니다 (Hybrid Nodes Gateway 아님).</div>
   </div>
   <div class="hn-stack">
-    <div class="callout callout-success fragment fade-left" data-fragment-index="1"><strong class="text-success">온프렘이 연다 (outbound)</strong><div class="on-surface-muted">kubelet·Pod → Kubernetes API, TCP 443. 노드가 먼저 연결을 시작</div></div>
+    <div class="callout callout-success fragment fade-left" data-fragment-index="1"><strong class="text-success">온프렘이 연다 (outbound)</strong><div class="on-surface-muted">kubelet, Pod → Kubernetes API, TCP 443. 노드가 먼저 연결을 시작</div></div>
     <div class="callout callout-warning fragment fade-left" data-fragment-index="2"><strong class="text-warning">AWS가 연다 (inbound)</strong><div class="on-surface-muted">CP → kubelet TCP 10250 (logs/exec/port-forward), CP → webhook Pod의 실제 설정 port</div></div>
     <div class="callout callout-info fragment zoom-in" data-fragment-index="3"><strong class="text-info">응답 허용 ≠ 신규 inbound 허용</strong><div class="on-surface-muted">443 세션의 stateful return이 10250 신규 연결을 열어 주지 않음. 별도 방화벽 규칙 필요</div></div>
   </div>
@@ -139,11 +139,11 @@ CIDR이 정해졌으면, 이제 누가 먼저 연결을 여는지를 볼 차례�
 :::notes
 {timing: 2min}
 [요약]
-• 노드·Pod가 API 서버로 여는 TCP 443은 온프렘 outbound
+• 노드, Pod가 API 서버로 여는 TCP 443은 온프렘 outbound
 • CP가 kubelet(10250)과 webhook으로 여는 연결은 온프렘 inbound
 • 443 세션의 응답이 허용된다고 10250 신규 연결이 열리지는 않음
 • 보안팀에는 "누가 어떤 세션을 시작하는가" 기준으로 설명
-이 슬라이드가 방화벽·보안팀과 대화할 때 제일 중요한 한 장입니다. 세션은 서로 다른 두 종류가 있습니다.
+이 슬라이드가 방화벽, 보안팀과 대화할 때 제일 중요한 한 장입니다. 세션은 서로 다른 두 종류가 있습니다.
 첫째, 노드와 Pod가 Kubernetes API로 여는 TCP 443입니다. 온프렘에서 밖으로 나가는 연결이라 outbound 규칙만 있으면 됩니다.
 둘째, 컨트롤 플레인이 시작하는 연결입니다. kubectl logs, exec, port-forward 때문에 kubelet 10250으로 들어오고, 온프렘에서 webhook을 돌린다면 그 webhook의 실제 포트로도 들어옵니다. 이건 온프렘 입장에서 inbound입니다.
 {cue: question}
@@ -157,7 +157,7 @@ CIDR이 정해졌으면, 이제 누가 먼저 연결을 여는지를 볼 차례�
 :::
 
 ---
-<!-- Slide 5: 패턴 1·2 kubelet ↔ CP -->
+<!-- Slide 5: 패턴 1, 2 kubelet ↔ CP -->
 @type: content
 @title: kubelet과 CP, 세션 방향이 다르다
 
@@ -170,13 +170,13 @@ CIDR이 정해졌으면, 이제 누가 먼저 연결을 여는지를 볼 차례�
 </div>
 <div class="tc">
   <img class="hn-tabimg" src="images/hybrid-nodes-kubelet-to-cp.svg" alt="kubelet에서 EKS 컨트롤 플레인으로: public endpoint 경로와 private endpoint 경로">
-  <div class="hn-note"><strong class="text-accent">public/private 중 하나를 선택</strong> — 경로가 다르므로 endpoint 설정에 따라 방화벽·DNS가 달라집니다. EKS 관리 PrivateLink(<code>eks</code>)와 Kubernetes API endpoint는 별개입니다.</div>
+  <div class="hn-note"><strong class="text-accent">public/private 중 하나를 선택</strong>: 경로가 다르므로 endpoint 설정에 따라 방화벽, DNS가 달라집니다. EKS 관리 PrivateLink(<code>eks</code>)와 Kubernetes API endpoint는 별개입니다.</div>
 </div>
 <div class="tc" hidden>
   <img class="hn-tabimg" src="images/hybrid-nodes-cp-to-kubelet.svg" alt="EKS 컨트롤 플레인에서 CP ENI, VPC 라우터, 사설 연결을 거쳐 kubelet 10250으로">
-  <div class="hn-note"><strong class="text-warning">보고된 node IP의 TCP 10250</strong>으로 CP ENI에서 접속합니다. return route·방화벽·kubelet 인증이 모두 필요하고, logs/exec/port-forward에 쓰입니다.</div>
+  <div class="hn-note"><strong class="text-warning">보고된 node IP의 TCP 10250</strong>으로 CP ENI에서 접속합니다. return route, 방화벽, kubelet 인증이 모두 필요하고, logs/exec/port-forward에 쓰입니다.</div>
 </div>
-<div class="callout callout-info hn-takeaway fragment zoom-in" data-fragment-index="1"><strong class="text-info">한 줄 정리</strong><div class="on-surface-muted">443은 온프렘이 열고, 10250은 CP가 엽니다 — 같은 노드라도 방화벽 규칙의 방향이 다릅니다.</div></div>
+<div class="callout callout-info hn-takeaway fragment zoom-in" data-fragment-index="1"><strong class="text-info">한 줄 정리</strong><div class="on-surface-muted">443은 온프렘이 열고, 10250은 CP가 엽니다, 같은 노드라도 방화벽 규칙의 방향이 다릅니다.</div></div>
 :::
 
 :::notes
@@ -193,7 +193,7 @@ CIDR이 정해졌으면, 이제 누가 먼저 연결을 여는지를 볼 차례�
 {cue: transition}
 다음은 Pod가 API 서버로 나가는 경로입니다.
 [근거]
-• 내부 문서 D/02 패턴 1·2, 클러스터 endpoint 제약은 fact sheet(공개/비공개 중 선택). 그림은 AWS 개념도를 바탕으로 제작된 자료
+• 내부 문서 D/02 패턴 1, 2, 클러스터 endpoint 제약은 fact sheet(공개/비공개 중 선택). 그림은 AWS 개념도를 바탕으로 제작된 자료
 :::
 
 ---
@@ -256,7 +256,7 @@ CNI가 SNAT를 하면 응답이 node 주소로 돌아오고 connection tracking�
     <div class="metric-card"><strong class="text-info">② VXLAN</strong><div class="on-surface-muted"><code>hybrid_vxlan0</code>, VNI 2, UDP 8472 → hybrid node IP</div></div>
     <div class="metric-card"><strong class="text-info">③ Cilium</strong><div class="on-surface-muted">VTEP decap 후 webhook Pod 전달. 응답은 CiliumVTEPConfig 경로로 반환</div></div>
   </div>
-  <div class="callout callout-warning" style="margin-top: var(--space-3);"><div class="on-surface-muted">Gateway 설치만으로 완성되지 않습니다. remote Pod network·CP subnet route·webhook Service/endpoint/TLS·방화벽·return path를 확인해야 합니다. Pod를 직접 라우팅해도 webhook은 지원됩니다.</div></div>
+  <div class="callout callout-warning" style="margin-top: var(--space-3);"><div class="on-surface-muted">Gateway 설치만으로 완성되지 않습니다. remote Pod network, CP subnet route, webhook Service/endpoint/TLS, 방화벽, return path를 확인해야 합니다. Pod를 직접 라우팅해도 webhook은 지원됩니다.</div></div>
 </div>
 <div class="tc" hidden>
   <pre class="hn-code">affinity:
@@ -268,15 +268,15 @@ CNI가 SNAT를 하면 응답이 node 주소로 돌아오고 connection tracking�
           operator: NotIn
           values:
           - hybrid</pre>
-  <div class="hn-note"><strong class="text-success">webhook을 cloud 노드에 두면</strong> CP → 온프렘 Pod 경로가 필요 없습니다. Pod-template affinity 조각이며, AWS Load Balancer Controller·cert-manager 등의 webhook 배치를 검토하세요. 단 kubelet 10250 inbound는 별개입니다.</div>
+  <div class="hn-note"><strong class="text-success">webhook을 cloud 노드에 두면</strong> CP → 온프렘 Pod 경로가 필요 없습니다. Pod-template affinity 조각이며, AWS Load Balancer Controller, cert-manager 등의 webhook 배치를 검토하세요. 단 kubelet 10250 inbound는 별개입니다.</div>
 </div>
-<div class="callout callout-info hn-takeaway fragment zoom-in" data-fragment-index="1"><strong class="text-info">한 줄 정리</strong><div class="on-surface-muted">CP가 Pod에 닿지 못하면 해당 webhook 호출이 실패합니다 — Pod route를 만들거나(BGP/static/Gateway) webhook을 cloud에 두세요.</div></div>
+<div class="callout callout-info hn-takeaway fragment zoom-in" data-fragment-index="1"><strong class="text-info">한 줄 정리</strong><div class="on-surface-muted">CP가 Pod에 닿지 못하면 해당 webhook 호출이 실패합니다, Pod route를 만들거나(BGP/static/Gateway) webhook을 cloud에 두세요.</div></div>
 :::
 
 :::notes
 {timing: 2min}
 [요약]
-• 웹훅·aggregated API는 CP가 Pod IP + 설정 포트로 직접 호출
+• 웹훅, aggregated API는 CP가 Pod IP + 설정 포트로 직접 호출
 • direct routing이면 Pod CIDR route와 return path가 필수
 • Gateway는 같은 경로를 VXLAN으로 대신 제공하지만 설치만으로 완성되진 않음
 • 대안: webhook을 cloud 노드에 배치하면 이 경로 자체가 불필요
@@ -288,11 +288,11 @@ CNI가 SNAT를 하면 응답이 node 주소로 돌아오고 connection tracking�
 {cue: transition}
 다음은 Pod끼리의 통신, 즉 hybrid 노드 간과 cloud↔hybrid 구간입니다.
 [근거]
-• 내부 문서 D/02 패턴 4·"웹훅 구성", D/10 "패턴 3: Control Plane에서 Webhook으로"
+• 내부 문서 D/02 패턴 4, "웹훅 구성", D/10 "패턴 3: Control Plane에서 Webhook으로"
 :::
 
 ---
-<!-- Slide 8: 패턴 5·6 Pod ↔ Pod -->
+<!-- Slide 8: 패턴 5, 6 Pod ↔ Pod -->
 @type: content
 @title: Pod 간 통신: VXLAN과 Cloud↔Hybrid
 
@@ -318,17 +318,17 @@ CNI가 SNAT를 하면 응답이 node 주소로 돌아오고 connection tracking�
     <div class="flow-arrow">→</div>
     <div class="flow-group"><div class="flow-group-label">node 2</div><div class="flow-box">Cilium decap</div><div class="flow-box">Pod B<br>10.85.2.x</div></div>
   </div>
-  <div class="hn-note"><strong class="text-accent">outer packet은 node IP로 라우팅</strong>됩니다. 캡슐화 운반만을 위해 underlay에 Pod CIDR route가 필요하지는 않습니다(같은 L2 node끼리는 router hop 없이 직접 통신할 수도 있음). IPv4 VXLAN overhead 50바이트 → MTU 1500이면 1450 예시. 이 UDP 8472는 direct routing·Gateway 두 모드 모두에서 필요합니다.</div>
+  <div class="hn-note"><strong class="text-accent">outer packet은 node IP로 라우팅</strong>됩니다. 캡슐화 운반만을 위해 underlay에 Pod CIDR route가 필요하지는 않습니다(같은 L2 node끼리는 router hop 없이 직접 통신할 수도 있음). IPv4 VXLAN overhead 50바이트 → MTU 1500이면 1450 예시. 이 UDP 8472는 direct routing, Gateway 두 모드 모두에서 필요합니다.</div>
 </div>
 <div class="tc" hidden>
   <img class="hn-tabimg hn-ew-img" src="images/hybrid-nodes-east-west.svg" alt="Cloud Pod에서 Hybrid Pod로, 그리고 Hybrid Pod에서 Cloud Pod로의 직접 라우팅 경로">
-  <div class="hn-note hn-ew-note"><strong class="text-warning">VPC·WAN·온프렘의 Pod route가 모두 필요</strong>합니다. Pod-IP 직접 통신에는 Service 변환이 본질적으로 필요하지 않으며(그림의 kube-proxy 블록은 dataplane에 따라 다름), 요청 대상이 Service VIP일 때만 변환이 일어납니다.</div>
+  <div class="hn-note hn-ew-note"><strong class="text-warning">VPC, WAN, 온프렘의 Pod route가 모두 필요</strong>합니다. Pod-IP 직접 통신에는 Service 변환이 본질적으로 필요하지 않으며(그림의 kube-proxy 블록은 dataplane에 따라 다름), 요청 대상이 Service VIP일 때만 변환이 일어납니다.</div>
 </div>
 <div class="tc" hidden>
   <div class="flow-h">
     <div class="flow-group"><div class="flow-group-label"><img class="hn-ico" src="./common/aws-icons/services/Arch_Amazon-Virtual-Private-Cloud_48.svg" alt="Amazon VPC">VPC</div><div class="flow-box">Cloud Pod</div><div class="flow-box">route: pod CIDR마다 → leader ENI</div></div>
     <div class="flow-arrow">→</div>
-    <div class="flow-group"><div class="flow-group-label"><img class="hn-ico" src="./common/aws-icons/services/Arch_Amazon-EC2_48.svg" alt="Amazon EC2">Gateway EC2</div><div class="flow-box"><code>hybrid_vxlan0</code><br>VNI 2 · UDP 8472</div></div>
+    <div class="flow-group"><div class="flow-group-label"><img class="hn-ico" src="./common/aws-icons/services/Arch_Amazon-EC2_48.svg" alt="Amazon EC2">Gateway EC2</div><div class="flow-box"><code>hybrid_vxlan0</code><br>VNI 2, UDP 8472</div></div>
     <div class="flow-arrow"><img class="hn-ico" src="./common/aws-icons/services/Arch_AWS-Direct-Connect_48.svg" alt="AWS Direct Connect"><img class="hn-ico" src="./common/aws-icons/services/Arch_AWS-Site-to-Site-VPN_48.svg" alt="AWS Site-to-Site VPN"><br>→ DX/VPN →</div>
     <div class="flow-group"><div class="flow-group-label">온프렘</div><div class="flow-box">Cilium (VTEP) decap</div><div class="flow-box">Hybrid Pod</div></div>
   </div>
@@ -341,7 +341,7 @@ CNI가 SNAT를 하면 응답이 node 주소로 돌아오고 connection tracking�
 {timing: 1.5min}
 [요약]
 • Hybrid↔Hybrid: Cilium VXLAN(UDP 8472), outer는 node IP로 라우팅
-• Cloud↔Hybrid 직접 라우팅: VPC·WAN·온프렘에 Pod route 필요
+• Cloud↔Hybrid 직접 라우팅: VPC, WAN, 온프렘에 Pod route 필요
 • Cloud↔Hybrid Gateway: VPC route + VXLAN 터널이 Pod 경로를 대신 제공
 • UDP 8472는 두 모드 모두에서 필요
 세 탭입니다. 첫 번째, hybrid 노드끼리입니다. Cilium이 VXLAN으로 캡슐화하고, 바깥 패킷의 주소는 node IP입니다. 그래서 캡슐화된 패킷을 나르기 위해 underlay에 Pod CIDR route가 있어야 하는 것은 아닙니다. 오버헤드는 IPv4 기준 50바이트라서 MTU 1500 환경이면 1450을 예로 듭니다. 중요한 포인트는 이 UDP 8472가 direct routing이든 Gateway든 모두 필요하다는 점입니다. 퀴즈에서 다시 묻겠습니다.
@@ -351,30 +351,30 @@ CNI가 SNAT를 하면 응답이 node 주소로 돌아오고 connection tracking�
 {cue: transition}
 그럼 Pod CIDR을 라우팅하는 선택지를 정리해 보겠습니다.
 [근거]
-• 내부 문서 D/02 패턴 5·6 (MTU/VXLAN overhead, UDP 8472), D/10 "패턴 1·2"
+• 내부 문서 D/02 패턴 5, 6 (MTU/VXLAN overhead, UDP 8472), D/10 "패턴 1, 2"
 :::
 
 ---
 <!-- Slide 9: 라우팅 선택지 비교 -->
 @type: content
-@title: 라우팅 선택: static·BGP·Gateway
+@title: 라우팅 선택: static, BGP, Gateway
 
-## 라우팅 선택: static·BGP·Gateway
+## 라우팅 선택: static, BGP, Gateway
 
 :::html
 <table class="data-table hn-table">
   <thead><tr><th>비교 항목</th><th>static route</th><th>Cilium BGP v2</th><th>Gateway</th></tr></thead>
   <tbody>
     <tr><td>Pod CIDR 도달 방법</td><td>온프렘 라우터에 node별 prefix를 수동 등록</td><td>Cilium이 Pod CIDR을 라우터에 광고</td><td>pod CIDR당 VPC route 1건 → leader ENI + VXLAN</td></tr>
-    <tr><td>온프렘 라우터 변경</td><td>필요 (route 유지·drift 추적)</td><td>필요 (peering·ASN·prefix filter)</td><td>Pod CIDR route는 불필요 (node IP·UDP 8472은 필요)</td></tr>
+    <tr><td>온프렘 라우터 변경</td><td>필요 (route 유지, drift 추적)</td><td>필요 (peering, ASN, prefix filter)</td><td>Pod CIDR route는 불필요 (node IP, UDP 8472은 필요)</td></tr>
     <tr><td>CNI 제약</td><td>지원되는 routable Pod 설계</td><td>Cilium BGP Control Plane</td><td>AWS Cilium VTEP + <code>l7Proxy=false</code></td></tr>
-    <tr><td>HA / 처리량</td><td>네트워크 팀 설계 · 라우터/링크 한계</td><td>네트워크 팀 설계 · 라우터/링크 한계</td><td>Lease active-standby · 활성 Gateway 1대 한계</td></tr>
+    <tr><td>HA / 처리량</td><td>네트워크 팀 설계, 라우터/링크 한계</td><td>네트워크 팀 설계, 라우터/링크 한계</td><td>Lease active-standby, 활성 Gateway 1대 한계</td></tr>
     <tr><td>정리(제거)</td><td>소유한 route 정리</td><td>소유한 route/peering 정리</td><td>Helm 제거해도 VPC route는 남음</td></tr>
   </tbody>
 </table>
 <div class="card-grid fragment" style="margin-top: var(--space-3);" data-reveal="stagger" data-fragment-index="1">
   <div class="callout callout-success"><strong class="text-success">BGP 우선</strong><div class="on-surface-muted">라우터 팀이 BGP를 운영할 수 있고 노드가 늘어날 환경. AWS 가이드가 권장하는 방식</div></div>
-  <div class="callout callout-warning"><strong class="text-warning">static은 소규모·고정 환경</strong><div class="on-surface-muted">노드·Pod CIDR 변경 때마다 수동 갱신과 장애 추적 부담</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">static은 소규모, 고정 환경</strong><div class="on-surface-muted">노드, Pod CIDR 변경 때마다 수동 갱신과 장애 추적 부담</div></div>
   <div class="callout callout-info"><strong class="text-info">Gateway는 라우터 변경이 어려울 때</strong><div class="on-surface-muted">VTEP/<code>l7Proxy=false</code> 제약과 추가 hop을 수용할 수 있다면</div></div>
 </div>
 :::
@@ -383,9 +383,9 @@ CNI가 SNAT를 하면 응답이 node 주소로 돌아오고 connection tracking�
 {timing: 2min}
 [요약]
 • static/BGP는 direct routing, Gateway는 VXLAN 터널로 우회
-• Gateway가 없어도 routable Pod 설계로 webhook·ALB/NLB IP target 가능
+• Gateway가 없어도 routable Pod 설계로 webhook, ALB/NLB IP target 가능
 • BGP는 네트워크 팀의 peering 운영 능력, Gateway는 CNI 제약 수용이 판단 기준
-• 정답은 하나가 아니며 비용·운영 역량·제약으로 결정
+• 정답은 하나가 아니며 비용, 운영 역량, 제약으로 결정
 세 가지 방법을 나란히 놓았습니다. static은 라우터에 prefix를 직접 넣는 방식이라 단순하지만 노드와 Pod CIDR이 바뀔 때마다 사람이 따라가야 합니다. BGP는 Cilium BGP Control Plane이 Pod CIDR을 광고하므로 노드 증감에 유연하지만 라우터 팀과 ASN, prefix filter, graceful restart를 합의해야 합니다.
 Gateway는 온프렘 Pod CIDR을 VPC에서 routable하게 만들 필요가 없다는 것이 핵심입니다. 대신 AWS가 지원하는 Cilium의 VTEP을 켜고 l7Proxy를 꺼야 하며, 활성 Gateway 한 대를 거치는 추가 hop이 생깁니다.
 {cue: question}
@@ -447,7 +447,7 @@ spec:
 ```
 
 ### Advertisement
-Pod CIDR만 광고 (Service·LB IP는 별도 설계)
+Pod CIDR만 광고 (Service, LB IP는 별도 설계)
 ```yaml
 apiVersion: cilium.io/v2alpha1
 kind: CiliumBGPAdvertisement
@@ -460,7 +460,7 @@ spec:
   - advertisementType: PodCIDR
 ```
 
-### 활성화·확인
+### 활성화, 확인
 Helm values로 BGP Control Plane 활성화 후 상태 확인
 ```yaml
 bgpControlPlane:
@@ -477,7 +477,7 @@ cilium bgp routes
 {timing: 1.5min}
 [요약]
 • v2 리소스 3종: CiliumBGPClusterConfig, CiliumBGPPeerConfig, CiliumBGPAdvertisement
-• Pod CIDR만 광고하고, 라우터와 ASN·TCP 179·prefix filter를 합의
+• Pod CIDR만 광고하고, 라우터와 ASN, TCP 179, prefix filter를 합의
 • 이전 CiliumBGPPeeringPolicy는 사용하지 않음
 • Established ≠ 의도한 prefix가 라우터에 설치됨
 네 탭으로 최소 구성을 봅니다. ClusterConfig가 어떤 노드가 어떤 라우터와 peering 할지를 정하고, PeerConfig가 timer와 graceful restart, 그리고 어떤 advertisement를 붙일지를 정하며, Advertisement가 Pod CIDR을 광고하도록 합니다.
@@ -519,9 +519,9 @@ BGP 세션이 Established 됐다고 끝이 아닙니다. 라우터에 의도한 
   <div>
     <div class="on-surface-muted" style="margin-bottom: var(--space-2);">솔직한 한계</div>
     <div class="stack fragment" style="display: flex; flex-direction: column; gap: var(--space-2);" data-reveal="stagger" data-reveal-anim="left" data-fragment-index="2">
-      <div class="callout callout-warning"><div class="on-surface-muted">설치만으로 모든 조건이 충족되지 않음 — route·return path·TLS·방화벽은 별도 검증</div></div>
+      <div class="callout callout-warning"><div class="on-surface-muted">설치만으로 모든 조건이 충족되지 않음, route, return path, TLS, 방화벽은 별도 검증</div></div>
       <div class="callout callout-warning"><div class="on-surface-muted">AWS Cilium + VTEP, <code>l7Proxy=false</code> 필요 (Cilium Ingress/Gateway API/L7 policy와 같은 설치에서 충돌)</div></div>
-      <div class="callout callout-danger"><div class="on-surface-muted">VXLAN은 암호화 없음 · 클러스터당 1개 · 활성 Gateway 1대가 처리량 한계</div></div>
+      <div class="callout callout-danger"><div class="on-surface-muted">VXLAN은 암호화 없음, 클러스터당 1개, 활성 Gateway 1대가 처리량 한계</div></div>
     </div>
   </div>
 </div>
@@ -569,8 +569,8 @@ Hybrid Nodes Gateway는 2026년 4월 21일에 GA 된 오픈소스 프로젝트�
   <div class="flow-arrow fragment fade-right" data-fragment-index="2"><span class="hn-pulse">→</span></div>
   <div class="flow-group hn-region info fragment fade-right" data-fragment-index="2">
     <div class="flow-group-label"><img class="hn-ico" src="./common/aws-icons/services/Arch_Amazon-EC2_48.svg" alt="Amazon EC2">② Gateway leader (EC2)</div>
-    <div class="flow-box"><code>hybrid_vxlan0</code> · VNI 2<br>UDP 8472 · IP 없음</div>
-    <div class="flow-box">CiliumNode watch →<br>로컬 FDB·ARP·onlink route</div>
+    <div class="flow-box"><code>hybrid_vxlan0</code>, VNI 2<br>UDP 8472, IP 없음</div>
+    <div class="flow-box">CiliumNode watch →<br>로컬 FDB, ARP, onlink route</div>
   </div>
   <div class="flow-arrow fragment fade-right" data-fragment-index="3"><span class="hn-pulse">→</span><br><img class="hn-ico" src="./common/aws-icons/services/Arch_AWS-Direct-Connect_48.svg" alt="AWS Direct Connect"><br><img class="hn-ico" src="./common/aws-icons/services/Arch_AWS-Site-to-Site-VPN_48.svg" alt="AWS Site-to-Site VPN"><br>DX/VPN</div>
   <div class="flow-group hn-region success fragment fade-right" data-fragment-index="3">
@@ -580,7 +580,7 @@ Hybrid Nodes Gateway는 2026년 4월 21일에 GA 된 오픈소스 프로젝트�
   </div>
 </div>
 <div class="card-grid fragment" style="margin-top: var(--space-3);" data-reveal="stagger" data-fragment-index="4">
-  <div class="callout callout-info"><strong class="text-info">역방향</strong><div class="on-surface-muted">leader가 <code>CiliumVTEPConfig</code> <code>hybrid-gateway</code>(tunnelEndpoint·cidr·mac)를 갱신 → Cilium이 VPC CIDR 목적지를 VXLAN으로 leader에 전송</div></div>
+  <div class="callout callout-info"><strong class="text-info">역방향</strong><div class="on-surface-muted">leader가 <code>CiliumVTEPConfig</code> <code>hybrid-gateway</code>(tunnelEndpoint, cidr, mac)를 갱신 → Cilium이 VPC CIDR 목적지를 VXLAN으로 leader에 전송</div></div>
   <div class="callout callout-success"><strong class="text-success">두 종류의 상태</strong><div class="on-surface-muted">AWS route는 pod CIDR당 1건(노드가 늘어도 그대로), 노드별 터널 정보는 각 replica가 CiliumNode watch로 로컬에서 갱신</div></div>
 </div>
 :::
@@ -599,7 +599,7 @@ Hybrid Nodes Gateway는 2026년 4월 21일에 GA 된 오픈소스 프로젝트�
 {cue: transition}
 leader가 죽으면 어떻게 되는지, HA를 보겠습니다.
 [근거]
-• 내부 문서 D/10 "핵심 구성 요소 상세"(1.0.2 구현 확인), "VPC 라우트 테이블 자동 관리", "패턴 1·2"
+• 내부 문서 D/10 "핵심 구성 요소 상세"(1.0.2 구현 확인), "VPC 라우트 테이블 자동 관리", "패턴 1, 2"
 :::
 
 ---
@@ -617,10 +617,10 @@ leader가 죽으면 어떻게 되는지, HA를 보겠습니다.
   <div class="flow-arrow">→</div>
   <div class="flow-group fragment fade-right" data-fragment-index="3"><div class="flow-group-label">③ route</div><div class="flow-box">ReplaceRoute →<br>새 leader ENI</div></div>
   <div class="flow-arrow">→</div>
-  <div class="flow-group fragment fade-right" data-fragment-index="4"><div class="flow-group-label">④ VTEP</div><div class="flow-box"><code>CiliumVTEPConfig</code><br>IP·MAC 갱신</div></div>
+  <div class="flow-group fragment fade-right" data-fragment-index="4"><div class="flow-group-label">④ VTEP</div><div class="flow-box"><code>CiliumVTEPConfig</code><br>IP, MAC 갱신</div></div>
 </div>
 <div class="card-grid fragment" style="margin-top: var(--space-3);" data-reveal="stagger" data-reveal-anim="zoom" data-fragment-index="5">
-  <div class="metric-card"><strong class="text-warning">3–5초는 가이드, 보장 아님</strong><div class="on-surface-muted">AWS 안내 예상치. AWS 블로그 측정은 약 6.2초. API·route·Cilium·앱 복구를 실제로 검증</div></div>
+  <div class="metric-card"><strong class="text-warning">3–5초는 가이드, 보장 아님</strong><div class="on-surface-muted">AWS 안내 예상치. AWS 블로그 측정은 약 6.2초. API, route, Cilium, 앱 복구를 실제로 검증</div></div>
   <div class="metric-card"><strong class="text-accent">replica는 처리량이 아님</strong><div class="on-surface-muted">standby는 터널 상태만 warm 유지. 처리량은 인스턴스 크기를 키워(scale-up) 해결</div></div>
   <div class="metric-card"><strong class="text-info">2 AZ에 2대</strong><div class="on-surface-muted">chart는 host 분리 필수, AZ 분리 선호. AWS 가이드: 10–100 노드 c6in.xlarge, 더 크면 c6in.2xlarge/4xlarge</div></div>
 </div>
@@ -664,7 +664,7 @@ hybrid-gateway-node: "true"
 ```
 NodePool은 label `hybrid-gateway-node: "true"`와 taint `hybrid-gateway-node:NoSchedule`을 사용합니다(전체 manifest는 AWS getting-started 문서). 관리형/자체 관리 노드는 primary ENI source/dest check를 별도로 끄고 `autoMode.enabled=false`
 
-### ② IAM · VPC CNI
+### ② IAM, VPC CNI
 ```bash
 aws eks create-pod-identity-association \
   --cluster-name "$CLUSTER_NAME" --namespace eks-hybrid-nodes-gateway \
@@ -686,11 +686,11 @@ kubectl -n kube-system get configmap cilium-config \
   -o jsonpath='{.data.enable-vtep}{"\n"}{.data.enable-l7-proxy}{"\n"}'
 # 기대 출력: true / false
 ```
-AWS Cilium 최소 버전: 1.17.13-1 · 1.18.8-1 · 1.19.2-1. Cilium minor를 바꾸는 업그레이드에서는 `--reuse-values`를 주의하세요.
+AWS Cilium 최소 버전: 1.17.13-1, 1.18.8-1, 1.19.2-1. Cilium minor를 바꾸는 업그레이드에서는 `--reuse-values`를 주의하세요.
 
 ### ④ Helm 설치
 ```yaml
-# values.yaml (podCIDRs·routeTableIDs는 CSV 문자열)
+# values.yaml (podCIDRs, routeTableIDs는 CSV 문자열)
 vpcCIDR: "10.226.0.0/16"  # 예시 값
 podCIDRs: "10.85.0.0/16"
 routeTableIDs: "rtb-0abc123456789def0,rtb-0def456789abc1230"
@@ -711,8 +711,8 @@ helm upgrade --install eks-hybrid-nodes-gateway \
 [요약]
 • 순서: 적격 EC2 노드 준비 → IAM(Pod Identity) → Cilium VTEP → Helm 설치 → 검증
 • namespace는 eks-hybrid-nodes-gateway (kube-system 아님), chart는 --version 1.0.2 고정
-• podCIDRs·routeTableIDs는 YAML 배열이 아닌 CSV 문자열
-• 설치는 route cutover — 같은 CIDR의 기존 route를 ReplaceRoute가 바꿀 수 있음
+• podCIDRs, routeTableIDs는 YAML 배열이 아닌 CSV 문자열
+• 설치는 route cutover, 같은 CIDR의 기존 route를 ReplaceRoute가 바꿀 수 있음
 네 개의 탭이 설치 순서입니다. 먼저 Gateway가 돌 EC2 노드를 준비합니다. Auto Mode라면 NodeClass에서 sourceDestCheck를 DisabledPrimaryENI로 두어 포워딩을 허용하고, 노드에 hybrid-gateway-node 라벨을 붙입니다. 관리형이나 자체 관리 노드라면 primary ENI의 source/dest check를 직접 끄고 autoMode.enabled를 false로 둡니다. NodePool taint와 전체 manifest는 이 자료에 수록하지 않았으니 AWS getting-started 문서를 확인하세요.
 {cue: pause}
 Helm 설치는 namespace가 eks-hybrid-nodes-gateway입니다. 이전 자료는 kube-system이라고 했는데 틀렸습니다. 값 파일에서 podCIDRs와 routeTableIDs는 CSV 문자열이라 --set 대신 values 파일을 쓰세요. 그리고 latest 대신 1.0.2처럼 버전을 고정합니다.
@@ -727,7 +727,7 @@ IAM은 Pod Identity로 연결합니다. 권한은 Describe 두 개와 CreateRout
 :::
 
 ---
-<!-- Slide 15: Gateway ⑤ 운영·제약 -->
+<!-- Slide 15: Gateway ⑤ 운영, 제약 -->
 @type: content
 @title: Gateway 운영: 관측과 제약
 
@@ -737,7 +737,7 @@ IAM은 Pod Identity로 연결합니다. 권한은 Describe 두 개와 CreateRout
 <div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
   <button class="tab-btn active">관측</button>
   <button class="tab-btn">제약</button>
-  <button class="tab-btn">설치·제거 위험</button>
+  <button class="tab-btn">설치, 제거 위험</button>
 </div>
 <div class="tc">
   <table class="data-table hn-table">
@@ -745,11 +745,11 @@ IAM은 Pod Identity로 연결합니다. 권한은 Describe 두 개와 CreateRout
     <tbody>
       <tr><td><code>hybrid_gateway_leader_is_active</code></td><td>replica의 leader 여부. <code>sum()</code>이 1이어야 하며 route 성공의 증거는 아님</td></tr>
       <tr><td><code>hybrid_gateway_hybrid_nodes_configured</code></td><td>replica별 로컬 구성 노드 수 (leader+standby 합산 금지)</td></tr>
-      <tr><td><code>hybrid_gateway_vxlan_{tx,rx}_{bytes,packets}_total</code></td><td>Counter — <code>rate()</code>로 처리량 확인</td></tr>
-      <tr><td><code>hybrid_gateway_aws_route_table_update_errors_total</code></td><td>Counter — <code>increase(…[5m])</code>로 최근 실패만 판단</td></tr>
+      <tr><td><code>hybrid_gateway_vxlan_{tx,rx}_{bytes,packets}_total</code></td><td>Counter, <code>rate()</code>로 처리량 확인</td></tr>
+      <tr><td><code>hybrid_gateway_aws_route_table_update_errors_total</code></td><td>Counter, <code>increase(…[5m])</code>로 최근 실패만 판단</td></tr>
     </tbody>
   </table>
-  <div class="hn-note">health는 TCP 8088 <code>/healthz</code>·<code>/readyz</code>. chart는 Service·ServiceMonitor·PDB를 만들지 않으므로 직접 구성하고, readiness만으로 forwarding 성공을 판단하지 마세요.</div>
+  <div class="hn-note">health는 TCP 8088 <code>/healthz</code>, <code>/readyz</code>. chart는 Service, ServiceMonitor, PDB를 만들지 않으므로 직접 구성하고, readiness만으로 forwarding 성공을 판단하지 마세요.</div>
 </div>
 <div class="tc" hidden>
   <div class="card-grid">
@@ -761,21 +761,21 @@ IAM은 Pod Identity로 연결합니다. 권한은 Describe 두 개와 CreateRout
 </div>
 <div class="tc" hidden>
   <div class="card-grid">
-    <div class="callout callout-warning"><strong class="text-warning">설치 = route cutover</strong><div class="on-surface-muted">같은 CIDR의 기존 route를 ReplaceRoute가 가져갈 수 있음. 소유자·롤백 사전 합의</div></div>
-    <div class="callout callout-danger"><strong class="text-danger">uninstall은 VPC route를 안 지움</strong><div class="on-surface-muted">제거 전 table·CIDR·target 기록 → 복구/삭제는 수동</div></div>
+    <div class="callout callout-warning"><strong class="text-warning">설치 = route cutover</strong><div class="on-surface-muted">같은 CIDR의 기존 route를 ReplaceRoute가 가져갈 수 있음. 소유자, 롤백 사전 합의</div></div>
+    <div class="callout callout-danger"><strong class="text-danger">uninstall은 VPC route를 안 지움</strong><div class="on-surface-muted">제거 전 table, CIDR, target 기록 → 복구/삭제는 수동</div></div>
     <div class="callout callout-info"><strong class="text-info">그 밖에 남는 것</strong><div class="on-surface-muted">CiliumVTEPConfig <code>hybrid-gateway</code>, Pod Identity association, 전용 capacity는 IaC 소유자가 정리</div></div>
   </div>
   <div class="hn-code" style="margin-top: var(--space-3);">kubectl -n eks-hybrid-nodes-gateway get lease hybrid-gateway-leader -o yaml
 kubectl get ciliumvtepconfig hybrid-gateway -o yaml</div>
 </div>
-<div class="callout callout-info hn-takeaway fragment zoom-in" data-fragment-index="1"><strong class="text-info">한 줄 정리</strong><div class="on-surface-muted">설치·제거는 결국 route 소유권 문제입니다 — 바꾸기 전에 table·CIDR·target을 기록하세요.</div></div>
+<div class="callout callout-info hn-takeaway fragment zoom-in" data-fragment-index="1"><strong class="text-info">한 줄 정리</strong><div class="on-surface-muted">설치, 제거는 결국 route 소유권 문제입니다, 바꾸기 전에 table, CIDR, target을 기록하세요.</div></div>
 :::
 
 :::notes
 {timing: 1.5min}
 [요약]
-• 관측: 10080 /metrics, 8088 /healthz·/readyz, 핵심 메트릭 4군
-• 제약: 암호화 없음, 클러스터당 1개, AWS Cilium+VTEP·IPv4, l7Proxy=false 트레이드오프
+• 관측: 10080 /metrics, 8088 /healthz, /readyz, 핵심 메트릭 4군
+• 제약: 암호화 없음, 클러스터당 1개, AWS Cilium+VTEP, IPv4, l7Proxy=false 트레이드오프
 • 위험: 설치는 route cutover, uninstall은 VPC route를 안 지움
 • 검증은 Lease와 CiliumVTEPConfig를 직접 대조
 운영 슬라이드도 탭 세 개입니다. 관측은 TCP 10080의 메트릭과 8088의 health endpoint입니다. leader_is_active의 합이 1인지, hybrid_nodes_configured는 replica별 값이니 합치지 말고, VXLAN 바이트와 패킷은 Counter이므로 rate로 보고, route 오류는 최근 5분 증가분만 봅니다. 이 chart는 Service나 ServiceMonitor를 만들지 않아서 직접 만들어야 합니다.
@@ -820,7 +820,7 @@ kubectl get ciliumvtepconfig hybrid-gateway -o yaml</div>
     <thead><tr><th>Flow</th><th>포트</th><th>비고</th></tr></thead>
     <tbody>
       <tr><td>BGP node ↔ router</td><td>TCP 179</td><td>설정한 active/passive peer 기준, BGP 사용 시</td></tr>
-      <tr><td>CP/Cloud → hybrid Pod</td><td>실제 앱·webhook port</td><td>Pod CIDR route + return path 필요</td></tr>
+      <tr><td>CP/Cloud → hybrid Pod</td><td>실제 앱, webhook port</td><td>Pod CIDR route + return path 필요</td></tr>
       <tr><td>static route</td><td>(포트 없음)</td><td>node별 prefix → node IP 수동 유지</td></tr>
     </tbody>
   </table>
@@ -830,7 +830,7 @@ kubectl get ciliumvtepconfig hybrid-gateway -o yaml</div>
   <table class="data-table hn-table">
     <thead><tr><th>Flow</th><th>포트</th><th>비고</th></tr></thead>
     <tbody>
-      <tr><td>Gateway 노드 ↔ hybrid 노드</td><td>UDP 8472 양방향</td><td>SG·NACL·온프렘 방화벽. Gateway 노드 <strong>private IP</strong> (EIP 아님), leader/standby 후보·교체 노드 모두</td></tr>
+      <tr><td>Gateway 노드 ↔ hybrid 노드</td><td>UDP 8472 양방향</td><td>SG, NACL, 온프렘 방화벽. Gateway 노드 <strong>private IP</strong> (EIP 아님), leader/standby 후보, 교체 노드 모두</td></tr>
       <tr><td>Cloud workload ↔ hybrid Pod</td><td>실제 앱 port</td><td>반환 트래픽 포함</td></tr>
       <tr><td>Prometheus → Gateway</td><td>TCP 10080</td><td>승인된 scraper만</td></tr>
       <tr><td>health probe</td><td>TCP 8088</td><td><code>/healthz</code> <code>/readyz</code></td></tr>
@@ -844,7 +844,7 @@ kubectl get ciliumvtepconfig hybrid-gateway -o yaml</div>
 :::notes
 {timing: 1.5min}
 [요약]
-• 공통: 443(온프렘 시작), 10250·webhook port(AWS 시작), DNS 53, UDP 8472, TCP 4240
+• 공통: 443(온프렘 시작), 10250, webhook port(AWS 시작), DNS 53, UDP 8472, TCP 4240
 • direct routing 추가: BGP 사용 시 TCP 179, Pod CIDR route와 앱 포트
 • Gateway 추가: Gateway 노드 private IP ↔ hybrid 노드 UDP 8472 양방향, metrics 10080
 • UDP 8472는 두 모드 모두에서 필요
@@ -855,7 +855,7 @@ Gateway 탭은 Gateway 노드와 hybrid 노드 사이의 UDP 8472 양방향이 �
 {cue: transition}
 마지막으로 VPC 엔드포인트가 언제 필요한지 보겠습니다.
 [근거]
-• 내부 문서 D/02 "필수 방화벽 포트", D/10 "보안 그룹"·"온프레미스 방화벽 규칙", D/11 포트 표
+• 내부 문서 D/02 "필수 방화벽 포트", D/10 "보안 그룹", "온프레미스 방화벽 규칙", D/11 포트 표
 :::
 
 ---
@@ -867,29 +867,29 @@ Gateway 탭은 Gateway 노드와 hybrid 노드 사이의 UDP 8472 양방향이 �
 
 :::html
 <div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
-  <button class="tab-btn active">노드 인증·관리</button>
-  <button class="tab-btn">이미지·아티팩트</button>
-  <button class="tab-btn">워크로드·선택</button>
+  <button class="tab-btn active">노드 인증, 관리</button>
+  <button class="tab-btn">이미지, 아티팩트</button>
+  <button class="tab-btn">워크로드, 선택</button>
 </div>
 <div class="tc">
   <div class="card-grid">
     <div class="metric-card"><strong class="text-accent">eks</strong><div class="on-surface-muted">DescribeCluster 등 EKS 관리 API (Kubernetes API endpoint와 다름)</div></div>
-    <div class="metric-card"><strong class="text-accent">ssm · ssmmessages</strong><div class="on-surface-muted">SSM 하이브리드 활성화를 쓸 때 (SSM provider)</div></div>
+    <div class="metric-card"><strong class="text-accent">ssm, ssmmessages</strong><div class="on-surface-muted">SSM 하이브리드 활성화를 쓸 때 (SSM provider)</div></div>
     <div class="metric-card"><strong class="text-accent">rolesanywhere</strong><div class="on-surface-muted">IAM Roles Anywhere provider를 쓸 때</div></div>
   </div>
 </div>
 <div class="tc" hidden>
   <div class="card-grid">
-    <div class="metric-card"><strong class="text-info">ecr.api · ecr.dkr</strong><div class="on-surface-muted">private ECR API/registry 사용 시</div></div>
+    <div class="metric-card"><strong class="text-info">ecr.api, ecr.dkr</strong><div class="on-surface-muted">private ECR API/registry 사용 시</div></div>
     <div class="metric-card"><strong class="text-info">s3 (interface)</strong><div class="on-surface-muted">image layer용. 온프렘에서는 gateway endpoint를 직접 못 쓰므로 interface endpoint</div></div>
   </div>
-  <div class="hn-note">private ECR endpoint가 public ECR·CloudFront·임의 package repo를 private으로 만들지는 않습니다.</div>
+  <div class="hn-note">private ECR endpoint가 public ECR, CloudFront, 임의 package repo를 private으로 만들지는 않습니다.</div>
 </div>
 <div class="tc" hidden>
   <div class="card-grid">
     <div class="metric-card"><strong class="text-success">eks-auth</strong><div class="on-surface-muted">EKS Pod Identity 사용 시</div></div>
-    <div class="metric-card"><strong class="text-warning">sts</strong><div class="on-surface-muted">필수 아님 — client가 STS(IRSA/<wbr>AssumeRole)를 실제 호출할 때만</div></div>
-    <div class="metric-card"><strong class="text-info">logs · monitoring</strong><div class="on-surface-muted">해당 agent가 호출할 때만</div></div>
+    <div class="metric-card"><strong class="text-warning">sts</strong><div class="on-surface-muted">필수 아님, client가 STS(IRSA/<wbr>AssumeRole)를 실제 호출할 때만</div></div>
+    <div class="metric-card"><strong class="text-info">logs, monitoring</strong><div class="on-surface-muted">해당 agent가 호출할 때만</div></div>
     <div class="metric-card"><strong class="text-info">oidc-eks</strong><div class="on-surface-muted">지원 리전의 OIDC discovery/JWKS</div></div>
   </div>
 </div>
@@ -918,7 +918,7 @@ Gateway 탭은 Gateway 노드와 hybrid 노드 사이의 UDP 8472 양방향이 �
 
 ## Block 2 Quiz (1/2)
 
-**Q1: kubectl logs·exec가 동작하려면 온프렘 방화벽에서 무엇을 허용해야 하는가?**
+**Q1: kubectl logs, exec가 동작하려면 온프렘 방화벽에서 무엇을 허용해야 하는가?**
 - [ ] 노드가 연 TCP 443 세션의 응답이면 충분하다
 - [x] CP ENI가 시작하는 kubelet TCP 10250 inbound
 - [ ] TCP 179 inbound만
@@ -978,7 +978,7 @@ Gateway 탭은 Gateway 노드와 hybrid 노드 사이의 UDP 8472 양방향이 �
 :::html
 <div class="card-grid" data-reveal="static">
   <div class="metric-card"><strong class="text-accent">네트워킹 요구 사항</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html</div></div>
-  <div class="metric-card"><strong class="text-accent">CNI · Cilium BGP</strong><div class="on-surface-muted">…/hybrid-nodes-cni.html<br>…/hybrid-nodes-cilium-bgp.html</div></div>
+  <div class="metric-card"><strong class="text-accent">CNI, Cilium BGP</strong><div class="on-surface-muted">…/hybrid-nodes-cni.html<br>…/hybrid-nodes-cilium-bgp.html</div></div>
   <div class="metric-card"><strong class="text-accent">Webhook 배치</strong><div class="on-surface-muted">…/hybrid-nodes-webhooks.html</div></div>
   <div class="metric-card"><strong class="text-info">Gateway 문서</strong><div class="on-surface-muted">…/hybrid-nodes-gateway-overview.html<br>…/hybrid-nodes-gateway-getting-started.html<br>…/hybrid-nodes-gateway-operations.html</div></div>
   <div class="metric-card"><strong class="text-info">Gateway 소스</strong><div class="on-surface-muted">github.com/aws/eks-hybrid-nodes-gateway</div></div>
@@ -989,9 +989,9 @@ Gateway 탭은 Gateway 노드와 hybrid 노드 사이의 UDP 8472 양방향이 �
 :::notes
 {timing: 0.5min}
 [요약]
-• 네트워킹·CNI·BGP·webhook·Gateway 공식 문서 6묶음
+• 네트워킹, CNI, BGP, webhook, Gateway 공식 문서 6묶음
 • Gateway 소스와 AWS Containers 블로그
-• 이 블록의 YAML·명령은 내부 검토 문서 기준이며 실환경 검증 전 필수
+• 이 블록의 YAML, 명령은 내부 검토 문서 기준이며 실환경 검증 전 필수
 참고 자료를 정리했습니다. docs.aws.amazon.com/eks/latest/userguide 아래의 hybrid-nodes로 시작하는 문서들이 기준입니다. 이 블록의 YAML과 명령은 로컬 schema 수준으로 검토된 예시이므로 실제 환경에서는 승인된 창에서 직접 검증하세요.
 {cue: transition}
 질문 받겠습니다.
@@ -1003,12 +1003,12 @@ Gateway 탭은 Gateway 노드와 hybrid 노드 사이의 UDP 8472 양방향이 �
 @toc: toc.html
 @next: 03-node-lifecycle.html
 @next-label: 다음: 노드 부트스트랩
-@message: Block 2 — 네트워킹 & Gateway 완료
+@message: Block 2: 네트워킹 & Gateway 완료
 
 :::notes
 {timing: 0.5min}
 [요약]
-• Block 2 핵심: 세션 방향(443은 온프렘 outbound, 10250·webhook은 온프렘 inbound), Pod CIDR 라우팅 3가지, Gateway는 선택
+• Block 2 핵심: 세션 방향(443은 온프렘 outbound, 10250, webhook은 온프렘 inbound), Pod CIDR 라우팅 3가지, Gateway는 선택
 • Q&A 후 5분 휴식, 다음은 Block 3 노드 부트스트랩
 Block 2를 마칩니다. 기억할 세 가지입니다. 하나, 443은 온프렘이 열고 10250과 webhook은 AWS가 엽니다. 둘, Pod CIDR 라우팅은 static, BGP, Gateway 중에서 운영 역량과 제약으로 고릅니다. 셋, Gateway는 선택 사항이고 설치는 route cutover입니다.
 {cue: question}

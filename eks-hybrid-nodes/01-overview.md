@@ -11,7 +11,7 @@ block: 01-overview
 
 온프레미스를 EKS로 확장하는 가이드
 
-Block 1 — 개요 & 아키텍처 | 30분
+Block 1: 개요 & 아키텍처 | 30분
 
 :::notes
 {timing: 0.5min}
@@ -37,7 +37,7 @@ Block 1 — 개요 & 아키텍처 | 30분
 1. 개요 & 아키텍처 (30분)
 2. 네트워킹 & Hybrid Nodes Gateway (30분)
 3. 노드 부트스트랩 & 라이프사이클 (30분)
-4. 운영·워크로드·보안 & 전략 (30분)
+4. 운영, 워크로드, 보안 & 전략 (30분)
 
 > 질문은 각 Block 종료 시에 받겠습니다.
 
@@ -71,7 +71,7 @@ Block 1 — 개요 & 아키텍처 | 30분
 <div class="card-grid" data-reveal="stagger">
   <div class="card">
     <strong class="text-accent">컨트롤 플레인 직접 운영</strong>
-    <div class="on-surface-muted">etcd 백업·복구, API server 가용성, 인증서 갱신을 팀이 직접 책임</div>
+    <div class="on-surface-muted">etcd 백업, 복구, API server 가용성, 인증서 갱신을 팀이 직접 책임</div>
   </div>
   <div class="card">
     <strong class="text-accent">버전 업그레이드 부담</strong>
@@ -79,19 +79,19 @@ Block 1 — 개요 & 아키텍처 | 30분
   </div>
   <div class="card">
     <strong class="text-accent">클러스터 파편화</strong>
-    <div class="on-surface-muted">클라우드와 온프렘이 서로 다른 도구·정책·버전으로 따로 운영되기 쉬움</div>
+    <div class="on-surface-muted">클라우드와 온프렘이 서로 다른 도구, 정책, 버전으로 따로 운영되기 쉬움</div>
   </div>
   <div class="card">
-    <strong class="text-accent">인증·감사 이원화</strong>
+    <strong class="text-accent">인증, 감사 이원화</strong>
     <div class="on-surface-muted">IAM 기반 클라우드 권한 체계와 온프렘 인증 체계를 각각 관리</div>
   </div>
   <div class="card">
-    <strong class="text-accent">GPU·데이터 근접성</strong>
+    <strong class="text-accent">GPU, 데이터 근접성</strong>
     <div class="on-surface-muted">기존 하드웨어와 대규모 로컬 데이터 때문에 워크로드를 클라우드로 옮기기 어려움</div>
   </div>
   <div class="card">
     <strong class="text-accent">가시성 도구 분산</strong>
-    <div class="on-surface-muted">모니터링·로깅이 환경별로 나뉘어 한 화면에서 보기 어려움</div>
+    <div class="on-surface-muted">모니터링, 로깅이 환경별로 나뉘어 한 화면에서 보기 어려움</div>
   </div>
 </div>
 :::
@@ -126,11 +126,11 @@ Block 1 — 개요 & 아키텍처 | 30분
 | EKS on Local Zones | AWS 관리 (Region) | Local Zone의 AWS 인프라 | AWS |
 | EKS on Outposts | 확장 클러스터는 Region, 로컬 클러스터는 Outposts에서 AWS 관리 | 고객 시설에 설치된 AWS 인프라 | AWS 제공 |
 | EKS Anywhere | 고객이 직접 운영 | 고객 인프라 | 고객 |
-| EKS Hybrid Nodes | AWS 관리 (EKS) | 고객 소유 온프레미스·엣지 호스트 | 고객 |
+| EKS Hybrid Nodes | AWS 관리 (EKS) | 고객 소유 온프레미스, 엣지 호스트 | 고객 |
 
 :::html
 <div class="callout callout-info fragment zoom-in" data-fragment-index="1">
-  Local Zone·Outposts·다른 클라우드의 머신을 <strong>hybrid node 인프라로 등록하는 것은 지원하지 않습니다.</strong> 이 비교는 개념 수준이며, 상세 지원 범위는 각 서비스의 공식 문서로 확인하세요.
+  Local Zone, Outposts, 다른 클라우드의 머신을 <strong>hybrid node 인프라로 등록하는 것은 지원하지 않습니다.</strong> 이 비교는 개념 수준이며, 상세 지원 범위는 각 서비스의 공식 문서로 확인하세요.
 </div>
 :::
 
@@ -144,7 +144,7 @@ Block 1 — 개요 & 아키텍처 | 30분
 표를 두 축으로 읽어주세요. 컨트롤 플레인을 누가 운영하는지, 그리고 워커 노드 하드웨어가 누구 소유인지입니다. EKS Anywhere는 컨트롤 플레인까지 고객이 운영하고, Hybrid Nodes는 컨트롤 플레인을 AWS가 맡습니다.
 {cue: pause}
 Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 자리에서 단정하지 않고 공식 문서 확인이 필요하다고 표시했습니다. 중요한 점은 Local Zone과 Outposts는 AWS 인프라라서 hybrid node 인프라로 쓸 수 없다는 것입니다.
-근거: kubernetes-docs/ko/eks-hybrid-nodes/README.md "Hybrid Nodes 개요" (Local Zone·Outposts 비지원 문장). 나머지 행은 개념 수준 설명이며 로컬 문서에 비교표가 없어 공식 문서 확인이 필요합니다.
+근거: kubernetes-docs/ko/eks-hybrid-nodes/README.md "Hybrid Nodes 개요" (Local Zone, Outposts 비지원 문장). 나머지 행은 개념 수준 설명이며 로컬 문서에 비교표가 없어 공식 문서 확인이 필요합니다.
 {cue: transition}
 그럼 Hybrid Nodes가 정확히 무엇인지 보겠습니다.
 :::
@@ -170,7 +170,7 @@ Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 
   <div class="hn-stack fragment" data-reveal="stagger" data-reveal-anim="left" data-fragment-index="1">
     <div class="callout callout-info">
       <strong class="text-info">What</strong>
-      <div class="on-surface-muted">온프레미스·엣지 노드를 AWS 관리형 EKS 컨트롤 플레인에 연결하는 기능</div>
+      <div class="on-surface-muted">온프레미스, 엣지 노드를 AWS 관리형 EKS 컨트롤 플레인에 연결하는 기능</div>
     </div>
     <div class="callout callout-success">
       <strong class="text-success">Why</strong>
@@ -178,7 +178,7 @@ Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 
     </div>
     <div class="callout callout-warning">
       <strong class="text-warning">단, 책임은 남는다</strong>
-      <div class="on-surface-muted">Host·OS·연결·워크로드 운영은 계속 고객 몫</div>
+      <div class="on-surface-muted">Host, OS, 연결, 워크로드 운영은 계속 고객 몫</div>
     </div>
   </div>
   <div class="fragment zoom-in" data-fragment-index="2">
@@ -191,7 +191,7 @@ Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 
 :::notes
 {timing: 2min}
 [요약]
-- Hybrid Nodes = 고객이 운영하는 온프레미스·엣지 노드를 AWS 관리형 EKS 컨트롤 플레인에 연결
+- Hybrid Nodes = 고객이 운영하는 온프레미스, 엣지 노드를 AWS 관리형 EKS 컨트롤 플레인에 연결
 - 같은 클러스터에 일반 AWS 노드와 hybrid node를 함께 둘 수 있음
 - Host, OS, 연결, 워크로드 운영 책임은 계속 고객에게 있음
 - 안정적인 private 양방향 연결이 전제
@@ -221,7 +221,7 @@ Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 
 </style>
 <div class="hn-steps">
   <div class="card fragment fade-right" data-fragment-index="1">
-    <span class="hn-no">1</span><strong class="text-accent">nodeadm install · init</strong>
+    <span class="hn-no">1</span><strong class="text-accent">nodeadm install, init</strong>
     <div class="on-surface-muted">의존성 설치와 구성. nodeadm은 상시 에이전트가 아닌 설치/bootstrap/upgrade CLI</div>
   </div>
   <div class="card fragment fade-right" data-fragment-index="2">
@@ -293,14 +293,14 @@ Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 
   <div class="card fragment fade-left" data-fragment-index="2">
     <strong class="text-warning">고객 책임</strong>
     <ul class="on-surface-muted">
-      <li>Host, OS, 보안 패치, kubelet·containerd 운영</li>
-      <li>CNI 구성, VPN·Direct Connect·라우팅</li>
-      <li>노드 인증서·자격 증명 준비, 워크로드 운영</li>
+      <li>Host, OS, 보안 패치, kubelet, containerd 운영</li>
+      <li>CNI 구성, VPN, Direct Connect, 라우팅</li>
+      <li>노드 인증서, 자격 증명 준비, 워크로드 운영</li>
     </ul>
   </div>
 </div>
 <div class="callout callout-danger fragment zoom-in" data-fragment-index="3">
-  <strong class="text-danger">데이터 경계 주의</strong> — Secrets, Kubernetes 객체, 로그 등 컨트롤 플레인 데이터는 AWS에 저장됩니다. Private endpoint를 쓴다고 망분리 규정 준수가 입증되지는 않으며, Direct Connect 자체는 기본 암호화를 제공하지 않습니다.
+  <strong class="text-danger">데이터 경계 주의</strong>: Secrets, Kubernetes 객체, 로그 등 컨트롤 플레인 데이터는 AWS에 저장됩니다. Private endpoint를 쓴다고 망분리 규정 준수가 입증되지는 않으며, Direct Connect 자체는 기본 암호화를 제공하지 않습니다.
 </div>
 :::
 
@@ -309,7 +309,7 @@ Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 
 {timing: 2min}
 [요약]
 - 컨트롤 플레인은 AWS, 노드 이하는 고객 책임입니다.
-- 자격 증명 서비스는 AWS지만, 인증서·PKI·activation 준비는 고객 몫입니다.
+- 자격 증명 서비스는 AWS지만, 인증서, PKI, activation 준비는 고객 몫입니다.
 - Secrets, K8s 객체, 로그는 AWS 컨트롤 플레인에 저장됩니다.
 - Private endpoint가 망분리 규정 준수를 자동으로 뜻하지 않습니다.
 - Direct Connect는 기본 암호화가 없어 MACsec 또는 IPsec 검토가 필요합니다.
@@ -339,7 +339,7 @@ Direct Connect만으로는 암호화가 보장되지 않기 때문에 MACsec 또
 <div class="card-grid fragment" data-reveal="stagger" data-reveal-anim="zoom" data-reveal-pace="slow" data-fragment-index="1">
   <div class="card">
     <strong class="text-accent">IPv4 전용</strong>
-    <div class="on-surface-muted">Remote node·Pod CIDR은 RFC1918 또는 CGNAT(100.64.0.0/10)이며 VPC·service CIDR과 겹치면 안 됨</div>
+    <div class="on-surface-muted">Remote node, Pod CIDR은 RFC1918 또는 CGNAT(100.64.0.0/10)이며 VPC, service CIDR과 겹치면 안 됨</div>
   </div>
   <div class="card">
     <strong class="text-accent">CIDR 개수 상한</strong>
@@ -347,7 +347,7 @@ Direct Connect만으로는 암호화가 보장되지 않기 때문에 MACsec 또
   </div>
   <div class="card">
     <strong class="text-accent">연결형 환경 전제</strong>
-    <div class="on-surface-muted">AWS와 안정적인 private 양방향 연결 필요. 단절·간헐 연결(DDIL) 용도 아님</div>
+    <div class="on-surface-muted">AWS와 안정적인 private 양방향 연결 필요. 단절, 간헐 연결(DDIL) 용도 아님</div>
   </div>
   <div class="card">
     <strong class="text-accent">권장 연결 품질</strong>
@@ -377,7 +377,7 @@ Direct Connect만으로는 암호화가 보장되지 않기 때문에 MACsec 또
 여섯 가지 제약입니다. 위쪽 네 개는 네트워크 전제로, 주소는 IPv4에 RFC1918이나 CGNAT 범위여야 하고 node, Pod, VPC, service CIDR이 서로 겹치면 안 됩니다.
 {cue: pause}
 연결 품질은 "100 Mbps, RTT 200 ms 이하"가 일반 권장입니다. 예전 자료에 나오던 100ms나 Direct Connect 10ms 같은 수치는 근거를 확인하지 못해서 사용하지 않았습니다. 아래 두 개는 실수하기 쉬운 항목입니다. endpoint는 public 또는 private 하나만 켜는 것이 권장이고(둘 다 켜면 join이 실패할 수 있습니다. API가 거부하는 구성은 아닙니다), 노드는 workload가 놀아도 vCPU-hour 과금이 계속됩니다.
-근거: D/README.md "계획에 반영할 제약", D/01-prerequisites.md "Network·CIDR·MTU".
+근거: D/README.md "계획에 반영할 제약", D/01-prerequisites.md "Network, CIDR, MTU".
 {cue: transition}
 다음은 지원 범위 매트릭스입니다.
 :::
@@ -386,35 +386,35 @@ Direct Connect만으로는 암호화가 보장되지 않기 때문에 MACsec 또
 <!-- Slide 9: 지원 매트릭스 -->
 @type: tabs
 
-## 지원 매트릭스: OS·K8s·CNI
+## 지원 매트릭스: OS, K8s, CNI
 
-### OS · 아키텍처
+### OS, 아키텍처
 
 | OS | 지원 범위 |
 |----|-----------|
-| Ubuntu | 20.04 · 22.04 · 24.04 |
-| RHEL | 8 · 9 |
+| Ubuntu | 20.04, 22.04, 24.04 |
+| RHEL | 8, 9 |
 | Amazon Linux 2023 | 온프렘 **가상화** 환경만 (베어메탈 아님) |
 | Bottlerocket | VMware 변형 v1.37.0+, **x86_64만**, nodeadm 미사용 |
 
 아키텍처는 x86_64와 arm64. RHEL 10과 Ubuntu 26.04는 지원 목록에 없음.
 
-### Kubernetes · nodeadm
+### Kubernetes, nodeadm
 
 | 항목 | 내용 |
 |------|------|
 | K8s 버전 | EKS와 동일한 버전 지원 (기준일 2026-10-07: 표준 1.34–1.37, 확장 1.31–1.33) |
 | nodeadm | 현재 v1.0.20, SSM 사용 시 **1.0.19 이상** 필요 |
 | 설치 권장 | `releases/latest` 대신 릴리스를 고정하고 checksum 검증 |
-| 리전 | GovCloud (US)·중국 리전을 제외한 모든 AWS 리전 |
-| 업그레이드 주의 | 1.35 cgroup v2 필수 · 1.36 containerd 2.0+ · 1.37 SELinuxMount 기본 활성·kubelet flag 변경 (Block 3 점검 슬라이드) |
+| 리전 | GovCloud (US), 중국 리전을 제외한 모든 AWS 리전 |
+| 업그레이드 주의 | 1.35 cgroup v2 필수, 1.36 containerd 2.0+, 1.37 SELinuxMount 기본 활성, kubelet flag 변경 (Block 3 점검 슬라이드) |
 
-### CNI · Cilium
+### CNI, Cilium
 
 | 항목 | 내용 |
 |------|------|
 | AWS 지원 범위 | AWS 빌드 `oci://public.ecr.aws/eks/cilium/cilium` |
-| 공식 CNI 페이지 | v1.17.x, v1.18.x 명시 (Gateway 사용 시 최소 1.17.13-1 · 1.18.8-1 · 1.19.2-1) |
+| 공식 CNI 페이지 | v1.17.x, v1.18.x 명시 (Gateway 사용 시 최소 1.17.13-1, 1.18.8-1, 1.19.2-1) |
 | 커널 | Cilium 1.18.3은 kernel 5.10+ 필요 → Ubuntu 20.04, RHEL 8 미지원 |
 | 주의 | 업스트림 최신 Cilium이 자동으로 AWS 지원 대상은 아님 |
 | 지원 범위 | IPv4, VXLAN, Cluster Scope IPAM 등 |
@@ -468,7 +468,7 @@ Direct Connect만으로는 암호화가 보장되지 않기 때문에 MACsec 또
 <div class="tc" hidden>
   <div class="card-grid">
     <div class="card"><strong class="text-accent">세션 수명</strong><div class="on-surface-muted">기본 1시간, 15분–12시간 설정 가능 (role 최대값 이하)</div></div>
-    <div class="card"><strong class="text-accent">준비물</strong><div class="on-surface-muted">PKI, 노드별 인증서·키, trust anchor, profile, role</div></div>
+    <div class="card"><strong class="text-accent">준비물</strong><div class="on-surface-muted">PKI, 노드별 인증서, 키, trust anchor, profile, role</div></div>
     <div class="card"><strong class="text-accent">NodeConfig</strong><div class="on-surface-muted">nodeName, certificatePath, privateKeyPath 지정</div></div>
     <div class="card"><strong class="text-accent">언제 선택</strong><div class="on-surface-muted">기존 PKI와 인증서 수명 관리 체계가 있을 때</div></div>
   </div>
@@ -477,7 +477,7 @@ Direct Connect만으로는 암호화가 보장되지 않기 때문에 MACsec 또
   <div class="card-grid">
     <div class="callout callout-warning"><strong class="text-warning">AWS 연결 필수</strong><div class="on-surface-muted">두 방식 모두 갱신에 AWS 서비스 endpoint 접근 필요. 로컬 CA로 offline 발급 불가</div></div>
     <div class="callout callout-danger"><strong class="text-danger">SSM Advanced tier 폐지</strong><div class="on-surface-muted">Advanced Instances tier는 2026-06-30 폐지</div></div>
-    <div class="callout callout-info"><strong class="text-info">nodeadm 1.0.19+</strong><div class="on-surface-muted">SSM 신규 설치·upgrade에 필요 (현재 v1.0.20)</div></div>
+    <div class="callout callout-info"><strong class="text-info">nodeadm 1.0.19+</strong><div class="on-surface-muted">SSM 신규 설치, upgrade에 필요 (현재 v1.0.20)</div></div>
     <div class="callout callout-success"><strong class="text-success">Provider 일관성</strong><div class="on-surface-muted">특별한 이유가 없다면 fleet에서 한 방식만 사용 권장</div></div>
   </div>
 </div>
@@ -591,7 +591,7 @@ IAM Roles Anywhere는 PKI와 노드별 인증서, trust anchor, profile이 필�
         <span class="hn-break" id="hn-vcpu-v" aria-live="polite">과금 기준: 256 vCPU/노드</span>
       </div>
     </div>
-    <div class="hn-break" id="hn-core-guide">GPU 서버 가정: 물리 CPU 32~216코어 · 기본 128코어 · SMT 해제 시 코어당 1 vCPU</div>
+    <div class="hn-break" id="hn-core-guide">GPU 서버 가정: 물리 CPU 32~216코어, 기본 128코어, SMT 해제 시 코어당 1 vCPU</div>
     <div class="hn-presets">
       <button class="btn btn-sm" id="hn-p10">10 GPU 노드</button>
       <button class="btn btn-sm" id="hn-p50">50 GPU 노드</button>
@@ -605,9 +605,9 @@ IAM Roles Anywhere는 PKI와 노드별 인증서, trust anchor, profile이 필�
     <div class="metric-card"><div class="metric-value" id="hn-year-cl">-</div><div class="metric-label">연환산 + 클러스터 1개</div></div>
   </div>
   <div class="hn-break" id="hn-break"></div>
-  <div class="hn-break">공개 요율 기반 계산 · 32 vCPU/머신 초과는 account team에 요금 확인 · 실제 노드가 보고한 CPU 수 기준</div>
+  <div class="hn-break">공개 요율 기반 계산, 32 vCPU/머신 초과는 account team에 요금 확인, 실제 노드가 보고한 CPU 수 기준</div>
   <div class="callout callout-warning fragment fade-up" data-fragment-index="1">
-    <strong>추정치입니다.</strong> 월 730시간, 동일 리전·계정 합산, 같은 월을 12번 반복한 연환산입니다. 마지막 카드는 표준 지원 클러스터 1개($876/년)를 더합니다. GPU 구매·전력·네트워크·로그·스토리지·EC2·OS·인력 비용은 제외입니다.
+    <strong>추정치입니다.</strong> 월 730시간, 동일 리전, 계정 합산, 같은 월을 12번 반복한 연환산입니다. 마지막 카드는 표준 지원 클러스터 1개($876/년)를 더합니다. GPU 구매, 전력, 네트워크, 로그, 스토리지, EC2, OS, 인력 비용은 제외입니다.
   </div>
 </div>
 :::
@@ -663,7 +663,7 @@ update();
 - GPU 서버를 가정해 물리 CPU 코어를 32~216 범위에서 8코어 단위로 선택합니다. 기본은 128코어입니다.
 - SMT / HT 사용 시 코어당 2 vCPU, 해제 시 1 vCPU로 환산합니다. 실제 과금은 Kubernetes에 보고된 CPU 수 기준입니다.
 - 프리셋은 코어와 SMT 설정을 유지한 채 노드 수만 변경합니다. 기본 설정(128코어, SMT 사용, 730시간)에서 10/50/100노드 연 요금은 $321,024 / $1,132,032 / $1,857,024입니다.
-- 클러스터 1개 요금($876/년)을 더하면 $321,900 / $1,132,908 / $1,857,900입니다. GPU 하드웨어·전력 등은 제외합니다.
+- 클러스터 1개 요금($876/년)을 더하면 $321,900 / $1,132,908 / $1,857,900입니다. GPU 하드웨어, 전력 등은 제외합니다.
 
 온프레미스 GPU 서버의 CPU 규모를 비교하기 위한 계산기입니다. 32~216코어는 시뮬레이션 입력 범위이며 특정 GPU 모델의 필수 사양이나 EKS의 지원 한도를 뜻하지 않습니다. 기본은 물리 CPU 128코어에 SMT를 사용한 구성으로, Kubernetes가 노드당 256 vCPU를 보고한다고 가정합니다. GPU 연산 코어 수를 입력하는 것이 아닙니다.
 
@@ -691,7 +691,7 @@ update();
     "type": "HYBRID_LINUX"
   }
   ```
-- [ ] remoteNetworkConfig: remote node·Pod CIDR 선언 (기존 클러스터에도 추가 가능)
+- [ ] remoteNetworkConfig: remote node, Pod CIDR 선언 (기존 클러스터에도 추가 가능)
   ```yaml
   remoteNetworkConfig:
     remoteNodeNetworks:
@@ -700,9 +700,9 @@ update();
     - cidrs: [10.85.0.0/16]
   ```
 - [ ] IAM: eks:DescribeCluster 포함 (AmazonEKSWorkerNodeMinimalPolicy에는 없음)
-- [ ] CIDR: IPv4, RFC1918/CGNAT, VPC·service CIDR과 중복 없음
+- [ ] CIDR: IPv4, RFC1918/CGNAT, VPC, service CIDR과 중복 없음
 - [ ] 연결: TGW/VGW 양방향 라우팅, 443 / 10250 / webhook 포트 방화벽
-- [ ] OS: 지원 OS·nodeadm 버전·containerd source 확인
+- [ ] OS: 지원 OS, nodeadm 버전, containerd source 확인
 
 :::notes
 {timing: 2min}
@@ -715,7 +715,7 @@ update();
 체크박스를 눌러 가며 확인해보겠습니다. 첫 번째 항목은 access entry입니다. node IAM role에 HYBRID_LINUX 타입으로 만듭니다. 두 번째는 remoteNetworkConfig로, 온프렘 노드와 Pod CIDR을 클러스터에 알려주는 설정입니다.
 {cue: pause}
 IAM에서 자주 놓치는 부분은 AmazonEKSWorkerNodeMinimalPolicy에 eks:DescribeCluster가 없다는 점입니다. 따로 추가해야 합니다. 마지막으로 이 CIDR 선언이 라우트와 방화벽 규칙을 자동으로 만들어주지는 않습니다. VPC와 온프렘 양쪽 라우팅은 직접 구성해야 합니다. 코드 조각은 문서의 예시값이며 실제 클러스터에서 실행해본 결과가 아닙니다.
-근거: D/01-prerequisites.md "Cluster Access와 생성 계획" 및 "Provider별 자격 증명", "Network·CIDR·MTU".
+근거: D/01-prerequisites.md "Cluster Access와 생성 계획" 및 "Provider별 자격 증명", "Network, CIDR, MTU".
 {cue: transition}
 배운 내용을 퀴즈로 확인해보겠습니다.
 :::
@@ -805,12 +805,12 @@ IAM에서 자주 놓치는 부분은 AmazonEKSWorkerNodeMinimalPolicy에 eks:Des
     <div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html</div>
   </div>
   <div class="card">
-    <strong class="text-accent">OS · Credentials</strong>
-    <div class="on-surface-muted">hybrid-nodes-os.html · hybrid-nodes-creds.html</div>
+    <strong class="text-accent">OS, Credentials</strong>
+    <div class="on-surface-muted">hybrid-nodes-os.html, hybrid-nodes-creds.html</div>
   </div>
   <div class="card">
-    <strong class="text-accent">CNI · Troubleshooting</strong>
-    <div class="on-surface-muted">hybrid-nodes-cni.html · hybrid-nodes-troubleshooting.html</div>
+    <strong class="text-accent">CNI, Troubleshooting</strong>
+    <div class="on-surface-muted">hybrid-nodes-cni.html, hybrid-nodes-troubleshooting.html</div>
   </div>
   <div class="card">
     <strong class="text-accent">Pricing</strong>
@@ -840,7 +840,7 @@ IAM에서 자주 놓치는 부분은 AmazonEKSWorkerNodeMinimalPolicy에 eks:Des
 @toc: toc.html
 @next: 02-networking-gateway.html
 @next-label: 다음: 네트워킹 & Gateway
-@message: Block 1 — 개요 & 아키텍처 완료
+@message: Block 1: 개요 & 아키텍처 완료
 
 :::notes
 {timing: 0.5min}

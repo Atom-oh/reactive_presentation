@@ -7,7 +7,7 @@ block: 03-node-lifecycle
 <!-- Slide 1: 블록 커버 -->
 @type: section
 
-# Block 3 — 노드 부트스트랩 & 라이프사이클
+# Block 3: 노드 부트스트랩 & 라이프사이클
 
 사전 준비 → nodeadm → Cilium → 업그레이드 → 트러블슈팅 → 크리덴셜
 
@@ -121,10 +121,10 @@ remoteNetworkConfig:
   <div class="metric-card"><strong class="text-accent">init</strong><div class="on-surface-muted">호스트 구성 + EKS 조인</div></div>
   <div class="metric-card"><strong class="text-accent">upgrade</strong><div class="on-surface-muted">in-place 버전 변경 (중단 작업)</div></div>
   <div class="metric-card"><strong class="text-accent">uninstall</strong><div class="on-surface-muted">구성 요소 제거 + SSM 등록 해제</div></div>
-  <div class="metric-card"><strong class="text-accent">debug</strong><div class="on-surface-muted">AWS/클러스터 연결·자격 증명 진단</div></div>
+  <div class="metric-card"><strong class="text-accent">debug</strong><div class="on-surface-muted">AWS/클러스터 연결, 자격 증명 진단</div></div>
 </div>
-<div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">v1.0.20</strong> — 저장소 <code>aws/eks-hybrid</code> (EC2용 amazon-eks-ami의 nodeadm과 다름). SSM 신규 설치·업그레이드는 <strong>1.0.19 이상</strong> 필요.</div>
-<div class="callout callout-warning fragment zoom-in" data-fragment-index="1"><strong class="text-warning">없는 것</strong> — <code>upgrade --rollback</code>, <code>reset</code>, <code>init --dry-run</code>은 존재하지 않습니다.</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">v1.0.20</strong>: 저장소 <code>aws/eks-hybrid</code> (EC2용 amazon-eks-ami의 nodeadm과 다름). SSM 신규 설치, 업그레이드는 <strong>1.0.19 이상</strong> 필요.</div>
+<div class="callout callout-warning fragment zoom-in" data-fragment-index="1"><strong class="text-warning">없는 것</strong>: <code>upgrade --rollback</code>, <code>reset</code>, <code>init --dry-run</code>은 존재하지 않습니다.</div>
 :::
 
 ```bash
@@ -176,7 +176,7 @@ nodeadm 명령은 여섯 개입니다. install, config check, init, upgrade, uni
   <div class="card fragment fade-right" data-fragment-index="4"><span class="hn-boot-no">4</span><strong class="text-warning">CNI</strong><div class="on-surface-muted">CNI 설치 전까지 Node가 NotReady인 것은 정상일 수 있음</div></div>
   <div class="card fragment fade-right" data-fragment-index="5"><span class="hn-boot-no">5</span><strong class="text-success">Ready 검증</strong><div class="on-surface-muted">노드 UID 대조, 라벨, DNS, 이미지 풀, 자격 증명 갱신</div></div>
 </div>
-<div class="callout callout-info fragment zoom-in" data-fragment-index="6"><strong class="text-accent">Ready는 필요 조건일 뿐</strong> — 실제 워크로드까지 확인한 뒤에 서비스에 투입합니다.</div>
+<div class="callout callout-info fragment zoom-in" data-fragment-index="6"><strong class="text-accent">Ready는 필요 조건일 뿐</strong>: 실제 워크로드까지 확인한 뒤에 서비스에 투입합니다.</div>
 :::
 
 :::notes
@@ -260,7 +260,7 @@ spec:
 [요약]
 • 공급자는 SSM 또는 IAM Roles Anywhere 중 정확히 하나
 • 최소 구성은 cluster name + region + 공급자 정보
-• endpoint/CA는 DescribeCluster로 자동 조회 — NodeConfig에 필수가 아님
+• endpoint/CA는 DescribeCluster로 자동 조회, NodeConfig에 필수가 아님
 • IRA는 nodeName, certificatePath, privateKeyPath 필요
 
 SSM 탭부터 보겠습니다. 클러스터 이름, 리전, 그리고 활성화 코드와 ID가 핵심입니다. kubelet 섹션의 maxPods와 라벨은 선택입니다. 이 파일에는 비밀이 들어 있으니 0600으로 보호해야 합니다.
@@ -290,9 +290,9 @@ IAM Roles Anywhere 탭에는 nodeName과 인증서, 개인 키 경로가 추가�
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
 .on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
-<div class="on-surface-muted fragment fade-up" data-fragment-index="1"><strong class="text-accent">범위</strong> VMware variant · x86_64 · OS 1.37.0+ (vSphere 전용)<br><strong class="text-accent">방식</strong> settings.toml + <code>eks-hybrid-setup</code> bootstrap container, <code>guestinfo.userdata.encoding=base64</code></div>
-<div class="on-surface-muted fragment fade-up" data-fragment-index="1">오른쪽은 공통 조각입니다. 공급자별 설정은 AWS 가이드에서 조합하고, <code>api-server</code>·CA는 자동 조회되지 않으므로 직접 기입합니다.</div>
-<div class="callout callout-warning fragment fade-up" data-fragment-index="2"><strong class="text-warning">주의</strong> — base64는 암호화가 아닙니다. 활성화 비밀과 개인 키가 들어갈 수 있으니 VM 구성·guestinfo를 보호하고, 등록된 VM을 템플릿으로 복제하지 않습니다.</div>
+<div class="on-surface-muted fragment fade-up" data-fragment-index="1"><strong class="text-accent">범위</strong> VMware variant, x86_64, OS 1.37.0+ (vSphere 전용)<br><strong class="text-accent">방식</strong> settings.toml + <code>eks-hybrid-setup</code> bootstrap container, <code>guestinfo.userdata.encoding=base64</code></div>
+<div class="on-surface-muted fragment fade-up" data-fragment-index="1">오른쪽은 공통 조각입니다. 공급자별 설정은 AWS 가이드에서 조합하고, <code>api-server</code>, CA는 자동 조회되지 않으므로 직접 기입합니다.</div>
+<div class="callout callout-warning fragment fade-up" data-fragment-index="2"><strong class="text-warning">주의</strong>: base64는 암호화가 아닙니다. 활성화 비밀과 개인 키가 들어갈 수 있으니 VM 구성, guestinfo를 보호하고, 등록된 VM을 템플릿으로 복제하지 않습니다.</div>
 :::
 :::
 
@@ -323,7 +323,7 @@ user-data = "REPLACE_WITH_BASE64_PROVIDER_BOOTSTRAP_INPUT"
 [요약]
 • Bottlerocket은 nodeadm을 쓰지 않고 settings.toml과 bootstrap container로 부트스트랩
 • VMware variant만 지원, OS 1.37.0 이상
-• guestinfo로 base64 user-data 전달 — 암호화가 아님
+• guestinfo로 base64 user-data 전달, 암호화가 아님
 • 이전에 돌던 [settings.hybrid.ssm] 예제는 유효한 계약이 아님
 
 Bottlerocket은 완전히 다른 경로입니다. nodeadm이 없고, settings.toml과 eks-hybrid-setup이라는 bootstrap container가 그 역할을 합니다. 지원 대상은 VMware variant, x86_64, OS 1.37.0 이상으로 vSphere 환경에 한정됩니다.
@@ -355,9 +355,9 @@ VM을 처음 켜기 전에 settings.toml을 base64로 인코딩해서 guestinfo�
 </style>
 <div class="card-grid fragment" data-reveal="stagger" data-fragment-index="1">
   <div class="callout callout-success"><strong class="text-success">Ubuntu / AL2023</strong><div class="on-surface-muted"><code>distro</code> (기본)</div></div>
-  <div class="callout callout-info"><strong class="text-info">RHEL</strong><div class="on-surface-muted"><code>docker</code> 또는 <code>none</code> — <code>distro</code>는 무효</div></div>
+  <div class="callout callout-info"><strong class="text-info">RHEL</strong><div class="on-surface-muted"><code>docker</code> 또는 <code>none</code>, <code>distro</code>는 무효</div></div>
   <div class="callout callout-danger"><strong class="text-danger">AL2023</strong><div class="on-surface-muted"><code>docker</code> 사용 불가</div></div>
-  <div class="callout callout-warning"><strong class="text-warning">none</strong><div class="on-surface-muted">containerd 설치를 건너뜀 — 미리 설치·관리해야 함</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">none</strong><div class="on-surface-muted">containerd 설치를 건너뜀, 미리 설치, 관리해야 함</div></div>
 </div>
 :::
 
@@ -401,11 +401,11 @@ Kubernetes 버전은 새 노드라면 컨트롤 플레인의 현재 마이너를
 .on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
 <div class="card-grid" data-reveal="stagger">
-  <div class="metric-card"><strong class="text-accent">Packer</strong><div class="on-surface-muted"><code>hybrid-nodes-template.pkr.hcl</code> — vSphere OVA, QEMU qcow2/raw</div></div>
+  <div class="metric-card"><strong class="text-accent">Packer</strong><div class="on-surface-muted"><code>hybrid-nodes-template.pkr.hcl</code>, vSphere OVA, QEMU qcow2/raw</div></div>
   <div class="metric-card"><strong class="text-accent">Ubuntu Autoinstall</strong><div class="on-surface-muted">Subiquity YAML(cloud-init). 디스크는 승인한 serial로만 지정</div></div>
   <div class="metric-card"><strong class="text-accent">RHEL Kickstart</strong><div class="on-surface-muted"><code>ignoredisk</code>와 <code>clearpart</code>를 같은 디스크로 제한</div></div>
 </div>
-<div class="callout callout-warning fragment zoom-in" data-fragment-index="1"><strong class="text-warning">K8S_VERSION 검증</strong> — v1.0.20 템플릿은 1.26–1.31만 허용합니다. 템플릿 때문에 버전을 낮추지 말고 검토한 포크를 유지하세요.</div>
+<div class="callout callout-warning fragment zoom-in" data-fragment-index="1"><strong class="text-warning">K8S_VERSION 검증</strong>: v1.0.20 템플릿은 1.26–1.31만 허용합니다. 템플릿 때문에 버전을 낮추지 말고 검토한 포크를 유지하세요.</div>
 :::
 
 ```bash
@@ -442,7 +442,7 @@ Autoinstall과 Kickstart는 디스크를 지우는 설정이라서 승인한 디
 
 ## Cilium: 하이브리드 노드에만 설치
 
-::::tab "values: agent·IPAM"
+::::tab "values: agent, IPAM"
 ```yaml
 affinity:
   nodeAffinity:
@@ -460,7 +460,7 @@ ipam:
 ```
 ::::
 
-::::tab "values: operator·기타"
+::::tab "values: operator, 기타"
 ```yaml
 operator:
   affinity:
@@ -479,7 +479,7 @@ kubeProxyReplacement: "false"
 ```
 ::::
 
-::::tab "설치·버전"
+::::tab "설치, 버전"
 ```bash
 helm install cilium oci://public.ecr.aws/eks/cilium/cilium \
   --version "$CILIUM_VERSION" --namespace kube-system \
@@ -487,7 +487,7 @@ helm install cilium oci://public.ecr.aws/eks/cilium/cilium \
 ```
 - **AWS 지원 범위는 AWS 유지 관리 빌드**(`oci://public.ecr.aws/eks/cilium/cilium`)
 - 공식 CNI 페이지: **1.17.x / 1.18.x** (예: 1.17.9-0, 1.18.3-0)
-- Hybrid Nodes Gateway를 쓰면 branch별 VTEP 최소 **1.17.13-1 · 1.18.8-1 · 1.19.2-1** — 위 예시 버전으로는 Gateway 불가
+- Hybrid Nodes Gateway를 쓰면 branch별 VTEP 최소 **1.17.13-1, 1.18.8-1, 1.19.2-1**: 위 예시 버전으로는 Gateway 불가
 - 1.18.3은 커널 요구로 **Ubuntu 20.04, RHEL 8 제외**
 - 업스트림 최신 차트를 임의로 쓰지 않습니다
 ::::
@@ -498,7 +498,7 @@ helm install cilium oci://public.ecr.aws/eks/cilium/cilium \
 • AWS가 지원하는 Cilium은 AWS 유지 관리 OCI 차트 (public.ecr.aws/eks/cilium/cilium)
 • agent와 operator 모두 compute-type=hybrid affinity로 하이브리드 노드에만 배치
 • cluster-pool IPAM, envoy 비활성, kubeProxyReplacement는 "false"
-• 공식 CNI 페이지는 1.17/1.18, Gateway 사용 시 branch별 최소 1.17.13-1·1.18.8-1·1.19.2-1
+• 공식 CNI 페이지는 1.17/1.18, Gateway 사용 시 branch별 최소 1.17.13-1, 1.18.8-1, 1.19.2-1
 
 첫 탭은 agent affinity와 IPAM입니다. compute-type이 hybrid인 노드에만 agent를 올리고, 클라우드 노드는 기존 VPC CNI가 계속 관리합니다. Pod CIDR 리스트는 앞에서 remoteNetworkConfig에 넣은 값과 맞아야 하고, 노드/VPC/Service 대역과 겹치면 안 됩니다. 값은 최초 설치 전에 정하세요.
 {cue: pause}
@@ -536,16 +536,16 @@ IPAM의 마스크 값이 노드당 Pod 수를 결정합니다. 다음 슬라이�
 </table>
 <div class="card-grid fragment" data-reveal="stagger" data-fragment-index="1">
   <div class="callout callout-info"><strong class="text-info">AWS 공식 가이드</strong><div class="on-surface-muted">설치 후 <code>clusterPoolIPv4PodCIDRList</code>와 <code>MaskSize</code>를 변경하지 않는다</div></div>
-  <div class="callout callout-success"><strong class="text-success">Cilium 문서 기준</strong><div class="on-surface-muted">기존 항목·MaskSize는 수정 금지. 확장은 <strong>새 CIDR 항목 추가</strong></div></div>
+  <div class="callout callout-success"><strong class="text-success">Cilium 문서 기준</strong><div class="on-surface-muted">기존 항목, MaskSize는 수정 금지. 확장은 <strong>새 CIDR 항목 추가</strong></div></div>
 </div>
-<div class="callout callout-warning fragment fade-up" data-fragment-index="2"><strong class="text-warning">산정 예일 뿐</strong> — maxPods 값은 검증된 권장값이 아닙니다. hostNetwork Pod, 데몬, CPU/메모리 여유를 함께 검토하세요.</div>
+<div class="callout callout-warning fragment fade-up" data-fragment-index="2"><strong class="text-warning">산정 예일 뿐</strong>: maxPods 값은 검증된 권장값이 아닙니다. hostNetwork Pod, 데몬, CPU/메모리 여유를 함께 검토하세요.</div>
 :::
 
 
 :::notes
 {timing: 2min}
 [요약]
-• 노드마다 MaskSize 크기의 블록을 할당 — /25면 노드당 128개 주소
+• 노드마다 MaskSize 크기의 블록을 할당, /25면 노드당 128개 주소
 • Cilium cluster-pool은 블록당 2개 주소를 예약 → 사용 가능 126개
 • maxPods 산정 예: /25→110, /24→240, /26→50
 • 확장은 새 항목 추가가 Cilium 문서 기준, AWS 가이드는 변경 자제를 강조
@@ -585,7 +585,7 @@ kubectl -n kube-system get pods -o wide | grep cilium
 <div class="card-grid">
   <div class="callout callout-success fragment fade-up" data-fragment-index="1"><strong class="text-success">자동 라벨</strong><div class="on-surface-muted"><code>eks.amazonaws.com/compute-type=hybrid</code> 하나뿐. <code>--node-labels</code>로 따로 넣을 필요 없음</div></div>
   <div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">추가 라벨</strong><div class="on-surface-muted">NodeConfig <code>kubelet.flags</code>의 <code>--node-labels=...</code></div></div>
-  <div class="callout callout-warning fragment zoom-in" data-fragment-index="3"><strong class="text-warning">테인트</strong><div class="on-surface-muted">자동 부여 없음. 선택 사항이며 쓰면 워크로드·CNI에 toleration 필요</div></div>
+  <div class="callout callout-warning fragment zoom-in" data-fragment-index="3"><strong class="text-warning">테인트</strong><div class="on-surface-muted">자동 부여 없음. 선택 사항이며 쓰면 워크로드, CNI에 toleration 필요</div></div>
 </div>
 :::
 
@@ -599,8 +599,8 @@ kubectl taint nodes hybrid-gpu-001 gpu=true:NoSchedule   # 운영 중 수동 테
 [요약]
 • 등록 확인: compute-type 라벨로 조회 → Ready 대기 → Cilium agent 존재 확인
 • 자동 라벨은 eks.amazonaws.com/compute-type=hybrid 하나뿐
-• 테인트는 자동 부여되지 않음 — 선택 사항
-• Ready는 필요 조건일 뿐, DNS·이미지 풀·워크로드 확인은 별도
+• 테인트는 자동 부여되지 않음, 선택 사항
+• Ready는 필요 조건일 뿐, DNS, 이미지 풀, 워크로드 확인은 별도
 
 확인 명령부터 보겠습니다. compute-type 라벨로 하이브리드 노드만 조회하고, 예상한 노드 이름에 대해 Ready를 기다립니다. 그리고 해당 노드에 Cilium agent가 올라왔는지 확인합니다. 스크립트로 만들 때는 Node UID를 기록해 두고 실제 호스트와 대조하는 것이 안전합니다.
 {cue: pause}
@@ -617,9 +617,9 @@ kubectl taint nodes hybrid-gpu-001 gpu=true:NoSchedule   # 운영 중 수동 테
 ---
 <!-- Slide 12: kubelet 튜닝 -->
 @type: tabs
-@title: kubelet 튜닝: 예약·축출·maxPods
+@title: kubelet 튜닝: 예약, 축출, maxPods
 
-## kubelet 튜닝: 예약·축출·maxPods
+## kubelet 튜닝: 예약, 축출, maxPods
 
 ::::tab "리소스 예약"
 ```yaml
@@ -634,7 +634,7 @@ kubelet:
       memory: "1Gi"
       ephemeral-storage: "5Gi"
 ```
-Node Allocatable에서 차감하는 예약량입니다. OS·kubelet·런타임·CNI 사용량을 측정해 정합니다. 위 값은 초기 산정 예입니다.
+Node Allocatable에서 차감하는 예약량입니다. OS, kubelet, 런타임, CNI 사용량을 측정해 정합니다. 위 값은 초기 산정 예입니다.
 ::::
 
 ::::tab "축출 임계값"
@@ -655,7 +655,7 @@ kubelet:
 Hard 임계값은 유예 없이 처리됩니다. `evictionHard`를 바꾸면 inode 항목까지 **전체 의도한 임계값을 명시**하세요. 누락한 기본 임계값은 0이 됩니다.
 ::::
 
-::::tab "maxPods·GC"
+::::tab "maxPods, GC"
 ```yaml
 kubelet:
   config:
@@ -671,7 +671,7 @@ kubelet:
 :::notes
 {timing: 1.5min}
 [요약]
-• systemReserved/kubeReserved는 Node Allocatable 산정용 예약 — 측정 후 조정
+• systemReserved/kubeReserved는 Node Allocatable 산정용 예약, 측정 후 조정
 • evictionHard를 바꿀 때는 전체 임계값을 명시 (누락한 기본값은 0)
 • 노드 압박 축출은 PDB를 따르지 않음
 • maxPods는 Cilium pool 크기와 함께 결정
@@ -695,7 +695,7 @@ kubelet 설정은 NodeConfig의 kubelet.config 아래에 넣습니다. 첫 번�
 ## 업그레이드는 교체가 기본이다
 
 ::::tab "노드"
-- **권장: 새 호스트를 준비해 전환** — 새 노드를 초기화·검증한 뒤 이전 호스트를 비웁니다 (이전 호스트는 검증 완료까지 보존)
+- **권장: 새 호스트를 준비해 전환**: 새 노드를 초기화, 검증한 뒤 이전 호스트를 비웁니다 (이전 호스트는 검증 완료까지 보존)
 - **in-place**: 비운(cordon + drain) 호스트에서 `nodeadm upgrade` 실행. 중단 작업이며 트랜잭션식 다운그레이드가 아님
 - kubelet은 API 서버보다 새 버전일 수 없고, **n-3까지** 뒤처질 수 있음 (계속 유지하라는 권장은 아님)
 - 뒤처진 노드를 먼저 현재 컨트롤 플레인 마이너로 맞춘 뒤, 다음 마이너는 컨트롤 플레인부터
@@ -707,7 +707,7 @@ sudo /usr/local/bin/nodeadm upgrade "$TARGET_MINOR" \
 ::::
 
 ::::tab "Cilium"
-1. 현재 values·Helm revision 저장, 버전별 업그레이드 문서 확인
+1. 현재 values, Helm revision 저장, 버전별 업그레이드 문서 확인
 2. Hybrid 노드로 한정한 **별도 preflight 릴리스** 실행 (`preflight.enabled=true`, `agent=false`, `operator.enabled=false`)
 3. DaemonSet 커버리지와 검증 Deployment readiness를 **둘 다** 대기
 4. 통과 후 preflight 릴리스만 제거
@@ -728,10 +728,10 @@ sudo /usr/local/bin/nodeadm upgrade "$TARGET_MINOR" \
 :::notes
 {timing: 1.5min}
 [요약]
-• 기본 전략은 in-place보다 호스트 교체 — 새 호스트를 검증한 뒤 이전 호스트를 비움
+• 기본 전략은 in-place보다 호스트 교체, 새 호스트를 검증한 뒤 이전 호스트를 비움
 • kubelet 스큐는 API 서버 대비 n-3까지 허용, 더 새로울 수는 없음
 • Cilium은 preflight 릴리스 → upgradeCompatibility와 함께 한 마이너씩, --reuse-values 금지
-• 롤백 명령은 없음 — 롤백은 호스트 교체, Cilium만 helm rollback 가능
+• 롤백 명령은 없음, 롤백은 호스트 교체, Cilium만 helm rollback 가능
 
 첫 번째 탭, 노드 업그레이드입니다. AWS는 여유 용량이 있으면 새 호스트를 준비해서 제어된 방식으로 전환하는 것을 권장합니다. in-place nodeadm upgrade도 가능하지만, cordon과 drain을 한 호스트에서 먼저 하고 실행하는 중단 작업이고, 되돌리는 기능이 아닙니다.
 {cue: pause}
@@ -755,9 +755,9 @@ kubelet 버전은 API 서버보다 새로울 수 없고, 최대 n-3까지 뒤처
 ## 1.37 업그레이드 전 필수 점검
 
 ::::tab "SELinuxMount"
-- 1.37에서 `SELinuxMount`가 **기본 활성화** — SELinux가 켜진 노드(예: RHEL)만 영향
+- 1.37에서 `SELinuxMount`가 **기본 활성화**: SELinux가 켜진 노드(예: RHEL)만 영향
 - CSI driver가 `seLinuxMount: true`이고 Pod에 `seLinuxOptions`가 있으면 `mount -o context=LABEL`로 마운트
-- 같은 노드에서 한 volume을 **다른 label·`seLinuxChangePolicy`·권한 수준**으로 공유하면 뒤에 뜬 Pod가 `ContainerCreating`에 멈춤
+- 같은 노드에서 한 volume을 **다른 label, `seLinuxChangePolicy`, 권한 수준**으로 공유하면 뒤에 뜬 Pod가 `ContainerCreating`에 멈춤
 - 공유 Pod끼리 `seLinuxOptions.level`과 `seLinuxChangePolicy`를 맞추고, privileged와 unprivileged가 섞이면 `Recursive`로 지정
 
 ```bash
@@ -768,19 +768,19 @@ kubectl get csidriver \
 
 ::::tab "kubelet"
 - deprecated cAdvisor flag가 남아 있으면 **kubelet이 기동하지 않음** (`--housekeeping-interval`만 예외)
-- `eventRecordQPS: 0`은 이제 **무제한** — 이전 동작(초당 5개)을 유지하려면 `5`로 변경
-- metric 제거: `container_cpu_load_average_10s`, `container_cpu_load_d_average_10s`, `container_tasks_state` → 대시보드·알람 수정
+- `eventRecordQPS: 0`은 이제 **무제한**: 이전 동작(초당 5개)을 유지하려면 `5`로 변경
+- metric 제거: `container_cpu_load_average_10s`, `container_cpu_load_d_average_10s`, `container_tasks_state` → 대시보드, 알람 수정
 - kubelet이 시작할 때 전체 설정을 로그에 남김 → 노드 로그 읽기 권한 제한
 
-> "EKS 최적화 AMI는 영향 없음"은 Hybrid 노드에 해당하지 않습니다. NodeConfig의 `kubelet.flags`·`kubelet.config`와 골든 이미지에 넣은 인자를 점검합니다.
+> "EKS 최적화 AMI는 영향 없음"은 Hybrid 노드에 해당하지 않습니다. NodeConfig의 `kubelet.flags`, `kubelet.config`와 골든 이미지에 넣은 인자를 점검합니다.
 ::::
 
 ::::tab "누적 변경 1.35–1.36"
-- **1.35**: cgroup v1 노드에서 kubelet 기동 거부 (기본값) — Ubuntu 20.04, RHEL 8은 기본이 cgroup v1
-- **1.35**: kubelet `--pod-infra-container-image` flag 제거 — NodeConfig `kubelet.flags`·골든 이미지에서 삭제
+- **1.35**: cgroup v1 노드에서 kubelet 기동 거부 (기본값), Ubuntu 20.04, RHEL 8은 기본이 cgroup v1
+- **1.35**: kubelet `--pod-infra-container-image` flag 제거, NodeConfig `kubelet.flags`, 골든 이미지에서 삭제
 - **1.36**: containerd **2.0 이상** 필요 (1.35가 containerd 1.x 마지막)
 - **1.36**: `gitRepo` volume 비활성, `StrictIPCIDRValidation` 기본 활성, Service `externalIPs` deprecated
-- 업그레이드는 한 마이너씩 — 이전 버전의 변경 사항도 모두 적용되므로 함께 점검
+- 업그레이드는 한 마이너씩, 이전 버전의 변경 사항도 모두 적용되므로 함께 점검
 
 > 위 항목은 업그레이드 전에 끝낼 일입니다. 노드에서 확인하지 못했다면 새 호스트로 먼저 검증합니다.
 ::::
@@ -788,10 +788,10 @@ kubectl get csidriver \
 :::notes
 {timing: 1.5min}
 [요약]
-• 1.37 필수: SELinuxMount 기본 활성 — volume 공유 Pod의 label·changePolicy 정렬
+• 1.37 필수: SELinuxMount 기본 활성, volume 공유 Pod의 label, changePolicy 정렬
 • 1.37 필수: deprecated cAdvisor flag 제거, eventRecordQPS 0 의미 변경, 제거된 metric 대응
 • Hybrid 노드는 EKS 최적화 AMI가 아니므로 "AMI는 영향 없음" 문구가 적용되지 않음
-• 1.35 cgroup v2·pod-infra-container-image flag 제거, 1.36 containerd 2.0+도 누적으로 확인
+• 1.35 cgroup v2, pod-infra-container-image flag 제거, 1.36 containerd 2.0+도 누적으로 확인
 
 방금 본 업그레이드 절차를 1.37에 적용할 때 꼭 확인할 항목입니다. 첫 번째 탭, SELinuxMount입니다. SELinux가 켜진 RHEL 같은 노드에서, 같은 volume을 서로 다른 SELinux label이나 changePolicy로 공유하는 Pod가 있으면 뒤에 뜬 Pod가 ContainerCreating에서 멈춥니다. 먼저 CSI driver 중 seLinuxMount가 true인 것을 찾고, 그 volume을 공유하는 Pod를 확인하세요.
 {cue: pause}
@@ -802,7 +802,7 @@ kubectl get csidriver \
 이제 제한망 환경에서 설치하는 방법을 보겠습니다.
 
 [출처]
-• AWS EKS User Guide "Review release notes for Kubernetes versions on standard support" — Kubernetes 1.37·1.36·1.35 섹션
+• AWS EKS User Guide "Review release notes for Kubernetes versions on standard support", Kubernetes 1.37, 1.36, 1.35 섹션
 • kubernetes-docs eks/08-eks-upgrades.md (1.37 제공 시작), eks/05-eks-security.md (SELinux volume mount)
 :::
 
@@ -815,9 +815,9 @@ kubectl get csidriver \
 
 ::::tab "정의"
 - 제한망 = **퍼블릭 인터넷은 제한**, 하지만 EKS 컨트롤 플레인과 자격 증명용 AWS 서비스 연결은 계속 필요
-- 물리적 단절(DDIL)은 Hybrid Nodes의 지원 운영 모델이 아님 — IAM Roles Anywhere도 CreateSession 호출이 필요
+- 물리적 단절(DDIL)은 Hybrid Nodes의 지원 운영 모델이 아님, IAM Roles Anywhere도 CreateSession 호출이 필요
 - 온프레미스에서 S3에는 **Interface 엔드포인트** 사용 (gateway 엔드포인트는 온프레미스에서 직접 접근 불가)
-- 소프트웨어는 승인한 manifest를 자체 미러에서 사용 — artifact와 manifest는 검토한 절차로 직접 준비 (nodeadm은 SigV4 서명 없는 HTTP(S)로 다운로드)
+- 소프트웨어는 승인한 manifest를 자체 미러에서 사용, artifact와 manifest는 검토한 절차로 직접 준비 (nodeadm은 SigV4 서명 없는 HTTP(S)로 다운로드)
 ::::
 
 ::::tab "명령"
@@ -834,8 +834,8 @@ sudo nodeadm init --config-source file:///etc/eks/nodeconfig.yaml \
 
 ::::tab "PHZ CNAME은 안 됨"
 `hybrid-assets.eks.amazonaws.com`을 Route 53 PHZ에서 S3로 CNAME 해도 **투명 미러가 되지 않습니다.**
-- TLS 인증서·SNI 호스트명 불일치
-- HTTP Host 헤더와 S3 버킷·키 매핑 불일치
+- TLS 인증서, SNI 호스트명 불일치
+- HTTP Host 헤더와 S3 버킷, 키 매핑 불일치
 - 요청 권한(서명) 미제공
 
 TLS 검사를 끄는 방식으로 해결하지 않습니다. 대신 통제된 프록시, 사전 설치 이미지, 실제 미러 URL의 manifest override 중 선택하세요.
@@ -844,7 +844,7 @@ TLS 검사를 끄는 방식으로 해결하지 않습니다. 대신 통제된 �
 :::notes
 {timing: 1.5min}
 [요약]
-• 제한망은 "AWS 연결이 없는" 환경이 아님 — 컨트롤 플레인·자격 증명 연결은 필수
+• 제한망은 "AWS 연결이 없는" 환경이 아님, 컨트롤 플레인, 자격 증명 연결은 필수
 • 설치와 init 모두 --manifest-override + --private-mode
 • private mode는 OS 패키지를 건너뛰므로 런타임을 미리 설치
 • PHZ CNAME 방식은 TLS/SNI/Host 헤더 문제로 문서에서 기각
@@ -874,7 +874,7 @@ sudo nodeadm debug --config-source file:///etc/eks/nodeconfig.yaml
 sudo journalctl -u kubelet --since '-15 min' --lines 200 --no-pager
 ```
 - 노드 IP가 EKS **remote node CIDR** 안에 있는가
-- DNS·라우팅·TCP 443 반환 경로, 의도한 Hybrid 역할, `HYBRID_LINUX` access entry
+- DNS, 라우팅, TCP 443 반환 경로, 의도한 Hybrid 역할, `HYBRID_LINUX` access entry
 - 엔드포인트가 "Public and Private"로 설정되지 않았는가 (public IP로 해석되어 join 실패 가능)
 - `eks:DescribeCluster` 권한 여부
 ::::
@@ -885,15 +885,15 @@ sudo systemctl status kubelet containerd --no-pager
 kubectl describe node "$NODE"
 kubectl -n kube-system get pods -o wide | grep cilium
 ```
-- CNI·agent 로그, 런타임, 디스크·리소스 조건 확인
+- CNI, agent 로그, 런타임, 디스크, 리소스 조건 확인
 - NotReady가 **항상 CNI 누락 때문은 아님**
-- NotReady만으로 등록 해제·재초기화하지 않기 (`nodeadm reset`은 없음)
+- NotReady만으로 등록 해제, 재초기화하지 않기 (`nodeadm reset`은 없음)
 ::::
 
 ::::tab "네트워크"
 - API → kubelet **TCP 10250**이 온프레미스 방화벽으로 들어오는가
-- Webhook은 실제 설정한 포트·Pod IP 경로가 열려 있는가
-- 이미지 풀/x509 오류: ECR api·dkr, S3, 레지스트리 CA와 호스트명 (TLS 검증 유지, `curl -k` 금지)
+- Webhook은 실제 설정한 포트, Pod IP 경로가 열려 있는가
+- 이미지 풀/x509 오류: ECR api, dkr, S3, 레지스트리 CA와 호스트명 (TLS 검증 유지, `curl -k` 금지)
 - DNS: CoreDNS가 클라우드/온프레미스 양쪽에 있는지 확인
 - EKS **cluster insights**의 hybrid nodes 점검 항목도 함께 확인
 ::::
@@ -903,8 +903,8 @@ kubectl -n kube-system get pods -o wide | grep cilium
 openssl x509 -in "$CERT_PATH" -checkend 2592000 -noout
 sudo nodeadm debug --config-source file:///etc/eks/nodeconfig.yaml
 ```
-- SSM: 활성화 만료(신규 등록 제한)와 에이전트 갱신·시각 동기화를 구분
-- IAM Roles Anywhere: 인증서 만료·역할 세션 시간·AWS 접근 확인
+- SSM: 활성화 만료(신규 등록 제한)와 에이전트 갱신, 시각 동기화를 구분
+- IAM Roles Anywhere: 인증서 만료, 역할 세션 시간, AWS 접근 확인
 - `sudo aws sts get-caller-identity`는 kubelet이 쓰는 신원을 증명하지 않음
 ::::
 
@@ -925,7 +925,7 @@ NotReady는 journalctl과 systemctl status, kubectl describe node로 봅니다. 
 
 [출처]
 • D/04 "문제 해결" 표와 진단 명령, D/08 "노드 연결 문제", D/01 엔드포인트 주의
-• cluster insights 항목은 로컬 D/ 문서에 명령 예가 없어 서술만 포함 — 공식 문서 확인 필요
+• cluster insights 항목은 로컬 D/ 문서에 명령 예가 없어 서술만 포함, 공식 문서 확인 필요
 :::
 
 ---
@@ -937,7 +937,7 @@ NotReady는 journalctl과 systemctl status, kubectl describe node로 봅니다. 
 
 ::::tab "SSM"
 - 활성화 기본 만료 **24시간**, 최대 **30일**, RegistrationLimit **1–1000**
-- 활성화 만료는 **신규 등록만** 제한 — 이미 등록한 노드는 영향 없음
+- 활성화 만료는 **신규 등록만** 제한, 이미 등록한 노드는 영향 없음
 - 세션 자격 증명은 고정 1시간, 에이전트가 갱신
 - 새 호스트 등록이나 승인된 복구에만 새 활성화 생성
 
@@ -961,7 +961,7 @@ openssl x509 -in "$CERT_PATH" -checkend 2592000 -noout
 ::::
 
 ::::tab "Trust Anchor"
-동일 CA에서 leaf만 갱신하면 trust anchor 교체는 보통 불필요합니다. CA rollover는 **모든 호스트·profile·role에 영향**을 줍니다.
+동일 CA에서 leaf만 갱신하면 trust anchor 교체는 보통 불필요합니다. CA rollover는 **모든 호스트, profile, role에 영향**을 줍니다.
 
 ```bash
 jq -n --rawfile bundle "$APPROVED_CA_PEM" \
@@ -977,7 +977,7 @@ aws rolesanywhere update-trust-anchor --trust-anchor-id "$TRUST_ANCHOR_ID" \
 {timing: 1.5min}
 [요약]
 • SSM 활성화 만료는 신규 등록만 막고 기존 노드는 그대로
-• IAM Roles Anywhere는 인증서 만료가 핵심 — openssl x509 -checkend 2592000으로 30일 전 경고
+• IAM Roles Anywhere는 인증서 만료가 핵심, openssl x509 -checkend 2592000으로 30일 전 경고
 • trust anchor 업데이트는 CA rollover 때만, 전체 노드에 영향
 • 자격 증명 비밀은 비공개 파일에 저장
 
@@ -1092,7 +1092,7 @@ trust anchor는 언제 바꿀까요? 같은 CA에서 leaf 인증서만 갱신한
   <div class="metric-card"><strong class="text-accent">자격 증명</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html</div></div>
   <div class="metric-card"><strong class="text-accent">Hybrid CNI</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html</div></div>
   <div class="metric-card"><strong class="text-accent">Bottlerocket</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html</div></div>
-  <div class="metric-card"><strong class="text-accent">업그레이드 · 릴리스 노트</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-upgrade.html<br>docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html</div></div>
+  <div class="metric-card"><strong class="text-accent">업그레이드, 릴리스 노트</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-upgrade.html<br>docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html</div></div>
   <div class="metric-card"><strong class="text-accent">nodeadm 소스</strong><div class="on-surface-muted">github.com/aws/eks-hybrid (v1.0.20)</div></div>
 </div>
 :::
@@ -1102,8 +1102,8 @@ trust anchor는 언제 바꿀까요? 같은 CA에서 leaf 인증서만 갱신한
 {timing: 0.5min}
 [요약]
 • Block 3의 근거는 AWS hybrid-nodes 문서와 aws/eks-hybrid v1.0.20 소스
-• 문서의 예제는 실제 클러스터에서 모두 실행 검증된 것은 아님 — 적용 전 환경에서 확인
-• 다음 Block 4에서는 운영·워크로드 배치·보안과 전략을 다룸
+• 문서의 예제는 실제 클러스터에서 모두 실행 검증된 것은 아님, 적용 전 환경에서 확인
+• 다음 Block 4에서는 운영, 워크로드 배치, 보안과 전략을 다룸
 
 참고 자료를 정리했습니다. nodeadm 레퍼런스와 자격 증명, CNI, Bottlerocket, 업그레이드 문서가 오늘 내용의 근거입니다. 예제들은 문서 기준이고 모든 환경에서 검증된 레시피는 아니라는 점을 한 번 더 말씀드립니다.
 {cue: pause}
@@ -1122,7 +1122,7 @@ trust anchor는 언제 바꿀까요? 같은 CA에서 leaf 인증서만 갱신한
 
 # Thank You
 
-Block 3 — 노드 부트스트랩 & 라이프사이클 완료
+Block 3: 노드 부트스트랩 & 라이프사이클 완료
 
 :::notes
 {timing: 0.5min}

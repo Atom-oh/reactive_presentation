@@ -779,7 +779,7 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 </style>
 <div class="card-grid fragment" data-reveal="stagger" data-reveal-pace="slow" data-fragment-index="1">
   <div class="callout callout-success"><strong class="text-success">Hybrid Nodes가 맞는 신호</strong><div class="on-surface-muted">온프레미스 GPU, 대규모 로컬 데이터, edge 처리, 기존 하드웨어 활용. AWS와 안정적인 사설 양방향 연결을 유지할 수 있는 경우.</div></div>
-  <div class="callout callout-warning"><strong class="text-warning">먼저 확인할 제약</strong><div class="on-surface-muted">IPv4만 지원. 간헐적, 단절(DDIL) 환경용이 아님. GovCloud(US)와 중국 리전 제외. OS, 아키텍처, CNI 조합 확인.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">먼저 확인할 제약</strong><div class="on-surface-muted">IPv4만 지원. 간헐적, 단절(DDIL) 환경용이 아님. 연결이 끊기면 노드는 Unknown이 되고, toleration 없는 Pod는 기본 300초 뒤 eviction. GovCloud(US)와 중국 리전 제외. OS, 아키텍처, CNI 조합 확인.</div></div>
   <div class="callout callout-danger"><strong class="text-danger">맞지 않는 경우</strong><div class="on-surface-muted">완전 단절이 필요하거나 클라우드발 신규 연결이 전면 금지된 정책. AWS Region, Local Zone, Outposts, 타사 클라우드를 hybrid 인프라로 쓰는 것은 미지원.</div></div>
   <div class="callout callout-info"><strong class="text-info">운영 책임</strong><div class="on-surface-muted">Control plane은 AWS가 관리하지만 host, OS, 연결, workload 운영은 계속 사용자 책임입니다.</div></div>
 </div>
@@ -792,18 +792,20 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 [요약]
 • 온프레미스 GPU, 로컬 데이터, edge가 대표적인 선택 이유
 • 사설 양방향 연결 필요, IPv4 전용, DDIL 용도 아님
+• 연결이 끊기면 노드는 Unknown, toleration 없는 Pod는 기본 300초 뒤 eviction
 • 완전 단절이나 클라우드발 연결 금지 정책과는 충돌
 • 대안 비교는 조직의 TCO 기준으로, 이 자료는 우열을 주장하지 않음
 
 도입 판단은 장점 나열보다 제약 확인에서 시작하는 것이 안전합니다. 문서가 꼽는 선택 이유는 온프레미스 GPU, 대규모 로컬 데이터, edge 처리, 기존 하드웨어입니다. 다만 data locality에는 애플리케이션, 스토리지, egress, 로깅 통제도 함께 필요합니다.
 {cue: pause}
-반대로 IPv4만 지원하고, AWS와의 안정적인 사설 양방향 연결이 필수이며, 단절, 간헐 연결 환경용이 아닙니다. AWS Region이나 Outposts 같은 AWS 인프라를 hybrid 노드로 등록하는 것도 지원 대상이 아닙니다.
+반대로 IPv4만 지원하고, AWS와의 안정적인 사설 양방향 연결이 필수이며, 단절, 간헐 연결 환경용이 아닙니다. 연결이 끊기면 kubelet이 Lease를 갱신하지 못해 노드는 Ready Unknown이 되고 unreachable taint가 붙어서, toleration이 없는 Pod는 기본 300초 뒤 eviction됩니다. DaemonSet은 이 taint를 기본으로 견딥니다. 다른 호스트로 옮기기 어려운 앱은 tolerationSeconds를 늘리거나 컨트롤러로 taint를 관리할 수 있지만, 길게 잡을수록 장애 노드의 Pod 이전도 늦어집니다. AWS Region이나 Outposts 같은 AWS 인프라를 hybrid 노드로 등록하는 것도 지원 대상이 아닙니다.
 대안과의 비교는 일부러 숫자를 싣지 않았습니다. 동등한 가용성과 지원 범위로 직접 계산하시기 바랍니다.
 {cue: transition}
 이제 네 블록 전체를 정리하겠습니다.
 
 [출처]
 • D/README "계획에 반영할 제약", "사용 사례와 데이터 경계"; D/09 TCO 고려 사항
+• https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-network-disconnection-best-practices.html (확인일 2026-10-12)
 :::
 
 ---

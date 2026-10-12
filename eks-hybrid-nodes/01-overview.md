@@ -130,7 +130,7 @@ Block 1: 개요 & 아키텍처 | 30분
 
 :::html
 <div class="callout callout-info fragment zoom-in" data-fragment-index="1">
-  Local Zone, Outposts, 다른 클라우드의 머신을 <strong>hybrid node 인프라로 등록하는 것은 지원하지 않습니다.</strong> 이 비교는 개념 수준이며, 상세 지원 범위는 각 서비스의 공식 문서로 확인하세요.
+  Local Zone, Outposts, 다른 클라우드의 머신을 <strong>hybrid node 인프라로 등록하는 것은 지원하지 않습니다.</strong> 테스트 목적으로 Amazon EC2에서 실행하는 것도 미지원이며 hybrid node 요금이 부과됩니다. 이 비교는 개념 수준이며, 상세 지원 범위는 각 서비스의 공식 문서로 확인하세요.
 </div>
 :::
 
@@ -143,8 +143,8 @@ Block 1: 개요 & 아키텍처 | 30분
 
 표를 두 축으로 읽어주세요. 컨트롤 플레인을 누가 운영하는지, 그리고 워커 노드 하드웨어가 누구 소유인지입니다. EKS Anywhere는 컨트롤 플레인까지 고객이 운영하고, Hybrid Nodes는 컨트롤 플레인을 AWS가 맡습니다.
 {cue: pause}
-Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 자리에서 단정하지 않고 공식 문서 확인이 필요하다고 표시했습니다. 중요한 점은 Local Zone과 Outposts는 AWS 인프라라서 hybrid node 인프라로 쓸 수 없다는 것입니다.
-근거: kubernetes-docs/ko/eks-hybrid-nodes/README.md "Hybrid Nodes 개요" (Local Zone, Outposts 비지원 문장). 나머지 행은 개념 수준 설명이며 로컬 문서에 비교표가 없어 공식 문서 확인이 필요합니다.
+Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 자리에서 단정하지 않고 공식 문서 확인이 필요하다고 표시했습니다. 중요한 점은 Local Zone과 Outposts는 AWS 인프라라서 hybrid node 인프라로 쓸 수 없다는 것입니다. EC2에 올려서 테스트하는 경우도 미지원이고, 그래도 hybrid node 요금은 부과됩니다.
+근거: kubernetes-docs/ko/eks-hybrid-nodes/README.md "Hybrid Nodes 개요" (Local Zone, Outposts 비지원 문장). EC2 실행 시 요금 부과 문장: https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html (확인일 2026-10-12). 나머지 행은 개념 수준 설명이며 로컬 문서에 비교표가 없어 공식 문서 확인이 필요합니다.
 {cue: transition}
 그럼 Hybrid Nodes가 정확히 무엇인지 보겠습니다.
 :::
@@ -523,7 +523,7 @@ IAM Roles Anywhere는 PKI와 노드별 인증서, trust anchor, profile이 필�
 </style>
 <div class="hn-price-notes fragment" data-reveal="stagger" data-reveal-anim="right" data-fragment-index="1">
   <div class="callout callout-info">노드가 <strong>join된 시점부터 제거될 때까지</strong> 과금되며 workload가 idle이어도 요금은 유지됩니다.</div>
-  <div class="callout callout-warning">Hyperthreading된 bare-metal core는 vCPU 2개로 보고될 수 있습니다. <strong>머신당 32 vCPU 초과</strong> 시 account team과 상담하세요.</div>
+  <div class="callout callout-warning">과금은 Kubernetes에 보고된 vCPU 기준이고, Hyperthreading된 bare-metal core는 vCPU 2개로 보고될 수 있습니다. <strong>머신당 32 vCPU 초과</strong> 시 account team과 상담하세요.</div>
   <div class="callout callout-danger">모든 사용량에 적용되는 고정 요금이 아닙니다. 클러스터 요금, 네트워크, 로그, 스토리지, OS 요금은 별도입니다.</div>
 </div>
 :::
@@ -539,7 +539,7 @@ IAM Roles Anywhere는 PKI와 노드별 인증서, trust anchor, profile이 필�
 
 요금표입니다. 노드가 보고하는 vCPU-hours를 월 단위로 누적해서 구간별로 요금을 계산합니다. 처음 57만 6천 vCPU-hours까지는 0.020달러이고, 사용량이 늘수록 단가가 내려가서 1,152만 초과분은 0.006달러입니다.
 {cue: pause}
-예전 자료에 등장하던 "vCPU당 시간당 0.01달러 고정" 같은 단순화는 틀립니다. 구간제이고, 노드가 클러스터에 연결되어 있는 동안은 workload가 없어도 과금됩니다. 또 hyperthreading을 켠 베어메탈은 코어 하나가 vCPU 2개로 잡힐 수 있어서 사이징할 때 확인해야 합니다.
+예전 자료에 등장하던 "vCPU당 시간당 0.01달러 고정" 같은 단순화는 틀립니다. 구간제이고, 노드가 클러스터에 연결되어 있는 동안은 workload가 없어도 과금됩니다. 또 hyperthreading을 켠 베어메탈은 코어 하나가 vCPU 2개로 잡힐 수 있어서 사이징할 때 확인해야 합니다. 자주 받는 질문 두 가지는 공식 요금 페이지에 명시가 없습니다. kubelet 설정으로 CPU 사용을 제한하면 과금이 줄어드는지, cost allocation tag를 지원하는지는 단정하지 않고 account team에 확인하시기 바랍니다.
 근거: https://aws.amazon.com/eks/pricing/ 및 D/09-bare-metal-os-setup.md 「비용 비교 분석」(요금 확인일 2026-09-16). 발표 직전에 최신 요금표 재확인 필요.
 {cue: transition}
 직접 숫자를 넣어서 계산해보겠습니다.

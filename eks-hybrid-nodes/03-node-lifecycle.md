@@ -291,7 +291,7 @@ IAM Roles Anywhere 탭에는 nodeName과 인증서, 개인 키 경로가 추가�
 .on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
 <div class="on-surface-muted fragment fade-up" data-fragment-index="1"><strong class="text-accent">범위</strong> VMware variant, x86_64, OS 1.37.0+ (vSphere 전용)<br><strong class="text-accent">방식</strong> settings.toml + <code>eks-hybrid-setup</code> bootstrap container, <code>guestinfo.userdata.encoding=base64</code></div>
-<div class="on-surface-muted fragment fade-up" data-fragment-index="1">오른쪽은 공통 조각입니다. 공급자별 설정은 AWS 가이드에서 조합하고, <code>api-server</code>, CA는 자동 조회되지 않으므로 직접 기입합니다.</div>
+<div class="on-surface-muted fragment fade-up" data-fragment-index="1">오른쪽은 공통 조각입니다. 공급자별 설정은 AWS 가이드에서 조합하고, <code>api-server</code>, CA는 자동 조회되지 않으므로 직접 기입합니다. 이 TOML은 join에 필요한 최소 설정이라 static IP 같은 네트워크 설정은 Bottlerocket 문서로 따로 검증하세요.</div>
 <div class="callout callout-warning fragment fade-up" data-fragment-index="2"><strong class="text-warning">주의</strong>: base64는 암호화가 아닙니다. 활성화 비밀과 개인 키가 들어갈 수 있으니 VM 구성, guestinfo를 보호하고, 등록된 VM을 템플릿으로 복제하지 않습니다.</div>
 :::
 :::
@@ -329,7 +329,7 @@ user-data = "REPLACE_WITH_BASE64_PROVIDER_BOOTSTRAP_INPUT"
 Bottlerocket은 완전히 다른 경로입니다. nodeadm이 없고, settings.toml과 eks-hybrid-setup이라는 bootstrap container가 그 역할을 합니다. 지원 대상은 VMware variant, x86_64, OS 1.37.0 이상으로 vSphere 환경에 한정됩니다.
 {cue: pause}
 VM을 처음 켜기 전에 settings.toml을 base64로 인코딩해서 guestinfo로 넣습니다. 여기서 base64는 인코딩일 뿐입니다. 활성화 비밀이나 개인 키가 들어가니까 VM 구성과 provisioning 로그를 보호하셔야 합니다.
-공급자별 전체 설정은 AWS Bottlerocket 가이드를 그대로 따라 주세요. 슬라이드의 조각은 공통 부분만 보여 드린 것입니다. 이전 자료의 settings.hybrid.ssm 형태는 문서화된 계약이 아닙니다.
+공급자별 전체 설정은 AWS Bottlerocket 가이드를 그대로 따라 주세요. 슬라이드의 조각은 공통 부분만 보여 드린 것입니다. 이전 자료의 settings.hybrid.ssm 형태는 문서화된 계약이 아닙니다. 또 AWS 가이드의 TOML은 join에 필요한 최소 설정이라서, static IP 같은 네트워크 설정은 Bottlerocket settings 문서를 보고 직접 검증하셔야 합니다.
 {cue: transition}
 이제 nodeadm 경로로 돌아와서 containerd 규칙을 보겠습니다.
 

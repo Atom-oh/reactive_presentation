@@ -508,6 +508,8 @@ spec:
 
 `CiliumBGPClusterConfig`, `CiliumBGPPeerConfig`와 함께 구성합니다. 세션, 수락된 라우트, next hop, 반환 경로를 확인해야 완성입니다.
 
+`cilium.io/v2` BGP CRD는 Cilium 1.18 기준입니다. 1.17.x 클러스터는 Block 2 예제처럼 `v2alpha1`을 사용합니다.
+
 ### 제약
 Cilium Ingress와 Gateway API는 L7 proxy가 필요합니다. 그러나 Hybrid Nodes Gateway의 필수 설정은 `vtep.enabled=true`, `l7Proxy=false`이므로 **같은 Cilium 설치에 함께 적용할 수 없습니다.** 기능을 켜기 전에 네트워크 설계를 먼저 선택합니다.
 
@@ -517,6 +519,7 @@ Cilium Ingress와 Gateway API는 L7 proxy가 필요합니다. 그러나 Hybrid N
 • ALB/NLB IP target은 Hybrid Pod IP가 도달 가능해야 동작
 • Cilium LB IPAM은 주소 할당, BGP는 그 주소를 광고하는 별개의 단계
 • Advertisement의 selector와 Service label, peer 설정이 일치해야 함
+• BGP 예시의 `v2` apiVersion은 Cilium 1.18 기준, 1.17.x는 `v2alpha1`
 • Cilium Ingress/Gateway API(L7 proxy)와 Hybrid Nodes Gateway(l7Proxy=false)는 같은 설치에서 충돌
 
 외부에서 들어오는 트래픽은 두 가지 길이 있습니다. 하나는 AWS Load Balancer Controller로 ALB나 NLB를 만들고 IP target으로 Hybrid Pod를 직접 등록하는 방식입니다. 이때 Pod IP에 AWS에서 도달할 수 있어야 합니다.
@@ -865,7 +868,7 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 [요약]
 • Q1 Pending Pod가 버스팅 트리거
 • Q2 GPU마다 할당 관리자는 하나
-• 오답이면 슬라이드 3, 5로 돌아가 확인
+• 오답이면 "버스팅"·"GPU 할당 관리자" 슬라이드로 돌아가 확인
 
 두 문제를 먼저 풀어보겠습니다. 이번 블록에서 오해하기 쉬운 지점에서 냈습니다.
 {cue: poll}
@@ -898,7 +901,7 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 
 3번은 deletion cost가 네 번째 비교 기준이라는 점, 4번은 private endpoint와 망분리 준수가 다른 이야기라는 점입니다. Direct Connect는 기본 암호화를 제공하지 않으므로 세 번째 보기도 틀립니다.
 {cue: pause}
-틀린 문항은 슬라이드 4와 11을 다시 확인하세요.
+틀린 문항은 "스케일-인 순서"와 "'endpoint'는 세 가지" 슬라이드를 다시 확인하세요.
 :::
 
 ---

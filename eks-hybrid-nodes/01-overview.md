@@ -230,7 +230,7 @@ Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 
   </div>
   <div class="card fragment fade-right" data-fragment-index="3">
     <span class="hn-no">3</span><strong class="text-accent">kubelet 기동</strong>
-    <div class="on-surface-muted">label eks.amazonaws.com/compute-type=hybrid 자동 부여, taint는 자동 아님</div>
+    <div class="on-surface-muted">label eks.amazonaws.com/<wbr>compute-type=hybrid 자동 부여, taint는 자동 아님</div>
   </div>
   <div class="card fragment fade-right" data-fragment-index="4">
     <span class="hn-no">4</span><strong class="text-accent">EKS API 인증</strong>
@@ -407,6 +407,7 @@ Direct Connect만으로는 암호화가 보장되지 않기 때문에 MACsec 또
 | nodeadm | 현재 v1.0.20, SSM 사용 시 **1.0.19 이상** 필요 |
 | 설치 권장 | `releases/latest` 대신 릴리스를 고정하고 checksum 검증 |
 | 리전 | GovCloud (US)·중국 리전을 제외한 모든 AWS 리전 |
+| 업그레이드 주의 | 1.35 cgroup v2 필수 · 1.36 containerd 2.0+ · 1.37 SELinuxMount 기본 활성·kubelet flag 변경 (Block 3 점검 슬라이드) |
 
 ### CNI · Cilium
 
@@ -428,7 +429,7 @@ Direct Connect만으로는 암호화가 보장되지 않기 때문에 MACsec 또
 
 탭 세 개로 나눴습니다. OS 탭에서 주의할 점은 AL2023이 온프렘 가상화 환경 전용이라는 점과, Bottlerocket은 VMware 변형에 x86_64만 지원하고 nodeadm 대신 자체 bootstrap을 쓴다는 점입니다. RHEL 10이나 Ubuntu 26.04는 아직 목록에 없습니다.
 {cue: pause}
-두 번째 탭에서 버전은 EKS와 같은 버전을 지원한다고 말씀드리되, 1.37에서 hybrid 전용 검증을 했는지는 단정하지 않겠습니다. SSM을 쓸 때는 nodeadm 1.0.19 이상이 필요합니다.
+두 번째 탭에서 버전은 EKS와 같은 버전을 지원한다고 말씀드리되, 1.37에서 hybrid 전용 검증을 했는지는 단정하지 않겠습니다. SSM을 쓸 때는 nodeadm 1.0.19 이상이 필요합니다. 1.35 이후로는 cgroup v2, containerd 2.0, 1.37의 SELinuxMount와 kubelet 변경처럼 노드 쪽에서 준비할 항목이 계속 늘고 있어서, Block 3에서 따로 점검합니다.
 세 번째 탭의 Cilium은 AWS 빌드가 지원 범위입니다. 공식 CNI 페이지는 1.17과 1.18을 명시하고, Hybrid Nodes Gateway를 쓰려면 branch별로 1.17.13-1, 1.18.8-1, 1.19.2-1 이상이 필요합니다. CNI 페이지 예시 버전은 이보다 낮으니 Gateway 계획이 있다면 버전을 먼저 맞추세요. 업스트림 Cilium 최신 버전을 그대로 쓰면 AWS 지원 대상이 아닐 수 있습니다.
 근거: D/01-prerequisites.md "OS와 Runtime", D/README.md "계획에 반영할 제약", fact sheet(EKS 지원 버전 2026-10-07 기준), D/04-node-bootstrap.md. 버전 숫자는 시점에 따라 바뀌므로 발표 전 공식 문서로 재확인 필요.
 {cue: transition}

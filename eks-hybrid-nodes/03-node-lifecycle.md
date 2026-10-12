@@ -726,7 +726,7 @@ sudo /usr/local/bin/nodeadm upgrade "$TARGET_MINOR" \
 ::::
 
 :::notes
-{timing: 2min}
+{timing: 1.5min}
 [요약]
 • 기본 전략은 in-place보다 호스트 교체 — 새 호스트를 검증한 뒤 이전 호스트를 비움
 • kubelet 스큐는 API 서버 대비 n-3까지 허용, 더 새로울 수는 없음
@@ -740,11 +740,70 @@ kubelet 버전은 API 서버보다 새로울 수 없고, 최대 n-3까지 뒤처
 {cue: question}
 세 번째, 롤백은 어떻게 할까요? nodeadm에는 rollback이 없습니다. 실패한 노드는 cordon을 유지하고, 승인된 버전으로 호스트를 교체합니다. 롤백이 되는 것은 Cilium의 helm revision뿐인데, 그것도 데이터 경로 복구를 보장하지는 않습니다.
 {cue: transition}
-이제 제한망 환경에서 설치하는 방법을 보겠습니다.
+그럼 1.37로 올리기 전에 반드시 확인할 항목을 보겠습니다.
 
 [출처]
 • D/07 "버전 스큐 정책", "롤링 업그레이드", "복구와 롤백의 한계"; D/04 "업그레이드와 제거 경계", "Cilium 업그레이드"
 • cilium/07-advanced-topics.md "롤아웃과 복구" 섹션
+:::
+
+---
+<!-- Slide 13b: EKS 1.37 업그레이드 전 필수 점검 -->
+@type: tabs
+@title: 1.37 업그레이드 전 필수 점검
+
+## 1.37 업그레이드 전 필수 점검
+
+::::tab "SELinuxMount"
+- 1.37에서 `SELinuxMount`가 **기본 활성화** — SELinux가 켜진 노드(예: RHEL)만 영향
+- CSI driver가 `seLinuxMount: true`이고 Pod에 `seLinuxOptions`가 있으면 `mount -o context=LABEL`로 마운트
+- 같은 노드에서 한 volume을 **다른 label·`seLinuxChangePolicy`·권한 수준**으로 공유하면 뒤에 뜬 Pod가 `ContainerCreating`에 멈춤
+- 공유 Pod끼리 `seLinuxOptions.level`과 `seLinuxChangePolicy`를 맞추고, privileged와 unprivileged가 섞이면 `Recursive`로 지정
+
+```bash
+kubectl get csidriver \
+  -o custom-columns=NAME:.metadata.name,SELINUXMOUNT:.spec.seLinuxMount
+```
+::::
+
+::::tab "kubelet"
+- deprecated cAdvisor flag가 남아 있으면 **kubelet이 기동하지 않음** (`--housekeeping-interval`만 예외)
+- `eventRecordQPS: 0`은 이제 **무제한** — 이전 동작(초당 5개)을 유지하려면 `5`로 변경
+- metric 제거: `container_cpu_load_average_10s`, `container_cpu_load_d_average_10s`, `container_tasks_state` → 대시보드·알람 수정
+- kubelet이 시작할 때 전체 설정을 로그에 남김 → 노드 로그 읽기 권한 제한
+
+> "EKS 최적화 AMI는 영향 없음"은 Hybrid 노드에 해당하지 않습니다. NodeConfig의 `kubelet.flags`·`kubelet.config`와 골든 이미지에 넣은 인자를 점검합니다.
+::::
+
+::::tab "누적 변경 1.35–1.36"
+- **1.35**: cgroup v1 노드에서 kubelet 기동 거부 (기본값) — Ubuntu 20.04, RHEL 8은 기본이 cgroup v1
+- **1.35**: kubelet `--pod-infra-container-image` flag 제거 — NodeConfig `kubelet.flags`·골든 이미지에서 삭제
+- **1.36**: containerd **2.0 이상** 필요 (1.35가 containerd 1.x 마지막)
+- **1.36**: `gitRepo` volume 비활성, `StrictIPCIDRValidation` 기본 활성, Service `externalIPs` deprecated
+- 업그레이드는 한 마이너씩 — 이전 버전의 변경 사항도 모두 적용되므로 함께 점검
+
+> 위 항목은 업그레이드 전에 끝낼 일입니다. 노드에서 확인하지 못했다면 새 호스트로 먼저 검증합니다.
+::::
+
+:::notes
+{timing: 1.5min}
+[요약]
+• 1.37 필수: SELinuxMount 기본 활성 — volume 공유 Pod의 label·changePolicy 정렬
+• 1.37 필수: deprecated cAdvisor flag 제거, eventRecordQPS 0 의미 변경, 제거된 metric 대응
+• Hybrid 노드는 EKS 최적화 AMI가 아니므로 "AMI는 영향 없음" 문구가 적용되지 않음
+• 1.35 cgroup v2·pod-infra-container-image flag 제거, 1.36 containerd 2.0+도 누적으로 확인
+
+방금 본 업그레이드 절차를 1.37에 적용할 때 꼭 확인할 항목입니다. 첫 번째 탭, SELinuxMount입니다. SELinux가 켜진 RHEL 같은 노드에서, 같은 volume을 서로 다른 SELinux label이나 changePolicy로 공유하는 Pod가 있으면 뒤에 뜬 Pod가 ContainerCreating에서 멈춥니다. 먼저 CSI driver 중 seLinuxMount가 true인 것을 찾고, 그 volume을 공유하는 Pod를 확인하세요.
+{cue: pause}
+두 번째 탭, kubelet입니다. AWS 릴리스 노트는 EKS 최적화 AMI가 이 flag를 쓰지 않아서 영향이 없다고 하는데, Hybrid 노드는 여러분의 OS 이미지라 그 문구가 해당되지 않습니다. NodeConfig에 넣은 kubelet flag와 골든 이미지를 확인하세요. eventRecordQPS를 0으로 둔 경우 이제 무제한이 됩니다. 제거된 세 metric을 쓰는 대시보드가 있다면 함께 고칩니다.
+{cue: question}
+세 번째 탭은 이전 버전에서 넘어온 변경입니다. 1.35부터 cgroup v1 노드는 kubelet이 기동하지 않고 pod-infra-container-image flag도 제거됐습니다. 1.36부터는 containerd 2.0 이상이 필요합니다. Ubuntu 20.04나 RHEL 8을 쓰고 있다면 지금 cgroup 버전을 확인해 보셨나요?
+{cue: transition}
+이제 제한망 환경에서 설치하는 방법을 보겠습니다.
+
+[출처]
+• AWS EKS User Guide "Review release notes for Kubernetes versions on standard support" — Kubernetes 1.37·1.36·1.35 섹션
+• kubernetes-docs eks/08-eks-upgrades.md (1.37 제공 시작), eks/05-eks-security.md (SELinux volume mount)
 :::
 
 ---
@@ -850,7 +909,7 @@ sudo nodeadm debug --config-source file:///etc/eks/nodeconfig.yaml
 ::::
 
 :::notes
-{timing: 2min}
+{timing: 1.5min}
 [요약]
 • 도구: nodeadm debug, journalctl -u kubelet, systemctl status, kubectl describe node
 • join 실패 → access entry, DescribeCluster, remote node CIDR, 443 경로
@@ -935,11 +994,11 @@ trust anchor는 언제 바꿀까요? 같은 CA에서 leaf 인증서만 갱신한
 :::
 
 ---
-<!-- Slide 17: Quiz (1/2) -->
+<!-- Slide 17: Quiz (1/3) -->
 @type: quiz
-@title: Block 3 Quiz (1/2)
+@title: Block 3 Quiz (1/3)
 
-## Block 3 Quiz (1/2)
+## Block 3 Quiz (1/3)
 
 **Q1: nodeadm NodeConfig에서 반드시 직접 채워야 하는 최소 항목은?**
 - [ ] API 서버 엔드포인트와 클러스터 CA
@@ -952,7 +1011,7 @@ trust anchor는 언제 바꿀까요? 같은 CA에서 leaf 인증서만 갱신한
 - [ ] 자동 라벨은 없다
 
 :::notes
-{timing: 1min}
+{timing: 0.75min}
 [요약]
 • Q1 정답: 클러스터 이름+리전+공급자 블록 (endpoint/CA는 DescribeCluster로 조회)
 • Q2 정답: eks.amazonaws.com/compute-type=hybrid, 테인트는 자동 부여되지 않음
@@ -965,11 +1024,11 @@ trust anchor는 언제 바꿀까요? 같은 CA에서 leaf 인증서만 갱신한
 :::
 
 ---
-<!-- Slide 18: Quiz (2/2) -->
+<!-- Slide 18: Quiz (2/3) -->
 @type: quiz
-@title: Block 3 Quiz (2/2)
+@title: Block 3 Quiz (2/3)
 
-## Block 3 Quiz (2/2)
+## Block 3 Quiz (2/3)
 
 **Q3: nodeadm upgrade가 실패했을 때 올바른 대응은?**
 - [ ] nodeadm upgrade --rollback 실행
@@ -982,7 +1041,7 @@ trust anchor는 언제 바꿀까요? 같은 CA에서 leaf 인증서만 갱신한
 - [ ] --dry-run 과 --config-source s3://
 
 :::notes
-{timing: 1min}
+{timing: 0.75min}
 [요약]
 • Q3 정답: cordon 유지 + 승인된 버전 호스트로 교체 (rollback/reset 명령 없음)
 • Q4 정답: --manifest-override + --private-mode
@@ -990,6 +1049,28 @@ trust anchor는 언제 바꿀까요? 같은 CA에서 leaf 인증서만 갱신한
 3번은 롤백입니다. rollback과 reset은 존재하지 않습니다. 호스트 교체가 답입니다.
 {cue: pause}
 4번은 제한망 옵션입니다. PHZ 방식은 문서에서 기각했고, config-source로 S3를 지정하는 방식은 문서화되지 않았습니다. 정답은 manifest-override와 private-mode입니다.
+{cue: transition}
+마지막 한 문제는 1.37 변경입니다.
+:::
+
+---
+<!-- Slide 18b: Quiz (3/3) -->
+@type: quiz
+@title: Block 3 Quiz (3/3)
+
+## Block 3 Quiz (3/3)
+
+**Q5: EKS 1.37 kubelet에서 `eventRecordQPS: 0`의 의미는?**
+- [ ] 이벤트 기록을 끈다
+- [x] 이벤트 기록 속도에 제한이 없다
+- [ ] 초당 5개로 제한한다
+
+:::notes
+{timing: 0.5min}
+[요약]
+• Q5 정답: 1.37부터 eventRecordQPS 0은 무제한 (이전엔 초당 5개)
+
+5번은 1.37 kubelet 변경입니다. 예전에는 0이 초당 5개 제한이었지만 이제는 무제한입니다. 이전 동작을 유지하려면 5로 바꿔야 합니다.
 {cue: transition}
 마지막으로 참고 자료를 정리하겠습니다.
 :::
@@ -1011,14 +1092,14 @@ trust anchor는 언제 바꿀까요? 같은 CA에서 leaf 인증서만 갱신한
   <div class="metric-card"><strong class="text-accent">자격 증명</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html</div></div>
   <div class="metric-card"><strong class="text-accent">Hybrid CNI</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html</div></div>
   <div class="metric-card"><strong class="text-accent">Bottlerocket</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html</div></div>
-  <div class="metric-card"><strong class="text-accent">업그레이드</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-upgrade.html</div></div>
+  <div class="metric-card"><strong class="text-accent">업그레이드 · 릴리스 노트</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-upgrade.html<br>docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html</div></div>
   <div class="metric-card"><strong class="text-accent">nodeadm 소스</strong><div class="on-surface-muted">github.com/aws/eks-hybrid (v1.0.20)</div></div>
 </div>
 :::
 
 
 :::notes
-{timing: 1min}
+{timing: 0.5min}
 [요약]
 • Block 3의 근거는 AWS hybrid-nodes 문서와 aws/eks-hybrid v1.0.20 소스
 • 문서의 예제는 실제 클러스터에서 모두 실행 검증된 것은 아님 — 적용 전 환경에서 확인

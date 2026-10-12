@@ -282,7 +282,7 @@ CNI가 SNAT를 하면 응답이 node 주소로 돌아오고 connection tracking�
 • 대안: webhook을 cloud 노드에 배치하면 이 경로 자체가 불필요
 세 개의 탭으로 설명합니다. 첫 번째, 직접 라우팅입니다. API 서버가 선택한 webhook Pod IP와 포트로 들어와야 하므로 BGP나 static으로 Pod CIDR route를 만들어야 합니다. 포트는 실제로 설정한 포트이며, 예전 그림에 있던 "8443 이상" 범위는 유효한 요구 사항이 아닙니다.
 {cue: pause}
-두 번째, Gateway입니다. VPC route table의 Pod CIDR route가 Gateway leader ENI를 가리키고, 거기서 VXLAN으로 온프렘 node에 전달됩니다. 이 경로는 슬라이드 12에서 자세히 보겠습니다. 중요한 건 Gateway를 설치했다고 webhook이 자동으로 된다는 뜻이 아니라는 점입니다. route, TLS, 방화벽, 반환 경로는 여전히 확인해야 하고, Pod를 직접 라우팅해도 webhook은 지원됩니다.
+두 번째, Gateway입니다. VPC route table의 Pod CIDR route가 Gateway leader ENI를 가리키고, 거기서 VXLAN으로 온프렘 node에 전달됩니다. 이 경로는 뒤의 "Gateway 데이터 플레인" 슬라이드에서 자세히 보겠습니다. 중요한 건 Gateway를 설치했다고 webhook이 자동으로 된다는 뜻이 아니라는 점입니다. route, TLS, 방화벽, 반환 경로는 여전히 확인해야 하고, Pod를 직접 라우팅해도 webhook은 지원됩니다.
 {cue: question}
 세 번째는 아예 webhook을 cloud 노드에 두는 대안입니다. NotIn hybrid affinity 하나로 CP에서 온프렘 Pod로 들어오는 경로를 없앨 수 있습니다. 여러분 환경의 webhook은 어디에 떠 있나요?
 {cue: transition}
@@ -332,7 +332,7 @@ CNI가 SNAT를 하면 응답이 node 주소로 돌아오고 connection tracking�
     <div class="flow-arrow"><img class="hn-ico" src="./common/aws-icons/services/Arch_AWS-Direct-Connect_48.svg" alt="AWS Direct Connect"><img class="hn-ico" src="./common/aws-icons/services/Arch_AWS-Site-to-Site-VPN_48.svg" alt="AWS Site-to-Site VPN"><br>→ DX/VPN →</div>
     <div class="flow-group"><div class="flow-group-label">온프렘</div><div class="flow-box">Cilium (VTEP) decap</div><div class="flow-box">Hybrid Pod</div></div>
   </div>
-  <div class="hn-note"><strong class="text-info">온프렘 Pod CIDR을 VPC에서 routable하게 만들 필요가 없습니다.</strong> 반대 방향(Hybrid → VPC)은 Cilium이 CiliumVTEPConfig를 보고 VPC CIDR 목적지를 Gateway로 VXLAN 전송합니다. 상세는 슬라이드 12.</div>
+  <div class="hn-note"><strong class="text-info">온프렘 Pod CIDR을 VPC에서 routable하게 만들 필요가 없습니다.</strong> 반대 방향(Hybrid → VPC)은 Cilium이 CiliumVTEPConfig를 보고 VPC CIDR 목적지를 Gateway로 VXLAN 전송합니다. 상세는 "Gateway 데이터 플레인" 슬라이드.</div>
 </div>
 <div class="callout callout-info hn-takeaway hn-ew-take fragment zoom-in" data-fragment-index="1"><strong class="text-info">한 줄 정리</strong><div class="on-surface-muted">UDP 8472는 어느 모드에서든 열려 있어야 합니다 (hybrid 노드 간 VXLAN).</div></div>
 :::
@@ -347,7 +347,7 @@ CNI가 SNAT를 하면 응답이 node 주소로 돌아오고 connection tracking�
 세 탭입니다. 첫 번째, hybrid 노드끼리입니다. Cilium이 VXLAN으로 캡슐화하고, 바깥 패킷의 주소는 node IP입니다. 그래서 캡슐화된 패킷을 나르기 위해 underlay에 Pod CIDR route가 있어야 하는 것은 아닙니다. 오버헤드는 IPv4 기준 50바이트라서 MTU 1500 환경이면 1450을 예로 듭니다. 중요한 포인트는 이 UDP 8472가 direct routing이든 Gateway든 모두 필요하다는 점입니다. 퀴즈에서 다시 묻겠습니다.
 {cue: pause}
 두 번째, cloud와 hybrid Pod가 직접 통신하려면 VPC와 사설 연결, 온프렘까지 Pod route가 있어야 합니다. 이 route를 만드는 방법이 다음 슬라이드의 주제입니다.
-세 번째, Gateway는 그 route를 만들지 않고 VXLAN 터널로 대신합니다. 구조는 슬라이드 12에서 자세히 보겠습니다.
+세 번째, Gateway는 그 route를 만들지 않고 VXLAN 터널로 대신합니다. 구조는 뒤의 "Gateway 데이터 플레인" 슬라이드에서 자세히 보겠습니다.
 {cue: transition}
 그럼 Pod CIDR을 라우팅하는 선택지를 정리해 보겠습니다.
 [근거]
@@ -888,7 +888,7 @@ Gateway 탭은 Gateway 노드와 hybrid 노드 사이의 UDP 8472 양방향이 �
 <div class="tc" hidden>
   <div class="card-grid">
     <div class="metric-card"><strong class="text-success">eks-auth</strong><div class="on-surface-muted">EKS Pod Identity 사용 시</div></div>
-    <div class="metric-card"><strong class="text-warning">sts</strong><div class="on-surface-muted">필수 아님 — client가 STS(IRSA/AssumeRole)를 실제 호출할 때만</div></div>
+    <div class="metric-card"><strong class="text-warning">sts</strong><div class="on-surface-muted">필수 아님 — client가 STS(IRSA/<wbr>AssumeRole)를 실제 호출할 때만</div></div>
     <div class="metric-card"><strong class="text-info">logs · monitoring</strong><div class="on-surface-muted">해당 agent가 호출할 때만</div></div>
     <div class="metric-card"><strong class="text-info">oidc-eks</strong><div class="on-surface-muted">지원 리전의 OIDC discovery/JWKS</div></div>
   </div>

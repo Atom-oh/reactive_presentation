@@ -8,6 +8,52 @@
   <link rel="stylesheet" href="common/theme.css">
   <link rel="stylesheet" href="common/theme-override.css">
   <style>
+
+    /* Learning layer: one question, a short explanation, then optional detail. */
+    .learn-body { gap: 1rem; padding-bottom: 1.2rem; }
+    .learn-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1rem; }
+    .learn-grid.two { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .learn-card { padding: 1rem; }
+    .learn-card h3 { font-size: 1.15rem; color: var(--text-primary); margin-bottom: .65rem; }
+    .learn-card p { font-size: .95rem; line-height: 1.6; margin: .35rem 0; }
+    .learn-card .learn-api { display: block; color: var(--cyan); font-family: var(--font-mono); font-size: .72rem; overflow-wrap: anywhere; }
+    .learn-callout { padding: .8rem 1rem; border-left: .18rem solid var(--accent); background: var(--bg-card); color: var(--text-primary); line-height: 1.5; font-size: .95rem; }
+    .learn-detail { border: 1px solid var(--border); border-radius: .4rem; padding: .65rem .85rem; font-size: .85rem; }
+    .learn-detail summary { cursor: pointer; color: var(--cyan); font-weight: 600; }
+    .learn-detail[open] summary { margin-bottom: .65rem; }
+    .learn-detail .code-block { font-size: .76rem; line-height: 1.3; }
+    .learn-detail p { margin-top: .5rem; }
+    .learn-note { color: var(--text-secondary); font-size: .85rem; line-height: 1.5; }
+    .learn-chain { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: .65rem; }
+    .learn-step { display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start; position:relative; min-height:7rem; text-align: left; font: inherit; padding: .85rem; color: var(--text-secondary); background: var(--bg-card); border: 2px solid var(--border); border-radius: .45rem; cursor: pointer; }
+    .learn-step[aria-pressed="true"] { border-color: var(--accent); color: var(--text-primary); background: var(--accent-glow); }
+    .learn-step span { display: block; font-size: .85rem; line-height: 1.45; }
+    .learn-step strong { display: block; margin: .4rem 0; font-size: 1rem; }
+    .learn-step img { position:absolute; top:.8rem; right:.8rem; width: 1.8rem; height: 1.8rem; object-fit: contain; }
+    .learn-controls { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+    .learn-controls button:disabled { opacity:.45; cursor:default; }
+    .learn-controls [aria-pressed="true"] { border-color:var(--accent); background:var(--accent-glow); color:var(--text-primary); }
+    .learn-big { font-size: 2rem; color:var(--cyan); font-weight:700; }
+    .learn-verdict { display:block; padding:.55rem .65rem; margin-top:.7rem; background:var(--bg-secondary); font-weight:600; color:var(--cyan); }
+    .learn-quiz .quiz-question { font-size:1.2rem; line-height:1.5; }
+    .learn-quiz .quiz-option { padding:.8rem 1rem; font-size:1rem; text-align:left; }
+    .learn-quiz .quiz-explain { font-size:1rem; line-height:1.6; }
+    .learn-body button:focus-visible, .learn-detail summary:focus-visible { outline:3px solid var(--cyan); outline-offset:3px; }
+    .slide-header .subtitle { color: var(--text-secondary); }
+    :root { --text-muted: var(--text-secondary); }
+    .btn.btn-primary, .tab-btn.active { background: var(--accent); color: var(--bg-primary); }
+    .code-label { font-size: .8rem; }
+    .slide:has(#timeline-canvas) .slide-body { padding-bottom: 3rem; }
+    .slide:has(#drift-node-grid) .slide-body > div:last-child { font-size: .8rem !important; }
+    .learn-detail a { color: var(--cyan); }
+    #nodepool-basics:has(details[open]) > .learn-callout { display: none; }
+    .slide-body:has(#nodeclass-builder[open]) > .learn-grid,
+    .slide-body:has(#nodeclass-builder[open]) > .learn-callout { display: none; }
+    #instance-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .65rem; }
+    #instance-grid .instance-box { display: block; margin: 0; padding: .8rem; font-size: 1rem; text-align: center; }
+
+    /* Keep complete NodePool examples visible after adding the v1 NodeClass reference. */
+    .tab-content .code-block { font-size: .8rem; line-height: 1.2; }
     /* Slide-specific styles */
     .gradient-title {
       font-size: 3.5rem;
@@ -79,8 +125,9 @@
       transition: all 0.5s ease;
     }
     .instance-box.filtered {
-      opacity: 0.2;
-      transform: scale(0.8);
+      color: var(--text-secondary);
+      border-style: dashed;
+      text-decoration: line-through;
     }
     .instance-box.selected {
       background: var(--green-bg);
@@ -252,54 +299,27 @@
     <div class="meta">
       <span class="badge badge-blue">Karpenter 기반</span>
       <span class="badge badge-green">관리형 노드</span>
-      <span class="badge badge-yellow">자동 스케일링</span>
+      <span class="badge badge-yellow">EKS 1.37 · Karpenter v1.14.1</span>
+      <a href="version-update.md" style="color:var(--accent-light)">2026-10-07 검토, 1.37은 Karpenter 1.15.x 필요 · 공식 출처</a>
     </div>
   </div>
 
   <!-- Slide 2: Auto Mode란? -->
-  <div class="slide">
-    <div class="slide-header">
-      <h1>Auto Mode란?</h1>
-      <p class="subtitle">AWS 관리형 Karpenter로 노드 프로비저닝 자동화</p>
-    </div>
-    <div class="slide-body">
-      <div class="columns">
-        <div>
-          <h3>핵심 특징</h3>
-          <ul>
-            <li>AWS가 Control Plane 내에서 <strong>Karpenter를 관리형으로 운영</strong></li>
-            <li><strong>NodePool/NodeClass</strong>로 노드 프로비저닝 제어</li>
-            <li>Managed Node Group 대비: <strong>노드 관리 오버헤드 제거</strong></li>
-            <li><strong>빠른 스케일링</strong>: 40-90초 내 Pod 실행</li>
-          </ul>
-        </div>
-        <div>
-          <h3>기본 NodePool</h3>
-          <div class="card" style="margin-bottom: 12px;">
-            <div class="card-title">general-purpose</div>
-            <p>범용 워크로드용, amd64/arm64, On-Demand + Spot 지원</p>
-          </div>
-          <div class="card">
-            <div class="card-title">system</div>
-            <p>시스템 컴포넌트 전용, CriticalAddonsOnly taint 적용</p>
-          </div>
-        </div>
-      </div>
-      <div class="callout callout-info" style="margin-top: 8px; padding: .42rem .67rem; font-size:.9rem;">
-        Karpenter를 직접 설치/관리할 필요 없이, EKS가 모든 것을 자동 처리합니다.
-      </div>
-    </div>
+  <div class="slide ">
+    <div class="slide-header"><h1>노드는 자동으로, 앱 정책은 우리가</h1><p class="subtitle">Karpenter의 역할과 Auto Mode의 관리 범위</p></div>
+    <div class="slide-body learn-body"><div class="learn-grid"><div class="card learn-card"><h3>Karpenter의 역할</h3><p>배치되지 못한 Pod에 맞는<br><strong>노드를 골라 추가</strong>합니다.</p><p>조건이 맞으면 노드를 정리해<br>불필요한 비용을 줄입니다.</p></div><div class="card learn-card"><h3>Auto Mode에서 AWS가 할 일</h3><p>Karpenter 기반 노드 관리와<br><strong>OS·주요 인프라 구성 요소</strong>를 관리합니다.</p><p>Controller 설치·패치 부담을 줄입니다.</p></div><div class="card learn-card"><h3>우리 팀이 할 일</h3><p>앱에 필요한 CPU·메모리,<br><strong>배치 조건과 중단 허용 범위</strong>를 정합니다.</p><p>앱의 가용성은 함께 설계해야 합니다.</p></div></div><div class="learn-callout"><strong>Pod = 앱 실행 단위 · Node = Pod가 실행되는 서버.</strong><br>Auto Mode를 이해할 때는 “무엇을 자동화하나”와 “누가 관리하나”를 함께 보세요.</div><details class="learn-detail"><summary>최신 버전은 무엇을 의미하나요?</summary><p>EKS: <strong>1.37</strong> · 직접 설치한 Karpenter: <strong>v1.14.1</strong> (2026-10-07 확인).</p><p>Auto Mode에 별도 Helm 버전을 지정하지 않습니다. 직접 설치한 Karpenter의 1.37 호환성은 공식 표에 아직 없습니다. <a href="version-update.md">공식 출처·변경 사항</a></p></details></div>
   </div>
 
   <!-- Slide 3: Auto Mode vs MNG vs Fargate -->
   <div class="slide">
     <div class="slide-header">
-      <h1>Auto Mode vs MNG vs Fargate</h1>
-      <p class="subtitle">노드 관리 방식 비교</p>
+      <h1>어디까지 직접 운영할까요?</h1>
+      <p class="subtitle">Auto Mode와 직접 설치한 Karpenter부터 비교</p>
     </div>
     <div class="slide-body">
       <div class="compare-toggle">
         <button class="compare-btn active" data-compare="auto">Auto Mode</button>
+        <button class="compare-btn" data-compare="self-karpenter">직접 설치한 Karpenter</button>
         <button class="compare-btn" data-compare="mng">Managed Node Group</button>
         <button class="compare-btn" data-compare="fargate">Fargate</button>
       </div>
@@ -309,20 +329,21 @@
           <h3>Auto Mode</h3>
           <table>
             <tr><th>특징</th><td>Karpenter 기반, AWS 관리형, 인스턴스 다양화</td></tr>
-            <tr><th>스케일링</th><td>자동 Consolidation, 40-90초 프로비저닝</td></tr>
-            <tr><th>비용</th><td>Spot 인스턴스 자동 활용, 최적화된 bin-packing</td></tr>
+            <tr><th>스케일링</th><td>Balanced 기본 정책 (EKS 1.37 신규 풀), 수요 기반 프로비저닝</td></tr>
+            <tr><th>비용</th><td>EC2 + Auto Mode 관리 비용, 커스텀 풀에서 Spot 활용</td></tr>
             <tr><th>적합 워크로드</th><td>가변적 워크로드, 다양한 인스턴스 요구사항</td></tr>
           </table>
         </div>
       </div>
 
+<div class="compare-content" data-compare="self-karpenter"><div class="card learn-card"><h3>설정 자유도와 운영 책임을 함께 가져갑니다</h3><table><tr><th>팀이 관리</th><td>Controller · CRD · IAM · AMI 선택/업데이트</td></tr><tr><th>노드 설정</th><td>NodePool + EC2NodeClass</td></tr><tr><th>잘 맞는 경우</th><td>AMI와 노드 구성을 직접 제어해야 할 때</td></tr><tr><th>업그레이드</th><td>v1.14.1 · Controller와 CRD를 함께 확인</td></tr></table></div></div>
       <div class="compare-content" data-compare="mng">
         <div class="card">
           <h3>Managed Node Group</h3>
           <table>
             <tr><th>특징</th><td>ASG 기반, Launch Template, 수동 설정</td></tr>
-            <tr><th>스케일링</th><td>Cluster Autoscaler 필요, 2-5분 소요</td></tr>
-            <tr><th>비용</th><td>인스턴스 타입 고정, 수동 Spot 설정</td></tr>
+            <tr><th>스케일링</th><td>Cluster Autoscaler 등으로 노드 그룹 용량 조절</td></tr>
+            <tr><th>비용</th><td>노드 그룹 단위로 인스턴스 타입·Spot 구성</td></tr>
             <tr><th>적합 워크로드</th><td>예측 가능한 워크로드, 특정 인스턴스 요구</td></tr>
           </table>
         </div>
@@ -333,7 +354,7 @@
           <h3>Fargate</h3>
           <table>
             <tr><th>특징</th><td>서버리스, Pod 단위 격리, 노드 관리 없음</td></tr>
-            <tr><th>스케일링</th><td>Pod 단위 자동, 30-60초 소요</td></tr>
+            <tr><th>스케일링</th><td>Pod 단위 용량 제공 · 실제 시작 시간은 환경에 따라 다름</td></tr>
             <tr><th>비용</th><td>vCPU/메모리 기반 과금, 유휴 비용 없음</td></tr>
             <tr><th>적합 워크로드</th><td>배치 작업, 간헐적 워크로드, 보안 격리</td></tr>
           </table>
@@ -343,29 +364,18 @@
   </div>
 
   <!-- Slide 4: 내부 아키텍처 Canvas -->
-  <div class="slide">
-    <div class="slide-header">
-      <h1>내부 아키텍처</h1>
-      <p class="subtitle">Karpenter가 Control Plane 내에서 동작하는 방식</p>
-    </div>
-    <div class="slide-body">
-      <div class="canvas-container" style="flex: 1;">
-        <canvas id="arch-canvas"></canvas>
-        <div class="canvas-controls">
-          <button class="btn btn-primary" id="arch-play-btn">Play</button>
-          <button class="btn" id="arch-reset-btn">Reset</button>
-        </div>
-      </div>
-    </div>
+  <div class="slide ">
+    <div class="slide-header"><h1>Pod가 기다리면 누가 움직일까요?</h1><p class="subtitle">배치 불가(FailedScheduling) 예시 → 용량 계획 → 노드 준비 → Pod 배치</p></div>
+    <div class="slide-body learn-body"><div id="capacity-journey"><div class="learn-chain"><button class="learn-step" data-journey="0" aria-pressed="true"><span>01</span><strong>앱이 대기</strong><span>FailedScheduling 확인</span></button><button class="learn-step" data-journey="1" aria-pressed="false"><span>02</span><img src="common/aws-icons/services/Arch_Amazon-Elastic-Kubernetes-Service_48.svg" alt="Amazon EKS"><strong>노드를 계획</strong><span>Karpenter · AWS 관리</span></button><button class="learn-step" data-journey="2" aria-pressed="false"><span>03</span><strong>두 설정을 확인</strong><span>NodePool + NodeClass</span></button><button class="learn-step" data-journey="3" aria-pressed="false"><span>04</span><img src="common/aws-icons/services/Arch_Amazon-EC2_48.svg" alt="Amazon EC2"><strong>노드가 준비</strong><span>EC2 → Ready</span></button><button class="learn-step" data-journey="4" aria-pressed="false"><span>05</span><strong>앱을 배치</strong><span>Scheduler → Pod</span></button></div><div class="card learn-card" style="margin-top:1rem" aria-live="polite"><h3 id="journey-title"></h3><p id="journey-description"></p></div><div class="learn-controls" style="margin-top:1rem"><button class="btn" id="journey-prev">이전 단계</button><button class="btn btn-primary" id="journey-next">다음 단계</button><button class="btn" id="journey-reset">처음부터</button><span class="learn-note">단계 버튼 또는 ↑ ↓</span></div></div><div class="learn-callout"><strong>핵심:</strong> Karpenter는 노드를 준비하고, Kubernetes Scheduler는 Pod를 배치합니다.</div></div>
   </div>
 
   <!-- Slide 5: NodePool 구조 -->
   <div class="slide">
     <div class="slide-header">
-      <h1>NodePool 구조</h1>
-      <p class="subtitle">기본 제공 NodePool 비교</p>
+      <h1>NodePool: 어떤 노드를 허용할까요?</h1>
+      <p class="subtitle">먼저 기본 풀의 역할을 구분하고, 필요한 경우 설정을 펼쳐 보세요</p>
     </div>
-    <div class="slide-body">
+    <div class="slide-body" id="nodepool-basics">
       <div class="tab-bar">
         <button class="tab-btn active" data-tab="gp">general-purpose</button>
         <button class="tab-btn" data-tab="sys">system</button>
@@ -374,15 +384,17 @@
       <div class="tab-content active" data-tab="gp">
         <div class="columns">
           <div>
-            <h3>특징</h3>
+            <h3>일반 앱을 실행할 자리</h3>
             <ul>
               <li>범용 워크로드용 기본 NodePool</li>
-              <li>amd64 및 arm64 아키텍처 지원</li>
-              <li>On-Demand + Spot 인스턴스 혼합</li>
-              <li>WhenEmptyOrUnderutilized Consolidation</li>
+              <li>amd64 아키텍처 지원</li>
+              <li>On-Demand 인스턴스만 사용</li>
+              <li>EKS 1.37에서는 Balanced 정책</li>
             </ul>
+            <p class="learn-note">Spot을 쓰려면 별도 커스텀 풀을 만듭니다.</p>
           </div>
           <div>
+            <details class="learn-detail"><summary>NodePool YAML 발췌 보기</summary><p>읽기용 발췌입니다. AWS가 관리하는 기본 풀은 직접 수정하지 않습니다.</p>
             <div class="code-block"><span class="code-label">YAML</span><span class="key">apiVersion</span>: <span class="string">karpenter.sh/v1</span>
 <span class="key">kind</span>: <span class="string">NodePool</span>
 <span class="key">metadata</span>:
@@ -390,38 +402,10 @@
 <span class="key">spec</span>:
   <span class="key">template</span>:
     <span class="key">spec</span>:
-      <span class="key">requirements</span>:
-        - <span class="key">key</span>: <span class="string">kubernetes.io/arch</span>
-          <span class="key">operator</span>: <span class="string">In</span>
-          <span class="key">values</span>: [<span class="string">amd64</span>, <span class="string">arm64</span>]
-        - <span class="key">key</span>: <span class="string">karpenter.sh/capacity-type</span>
-          <span class="key">operator</span>: <span class="string">In</span>
-          <span class="key">values</span>: [<span class="string">on-demand</span>, <span class="string">spot</span>]
-  <span class="key">disruption</span>:
-    <span class="key">consolidationPolicy</span>: <span class="string">WhenEmptyOrUnderutilized</span></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="tab-content" data-tab="sys">
-        <div class="columns">
-          <div>
-            <h3>특징</h3>
-            <ul>
-              <li>시스템 컴포넌트 전용 NodePool</li>
-              <li>amd64 아키텍처만 지원</li>
-              <li>On-Demand 인스턴스만 사용 (안정성)</li>
-              <li>CriticalAddonsOnly taint로 일반 워크로드 차단</li>
-            </ul>
-          </div>
-          <div>
-            <div class="code-block"><span class="code-label">YAML</span><span class="key">apiVersion</span>: <span class="string">karpenter.sh/v1</span>
-<span class="key">kind</span>: <span class="string">NodePool</span>
-<span class="key">metadata</span>:
-  <span class="key">name</span>: <span class="string">system</span>
-<span class="key">spec</span>:
-  <span class="key">template</span>:
-    <span class="key">spec</span>:
+      <span class="key">nodeClassRef</span>:
+        <span class="key">group</span>: eks.amazonaws.com
+        <span class="key">kind</span>: NodeClass
+        <span class="key">name</span>: default
       <span class="key">requirements</span>:
         - <span class="key">key</span>: <span class="string">kubernetes.io/arch</span>
           <span class="key">operator</span>: <span class="string">In</span>
@@ -429,32 +413,74 @@
         - <span class="key">key</span>: <span class="string">karpenter.sh/capacity-type</span>
           <span class="key">operator</span>: <span class="string">In</span>
           <span class="key">values</span>: [<span class="string">on-demand</span>]
-      <span class="key">taints</span>:
-        - <span class="key">key</span>: <span class="string">CriticalAddonsOnly</span>
-          <span class="key">effect</span>: <span class="string">NoSchedule</span></div>
+  <span class="key">disruption</span>:
+    <span class="key">consolidationPolicy</span>: <span class="string">Balanced</span></div></details>
           </div>
         </div>
       </div>
+
+      <div class="tab-content" data-tab="sys">
+        <div class="columns">
+          <div>
+            <h3>시스템 Pod를 위한 자리</h3>
+            <ul>
+              <li>시스템 컴포넌트 전용 NodePool</li>
+              <li>amd64 및 arm64 아키텍처 지원</li>
+              <li>On-Demand 인스턴스만 사용</li>
+              <li>CriticalAddonsOnly taint 사용</li>
+            </ul>
+            <p class="learn-note">taint를 허용하는 toleration이 있어야 배치 후보가 됩니다.</p>
+          </div>
+          <div>
+            <details class="learn-detail"><summary>NodePool YAML 발췌 보기</summary><p>기본 풀은 직접 수정하지 않습니다. 두 기본 풀 모두 EKS 1.37에서는 Balanced를 사용합니다.</p>
+            <div class="code-block"><span class="code-label">YAML</span><span class="key">apiVersion</span>: <span class="string">karpenter.sh/v1</span>
+<span class="key">kind</span>: <span class="string">NodePool</span>
+<span class="key">metadata</span>:
+  <span class="key">name</span>: <span class="string">system</span>
+<span class="key">spec</span>:
+  <span class="key">template</span>:
+    <span class="key">spec</span>:
+      <span class="key">nodeClassRef</span>:
+        <span class="key">group</span>: eks.amazonaws.com
+        <span class="key">kind</span>: NodeClass
+        <span class="key">name</span>: default
+      <span class="key">requirements</span>:
+        - <span class="key">key</span>: <span class="string">kubernetes.io/arch</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">amd64</span>, <span class="string">arm64</span>]
+        - <span class="key">key</span>: <span class="string">karpenter.sh/capacity-type</span>
+          <span class="key">operator</span>: <span class="string">In</span>
+          <span class="key">values</span>: [<span class="string">on-demand</span>]
+      <span class="key">taints</span>:
+        - <span class="key">key</span>: <span class="string">CriticalAddonsOnly</span>
+          <span class="key">effect</span>: <span class="string">NoSchedule</span></div></details>
+          </div>
+        </div>
+      </div>
+      <div class="learn-callout"><strong>NodePool = 허용할 노드의 조건.</strong><br>Spot·별도 인스턴스 조건은 커스텀 풀에 설정합니다. 기본 풀은 활성화·비활성화만 가능합니다.</div>
     </div>
   </div>
 
   <!-- Slide 6: NodeClass 설정 -->
   <div class="slide">
     <div class="slide-header">
-      <h1>NodeClass 설정</h1>
-      <p class="subtitle">인터랙티브 NodeClass 빌더</p>
+      <h1>NodeClass: AWS에서 어떻게 만들까요?</h1>
+      <p class="subtitle">노드를 만들 때 필요한 AWS 설정 세 가지</p>
     </div>
-    <div class="slide-body">
+    <div class="slide-body learn-body">
+      <div class="learn-grid">
+        <div class="card learn-card"><h3>어디에 연결하나?</h3><p>Subnet · Security Group</p><p>네트워크 위치와 허용할 통신을 정합니다.</p></div>
+        <div class="card learn-card"><h3>어떤 권한을 쓰나?</h3><p>노드 IAM 역할</p><p>노드가 AWS API와 클러스터에 접근할 권한을 준비합니다.</p></div>
+        <div class="card learn-card"><h3>얼마나 저장하나?</h3><p>로컬 스토리지</p><p>컨테이너 이미지와 로그 등에 쓸 디스크 크기를 정합니다.</p></div>
+      </div>
+      <div class="learn-callout"><strong>Auto Mode는 NodeClass · 직접 설치한 Karpenter는 EC2NodeClass.</strong><br>목적은 비슷하지만 API와 설정 필드가 다릅니다. Auto Mode의 OS·AMI는 AWS가 관리합니다.</div>
+      <details class="learn-detail" id="nodeclass-builder"><summary>옵션을 바꾸며 전체 YAML 확인하기</summary>
       <div class="columns">
         <div>
-          <h3>설정 옵션</h3>
+          <h3>설정 옵션</h3><p style="font-size:.85rem">AMI·IMDS 보안은 AWS 관리.<br>노드 역할: EC2 Access Entry + AmazonEKSAutoNodePolicy</p>
           <div class="checkbox-group" id="nodeclass-options">
-            <label class="checkbox-item">
-              <input type="radio" name="ami" value="AL2023" checked> AMI: AL2023
-            </label>
-            <label class="checkbox-item">
-              <input type="radio" name="ami" value="Bottlerocket"> AMI: Bottlerocket
-            </label>
+
+
             <label class="checkbox-item">
               <input type="radio" name="subnet" value="private" checked> Subnet: Private
             </label>
@@ -462,48 +488,46 @@
               <input type="radio" name="subnet" value="public"> Subnet: Public
             </label>
             <label class="checkbox-item">
-              <input type="radio" name="ebs" value="50" checked> EBS: 50Gi gp3
+              <input type="radio" name="ebs" value="80" checked> 로컬 스토리지: 80Gi
             </label>
             <label class="checkbox-item">
-              <input type="radio" name="ebs" value="100"> EBS: 100Gi gp3
+              <input type="radio" name="ebs" value="100"> 로컬 스토리지: 100Gi
             </label>
             <label class="checkbox-item">
-              <input type="radio" name="ebs" value="200"> EBS: 200Gi gp3
+              <input type="radio" name="ebs" value="200"> 로컬 스토리지: 200Gi
             </label>
-            <label class="checkbox-item">
-              <input type="checkbox" name="imdsv2" checked> IMDSv2 Required
-            </label>
+
           </div>
         </div>
         <div>
-          <h3>생성된 NodeClass</h3>
-          <div class="code-block" id="nodeclass-preview"><span class="code-label">YAML</span><span class="key">apiVersion</span>: <span class="string">karpenter.k8s.aws/v1</span>
-<span class="key">kind</span>: <span class="string">EC2NodeClass</span>
+          <h3>변경 결과를 확인하세요</h3>
+          <div class="code-block" id="nodeclass-preview"><span class="key">apiVersion</span>: eks.amazonaws.com/v1
+<span class="key">kind</span>: NodeClass
 <span class="key">metadata</span>:
-  <span class="key">name</span>: <span class="string">default</span>
+  <span class="key">name</span>: workload
 <span class="key">spec</span>:
-  <span class="key">amiFamily</span>: <span class="string">AL2023</span>
+  <span class="key">role</span>: MyAutoModeNodeRole
   <span class="key">subnetSelectorTerms</span>:
     - <span class="key">tags</span>:
-        <span class="key">karpenter.sh/discovery</span>: <span class="string">my-cluster</span>
-        <span class="key">network-type</span>: <span class="string">private</span>
-  <span class="key">blockDeviceMappings</span>:
-    - <span class="key">deviceName</span>: <span class="string">/dev/xvda</span>
-      <span class="key">ebs</span>:
-        <span class="key">volumeSize</span>: <span class="string">50Gi</span>
-        <span class="key">volumeType</span>: <span class="string">gp3</span>
-  <span class="key">metadataOptions</span>:
-    <span class="key">httpTokens</span>: <span class="string">required</span></div>
+        <span class="key">karpenter.sh/discovery</span>: my-cluster
+        <span class="key">network-type</span>: private
+  <span class="key">securityGroupSelectorTerms</span>:
+    - <span class="key">tags</span>:
+        <span class="key">karpenter.sh/discovery</span>: my-cluster
+  <span class="key">ephemeralStorage</span>:
+    <span class="key">size</span>: 80Gi</div>
         </div>
       </div>
+      <p>예제의 <code>network-type</code>은 직접 붙인 subnet 태그입니다. Private subnet에는 필요한 NAT 또는 VPC endpoint 연결도 준비해야 합니다.</p>
+      </details>
     </div>
   </div>
 
   <!-- Slide 7: 커스텀 NodePool 패턴 -->
   <div class="slide">
     <div class="slide-header">
-      <h1>커스텀 NodePool 패턴</h1>
-      <p class="subtitle">워크로드 특성에 따른 NodePool 분리 전략</p>
+      <h1>요구가 다를 때 커스텀 풀을 만듭니다</h1>
+      <p class="subtitle">먼저 워크로드 목적을 고르고, requirements에서 바뀐 조건을 확인</p>
     </div>
     <div class="slide-body">
       <div class="tab-bar">
@@ -514,8 +538,10 @@
       </div>
 
       <div class="tab-content active" data-tab="np-compute">
+        <p class="learn-note">앞에서 만든 <code>workload</code> NodeClass를 사용합니다. 네트워크·IAM 준비 후 적용하는 예제입니다.</p>
         <div class="columns">
           <div>
+            <details class="learn-detail"><summary>Compute YAML 보기</summary>
             <div class="code-block"><span class="code-label">compute-optimized.yaml</span><span class="key">apiVersion</span>: <span class="string">karpenter.sh/v1</span>
 <span class="key">kind</span>: <span class="string">NodePool</span>
 <span class="key">metadata</span>:
@@ -523,26 +549,30 @@
 <span class="key">spec</span>:
   <span class="key">template</span>:
     <span class="key">spec</span>:
+      <span class="key">nodeClassRef</span>:
+        <span class="key">group</span>: eks.amazonaws.com
+        <span class="key">kind</span>: NodeClass
+        <span class="key">name</span>: workload
       <span class="key">requirements</span>:
-        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-category</span>
+        - <span class="key">key</span>: <span class="string">eks.amazonaws.com/instance-category</span>
           <span class="key">operator</span>: <span class="string">In</span>
           <span class="key">values</span>: [<span class="string">c</span>]
-        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-generation</span>
+        - <span class="key">key</span>: <span class="string">eks.amazonaws.com/instance-generation</span>
           <span class="key">operator</span>: <span class="string">Gt</span>
           <span class="key">values</span>: [<span class="string">"6"</span>]
         - <span class="key">key</span>: <span class="string">karpenter.sh/capacity-type</span>
           <span class="key">operator</span>: <span class="string">In</span>
           <span class="key">values</span>: [<span class="string">on-demand</span>]
   <span class="key">limits</span>:
-    <span class="key">cpu</span>: <span class="number">1000</span></div>
+    <span class="key">cpu</span>: <span class="number">1000</span></div></details>
           </div>
           <div>
             <h3>Compute-optimized 특징</h3>
             <ul>
-              <li>C 패밀리 (c7i, c7a) — vCPU 당 비용 최적</li>
-              <li>7세대 이상 최신 인스턴스만 사용</li>
-              <li>배치 처리, 인코딩, 고성능 API 서버에 적합</li>
-              <li>On-Demand로 안정적 운영</li>
+              <li>CPU 중심 작업에 C 계열을 허용하는 예시</li>
+              <li>7세대 이상 허용 — 성능·용량은 별도 확인</li>
+              <li>배치 처리·인코딩 등에서 먼저 측정</li>
+              <li>이 예제는 On-Demand 선택</li>
             </ul>
           </div>
         </div>
@@ -551,6 +581,7 @@
       <div class="tab-content" data-tab="np-spot">
         <div class="columns">
           <div>
+            <details class="learn-detail"><summary>Spot YAML 보기</summary>
             <div class="code-block"><span class="code-label">spot-mixed.yaml</span><span class="key">apiVersion</span>: <span class="string">karpenter.sh/v1</span>
 <span class="key">kind</span>: <span class="string">NodePool</span>
 <span class="key">metadata</span>:
@@ -558,29 +589,33 @@
 <span class="key">spec</span>:
   <span class="key">template</span>:
     <span class="key">spec</span>:
+      <span class="key">nodeClassRef</span>:
+        <span class="key">group</span>: eks.amazonaws.com
+        <span class="key">kind</span>: NodeClass
+        <span class="key">name</span>: workload
       <span class="key">requirements</span>:
-        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-category</span>
+        - <span class="key">key</span>: <span class="string">eks.amazonaws.com/instance-category</span>
           <span class="key">operator</span>: <span class="string">In</span>
           <span class="key">values</span>: [<span class="string">m</span>, <span class="string">c</span>, <span class="string">r</span>]
-        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-generation</span>
+        - <span class="key">key</span>: <span class="string">eks.amazonaws.com/instance-generation</span>
           <span class="key">operator</span>: <span class="string">Gt</span>
           <span class="key">values</span>: [<span class="string">"5"</span>]
         - <span class="key">key</span>: <span class="string">karpenter.sh/capacity-type</span>
           <span class="key">operator</span>: <span class="string">In</span>
           <span class="key">values</span>: [<span class="string">spot</span>, <span class="string">on-demand</span>]
   <span class="key">disruption</span>:
-    <span class="key">consolidationPolicy</span>: <span class="string">WhenEmptyOrUnderutilized</span></div>
+    <span class="key">consolidationPolicy</span>: <span class="string">WhenEmptyOrUnderutilized</span></div></details>
           </div>
           <div>
             <h3>Spot Mixed 특징</h3>
             <ul>
-              <li>Spot + On-Demand 혼합으로 비용 60~70% 절감</li>
+              <li>Spot 우선, 가용 용량에 따라 On-Demand 사용</li>
               <li>다양한 카테고리 (m, c, r) 로 Spot 풀 확대</li>
-              <li>6세대 이상으로 Spot 가용성 극대화</li>
-              <li>Stateless 워크로드, 개발/스테이징 환경에 적합</li>
+              <li>용량 유형을 허용해도 혼합 비율은 보장되지 않음</li>
+              <li>실제 절감률과 재시작 영향을 함께 측정</li>
             </ul>
             <div class="callout callout-warning" style="margin-top: 12px;">
-              Spot 인터럽트 대비: PDB 설정 + 다중 AZ 분산 필수
+              중단을 감수할 수 있는 작업부터 시작하고, 여유 용량·분산 배치·재시작 시간을 확인하세요.
             </div>
           </div>
         </div>
@@ -589,6 +624,7 @@
       <div class="tab-content" data-tab="np-graviton">
         <div class="columns">
           <div>
+            <details class="learn-detail"><summary>Graviton YAML 보기</summary>
             <div class="code-block"><span class="code-label">graviton.yaml</span><span class="key">apiVersion</span>: <span class="string">karpenter.sh/v1</span>
 <span class="key">kind</span>: <span class="string">NodePool</span>
 <span class="key">metadata</span>:
@@ -596,26 +632,30 @@
 <span class="key">spec</span>:
   <span class="key">template</span>:
     <span class="key">spec</span>:
+      <span class="key">nodeClassRef</span>:
+        <span class="key">group</span>: eks.amazonaws.com
+        <span class="key">kind</span>: NodeClass
+        <span class="key">name</span>: workload
       <span class="key">requirements</span>:
         - <span class="key">key</span>: <span class="string">kubernetes.io/arch</span>
           <span class="key">operator</span>: <span class="string">In</span>
           <span class="key">values</span>: [<span class="string">arm64</span>]
-        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-category</span>
+        - <span class="key">key</span>: <span class="string">eks.amazonaws.com/instance-category</span>
           <span class="key">operator</span>: <span class="string">In</span>
           <span class="key">values</span>: [<span class="string">m</span>, <span class="string">c</span>, <span class="string">r</span>]
-        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-generation</span>
+        - <span class="key">key</span>: <span class="string">eks.amazonaws.com/instance-generation</span>
           <span class="key">operator</span>: <span class="string">Gt</span>
           <span class="key">values</span>: [<span class="string">"6"</span>]
   <span class="key">limits</span>:
-    <span class="key">cpu</span>: <span class="number">2000</span></div>
+    <span class="key">cpu</span>: <span class="number">2000</span></div></details>
           </div>
           <div>
             <h3>Graviton 특징</h3>
             <ul>
-              <li>ARM64 아키텍처 — 가성비 최대 40% 향상</li>
-              <li>m7g, c7g, r7g 시리즈 자동 선택</li>
-              <li>컨테이너 이미지 multi-arch 빌드 필요</li>
-              <li>대부분의 워크로드에서 x86 대비 성능 동등 이상</li>
+              <li>arm64 호환 앱을 위한 Graviton 예시</li>
+              <li>허용한 M/C/R 계열 중 조건에 맞는 노드 선택</li>
+              <li>arm64 이미지 또는 multi-arch 이미지 필요</li>
+              <li>라이브러리 호환성과 앱의 비용·성능을 측정</li>
             </ul>
             <div class="callout callout-info" style="margin-top: 12px;">
               <code>docker buildx build --platform linux/amd64,linux/arm64</code> 으로 멀티 아키텍처 이미지 빌드
@@ -627,6 +667,7 @@
       <div class="tab-content" data-tab="np-gpu">
         <div class="columns">
           <div>
+            <details class="learn-detail"><summary>GPU YAML 보기</summary>
             <div class="code-block"><span class="code-label">gpu-nodepool.yaml</span><span class="key">apiVersion</span>: <span class="string">karpenter.sh/v1</span>
 <span class="key">kind</span>: <span class="string">NodePool</span>
 <span class="key">metadata</span>:
@@ -634,8 +675,12 @@
 <span class="key">spec</span>:
   <span class="key">template</span>:
     <span class="key">spec</span>:
+      <span class="key">nodeClassRef</span>:
+        <span class="key">group</span>: eks.amazonaws.com
+        <span class="key">kind</span>: NodeClass
+        <span class="key">name</span>: workload
       <span class="key">requirements</span>:
-        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-category</span>
+        - <span class="key">key</span>: <span class="string">eks.amazonaws.com/instance-category</span>
           <span class="key">operator</span>: <span class="string">In</span>
           <span class="key">values</span>: [<span class="string">g</span>, <span class="string">p</span>]
         - <span class="key">key</span>: <span class="string">karpenter.sh/capacity-type</span>
@@ -647,15 +692,15 @@
   <span class="key">limits</span>:
     <span class="key">nvidia.com/gpu</span>: <span class="number">100</span>
   <span class="key">disruption</span>:
-    <span class="key">consolidationPolicy</span>: <span class="string">WhenEmpty</span></div>
+    <span class="key">consolidationPolicy</span>: <span class="string">WhenEmpty</span></div></details>
           </div>
           <div>
             <h3>GPU NodePool 특징</h3>
             <ul>
-              <li>g5/g6 (추론), p4d/p5 (학습) 자동 선택</li>
-              <li>On-Demand만 사용 (GPU Spot 가용성 제한)</li>
-              <li>Taint로 GPU 워크로드만 스케줄링</li>
-              <li>WhenEmpty — 비싼 GPU 노드 빠르게 회수</li>
+              <li>G/P 계열 중 리소스·드라이버 요구에 맞게 선택</li>
+              <li>On-Demand만 사용 (이 예제의 선택; Spot은 별도 검토 가능)</li>
+              <li>Taint를 허용하는 toleration과 GPU 요청 필요</li>
+              <li>WhenEmpty — 빈 노드의 정리를 검토</li>
             </ul>
             <div class="callout callout-warning" style="margin-top: 12px;">
               GPU 인스턴스는 비용이 높으므로 limits 설정이 중요합니다.
@@ -670,7 +715,7 @@
   <div class="slide">
     <div class="slide-header">
       <h1>Pod Pending에서 Node Ready까지</h1>
-      <p class="subtitle">프로비저닝 타임라인 시뮬레이션</p>
+      <p class="subtitle">프로비저닝 타임라인 시뮬레이션 · 시간은 설명용 예시, SLA 아님</p>
     </div>
     <div class="slide-body">
       <div class="canvas-container" style="flex: 1;">
@@ -691,30 +736,31 @@
   <!-- Slide 10: 인스턴스 선택 알고리즘 -->
   <div class="slide">
     <div class="slide-header">
-      <h1>인스턴스 선택 알고리즘</h1>
-      <p class="subtitle">필터링 과정 시각화</p>
+      <h1>조건에 맞는 후보부터 좁힙니다</h1>
+      <p class="subtitle">12개 이름으로 보는 필터 연습 · 실제 가격·용량 계산은 생략</p>
     </div>
     <div class="slide-body">
       <div class="btn-group" style="margin-bottom: 16px;">
         <button class="btn" id="filter-reset">Reset</button>
-        <button class="btn" id="filter-category">1. Category (m, c, r, g, p)</button>
-        <button class="btn" id="filter-generation">2. Generation (>7)</button>
-        <button class="btn" id="filter-size">3. Size (large+)</button>
-        <button class="btn btn-primary" id="filter-select">4. Best → Graviton</button>
+        <button class="btn" id="filter-category">1. M/C/R 계열</button>
+        <button class="btn" id="filter-generation">2. 7세대 이상</button>
+        <button class="btn" id="filter-size">3. xlarge 이상</button>
+        <button class="btn btn-primary" id="filter-select">4. 남은 후보 확인</button>
       </div>
       <div id="instance-grid" style="background: var(--bg-card); border-radius: 12px; padding: 16px; min-height: 200px;">
       </div>
       <div class="callout callout-info" style="margin-top: 12px;">
-        Karpenter는 Pod 요구사항과 NodePool 제약을 기반으로 최적의 인스턴스를 자동 선택합니다.
+        <strong>정답은 항상 Graviton 한 종류가 아닙니다.</strong><br>이 예시는 amd64·arm64 모두 호환되는 앱을 가정합니다. 실제 선택은 Pod 요청량·배치 조건·가용 용량·가격도 함께 반영합니다.
       </div>
+      <p class="learn-note" id="instance-result" aria-live="polite"></p>
     </div>
   </div>
 
   <!-- Slide 11: Consolidation 동작 원리 -->
   <div class="slide">
     <div class="slide-header">
-      <h1>Consolidation 동작 원리</h1>
-      <p class="subtitle">노드 통합으로 비용 최적화</p>
+      <h1>Pod를 옮길 자리가 있어야 줄입니다</h1>
+      <p class="subtitle">Consolidation = Pod를 재배치하고 불필요한 노드 정리 · 모두 한 노드에 들어가는 예시</p>
     </div>
     <div class="slide-body">
       <div class="canvas-container" style="flex: 1;">
@@ -729,49 +775,16 @@
   </div>
 
   <!-- Slide 12: WhenEmpty vs WhenEmptyOrUnderutilized -->
-  <div class="slide">
-    <div class="slide-header">
-      <h1>Consolidation 정책 비교</h1>
-      <p class="subtitle">WhenEmpty vs WhenEmptyOrUnderutilized</p>
-    </div>
-    <div class="slide-body">
-      <div class="columns">
-        <div>
-          <div class="btn-group" style="margin-bottom: 16px;">
-            <button class="btn" id="policy-whenempty">WhenEmpty</button>
-            <button class="btn btn-primary" id="policy-underutilized">WhenEmptyOrUnderutilized</button>
-            <button class="btn" id="policy-reset">Reset</button>
-          </div>
-          <div id="policy-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-          </div>
-        </div>
-        <div>
-          <div class="card" style="margin-bottom: 12px;">
-            <div class="card-title">WhenEmpty</div>
-            <ul>
-              <li>Pod가 0개인 노드만 제거</li>
-              <li>안전하지만 비효율적일 수 있음</li>
-              <li>GPU 워크로드에 적합</li>
-            </ul>
-          </div>
-          <div class="card highlight">
-            <div class="card-title">WhenEmptyOrUnderutilized</div>
-            <ul>
-              <li>저사용률 노드도 통합</li>
-              <li>더 공격적인 비용 최적화</li>
-              <li>일반 워크로드에 권장</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
+  <div class="slide ">
+    <div class="slide-header"><h1>조금 싸져도 Pod를 옮길까요?</h1><p class="subtitle">상황을 고르면 세 가지 Consolidation 정책을 비교할 수 있습니다</p></div>
+    <div class="slide-body learn-body"><div id="policy-lab"><div class="learn-controls"><button class="btn" data-scenario="empty" aria-pressed="false">빈 노드</button><button class="btn" data-scenario="small" aria-pressed="true">작은 절감 · 큰 중단</button><button class="btn" data-scenario="large" aria-pressed="false">큰 절감 · 작은 중단</button></div><p id="policy-scenario-description" class="learn-note" style="margin:1rem 0" aria-live="polite"></p><div class="learn-grid"><div class="card learn-card"><h3>비었을 때만</h3><span class="learn-api">WhenEmpty</span><p>실행 중인 일반 워크로드가 없는 노드를 정리합니다.</p><span class="learn-verdict" data-policy-result="0"></span></div><div class="card learn-card"><h3>절감 기회가 있으면</h3><span class="learn-api">WhenEmptyOrUnderutilized</span><p>Pod를 옮길 수 있고 더 저렴하게 운영할 수 있으면 통합을 검토합니다.</p><span class="learn-verdict" data-policy-result="1"></span></div><div class="card learn-card"><h3>절감과 중단을 함께</h3><span class="learn-api">Balanced</span><p>비용 절감과 Pod 중단 비용을 함께 평가합니다.</p><span class="learn-verdict" data-policy-result="2"></span></div></div></div><div class="learn-callout"><strong>EKS 1.37의 새 Auto Mode NodePool 기본값은 Balanced.</strong><br>직접 설치한 Karpenter v1.14에서는 정책을 명시적으로 선택합니다.</div><p class="learn-note">교육용 정성 비교입니다. 실제 결정은 배치 가능성, PDB, 교체 예산 등에도 영향을 받습니다.</p></div>
   </div>
 
   <!-- Slide 13: Drift 감지 -> 교체 -->
   <div class="slide">
     <div class="slide-header">
       <h1>Drift 감지와 교체</h1>
-      <p class="subtitle">NodePool/NodeClass 변경 시 자동 롤링 업데이트</p>
+      <p class="subtitle">기존 노드가 원하는 설정과 맞지 않으면 교체를 검토합니다</p>
     </div>
     <div class="slide-body">
       <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin: 24px 0;">
@@ -793,18 +806,19 @@
         <div class="card">
           <div class="card-title">Drift 발생 조건</div>
           <ul>
-            <li>AMI Family 변경</li>
-            <li>인스턴스 타입 요구사항 변경</li>
+            <li>AWS 관리 AMI 업데이트 또는 NodeClass 변경</li>
+            <li>기존 노드와 맞지 않는 인스턴스 요구사항</li>
             <li>Subnet/SecurityGroup 변경</li>
-            <li>Block Device 설정 변경</li>
+            <li>ephemeralStorage 설정 변경</li>
           </ul>
+          <p class="learn-note">모든 변경이 Drift는 아닙니다. limits·weight·disruption 변경은 Drift를 유발하지 않으며, 허용 범위를 넓혀도 기존 노드가 계속 맞을 수 있습니다.</p>
         </div>
         <div class="card">
-          <div class="card-title">안전한 교체 보장</div>
+          <div class="card-title">교체 중단 제어</div>
           <ul>
             <li>PodDisruptionBudget 준수</li>
             <li>Disruption Budget 적용</li>
-            <li>점진적 롤링 (한 번에 모든 노드 교체하지 않음)</li>
+            <li>점진적 롤링 · PDB가 만료/Spot 회수 기한을 연장하지 않음</li>
           </ul>
         </div>
       </div>
@@ -814,10 +828,11 @@
   <!-- Slide 14: Disruption Budget -->
   <div class="slide">
     <div class="slide-header">
-      <h1>Disruption Budget</h1>
-      <p class="subtitle">안전한 노드 교체를 위한 제한 설정 — Drift 시뮬레이션</p>
+      <h1>한 번에 몇 대까지 바꿀까요?</h1>
+      <p class="subtitle">NodePool 예산은 노드 수 · PDB는 앱의 Pod 중단 제어</p>
     </div>
     <div class="slide-body" style="gap: 12px;">
+      <p class="learn-note">Drift 교체 예시: 10대 × 10% = 한 번에 최대 1대. 비율은 올림, 여러 예산은 최솟값을 적용합니다. 삭제 중·NotReady 노드는 0개로 가정합니다.</p>
       <!-- Top: Controls + YAML -->
       <div class="columns" style="flex: 0 0 auto;">
         <div>
@@ -831,7 +846,7 @@
               <input type="range" id="pct-slider" min="5" max="50" value="10" style="width: 100%;">
             </div>
             <div style="flex: 1; min-width: 100px;">
-              <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.8rem;">minAvailable: <strong id="fixed-value">0</strong></label>
+              <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.8rem;">최소 유지(계산용): <strong id="fixed-value">0</strong></label>
               <input type="range" id="fixed-slider" min="0" max="10" value="0" style="width: 100%;">
             </div>
             <div style="flex: 0 0 auto;">
@@ -879,23 +894,19 @@
           <ul class="checklist">
             <li>
               <span class="check"></span>
-              <div><strong>Bottlerocket AMI 사용</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">부팅 시간 10-20초 단축</span>
-                <div class="check-yaml"><div class="code-block"><span class="comment"># NodeClass</span>
-<span class="key">spec</span>:
-  <span class="key">amiSelectorTerms</span>:
-    - <span class="key">alias</span>: <span class="string">bottlerocket@latest</span></div></div>
+              <div><strong>관리형 AMI 교체 확인</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">AWS가 AMI 선택·패치 관리</span>
+                <div class="check-yaml"><div class="code-block"># Auto Mode: AMI 선택 필드 없음
+# AWS 관리 AMI, SSH/SSM 직접 접근 불가
+kubectl get nodeclaims</div></div>
               </div>
             </li>
             <li>
               <span class="check"></span>
-              <div><strong>작은 EBS 볼륨</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">볼륨 초기화 5-10초 단축</span>
-                <div class="check-yaml"><div class="code-block"><span class="comment"># NodeClass</span>
+              <div><strong>ephemeralStorage 크기 설정</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">이미지·로그 용량에 맞게 구성</span>
+                <div class="check-yaml"><div class="code-block"># Auto Mode NodeClass 설정 발췌
 <span class="key">spec</span>:
-  <span class="key">blockDeviceMappings</span>:
-    - <span class="key">deviceName</span>: <span class="string">/dev/xvda</span>
-      <span class="key">ebs</span>:
-        <span class="key">volumeSize</span>: <span class="value">20Gi</span>
-        <span class="key">volumeType</span>: <span class="value">gp3</span></div></div>
+  <span class="key">ephemeralStorage</span>:
+    <span class="key">size</span>: 80Gi</div></div>
               </div>
             </li>
             <li>
@@ -906,10 +917,10 @@
   <span class="key">template</span>:
     <span class="key">spec</span>:
       <span class="key">requirements</span>:
-        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-family</span>
+        - <span class="key">key</span>: <span class="string">eks.amazonaws.com/instance-family</span>
           <span class="key">operator</span>: <span class="string">In</span>
           <span class="key">values</span>: [<span class="string">m7i</span>, <span class="string">m7g</span>, <span class="string">c7i</span>, <span class="string">c7g</span>, <span class="string">r7i</span>]
-        - <span class="key">key</span>: <span class="string">karpenter.k8s.aws/instance-size</span>
+        - <span class="key">key</span>: <span class="string">eks.amazonaws.com/instance-size</span>
           <span class="key">operator</span>: <span class="string">In</span>
           <span class="key">values</span>: [<span class="string">large</span>, <span class="string">xlarge</span>, <span class="string">2xlarge</span>]</div></div>
               </div>
@@ -961,45 +972,9 @@
   </div>
 
   <!-- Slide 16: Block 1 요약 & 퀴즈 -->
-  <div class="slide">
-    <div class="slide-header">
-      <h1>Block 1 요약 & 퀴즈</h1>
-      <p class="subtitle">학습 내용 확인</p>
-    </div>
-    <div class="slide-body" style="overflow-y: auto;">
-      <div class="quiz" data-quiz="q1">
-        <div class="quiz-question">1. EKS Auto Mode의 기반 기술은?</div>
-        <div class="quiz-options">
-          <button class="quiz-option" data-correct="true">Karpenter</button>
-          <button class="quiz-option" data-correct="false">Cluster Autoscaler</button>
-          <button class="quiz-option" data-correct="false">AWS Fargate</button>
-          <button class="quiz-option" data-correct="false">Custom Controller</button>
-        </div>
-        <div class="quiz-feedback"></div>
-      </div>
-
-      <div class="quiz" data-quiz="q2">
-        <div class="quiz-question">2. Consolidation 정책 중 저사용률 노드도 통합하는 것은?</div>
-        <div class="quiz-options">
-          <button class="quiz-option" data-correct="true">WhenEmptyOrUnderutilized</button>
-          <button class="quiz-option" data-correct="false">WhenEmpty</button>
-          <button class="quiz-option" data-correct="false">WhenIdle</button>
-          <button class="quiz-option" data-correct="false">WhenUnderutilized</button>
-        </div>
-        <div class="quiz-feedback"></div>
-      </div>
-
-      <div class="quiz" data-quiz="q3">
-        <div class="quiz-question">3. Auto Mode에서 Pod Pending에서 Node Ready까지 일반적 소요 시간은?</div>
-        <div class="quiz-options">
-          <button class="quiz-option" data-correct="false">5-10초</button>
-          <button class="quiz-option" data-correct="true">40-90초</button>
-          <button class="quiz-option" data-correct="false">2-5분</button>
-          <button class="quiz-option" data-correct="false">10분 이상</button>
-        </div>
-        <div class="quiz-feedback"></div>
-      </div>
-    </div>
+  <div class="slide learn-quiz">
+    <div class="slide-header"><h1>세 가지 상황으로 확인해 봅시다</h1><p class="subtitle">하나씩 답을 고르고, 해설에서 이유를 확인하세요</p></div>
+    <div class="slide-body learn-body"><div class="tab-bar"><button class="tab-btn active" data-tab="arch-quiz-0">상황 1</button><button class="tab-btn " data-tab="arch-quiz-1">상황 2</button><button class="tab-btn " data-tab="arch-quiz-2">상황 3</button></div><div class="tab-content active" data-tab="arch-quiz-0"><div class="quiz" data-quiz="q1" data-explain="AWS가 노드를 관리해도 앱의 요청량, 배치 조건, PDB 같은 가용성 정책은 팀이 설계합니다."><div class="quiz-question">Auto Mode에서 팀이 직접 정해야 하는 것은?</div><div class="quiz-options"><button class="quiz-option" data-correct="true">앱의 CPU·메모리 요청량과 중단 허용 범위</button><button class="quiz-option" data-correct="false">관리형 Karpenter의 Helm 버전</button><button class="quiz-option" data-correct="false">노드의 AL2023 AMI 선택</button></div><div class="quiz-feedback" aria-live="polite"></div><button class="btn" data-reset-quiz="q1">다시 풀기</button></div></div><div class="tab-content " data-tab="arch-quiz-1"><div class="quiz" data-quiz="q2" data-explain="NodePool은 어떤 노드를 허용할지, NodeClass는 AWS에서 어떻게 만들지를 정합니다."><div class="quiz-question">Spot을 허용하는 조건과 subnet 설정은 어디에 둘까요?</div><div class="quiz-options"><button class="quiz-option" data-correct="false">둘 다 Pod 이미지에 설정</button><button class="quiz-option" data-correct="true">Spot 조건은 NodePool, subnet은 NodeClass</button><button class="quiz-option" data-correct="false">Spot 조건은 NodeClass, subnet은 NodePool</button></div><div class="quiz-feedback" aria-live="polite"></div><button class="btn" data-reset-quiz="q2">다시 풀기</button></div></div><div class="tab-content " data-tab="arch-quiz-2"><div class="quiz" data-quiz="q3" data-explain="Balanced의 판단 관점에 맞는 상황입니다. 실제 결정은 배치 가능성과 PDB·교체 예산 등도 확인해야 합니다."><div class="quiz-question">절감은 작은데 Pod 재시작 영향은 큽니다. 무엇을 검토할까요?</div><div class="quiz-options"><button class="quiz-option" data-correct="true">Balanced로 절감과 중단 비용을 함께 평가</button><button class="quiz-option" data-correct="false">CPU 사용량만 보고 모든 노드를 삭제</button><button class="quiz-option" data-correct="false">PDB를 삭제해 강제로 비용 절감</button></div><div class="quiz-feedback" aria-live="polite"></div><button class="btn" data-reset-quiz="q3">다시 풀기</button></div></div></div>
   </div>
 
   <!-- Slide 17: Thank You -->
@@ -1026,159 +1001,25 @@
     presenterNotes: {
       1: '세션 시작 슬라이드.\n\n자기소개와 세션 개요를 간략히 안내하세요.\n오늘 다룰 내용: Auto Mode 아키텍처, 노드 관리, 모니터링, 비용 최적화',
       2: 'Welcome! 이 블록에서는 Auto Mode 내부 구조와 Karpenter 기반 노드 관리를 다룹니다.\n약 35분 소요 예정.\n\n핵심 목표:\n- Auto Mode 아키텍처 이해\n- NodePool/NodeClass 설정 학습',
-      3: 'Auto Mode의 핵심 가치를 설명합니다.\n\n강조 포인트:\n- 관리형 Karpenter + 관리형 애드온의 결합\n- 기존 MNG 대비 운영 부담 대폭 감소\n- AWS가 컨트롤러 업데이트/패치 담당',
-      4: '세 가지 컴퓨팅 옵션 비교.\n\n청중 참여: 현재 어떤 방식 사용중인지 질문해보세요.\n\n핵심 메시지:\n- Auto Mode = MNG의 유연성 + Fargate의 편의성\n- 대부분의 워크로드에 적합한 선택',
-      5: 'Play 버튼 클릭하여 아키텍처 애니메이션 시연.\n\n설명 흐름:\n- API Server → Karpenter → EC2\n- Webhook으로 Pending Pod 감지\n- Leader Election으로 HA 보장',
-      6: 'default NodePool vs system NodePool 비교.\n\n핵심 개념:\n- requirements 필드가 인스턴스 선택의 핵심\n- consolidationPolicy로 비용 최적화\n- system은 애드온 전용, default는 일반 워크로드',
-      7: 'NodeClass는 AWS 리소스 설정 담당.\n\n설정 항목:\n- AMI, 서브넷, 보안그룹, EBS\n\nBottlerocket 추천 이유:\n- 빠른 부팅 (30초 이내)\n- 보안 강화 (read-only 루트 파일시스템)',
-      8: '탭별로 Compute/Spot/Graviton/GPU 패턴 시연.\n\n각 탭 클릭하며 설명:\n- Compute: 범용 워크로드\n- Spot: 비용 절감 (최대 90%)\n- Graviton: 가성비 최적화\n- GPU: ML/AI 워크로드',
-      9: 'Pod Pending → Node Ready 시간 흐름 시뮬레이션.\n\nStart 버튼으로 시연.\n\n단계별 소요 시간:\n- EC2 런칭: ~30초\n- Node 등록: ~15초\n- Pod 스케줄링: ~15초\n- 총 목표: 60-90초',
-      10: 'Karpenter의 인스턴스 선택 로직 시연.\n\n버튼을 순서대로 클릭.\n\n선택 기준:\n- 가격 (비용 효율성)\n- 가용성 (용량 확보)\n- 리소스 적합성 (낭비 최소화)\n\n팁: 다양한 인스턴스 타입 허용이 중요!',
+      3: "{timing: 2min} [요약] Karpenter는 Pod에 맞는 노드를 고르는 역할입니다. Auto Mode에서는 AWS가 이 기능과 노드 OS·주요 인프라 구성 요소를 관리합니다. 팀은 Pod 요청량, 배치 조건, 서비스 가용성을 설계합니다. Pod는 애플리케이션 실행 단위, Node는 Pod가 실행되는 서버라고 먼저 설명하세요. 오늘의 기준은 EKS 1.37과 직접 설치한 Karpenter v1.14.1입니다. 단, Karpenter 공식 호환성 표는 Kubernetes 1.37에 Karpenter 1.15.x를 요구합니다. 1.37 클러스터에 직접 설치한다면 v1.15 업그레이드 안내를 먼저 확인합니다. {cue: transition} 다음에는 팀이 직접 운영할 범위를 비교합니다.",
+      4: "{timing: 2min} [요약] 같은 노드 자동화라도 운영 책임이 다릅니다. Auto Mode는 AWS가 노드 OS와 관리형 구성 요소를 운영합니다. 직접 설치한 Karpenter는 팀이 Controller·CRD·IAM·AMI를 관리하므로 자유도와 운영 부담이 함께 커집니다. 기존 MNG와 Fargate 비교는 추가 탭에서만 다룹니다. 어느 방식이 무조건 빠르다고 단정하지 말고 필요한 제어 수준을 물어보세요. {cue: transition} 이제 앱이 노드에 배치되는 흐름을 따라갑니다.",
+      5: "{timing: 3min} [요약] Pod가 대기하고, Karpenter가 조건을 확인해 노드를 준비한 뒤, Scheduler가 Pod를 배치합니다. 첫 화면에서 전체 흐름을 보여주고 다음 단계로 한 번씩 진행하세요. 세 번째 단계에서 NodePool은 허용 조건, NodeClass는 AWS 생성 설정, NodeClaim은 한 대의 생성 요청이라는 역할만 익힙니다. Scheduler가 Karpenter를 직접 호출하거나 EC2가 Pod를 배치하는 구조로 설명하지 마세요. {cue: transition} 다음은 두 설정 중 먼저 NodePool입니다.",
+      6: '{timing: 2min} [요약] 기본 풀은 일반 앱 자리와 시스템 Pod 자리로 구분합니다. general-purpose는 amd64, system은 amd64/arm64이며 둘 다 On-Demand입니다. system의 taint를 허용하는 toleration이 있어야 배치 후보가 되며, toleration만으로 그 풀에 반드시 배치되지는 않습니다. 먼저 두 탭의 역할을 읽고 YAML은 질문이 있을 때만 펼칩니다. EKS 1.37에서는 두 기본 풀 모두 Balanced를 사용합니다. {cue: transition} 허용 조건을 봤으니 AWS 생성 설정으로 넘어갑니다.',
+      7: '{timing: 2min} [요약] NodeClass는 네트워크, 권한, 저장공간을 정합니다. Auto Mode는 NodeClass, 직접 설치한 Karpenter는 EC2NodeClass이므로 YAML을 그대로 섞지 않습니다. OS와 AMI는 AWS가 관리합니다. 상세 예제를 펼친 뒤 디스크를 80Gi에서 200Gi로 바꿔 결과를 보여주세요. 예제 태그, IAM 역할, EC2 Access Entry와 AmazonEKSAutoNodePolicy는 환경에 맞게 준비합니다. {cue: transition} 앱 요구가 다르면 커스텀 NodePool로 구분합니다.',
+      8: '{timing: 2min} [요약] 워크로드 목적을 먼저 고르고 조건을 확인합니다. Compute는 CPU 중심, Spot은 중단을 감수할 수 있는 작업, Graviton은 arm64 이미지 호환성, GPU는 가속기와 드라이버 지원 여부를 봅니다. 특정 계열을 모든 추론·학습에 고정 추천하지 않습니다. {cue: transition} 이 조건으로 노드가 준비되는 과정을 봅니다.',
+      9: '타임라인은 설명용 시뮬레이션이며 SLA가 아닙니다. 실제 시간은 인스턴스 가용성, 네트워크, 이미지 다운로드 및 초기화에 따라 달라집니다.',
+      10: '{timing: 2min} [요약] 후보를 좁히는 연습이며 실제 EC2 배치 전략이나 가격 계산기는 아닙니다. 계열, 세대, 크기를 차례로 누르면 마지막에 서로 다른 네 후보가 남습니다. 앱은 amd64와 arm64 모두 호환된다고 가정합니다. 실제 선택은 리소스와 배치 조건, 가용 용량과 가격도 반영하며 Graviton 한 종류를 고정 선호하지 않습니다. {cue: transition} 노드를 줄일 때도 Pod를 배치할 자리가 있어야 합니다.',
       11: '노드 통합으로 비용 절감하는 과정 시연.\n\nConsolidate 버튼 클릭.\n\n통합 순서:\n- 빈 노드 먼저 제거\n- 저활용 노드 통합\n- 워크로드 중단 최소화 방식',
-      12: 'WhenEmpty vs WhenEmptyOrUnderutilized 차이 시연.\n\n버튼으로 각 정책 동작 비교.\n\n권장 사항:\n- 프로덕션: 보수적 접근 (WhenEmpty)\n- 비용 최적화: WhenEmptyOrUnderutilized\n- Schedule로 업무 시간 외 통합 설정',
-      13: 'AMI 업데이트, 설정 변경 시 자동 감지 시연.\n\n핵심 포인트:\n- 롤링 교체 방식으로 안전하게 적용\n- NodePool 변경 시 기존 노드 영향\n- Drift 감지 → 자동 교체 트리거',
-      14: '동시 교체 노드 수 제한 설정.\n\nminAvailable 슬라이더로 시연하며 효과 확인.\n\n핵심 메시지:\n- 프로덕션 안정성의 핵심 설정\n- 서비스 가용성과 업데이트 속도의 균형\n- 권장: 최소 50% 이상 유지',
-      15: '체크리스트 항목 하나씩 클릭하며 YAML 확인.\n\n실무 효과:\n- Bottlerocket: 부팅 시간 50% 단축\n- 작은 EBS: 비용 절감 + 빠른 프로비저닝\n\n가장 효과적: Bottlerocket + 작은 EBS 조합',
-      16: '퀴즈로 핵심 내용 복습.\n\n청중 참여 유도하세요.\n\n팁:\n- 틀린 문제는 해당 슬라이드로 돌아가서 재설명 가능\n- 정답률로 이해도 확인',
+      12: "{timing: 3min} [요약] WhenEmpty는 빈 노드, WhenEmptyOrUnderutilized는 가능한 비용 절감, Balanced는 절감과 중단 비용을 함께 봅니다. 작은 절감·큰 중단 버튼부터 시작해 정책 간 판단 관점을 비교하세요. 이어서 빈 노드, 큰 절감·작은 중단을 선택합니다. 이 화면은 실제 점수 계산기를 재현한 것이 아니라 판단 관점을 설명하는 정성 예시입니다. 실제 스케줄링 제약과 PDB·예산 확인은 여전히 필요합니다. {cue: transition} 비용 정리와 별도로 새 설정을 반영하는 Drift를 살펴봅니다.",
+      13: '{timing: 2min} [요약] Drift는 기존 노드와 원하는 설정의 차이입니다. 새 AMI를 반영해야 하는 상황을 예로 듭니다. limits, weight, disruption 같은 동작 정책 변경은 Drift를 유발하지 않으며 요구사항의 허용 범위를 넓혔다고 기존 노드가 반드시 교체되지는 않습니다. 교체가 필요한 노드는 PDB와 NodePool 예산을 확인합니다. {cue: transition} 다음에서 한 번에 바꿀 수 있는 노드 수를 계산합니다.',
+      14: 'NodePool 예산은 중단 가능한 노드의 상한입니다. 비율은 올림, 복수 예산은 최솟값을 적용합니다. 최소 유지 입력은 NodePool 필드가 아니며 전체 노드 수에서 빼서 중단 상한으로 환산합니다. 시뮬레이션은 삭제 중·NotReady 노드가 없다고 가정합니다. 0이면 교체를 중지합니다.',
+      15: 'Auto Mode의 AMI와 보안 설정은 AWS가 관리합니다. ephemeralStorage는 이미지와 로그 용량에 맞춥니다. 특정 AMI나 작은 디스크가 일정 시간의 부팅 단축을 보장하지 않습니다.',
+      16: "{timing: 3min} [요약] 상황별 정답은 앱 요청량·중단 정책, Spot은 NodePool/subnet은 NodeClass, Balanced입니다. 각 탭에서 선택 후 이유를 설명합니다. {cue: transition} 다음 블록은 운영 중 진단입니다.",
       17: 'Block 1 마무리.\n\n안내 사항:\n- 5분 휴식\n- 다음 블록: 노드 수명주기 관리\n\n질문 있으신가요?',
       18: '이 블록을 마무리합니다.\n\n- 질문이 있으시면 지금 받겠습니다\n- 5분 휴식 후 다음 블록으로 진행합니다\n- 목차 페이지에서 전체 구조를 확인할 수 있습니다'
     }
   });
 
-  // ========================================
-  // Slide 4: Architecture Canvas Animation
-  // ========================================
-  (function() {
-    const archCanvas = document.getElementById('arch-canvas');
-    if (!archCanvas) return;
-    const archContainer = archCanvas.parentElement;
-    const BASE_W = 960, BASE_H = 400;
-
-    function resizeArchCanvas() {
-      const cw = archContainer.clientWidth;
-      const ch = archContainer.clientHeight;
-      if (cw <= 0 || ch <= 0) {
-        setupCanvas('arch-canvas', BASE_W, BASE_H);
-        return;
-      }
-      const dpr = window.devicePixelRatio || 1;
-      const scale = cw / BASE_W;
-      const scaledH = Math.min(Math.round(BASE_H * scale), ch);
-      archCanvas.width = Math.round(cw * dpr);
-      archCanvas.height = Math.round(scaledH * dpr);
-      archCanvas.style.width = cw + 'px';
-      archCanvas.style.height = scaledH + 'px';
-      archCanvas.style.maxWidth = 'none';
-      const c = archCanvas.getContext('2d');
-      c.setTransform(1, 0, 0, 1, 0, 0);
-      c.scale(scale * dpr, scale * dpr);
-    }
-    resizeArchCanvas();
-
-    const ctx = archCanvas.getContext('2d');
-    const width = BASE_W, height = BASE_H;
-
-    let step = 0;
-    const maxSteps = 7;
-
-    const components = [
-      { x: 20, y: 60, w: 240, h: 280, label: 'EKS Control Plane', color: Colors.accent },
-      { x: 40, y: 120, w: 200, h: 60, label: 'Karpenter Controller', color: Colors.blue },
-      { x: 40, y: 200, w: 200, h: 60, label: 'Scheduler', color: Colors.cyan },
-      { x: 290, y: 60, w: 650, h: 280, label: 'Data Plane', color: Colors.green },
-      { x: 310, y: 120, w: 130, h: 60, label: 'NodePool', color: Colors.yellow },
-      { x: 460, y: 120, w: 130, h: 60, label: 'NodeClass', color: Colors.orange },
-      { x: 610, y: 120, w: 140, h: 60, label: 'EC2 Instances', color: Colors.pink },
-      { x: 770, y: 120, w: 130, h: 60, label: 'Pods', color: Colors.green },
-    ];
-
-    const arrows = [
-      { from: 2, to: 1, label: 'Pending' },
-      { from: 1, to: 4, label: 'Evaluate' },
-      { from: 4, to: 5, label: '' },
-      { from: 5, to: 6, label: 'RunInstances' },
-      { from: 6, to: 7, label: 'Schedule' },
-    ];
-
-    function draw() {
-      ctx.clearRect(0, 0, width, height);
-
-      // Draw components based on step
-      for (let i = 0; i < Math.min(step, components.length); i++) {
-        const c = components[i];
-        if (i === 0 || i === 3) {
-          // Container boxes
-          drawRoundRect(ctx, c.x, c.y, c.w, c.h, 12, c.color + '15', c.color);
-          ctx.fillStyle = c.color;
-          ctx.font = '600 14px Pretendard, sans-serif';
-          ctx.textAlign = 'left';
-          ctx.fillText(c.label, c.x + 12, c.y + 24);
-        } else {
-          drawBox(ctx, c.x, c.y, c.w, c.h, c.label, c.color);
-        }
-      }
-
-      // Draw arrows
-      if (step > 3) {
-        for (let i = 0; i < Math.min(step - 3, arrows.length); i++) {
-          const arr = arrows[i];
-          const from = components[arr.from];
-          const to = components[arr.to];
-          let x1, y1, x2, y2;
-
-          if (arr.from === 2 && arr.to === 1) {
-            x1 = from.x + from.w / 2;
-            y1 = from.y;
-            x2 = to.x + to.w / 2;
-            y2 = to.y + to.h;
-          } else {
-            x1 = from.x + from.w;
-            y1 = from.y + from.h / 2;
-            x2 = to.x;
-            y2 = to.y + to.h / 2;
-          }
-
-          drawArrow(ctx, x1, y1, x2, y2, Colors.accentLt);
-          if (arr.label) {
-            const mx = (x1 + x2) / 2;
-            const my = (y1 + y2) / 2 - 12;
-            ctx.save();
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-            ctx.shadowBlur = 6;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 1;
-            drawText(ctx, arr.label, mx, my, { size: 12, color: '#fff' });
-            ctx.restore();
-          }
-        }
-      }
-
-      // Flow description
-      if (step >= maxSteps) {
-        drawText(ctx, 'Pod Pending -> Scheduler -> Karpenter -> NodePool -> EC2 API -> Node Register -> Pod Running',
-          width / 2, height - 30, { size: 13, weight: '600', color: Colors.cyan });
-      }
-    }
-
-    draw();
-    new ResizeObserver(() => { resizeArchCanvas(); draw(); }).observe(archContainer);
-
-    document.getElementById('arch-play-btn').addEventListener('click', () => {
-      step = 0;
-      const interval = setInterval(() => {
-        step++;
-        draw();
-        if (step >= maxSteps + arrows.length) {
-          clearInterval(interval);
-        }
-      }, 400);
-    });
-
-    document.getElementById('arch-reset-btn').addEventListener('click', () => {
-      step = 0;
-      draw();
-    });
-  })();
 
   // ========================================
   // Slide 6: NodeClass Builder
@@ -1189,32 +1030,25 @@
     if (!options || !preview) return;
 
     function updatePreview() {
-      const ami = document.querySelector('input[name="ami"]:checked')?.value || 'AL2023';
-      const subnet = document.querySelector('input[name="subnet"]:checked')?.value || 'private';
-      const ebs = document.querySelector('input[name="ebs"]:checked')?.value || '50';
-      const imdsv2 = document.querySelector('input[name="imdsv2"]')?.checked;
-
-      const subnetTag = subnet === 'private' ? 'private' : 'public';
-      const httpTokens = imdsv2 ? 'required' : 'optional';
-
-      preview.innerHTML = `<span class="code-label">YAML</span><span class="key">apiVersion</span>: <span class="string">karpenter.k8s.aws/v1</span>
-<span class="key">kind</span>: <span class="string">EC2NodeClass</span>
+      const subnet = options.querySelector('input[name="subnet"]:checked')?.value || 'private';
+      const ebs = options.querySelector('input[name="ebs"]:checked')?.value || '80';
+      preview.innerHTML = `<span class="key">apiVersion</span>: eks.amazonaws.com/v1
+<span class="key">kind</span>: NodeClass
 <span class="key">metadata</span>:
-  <span class="key">name</span>: <span class="string">default</span>
+  <span class="key">name</span>: workload
 <span class="key">spec</span>:
-  <span class="key">amiFamily</span>: <span class="string">${ami}</span>
+  <span class="key">role</span>: MyAutoModeNodeRole
   <span class="key">subnetSelectorTerms</span>:
     - <span class="key">tags</span>:
-        <span class="key">karpenter.sh/discovery</span>: <span class="string">my-cluster</span>
-        <span class="key">network-type</span>: <span class="string">${subnetTag}</span>
-  <span class="key">blockDeviceMappings</span>:
-    - <span class="key">deviceName</span>: <span class="string">/dev/xvda</span>
-      <span class="key">ebs</span>:
-        <span class="key">volumeSize</span>: <span class="string">${ebs}Gi</span>
-        <span class="key">volumeType</span>: <span class="string">gp3</span>
-  <span class="key">metadataOptions</span>:
-    <span class="key">httpTokens</span>: <span class="string">${httpTokens}</span>`;
+        <span class="key">karpenter.sh/discovery</span>: my-cluster
+        <span class="key">network-type</span>: ${subnet}
+  <span class="key">securityGroupSelectorTerms</span>:
+    - <span class="key">tags</span>:
+        <span class="key">karpenter.sh/discovery</span>: my-cluster
+  <span class="key">ephemeralStorage</span>:
+    <span class="key">size</span>: ${ebs}Gi`;
     }
+    updatePreview();
 
     options.addEventListener('change', updatePreview);
   })();
@@ -1236,12 +1070,11 @@
         return;
       }
       const dpr = window.devicePixelRatio || 1;
-      const scale = cw / BASE_W;
-      const scaledH = Math.min(Math.round(BASE_H * scale), ch);
-      tlCanvas.width = Math.round(cw * dpr);
-      tlCanvas.height = Math.round(scaledH * dpr);
-      tlCanvas.style.width = cw + 'px';
-      tlCanvas.style.height = scaledH + 'px';
+      const scale = Math.min(cw / BASE_W, ch / BASE_H);
+      tlCanvas.width = Math.round(BASE_W * scale * dpr);
+      tlCanvas.height = Math.round(BASE_H * scale * dpr);
+      tlCanvas.style.width = BASE_W * scale + 'px';
+      tlCanvas.style.height = BASE_H * scale + 'px';
       tlCanvas.style.maxWidth = 'none';
       const c = tlCanvas.getContext('2d');
       c.setTransform(1, 0, 0, 1, 0, 0);
@@ -1253,13 +1086,10 @@
     const width = BASE_W, height = BASE_H;
 
     const steps = [
-      { name: 'Pod Created', time: 0, duration: 1 },
-      { name: 'Pending Detected', time: 1, duration: 2 },
-      { name: 'NodePool Eval', time: 3, duration: 4 },
-      { name: 'EC2 RunInstances', time: 7, duration: 15 },
-      { name: 'AMI Boot', time: 22, duration: 30 },
-      { name: 'kubelet Register', time: 52, duration: 20 },
-      { name: 'Pod Running', time: 72, duration: 18 },
+      { name: '1. 배치 조건 확인', time: 0, duration: 7 },
+      { name: '2. EC2 용량 요청', time: 7, duration: 15 },
+      { name: '3. 노드 준비', time: 22, duration: 50 },
+      { name: '4. 앱 실행', time: 72, duration: 18 },
     ];
 
     const totalTime = 90;
@@ -1309,7 +1139,7 @@
       drawCircle(ctx, markerX, barY + barH / 2, 8, Colors.accentLt, '#fff');
 
       // Step boxes
-      const boxW = 130;
+      const boxW = 195;
       const boxH = 70;
       const boxY = 120;
       const gap = (width - 60 - steps.length * boxW) / (steps.length + 1);
@@ -1322,7 +1152,7 @@
         if (state === 'pending') {
           bgColor = Colors.bgSecond;
           borderColor = Colors.border;
-          textCol = Colors.textMuted;
+          textCol = Colors.textSec;
         } else if (state === 'active') {
           bgColor = Colors.yellow + '30';
           borderColor = Colors.yellow;
@@ -1334,8 +1164,9 @@
         }
 
         drawRoundRect(ctx, x, boxY, boxW, boxH, 10, bgColor, borderColor);
-        drawText(ctx, step.name, x + boxW / 2, boxY + 25, { size: 12, weight: '600', color: textCol });
-        drawText(ctx, `${step.time}s - ${step.time + step.duration}s`, x + boxW / 2, boxY + 48, { size: 10, color: Colors.textMuted });
+        drawText(ctx, step.name, x + boxW / 2, boxY + 23, { size: 16, weight: '600', color: textCol });
+        drawText(ctx, `${step.time}s - ${step.time + step.duration}s (예시)`, x + boxW / 2, boxY + 48, { size: 12, color: Colors.textSec });
+        drawText(ctx, { pending: '대기', active: '진행 중', done: '완료' }[state], x + boxW / 2, boxY + boxH + 22, { size: 14, color: textCol });
 
         // Connection line
         if (i < steps.length - 1) {
@@ -1362,15 +1193,6 @@
       }
       drawText(ctx, statusText, width / 2, height - 60, { size: 14, weight: '600', color: statusColor });
 
-      // Legend
-      drawRoundRect(ctx, 60, height - 40, 16, 16, 4, Colors.bgSecond, Colors.border);
-      drawText(ctx, 'Pending', 100, height - 32, { size: 11, color: Colors.textMuted, align: 'left' });
-
-      drawRoundRect(ctx, 180, height - 40, 16, 16, 4, Colors.yellow + '30', Colors.yellow);
-      drawText(ctx, 'In Progress', 220, height - 32, { size: 11, color: Colors.textMuted, align: 'left' });
-
-      drawRoundRect(ctx, 320, height - 40, 16, 16, 4, Colors.green + '30', Colors.green);
-      drawText(ctx, 'Done', 360, height - 32, { size: 11, color: Colors.textMuted, align: 'left' });
     }
 
     function animate(timestamp) {
@@ -1426,42 +1248,9 @@
     const grid = document.getElementById('instance-grid');
     if (!grid) return;
 
-    const instances = [
-      // T-series (burstable)
-      't3.micro', 't3.small', 't3.medium', 't3.large',
-      // M-series Intel
-      'm5.large', 'm5.xlarge', 'm5.2xlarge',
-      'm6i.large', 'm6i.xlarge', 'm6i.2xlarge',
-      'm7i.large', 'm7i.xlarge', 'm7i.2xlarge',
-      'm8i.large', 'm8i.xlarge', 'm8i.2xlarge',
-      // M-series Graviton
-      'm6g.large', 'm6g.xlarge', 'm6g.2xlarge',
-      'm7g.large', 'm7g.xlarge', 'm7g.2xlarge',
-      'm8g.large', 'm8g.xlarge', 'm8g.2xlarge',
-      // C-series Intel
-      'c5.large', 'c5.xlarge', 'c5.2xlarge',
-      'c6i.large', 'c6i.xlarge', 'c6i.2xlarge',
-      'c7i.large', 'c7i.xlarge', 'c7i.2xlarge',
-      'c8i.large', 'c8i.xlarge', 'c8i.2xlarge',
-      // C-series Graviton
-      'c6g.large', 'c6g.xlarge', 'c6g.2xlarge',
-      'c7g.large', 'c7g.xlarge', 'c7g.2xlarge',
-      'c8g.large', 'c8g.xlarge', 'c8g.2xlarge',
-      // R-series Intel
-      'r5.large', 'r5.xlarge', 'r5.2xlarge',
-      'r6i.large', 'r6i.xlarge', 'r6i.2xlarge',
-      'r7i.large', 'r7i.xlarge',
-      'r8i.large', 'r8i.xlarge',
-      // R-series Graviton
-      'r6g.large', 'r6g.xlarge',
-      'r7g.large', 'r7g.xlarge', 'r7g.2xlarge',
-      'r8g.large', 'r8g.xlarge', 'r8g.2xlarge',
-      // GPU
-      'g5.xlarge', 'g5.2xlarge', 'g6.xlarge', 'g6.2xlarge',
-      'p4d.24xlarge', 'p5.48xlarge'
-    ];
-
-    let filters = { category: false, generation: false, size: false };
+    const instances = ['t3.micro', 't3.large', 'm5.xlarge', 'm6i.xlarge', 'm7i.large', 'm7i.xlarge',
+      'm7g.xlarge', 'c6i.large', 'c7i.xlarge', 'r7i.xlarge', 'g5.xlarge', 'p5.48xlarge'];
+    let filters = { category: false, generation: false, size: false, result: false };
 
     function renderGrid() {
       grid.innerHTML = instances.map(inst => {
@@ -1472,26 +1261,26 @@
         const gen = parseInt(inst.match(/\d+/)?.[0] || '0');
         const size = inst.split('.')[1];
 
-        if (filters.category && !['m', 'c', 'r', 'g', 'p'].includes(category)) filtered = true;
-        if (filters.generation && gen <= 7) filtered = true;
-        if (filters.size && ['micro', 'small', 'medium'].includes(size)) filtered = true;
-
-        if (filters.category && filters.generation && filters.size) {
-          if (inst === 'm8g.2xlarge') selected = true;
-        }
+        if (filters.category && !['m', 'c', 'r'].includes(category)) filtered = true;
+        if (filters.generation && gen <= 6) filtered = true;
+        if (filters.size && ['micro', 'small', 'medium', 'large'].includes(size)) filtered = true;
+        selected = filters.result && !filtered;
 
         let cls = 'instance-box';
         if (filtered) cls += ' filtered';
         if (selected) cls += ' selected';
 
-        return `<span class="${cls}">${inst}</span>`;
+        return `<span class="${cls}" aria-label="${inst}: ${filtered ? '제외' : selected ? '남은 후보' : '검토 전'}">${inst}${selected ? ' ✓' : filtered ? ' ×' : ''}</span>`;
       }).join('');
+      document.getElementById('instance-result').textContent = filters.result
+        ? '남은 후보 4개: m7i.xlarge · m7g.xlarge · c7i.xlarge · r7i.xlarge. 여기서 한 종류를 고정 추천하지 않습니다.'
+        : '계열 → 세대 → 크기를 차례로 눌러 제외되는 후보를 확인하세요.';
     }
 
     renderGrid();
 
     document.getElementById('filter-reset').addEventListener('click', () => {
-      filters = { category: false, generation: false, size: false };
+      filters = { category: false, generation: false, size: false, result: false };
       renderGrid();
     });
 
@@ -1511,7 +1300,7 @@
     });
 
     document.getElementById('filter-select').addEventListener('click', () => {
-      filters = { category: true, generation: true, size: true };
+      filters = { category: true, generation: true, size: true, result: true };
       renderGrid();
     });
   })();
@@ -1533,12 +1322,11 @@
         return;
       }
       const dpr = window.devicePixelRatio || 1;
-      const scale = cw / BASE_W;
-      const scaledH = Math.min(Math.round(BASE_H * scale), ch);
-      conCanvas.width = Math.round(cw * dpr);
-      conCanvas.height = Math.round(scaledH * dpr);
-      conCanvas.style.width = cw + 'px';
-      conCanvas.style.height = scaledH + 'px';
+      const scale = Math.min(cw / BASE_W, ch / BASE_H);
+      conCanvas.width = Math.round(BASE_W * scale * dpr);
+      conCanvas.height = Math.round(BASE_H * scale * dpr);
+      conCanvas.style.width = BASE_W * scale + 'px';
+      conCanvas.style.height = BASE_H * scale + 'px';
       conCanvas.style.maxWidth = 'none';
       const c = conCanvas.getContext('2d');
       c.setTransform(1, 0, 0, 1, 0, 0);
@@ -1559,10 +1347,7 @@
     let consolidating = false;
     let savings = 0;
 
-    const podColors = [
-      Colors.blue, Colors.cyan, Colors.pink, Colors.orange,
-      Colors.accentLt, Colors.yellow, Colors.green
-    ];
+    let consolidationTimers = [];
 
     function draw() {
       ctx.clearRect(0, 0, width, height);
@@ -1581,23 +1366,10 @@
 
         drawRoundRect(ctx, node.x, node.y, nodeW, nodeH, 12, Colors.bgSecond, borderColor);
         drawText(ctx, `Node ${ni + 1}`, node.x + nodeW / 2, node.y + 20, { size: 13, weight: '600', color: Colors.textPri });
-        drawText(ctx, `$${node.cost.toFixed(2)}/hr`, node.x + nodeW / 2, node.y + nodeH - 15, { size: 11, color: Colors.textMuted });
+        drawText(ctx, `$${node.cost.toFixed(2)}/hr`, node.x + nodeW / 2, node.y + nodeH - 15, { size: 12, color: Colors.textSec });
 
-        // Pods
-        const podW = 35;
-        const podH = 35;
-        const podGap = 8;
-        const podsPerRow = 4;
-
-        node.pods.forEach((podId, pi) => {
-          const row = Math.floor(pi / podsPerRow);
-          const col = pi % podsPerRow;
-          const px = node.x + 15 + col * (podW + podGap);
-          const py = node.y + 50 + row * (podH + podGap);
-
-          drawRoundRect(ctx, px, py, podW, podH, 6, podColors[podId - 1] + '40', podColors[podId - 1]);
-          drawText(ctx, `P${podId}`, px + podW / 2, py + podH / 2, { size: 10, weight: '600', color: podColors[podId - 1] });
-        });
+        drawText(ctx, `${node.pods.length} Pods`, node.x + nodeW / 2, node.y + 88, { size: 26, weight: '700', color: Colors.textPri });
+        drawText(ctx, node.pods.length === 0 ? '빈 노드' : '예약된 앱 용량', node.x + nodeW / 2, node.y + 128, { size: 14, color: Colors.textSec });
       });
 
       // Update counter
@@ -1612,141 +1384,58 @@
       consolidating = true;
 
       // Step 1: Move pods from node 2 to node 1
-      setTimeout(() => {
+      consolidationTimers.push(setTimeout(() => {
         nodes[0].pods.push(5);
         nodes[1].pods = [];
         draw();
-      }, 500);
+      }, 500));
 
       // Step 2: Remove empty node 2
-      setTimeout(() => {
+      consolidationTimers.push(setTimeout(() => {
         nodes[1].removing = true;
         savings += 0.10;
         draw();
-      }, 1000);
+      }, 1000));
 
       // Step 3: Move pods from node 3 to node 1
-      setTimeout(() => {
+      consolidationTimers.push(setTimeout(() => {
         nodes[0].pods.push(6, 7);
         nodes[2].pods = [];
         draw();
-      }, 1500);
+      }, 1500));
 
       // Step 4: Remove empty node 3
-      setTimeout(() => {
+      consolidationTimers.push(setTimeout(() => {
         nodes[2].removing = true;
         savings += 0.10;
         draw();
-      }, 2000);
+      }, 2000));
 
       // Step 5: Remove already empty node 4
-      setTimeout(() => {
+      consolidationTimers.push(setTimeout(() => {
         nodes[3].removing = true;
         savings += 0.10;
         draw();
         consolidating = false;
-      }, 2500);
+        consolidationTimers = [];
+      }, 2500));
     });
 
     document.getElementById('consolidate-reset-btn').addEventListener('click', () => {
       consolidating = false;
+      consolidationTimers.forEach(timer => clearTimeout(timer));
+      consolidationTimers = [];
       savings = 0;
       nodes = [
-        { x: 80, y: 80, pods: [1, 2, 3, 4], cost: 0.10, removing: false },
-        { x: 320, y: 80, pods: [5], cost: 0.10, removing: false },
-        { x: 560, y: 80, pods: [6, 7], cost: 0.10, removing: false },
-        { x: 800, y: 80, pods: [], cost: 0.10, removing: false },
+        { x: 50, y: 80, pods: [1, 2, 3, 4], cost: 0.10, removing: false },
+        { x: 250, y: 80, pods: [5], cost: 0.10, removing: false },
+        { x: 450, y: 80, pods: [6, 7], cost: 0.10, removing: false },
+        { x: 650, y: 80, pods: [], cost: 0.10, removing: false },
       ];
       draw();
     });
   })();
 
-  // ========================================
-  // Slide 12: Consolidation Policy Comparison
-  // ========================================
-  (function() {
-    const grid = document.getElementById('policy-grid');
-    if (!grid) return;
-
-    function createNodes() {
-      return [
-        { id: 1, pods: 5, utilization: 80 },
-        { id: 2, pods: 1, utilization: 15 },
-        { id: 3, pods: 3, utilization: 45 },
-        { id: 4, pods: 0, utilization: 0 },
-        { id: 5, pods: 2, utilization: 25 },
-        { id: 6, pods: 4, utilization: 60 },
-      ];
-    }
-
-    let nodes = createNodes();
-
-    function renderNodes() {
-      grid.innerHTML = nodes.map(n => {
-        let cls = 'sim-node ';
-        if (n.utilization >= 50) cls += 'utilized';
-        else if (n.utilization > 0) cls += 'underutilized';
-        else cls += 'empty';
-        if (n.removing) cls += ' removing';
-
-        return `<div class="${cls}">
-          <span>Node ${n.id}</span>
-          <span style="font-size: 0.65rem;">${n.pods} pods</span>
-          <span style="font-size: 0.65rem;">${n.utilization}%</span>
-        </div>`;
-      }).join('');
-    }
-
-    renderNodes();
-
-    document.getElementById('policy-whenempty').addEventListener('click', () => {
-      // Only remove nodes with 0 pods
-      nodes = nodes.map(n => ({ ...n, removing: n.pods === 0 }));
-      renderNodes();
-      setTimeout(() => {
-        nodes = nodes.filter(n => !n.removing);
-        renderNodes();
-      }, 600);
-    });
-
-    document.getElementById('policy-underutilized').addEventListener('click', () => {
-      // Remove empty and consolidate underutilized
-      const sortedByUtil = [...nodes].sort((a, b) => a.utilization - b.utilization);
-
-      // Mark empty for removal
-      nodes = nodes.map(n => ({ ...n, removing: n.pods === 0 }));
-      renderNodes();
-
-      setTimeout(() => {
-        nodes = nodes.filter(n => !n.removing);
-        // Mark very underutilized for consolidation
-        nodes = nodes.map(n => ({ ...n, removing: n.utilization < 30 }));
-        renderNodes();
-
-        setTimeout(() => {
-          // Redistribute pods and remove
-          const remaining = nodes.filter(n => !n.removing);
-          const toRemove = nodes.filter(n => n.removing);
-          let extraPods = toRemove.reduce((sum, n) => sum + n.pods, 0);
-
-          remaining.forEach(n => {
-            const add = Math.min(extraPods, 2);
-            n.pods += add;
-            n.utilization = Math.min(100, n.utilization + add * 15);
-            extraPods -= add;
-          });
-
-          nodes = remaining;
-          renderNodes();
-        }, 600);
-      }, 600);
-    });
-
-    document.getElementById('policy-reset').addEventListener('click', () => {
-      nodes = createNodes();
-      renderNodes();
-    });
-  })();
 
   // ========================================
   // Slide 13: Drift Detection Flow
@@ -1815,20 +1504,20 @@
     let simRunning = false;
 
     const stateColors = {
-      healthy: { bg: 'var(--green)', border: 'var(--green)', text: '#fff' },
+      healthy: { bg: 'var(--green)', border: 'var(--green)', text: 'var(--bg-primary)' },
       drifted: { bg: 'var(--yellow)', border: 'var(--yellow)', text: '#000' },
       draining: { bg: 'var(--orange)', border: 'var(--orange)', text: '#fff' },
       new: { bg: 'var(--accent)', border: 'var(--accent)', text: '#fff' },
-      replaced: { bg: 'var(--green)', border: 'var(--green)', text: '#fff' }
+      replaced: { bg: 'var(--green)', border: 'var(--green)', text: 'var(--bg-primary)' }
     };
 
     function getNodeCount() { return parseInt(nodesSlider.value); }
     function getBudget() { return parseInt(pctSlider.value); }
     function getFixed() { return parseInt(fixedSlider.value); }
     function getMaxDisruption() {
-      const maxByPct = Math.max(1, Math.floor(getNodeCount() * getBudget() / 100));
+      const maxByPct = Math.ceil(getNodeCount() * getBudget() / 100);
       const fixed = getFixed();
-      return fixed > 0 ? Math.min(maxByPct, getNodeCount() - fixed) : maxByPct;
+      return fixed > 0 ? Math.max(0, Math.min(maxByPct, getNodeCount() - fixed)) : maxByPct;
     }
 
     function renderGrid() {
@@ -1841,7 +1530,7 @@
         const opacity = state === 'healthy' ? '0.6' : '1';
         const label = state === 'replaced' ? `N${i+1} ✓` : state === 'new' ? `N${i+1} ↑` : state === 'draining' ? `N${i+1} ↓` : `N${i+1}`;
         return `<div style="
-          width: 56px; height: 56px; border-radius: 10px;
+          width: 2.5rem; height: 2.5rem; border-radius: .4rem; flex-shrink: 0; white-space: nowrap;
           background: ${c.bg}; opacity: ${opacity};
           border: 2px solid ${c.border};
           display: flex; align-items: center; justify-content: center;
@@ -1855,16 +1544,16 @@
       const n = getNodeCount();
       const fixed = getFixed();
       const maxD = getMaxDisruption();
-      const minA = fixed > 0 ? Math.max(fixed, n - maxD) : n - maxD;
+      const minA = n - maxD;
       document.getElementById('nodes-value').textContent = n;
       document.getElementById('pct-value').textContent = getBudget() + '%';
       document.getElementById('fixed-value').textContent = fixed;
-      document.getElementById('max-disruption').textContent = Math.max(1, maxD);
+      document.getElementById('max-disruption').textContent = maxD;
       document.getElementById('min-available').textContent = minA;
 
       let budgetYaml = `- <span class="key">nodes</span>: <span class="string">"${getBudget()}%"</span>`;
       if (fixed > 0) {
-        budgetYaml += `\n      - <span class="key">nodes</span>: <span class="number">${fixed}</span>  <span class="comment"># minAvailable</span>`;
+        budgetYaml += `\n      - <span class="key">nodes</span>: <span class="string">"${Math.max(0, n - fixed)}"</span>  <span class="comment"># 중단 상한</span>`;
       }
       preview.innerHTML = `<span class="code-label">YAML</span><span class="key">spec</span>:
   <span class="key">disruption</span>:
@@ -1881,6 +1570,12 @@
       const maxD = getMaxDisruption();
       nodeStates = Array(n).fill('healthy');
       renderGrid();
+
+      if (maxD === 0) {
+        document.getElementById('drift-progress').textContent = '예산 0: 교체 중지';
+        simRunning = false;
+        return;
+      }
 
       // Step 1: Mark all as drifted
       document.getElementById('drift-progress').textContent = 'Drift 감지';
@@ -1948,6 +1643,44 @@
     updateMetrics();
     renderGrid();
   })();
+
+  // Learning walkthrough: keyboard-accessible, deterministic step selection.
+  (function initCapacityJourney() {
+    const root = document.getElementById('capacity-journey');
+    const steps = [["앱이 대기", "Pod Pending", "이 예시는 Pod Events에 FailedScheduling이 확인된 경우입니다. 기존 노드에 배치하지 못하는 이유를 확인합니다. 일반적인 Pending 전체를 노드 부족으로 단정하지 않습니다."], ["노드를 계획", "Karpenter", "Karpenter는 스케줄되지 못한 Pod를 관찰합니다. NodePool·NodeClass 조건과 요청 리소스를 확인해 추가 용량을 계획합니다."], ["두 설정을 확인", "NodePool + NodeClass", "NodePool은 어떤 노드를 허용할지, NodeClass는 AWS에서 어떻게 만들지를 정합니다. NodeClaim은 생성할 노드 한 대의 요청·상태를 나타냅니다."], ["노드가 준비", "EC2 → Ready", "인스턴스가 시작되고 클러스터에 등록됩니다. Auto Mode에서는 AWS가 노드 OS와 필요한 구성 요소를 관리합니다."], ["앱을 배치", "Scheduler → Pod", "준비된 노드에 Kubernetes Scheduler가 Pod를 배치합니다. 이후 이미지 다운로드와 앱 시작이 완료되어야 요청을 처리할 수 있습니다."]];
+    let current = 0;
+    function render() {
+      root.querySelectorAll('[data-journey]').forEach((b,i)=>b.setAttribute('aria-pressed',String(i===current)));
+      document.getElementById('journey-title').textContent = (current+1)+'. '+steps[current][0];
+      document.getElementById('journey-description').textContent = steps[current][2];
+      document.getElementById('journey-prev').disabled = current===0;
+      document.getElementById('journey-next').disabled = current===steps.length-1;
+    }
+    function move(n) { current=Math.max(0,Math.min(steps.length-1,n));render(); }
+    root.querySelectorAll('[data-journey]').forEach(b=>b.addEventListener('click',()=>move(Number(b.dataset.journey))));
+    document.getElementById('journey-prev').onclick=()=>move(current-1);
+    document.getElementById('journey-next').onclick=()=>move(current+1);
+    document.getElementById('journey-reset').onclick=()=>move(0);
+    document.addEventListener('keydown',e=>{
+      if (!root.closest('.slide').classList.contains('active') || !['ArrowUp','ArrowDown'].includes(e.key)) return;
+      e.preventDefault();move(current+(e.key==='ArrowDown'?1:-1));
+    });
+    render();
+  })();
+  (function initPolicyLab() {
+    const cases = [["empty", "빈 노드", "일반 워크로드 Pod가 없는 노드. 다른 교체 제약도 없다고 가정합니다.", ["정리 검토", "정리 검토", "정리 검토"]], ["small", "작은 절감 · 큰 중단", "Pod는 옮길 수 있지만, 재시작 영향에 비해 비용 절감이 작은 경우입니다.", ["유지", "통합 검토", "유지하는 방향"]], ["large", "큰 절감 · 작은 중단", "Pod를 옮길 수 있고, 비용 절감에 비해 재시작 영향이 작은 경우입니다.", ["유지", "통합 검토", "통합 검토"]]];
+    function choose(key) {
+      const c=cases.find(row=>row[0]===key);
+      document.querySelectorAll('[data-scenario]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.scenario===key)));
+      document.getElementById('policy-scenario-description').textContent=c[2];
+      document.querySelectorAll('[data-policy-result]').forEach((el,i)=>el.textContent=c[3][i]);
+    }
+    document.querySelectorAll('[data-scenario]').forEach(b=>b.addEventListener('click',()=>choose(b.dataset.scenario)));
+    choose('small');
+  })();
+  document.querySelectorAll('[data-reset-quiz]').forEach(button => {
+    button.addEventListener('click', () => quizManager.reset(button.dataset.resetQuiz));
+  });
 </script>
 </body>
 </html>

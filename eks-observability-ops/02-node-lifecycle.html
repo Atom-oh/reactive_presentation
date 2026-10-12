@@ -8,6 +8,69 @@
   <link rel="stylesheet" href="common/theme.css">
   <link rel="stylesheet" href="common/theme-override.css">
   <style>
+
+    /* Learning layer: one question, a short explanation, then optional detail. */
+    .learn-body { gap: 1rem; padding-bottom: 1.2rem; }
+    .learn-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1rem; }
+    .learn-grid.two { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .learn-card { padding: 1rem; }
+    .learn-card h3 { font-size: 1.15rem; color: var(--text-primary); margin-bottom: .65rem; }
+    .learn-card p { font-size: .95rem; line-height: 1.6; margin: .35rem 0; }
+    .learn-card .learn-api { display: block; color: var(--cyan); font-family: var(--font-mono); font-size: .72rem; overflow-wrap: anywhere; }
+    .learn-callout { padding: .8rem 1rem; border-left: .18rem solid var(--accent); background: var(--bg-card); color: var(--text-primary); line-height: 1.5; font-size: .95rem; }
+    .learn-detail { border: 1px solid var(--border); border-radius: .4rem; padding: .65rem .85rem; font-size: .85rem; }
+    .learn-detail summary { cursor: pointer; color: var(--cyan); font-weight: 600; }
+    .learn-detail[open] summary { margin-bottom: .65rem; }
+    .learn-detail .code-block { font-size: .76rem; line-height: 1.3; }
+    .learn-detail p { margin-top: .5rem; }
+    .learn-detail-scroll[open] { max-height: 17vh; overflow: auto; }
+    .learn-note { color: var(--text-secondary); font-size: .85rem; line-height: 1.5; }
+    .learn-chain { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: .65rem; }
+    .learn-step { display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start; position:relative; min-height:7rem; text-align: left; font: inherit; padding: .85rem; color: var(--text-secondary); background: var(--bg-card); border: 2px solid var(--border); border-radius: .45rem; cursor: pointer; }
+    .learn-step[aria-pressed="true"] { border-color: var(--accent); color: var(--text-primary); background: var(--accent-glow); }
+    .learn-step span { display: block; font-size: .85rem; line-height: 1.45; }
+    .learn-step strong { display: block; margin: .4rem 0; font-size: 1rem; }
+    .learn-step img { position:absolute; top:.8rem; right:.8rem; width: 1.8rem; height: 1.8rem; object-fit: contain; }
+    .learn-controls { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+    .learn-controls button:disabled { opacity:.45; cursor:default; }
+    .learn-controls [aria-pressed="true"] { border-color:var(--accent); background:var(--accent-glow); color:var(--text-primary); }
+    .learn-big { font-size: 2rem; color:var(--cyan); font-weight:700; }
+    .learn-verdict { display:block; padding:.55rem .65rem; margin-top:.7rem; background:var(--bg-secondary); font-weight:600; color:var(--cyan); }
+    .learn-quiz .quiz-question { font-size:1.2rem; line-height:1.5; }
+    .learn-quiz .quiz-option { padding:.8rem 1rem; font-size:1rem; text-align:left; }
+    .learn-quiz .quiz-explain { font-size:1rem; line-height:1.6; }
+    .learn-body button:focus-visible, .learn-detail summary:focus-visible { outline:3px solid var(--cyan); outline-offset:3px; }
+    .slide-header .subtitle { color: var(--text-secondary); }
+    :root { --text-muted: var(--text-secondary); }
+    .btn.btn-primary, .tab-btn.active { background: var(--accent); color: var(--bg-primary); }
+    .code-label { font-size: .8rem; }
+    .slide-body a { font-size: max(.8rem, 18.667px) !important; }
+    .learn-detail a, .buffer-options a { color: var(--cyan); }
+    #spot-lesson:has(details[open]) .spot-steps { display: none; }
+    #spot-lesson:has(details[open]) .learn-controls { display: none; }
+    .spot-steps { grid-template-columns: repeat(4,minmax(0,1fr)); }
+    .spot-lane { display: flex; flex-direction: column; gap: .5rem; }
+    .spot-lane img { width: 2rem; height: 2rem; }
+    .spot-status { font-size: 1.25rem; font-weight: 700; color: var(--cyan); }
+    #spot-outcome { min-height: 3.2rem; }
+    #op-explanation { margin-top: .75rem; }
+    .buffer-options { display: grid; gap: .7rem; }
+    .buffer-options p { margin: .25rem 0; font-size: .95rem; line-height: 1.5; }
+    .dashboard-body { gap: .6rem; padding-bottom: 2rem; }
+    .dashboard-stats { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: .5rem; }
+    .dashboard-stat { padding: .5rem .7rem; background: var(--bg-card); border-radius: .3rem; }
+    .dashboard-stat span { display: block; font-size: .8rem; color: var(--text-secondary); }
+    .dashboard-stat strong { display: block; font-size: 1.15rem; color: var(--cyan); }
+    .dashboard-chart { height: 7rem; flex: 0 0 7rem; }
+    .dashboard-data { display: grid; grid-template-columns: 1.1fr 1fr; gap: 1rem; min-height: 0; }
+    .dashboard-data table { font-size: .8rem; margin: 0; }
+    .dashboard-data th, .dashboard-data td { padding: .18rem .4rem; }
+    .dashboard-data h3 { font-size: 1rem; margin-bottom: .35rem; }
+    .dashboard-events { font-size: .8rem; line-height: 1.45; list-style: none; padding: 0; margin: 0; }
+    .dashboard-events li { padding: .2rem 0; }
+    .dashboard-events strong { color: var(--cyan); }
+
+    .promql-query { white-space: pre-wrap; overflow-wrap: anywhere; }
     /* Command Cards */
     .command-cards {
       display: grid;
@@ -239,17 +302,17 @@
 
     /* Overprovisioning Slide */
     .overprov-flow { display: flex; flex-direction: column; gap: .5rem; }
-    .overprov-step { display: flex; align-items: center; gap: .5rem; padding: .42rem .58rem; background: var(--bg-tertiary); border-radius: .33rem; border-left: 3px solid var(--accent); opacity: 0.4; transition: all 0.4s ease; }
+    .overprov-step { display: flex; align-items: center; gap: .5rem; padding: .42rem .58rem; background: var(--bg-tertiary); border-radius: .33rem; border-left: 3px solid var(--border); transition: all 0.4s ease; }
     .overprov-step.active { opacity: 1; border-left-color: var(--green); }
     .overprov-nodes { display: grid; grid-template-columns: repeat(4, 1fr); gap: .33rem; margin-top: .5rem; }
     .overprov-node { background: var(--bg-card); border: 1px solid var(--border); border-radius: .33rem; padding: .33rem; min-height: 2.5rem; display: flex; flex-wrap: wrap; gap: .17rem; align-content: flex-start; transition: all 0.4s ease; }
     .overprov-node.new-node { border-color: var(--green); box-shadow: 0 0 .5rem rgba(0, 206, 201, 0.2); }
-    .overprov-pod { width: 1.17rem; height: 1.17rem; border-radius: .17rem; display: flex; align-items: center; justify-content: center; font-size: .5rem; font-weight: 700; transition: all 0.3s ease; }
+    .overprov-pod { width: 1.35rem; height: 1.35rem; border-radius: .17rem; display: flex; align-items: center; justify-content: center; font-size: .8rem; font-weight: 700; transition: all 0.3s ease; }
     .overprov-pod.dummy { background: rgba(0, 206, 201, 0.15); border: 1px dashed var(--cyan); color: var(--cyan); }
-    .overprov-pod.real { background: rgba(108, 92, 231, 0.3); border: 1px solid var(--accent); color: var(--accent-light); }
+    .overprov-pod.real { background: rgba(108, 92, 231, 0.3); border: 1px solid var(--accent); color: var(--text-primary); }
     .overprov-pod.evicted { opacity: 0; transform: scale(0); }
-    .overprov-pod.pending { opacity: 0.4; border-style: dotted; }
-    .overprov-legend { display: flex; gap: .67rem; font-size: .75rem; color: var(--text-muted); margin-top: .33rem; }
+    .overprov-pod.pending { border-style: dotted; color: var(--yellow); }
+    .overprov-legend { display: flex; gap: .67rem; font-size: .8rem; color: var(--text-secondary); margin-top: .33rem; }
     .overprov-legend span { display: flex; align-items: center; gap: .17rem; }
   </style>
 </head>
@@ -269,42 +332,27 @@
     </div>
 
     <!-- Slide 2: Pain Point -->
-    <div class="slide">
-      <div class="slide-header">
-        <h1>노드 가용성 모니터링이 어려운 이유</h1>
-        <p class="subtitle">Block 2: 노드 라이프사이클 & 모니터링</p>
-      </div>
-      <div class="slide-body">
-        <div class="pain-quote">
-          "Auto Mode에서 노드가 갑자기 사라지는데, 왜 사라졌는지 파악하기 어렵습니다"
-        </div>
-        <div class="pain-quote">
-          "Spot 인터럽트인지, Consolidation인지, Drift 교체인지 구분이 안 됩니다"
-        </div>
-        <div style="margin-top: 24px;">
-          <h3>핵심 과제</h3>
-          <ul style="margin-top: 12px;">
-            <li><strong>노드 종료 원인 가시성 부족</strong> — 왜 이 노드가 사라졌는지 로그 추적 필요</li>
-            <li><strong>Karpenter 이벤트 추적 어려움</strong> — Consolidation, Drift, Expiry 구분 필요</li>
-            <li><strong>Spot 인터럽트 사전 감지 필요</strong> — 2분 경고 내에 Pod 안전 이동</li>
-          </ul>
-        </div>
-        <div class="callout callout-info" style="margin-top: 24px;">
-          <strong>이 블록에서 학습할 내용:</strong> 노드 상태 시각화, kubectl 진단, Prometheus 쿼리, Spot 대응, expireAfter 전략, AlertManager 알림 구성
-        </div>
-      </div>
-    </div>
+  <div class="slide ">
+    <div class="slide-header"><h1>노드가 바뀌는 이유는 다릅니다</h1><p class="subtitle">Block 2 · 같은 “노드 종료”라도 확인할 원인은 다릅니다</p></div>
+    <div class="slide-body learn-body"><div class="learn-grid two"><div class="card learn-card"><h3>Consolidation · 노드 정리</h3><p>Pod를 다른 곳에 배치할 수 있어<br>불필요한 노드를 줄이는 과정입니다.</p></div><div class="card learn-card"><h3>Drift · 새 설정 반영</h3><p>원하는 설정과 현재 노드가 달라<br>새 노드로 교체하는 과정입니다.</p></div><div class="card learn-card"><h3>Expiration · 수명 만료</h3><p><code>expireAfter</code>에 도달해<br>노드 교체를 시작하는 경우입니다.</p></div><div class="card learn-card"><h3>Spot interruption · 용량 회수</h3><p>EC2가 Spot 인스턴스를 회수합니다.<br>PDB로 회수를 막을 수는 없습니다.</p></div></div><div class="learn-callout"><strong>진단 순서:</strong> 앱이 영향을 받았나? → 노드가 준비됐나? → 이벤트에 어떤 이유가 남았나?</div></div>
+  </div>
 
     <!-- Slide 2: Grafana-style Node Dashboard Simulator -->
     <div class="slide">
       <div class="slide-header" style="margin-bottom: 8px;">
-        <h1>Grafana: EKS Node Monitoring</h1>
-        <p class="subtitle">CPU Requests vs Usage — Karpenter 판단 기준 시각화</p>
+        <h1>예약량과 실제 사용량을 구분합니다</h1>
+        <p class="subtitle">Requests = 스케줄링 예약 · Usage = 실제 사용량 · 임계값은 교육용 예시</p>
       </div>
-      <div class="slide-body" style="gap: 0;">
-        <div class="canvas-container" style="flex: 1; position: relative;">
+      <div class="slide-body dashboard-body">
+        <div class="dashboard-stats" id="dashboard-stats"></div>
+        <div class="canvas-container dashboard-chart">
           <canvas id="dashboard-canvas"></canvas>
-          <div class="btn-group" style="justify-content: center; position: absolute; bottom: 4px; left: 0; right: 0; z-index: 10;">
+        </div>
+        <div class="dashboard-data">
+          <div><h3>노드별 예약량과 사용량</h3><table><thead><tr><th>노드</th><th>상태</th><th>유형</th><th>Requests</th><th>Usage</th></tr></thead><tbody id="dashboard-nodes"></tbody></table></div>
+          <div><h3>최근 이벤트 · 교육용</h3><ul class="dashboard-events" id="dashboard-events" aria-live="polite"></ul><p class="learn-note">낮은 사용량만으로 노드를 삭제하지 않습니다. 아래 버튼은 개념을 설명하는 시뮬레이션입니다.</p></div>
+        </div>
+          <div class="btn-group" style="justify-content: center;">
             <button class="btn" id="btn-add-node">노드 추가</button>
             <button class="btn" id="btn-add-workload">워크로드 추가</button>
             <button class="btn" style="border-color: var(--orange); color: var(--orange);" id="btn-remove-workload">워크로드 삭제</button>
@@ -312,89 +360,39 @@
             <button class="btn" style="border-color: var(--yellow); color: var(--yellow);" id="btn-consolidation">Consolidation</button>
             <button class="btn btn-sm" id="btn-reset">Reset</button>
           </div>
-        </div>
       </div>
     </div>
 
     <!-- Slide 3: kubectl Diagnostics -->
-    <div class="slide">
-      <div class="slide-header">
-        <h1>kubectl 진단 명령어</h1>
-        <p class="subtitle">노드 상태 및 Karpenter 이벤트 확인</p>
-      </div>
-      <div class="slide-body">
-        <div class="command-cards" id="command-cards">
-          <div class="command-card" data-cmd="1">
-            <div class="command-header">kubectl get nodepools</div>
-            <div class="command-output">
-              <div class="code-block">NAME              NODECLASS   NODES   READY   AGE
-general-purpose   default     8       8       5d
-system            default     2       2       5d
-gpu-workload      gpu         0       0       5d</div>
-            </div>
-          </div>
-          <div class="command-card" data-cmd="2">
-            <div class="command-header">kubectl get nodeclaims -o wide</div>
-            <div class="command-output">
-              <div class="code-block">NAME          TYPE          ZONE         CAP-TYPE   NODE          READY   AGE
-nc-abc123     m5.xlarge     ap-ne-2a     on-demand  ip-10-0-1-5   True    2h
-nc-def456     c5.2xlarge    ap-ne-2b     spot       ip-10-0-2-8   True    45m
-nc-ghi789     m5.2xlarge    ap-ne-2c     on-demand  ip-10-0-3-2   True    3h
-nc-jkl012     r5.xlarge     ap-ne-2a     spot       ip-10-0-1-9   True    1h</div>
-            </div>
-          </div>
-          <div class="command-card" data-cmd="3">
-            <div class="command-header">kubectl get nodes -L karpenter.sh/nodepool,karpenter.sh/capacity-type</div>
-            <div class="command-output">
-              <div class="code-block">NAME          STATUS   ROLES    AGE   NODEPOOL          CAPACITY-TYPE
-ip-10-0-1-5   Ready    <none>   2h    general-purpose   on-demand
-ip-10-0-2-8   Ready    <none>   45m   general-purpose   spot
-ip-10-0-3-2   Ready    <none>   3h    general-purpose   on-demand
-ip-10-0-1-9   Ready    <none>   1h    general-purpose   spot</div>
-            </div>
-          </div>
-          <div class="command-card" data-cmd="4">
-            <div class="command-header">kubectl get events --sort-by='.lastTimestamp' | grep karpenter</div>
-            <div class="command-output">
-              <div class="code-block"><span class="timestamp">12m</span>   Normal   <span class="event-ok">Launched</span>         <span class="keyword">karpenter</span>   nodeclaim/nc-abc123   Launched node ip-10-0-1-5
-<span class="timestamp">10m</span>   Normal   <span class="event-info">Registered</span>       <span class="keyword">karpenter</span>   nodeclaim/nc-abc123   Registered node
-<span class="timestamp">5m</span>    Normal   <span class="event-warn">Consolidating</span>    <span class="keyword">karpenter</span>   nodeclaim/nc-xyz789   Consolidating node (underutilized)
-<span class="timestamp">3m</span>    Warning  <span class="event-error">SpotInterrupted</span>  <span class="keyword">karpenter</span>   nodeclaim/nc-old123   Spot instance interrupted
-<span class="timestamp">2m</span>    Normal   <span class="event-info">Drifted</span>          <span class="keyword">karpenter</span>   nodeclaim/nc-def456   NodeClass changed</div>
-            </div>
-          </div>
-          <div class="command-card" data-cmd="5">
-            <div class="command-header">kubectl get pods -A --field-selector=status.phase=Pending</div>
-            <div class="command-output">
-              <div class="code-block">NAMESPACE     NAME                      READY   STATUS    AGE
-default       web-app-7d9f8b6c5-xyz    0/1     Pending   2m
-production    api-server-5c8d7e-abc    0/1     Pending   1m
-monitoring    prometheus-0             0/1     Pending   30s</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+  <div class="slide ">
+    <div class="slide-header"><h1>Pod → 노드 → 이벤트 순서로 봅니다</h1><p class="subtitle">명령어를 외우기보다, 결과에서 확인할 질문을 기억하세요</p></div>
+    <div class="slide-body learn-body"><div class="tab-bar"><button class="tab-btn active" data-tab="diag-pod">1. 앱 상태</button><button class="tab-btn " data-tab="diag-node">2. 노드 상태</button><button class="tab-btn " data-tab="diag-reason">3. 교체 원인</button></div><div class="tab-content active" data-tab="diag-pod"><div class="learn-grid two"><div class="card learn-card"><h3>Pod가 어디서 멈췄나요?</h3><div class="code-block" style="white-space:pre-wrap;font-size:.82rem;line-height:1.55">kubectl get pods -A --field-selector=status.phase=Pending
+kubectl describe pod &lt;pod&gt; -n &lt;namespace&gt;</div></div><div class="card learn-card"><h3>무엇을 읽어야 하나요?</h3><p>Events에 <strong>FailedScheduling</strong>이 있으면 CPU·메모리 요청량, taint, 배치 조건부터 확인합니다.</p><p>이미 노드에 배치됐다면 이미지 다운로드·볼륨·앱 시작 문제도 확인합니다. Pending이 곧 노드 부족은 아닙니다.</p></div></div></div><div class="tab-content " data-tab="diag-node"><div class="learn-grid two"><div class="card learn-card"><h3>요청한 노드가 준비됐나요?</h3><div class="code-block" style="white-space:pre-wrap;font-size:.82rem;line-height:1.55">kubectl get nodepools
+kubectl get nodeclaims -o wide
+kubectl describe nodeclaim &lt;nodeclaim&gt;</div></div><div class="card learn-card"><h3>무엇을 읽어야 하나요?</h3><p>NodeClaim의 <strong>Conditions·Events</strong>에서 생성, 등록, 준비 단계가 어디까지 진행됐는지 확인합니다.</p><p>NodePool·NodeClass 조건이 맞는지, IAM·subnet·EC2 용량에 문제가 있는지 이벤트를 보고 좁힙니다.</p></div></div></div><div class="tab-content " data-tab="diag-reason"><div class="learn-grid two"><div class="card learn-card"><h3>무슨 이유로 바뀌었나요?</h3><div class="code-block" style="white-space:pre-wrap;font-size:.82rem;line-height:1.55">kubectl get events -A \
+  --field-selector involvedObject.kind=NodeClaim \
+  --sort-by='.lastTimestamp'</div></div><div class="card learn-card"><h3>무엇을 읽어야 하나요?</h3><p><strong>같은 노드·같은 시간</strong>의 교체 이벤트를 앱 장애 시각과 비교합니다.</p><p>NodeClaim 이벤트만으로 부족하면 관련 Node·Pod 이벤트도 확인합니다. 종료 원인은 메트릭 하나로 단정하지 않습니다.</p></div></div></div><p class="learn-note">&lt;pod&gt;, &lt;namespace&gt;, &lt;nodeclaim&gt;은 실제 이름으로 바꿉니다. 명령은 조회용입니다.</p></div>
+  </div>
 
     <!-- Slide 4: Prometheus Queries -->
     <div class="slide">
       <div class="slide-header">
-        <h1>Prometheus 쿼리: 노드 모니터링</h1>
-        <p class="subtitle">핵심 Karpenter 메트릭 쿼리</p>
+        <h1>대시보드는 질문에 답하게 만듭니다</h1>
+        <p class="subtitle">노드 수·대기 Pod·Spot 비율·시작 지연 · 표시 수치는 예시</p>
       </div>
       <div class="slide-body">
         <div class="tab-bar">
-          <button class="tab-btn active" data-tab="prom1">총 노드 수</button>
-          <button class="tab-btn" data-tab="prom2">Pending Pods</button>
-          <button class="tab-btn" data-tab="prom3">Spot 비율</button>
-          <button class="tab-btn" data-tab="prom4">프로비저닝 P99</button>
+          <button class="tab-btn active" data-tab="prom1">노드 수가 바뀌었나?</button>
+          <button class="tab-btn" data-tab="prom2">앱이 기다리나?</button>
+          <button class="tab-btn" data-tab="prom3">Spot 의존도는?</button>
+          <button class="tab-btn" data-tab="prom4">시작이 느린가?</button>
         </div>
         <div class="tab-content active" data-tab="prom1">
           <div class="promql-display">
-            <div class="promql-query">karpenter_cluster_state_node_count</div>
-            <p style="color: var(--text-secondary); font-size: .88rem; margin-bottom: 16px;">클러스터 내 현재 노드 수 추적</p>
+            <div class="promql-query">count by (label_karpenter_sh_nodepool) (kube_node_labels{label_karpenter_sh_nodepool!=""})</div>
+            <p style="color: var(--text-secondary); font-size: .88rem; margin-bottom: 16px;">노드 수 변화는 “무슨 일이 생겼나”의 시작점입니다. 원인은 이벤트와 함께 봅니다. (node 라벨 allowlist 필요)</p>
             <div class="metric-bar">
-              <span class="metric-bar-label">general-purpose</span>
+              <span class="metric-bar-label">workload</span>
               <div class="metric-bar-track"><div class="metric-bar-fill" style="width: 80%; background: var(--green);"></div></div>
               <span class="metric-bar-value">8</span>
             </div>
@@ -412,22 +410,22 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
         </div>
         <div class="tab-content" data-tab="prom2">
           <div class="promql-display">
-            <div class="promql-query">karpenter_pods_state{phase="Pending"}</div>
-            <p style="color: var(--text-secondary); font-size: .88rem; margin-bottom: 16px;">스케줄 대기 중인 Pod 수 (프로비저닝 필요 신호)</p>
+            <div class="promql-query">sum(kube_pod_status_phase{phase="Pending"})</div>
+            <p style="color: var(--text-secondary); font-size: .88rem; margin-bottom: 16px;">전체 Pending Pod 수. 이미 스케줄된 시작 대기 Pod도 포함하며 Unschedulable과 구분합니다.</p>
             <div class="metric-bar">
               <span class="metric-bar-label">Current</span>
               <div class="metric-bar-track"><div class="metric-bar-fill" style="width: 30%; background: var(--yellow);"></div></div>
               <span class="metric-bar-value">3</span>
             </div>
             <div class="callout callout-warning" style="margin-top: 16px;">
-              <strong>Alert 조건:</strong> karpenter_pods_state{phase="Pending"} > 10 for 5m
+              <strong>Alert 조건:</strong> sum(kube_pod_status_phase{phase="Pending"}) > 10 for 5m
             </div>
           </div>
         </div>
         <div class="tab-content" data-tab="prom3">
           <div class="promql-display">
-            <div class="promql-query">count(karpenter_pods_state{capacity_type="spot"}) / count(karpenter_pods_state) * 100</div>
-            <p style="color: var(--text-secondary); font-size: .88rem; margin-bottom: 16px;">전체 중 Spot 인스턴스 비율 (pods_state의 capacity_type 라벨 활용)</p>
+            <div class="promql-query">(count(kube_node_labels{label_karpenter_sh_capacity_type="spot"}) or vector(0)) / count(kube_node_labels{label_karpenter_sh_nodepool!=""}) * 100</div>
+            <p style="color: var(--text-secondary); font-size: .88rem; margin-bottom: 16px;">Spot 중단 시 영향을 가늠하는 보조 지표입니다. Pod 개수가 아닌 노드 수의 비율입니다. (라벨 allowlist 필요)</p>
             <div class="metric-bar">
               <span class="metric-bar-label">Spot 비율</span>
               <div class="metric-bar-track"><div class="metric-bar-fill" style="width: 40%; background: var(--cyan);"></div></div>
@@ -447,8 +445,8 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
         </div>
         <div class="tab-content" data-tab="prom4">
           <div class="promql-display">
-            <div class="promql-query">histogram_quantile(0.99, rate(karpenter_pods_startup_duration_seconds_bucket[5m]))</div>
-            <p style="color: var(--text-secondary); font-size: .88rem; margin-bottom: 16px;">Pod 생성~Running까지 P99 지연 시간 (노드 프로비저닝 포함)</p>
+            <div class="promql-query">max(karpenter_pods_startup_duration_seconds{quantile="0.99"})</div>
+            <p style="color: var(--text-secondary); font-size: .88rem; margin-bottom: 16px;">직접 설치한 Karpenter Controller 수집 필요, Summary 타입이라 quantile label로 조회 · Pod 시작 시간이며 Node Ready 시간과 다름</p>
             <div class="metric-bar">
               <span class="metric-bar-label">P50</span>
               <div class="metric-bar-track"><div class="metric-bar-fill" style="width: 30%; background: var(--green);"></div></div>
@@ -475,28 +473,35 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
     <!-- Slide 5: Spot Interrupt Simulation -->
     <div class="slide">
       <div class="slide-header">
-        <h1>Spot 인터럽트 시뮬레이션</h1>
-        <p class="subtitle">EventBridge → SQS → Karpenter → Pod 퇴거 → 재스케줄링 전체 플로우</p>
+        <h1>Spot 회수 통지가 오면?</h1>
+        <p class="subtitle">Pod 종료 처리와 대체 노드 준비를 함께 시작합니다</p>
       </div>
-      <div class="slide-body" style="gap: 12px;">
-        <div class="canvas-container" style="flex: 1;">
-          <canvas id="spot-canvas"></canvas>
+      <div class="slide-body learn-body" id="spot-lesson">
+        <div class="learn-chain spot-steps">
+          <button class="learn-step" data-spot-step="0" aria-pressed="true"><span>01</span><strong>평상시</strong><span>Spot에서 앱 실행</span></button>
+          <button class="learn-step" data-spot-step="1" aria-pressed="false"><span>02</span><strong>회수 통지</strong><span>종료 기한 확인</span></button>
+          <button class="learn-step" data-spot-step="2" aria-pressed="false"><span>03</span><strong>동시에 대응</strong><span>종료 처리 + 대체 준비</span></button>
+          <button class="learn-step" data-spot-step="3" aria-pressed="false"><span>04</span><strong>결과 확인</strong><span>앱이 준비됐나?</span></button>
         </div>
-        <div class="btn-group" style="justify-content: center;">
-          <button class="btn btn-primary" id="btn-start-interrupt">인터럽트 시작</button>
-          <button class="btn btn-sm" id="btn-reset-spot">Reset</button>
+        <div class="learn-grid two" aria-live="polite">
+          <div class="card learn-card spot-lane"><h3>기존 Spot 노드</h3><div class="spot-status" id="spot-old-status"></div><p id="spot-old-description"></p></div>
+          <div class="card learn-card spot-lane"><h3>대체 용량과 앱</h3><div class="spot-status" id="spot-new-status"></div><p id="spot-new-description"></p></div>
         </div>
-        <div style="margin-top: auto; padding-top: 8px; text-align: right;">
-          <a href="https://atomoh.gitbook.io/kubernetes-docs/amazon-eks/eks-auto-mode/04-spot-strategies" target="_blank" style="font-size: .75rem; color: var(--text-muted); text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">📖 더 알아보기: Spot 노드 활용 전략</a>
+        <div class="learn-controls">
+          <button class="btn" id="spot-prev">이전 단계</button><button class="btn btn-primary" id="spot-next">다음 단계</button><button class="btn" id="btn-reset-spot">처음부터</button>
+          <span class="learn-note">단계 버튼 또는 ↑ ↓</span>
         </div>
+        <div class="learn-controls"><strong>결과 비교:</strong><button class="btn" data-spot-outcome="ready" aria-pressed="true">용량·앱 준비가 제때 완료</button><button class="btn" data-spot-outcome="late" aria-pressed="false">준비가 늦어짐</button></div>
+        <div class="learn-callout" id="spot-outcome" aria-live="polite"></div>
+        <details class="learn-detail"><summary>직접 설치한 Karpenter의 통지 경로와 주의점</summary><p>EC2 Spot interruption notice → EventBridge → SQS → Karpenter Controller. 직접 설치한 환경은 interruption queue 구성이 필요하고, Auto Mode는 AWS가 관리합니다.</p><p>이 예시는 stop/terminate 회수 통지입니다. 통상 2분 전 알림이지만 새 노드와 앱의 준비 완료를 보장하지 않습니다. hibernate는 2분 유예 없이 시작됩니다. PDB는 EC2 회수 기한을 늘리지 못합니다.</p><p><a href="version-update.md#spot-회수와-여유-용량을-읽는-기준">공식 근거와 적용 범위</a></p></details>
       </div>
     </div>
 
     <!-- Slide 6: Spot Overprovisioning Strategy -->
     <div class="slide">
       <div class="slide-header">
-        <h1>Spot Overprovisioning 전략</h1>
-        <p class="subtitle">Pause 컨테이너로 사전 용량 확보 — 즉시 스케줄링</p>
+        <h1>여유 자리를 미리 준비하면?</h1>
+        <p class="subtitle">버퍼 용량은 노드 대기를 줄이지만, 그만큼 비용이 듭니다</p>
       </div>
       <div class="slide-body">
         <div class="columns">
@@ -505,15 +510,15 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
             <div class="overprov-flow">
               <div class="overprov-step" id="op-step1">
                 <span class="badge badge-green">Phase 1</span>
-                <div><strong>Buffer Ready</strong><br><span style="color:var(--text-muted);font-size:.85rem;">Dummy pods가 용량 예약</span></div>
+                <div><strong>미리 자리 확보</strong><br><span style="color:var(--text-secondary);font-size:.85rem;">낮은 우선순위의 더미 Pod가 예약</span></div>
               </div>
               <div class="overprov-step" id="op-step2">
                 <span class="badge badge-blue">Phase 2</span>
-                <div><strong>Real Workload 도착</strong><br><span style="color:var(--text-muted);font-size:.85rem;">Dummy 삭제 → 워크로드 즉시 스케줄링</span></div>
+                <div><strong>실제 앱이 자리 사용</strong><br><span style="color:var(--text-secondary);font-size:.85rem;">조건이 맞으면 더미 Pod를 축출하고 배치</span></div>
               </div>
               <div class="overprov-step" id="op-step3">
                 <span class="badge badge-yellow">Phase 3</span>
-                <div><strong>Karpenter 보충</strong><br><span style="color:var(--text-muted);font-size:.85rem;">Pending dummy (AntiAffinity) → 새 노드 프로비저닝 → 버퍼 복원</span></div>
+                <div><strong>여유 자리 다시 확보</strong><br><span style="color:var(--text-secondary);font-size:.85rem;">대기 중인 더미 Pod를 위해 용량 보충</span></div>
               </div>
             </div>
             <div class="overprov-nodes" id="op-node-grid"></div>
@@ -524,29 +529,38 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
               <span><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:var(--bg-card);border:1px solid var(--border);"></span> Node</span>
             </div>
             <div class="btn-group" style="margin-top: 12px;">
-              <button class="btn btn-primary btn-sm" id="op-phase1">Phase 1</button>
-              <button class="btn btn-sm" id="op-phase2">Phase 2</button>
-              <button class="btn btn-sm" id="op-phase3">Phase 3</button>
-              <button class="btn btn-sm" id="op-reset">Reset</button>
+              <button class="btn btn-primary btn-sm" id="op-phase1">1. 자리 확보</button>
+              <button class="btn btn-sm" id="op-phase2">2. 앱 도착</button>
+              <button class="btn btn-sm" id="op-phase3">3. 버퍼 복원</button>
+              <button class="btn btn-sm" id="op-reset">처음부터</button>
             </div>
+            <p class="learn-note" id="op-explanation" aria-live="polite"></p>
           </div>
           <!-- Right: YAML -->
           <div>
             <div class="tab-bar">
-              <button class="tab-btn active" data-tab="op-priority">PriorityClass</button>
+              <button class="tab-btn active" data-tab="op-concept">먼저 이해하기</button>
+              <button class="tab-btn" data-tab="op-priority">PriorityClass</button>
               <button class="tab-btn" data-tab="op-deploy">Deployment</button>
             </div>
-            <div class="tab-content active" data-tab="op-priority">
+            <div class="tab-content active" data-tab="op-concept">
+              <div class="buffer-options">
+                <div class="card learn-card"><h3>이 예시: 더미 Pod로 예약</h3><p>빈자리를 낮은 우선순위 Pod가 차지합니다. 실제 앱이 더 높은 우선순위이고 배치 조건이 맞으면 자리를 내줍니다.</p></div>
+                <div class="card learn-card"><h3>v1.14: Capacity Buffers API</h3><p>직접 설치한 Karpenter는 여유 용량을 선언하는 API도 제공합니다. v1.14에서 <code>v1beta1</code>로 승격됐습니다.</p><p><a href="version-update.md#spot-회수와-여유-용량을-읽는-기준">CRD·적용 범위 확인</a> · Auto Mode의 지원을 의미하지 않습니다.</p></div>
+              </div>
+            </div>
+            <div class="tab-content" data-tab="op-priority">
               <div class="code-block" style="font-size:.78rem;"><span class="key">apiVersion</span>: scheduling.k8s.io/v1
 <span class="key">kind</span>: PriorityClass
 <span class="key">metadata</span>:
   <span class="key">name</span>: overprovisioning
-<span class="key">value</span>: <span class="value">-1</span>            <span class="comment"># 가장 낮은 우선순위</span>
+<span class="key">value</span>: <span class="value">-1</span>            <span class="comment"># 기본값 0보다 낮은 우선순위</span>
 <span class="key">globalDefault</span>: <span class="value">false</span>
 <span class="key">description</span>: <span class="string">"Overprovisioning placeholder pods"</span></div>
             </div>
             <div class="tab-content" data-tab="op-deploy">
-              <div class="code-block" style="font-size:.72rem;"><span class="key">apiVersion</span>: apps/v1
+              <p class="learn-note">코드 안에서 스크롤해 전체 설정을 확인하세요.</p>
+              <div class="code-block" style="font-size:.8rem;max-height:18rem;overflow:auto;" tabindex="0" aria-label="Deployment YAML 전체 예제"><span class="key">apiVersion</span>: apps/v1
 <span class="key">kind</span>: Deployment
 <span class="key">metadata</span>:
   <span class="key">name</span>: overprovisioning
@@ -578,9 +592,7 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
             <span class="key">memory</span>: <span class="string">"2Gi"</span></div>
             </div>
             <div class="callout-info" style="margin-top: 12px;">
-              <strong>핵심 원리</strong><br>
-              <code>value: -1</code> → 가장 낮은 우선순위<br>
-              실제 워크로드 도착 시 Dummy pod가 <strong>즉시 Preempt</strong> → 노드 대기 없이 스케줄링
+              <strong>기억할 점:</strong> 노드가 있어도 이미지 다운로드·앱 초기화는 필요합니다. 버퍼 자체가 Spot이면 함께 회수될 수도 있습니다.
             </div>
           </div>
         </div>
@@ -591,74 +603,34 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
     </div>
 
     <!-- Slide 7: expireAfter Strategy -->
-    <div class="slide">
-      <div class="slide-header">
-        <h1>expireAfter 전략 비교</h1>
-        <p class="subtitle">환경별 노드 최대 수명 설정</p>
-      </div>
-      <div class="slide-body">
-        <div class="columns">
-          <div>
-            <div class="expire-slider-container">
-              <label style="font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 12px;">expireAfter 값 선택</label>
-              <div class="slider-container">
-                <input type="range" id="expire-slider" min="0" max="5" value="3" step="1">
-                <span class="slider-value" id="expire-value">168h</span>
-              </div>
-              <div class="expire-labels">
-                <span>24h</span>
-                <span>48h</span>
-                <span>72h</span>
-                <span>168h</span>
-                <span>240h</span>
-                <span>336h</span>
-              </div>
-            </div>
-            <div class="expire-recommendation" id="expire-recommendation">
-              <h4>프로덕션 권장</h4>
-              <p style="color: var(--text-secondary); font-size: .88rem;">안정성과 보안 패치 속도의 균형</p>
-              <div class="tradeoff-bars">
-                <div class="tradeoff-item">
-                  <div class="tradeoff-label">보안 패치 속도</div>
-                  <div class="tradeoff-bar"><div class="tradeoff-fill" id="security-bar" style="width: 60%; background: var(--green);"></div></div>
-                </div>
-                <div class="tradeoff-item">
-                  <div class="tradeoff-label">안정성</div>
-                  <div class="tradeoff-bar"><div class="tradeoff-fill" id="stability-bar" style="width: 70%; background: var(--blue);"></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div>
-            <h3 style="margin-bottom: 12px;">NodePool YAML</h3>
-            <div class="code-block" id="expire-yaml"><span class="key">apiVersion</span>: karpenter.sh/v1
+  <div class="slide ">
+    <div class="slide-header"><h1>14일·24시간·21일은 서로 다릅니다</h1><p class="subtitle">노드 수명, 종료 유예, 서비스 상한을 구분하세요</p></div>
+    <div class="slide-body learn-body"><div class="learn-grid"><div class="card learn-card"><h3>교체를 시작할 시점</h3><div class="learn-big">14일</div><span class="learn-api">expireAfter: 336h</span><p>Auto Mode 기본 노드 만료 설정.<br>더 짧게 정할 수 있습니다.</p></div><div class="card learn-card"><h3>종료할 때 기다리는 시간</h3><div class="learn-big">24시간</div><span class="learn-api">terminationGracePeriod</span><p>미지정 시 NodeClaim에 적용되는 기본값.<br>노드 종료가 시작된 뒤의 유예입니다.</p></div><div class="card learn-card"><h3>서비스가 정한 최대 수명</h3><div class="learn-big">21일</div><span class="learn-api">Auto Mode 최대 노드 수명</span><p>14일과 24시간을 더한 값이 아닙니다.<br>노드를 유지하는 상한입니다.</p></div></div><div class="learn-controls" id="expiry-options"><strong>만료 정책 예시:</strong><button class="btn" data-expiry="24h" aria-pressed="false">1일 · 짧은 주기</button><button class="btn" data-expiry="168h" aria-pressed="false">7일 · 사용자 정책</button><button class="btn" data-expiry="336h" aria-pressed="true">14일 · 기본값</button></div><div class="learn-callout" id="expiry-explanation" aria-live="polite"></div><details class="learn-detail learn-detail-scroll"><summary>전체 NodePool YAML 보기 — 선택한 만료 값이 반영됩니다</summary><p>기본 풀이 활성화되어 <code>default</code> NodeClass가 있는 환경의 커스텀 풀 예제입니다.</p><div class="code-block" id="expire-yaml"><span class="key">apiVersion</span>: karpenter.sh/v1
 <span class="key">kind</span>: NodePool
 <span class="key">metadata</span>:
-  <span class="key">name</span>: general-purpose
+  <span class="key">name</span>: workload
 <span class="key">spec</span>:
   <span class="key">template</span>:
     <span class="key">spec</span>:
-      <span class="comment"># 프로덕션 권장 값</span>
-      <span class="key">expireAfter</span>: <span class="value">168h</span>  <span class="comment"># 7일</span>
+      <span class="key">nodeClassRef</span>:
+        <span class="key">group</span>: eks.amazonaws.com
+        <span class="key">kind</span>: NodeClass
+        <span class="key">name</span>: default
+      <span class="key">expireAfter</span>: 336h
+      <span class="key">terminationGracePeriod</span>: 24h
   <span class="key">disruption</span>:
-    <span class="key">consolidationPolicy</span>: WhenEmptyOrUnderutilized
-    <span class="key">consolidateAfter</span>: 1m</div>
-          </div>
-        </div>
-        <div style="margin-top: auto; padding-top: 8px; text-align: right;">
-          <a href="https://atomoh.gitbook.io/kubernetes-docs/amazon-eks/eks-auto-mode/07-node-lifecycle" target="_blank" style="font-size: .75rem; color: var(--text-muted); text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">📖 더 알아보기: 노드 생명주기 관리</a>
-        </div>
-      </div>
-    </div>
+    <span class="key">consolidationPolicy</span>: Balanced
+    <span class="key">consolidateAfter</span>: 1m</div></details><p class="learn-note">Drift·Spot 회수·노드 정리로 더 일찍 교체될 수 있습니다. PDB와 교체 예산이 모든 종료를 막는 것은 아닙니다.</p></div>
+  </div>
 
     <!-- Slide 8: AMI Update & Drift -->
     <div class="slide">
       <div class="slide-header">
-        <h1>AMI 업데이트 & Drift 감지</h1>
-        <p class="subtitle">NodeClass 변경 시 자동 노드 교체 흐름</p>
+        <h1>Drift: 새 설정을 새 노드에 반영합니다</h1>
+        <p class="subtitle">AMI rev A → AMI rev B · 각 단계 버튼으로 Pod 이동 과정 확인</p>
       </div>
       <div class="slide-body" style="gap: 8px;">
-        <div class="canvas-container" style="flex: 0 0 auto;">
+        <div class="canvas-container" style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;">
           <canvas id="drift-arch-canvas"></canvas>
         </div>
         <div class="btn-group" style="justify-content: center; flex-wrap: wrap; gap: 6px;">
@@ -670,41 +642,7 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
           <button class="btn btn-primary btn-sm" id="drift-auto-play">Auto Play</button>
           <button class="btn btn-sm" id="drift-reset">Reset</button>
         </div>
-        <div class="ami-comparison" style="flex: 0 0 auto; overflow-y: auto;">
-          <h3 style="margin-bottom: 6px; font-size: .85rem;">AL2023 vs Bottlerocket 비교</h3>
-          <table style="font-size: .8rem;">
-            <thead>
-              <tr>
-                <th>특성</th>
-                <th>AL2023</th>
-                <th>Bottlerocket</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>부팅 시간</td>
-                <td><span class="badge badge-yellow">40-60초</span></td>
-                <td><span class="badge badge-green">20-30초</span></td>
-              </tr>
-              <tr>
-                <td>보안</td>
-                <td>표준</td>
-                <td><span class="badge badge-green">강화 (immutable)</span></td>
-              </tr>
-              <tr>
-                <td>SSH 접근</td>
-                <td><span class="badge badge-blue">가능</span></td>
-                <td><span class="badge badge-yellow">제한적</span></td>
-              </tr>
-              <tr>
-                <td>권장 사용처</td>
-                <td>디버깅 필요 환경</td>
-                <td>프로덕션, 보안 중요</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div style="margin-top: auto; padding-top: 8px; text-align: right;">
+<div class="learn-callout"><strong>AWS가 관리형 AMI를 준비하고, 팀은 Pod 이동의 영향을 설계합니다.</strong><br>PDB = 동시에 중단할 Pod 제한 · NodePool 예산 = 동시에 교체할 노드 제한</div>        <div style="margin-top: auto; padding-top: 8px; text-align: right;">
           <a href="https://atomoh.gitbook.io/kubernetes-docs/amazon-eks/eks-auto-mode/03-scaling-behavior" target="_blank" style="font-size: .75rem; color: var(--text-muted); text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">📖 더 알아보기: Consolidation & Drift 동작 이해</a>
         </div>
       </div>
@@ -714,7 +652,7 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
     <div class="slide">
       <div class="slide-header">
         <h1>AlertManager 알림 규칙</h1>
-        <p class="subtitle">Karpenter 및 노드 상태 알림 구성</p>
+        <p class="subtitle">kube-state-metrics 기반 공통 알림 · 임계값은 예시, Spot 원인은 이벤트로 확인</p>
       </div>
       <div class="slide-body" style="gap: 10px;">
         <div class="columns">
@@ -724,23 +662,23 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
               <div class="alert-checkbox"></div>
               <div>
                 <div class="alert-name" style="font-size:.82rem;">HighPendingPods</div>
-                <div class="alert-desc">karpenter_pods_state{phase="Pending"} > 10 for 5m</div>
+                <div class="alert-desc">sum(kube_pod_status_phase{phase="Pending"}) > 10 for 5m</div>
               </div>
             </label>
             <label class="alert-toggle" data-alert="provisioning-failed" style="padding: 6px 10px;">
               <input type="checkbox" checked>
               <div class="alert-checkbox"></div>
               <div>
-                <div class="alert-name" style="font-size:.82rem;">NodeProvisioningFailed</div>
-                <div class="alert-desc">ProvisioningFailed 증가 감지</div>
+                <div class="alert-name" style="font-size:.82rem;">KubeNodeNotReady</div>
+                <div class="alert-desc">Ready=false/unknown 상태가 5분 지속</div>
               </div>
             </label>
             <label class="alert-toggle" data-alert="spot-rate" style="padding: 6px 10px;">
               <input type="checkbox">
               <div class="alert-checkbox"></div>
               <div>
-                <div class="alert-name" style="font-size:.82rem;">SpotInterruptionRate</div>
-                <div class="alert-desc">1시간 내 3회 이상 Spot 인터럽트</div>
+                <div class="alert-name" style="font-size:.82rem;">UnschedulablePods</div>
+                <div class="alert-desc">Unschedulable Pod가 5분 지속</div>
               </div>
             </label>
             <label class="alert-toggle" data-alert="node-age" style="padding: 6px 10px;">
@@ -748,15 +686,15 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
               <div class="alert-checkbox"></div>
               <div>
                 <div class="alert-name" style="font-size:.82rem;">NodeAgeExceeded</div>
-                <div class="alert-desc">노드 수명 7일 초과</div>
+                <div class="alert-desc">노드 수명 14일 초과: 교체 상태 조사</div>
               </div>
             </label>
             <label class="alert-toggle" data-alert="cpu-over" style="padding: 6px 10px;">
               <input type="checkbox">
               <div class="alert-checkbox"></div>
               <div>
-                <div class="alert-name" style="font-size:.82rem;">CPUOverProvisioned</div>
-                <div class="alert-desc">CPU 사용률 70% 이하 지속</div>
+                <div class="alert-name" style="font-size:.82rem;">HighCPURequests</div>
+                <div class="alert-desc">CPU Requests / Allocatable > 70% (실제 사용률 아님)</div>
               </div>
             </label>
           </div>
@@ -804,11 +742,10 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
   <span class="key">selector</span>:
     <span class="key">matchLabels</span>:
       <span class="key">app</span>: <span class="value">my-app</span></div></div></div></li>
-              <li><span class="check"></span><div>Spot 인터럽트 알림 구성
-                <div class="check-yaml"><div class="code-block"><span class="comment"># PrometheusRule</span>
-- <span class="key">alert</span>: SpotInterruptionRate
-  <span class="key">expr</span>: increase(karpenter_nodeclaims_terminated_total
-    {reason=<span class="string">"SpotInterruption"</span>}[1h]) > 3</div></div></div></li>
+              <li><span class="check"></span><div>Spot 중단 관련 이벤트 확인
+                <div class="check-yaml"><div class="code-block"># Spot 원인: NodeClaim 이벤트 확인
+kubectl get events -A \
+  --field-selector involvedObject.kind=NodeClaim</div></div></div></li>
               <li><span class="check"></span><div>expireAfter 정책 설정
                 <div class="check-yaml"><div class="code-block"><span class="comment"># NodePool</span>
 <span class="key">spec</span>:
@@ -817,19 +754,18 @@ monitoring    prometheus-0             0/1     Pending   30s</div>
       <span class="key">expireAfter</span>: <span class="value">168h</span>  <span class="comment"># 7일</span></div></div></div></li>
               <li><span class="check"></span><div>노드 모니터링 대시보드 구축
                 <div class="check-yaml"><div class="code-block"><span class="comment"># Grafana 대시보드 핵심 패널</span>
-karpenter_cluster_state_node_count
-karpenter_pods_state{phase=<span class="string">"Pending"</span>}
-karpenter_nodes_allocatable</div></div></div></li>
+count by (label_karpenter_sh_nodepool) (kube_node_labels{label_karpenter_sh_nodepool!=""})
+sum(kube_pod_status_phase{phase="Pending"})
+kube_node_status_allocatable</div></div></div></li>
             </ul>
           </div>
           <div>
             <h3 style="margin-bottom: 12px;">최적화 & 비용</h3>
             <ul class="checklist">
-              <li><span class="check"></span><div>AMI 업데이트 자동화
-                <div class="check-yaml"><div class="code-block"><span class="comment"># NodeClass</span>
-<span class="key">spec</span>:
-  <span class="key">amiSelectorTerms</span>:
-    - <span class="key">alias</span>: <span class="string">bottlerocket@latest</span></div></div></div></li>
+              <li><span class="check"></span><div>AWS 관리 AMI 교체 상태 확인
+                <div class="check-yaml"><div class="code-block"><span class="comment"># Auto Mode: AWS 관리 AMI 교체 상태 확인</span>
+kubectl get nodeclaims -o wide
+kubectl get nodes -o wide</div></div></div></li>
               <li><span class="check"></span><div>비용 태깅 (CostCenter, Team)
                 <div class="check-yaml"><div class="code-block"><span class="comment"># NodePool</span>
 <span class="key">spec</span>:
@@ -866,61 +802,10 @@ karpenter_nodes_allocatable</div></div></div></li>
     </div>
 
     <!-- Slide 11: Summary & Quiz -->
-    <div class="slide">
-      <div class="slide-header">
-        <h1>Block 2 요약 & 퀴즈</h1>
-        <p class="subtitle">노드 라이프사이클 & 모니터링 핵심 내용 정리</p>
-      </div>
-      <div class="slide-body" style="overflow-y: auto;">
-        <div class="col-3" style="margin-bottom: 20px;">
-          <div class="card">
-            <div class="card-title">노드 모니터링</div>
-            <p style="font-size: .85rem;">kubectl, Prometheus 쿼리로 노드 상태 및 이벤트 추적</p>
-          </div>
-          <div class="card">
-            <div class="card-title">Spot 대응</div>
-            <p style="font-size: .85rem;">2분 경고 내 Pod 안전 이동, PDB 준수</p>
-          </div>
-          <div class="card">
-            <div class="card-title">운영 전략</div>
-            <p style="font-size: .85rem;">expireAfter, Drift, AlertManager 알림</p>
-          </div>
-        </div>
-
-        <div class="quiz" data-quiz="q1">
-          <div class="quiz-question">1. Spot 인스턴스 종료 전 경고 시간은?</div>
-          <div class="quiz-options">
-            <button class="quiz-option" data-correct="false">A) 30초</button>
-            <button class="quiz-option" data-correct="true">B) 2분</button>
-            <button class="quiz-option" data-correct="false">C) 5분</button>
-            <button class="quiz-option" data-correct="false">D) 10분</button>
-          </div>
-          <div class="quiz-feedback"></div>
-        </div>
-
-        <div class="quiz" data-quiz="q2">
-          <div class="quiz-question">2. 프로덕션 환경의 권장 expireAfter 값은?</div>
-          <div class="quiz-options">
-            <button class="quiz-option" data-correct="false">A) 24h</button>
-            <button class="quiz-option" data-correct="false">B) 48h</button>
-            <button class="quiz-option" data-correct="true">C) 168h (7일)</button>
-            <button class="quiz-option" data-correct="false">D) 336h (14일)</button>
-          </div>
-          <div class="quiz-feedback"></div>
-        </div>
-
-        <div class="quiz" data-quiz="q3">
-          <div class="quiz-question">3. 노드 종료 원인을 파악할 수 있는 kubectl 명령은?</div>
-          <div class="quiz-options">
-            <button class="quiz-option" data-correct="false">A) kubectl get nodes</button>
-            <button class="quiz-option" data-correct="false">B) kubectl top nodes</button>
-            <button class="quiz-option" data-correct="true">C) kubectl get events --sort-by='.lastTimestamp' | grep karpenter</button>
-            <button class="quiz-option" data-correct="false">D) kubectl describe pod</button>
-          </div>
-          <div class="quiz-feedback"></div>
-        </div>
-      </div>
-    </div>
+  <div class="slide learn-quiz">
+    <div class="slide-header"><h1>장애 상황에서 무엇부터 볼까요?</h1><p class="subtitle">한 상황씩 선택하고 진단 이유를 설명해 보세요</p></div>
+    <div class="slide-body learn-body"><div class="tab-bar"><button class="tab-btn active" data-tab="ops-quiz-0">상황 1</button><button class="tab-btn " data-tab="ops-quiz-1">상황 2</button><button class="tab-btn " data-tab="ops-quiz-2">상황 3</button></div><div class="tab-content active" data-tab="ops-quiz-0"><div class="quiz" data-quiz="q1" data-explain="Pending에는 이미 배치된 Pod의 시작 대기도 포함됩니다. Pod → NodeClaim → 이벤트 순서로 원인을 좁힙니다."><div class="quiz-question">Pending Pod가 보입니다. 가장 먼저 할 일은?</div><div class="quiz-options"><button class="quiz-option" data-correct="false">바로 노드를 늘린다</button><button class="quiz-option" data-correct="true">Pod Events에서 FailedScheduling 여부와 이유를 확인한다</button><button class="quiz-option" data-correct="false">CPU 사용량이 낮은 노드를 삭제한다</button></div><div class="quiz-feedback" aria-live="polite"></div><button class="btn" data-reset-quiz="q1">다시 풀기</button></div></div><div class="tab-content " data-tab="ops-quiz-1"><div class="quiz" data-quiz="q2" data-explain="expireAfter는 최소 유지 시간의 보장이 아닙니다. 만료 전에 다른 이유로 교체될 수 있습니다."><div class="quiz-question">expireAfter가 14일이면 그동안 노드가 유지될까요?</div><div class="quiz-options"><button class="quiz-option" data-correct="true">Drift·Spot·노드 정리로 더 일찍 바뀔 수 있다</button><button class="quiz-option" data-correct="false">반드시 14일 동안 유지된다</button><button class="quiz-option" data-correct="false">PDB가 있으면 영구 유지된다</button></div><div class="quiz-feedback" aria-live="polite"></div><button class="btn" data-reset-quiz="q2">다시 풀기</button></div></div><div class="tab-content " data-tab="ops-quiz-2"><div class="quiz" data-quiz="q3" data-explain="PDB는 Pod 중단을 제어합니다. Spot 회수 자체를 막지 못하므로 여유 용량·분산 배치·재시작 전략이 함께 필요합니다."><div class="quiz-question">Spot 회수 통지가 왔습니다. PDB가 해주는 일은?</div><div class="quiz-options"><button class="quiz-option" data-correct="false">EC2의 인스턴스 회수를 취소한다</button><button class="quiz-option" data-correct="false">Spot 인스턴스를 On-Demand로 바꾼다</button><button class="quiz-option" data-correct="true">Pod 중단을 제어하지만 회수 기한을 늘리지는 못한다</button></div><div class="quiz-feedback" aria-live="polite"></div><button class="btn" data-reset-quiz="q3">다시 풀기</button></div></div></div>
+  </div>
 
     <!-- Slide 12: Thank You -->
     <div class="slide">
@@ -945,17 +830,17 @@ karpenter_nodes_allocatable</div></div></div></li>
     const slides = new SlideFramework({
       presenterNotes: {
         1: '세션 시작 슬라이드.\n\n자기소개 후 Block 2 개요 안내.\n노드 수명주기 관리와 Spot 인터럽트 대응을 다룹니다.',
-        2: '청중에게 "Spot 인터럽트 경험 있으신 분?" 손들기 유도.\n\n- CloudWatch, kubectl, Karpenter 로그가 분산되어 전체 그림 파악이 어려움\n- 이 블록에서 통합 모니터링 방법을 다룰 예정\n\n약 30분 소요.',
-        3: '대시보드 시뮬레이터의 각 패널을 클릭하며 설명.\n\n- Node Count: 현재 노드 수\n- Instance Types: 인스턴스 타입 분포\n- Spot vs On-Demand 비율: 비용/안정성 밸런스\n\n실제 Grafana에서 karpenter-dashboard 템플릿 import 방법 언급.',
-        4: '각 탭을 클릭하며 실제 출력 결과 설명.\n\n- kubectl get nodes: 기본 노드 목록\n- kubectl events --watch: 실시간 트러블슈팅에 가장 유용\n\n노드 상태 변화를 즉시 파악할 수 있음을 강조.',
-        5: '4개의 PromQL 쿼리를 하나씩 설명.\n\n- karpenter_cluster_state_node_count: 가장 기본적인 지표\n- Spot 노드 비율 모니터링이 핵심\n\n비용 최적화와 안정성 밸런스의 핵심임을 강조.',
-        6: 'Play 버튼을 눌러 시뮬레이션 시연.\n\n순서:\n- EC2에서 2분 전 경고\n- Pod drain 진행\n- 새 노드 프로비저닝\n\nPDB(PodDisruptionBudget) 설정이 graceful shutdown의 핵심임을 언급.',
-        7: '3단계 버튼을 순서대로 클릭하며 시연.\n\n- Phase 1: PriorityClass -1인 더미 Pod + podAntiAffinity로 노드당 1개씩 분산 배치\n- Phase 2: 실제 워크로드 도착 시 더미 Pod 축출, 즉시 스케줄링\n- Phase 3: Pending 더미 Pod(AntiAffinity) → Karpenter가 새 버퍼 노드 프로비저닝\n\npodAntiAffinity가 핵심 — 더미 Pod가 같은 노드에 몰리면 버퍼 효과가 없음.',
-        8: 'expireAfter는 노드 최대 수명을 제한.\n\n설정 가이드:\n- 720h (30일): 안정성 중시\n- 168h (7일): 보안 중시\n\n프로덕션에서는 보통 720h 권장, 보안 요건에 따라 조정.',
-        9: '아키텍처 다이어그램으로 AMI Drift 감지 흐름을 시연.\n\n5단계 Phase 버튼을 순서대로 클릭하거나 Auto Play 사용:\n- Initial: 기존 노드 A, B 정상 운영\n- Drift Detected: Karpenter가 AMI 불일치 감지 (빨간 표시)\n- New Node: 새 AMI로 Node C 프로비저닝\n- Pod Migration: 기존 노드에서 새 노드로 Pod 이동\n- Complete: 이전 노드 종료, 새 노드로 교체 완료\n\n아래 비교 표로 AL2023 vs Bottlerocket 차이점 설명.',
-        10: '각 알림 규칙 토글을 클릭하며 YAML 확인.\n\n- SpotInterruptWarning: 가장 중요한 알림\n- Slack webhook/PagerDuty 연동으로 즉시 대응 가능\n- for 시간 설정으로 노이즈 조절',
+        2: "{timing: 2min} [요약] 노드가 바뀌면 먼저 이유를 네 가지로 분류합니다. Consolidation은 재배치 후 정리, Drift는 새 설정 적용, Expiration은 설정한 수명 만료, Spot은 인스턴스 회수입니다. 이름만 외우지 말고 앱이 영향을 받았는지와 이벤트를 함께 확인합니다. 모든 종료를 CPU 사용량이나 Spot 탓으로 단정하지 않게 안내하세요. {cue: transition} 대시보드를 본 뒤 Pod·NodeClaim·이벤트 순서로 확인합니다.",
+        3: "{timing: 2min} [요약] Requests는 스케줄링 예약량, Usage는 실제 사용량입니다. 여러 작은 노드 그림 대신 표에서 두 열을 비교합니다. 요약 지표와 최근 이벤트를 HTML로 읽고, Canvas에서는 추세만 봅니다. 수치와 비용은 교육용 시뮬레이션입니다. 실제 Karpenter는 요청량·배치 조건·비용·PDB·예산을 함께 고려합니다. 워크로드 추가와 삭제 버튼으로 값이 변하는 것을 보여주세요. {cue: transition} 이상을 발견하면 Pod→노드→이벤트 순서로 확인합니다.",
+        4: "{timing: 3min} [요약] Pod → NodeClaim → 이벤트 순서로 원인을 좁힙니다. 첫 탭에서는 Pending과 FailedScheduling을 구분하고, 두 번째는 노드 요청의 생성·등록·Ready 상태, 세 번째는 교체 시각과 이유를 봅니다. 결과를 먼저 보지 않고 인스턴스 수부터 늘리면 다른 원인을 놓칠 수 있습니다. 명령어를 외우기보다 오른쪽의 무엇을 읽어야 하는지를 먼저 설명하세요. {cue: transition} 반복해서 볼 질문을 대시보드로 옮겨봅니다.",
+        5: "{timing: 2min} [요약] 노드 수 변화, Pending, Spot 의존도, 시작 지연이라는 네 가지 질문으로 대시보드를 읽습니다. KSM 수집과 라벨 allowlist가 필요합니다. P99는 직접 설치한 Karpenter의 Pod 시작 시간으로 Node Ready 시간과 구분합니다. {cue: transition} 회수 상황에서 어떻게 대응하는지 봅니다.",
+        6: '{timing: 3min} [요약] Spot 회수 대응은 종료 처리와 대체 용량 준비가 겹쳐 진행됩니다. 3단계에서 두 영역을 함께 짚으세요. 직접 설치한 Karpenter는 EventBridge와 SQS interruption queue 구성이 필요하며 Auto Mode는 AWS가 관리합니다. 4단계에서 준비 지연 버튼을 선택해 Pending이 남을 수 있음을 보여줍니다. 실제 앱은 기존 프로세스가 이동하는 대신 새 Pod로 다시 실행됩니다. PDB와 NodePool 예산으로 EC2 회수를 취소할 수 없습니다. 2분은 stop/terminate 통지에 대한 설명이며 hibernate에는 같은 유예가 없습니다. {cue: transition} 노드 대기를 줄이려면 여유 자리를 미리 준비할 수 있습니다.',
+        7: '{timing: 3min} [요약] 버퍼는 앱이 쓸 여유 용량을 미리 준비하는 방법이며 유지 비용이 듭니다. 더미 Pod보다 앱의 우선순위가 높고 배치 조건이 맞아야 선점할 수 있습니다. 세 버튼으로 자리 확보, 앱 배치, 버퍼 복원을 보여줍니다. 이 그림은 기존 노드에 남은 자리가 없다고 가정합니다. required podAntiAffinity 때문에 복원된 더미 두 개는 서로 다른 노드에 배치합니다. YAML은 선택해서 확인하고 v1.14 Capacity Buffers API는 직접 설치 환경의 별도 방식이라고 구분합니다. Auto Mode 지원을 추정하지 않습니다. {cue: transition} 이제 여유 용량과 별개인 노드 수명을 봅니다.',
+        8: "{timing: 3min} [요약] 14일은 기본 만료 설정, 24시간은 노드 종료 시작 후 기본 유예, 21일은 서비스의 최대 수명입니다. 세 값을 더해서 교체 일정을 계산하지 않습니다. 세 정책 버튼을 눌러 expireAfter만 바뀌는 것을 확인하세요. 7일을 모든 프로덕션의 권장값으로 설명하지 않습니다. 전체 YAML은 질문이 있을 때 펼치고 spec.template.spec 위치만 짚습니다. {cue: transition} 만료 전에 노드가 바뀌는 대표 사례인 Drift를 봅니다.",
+        9: "{timing: 3min} [요약] rev A/B는 교육용 AMI 구분입니다. 단계 버튼을 하나씩 눌러 기존 노드에서 새 노드로 Pod가 이동하는 과정을 봅니다. Auto Mode는 AWS가 AMI를 관리합니다. PDB와 노드 예산은 앱·노드의 서로 다른 중단 범위를 제어합니다. {cue: transition} 진단한 상태를 알림으로 연결합니다.",
+        10: '알림은 kube-state-metrics 기반입니다. NotReady와 Unschedulable은 증상이며 프로비저닝 실패 또는 Spot 중단 원인은 NodeClaim 이벤트로 확인합니다. HighCPURequests는 CPU 예약 비율이며 실제 사용량과 구분합니다.',
         11: '체크리스트 항목을 클릭하며 각 YAML 설정 확인.\n\n실무 도입 순서:\n- 1) 모니터링 대시보드\n- 2) 알림 규칙\n- 3) Spot 전략\n- 4) 자동 업데이트\n\n한 번에 다 하지 말고 단계적으로 적용.',
-        12: '퀴즈로 Block 2 핵심 내용 복습.\n\n- Spot 인터럽트 관련 문제에 집중\n- 틀린 항목이 있으면 해당 슬라이드로 돌아가서 재설명\n\n정답률 확인 후 다음 블록 진행.',
+        12: "{timing: 3min} [요약] Pending은 Events부터 확인, 만료 전에 교체 가능, PDB가 Spot 회수를 막지 못한다는 세 가지 판단을 복습합니다. 각 상황의 답과 이유를 함께 설명하세요. {cue: transition} 다음 블록으로 진행합니다.",
         13: 'Block 2 마무리.\n\n- 5분 휴식 안내\n- 다음 Block 3 예고: 관측성 데이터 상관 분석\n  (Logs, Metrics, Traces 연계)'
       },
       logoSrc: 'common/pptx-theme/images/logo_1.png'
@@ -975,7 +860,7 @@ karpenter_nodes_allocatable</div></div></div></li>
 
       function resizeDashboard() {
         const cw = dashContainer.clientWidth;
-        const ch = dashContainer.clientHeight - 38; // reserve for button overlay
+        const ch = dashContainer.clientHeight;
         const dpr = window.devicePixelRatio || 1;
 
         if (cw <= 0 || ch <= 0) {
@@ -1006,13 +891,7 @@ karpenter_nodes_allocatable</div></div></div></li>
           width = BASE_W;
           height = Math.round((ch * dpr) / scale);
         }
-        // Dynamic vertical layout
-        const statY = 30, statH = 40;
-        const chartY = statY + statH + 4;
-        const chartH = Math.max(80, Math.min(200, Math.round((height - chartY) * 0.28)));
-        const gridY = chartY + chartH + 6;
-        const gridH = height - gridY - 4;
-        L = { statY, statH, chartY, chartH, gridY, gridH };
+        L = { chartY: 0, chartH: height };
         return true;
       }
       resizeDashboard();
@@ -1024,8 +903,19 @@ karpenter_nodes_allocatable</div></div></div></li>
       let events = [];
       let timeSeriesData = []; // { avgReq, avgUsage }
       let tsInterval = null;
+      const dashboardTimers = new Set();
+      function scheduleDashboardChange(callback, delay) {
+        const timer = window.setTimeout(() => {
+          dashboardTimers.delete(timer);
+          callback();
+        }, delay);
+        dashboardTimers.add(timer);
+        return timer;
+      }
 
       function initNodes() {
+        dashboardTimers.forEach(timer => clearTimeout(timer));
+        dashboardTimers.clear();
         nodes = [];
         const initData = [
           { req: 55, use: 32, cap: 'on-demand', inst: 'm5.xlarge' },
@@ -1092,14 +982,11 @@ karpenter_nodes_allocatable</div></div></div></li>
 
       // ── Draw functions ──
 
-      function drawGrafanaHeader() {
-        // Header bar
-        drawRoundRect(ctx, 0, 0, width, 26, 0, '#1a1a2e', null);
-        drawText(ctx, '⬡', 18, 13, { size: 13, color: '#f46800', align: 'left' });
-        drawText(ctx, 'Grafana', 38, 13, { size: 11, weight: '700', color: '#f46800', align: 'left' });
-        drawText(ctx, 'EKS Node Monitoring', 110, 13, { size: 11, color: Colors.textSec, align: 'left' });
-        drawText(ctx, 'Last 5m ▾', width - 80, 13, { size: 9, color: Colors.textMuted, align: 'left' });
-        drawText(ctx, '🔄', width - 15, 13, { size: 10, color: Colors.textMuted });
+      const dashboardMarkup = new Map();
+      function updateDashboardHTML(id, markup) {
+        if (dashboardMarkup.get(id) === markup) return;
+        document.getElementById(id).innerHTML = markup;
+        dashboardMarkup.set(id, markup);
       }
 
       function drawStatPanels() {
@@ -1118,18 +1005,7 @@ karpenter_nodes_allocatable</div></div></div></li>
           { label: 'Cost/hr',      value: `$${cost}`,          color: Colors.yellow }
         ];
 
-        const panelY = L.statY;
-        const panelH = L.statH;
-        const gap = 6;
-        const totalGap = gap * (panels.length - 1);
-        const panelW = (width - 20 - totalGap) / panels.length;
-
-        panels.forEach((p, i) => {
-          const px = 10 + i * (panelW + gap);
-          drawRoundRect(ctx, px, panelY, panelW, panelH, 6, Colors.surface, Colors.border);
-          drawText(ctx, p.label, px + panelW / 2, panelY + 12, { size: 9, color: Colors.textMuted });
-          drawText(ctx, p.value, px + panelW / 2, panelY + 28, { size: 14, weight: '700', color: p.color });
-        });
+        updateDashboardHTML('dashboard-stats', panels.map(panel => `<div class="dashboard-stat"><span>${panel.label}</span><strong>${panel.value}</strong></div>`).join(''));
       }
 
       function drawTimeSeriesChart() {
@@ -1142,7 +1018,7 @@ karpenter_nodes_allocatable</div></div></div></li>
         drawRoundRect(ctx, chartX, chartY, chartW, chartH, 6, Colors.surface, Colors.border);
 
         // Title
-        drawText(ctx, 'CPU Requests vs Usage (%)', chartX + 15, chartY + 14, { size: 10, color: Colors.textMuted, align: 'left' });
+        drawText(ctx, 'CPU Requests vs Usage (%)', chartX + 15, chartY + 14, { size: 12, color: Colors.textSec, align: 'left' });
 
         // Chart area within panel
         const areaX = chartX + 45;
@@ -1160,7 +1036,7 @@ karpenter_nodes_allocatable</div></div></div></li>
           ctx.lineTo(areaX + areaW, gy);
           ctx.stroke();
           const label = `${100 - i * 25}%`;
-          drawText(ctx, label, areaX - 8, gy, { size: 9, color: Colors.textMuted, align: 'right' });
+          drawText(ctx, label, areaX - 8, gy, { size: 12, color: Colors.textSec, align: 'right' });
         }
 
         if (timeSeriesData.length < 2) return;
@@ -1217,158 +1093,33 @@ karpenter_nodes_allocatable</div></div></div></li>
         const legY = chartY + 14;
         ctx.fillStyle = Colors.blue;
         ctx.fillRect(legX, legY - 4, 16, 3);
-        drawText(ctx, 'Requests', legX + 24, legY, { size: 9, color: Colors.blue, align: 'left' });
+        drawText(ctx, 'Requests', legX + 24, legY, { size: 12, color: Colors.blue, align: 'left' });
         ctx.fillStyle = Colors.cyan;
         ctx.fillRect(legX + 85, legY - 4, 16, 3);
-        drawText(ctx, 'Usage', legX + 109, legY, { size: 9, color: Colors.cyan, align: 'left' });
+        drawText(ctx, 'Usage', legX + 109, legY, { size: 12, color: Colors.cyan, align: 'left' });
 
         // Gap annotation
         if (lastD.avgReq - lastD.avgUsage > 10) {
           const midY = (valToY(lastD.avgReq) + valToY(lastD.avgUsage)) / 2;
-          drawText(ctx, `gap ${lastD.avgReq - lastD.avgUsage}%`, lastX + 8, midY, { size: 9, weight: '600', color: Colors.yellow, align: 'left' });
+          drawText(ctx, `gap ${lastD.avgReq - lastD.avgUsage}%`, lastX - 8, midY, { size: 12, weight: '600', color: Colors.yellow, align: 'right' });
         }
       }
 
-      function drawNodeGrid(elapsed) {
-        const gridX = 10;
-        const gridY = L.gridY;
-        const gridW = 530;
-        const gridH = L.gridH;
-
-        drawRoundRect(ctx, gridX, gridY, gridW, gridH, 6, Colors.surface, Colors.border);
-        drawText(ctx, 'Node Status', gridX + 15, gridY + 14, { size: 10, color: Colors.textMuted, align: 'left' });
-
-        const startX = gridX + 10;
-        const startY = gridY + 24;
-        const nodeW = 166;
-        const gapX = 10;
-        const gapY = 6;
-        const nodeH = Math.min(86, Math.max(58, Math.round((gridH - 28) / 2 - gapY)));
-        const cols = 3;
-
-        nodes.forEach((node, i) => {
-          const col = i % cols;
-          const row = Math.floor(i / cols);
-          const nx = startX + col * (nodeW + gapX);
-          const ny = startY + row * (nodeH + gapY);
-
-          // Node border color based on status
-          let borderColor = Colors.border;
-          let bgColor = Colors.bg;
-          if (node.status === 'Ready') {
-            borderColor = node.cpuRequests < 30 ? Colors.yellow : Colors.green;
-            bgColor = Colors.bg;
-          } else if (node.status === 'Cordoned') {
-            borderColor = Colors.yellow;
-            bgColor = Colors.yellow + '10';
-          } else if (node.status === 'Terminating') {
-            borderColor = Colors.red;
-            bgColor = Colors.red + '10';
-          }
-
-          // Pulse for terminating
-          let alpha = 1;
-          if (node.status === 'Terminating') {
-            alpha = 0.5 + 0.5 * Math.sin(elapsed * 4 + node.animOffset);
-          }
-          ctx.globalAlpha = alpha;
-
-          drawRoundRect(ctx, nx, ny, nodeW, nodeH, 6, bgColor, borderColor);
-
-          // Node name + instance type
-          drawText(ctx, node.name, nx + 8, ny + 13, { size: 11, weight: '700', color: Colors.textPri, align: 'left' });
-          drawText(ctx, node.instanceType, nx + nodeW - 8, ny + 13, { size: 9, color: Colors.textMuted, align: 'right' });
-
-          // Spot badge
-          if (node.capacityType === 'spot') {
-            const badgeX = nx + 8;
-            const badgeY = ny + 23;
-            drawRoundRect(ctx, badgeX, badgeY, 32, 14, 3, Colors.orange + '30', null);
-            drawText(ctx, 'SPOT', badgeX + 16, badgeY + 7, { size: 8, weight: '700', color: Colors.orange });
-          }
-
-          // Low Req warning
-          if (node.status === 'Ready' && node.cpuRequests < 30) {
-            const warnX = node.capacityType === 'spot' ? nx + 46 : nx + 8;
-            const warnY = ny + 23;
-            drawRoundRect(ctx, warnX, warnY, 48, 14, 3, Colors.yellow + '30', null);
-            drawText(ctx, 'Low Req', warnX + 24, warnY + 7, { size: 8, weight: '700', color: Colors.yellow });
-          }
-
-          // Cordon badge
-          if (node.status === 'Cordoned') {
-            const cordonX = nx + nodeW - 50;
-            const cordonY = ny + 23;
-            drawRoundRect(ctx, cordonX, cordonY, 44, 14, 3, Colors.yellow + '30', Colors.yellow + '60');
-            drawText(ctx, 'CORDON', cordonX + 22, cordonY + 7, { size: 8, weight: '700', color: Colors.yellow });
-          }
-
-          // CPU bars
-          const barX = nx + 8;
-          const barW = nodeW - 16;
-          const barH = 8;
-
-          // Requests bar (blue)
-          const reqBarY = ny + nodeH - 26;
-          ctx.fillStyle = Colors.bg + 'cc';
-          ctx.fillRect(barX, reqBarY, barW, barH);
-          ctx.fillStyle = Colors.blue;
-          ctx.fillRect(barX, reqBarY, barW * (node.cpuRequests / 100), barH);
-          drawText(ctx, `Req ${node.cpuRequests}%`, nx + nodeW - 8, reqBarY + 4, { size: 8, color: Colors.blue, align: 'right' });
-
-          // Usage bar (cyan)
-          const useBarY = ny + nodeH - 14;
-          ctx.fillStyle = Colors.bg + 'cc';
-          ctx.fillRect(barX, useBarY, barW, barH);
-          ctx.fillStyle = Colors.cyan;
-          ctx.fillRect(barX, useBarY, barW * (node.cpuUsage / 100), barH);
-          drawText(ctx, `Use ${node.cpuUsage}%`, nx + nodeW - 8, useBarY + 4, { size: 8, color: Colors.cyan, align: 'right' });
-
-          ctx.globalAlpha = 1;
-        });
-
-        // Empty slots
-        for (let i = nodes.length; i < MAX_NODES; i++) {
-          const col = i % cols;
-          const row = Math.floor(i / cols);
-          const nx = startX + col * (nodeW + gapX);
-          const ny = startY + row * (nodeH + gapY);
-          if (ny + nodeH <= gridY + gridH) {
-            drawRoundRect(ctx, nx, ny, nodeW, nodeH, 6, Colors.bg + '40', Colors.border + '40');
-            drawText(ctx, '— empty —', nx + nodeW / 2, ny + nodeH / 2, { size: 10, color: Colors.textMuted });
-          }
-        }
+      function drawNodeGrid() {
+        updateDashboardHTML('dashboard-nodes', nodes.map(node => `<tr><td>${node.name}</td><td>${node.status}</td><td>${node.capacityType === 'spot' ? 'Spot' : 'On-Demand'}</td><td>${node.cpuRequests}%</td><td>${node.cpuUsage}%</td></tr>`).join(''));
       }
 
       function drawEventLog() {
-        const logX = 548;
-        const logY = L.gridY;
-        const logW = width - logX - 10;
-        const logH = L.gridH;
-
-        drawRoundRect(ctx, logX, logY, logW, logH, 6, Colors.surface, Colors.border);
-        drawText(ctx, 'Karpenter Events', logX + 15, logY + 14, { size: 10, color: Colors.textMuted, align: 'left' });
-
-        const maxEvents = Math.max(6, Math.floor((logH - 32) / 22));
-        events.slice(0, maxEvents).forEach((evt, i) => {
-          const ey = logY + 32 + i * 22;
-          // Timestamp
-          drawText(ctx, evt.time, logX + 10, ey, { size: 9, color: Colors.textMuted, align: 'left', font: 'JetBrains Mono, monospace' });
-          // Event type badge
-          drawText(ctx, evt.type, logX + 85, ey, { size: 9, weight: '600', color: evt.color, align: 'left' });
-          // Message
-          drawText(ctx, evt.msg, logX + 165, ey, { size: 9, color: Colors.textSec, align: 'left' });
-        });
+        updateDashboardHTML('dashboard-events', events.slice(0, 3).map(event => `<li><strong>${event.type}</strong> · ${event.time}<br>${event.msg}</li>`).join(''));
       }
 
       function draw(elapsed) {
         ctx.fillStyle = '#0b0e14';
         ctx.fillRect(0, 0, width, height);
 
-        drawGrafanaHeader();
         drawStatPanels();
         drawTimeSeriesChart();
-        drawNodeGrid(elapsed);
+        drawNodeGrid();
         drawEventLog();
       }
 
@@ -1387,7 +1138,7 @@ karpenter_nodes_allocatable</div></div></div></li>
         if (remaining.length === 0 || sourceNode.cpuRequests === 0) {
           if (sourceNode.cpuRequests > 0) {
             addEvent('Pending', `${sourceNode.cpuRequests}% requests waiting — provisioning`, Colors.orange);
-            setTimeout(() => {
+            scheduleDashboardChange(() => {
               if (nodes.length < MAX_NODES) {
                 const inst = INSTANCE_TYPES[Math.floor(Math.random() * INSTANCE_TYPES.length)];
                 const usageRatio = sourceNode.cpuUsage / Math.max(sourceNode.cpuRequests, 1);
@@ -1436,7 +1187,7 @@ karpenter_nodes_allocatable</div></div></div></li>
           });
           pushTimeSeriesPoint();
           addEvent('Pending', `${overflow}% requests waiting — provisioning new node`, Colors.orange);
-          setTimeout(() => {
+          scheduleDashboardChange(() => {
             if (nodes.length < MAX_NODES) {
               const inst = INSTANCE_TYPES[Math.floor(Math.random() * INSTANCE_TYPES.length)];
               const newNode = {
@@ -1521,27 +1272,27 @@ karpenter_nodes_allocatable</div></div></div></li>
         addEvent('EventBridge', `Spot ITN → SQS (${iid})`, Colors.orange);
 
         // Phase 2 (1000ms): Karpenter consumes SQS → Cordon
-        setTimeout(() => {
+        scheduleDashboardChange(() => {
           target.status = 'Cordoned';
           addEvent('Karpenter', `SQS consumed → ${target.name} cordoned`, Colors.yellow);
 
           // Phase 3 (2000ms): PDB check before eviction
-          setTimeout(() => {
+          scheduleDashboardChange(() => {
             if (target.status !== 'Cordoned') return;
             addEvent('PDB Check', 'minAvailable satisfied — eviction allowed', Colors.blue);
 
             // Phase 4 (3000ms): Pod deletion (graceful termination)
-            setTimeout(() => {
+            scheduleDashboardChange(() => {
               if (target.status !== 'Cordoned') return;
               target.status = 'Terminating';
               addEvent('Draining', `Deleting pods from ${target.name} (graceful)`, Colors.yellow);
 
               // Phase 5 (4000ms): ReplicaSet creates replacements → redistribute
-              setTimeout(() => {
+              scheduleDashboardChange(() => {
                 addEvent('ReplicaSet', 'Replacement pods created — scheduling', Colors.cyan);
                 redistributePods(target, () => {
                   // Phase 6: Node terminated
-                  setTimeout(() => {
+                  scheduleDashboardChange(() => {
                     const idx = nodes.indexOf(target);
                     if (idx !== -1) nodes.splice(idx, 1);
                     nodes.forEach((n, i) => { n.id = i; n.name = `node-${i + 1}`; });
@@ -1571,16 +1322,16 @@ karpenter_nodes_allocatable</div></div></div></li>
         addEvent('Consolidation', `Cordoning ${target.name} (Req: ${target.cpuRequests}%)`, Colors.yellow);
 
         // Phase 2: Drain — evict pods
-        setTimeout(() => {
+        scheduleDashboardChange(() => {
           if (target.status !== 'Cordoned') return;
           target.status = 'Terminating';
           addEvent('Draining', `Evicting pods from ${target.name}`, Colors.yellow);
 
           // Phase 3: Redistribute pods
-          setTimeout(() => {
+          scheduleDashboardChange(() => {
             redistributePods(target, () => {
               // Phase 4: Remove node
-              setTimeout(() => {
+              scheduleDashboardChange(() => {
                 const idx = nodes.indexOf(target);
                 if (idx !== -1) nodes.splice(idx, 1);
                 nodes.forEach((n, i) => { n.id = i; n.name = `node-${i + 1}`; });
@@ -1599,298 +1350,83 @@ karpenter_nodes_allocatable</div></div></div></li>
       };
     })();
 
-    // ============================================================
-    // Slide 3: Command Cards
-    // ============================================================
-    document.querySelectorAll('.command-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const wasExpanded = card.classList.contains('expanded');
-        document.querySelectorAll('.command-card').forEach(c => c.classList.remove('expanded'));
-        if (!wasExpanded) {
-          card.classList.add('expanded');
-        }
-      });
-    });
 
     // ============================================================
     // Slide 5: Spot Interrupt Simulation
     // ============================================================
-    (function initSpotSim() {
-      const spotCanvas = document.getElementById('spot-canvas');
-      if (!spotCanvas) return;
-      const spotContainer = spotCanvas.parentElement;
-      const BASE_W = 960, BASE_H = 350;
-
-      function resizeSpotCanvas() {
-        const cw = spotContainer.clientWidth;
-        const ch = spotContainer.clientHeight;
-        if (cw <= 0 || ch <= 0) {
-          const r = setupCanvas('spot-canvas', BASE_W, BASE_H);
-          if (r) Object.assign(spotCanvas, { _ctx: r.ctx });
-          return;
+    (function initSpotLesson() {
+      const lesson = document.getElementById('spot-lesson');
+      const phases = [
+        ['앱 실행 중', 'Spot 노드에서 Pod가 평소처럼 실행 중입니다.', '추가 요청 없음', '이 예시에서는 아직 대체 노드를 요청하지 않았습니다.'],
+        ['회수 통지 수신', 'EC2가 이 Spot 인스턴스를 회수할 예정입니다.', '대응 시작', 'Karpenter가 통지를 받아 종료 처리와 대체 용량 준비를 시작합니다.'],
+        ['새 배치를 막고 drain', '새 Pod 배치를 막고 PDB를 확인하며 기존 Pod 종료를 진행합니다.', '대체 노드 준비 중', 'drain과 병행해 새 노드를 준비합니다. 준비가 끝날 때까지 회수가 기다려주지는 않습니다.'],
+        ['기존 노드 종료', '이 예시에서는 통지받은 Spot 인스턴스가 종료됐습니다.', '새 Pod Ready', '대체 용량 확보와 앱 시작이 제때 끝난 경우입니다.']
+      ];
+      let step = 0;
+      let outcome = 'ready';
+      function render() {
+        const state = [...phases[step]];
+        if (step === 3 && outcome === 'late') {
+          state[2] = 'Pending 또는 시작 대기';
+          state[3] = '용량 부족·이미지 다운로드·앱 초기화로 준비가 늦으면 중단이 생길 수 있습니다.';
         }
-        const dpr = window.devicePixelRatio || 1;
-        const scale = cw / BASE_W;
-        const scaledH = Math.min(Math.round(BASE_H * scale), ch);
-        spotCanvas.width = Math.round(cw * dpr);
-        spotCanvas.height = Math.round(scaledH * dpr);
-        spotCanvas.style.width = cw + 'px';
-        spotCanvas.style.height = scaledH + 'px';
-        spotCanvas.style.maxWidth = 'none';
-        const c = spotCanvas.getContext('2d');
-        c.setTransform(1, 0, 0, 1, 0, 0);
-        c.scale(scale * dpr, scale * dpr);
-        spotCanvas._ctx = c;
-      }
-      resizeSpotCanvas();
-      new ResizeObserver(() => resizeSpotCanvas()).observe(spotContainer);
-
-      const ctx = spotCanvas.getContext('2d');
-      const W = BASE_W, H = BASE_H;
-
-      // --- Layout Constants ---
-      const PIPE = [
-        { x: 15, y: 5, w: 145, h: 32, label: 'EventBridge', sub: 'Spot ITN' },
-        { x: 200, y: 5, w: 115, h: 32, label: 'SQS Queue', sub: '2-min warning' },
-        { x: 355, y: 5, w: 145, h: 32, label: 'Karpenter', sub: 'Controller' },
-      ];
-      const NW = 140, NH = 175, NY = 55;
-      const NODES = [
-        { x: 15,  label: 'Node 1', spot: false },
-        { x: 170, label: 'Node 2', spot: true },
-        { x: 325, label: 'Node 3', spot: false },
-        { x: 480, label: 'Node 4 (New)', spot: false },
-      ];
-      const LX = 645, LY = 5, LW = 305, LH = 340;
-      const PW = 38, PH = 26;
-
-      // --- Phase Definitions ---
-      const PHASES = [
-        { at: 0,    key: 'eventbridge', msg: 'EventBridge: Spot ITN \uC218\uC2E0', clr: Colors.yellow },
-        { at: 1.5,  key: 'sqs',         msg: 'SQS: 2\uBD84 \uACBD\uACE0 \uC804\uB2EC', clr: Colors.blue },
-        { at: 3,    key: 'karpenter',    msg: 'Karpenter: \uC778\uD130\uB7FD\uC158 \uAC10\uC9C0', clr: Colors.accent },
-        { at: 4.5,  key: 'cordon',       msg: 'Node Cordon (SchedulingDisabled)', clr: Colors.yellow },
-        { at: 6,    key: 'pdb',          msg: 'PDB \uD655\uC778: minAvailable=1 \u2713', clr: Colors.green },
-        { at: 7.5,  key: 'evicting',     msg: 'Pod \uC0AD\uC81C \uC911 (gracefulTermination)', clr: Colors.red },
-        { at: 10,   key: 'reschedule',   msg: 'ReplicaSet \u2192 \uC0C8 Pod \uC2A4\uCF00\uC904\uB9C1', clr: Colors.blue },
-        { at: 11.5, key: 'pending',      msg: 'Pod Pending \u2192 \uD504\uB85C\uBE44\uC800\uB2DD \uC694\uCCAD', clr: Colors.yellow },
-        { at: 13,   key: 'provision',    msg: 'Karpenter: \uC0C8 \uB178\uB4DC \uD504\uB85C\uBE44\uC800\uB2DD', clr: Colors.cyan },
-        { at: 15,   key: 'complete',     msg: '\u2713 \uBAA8\uB4E0 Pod Ready \u2014 \uC644\uB8CC', clr: Colors.green },
-      ];
-
-      let running = false, timer = 0, lastPi = -1, events = [];
-
-      function reset() { running = false; timer = 0; lastPi = -1; events = []; }
-
-      function pi() { for (let i = PHASES.length - 1; i >= 0; i--) if (timer >= PHASES[i].at) return i; return -1; }
-      function pk() { const i = pi(); return i >= 0 ? PHASES[i].key : 'idle'; }
-
-      function spotPod(x, y, color) {
-        drawRoundRect(ctx, x, y, PW, PH, 5, color + '40', color);
-        drawText(ctx, 'Pod', x + PW / 2, y + PH / 2, { size: 9, weight: '600', color: color });
-      }
-
-      function draw(elapsed) {
-        ctx.fillStyle = Colors.bgSecond;
-        ctx.fillRect(0, 0, W, H);
-
-        if (running) {
-          timer += 1 / 60;
-          const i = pi();
-          if (i !== lastPi) {
-            lastPi = i;
-            events.push({ t: timer.toFixed(1), msg: PHASES[i].msg, clr: PHASES[i].clr });
-            if (events.length > 13) events.shift();
-          }
-          if (timer > 17) running = false;
-        }
-
-        const key = pk();
-        const pIdx = pi();
-
-        // === Pipeline ===
-        PIPE.forEach((b, i) => {
-          const active = pIdx >= i;
-          const hi = pIdx === i;
-          const c = active ? (i === 0 ? Colors.yellow : i === 1 ? Colors.blue : Colors.accent) : Colors.border;
-          if (hi) { ctx.shadowColor = c; ctx.shadowBlur = 12; }
-          drawRoundRect(ctx, b.x, b.y, b.w, b.h, 7, active ? c + '25' : Colors.surface, c);
-          ctx.shadowBlur = 0;
-          drawText(ctx, b.label, b.x + b.w / 2, b.y + 12, { size: 11, weight: '700', color: active ? c : Colors.textMuted });
-          drawText(ctx, b.sub, b.x + b.w / 2, b.y + 25, { size: 8, color: Colors.textMuted });
-          if (i < 2) {
-            const nx = PIPE[i + 1];
-            drawArrow(ctx, b.x + b.w + 4, b.y + b.h / 2, nx.x - 4, nx.y + nx.h / 2, pIdx > i ? Colors.green : Colors.border + '50');
-          }
+        ['spot-old-status', 'spot-old-description', 'spot-new-status', 'spot-new-description'].forEach((id, index) => {
+          document.getElementById(id).textContent = state[index];
         });
-
-        // === Nodes ===
-        for (let idx = 0; idx < 4; idx++) {
-          const n = NODES[idx];
-          if (idx === 3 && !['provision', 'complete'].includes(key)) continue;
-
-          let c = Colors.green, st = 'Ready';
-          if (idx === 1) {
-            if (['cordon', 'pdb'].includes(key)) { c = Colors.yellow; st = 'Cordoned'; }
-            else if (key === 'evicting') { c = Colors.red; st = 'Draining'; }
-            else if (['reschedule', 'pending', 'provision', 'complete'].includes(key)) { c = Colors.red; st = 'Terminated'; }
-          }
-          if (idx === 3) {
-            if (key === 'provision') { c = Colors.cyan; st = 'Provisioning...'; }
-            else if (key === 'complete') { c = Colors.green; st = 'Ready'; }
-          }
-
-          const faded = idx === 1 && ['reschedule', 'pending', 'provision', 'complete'].includes(key);
-          if (faded) ctx.globalAlpha = 0.25;
-          if (idx === 3 && key === 'provision') ctx.globalAlpha = 0.5 + 0.3 * Math.sin(elapsed * 4);
-
-          drawRoundRect(ctx, n.x, NY, NW, NH, 10, c + '15', c);
-          drawText(ctx, n.label, n.x + NW / 2, NY + 18, { size: 12, weight: '700', color: c });
-          if (n.spot) {
-            drawRoundRect(ctx, n.x + NW / 2 - 28, NY + 30, 56, 14, 4, Colors.cyan + '25', Colors.cyan);
-            drawText(ctx, 'SPOT', n.x + NW / 2, NY + 37, { size: 8, weight: '700', color: Colors.cyan });
-          } else {
-            drawText(ctx, 'On-Demand', n.x + NW / 2, NY + 35, { size: 8, color: Colors.textMuted });
-          }
-          drawText(ctx, st, n.x + NW / 2, NY + NH - 12, { size: 9, color: c });
-          ctx.globalAlpha = 1;
-
-          if (idx === 1 && ['cordon', 'pdb', 'evicting'].includes(key)) {
-            drawRoundRect(ctx, n.x, NY - 20, NW, 17, 4, Colors.yellow + '35', Colors.yellow);
-            drawText(ctx, '\u26A0 SchedulingDisabled', n.x + NW / 2, NY - 11, { size: 8, weight: '700', color: Colors.yellow });
-          }
-          if (idx === 1 && key === 'pdb') {
-            drawRoundRect(ctx, n.x - 5, NY + NH + 4, NW + 10, 18, 5, Colors.green + '20', Colors.green);
-            drawText(ctx, 'PDB: minAvailable=1 \u2713', n.x + NW / 2, NY + NH + 13, { size: 8, weight: '600', color: Colors.green });
-          }
-        }
-
-        // === Pods ===
-        spotPod(NODES[0].x + 10, NY + 55, Colors.green);
-        spotPod(NODES[0].x + 52, NY + 55, Colors.green);
-        spotPod(NODES[2].x + 10, NY + 55, Colors.green);
-
-        const targets = [
-          { sx: NODES[1].x + 10, sy: NY + 55, tx: NODES[0].x + 10, ty: NY + 90 },
-          { sx: NODES[1].x + 52, sy: NY + 55, tx: NODES[2].x + 52, ty: NY + 55 },
-          { sx: NODES[1].x + 94, sy: NY + 55, tx: NODES[2].x + 94, ty: NY + 90 },
-        ];
-
-        if (['idle', 'eventbridge', 'sqs', 'karpenter', 'cordon', 'pdb'].includes(key)) {
-          targets.forEach(p => spotPod(p.sx, p.sy, Colors.green));
-        } else if (key === 'evicting') {
-          const t = Math.min(1, (timer - 7.5) / 2.5);
-          ctx.globalAlpha = 1 - t;
-          targets.forEach(p => spotPod(p.sx, p.sy, Colors.red));
-          ctx.globalAlpha = 1;
-        } else if (key === 'reschedule') {
-          const t = Math.min(1, (timer - 10) / 1.2);
-          ctx.globalAlpha = Ease.out(t);
-          spotPod(targets[0].tx, targets[0].ty, Colors.blue);
-          spotPod(targets[1].tx, targets[1].ty, Colors.blue);
-          ctx.globalAlpha = 1;
-          ctx.globalAlpha = 0.35 + 0.3 * Math.sin(elapsed * 3);
-          spotPod(targets[2].tx, targets[2].ty, Colors.yellow);
-          ctx.globalAlpha = 1;
-          drawText(ctx, 'Pending', targets[2].tx + PW / 2, targets[2].ty + PH + 10, { size: 7, color: Colors.yellow });
-        } else if (['pending', 'provision'].includes(key)) {
-          spotPod(targets[0].tx, targets[0].ty, Colors.green);
-          spotPod(targets[1].tx, targets[1].ty, Colors.green);
-          ctx.globalAlpha = 0.35 + 0.3 * Math.sin(elapsed * 3);
-          spotPod(targets[2].tx, targets[2].ty, Colors.yellow);
-          ctx.globalAlpha = 1;
-          drawText(ctx, 'Pending', targets[2].tx + PW / 2, targets[2].ty + PH + 10, { size: 7, color: Colors.yellow });
-        } else if (key === 'complete') {
-          spotPod(targets[0].tx, targets[0].ty, Colors.green);
-          spotPod(targets[1].tx, targets[1].ty, Colors.green);
-          spotPod(NODES[3].x + 10, NY + 55, Colors.green);
-        }
-
-        if (['reschedule', 'pending'].includes(key)) {
-          const rsY = NY + NH + 8;
-          drawRoundRect(ctx, 15, rsY, 480, 22, 5, Colors.blue + '15', Colors.blue);
-          const rsMsg = key === 'reschedule' ? 'ReplicaSet: desired=3, running=0 \u2192 \uC0C8 Pod \uC0DD\uC131 \uC911' : 'ReplicaSet: desired=3, running=2, pending=1';
-          drawText(ctx, rsMsg, 255, rsY + 11, { size: 9, weight: '600', color: Colors.blue });
-        }
-
-        // === Event Log ===
-        drawRoundRect(ctx, LX, LY, LW, LH, 8, '#0d1117', Colors.border);
-        drawText(ctx, 'Event Log', LX + LW / 2, LY + 16, { size: 11, weight: '600', color: Colors.textMuted });
-        events.forEach((ev, i) => {
-          const y = LY + 36 + i * 23;
-          if (y > LY + LH - 10) return;
-          drawText(ctx, ev.t + 's', LX + 8, y, { size: 8, color: Colors.textMuted, align: 'left', font: 'JetBrains Mono, monospace' });
-          drawText(ctx, ev.msg, LX + 45, y, { size: 8, color: ev.clr, align: 'left' });
-        });
-
-        if (pIdx >= 0) {
-          drawText(ctx, '\uD604\uC7AC \uB2E8\uACC4: ' + PHASES[pIdx].key.toUpperCase(), 300, H - 10, { size: 9, color: Colors.textMuted });
-        }
+        lesson.querySelectorAll('[data-spot-step]').forEach(button => button.setAttribute('aria-pressed', String(Number(button.dataset.spotStep) === step)));
+        lesson.querySelectorAll('[data-spot-outcome]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.spotOutcome === outcome)));
+        document.getElementById('spot-prev').disabled = step === 0;
+        document.getElementById('spot-next').disabled = step === phases.length - 1;
+        document.getElementById('spot-outcome').textContent = step === 3
+          ? outcome === 'late' ? '준비가 늦어도 EC2 회수는 진행됩니다. 여유 용량·분산 배치·앱 재시작 시간을 함께 설계하세요.' : '준비가 제때 끝난 예시입니다. 모든 상황에서 2분 안에 복구된다는 보장은 아닙니다.'
+          : '핵심: 종료 처리와 대체 준비는 병행합니다. PDB는 EC2의 Spot 회수 기한을 늘리지 못합니다.';
       }
-
-      const loop = new AnimationLoop(draw);
-      loop.start();
-
-      document.getElementById('btn-start-interrupt').onclick = () => {
-        if (!running) { reset(); running = true; }
-      };
-      document.getElementById('btn-reset-spot').onclick = reset;
+      function chooseStep(value) {
+        step = Math.max(0, Math.min(phases.length - 1, value));
+        render();
+      }
+      lesson.querySelectorAll('[data-spot-step]').forEach(button => button.addEventListener('click', () => chooseStep(Number(button.dataset.spotStep))));
+      lesson.querySelectorAll('[data-spot-outcome]').forEach(button => button.addEventListener('click', () => {
+        outcome = button.dataset.spotOutcome;
+        chooseStep(3);
+      }));
+      document.getElementById('spot-prev').addEventListener('click', () => chooseStep(step - 1));
+      document.getElementById('spot-next').addEventListener('click', () => chooseStep(step + 1));
+      document.getElementById('btn-reset-spot').addEventListener('click', () => {
+        outcome = 'ready';
+        chooseStep(0);
+      });
+      document.addEventListener('keydown', event => {
+        if (!lesson.closest('.slide').classList.contains('active') || event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+        if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+        event.preventDefault();
+        chooseStep(step + (event.key === 'ArrowDown' ? 1 : -1));
+      });
+      render();
     })();
 
-    // ============================================================
-    // Slide 6: expireAfter Slider
-    // ============================================================
-    (function initExpireSlider() {
-      const slider = document.getElementById('expire-slider');
-      const valueDisplay = document.getElementById('expire-value');
-      const recommendation = document.getElementById('expire-recommendation');
-      const securityBar = document.getElementById('security-bar');
-      const stabilityBar = document.getElementById('stability-bar');
-      const yamlBlock = document.getElementById('expire-yaml');
-
-      const presets = [
-        { value: '24h', label: '개발/테스트', desc: '빠른 교체, 최신 AMI 적용', security: 100, stability: 30 },
-        { value: '48h', label: '보안 중요 환경', desc: '보안 패치 빠른 적용 우선', security: 90, stability: 45 },
-        { value: '72h', label: '스테이징', desc: '프로덕션 전 테스트 환경', security: 80, stability: 55 },
-        { value: '168h', label: '프로덕션 권장', desc: '안정성과 보안 패치 속도의 균형', security: 60, stability: 70 },
-        { value: '240h', label: '안정성 우선', desc: '장기 실행 워크로드', security: 45, stability: 85 },
-        { value: '336h', label: 'GPU 워크로드', desc: '프로비저닝 비용이 높은 노드', security: 30, stability: 95 }
-      ];
-
-      function update() {
-        const idx = parseInt(slider.value);
-        const preset = presets[idx];
-        valueDisplay.textContent = preset.value;
-        recommendation.querySelector('h4').textContent = preset.label;
-        recommendation.querySelector('p').textContent = preset.desc;
-        securityBar.style.width = preset.security + '%';
-        stabilityBar.style.width = preset.stability + '%';
-
-        yamlBlock.innerHTML = `<span class="key">apiVersion</span>: karpenter.sh/v1
-<span class="key">kind</span>: NodePool
-<span class="key">metadata</span>:
-  <span class="key">name</span>: general-purpose
-<span class="key">spec</span>:
-  <span class="key">template</span>:
-    <span class="key">spec</span>:
-      <span class="comment"># ${preset.label}</span>
-      <span class="key">expireAfter</span>: <span class="value">${preset.value}</span>
-  <span class="key">disruption</span>:
-    <span class="key">consolidationPolicy</span>: WhenEmptyOrUnderutilized
-    <span class="key">consolidateAfter</span>: 1m`;
-      }
-
-      slider.addEventListener('input', update);
-      update();
-    })();
 
     // ============================================================
     // Slide 8: Drift Architecture Animation (Canvas)
     // ============================================================
     (function initDriftArchitecture() {
-      const c = setupCanvas('drift-arch-canvas', 1100, 340);
-      if (!c) return;
-      const { ctx, width, height } = c;
+      const canvas = document.getElementById('drift-arch-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const width = 1100, height = 340;
+      function resizeDrift() {
+        const box = canvas.parentElement;
+        if (!box.clientWidth || !box.clientHeight) return;
+        const scale = Math.min(box.clientWidth / width, box.clientHeight / height);
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.round(width * scale * dpr);
+        canvas.height = Math.round(height * scale * dpr);
+        canvas.style.width = width * scale + 'px';
+        canvas.style.height = height * scale + 'px';
+        canvas.style.maxWidth = 'none';
+        ctx.setTransform(scale*dpr,0,0,scale*dpr,0,0);
+        draw();
+      }
 
       let phase = 1;
       let animT = 1; // 0-1 animation progress
@@ -1905,35 +1441,19 @@ karpenter_nodes_allocatable</div></div></div></li>
       const nodeW = 200, nodeH = 130;
       const nodeY = 175;
       const nodeAx = 60, nodeBx = 310, nodeCx = 560, nodeDx = 810;
-      const podW = 32, podH = 24, podGap = 8;
-
-      // Pod positions (relative within node)
-      const podOffsets = [
-        { x: 20, y: 50 }, { x: 64, y: 50 }, { x: 108, y: 50 },
-        { x: 20, y: 84 }, { x: 64, y: 84 }, { x: 108, y: 84 }
-      ];
 
       function drawNodeClassBox(amiVersion, glowing) {
         const { x, y, w, h } = nodeClassBox;
-        const borderColor = glowing ? Colors.accent : Colors.blue;
-        drawRoundRect(ctx, x, y, w, h, 10, Colors.blue + '18', borderColor);
-        if (glowing) {
-          ctx.shadowColor = Colors.accent;
-          ctx.shadowBlur = 12;
-          drawRoundRect(ctx, x, y, w, h, 10, null, Colors.accent);
-          ctx.shadowBlur = 0;
-        }
         drawText(ctx, 'NodeClass', x + w/2, y + 22, { size: 14, weight: '700', color: Colors.blue });
-        drawText(ctx, 'amiFamily: AL2023', x + w/2, y + 44, { size: 11, color: Colors.textSec });
-        drawText(ctx, `ami: ${amiVersion}`, x + w/2, y + 60, { size: 11, color: glowing ? Colors.accent : Colors.textSec });
+        drawText(ctx, 'AWS-managed AMI', x + w/2, y + 44, { size: 14, color: Colors.textSec });
+        drawText(ctx, `ami: ${amiVersion}`, x + w/2, y + 64, { size: 14, color: glowing ? Colors.accent : Colors.textSec });
       }
 
       function drawKarpenterBox(status) {
         const { x, y, w, h } = karpenterBox;
-        drawRoundRect(ctx, x, y, w, h, 10, Colors.cyan + '18', Colors.cyan);
         drawText(ctx, 'Karpenter', x + w/2, y + 28, { size: 14, weight: '700', color: Colors.cyan });
         if (status) {
-          drawText(ctx, status, x + w/2, y + 52, { size: 11, color: Colors.yellow });
+          drawText(ctx, status, x + w/2, y + 52, { size: 12, color: Colors.yellow });
         }
       }
 
@@ -1941,21 +1461,17 @@ karpenter_nodes_allocatable</div></div></div></li>
         ctx.globalAlpha = opacity;
         drawRoundRect(ctx, x, nodeY, nodeW, nodeH, 10, Colors.surface, borderColor);
         drawText(ctx, label, x + nodeW/2, nodeY + 18, { size: 13, weight: '600', color: Colors.textPri });
-        drawText(ctx, amiVer, x + nodeW/2, nodeY + 34, { size: 10, color: Colors.textMuted });
+        drawText(ctx, amiVer, x + nodeW/2, nodeY + 34, { size: 12, color: Colors.textSec });
 
-        // Draw pods
-        for (let i = 0; i < podCount; i++) {
-          const po = podOffsets[i];
-          drawRoundRect(ctx, x + po.x, nodeY + po.y, podW, podH, 4, Colors.accent + '55', Colors.accent);
-        }
+        drawText(ctx, `${podCount} Pods`, x + nodeW/2, nodeY + 85, { size: 26, weight: '700', color: Colors.textPri });
 
         // Status badge
         if (statusBadge) {
           const badgeColor = statusBadge.color;
           const badgeX = x + nodeW - 10;
-          const badgeY = nodeY + 10;
+          const badgeY = nodeY + nodeH - 16;
           ctx.fillStyle = badgeColor;
-          ctx.font = '600 11px Pretendard, sans-serif';
+          ctx.font = '600 12px Pretendard, sans-serif';
           ctx.textAlign = 'right';
           ctx.fillText(statusBadge.text, badgeX, badgeY);
         }
@@ -1968,7 +1484,7 @@ karpenter_nodes_allocatable</div></div></div></li>
         const x2 = karpenterBox.x;
         const y2 = karpenterBox.y + karpenterBox.h / 2;
         drawArrow(ctx, x1 + 8, y1, x2 - 8, y2, Colors.textMuted, true);
-        drawText(ctx, 'watches', (x1 + x2) / 2, y1 - 12, { size: 10, color: Colors.textMuted });
+        drawText(ctx, 'watches', (x1 + x2) / 2, y1 - 12, { size: 12, color: Colors.textSec });
       }
 
       function drawManagesArrow(toX, toNodeY) {
@@ -1980,7 +1496,7 @@ karpenter_nodes_allocatable</div></div></div></li>
       }
 
       function drawMigrationArrow(fromX, toX, progress) {
-        const y = nodeY + nodeH / 2;
+        const y = nodeY + nodeH + 16;
         const startX = fromX + nodeW;
         const endX = toX;
         const curX = lerp(startX, endX, Ease.out(progress));
@@ -1994,11 +1510,6 @@ karpenter_nodes_allocatable</div></div></div></li>
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Moving pod indicator
-        if (progress < 1) {
-          const podX = lerp(startX + 10, endX - podW - 10, Ease.out(progress));
-          drawRoundRect(ctx, podX, y - podH/2, podW, podH, 4, Colors.green + '88', Colors.green);
-        }
       }
 
       function draw() {
@@ -2008,62 +1519,62 @@ karpenter_nodes_allocatable</div></div></div></li>
 
         if (phase === 1) {
           // Initial state - stable
-          drawNodeClassBox('v1.29', false);
+          drawNodeClassBox('rev A', false);
           drawKarpenterBox(null);
           drawWatchesArrow();
-          drawNode(nodeAx, nodeY, 'Node-A', 'ami: v1.29', Colors.green, { text: 'Ready', color: Colors.green }, 1, 3);
-          drawNode(nodeBx, nodeY, 'Node-B', 'ami: v1.29', Colors.green, { text: 'Ready', color: Colors.green }, 1, 3);
+          drawNode(nodeAx, nodeY, 'Node-A', 'AMI rev A', Colors.green, { text: 'Ready', color: Colors.green }, 1, 3);
+          drawNode(nodeBx, nodeY, 'Node-B', 'AMI rev A', Colors.green, { text: 'Ready', color: Colors.green }, 1, 3);
           drawManagesArrow(nodeAx, nodeY);
           drawManagesArrow(nodeBx, nodeY);
         }
         else if (phase === 2) {
           // Drift detected
-          drawNodeClassBox('v1.30', true);
+          drawNodeClassBox('rev B', true);
           drawKarpenterBox('Drift Detected');
           drawWatchesArrow();
-          drawNode(nodeAx, nodeY, 'Node-A', 'ami: v1.29', Colors.yellow, { text: 'Drift', color: Colors.yellow }, 1, 3);
-          drawNode(nodeBx, nodeY, 'Node-B', 'ami: v1.29', Colors.yellow, { text: 'Drift', color: Colors.yellow }, 1, 3);
+          drawNode(nodeAx, nodeY, 'Node-A', 'AMI rev A', Colors.yellow, { text: 'Drift', color: Colors.yellow }, 1, 3);
+          drawNode(nodeBx, nodeY, 'Node-B', 'AMI rev A', Colors.yellow, { text: 'Drift', color: Colors.yellow }, 1, 3);
           drawManagesArrow(nodeAx, nodeY);
           drawManagesArrow(nodeBx, nodeY);
         }
         else if (phase === 3) {
           // New node provisioned
-          drawNodeClassBox('v1.30', false);
+          drawNodeClassBox('rev B', false);
           drawKarpenterBox('Provisioning...');
           drawWatchesArrow();
-          drawNode(nodeAx, nodeY, 'Node-A', 'ami: v1.29', Colors.yellow, { text: 'Drift', color: Colors.yellow }, 1, 3);
-          drawNode(nodeBx, nodeY, 'Node-B', 'ami: v1.29', Colors.yellow, { text: 'Drift', color: Colors.yellow }, 1, 3);
+          drawNode(nodeAx, nodeY, 'Node-A', 'AMI rev A', Colors.yellow, { text: 'Drift', color: Colors.yellow }, 1, 3);
+          drawNode(nodeBx, nodeY, 'Node-B', 'AMI rev A', Colors.yellow, { text: 'Drift', color: Colors.yellow }, 1, 3);
           // New node fades in
           const newOpacity = Ease.out(t);
-          drawNode(nodeCx, nodeY, 'Node-C', 'ami: v1.30', Colors.green, { text: 'Ready', color: Colors.green }, newOpacity, 0);
+          drawNode(nodeCx, nodeY, 'Node-C', 'AMI rev B', Colors.green, { text: 'Ready', color: Colors.green }, newOpacity, 0);
           drawManagesArrow(nodeAx, nodeY);
           drawManagesArrow(nodeBx, nodeY);
           if (t > 0.3) drawManagesArrow(nodeCx, nodeY);
         }
         else if (phase === 4) {
           // Pod migration
-          drawNodeClassBox('v1.30', false);
+          drawNodeClassBox('rev B', false);
           drawKarpenterBox('Migrating Pods...');
           drawWatchesArrow();
           // Node-A fading, pods moving
           const fadeA = 1 - t * 0.6;
           const podsInA = Math.max(0, 3 - Math.floor(t * 3));
           const podsInC = Math.min(3, Math.floor(t * 3));
-          drawNode(nodeAx, nodeY, 'Node-A', 'ami: v1.29', Colors.red, { text: 'Draining', color: Colors.red }, fadeA, podsInA);
-          drawNode(nodeBx, nodeY, 'Node-B', 'ami: v1.29', Colors.yellow, { text: 'Drift', color: Colors.yellow }, 1, 3);
-          drawNode(nodeCx, nodeY, 'Node-C', 'ami: v1.30', Colors.green, { text: 'Ready', color: Colors.green }, 1, podsInC);
+          drawNode(nodeAx, nodeY, 'Node-A', 'AMI rev A', Colors.red, { text: 'Draining', color: Colors.red }, fadeA, podsInA);
+          drawNode(nodeBx, nodeY, 'Node-B', 'AMI rev A', Colors.yellow, { text: 'Drift', color: Colors.yellow }, 1, 3);
+          drawNode(nodeCx, nodeY, 'Node-C', 'AMI rev B', Colors.green, { text: 'Ready', color: Colors.green }, 1, podsInC);
           drawMigrationArrow(nodeAx, nodeCx, t);
           drawManagesArrow(nodeBx, nodeY);
           drawManagesArrow(nodeCx, nodeY);
         }
         else if (phase === 5) {
           // Complete
-          drawNodeClassBox('v1.30', false);
+          drawNodeClassBox('rev B', false);
           drawKarpenterBox('Complete');
           drawWatchesArrow();
           // Node-A gone, Node-B replaced by Node-D
-          drawNode(nodeCx, nodeY, 'Node-C', 'ami: v1.30', Colors.green, { text: 'Updated', color: Colors.green }, 1, 3);
-          drawNode(nodeDx, nodeY, 'Node-D', 'ami: v1.30', Colors.green, { text: 'Updated', color: Colors.green }, Ease.out(t), 3);
+          drawNode(nodeCx, nodeY, 'Node-C', 'AMI rev B', Colors.green, { text: 'Updated', color: Colors.green }, 1, 3);
+          drawNode(nodeDx, nodeY, 'Node-D', 'AMI rev B', Colors.green, { text: 'Updated', color: Colors.green }, Ease.out(t), 3);
           drawManagesArrow(nodeCx, nodeY);
           if (t > 0.5) drawManagesArrow(nodeDx, nodeY);
         }
@@ -2117,11 +1628,14 @@ karpenter_nodes_allocatable</div></div></div></li>
         autoPlaying = false;
         if (autoPlayTimer) clearTimeout(autoPlayTimer);
         setPhase(1);
+        updateButtons();
       }
 
       function autoPlay() {
         if (autoPlaying) return;
+        if (autoPlayTimer) clearTimeout(autoPlayTimer);
         autoPlaying = true;
+        animT = 0; // Replay the first phase even when it is already complete.
         setPhase(1);
         updateButtons();
       }
@@ -2129,13 +1643,28 @@ karpenter_nodes_allocatable</div></div></div></li>
       // Event listeners
       for (let i = 1; i <= 5; i++) {
         const btn = document.getElementById(`drift-phase-${i}`);
-        if (btn) btn.onclick = () => { autoPlaying = false; setPhase(i); };
+        if (btn) btn.onclick = () => {
+          autoPlaying = false;
+          if (autoPlayTimer) clearTimeout(autoPlayTimer);
+          setPhase(i);
+          updateButtons();
+        };
       }
       document.getElementById('drift-auto-play').onclick = autoPlay;
       document.getElementById('drift-reset').onclick = reset;
+      document.addEventListener('keydown', event => {
+        if (!canvas.closest('.slide').classList.contains('active') || event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+        if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+        event.preventDefault();
+        autoPlaying = false;
+        if (autoPlayTimer) clearTimeout(autoPlayTimer);
+        setPhase(Math.max(1, Math.min(5, phase + (event.key === 'ArrowDown' ? 1 : -1))));
+        updateButtons();
+      });
 
-      // Initial draw
-      draw();
+      // Keep the same logical coordinates at FHD and 4K.
+      new ResizeObserver(resizeDrift).observe(canvas.parentElement);
+      resizeDrift();
       updateButtons();
     })();
 
@@ -2148,37 +1677,39 @@ karpenter_nodes_allocatable</div></div></div></li>
 
       const alertDefs = {
         'high-pending': `    - <span class="key">alert</span>: HighPendingPods
-      <span class="key">expr</span>: karpenter_pods_state{phase=<span class="string">"Pending"</span>} > <span class="number">10</span>
-      <span class="key">for</span>: <span class="string">5m</span>
+      <span class="key">expr</span>: sum(kube_pod_status_phase{phase="Pending"}) &gt; 10
+      <span class="key">for</span>: 5m
       <span class="key">labels</span>:
         <span class="key">severity</span>: warning
       <span class="key">annotations</span>:
-        <span class="key">summary</span>: <span class="string">"{{ $value }} pods pending"</span>`,
-        'provisioning-failed': `    - <span class="key">alert</span>: NodeProvisioningFailed
-      <span class="key">expr</span>: increase(karpenter_nodeclaims_terminated_total{reason=<span class="string">"ProvisioningFailed"</span>}[<span class="number">10m</span>]) > <span class="number">0</span>
+        <span class="key">summary</span>: "{{ $value }} pods pending"`,
+        'provisioning-failed': `    - <span class="key">alert</span>: KubeNodeNotReady
+      <span class="key">expr</span>: kube_node_status_condition{condition="Ready",status="true"} == 0
+      <span class="key">for</span>: 5m
       <span class="key">labels</span>:
         <span class="key">severity</span>: critical
       <span class="key">annotations</span>:
-        <span class="key">summary</span>: <span class="string">"Node provisioning failed"</span>`,
-        'spot-rate': `    - <span class="key">alert</span>: SpotInterruptionRate
-      <span class="key">expr</span>: increase(karpenter_nodeclaims_terminated_total{reason=<span class="string">"SpotInterruption"</span>}[<span class="number">1h</span>]) > <span class="number">3</span>
+        <span class="key">summary</span>: "Node is not Ready"`,
+        'spot-rate': `    - <span class="key">alert</span>: UnschedulablePods
+      <span class="key">expr</span>: sum(kube_pod_status_unschedulable) &gt; 0
+      <span class="key">for</span>: 5m
       <span class="key">labels</span>:
         <span class="key">severity</span>: warning
       <span class="key">annotations</span>:
-        <span class="key">summary</span>: <span class="string">"High Spot interruption rate"</span>`,
+        <span class="key">summary</span>: "Pods cannot be scheduled"`,
         'node-age': `    - <span class="key">alert</span>: NodeAgeExceeded
-      <span class="key">expr</span>: time() - kube_node_created > <span class="number">604800</span>
+      <span class="key">expr</span>: time() - kube_node_created &gt; 1209600
       <span class="key">labels</span>:
         <span class="key">severity</span>: info
       <span class="key">annotations</span>:
-        <span class="key">summary</span>: <span class="string">"Node older than 7 days"</span>`,
-        'cpu-over': `    - <span class="key">alert</span>: CPUOverProvisioned
-      <span class="key">expr</span>: (sum(kube_pod_container_resource_requests{resource=<span class="string">"cpu"</span>}) / sum(kube_node_status_allocatable{resource=<span class="string">"cpu"</span>})) > <span class="number">0.7</span>
-      <span class="key">for</span>: <span class="string">1h</span>
+        <span class="key">summary</span>: "Node older than 14 days; inspect replacement"`,
+        'cpu-over': `    - <span class="key">alert</span>: HighCPURequests
+      <span class="key">expr</span>: (sum(kube_pod_container_resource_requests{resource="cpu"}) / sum(kube_node_status_allocatable{resource="cpu"})) &gt; 0.7
+      <span class="key">for</span>: 1h
       <span class="key">labels</span>:
         <span class="key">severity</span>: info
       <span class="key">annotations</span>:
-        <span class="key">summary</span>: <span class="string">"CPU over-provisioned"</span>`
+        <span class="key">summary</span>: "CPU requests exceed 70% of allocatable"`
       };
 
       function updateYaml() {
@@ -2229,13 +1760,13 @@ karpenter_nodes_allocatable</div></div></div></li>
       const grid = document.getElementById('op-node-grid');
       if (!grid) return;
 
-      let phase = 0;
-      let animating = false;
+      let phase = 1;
 
       function mkPod(type, extra) {
         const pod = document.createElement('div');
         pod.className = 'overprov-pod ' + type + (extra ? ' ' + extra : '');
         pod.textContent = type === 'dummy' ? 'D' : 'W';
+        pod.setAttribute('aria-label', type === 'dummy' ? '더미 Pod' : '앱 Pod');
         return pod;
       }
 
@@ -2248,22 +1779,20 @@ karpenter_nodes_allocatable</div></div></div></li>
           node.style.borderStyle = 'dashed';
         }
         const lbl = document.createElement('div');
-        lbl.style.cssText = 'width:100%;font-size:.65rem;color:' + (opts.isPending ? 'var(--yellow)' : 'var(--text-muted)') + ';margin-bottom:2px;';
+        lbl.style.cssText = 'width:100%;font-size:.8rem;color:' + (opts.isPending ? 'var(--yellow)' : 'var(--text-secondary)') + ';margin-bottom:2px;';
         lbl.textContent = label;
         node.appendChild(lbl);
         pods.forEach(p => node.appendChild(p));
         return node;
       }
 
-      function setStepHighlight(p) {
-        document.getElementById('op-step1').classList.toggle('active', p >= 1);
-        document.getElementById('op-step2').classList.toggle('active', p >= 2);
-        document.getElementById('op-step3').classList.toggle('active', p >= 3);
-      }
-
-      function phase0() {
-        grid.innerHTML = '';
-        grid.append(mkNode('Node 1', []), mkNode('Node 2', []), mkNode('Node 3', []), mkNode('Node 4', []));
+      function setStepHighlight(value) {
+        [1, 2, 3].forEach(step => {
+          document.getElementById('op-step' + step).classList.toggle('active', value === step);
+          const button = document.getElementById('op-phase' + step);
+          button.classList.toggle('btn-primary', value === step);
+          button.setAttribute('aria-pressed', String(value === step));
+        });
       }
 
       function phase1() {
@@ -2276,92 +1805,83 @@ karpenter_nodes_allocatable</div></div></div></li>
         );
       }
 
-      function phase2anim() {
-        if (animating) return;
-        animating = true;
-        grid.innerHTML = '';
-        const d1 = mkPod('dummy');
-        const d2 = mkPod('dummy');
-        grid.append(
-          mkNode('Node 1', [mkPod('real'), mkPod('real'), mkPod('real')]),
-          mkNode('Node 2', [mkPod('real'), mkPod('real')]),
-          mkNode('Node 3', [d1]),
-          mkNode('Node 4', [d2])
-        );
-        setTimeout(() => { d1.classList.add('evicted'); d2.classList.add('evicted'); }, 400);
-        setTimeout(() => {
-          d1.className = 'overprov-pod real'; d1.textContent = 'W';
-          d1.style.opacity = '0'; d1.style.transform = 'scale(0.3)';
-          d2.className = 'overprov-pod real'; d2.textContent = 'W';
-          d2.style.opacity = '0'; d2.style.transform = 'scale(0.3)';
-          requestAnimationFrame(() => {
-            d1.style.opacity = '1'; d1.style.transform = 'scale(1)';
-            d2.style.opacity = '1'; d2.style.transform = 'scale(1)';
-          });
-        }, 1000);
-        setTimeout(() => {
-          grid.appendChild(mkNode('\u23F3 Pending', [mkPod('dummy', 'pending'), mkPod('dummy', 'pending')], { isPending: true }));
-          animating = false;
-        }, 1700);
-      }
-
-      function phase3anim() {
-        if (animating) return;
-        animating = true;
+      function phase2() {
         grid.innerHTML = '';
         grid.append(
           mkNode('Node 1', [mkPod('real'), mkPod('real'), mkPod('real')]),
           mkNode('Node 2', [mkPod('real'), mkPod('real')]),
           mkNode('Node 3', [mkPod('real')]),
           mkNode('Node 4', [mkPod('real')]),
-          mkNode('\u23F3 Pending', [mkPod('dummy', 'pending'), mkPod('dummy', 'pending')], { isPending: true })
+          mkNode('노드 배치 대기', [mkPod('dummy', 'pending'), mkPod('dummy', 'pending')], { isPending: true })
         );
-        setTimeout(() => {
-          grid.innerHTML = '';
-          grid.append(
-            mkNode('Node 1', [mkPod('real'), mkPod('real'), mkPod('real')]),
-            mkNode('Node 2', [mkPod('real'), mkPod('real')]),
-            mkNode('Node 3', [mkPod('real')]),
-            mkNode('Node 4', [mkPod('real')]),
-            mkNode('Node 5 (New)', [mkPod('dummy'), mkPod('dummy')], { isNew: true })
-          );
-          animating = false;
-        }, 1200);
       }
 
-      function setPhase(p) {
-        if (animating) return;
-        phase = p;
-        setStepHighlight(p);
-        if (p === 0) phase0();
-        else if (p === 1) phase1();
-        else if (p === 2) phase2anim();
-        else if (p === 3) phase3anim();
+      function phase3() {
+        grid.innerHTML = '';
+        grid.append(
+          mkNode('Node 1', [mkPod('real'), mkPod('real'), mkPod('real')]),
+          mkNode('Node 2', [mkPod('real'), mkPod('real')]),
+          mkNode('Node 3', [mkPod('real')]),
+          mkNode('Node 4', [mkPod('real')]),
+          mkNode('Node 5 (New)', [mkPod('dummy')], { isNew: true }),
+          mkNode('Node 6 (New)', [mkPod('dummy')], { isNew: true })
+        );
+      }
+
+      function setPhase(value) {
+        phase = Math.max(1, Math.min(3, value));
+        setStepHighlight(phase);
+        [phase1, phase2, phase3][phase - 1]();
+        document.getElementById('op-explanation').textContent = [
+          'D = 낮은 우선순위의 더미 Pod, W = 앱 Pod. 더미 Pod가 나중에 앱에 내줄 자리를 예약합니다.',
+          '더 높은 우선순위 앱이 더미 자리를 사용합니다. 이 예시에서는 기존 노드에 더미를 다시 배치할 자리가 없어 대기합니다.',
+          '버퍼 복원: required podAntiAffinity를 만족하도록 더미 두 개를 서로 다른 새 노드에 배치합니다.'
+        ][phase - 1];
       }
 
       document.getElementById('op-phase1').addEventListener('click', () => setPhase(1));
       document.getElementById('op-phase2').addEventListener('click', () => setPhase(2));
       document.getElementById('op-phase3').addEventListener('click', () => setPhase(3));
-      document.getElementById('op-reset').addEventListener('click', () => setPhase(0));
-
-      const tabBtns = document.querySelectorAll('.slide:nth-child(6) .tab-btn');
-      tabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-          const tab = btn.dataset.tab;
-          btn.closest('.slide').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          btn.closest('.slide').querySelectorAll('.tab-content').forEach(c => {
-            c.classList.toggle('active', c.dataset.tab === tab);
-          });
-        });
+      document.getElementById('op-reset').addEventListener('click', () => setPhase(1));
+      const example = grid.closest('.slide').querySelector('.code-block[tabindex="0"]');
+      example.addEventListener('keydown', event => {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) event.stopPropagation();
+        if (event.key === 'Home' || event.key === 'End') {
+          event.preventDefault();
+          example.scrollTop = event.key === 'Home' ? 0 : example.scrollHeight;
+        }
       });
-
-      setPhase(0);
+      document.addEventListener('keydown', event => {
+        if (!grid.closest('.slide').classList.contains('active') || event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+        if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+        event.preventDefault();
+        setPhase(phase + (event.key === 'ArrowDown' ? 1 : -1));
+      });
+      setPhase(1);
     })();
 
     // ============================================================
     // Slide 10: Checklist (already handled by slide-framework.js)
     // ============================================================
-  </script>
+
+    (function initExpiryLesson() {
+      const full = "<span class=\"key\">apiVersion</span>: karpenter.sh/v1\n<span class=\"key\">kind</span>: NodePool\n<span class=\"key\">metadata</span>:\n  <span class=\"key\">name</span>: workload\n<span class=\"key\">spec</span>:\n  <span class=\"key\">template</span>:\n    <span class=\"key\">spec</span>:\n      <span class=\"key\">nodeClassRef</span>:\n        <span class=\"key\">group</span>: eks.amazonaws.com\n        <span class=\"key\">kind</span>: NodeClass\n        <span class=\"key\">name</span>: default\n      <span class=\"key\">expireAfter</span>: 336h\n      <span class=\"key\">terminationGracePeriod</span>: 24h\n  <span class=\"key\">disruption</span>:\n    <span class=\"key\">consolidationPolicy</span>: Balanced\n    <span class=\"key\">consolidateAfter</span>: 1m";
+      const copy = {
+        '24h':'1일 예시: 교체가 더 자주 발생합니다. 먼저 테스트 환경에서 앱 재시작 영향을 확인하세요.',
+        '168h':'7일 예시: 팀이 선택하는 사용자 정책입니다. 모든 프로덕션의 공통 권장값은 아닙니다.',
+        '336h':'14일: Auto Mode 기본 expireAfter입니다. Drift·Spot 등으로 더 일찍 교체될 수 있습니다.'
+      };
+      function choose(value) {
+        document.querySelectorAll('[data-expiry]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.expiry===value)));
+        document.getElementById('expire-yaml').innerHTML=full.replace('336h',value);
+        document.getElementById('expiry-explanation').textContent=copy[value];
+      }
+      document.querySelectorAll('[data-expiry]').forEach(b=>b.addEventListener('click',()=>choose(b.dataset.expiry)));
+      choose('336h');
+    })();
+  document.querySelectorAll('[data-reset-quiz]').forEach(button => {
+    button.addEventListener('click', () => quizManager.reset(button.dataset.resetQuiz));
+  });
+</script>
 </body>
 </html>

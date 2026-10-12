@@ -460,8 +460,9 @@ Canvas 애니메이션:
 - **AWS 공식 문서: EKS Auto Mode** - EKS Auto Mode의 공식 문서. 설정 방법 및 모범 사례 안내.
   - https://docs.aws.amazon.com/eks/latest/userguide/automode.html
 
-- **Karpenter 공식 문서** - Auto Mode의 기반이 되는 Karpenter의 상세 문서. NodePool, NodeClass 설정.
+- **Karpenter 공식 문서** - 직접 설치한 Karpenter의 설정, 호환성 (Kubernetes 1.37은 1.15.x 필요). Auto Mode NodeClass와 구분.
   - https://karpenter.sh/docs/
+  - [2026-10-07 버전 검토·공식 출처](version-update.md)
 
 ### Observability
 - **Grafana 상관분석 가이드** - Logs, Metrics, Traces 연동을 위한 Grafana 데이터소스 설정 가이드.

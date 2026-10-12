@@ -9,215 +9,191 @@ paginate: true
 
 <!-- type: title -->
 
-# 노드 가용성 모니터링이 어려운 이유
+# 노드가 바뀌는 이유는 다릅니다
 
-**Block 2: 노드 라이프사이클 & 모니터링**
+**Block 2 · 먼저 종료 원인과 앱 영향을 나눠 봅니다.**
 
-> "Auto Mode에서 노드가 갑자기 사라지는데, 왜 사라졌는지 파악하기 어렵습니다"
+| 이름 | 쉬운 설명 |
+|---|---|
+| Consolidation | Pod를 재배치하고 불필요한 노드 정리 |
+| Drift | 새 설정을 반영하기 위해 노드 교체 |
+| Expiration | expireAfter에 도달해 교체 시작 |
+| Spot interruption | EC2가 Spot 용량 회수 |
 
-> "Spot 인터럽트인지, Consolidation인지, Drift 교체인지 구분이 안 됩니다"
+**진단 순서:** 앱 영향 → 노드 준비 상태 → 이벤트의 원인.
 
-### 핵심 과제
+[최신 버전·공식 출처](version-update.md)
 
-- **노드 종료 원인 가시성 부족** - 왜 이 노드가 사라졌는지 로그 추적 필요
-- **Karpenter 이벤트 추적 어려움** - Consolidation, Drift, Expiry 구분 필요
-- **Spot 인터럽트 사전 감지 필요** - 2분 경고 내에 Pod 안전 이동
-
-> **이 블록에서 학습할 내용:** 노드 상태 시각화, kubectl 진단, Prometheus 쿼리, Spot 대응, expireAfter 전략, AlertManager 알림 구성
-
-<!-- notes: 노드 라이프사이클 관리의 어려움을 설명하고, 이번 블록에서 다룰 내용을 소개합니다. -->
+<!-- notes: {timing: 2min} [요약] 노드가 바뀌면 먼저 이유를 네 가지로 분류합니다. Consolidation은 재배치 후 정리, Drift는 새 설정 적용, Expiration은 설정한 수명 만료, Spot은 인스턴스 회수입니다. 이름만 외우지 말고 앱이 영향을 받았는지와 이벤트를 함께 확인합니다. 모든 종료를 CPU 사용량이나 Spot 탓으로 단정하지 않게 안내하세요. {cue: transition} 대시보드를 본 뒤 Pod·NodeClaim·이벤트 순서로 확인합니다. -->
 
 ---
 
 <!-- type: canvas -->
 
-# Grafana: EKS Node Monitoring
+# 예약량과 실제 사용량을 구분합니다
 
-**CPU Requests vs Usage — Karpenter 판단 기준 시각화**
+**Requests = 스케줄링 예약 · Usage = 실제 사용량**
 
-Canvas 애니메이션:
-- Grafana 스타일 대시보드 — 상단에 Active Nodes, Ready, CPU Requests avg, CPU Usage avg, Cost/hr 메트릭
-- 시계열 차트: Requests(파란) vs Usage(초록) 트렌드
-- Node Status 패널: 노드별 Requests/Usage 바, SPOT 뱃지, Low Req 뱃지
-- Karpenter Events 패널: 실시간 이벤트 로그
+표의 수치와 임계값은 교육용 예시입니다. 실제 Karpenter는 특정 CPU 사용률 하나로 노드 삭제를 결정하지 않습니다.
+
+학습용 대시보드:
+- HTML로 읽는 요약: Active Nodes, Ready, CPU Requests avg, CPU Usage avg, Cost/hr. 금액은 교육용 예시입니다.
+- Canvas는 Requests와 Usage의 시계열 차트 한 개만 표시
+- HTML 표로 읽는 노드 상태·용량 유형·Requests·Usage
+- 최근 이벤트 세 개만 표시하는 HTML 목록
 - **버튼:**
   - "노드 추가": 빈 슬롯에 새 노드 프로비저닝
   - "워크로드 추가": Ready 노드들의 CPU Requests/Usage 증가
   - "워크로드 삭제": 1-2개 랜덤 노드에서 Pods 제거 (20-40% Requests 감소) → Consolidation 대상 생성
-  - "Spot 인터럽트": EventBridge→SQS→Karpenter 흐름 — Cordon→PDB→Drain→Reschedule→Terminate
+  - "Spot 인터럽트": 직접 설치한 Karpenter의 EventBridge→SQS→Controller 흐름 (Auto Mode는 AWS 관리) — Cordon→PDB→Drain→Reschedule→Terminate
   - "Consolidation": Low Req 노드 Cordon→Drain→Redistribute→Remove
   - "Reset": 초기 상태 복원
 
-<!-- notes: 대시보드 시뮬레이터에서 워크로드 추가/삭제로 노드 활용률을 조절하고, Spot 인터럽트와 Consolidation의 전체 흐름을 확인할 수 있습니다. -->
+<!-- notes: {timing: 2min} [요약] Requests는 스케줄링 예약량, Usage는 실제 사용량입니다. 여러 작은 노드 그림 대신 표에서 두 열을 비교합니다. 요약 지표와 최근 이벤트를 HTML로 읽고, Canvas에서는 추세만 봅니다. 수치와 비용은 교육용 시뮬레이션입니다. 실제 Karpenter는 요청량·배치 조건·비용·PDB·예산을 함께 고려합니다. 워크로드 추가와 삭제 버튼으로 값이 변하는 것을 보여주세요. {cue: transition} 이상을 발견하면 Pod→노드→이벤트 순서로 확인합니다. -->
 
 ---
 
 <!-- type: code -->
 
-# kubectl 진단 명령어
+# Pod → 노드 → 이벤트 순서로 봅니다
 
-**노드 상태 및 Karpenter 이벤트 확인**
-
-### NodePool 상태 확인
+### 1. 앱 상태 — Pod가 어디서 멈췄나요?
 
 ```bash
-$ kubectl get nodepools
-NAME              NODECLASS   NODES   READY   AGE
-general-purpose   default     8       8       5d
-system            default     2       2       5d
-gpu-workload      gpu         0       0       5d
+kubectl get pods -A --field-selector=status.phase=Pending
+kubectl describe pod <pod> -n <namespace>
 ```
 
-### NodeClaim 상세 정보
+Events에 FailedScheduling이 있으면 CPU·메모리 요청량, taint, 배치 조건부터 확인합니다. 이미 노드에 배치됐다면 이미지 다운로드·볼륨·앱 시작 문제도 확인합니다. Pending이 곧 노드 부족은 아닙니다.
+
+### 2. 노드 상태 — 요청한 노드가 준비됐나요?
 
 ```bash
-$ kubectl get nodeclaims -o wide
-NAME          TYPE          ZONE         CAP-TYPE   NODE          READY   AGE
-nc-abc123     m5.xlarge     ap-ne-2a     on-demand  ip-10-0-1-5   True    2h
-nc-def456     c5.2xlarge    ap-ne-2b     spot       ip-10-0-2-8   True    45m
-nc-ghi789     m5.2xlarge    ap-ne-2c     on-demand  ip-10-0-3-2   True    3h
-nc-jkl012     r5.xlarge     ap-ne-2a     spot       ip-10-0-1-9   True    1h
+kubectl get nodepools
+kubectl get nodeclaims -o wide
+kubectl describe nodeclaim <nodeclaim>
 ```
 
-<!-- notes: NodePool과 NodeClaim 리소스를 통해 Karpenter가 관리하는 노드 상태를 확인할 수 있습니다. -->
+NodeClaim의 Conditions·Events에서 생성, 등록, 준비 단계가 어디까지 진행됐는지 확인합니다. NodePool·NodeClass 조건이 맞는지, IAM·subnet·EC2 용량에 문제가 있는지 이벤트를 보고 좁힙니다.
+
+### 3. 교체 원인 — 무슨 이유로 바뀌었나요?
+
+```bash
+kubectl get events -A \
+  --field-selector involvedObject.kind=NodeClaim \
+  --sort-by='.lastTimestamp'
+```
+
+같은 노드·같은 시간의 교체 이벤트를 앱 장애 시각과 비교합니다. NodeClaim 이벤트만으로 부족하면 관련 Node·Pod 이벤트도 확인합니다. 종료 원인은 메트릭 하나로 단정하지 않습니다.
+
+<!-- notes: {timing: 3min} [요약] Pod → NodeClaim → 이벤트 순서로 원인을 좁힙니다. 첫 탭에서는 Pending과 FailedScheduling을 구분하고, 두 번째는 노드 요청의 생성·등록·Ready 상태, 세 번째는 교체 시각과 이유를 봅니다. 결과를 먼저 보지 않고 인스턴스 수부터 늘리면 다른 원인을 놓칠 수 있습니다. 명령어를 외우기보다 오른쪽의 무엇을 읽어야 하는지를 먼저 설명하세요. {cue: transition} 반복해서 볼 질문을 대시보드로 옮겨봅니다. -->
 
 ---
 
 <!-- type: code -->
 
-# kubectl 진단 명령어 (계속)
-
-### 노드 라벨 확인
+# 필요할 때 노드 라벨을 더 확인합니다
 
 ```bash
-$ kubectl get nodes -L karpenter.sh/nodepool,karpenter.sh/capacity-type
-NAME          STATUS   ROLES    AGE   NODEPOOL          CAPACITY-TYPE
-ip-10-0-1-5   Ready    <none>   2h    general-purpose   on-demand
-ip-10-0-2-8   Ready    <none>   45m   general-purpose   spot
-ip-10-0-3-2   Ready    <none>   3h    general-purpose   on-demand
-ip-10-0-1-9   Ready    <none>   1h    general-purpose   spot
+kubectl get nodes -L karpenter.sh/nodepool,karpenter.sh/capacity-type
 ```
 
-### Karpenter 이벤트 추적
+어느 NodePool 소속인지, Spot인지 On-Demand인지 확인합니다. 기본 general-purpose는 On-Demand이며 Spot은 커스텀 풀에서 구성합니다. HTML에서는 진단 탭을 먼저 보고 이 명령은 추가 참고로 사용합니다.
 
-```bash
-$ kubectl get events --sort-by='.lastTimestamp' | grep karpenter
-12m   Normal   Launched         nodeclaim/nc-abc123   Launched node ip-10-0-1-5
-10m   Normal   Registered       nodeclaim/nc-abc123   Registered node
-5m    Normal   Consolidating    nodeclaim/nc-xyz789   Consolidating node (underutilized)
-3m    Warning  SpotInterrupted  nodeclaim/nc-old123   Spot instance interrupted
-2m    Normal   Drifted          nodeclaim/nc-def456   NodeClass changed
-```
-
-### Pending Pods 확인
-
-```bash
-$ kubectl get pods -A --field-selector=status.phase=Pending
-NAMESPACE     NAME                      READY   STATUS    AGE
-default       web-app-7d9f8b6c5-xyz    0/1     Pending   2m
-production    api-server-5c8d7e-abc    0/1     Pending   1m
-monitoring    prometheus-0             0/1     Pending   30s
-```
-
-<!-- notes: 이벤트 로그를 통해 노드 종료 원인(Consolidation, SpotInterruption, Drift)을 파악할 수 있습니다. -->
+<!-- notes: {timing: 1min} [요약] 라벨은 노드를 묶어서 보는 기준입니다. 종료 이유 자체를 증명하지는 않습니다. {cue: transition} 이 분류를 메트릭 집계에도 사용할 수 있습니다. -->
 
 ---
 
 <!-- type: tabs -->
 
-# Prometheus 쿼리: 노드 모니터링
+# 대시보드는 질문에 답하게 만듭니다
 
-**핵심 Karpenter 메트릭 쿼리**
+**공통: kube-state-metrics / Pod 시작 P99: 직접 설치한 Karpenter**
 
-### 총 노드 수
+NodePool·Spot 쿼리에는 node 라벨 allowlist가 필요합니다. [설정 전제](version-update.md#메트릭-예제의-전제)를 확인하세요. 아래 표시 수치는 설명용 예시입니다.
 
-```promql
-karpenter_nodes_total
-```
-
-NodePool별 총 노드 수 추적
-
-| NodePool | 노드 수 |
-|----------|---------|
-| general-purpose | 8 |
-| system | 2 |
-| gpu-workload | 0 |
-
-### Pending Pods
+### 노드 수가 바뀌었나?
 
 ```promql
-karpenter_pods_pending
+count by (label_karpenter_sh_nodepool) (kube_node_labels{label_karpenter_sh_nodepool!=""})
 ```
 
-스케줄 대기 중인 Pod 수 (프로비저닝 필요 신호)
+NodePool별 노드 수. 예: workload 8개, system 2개.
 
-> **Alert 조건:** `karpenter_pods_pending > 10 for 5m`
-
-### Spot 비율
+### 앱이 기다리나?
 
 ```promql
-sum(karpenter_nodes_total{capacity_type="spot"}) / sum(karpenter_nodes_total) * 100
+sum(kube_pod_status_phase{phase="Pending"})
 ```
 
-전체 노드 중 Spot 인스턴스 비율: **40%**
+Pending Pod 전체 개수이며 Unschedulable과 동일하지 않습니다. 알림 예: 10개 초과가 5분 지속.
 
-- On-Demand: 60%
-- Spot: 40%
-
-### 프로비저닝 P99
+### Spot 의존도는?
 
 ```promql
-histogram_quantile(0.99, karpenter_nodeclaims_startup_duration_seconds)
+(count(kube_node_labels{label_karpenter_sh_capacity_type="spot"}) or vector(0)) / count(kube_node_labels{label_karpenter_sh_nodepool!=""}) * 100
 ```
 
-노드 프로비저닝 지연 시간:
-- P50: 45s
-- P90: 72s
-- P99: 98s
+Pod 개수가 아닌 NodePool 소속 **노드 수**를 기준으로 계산합니다.
 
-<!-- notes: Prometheus 쿼리를 통해 노드 수, Pending Pods, Spot 비율, 프로비저닝 지연 시간 등을 모니터링합니다. -->
+### 시작이 느린가? (직접 설치한 Karpenter)
+
+```promql
+max(karpenter_pods_startup_duration_seconds{quantile="0.99"})
+```
+
+Controller 메트릭 수집이 필요합니다. Summary 타입이라 `_bucket` 대신 `quantile` label로 조회합니다. Pod 시작 시간이며 Node Ready 시간과 동일하지 않습니다. Auto Mode에서 동일 endpoint를 가정하지 않습니다.
+
+<!-- notes: 앞의 세 쿼리는 kube-state-metrics를 사용합니다. Node 라벨 allowlist와 복수 클러스터 수집 시 cluster 필터를 준비합니다. 마지막 쿼리는 직접 설치한 Karpenter의 Pod 시작 시간 Summary에서 quantile="0.99" 값을 읽습니다. -->
 
 ---
 
-<!-- type: canvas -->
+<!-- type: timeline -->
 
-# Spot 인터럽트 시뮬레이션
+# Spot 회수 통지가 오면?
 
-**EventBridge → SQS → Karpenter → Pod 퇴거 → 재스케줄링 전체 플로우**
+**Pod 종료 처리와 대체 노드 준비를 함께 시작합니다.**
 
-Canvas 애니메이션:
-- 상단: EventBridge → SQS → Karpenter 파이프라인 플로우
-- 하단: Node 3개 (On-Demand ×2, Spot ×1) + Pod 이동 시각화
+| 단계 | 기존 Spot 노드 | 대체 용량과 앱 |
+|---|---|---|
+| 1. 평상시 | 앱 실행 중 | 추가 요청 없음 |
+| 2. 회수 통지 | 종료 기한 확인 | 통지를 받아 대응 시작 |
+| 3. 동시에 대응 | 새 배치를 막고 PDB를 확인하며 drain | drain과 병행해 대체 노드 준비 |
+| 4. 결과 확인 | 기존 노드 종료 | 제때 준비되면 새 Pod Ready, 늦으면 Pending·시작 대기 가능 |
 
-시퀀스 (10단계):
-1. **EC2 Spot ITN** — 2분 경고 발생
-2. **EventBridge Rule** 매칭
-3. **SQS 큐** 메시지 전달
-4. **Karpenter** 이벤트 수신
-5. **Node Cordon** — SchedulingDisabled
-6. **PDB 확인** — minAvailable 체크
-7. **Pod Terminating** — gracefulTermination
-8. **Pod 재스케줄링** — 다른 노드로 이동
-9. **새 노드 프로비저닝** (필요 시)
-10. **Node Terminated** — 인스턴스 종료
+HTML에서는 네 단계 버튼 또는 ↑ ↓로 이동합니다. **용량·앱 준비가 제때 완료 / 준비가 늦어짐**을 선택해 결과를 비교합니다.
 
-<!-- notes: AWS EventBridge → SQS → Karpenter 파이프라인을 통해 Spot 인터럽트가 처리되는 전체 흐름을 시뮬레이션합니다. -->
+통지 경로는 상세 설명으로 접어 둡니다. 직접 설치한 Karpenter는 **EC2 → EventBridge → SQS → Controller**이며 interruption queue 구성이 필요합니다. Auto Mode는 AWS가 관리합니다.
+
+이 예시는 stop/terminate 회수 통지입니다. 통상 2분 전 알림이지만 노드와 앱의 준비 완료를 보장하지 않습니다. hibernate는 같은 2분 유예 없이 시작됩니다. **PDB는 EC2 회수 기한을 늘리지 못합니다.**
+
+[공식 근거와 적용 범위](version-update.md#spot-회수와-여유-용량을-읽는-기준)
+
+<!-- notes: {timing: 3min} [요약] Spot 회수 대응은 종료 처리와 대체 용량 준비가 겹쳐 진행됩니다. 3단계에서 두 영역을 함께 짚으세요. 직접 설치한 Karpenter는 interruption queue 구성이 필요하며 Auto Mode는 AWS가 관리합니다. 4단계에서 준비 지연을 선택해 Pending이 남을 수 있음을 보여줍니다. 앱은 기존 프로세스가 이동하는 대신 새 Pod로 다시 실행됩니다. PDB와 NodePool 예산으로 EC2 회수를 취소할 수 없습니다. {cue: transition} 노드 대기를 줄이려면 여유 자리를 미리 준비할 수 있습니다. -->
 
 ---
 
 <!-- type: compare -->
 
-# Spot Overprovisioning 전략
+# 여유 자리를 미리 준비하면?
 
-**Pause 컨테이너로 사전 용량 확보 — 즉시 스케줄링**
+**버퍼 용량은 노드 대기를 줄이지만, 그만큼 비용이 듭니다.**
 
 ### 동작 흐름
 
 | Phase | 단계 | 설명 |
 |-------|------|------|
-| Phase 1 | **Buffer Ready** | Dummy pods가 용량 예약 (PriorityClass: -1) |
-| Phase 2 | **Real Workload 도착** | Dummy 삭제 → 워크로드 즉시 스케줄링 (Preempt) |
-| Phase 3 | **Karpenter 보충** | Pending dummy (AntiAffinity) → 새 노드 프로비저닝 → 버퍼 복원 |
+| Phase 1 | **미리 자리 확보** | 낮은 우선순위 더미 Pod가 예약 (PriorityClass: -1) |
+| Phase 2 | **실제 앱이 자리 사용** | 우선순위와 배치 조건이 맞으면 더미 Pod를 축출하고 배치 |
+| Phase 3 | **여유 자리 다시 확보** | 이 예시는 기존 노드에 여유가 없어 새 노드를 준비. 더미 두 개는 서로 다른 노드에 배치 |
+
+**먼저 이해하기 / PriorityClass / Deployment** 탭으로 개념과 YAML을 나눕니다. 단계 버튼은 앞뒤로 이동하고, 처음부터 버튼은 예약 상태로 되돌립니다.
+
+- 이 예시는 더미 Pod 방식입니다. Spot뿐 아니라 On-Demand 용량에도 적용할 수 있습니다.
+- 직접 설치한 Karpenter **v1.14**에서는 **Capacity Buffers API가 v1beta1로 승격**됐습니다. 별도 방식이며 Controller와 CRD 업데이트를 함께 확인합니다. Auto Mode 지원을 의미하지 않습니다.
+- 노드가 있어도 이미지 다운로드·앱 초기화는 필요합니다. 버퍼 자체가 Spot이면 함께 회수될 수도 있습니다.
+
+[최신 기능의 적용 범위](version-update.md#spot-회수와-여유-용량을-읽는-기준)
 
 ### PriorityClass YAML
 
@@ -226,7 +202,7 @@ apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
   name: overprovisioning
-value: -1              # 가장 낮은 우선순위
+value: -1              # 기본값 0보다 낮은 우선순위
 globalDefault: false
 description: "Overprovisioning placeholder pods"
 ```
@@ -240,7 +216,13 @@ metadata:
   name: overprovisioning
 spec:
   replicas: 2
+  selector:
+    matchLabels:
+      app: overprovisioning
   template:
+    metadata:
+      labels:
+        app: overprovisioning
     spec:
       priorityClassName: overprovisioning
       terminationGracePeriodSeconds: 0
@@ -260,87 +242,82 @@ spec:
             memory: "2Gi"
 ```
 
-> **핵심 원리:** `value: -1` → 가장 낮은 우선순위. 실제 워크로드 도착 시 Dummy pod가 즉시 Preempt → 노드 대기 없이 스케줄링
+> **핵심 원리:** `value: -1` → 기본값 0보다 낮은 우선순위. 더 높은 우선순위 Pod가 필요하면 Dummy Pod를 축출(Preemption)할 수 있습니다. 배치 조건이 맞을 때 노드 대기를 줄입니다.
 
-<!-- notes: Overprovisioning은 Spot 인터럽트 대비 전략입니다. Pause 컨테이너로 사전 용량을 확보하여 워크로드가 노드 프로비저닝을 기다리지 않고 즉시 스케줄링됩니다. -->
+<!-- notes: {timing: 3min} [요약] 버퍼는 앱에 내줄 여유 용량이며 유지 비용이 듭니다. 더미보다 앱의 우선순위가 높고 배치 조건이 맞아야 선점할 수 있습니다. 세 버튼으로 자리 확보, 앱 배치, 버퍼 복원을 보여줍니다. 기존 노드에 남은 자리가 없다는 예시이며 required podAntiAffinity 때문에 복원된 더미 두 개는 서로 다른 노드에 둡니다. v1.14 Capacity Buffers API는 직접 설치 환경의 별도 방식으로 구분합니다. {cue: transition} 이제 여유 용량과 별개인 노드 수명을 봅니다. -->
 
 ---
 
 <!-- type: compare -->
 
-# expireAfter 전략 비교
+# 14일·24시간·21일은 서로 다릅니다
 
-**환경별 노드 최대 수명 설정**
+| 숫자 | 의미 |
+|---|---|
+| 14일(336h) | Auto Mode 기본 expireAfter. 교체를 시작할 시점 |
+| 24시간 | terminationGracePeriod 미지정 시 기본값. 노드 종료 시작 후 유예 |
+| 21일 | Auto Mode 노드의 최대 수명. 앞의 두 숫자를 더한 값이 아님 |
 
-### 환경별 권장값
+**선택해 보기:** 1일(짧은 주기), 7일(사용자 정책), 14일(기본값).
 
-| 값 | 환경 | 설명 | 보안 패치 속도 | 안정성 |
-|----|------|------|----------------|--------|
-| 24h | 개발/테스트 | 빠른 교체, 최신 AMI 적용 | 높음 | 낮음 |
-| 48h | 보안 중요 환경 | 보안 패치 빠른 적용 우선 | 높음 | 중간 |
-| 72h | 스테이징 | 프로덕션 전 테스트 환경 | 중간 | 중간 |
-| **168h** | **프로덕션 권장** | 안정성과 보안 패치 속도의 균형 | 중간 | 높음 |
-| 240h | 안정성 우선 | 장기 실행 워크로드 | 낮음 | 높음 |
-| 336h | GPU 워크로드 | 프로비저닝 비용이 높은 노드 | 낮음 | 매우 높음 |
+Drift·Spot·노드 정리로 더 일찍 교체될 수 있습니다. PDB와 교체 예산은 모든 종료를 막지 못합니다.
 
-### NodePool YAML
+### 펼쳐 보는 전체 YAML
+
+default NodeClass가 존재하는 환경의 커스텀 풀 예제입니다.
 
 ```yaml
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
-  name: general-purpose
+  name: workload
 spec:
+  template:
+    spec:
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
+      expireAfter: 336h
+      terminationGracePeriod: 24h
   disruption:
-    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidationPolicy: Balanced
     consolidateAfter: 1m
-    # 프로덕션 권장 값
-    expireAfter: 168h  # 7일
 ```
 
-<!-- notes: expireAfter 값은 보안 패치 속도와 안정성 사이의 트레이드오프입니다. 프로덕션에서는 168h(7일)을 권장합니다. -->
+<!-- notes: {timing: 3min} [요약] 14일은 기본 만료 설정, 24시간은 노드 종료 시작 후 기본 유예, 21일은 서비스의 최대 수명입니다. 세 값을 더해서 교체 일정을 계산하지 않습니다. 세 정책 버튼을 눌러 expireAfter만 바뀌는 것을 확인하세요. 7일을 모든 프로덕션의 권장값으로 설명하지 않습니다. 전체 YAML은 질문이 있을 때 펼치고 spec.template.spec 위치만 짚습니다. {cue: transition} 만료 전에 노드가 바뀌는 대표 사례인 Drift를 봅니다. -->
 
 ---
 
 <!-- type: timeline -->
 
-# AMI 업데이트 & Drift 감지
+# Drift: 새 설정을 새 노드에 반영합니다
 
-**NodeClass 변경 시 자동 노드 교체 흐름**
+1. 현재 노드는 AMI rev A (교육용 표기)
+2. 원하는 설정이 AMI rev B로 바뀌어 Drift 감지
+3. 새 노드 준비
+4. Pod 이동
+5. 이전 노드 종료
 
-1. **NodeClass 변경** - AMI 업데이트
-2. **Drift 감지** - 자동
-3. **신규 노드 프로비저닝**
-4. **Pod 안전 이동** - PDB 준수
-5. **구 노드 종료**
+**AWS는 관리형 AMI를 준비하고, 팀은 Pod 이동 영향을 설계합니다.**
+
+그림에서는 Pod 하나씩 그리는 대신 노드별 **Pod 개수**를 표시합니다. 단계 버튼을 누르면 이전 노드의 수가 줄고 새 노드의 수가 늘어나는 것을 확인합니다.
+
+- PDB: 동시에 중단할 Pod 제한
+- NodePool 예산: 동시에 교체할 노드 제한
+- FHD·4K에서 같은 비율로 표시되는 단계형 Canvas. 각 단계 버튼으로 앞뒤 이동
+
+<!-- notes: {timing: 3min} [요약] Drift는 원하는 설정과 기존 노드의 차이를 반영하는 교체 과정입니다. rev A/B는 실제 Kubernetes 버전이 아닌 교육용 AMI 구분입니다. 초기→감지→새 노드→Pod 이동→완료 순서로 시연하세요. AWS가 AMI를 관리하는 것과 팀이 앱의 중단 영향을 설계하는 일을 구분합니다. {cue: transition} 이 상태를 알림으로 연결합니다. -->
 
 ---
 
 <!-- type: compare -->
 
-# AL2023 vs Bottlerocket 비교
+# OS 선택이 필요하면 운영 방식을 다시 봅니다
 
-### AL2023
+Auto Mode의 AMI는 AWS가 관리합니다. AMI를 직접 선택해야 하는 요구가 있다면 직접 설치한 Karpenter/MNG 등 다른 운영 방식을 검토합니다. 이 비교는 Block 1의 운영 책임 탭에서 다룹니다.
 
-| 특성 | 값 |
-|------|-----|
-| 부팅 시간 | 40-60초 |
-| 보안 | 표준 |
-| SSH 접근 | 가능 |
-| 패키지 관리 | yum/dnf |
-| 권장 사용처 | 디버깅 필요 환경 |
-
-### Bottlerocket
-
-| 특성 | 값 |
-|------|-----|
-| 부팅 시간 | **20-30초** |
-| 보안 | **강화 (immutable)** |
-| SSH 접근 | 제한적 |
-| 패키지 관리 | API 기반 업데이트 |
-| 권장 사용처 | **프로덕션, 보안 중요** |
-
-<!-- notes: Bottlerocket은 빠른 부팅과 강화된 보안을 제공하며, 프로덕션 환경에 권장됩니다. -->
+<!-- notes: {timing: 0.5min} [요약] Auto Mode 운영 설명에 직접 설치 환경의 OS 선택 예제를 섞지 않습니다. {cue: transition} 노드 상태를 관측하는 방법으로 돌아갑니다. -->
 
 ---
 
@@ -348,58 +325,60 @@ spec:
 
 # AlertManager 알림 규칙
 
-**Karpenter 및 노드 상태 알림 구성**
+**kube-state-metrics 기반 공통 노드·Pod 알림**
 
-### PrometheusRule YAML
+Prometheus Operator의 PrometheusRule CRD와 kube-state-metrics 수집을 전제로 합니다. 임계값은 예시입니다. 복수 클러스터는 cluster 필터를 추가합니다. Spot 원인은 NodeClaim 이벤트와 함께 조사합니다.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: karpenter-alerts
+  name: node-alerts
 spec:
   groups:
-  - name: karpenter
+  - name: nodes
     rules:
     - alert: HighPendingPods
-      expr: karpenter_pods_pending > 10
+      expr: sum(kube_pod_status_phase{phase="Pending"}) > 10
       for: 5m
       labels:
         severity: warning
       annotations:
         summary: "{{ $value }} pods pending"
 
-    - alert: NodeProvisioningFailed
-      expr: increase(karpenter_nodeclaims_terminated{reason="ProvisioningFailed"}[10m]) > 0
+    - alert: KubeNodeNotReady
+      expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+      for: 5m
       labels:
         severity: critical
       annotations:
-        summary: "Node provisioning failed"
+        summary: "Node is not Ready"
 
-    - alert: SpotInterruptionRate
-      expr: increase(karpenter_nodeclaims_terminated{reason="SpotInterruption"}[1h]) > 3
+    - alert: UnschedulablePods
+      expr: sum(kube_pod_status_unschedulable) > 0
+      for: 5m
       labels:
         severity: warning
       annotations:
-        summary: "High Spot interruption rate"
+        summary: "Pods cannot be scheduled"
 
     - alert: NodeAgeExceeded
-      expr: time() - kube_node_created > 604800
+      expr: time() - kube_node_created > 1209600
       labels:
         severity: info
       annotations:
-        summary: "Node older than 7 days"
+        summary: "Node older than 14 days; inspect replacement"
 
-    - alert: CPUOverProvisioned
+    - alert: HighCPURequests
       expr: (sum(kube_pod_container_resource_requests{resource="cpu"}) / sum(kube_node_status_allocatable{resource="cpu"})) > 0.7
       for: 1h
       labels:
         severity: info
       annotations:
-        summary: "CPU over-provisioned"
+        summary: "CPU requests exceed 70% of allocatable"
 ```
 
-<!-- notes: AlertManager 규칙을 통해 Pending Pods, 프로비저닝 실패, Spot 인터럽트 비율 등을 모니터링합니다. -->
+<!-- notes: 없는 Karpenter 메트릭이나 termination counter의 가정한 reason 라벨을 사용하지 않습니다. NotReady와 Unschedulable은 증상이며 프로비저닝 실패나 Spot 중단 원인을 단정하지 않습니다. HighCPURequests는 CPU 예약 비율로 실제 CPU 사용률이나 낭비를 의미하지 않습니다. -->
 
 ---
 
@@ -413,13 +392,13 @@ spec:
 
 - [ ] Disruption Budget 설정 완료
 - [ ] PodDisruptionBudget 적용
-- [ ] Spot 인터럽트 알림 구성
+- [ ] Spot 중단 관련 이벤트 확인
 - [ ] expireAfter 정책 설정
 - [ ] 노드 모니터링 대시보드 구축
 
 ### 최적화 & 비용
 
-- [ ] AMI 업데이트 자동화
+- [ ] AWS 관리 AMI 교체 상태 확인
 - [ ] 비용 태깅 (CostCenter, Team)
 - [ ] Multi-AZ 배포 확인
 - [ ] Topology Spread Constraints 적용
@@ -433,37 +412,32 @@ spec:
 
 <!-- type: quiz -->
 
-# Block 2 요약 & 퀴즈
+# 장애 상황에서 무엇부터 볼까요?
 
-**노드 라이프사이클 & 모니터링 핵심 내용 정리**
+한 상황씩 탭으로 열고 선택 후 해설을 읽습니다. **다시 풀기**로 재도전할 수 있습니다.
 
-### 핵심 요약
+### Pending Pod가 보입니다. 가장 먼저 할 일은?
 
-| 영역 | 내용 |
-|------|------|
-| 노드 모니터링 | kubectl, Prometheus 쿼리로 노드 상태 및 이벤트 추적 |
-| Spot 대응 | 2분 경고 내 Pod 안전 이동, PDB 준수 |
-| 운영 전략 | expireAfter, Drift, AlertManager 알림 |
+- [ ] 바로 노드를 늘린다
+- [x] Pod Events에서 FailedScheduling 여부와 이유를 확인한다
+- [ ] CPU 사용량이 낮은 노드를 삭제한다
 
-### Quiz 1: Spot 인스턴스 종료 전 경고 시간은?
+**해설:** Pending에는 이미 배치된 Pod의 시작 대기도 포함됩니다. Pod → NodeClaim → 이벤트 순서로 원인을 좁힙니다.
 
-- [ ] A) 30초
-- [x] B) 2분
-- [ ] C) 5분
-- [ ] D) 10분
+### expireAfter가 14일이면 그동안 노드가 유지될까요?
 
-### Quiz 2: 프로덕션 환경의 권장 expireAfter 값은?
+- [x] Drift·Spot·노드 정리로 더 일찍 바뀔 수 있다
+- [ ] 반드시 14일 동안 유지된다
+- [ ] PDB가 있으면 영구 유지된다
 
-- [ ] A) 24h
-- [ ] B) 48h
-- [x] C) 168h (7일)
-- [ ] D) 336h (14일)
+**해설:** expireAfter는 최소 유지 시간의 보장이 아닙니다. 만료 전에 다른 이유로 교체될 수 있습니다.
 
-### Quiz 3: 노드 종료 원인을 파악할 수 있는 kubectl 명령은?
+### Spot 회수 통지가 왔습니다. PDB가 해주는 일은?
 
-- [ ] A) kubectl get nodes
-- [ ] B) kubectl top nodes
-- [x] C) kubectl get events --sort-by='.lastTimestamp' | grep karpenter
-- [ ] D) kubectl describe pod
+- [ ] EC2의 인스턴스 회수를 취소한다
+- [ ] Spot 인스턴스를 On-Demand로 바꾼다
+- [x] Pod 중단을 제어하지만 회수 기한을 늘리지는 못한다
 
-<!-- notes: Block 2의 핵심 내용을 퀴즈를 통해 복습합니다. 정답: B, C, C -->
+**해설:** PDB는 Pod 중단을 제어합니다. Spot 회수 자체를 막지 못하므로 여유 용량·분산 배치·재시작 전략이 함께 필요합니다.
+
+<!-- notes: {timing: 3min} [요약] 정답은 두 번째, 첫 번째, 세 번째 선택지입니다. 진단 순서와 교체 조건, PDB의 범위를 이해했는지 확인합니다. 숫자를 암기했는지보다 판단 이유를 설명하도록 유도하세요. {cue: transition} 다음은 앱·노드·관측성의 상관분석입니다. -->

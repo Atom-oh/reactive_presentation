@@ -208,6 +208,7 @@ controller.kubernetes.io/pod-deletion-cost annotation은 ReplicaSet을 줄일 �
 
 [출처]
 • D/06 "Pod deletion cost는 선호도" (L311-320), "Binding 후 소유한 Pod 하나에 cost 부여" (L328)
+• 데모 2 (bursting과 pod-deletion-cost): https://github.com/Atom-oh/eks-hybrid-demo 의 RUNBOOK.md 데모 2, demo2-burst/run-compare.sh 결과 표 (private 저장소)
 :::
 
 ---
@@ -259,6 +260,7 @@ AWS는 신규 EKS 1.34 이상 배포에 DRA를 권고합니다. 단, EKS Auto Mo
 
 [출처]
 • D/05 "GPU마다 할당 관리자 하나 선택", 호스트 구성 조합 (확인 기준 2026-09)
+• 데모 3 (hybrid GPU 추론): https://github.com/Atom-oh/eks-hybrid-demo 의 RUNBOOK.md 데모 3, demo3-gpu/verify.sh (private 저장소, 시뮬레이션 GPU 호스트로 1회 검증)
 :::
 
 ---

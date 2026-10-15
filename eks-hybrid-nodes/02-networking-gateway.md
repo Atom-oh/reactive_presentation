@@ -642,6 +642,7 @@ replica를 늘린다고 처리량이 늘지 않습니다. active/standby라서 �
 설치 단계를 보겠습니다.
 [근거]
 • 내부 문서 D/10 "Lease 기반 리더 선출", "페일오버 동작", "스케일링 고려 사항" 및 fact sheet(AWS Gateway operations 가이드, AWS 블로그 ~6.2초 측정). instance 크기는 D/10가 "미검증 추정"으로 표기하므로 규모 판단 전 재검증 필요
+• 데모 1 (gateway 설치와 리더 전환): https://github.com/Atom-oh/eks-hybrid-demo 의 RUNBOOK.md 데모 1, demo1-gateway/verify.sh와 failover.sh (private 저장소, 실측 인계 3~5초)
 :::
 
 ---

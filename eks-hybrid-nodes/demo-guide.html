@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EKS Hybrid Nodes 데모 구현 가이드</title>
+  <link rel="stylesheet" href="./common/theme.css">
+  <style>
+    html, body { overflow: auto; height: auto; }
+    body { background: var(--bg-primary, #0f1b2a); color: var(--text-primary, #e8eef5); font-family: var(--font-body, system-ui, sans-serif); line-height: 1.65; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+    h1 { font-size: 2.1rem; margin: 0 0 .4rem; }
+    h2 { font-size: 1.45rem; margin: 2.6rem 0 .8rem; padding-top: 1rem; border-top: 1px solid var(--border, #2a3a4d); }
+    h3 { font-size: 1.1rem; margin: 1.6rem 0 .5rem; color: var(--accent, #3b82f6); }
+    p, li { font-size: 1rem; }
+    .lead { color: var(--text-secondary, #9fb0c3); margin: 0 0 1.4rem; }
+    .nav { display: flex; flex-wrap: wrap; gap: .5rem .9rem; margin: 1rem 0 1.6rem; font-size: .95rem; }
+    .nav a { color: var(--accent, #3b82f6); text-decoration: none; }
+    .nav a:hover { text-decoration: underline; }
+    .callout { border-left: 4px solid var(--accent, #3b82f6); background: var(--bg-card, #16212f); padding: .8rem 1rem; margin: 1rem 0; border-radius: 0 .4rem .4rem 0; }
+    .callout.warn { border-color: var(--warning, #f59e0b); }
+    .callout.ok { border-color: var(--success, #22c55e); }
+    .callout.bad { border-color: var(--danger, #ef4444); }
+    .callout strong { display: block; margin-bottom: .2rem; }
+    table { width: 100%; border-collapse: collapse; margin: .8rem 0 1.2rem; font-size: .95rem; }
+    th, td { border: 1px solid var(--border, #2a3a4d); padding: .5rem .65rem; text-align: left; vertical-align: top; }
+    th { background: var(--bg-card, #16212f); }
+    code, pre { font-family: var(--font-mono, ui-monospace, monospace); font-size: .88rem; }
+    code { background: rgba(127,127,127,.18); padding: .08rem .3rem; border-radius: .25rem; }
+    pre { background: #0b1522; color: #d7e3f0; padding: .9rem 1rem; border-radius: .4rem; overflow-x: auto; border: 1px solid var(--border, #2a3a4d); }
+    pre code { background: none; padding: 0; }
+    .arch { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: stretch; margin: 1rem 0 1.4rem; }
+    .vpc { border: 1px solid var(--border, #2a3a4d); border-radius: .5rem; padding: .8rem 1rem; background: var(--bg-card, #16212f); }
+    .vpc h4 { margin: 0 0 .4rem; font-size: 1rem; }
+    .vpc ul { margin: 0; padding-left: 1.1rem; }
+    .tgw { display: flex; align-items: center; justify-content: center; writing-mode: vertical-rl; letter-spacing: .15em; color: var(--accent, #3b82f6); font-weight: 700; }
+    .num { font-variant-numeric: tabular-nums; }
+    .tag { display: inline-block; font-size: .75rem; padding: .05rem .45rem; border-radius: 1rem; background: var(--accent-subtle, rgba(59,130,246,.16)); color: var(--accent, #3b82f6); margin-left: .35rem; }
+    @media (max-width: 760px) { .arch { grid-template-columns: 1fr; } .tgw { writing-mode: horizontal-tb; } }
+  </style>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-GWVLEW5JLL"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-GWVLEW5JLL');</script>
+</head>
+<body class="theme-dark">
+<div class="wrap">
+  <h1>EKS Hybrid Nodes 데모 구현 가이드</h1>
+  <p class="lead">세션 데모 3개를 실제 클러스터에서 구축하고 검증한 기록입니다. 모든 수치는 2026-10-15에 실측한 값이고, 데모 2는 시나리오별 1회 측정입니다.</p>
+  <div class="nav">
+    <a href="#where">확인 위치</a><a href="#env">환경과 버전</a><a href="#build">구축 순서</a><a href="#demo1">데모 1 gateway</a>
+    <a href="#demo2">데모 2 bursting</a><a href="#demo3">데모 3 GPU</a><a href="#issues">문서와 달랐던 점</a><a href="#cost">비용과 정리</a>
+    <a href="01-overview.html">세션 1블록으로</a><a href="toc.html">목차로</a>
+  </div>
+
+  <div class="callout bad">
+    <strong>시뮬레이션 환경입니다</strong>
+    온프렘 서버와 VPN이 없어서, 두 번째 VPC를 Transit Gateway로 연결하고 그 안의 EC2를 온프렘 호스트로 썼습니다. EC2를 hybrid node로 쓰는 구성은 프로덕션에서 지원되지 않고, 노드가 join하면 hybrid node 요금이 부과됩니다. 발표에서는 "온프렘을 시뮬레이션한 환경"이라고 먼저 말씀하세요.
+  </div>
+
+  <h2 id="where">1. 어디서 확인하나</h2>
+  <table>
+    <tr><th>대상</th><th>위치</th></tr>
+    <tr><td>데모 코드와 런북</td><td><code>~/eks-hybrid-demo</code> (GitHub <code>Atom-oh/eks-hybrid-demo</code>, private 저장소라 로그인이 필요합니다). 시작은 <code>RUNBOOK.md</code></td></tr>
+    <tr><td>문서와 다르게 동작한 점</td><td>같은 저장소의 <code>KNOWN-ISSUES.md</code></td></tr>
+    <tr><td>데모 2 측정 결과 원본</td><td>같은 저장소의 <code>results/compare-*.md</code></td></tr>
+    <tr><td>살아 있는 클러스터</td><td>클러스터 <code>hybrid-demo</code>, 리전 ap-northeast-2. <code>aws eks update-kubeconfig --name hybrid-demo</code> 후 <code>kubectl get nodes</code></td></tr>
+    <tr><td>이 설명</td><td>이 페이지(<code>eks-hybrid-nodes/demo-guide.html</code>). 슬라이드 발표자 노트의 데모 링크는 블록 2의 13번, 블록 4의 4번과 5번에 있습니다</td></tr>
+  </table>
+  <pre><code># 사전 점검 (읽기 전용), 그다음 각 데모
+./00-prereq/check.sh
+./demo1-gateway/verify.sh && ./demo1-gateway/failover.sh
+./demo2-burst/run-compare.sh && ./demo2-burst/verify.sh
+./demo3-gpu/verify.sh      # GPU 호스트가 있을 때만</code></pre>
+
+  <h2 id="env">2. 환경과 버전</h2>
+  <div class="arch">
+    <div class="vpc"><h4>클라우드 VPC 10.0.0.0/16</h4><ul>
+      <li>EKS 1.36 컨트롤 플레인, system 노드 2대</li>
+      <li>gateway 노드 2대 (c6in.xlarge, 2개 AZ, source/dest check 해제)</li>
+      <li>Karpenter burst 노드 (m6i/m7i large, xlarge)</li>
+      <li>NAT 게이트웨이 1개, 인스턴스에 공인 IP 없음</li></ul></div>
+    <div class="tgw">Transit Gateway</div>
+    <div class="vpc"><h4>시뮬레이션 온프렘 VPC 172.18.0.0/16</h4><ul>
+      <li>hybrid 노드 호스트 2대 (m7i.xlarge, Ubuntu 24.04)</li>
+      <li>EC2 Instance Connect Endpoint로만 SSH 접근</li>
+      <li>Pod CIDR 172.17.0.0/16 (Cilium cluster-pool)</li>
+      <li>인터넷 egress는 TGW를 거쳐 클라우드 VPC NAT 사용</li></ul></div>
+  </div>
+  <table>
+    <tr><th>구성 요소</th><th>고정한 버전</th><th>비고</th></tr>
+    <tr><td>Kubernetes</td><td>1.36</td><td>EKS 지원 목록에서 확인</td></tr>
+    <tr><td>Cilium (AWS 빌드)</td><td>v1.18.13-1</td><td>VTEP 최소 1.18.8-1 충족. <code>vtep.enabled=true</code>, <code>l7Proxy=false</code> 필수</td></tr>
+    <tr><td>Hybrid Nodes gateway chart</td><td>1.0.2</td><td>namespace <code>eks-hybrid-nodes-gateway</code></td></tr>
+    <tr><td>Karpenter</td><td>1.15.0</td><td>chart values에 <code>podDeletionCostManagement</code> 키 확인</td></tr>
+    <tr><td>Kyverno chart</td><td>3.9.1</td><td>EKS Workshop 정책을 기반으로 함</td></tr>
+    <tr><td>nodeadm</td><td>v1.0.20</td><td>호스트에서 sha256 검증 후 설치</td></tr>
+    <tr><td>NVIDIA device plugin</td><td>v0.17.1</td><td>AWS 블로그와 같은 버전</td></tr>
+    <tr><td>vLLM, 모델</td><td>v0.19.1, Qwen2.5-0.5B-Instruct</td><td>Apache-2.0 모델이라 토큰이 필요 없음</td></tr>
+  </table>
+  <p>보안 기준은 구축 중 계속 확인했습니다. 보안 그룹의 인터넷 개방 ingress가 없고, 인스턴스에 공인 IP가 없고, 로드 밸런서를 만들지 않았습니다. 시크릿(SSM 활성화 코드)은 git에서 제외한 파일에만 저장했습니다.</p>
+
+  <h2 id="build">3. 구축 순서</h2>
+  <p>모든 단계는 <code>plan</code>으로 바뀔 내용을 먼저 출력하고, 확인한 뒤 <code>apply</code>를 실행합니다.</p>
+  <table>
+    <tr><th>단계</th><th>하는 일</th><th>걸린 시간</th></tr>
+    <tr><td>01-network</td><td>CloudFormation으로 VPC 2개, TGW, NAT, EICE, 호스트 2대</td><td>약 6분</td></tr>
+    <tr><td>01-cluster</td><td><code>eksctl</code>로 EKS와 <code>remoteNetworkConfig</code>(노드와 Pod CIDR, SSM), SSM 활성화, 호스트에 nodeadm install과 init</td><td>클러스터 약 15분, 조인 약 3분</td></tr>
+    <tr><td>02-cilium</td><td>hybrid 노드에만 Cilium 설치, 노드가 NotReady에서 Ready로</td><td>약 2분</td></tr>
+    <tr><td>demo1-gateway</td><td>gateway 노드 그룹, Pod Identity 권한, SNAT 제외 설정, chart 설치</td><td>약 5분</td></tr>
+    <tr><td>03-karpenter, kyverno</td><td>Karpenter와 burst NodePool, Kyverno와 정책</td><td>약 5분</td></tr>
+  </table>
+  <div class="callout warn">
+    <strong>SNAT 제외 설정을 빠뜨리지 마세요</strong>
+    <code>aws-node</code>에 <code>AWS_VPC_K8S_CNI_EXCLUDE_SNAT_CIDRS=172.17.0.0/16</code>을 설정하지 않으면 클라우드 Pod에서 hybrid Pod로 가는 ClusterIP 트래픽이 실패합니다. Pod IP로 직접 호출하는 것은 이 설정 없이도 동작합니다.
+  </div>
+
+  <h2 id="demo1">4. 데모 1: gateway와 리더 전환</h2>
+  <p><code>verify.sh</code>가 확인하는 것: gateway Pod 2개 Running, Lease HOLDER, 리더의 <code>:8088/healthz</code> 200, VPC 라우트 테이블에서 <code>172.17.0.0/16</code>의 대상이 리더 노드 ENI인지, <code>CiliumVTEPConfig</code> 존재, 클라우드와 hybrid Pod의 양방향 통신과 ClusterIP 경로입니다.</p>
+  <p><code>failover.sh</code>는 리더 Pod를 삭제하고 1초 간격 요청의 끊김 구간을 잽니다.</p>
+  <table>
+    <tr><th>실행</th><th>Lease 전환</th><th>실패한 요청 (1초 간격)</th><th>라우트</th></tr>
+    <tr><td>1회차</td><td class="num">3초</td><td class="num">60개 중 1개</td><td>새 리더 ENI로 이동</td></tr>
+    <tr><td>2회차</td><td class="num">5초</td><td class="num">60개 중 1개</td><td>새 리더 ENI로 이동</td></tr>
+    <tr><td>3회차 (최소 권한 IAM)</td><td class="num">5초</td><td class="num">45개 중 2개</td><td>새 리더 ENI로 이동</td></tr>
+  </table>
+  <p>Lease HOLDER 값은 Pod 이름이 아니라 <code>노드 이름_uuid</code> 형식입니다. 발표에서 <code>kubectl get lease</code> 출력을 보여 줄 때 알려 주세요. gateway의 IAM은 문서 예시(<code>Resource: *</code>)보다 좁혀서, 라우트 쓰기 권한(<code>CreateRoute</code>, <code>ReplaceRoute</code>)을 gateway의 route table로만 제한했고 failover가 그대로 동작했습니다.</p>
+
+  <h2 id="demo2">5. 데모 2: bursting과 pod-deletion-cost</h2>
+  <p>같은 워크로드를 세 가지 방식으로 줄여서 어떤 Pod가 먼저 사라지는지 숫자로 비교합니다. hybrid 노드 2대에 Pod 8개가 들어가도록 Pod당 CPU 요청을 930m로 계산해서 정했고, 방식은 다음과 같습니다.</p>
+  <ul>
+    <li><strong>A</strong>: 정책 없음, Karpenter 기능 끔</li>
+    <li><strong>B</strong>: Kyverno가 hybrid 노드에 뜬 Pod에 <code>controller.kubernetes.io/pod-deletion-cost: "1"</code>을 붙임</li>
+    <li><strong>C</strong>: B에 더해 Karpenter의 <code>podDeletionCostManagement</code>를 켬</li>
+  </ul>
+  <p>각 시나리오는 3개에서 15개로 늘려 hybrid를 채우고 넘치는 7개를 burst 노드가 받게 한 뒤, 12개, 10개, 3개 순서로 줄입니다. 15개로 늘렸을 때 NodeClaim은 1~2초 안에 생성됐고, 15개가 모두 Ready가 되기까지 37~38초가 걸렸습니다.</p>
+  <table>
+    <tr><th>시나리오</th><th>10개일 때 (hybrid / cloud / EC2)</th><th>최종 3개</th><th>빈 burst 노드 정리</th></tr>
+    <tr><td>A 정책 없음</td><td class="num">6 / 4 / 3대</td><td>hybrid 2, cloud 1</td><td class="num">123초</td></tr>
+    <tr><td>B Kyverno</td><td class="num">8 / 2 / 4대</td><td>hybrid 3, cloud 0</td><td class="num">118초</td></tr>
+    <tr><td>C Kyverno와 Karpenter</td><td class="num">8 / 2 / 3대</td><td>hybrid 3, cloud 0</td><td class="num">87초</td></tr>
+  </table>
+  <div class="callout ok">
+    <strong>읽는 법</strong>
+    A는 기본 규칙이 Pod 위치를 보지 않아서 온프렘 Pod를 먼저 지웠습니다. B와 C는 온프렘 Pod를 모두 지켰습니다. C는 Karpenter가 burst 노드의 Pod에 음수 값(-2, -1)을 써서 EC2가 4대에서 3대로, 정리 시간이 118초에서 87초로 줄었지만, 시나리오당 1회 측정이라 차이는 작습니다. 숫자를 인용하기 전에 반복 측정하세요.
+  </div>
+  <h3>정책 구성 (Kyverno)</h3>
+  <ul>
+    <li><code>Pod/binding</code>을 매치해서 노드의 <code>eks.amazonaws.com/compute-type</code>이 <code>hybrid</code>일 때만 값 <code>1</code>을 씁니다. 클라우드 Pod에는 쓰지 않습니다.</li>
+    <li>Kyverno 기본 설정은 <code>Pod/binding</code>을 처리 대상에서 빼므로 <code>config.resourceFiltersExclude</code>로 다시 켜야 합니다.</li>
+    <li>백그라운드 컨트롤러에 <code>nodes get</code> 권한이 없으면 에러 없이 annotation이 붙지 않습니다. 이번 구축에서 시나리오 B가 A와 똑같이 나온 원인이었습니다.</li>
+  </ul>
+  <h3>Karpenter 기능 켜기</h3>
+  <pre><code>helm upgrade karpenter oci://public.ecr.aws/karpenter/karpenter --version 1.15.0 \
+  -n kube-system --reuse-values --set settings.featureGates.podDeletionCostManagement=true</code></pre>
+  <p>이 값을 Helm으로 켤 때만 <code>pods patch</code> 권한이 함께 부여됩니다. 기능을 켜면 Karpenter가 이 annotation을 덮어쓰고 consolidation은 더 이상 읽지 않습니다. 끌 때는 기능을 끈 뒤 Karpenter가 쓴 음수 값을 지워야 합니다(<code>karpenter-gate.sh off</code>가 처리합니다).</p>
+  <div class="callout warn">
+    <strong>시나리오 C에는 warm-up 단계가 필요합니다</strong>
+    Karpenter는 정리 가능한(덜 쓰이는) 노드에만 순위를 매기고, 갱신에 1~5분이 걸립니다. 노드가 꽉 찬 15개 상태에서 바로 줄이면 아직 순위가 없어서 C가 B와 똑같아집니다. 그래서 12개로 먼저 줄이고 순위가 쓰이길 기다린 뒤 10개, 3개로 줄였습니다. 지표 <code>karpenter_pod_deletion_cost_pod_annotation_writes_total</code>은 첫 쓰기 전에는 존재하지 않습니다.
+  </div>
+  <p>발표 포인트: pod-deletion-cost는 best-effort여서 노드 장애나 축출에는 적용되지 않습니다. 슬라이드 블록 4의 "스케일-인 순서는 선호일 뿐"과 이어집니다.</p>
+
+  <h2 id="demo3">6. 데모 3: hybrid GPU 추론</h2>
+  <p>GPU 서버가 없어서 시뮬레이션 온프렘 VPC에 g6.xlarge(NVIDIA L4, 23GB) 한 대를 hybrid 노드로 붙여 한 번 검증하고 바로 삭제했습니다. 실제 GPU 서버에서는 드라이버와 container toolkit이 이미지에 들어 있다고 가정하는 부분을, 여기서는 스크립트(<code>prepare-host.sh</code>)가 설치했습니다.</p>
+  <table>
+    <tr><th>단계</th><th>내용</th></tr>
+    <tr><td>호스트 준비</td><td><code>nvidia-driver-580-server-open</code>과 <code>nvidia-container-toolkit</code> 설치, 재부팅 후 <code>nvidia-smi</code>로 L4 확인</td></tr>
+    <tr><td>조인</td><td>kubelet 플래그로 taint <code>nvidia.com/gpu=Exists:NoSchedule</code>와 label <code>node-role/gpu=true</code>, <code>nvidia-ctk runtime configure --runtime=containerd --set-as-default</code></td></tr>
+    <tr><td>device plugin</td><td>hybrid GPU 노드에만 DaemonSet. 그 뒤 <code>allocatable</code>의 <code>nvidia.com/gpu</code>가 1</td></tr>
+    <tr><td>추론 Pod</td><td>hybrid와 GPU nodeSelector, GPU toleration, <code>limits nvidia.com/gpu: 1</code>, <code>sidecar.istio.io/inject: "false"</code>, hostNetwork 사용 안 함, 모델 캐시는 hostPath</td></tr>
+    <tr><td>호출</td><td>클라우드 노드의 Job이 <code>inference.gpu-demo.svc</code>를 호출하고, 응답 시간 약 1초(모델 로드 후)</td></tr>
+  </table>
+  <p><code>verify.sh</code>는 GPU allocatable, 추론 Pod에 <code>istio-proxy</code>가 없는지, hostNetwork가 꺼져 있는지, 클라우드 Pod의 호출 성공과 응답 시간을 확인하고 통과했습니다. 첫 시작은 느립니다. vLLM 이미지(약 10GB)를 받는 데 4분 28초가 걸렸으니 발표 전에 미리 받아 두세요. GPU가 1개라 Deployment는 <code>strategy: Recreate</code>여야 합니다.</p>
+
+  <h2 id="issues">7. 문서와 다르게 동작한 점</h2>
+  <table>
+    <tr><th>상황</th><th>원인과 처리</th></tr>
+    <tr><td><code>nodeadm init</code>이 403으로 실패</td><td><code>eksctl</code>이 만든 role에 <code>eks:ListAccessEntries</code>가 없습니다. 문서가 안내하는 <code>--skip cluster-access-validation</code>을 썼습니다.</td></tr>
+    <tr><td>Kyverno 정책이 적용되지 않음</td><td>백그라운드 컨트롤러의 <code>nodes get</code> 권한 부족입니다. 값 파일에 추가했습니다.</td></tr>
+    <tr><td>Kyverno 정책 생성이 거부됨</td><td>3.9.1에서는 <code>spec.failurePolicy</code>가 금지됩니다. <code>spec.webhookConfiguration.failurePolicy</code>를 씁니다. <code>ClusterPolicy</code> 자체는 deprecated입니다.</td></tr>
+    <tr><td>8개가 들어가야 할 hybrid 노드에 6개만 배치됨</td><td>Pod의 유효 요청은 컨테이너 합과 가장 큰 init container 중 큰 값입니다. Cilium agent의 100m가 init container에 있어서 계산에서 빠졌습니다.</td></tr>
+    <tr><td>vLLM이 빈 모델 이름으로 종료</td><td>env 예제의 빈 <code>MODEL_ID=</code>가 고정값을 덮어썼습니다. 빈 줄을 제거했습니다.</td></tr>
+    <tr><td>옵션 데모(Cilium + Istio L7)를 이 클러스터에서 재현할 수 없음</td><td>gateway가 Cilium <code>l7Proxy: false</code>를 요구해서 L7 정책이 동작하지 않습니다. gateway 없는 별도 클러스터가 필요하고, 코드만 작성했습니다.</td></tr>
+  </table>
+  <p>아직 측정하지 못한 항목은 consolidation이 hybrid 노드의 빈자리를 재배치 대상으로 보는지(Karpenter는 hybrid 노드를 관리하지 않으므로 보지 않아야 합니다), hostNetwork Pod의 gateway 경로, gateway 인스턴스 타입별 처리량입니다.</p>
+
+  <h2 id="cost">8. 비용과 정리</h2>
+  <p>환경이 켜져 있는 동안 EKS 컨트롤 플레인, NAT, Transit Gateway attachment, EC2, hybrid node vCPU 요금이 계속 발생합니다. 리허설이 끝나면 다음 순서로 삭제합니다.</p>
+  <pre><code>./teardown.sh plan
+./teardown.sh apply all   # demo, karpenter, gateway, hybrid, cluster, network 순서</code></pre>
+  <p>Karpenter 노드를 먼저 정리해서 고아 EC2가 남지 않게 하고, gateway가 만든 VPC 라우트(helm uninstall이 지우지 않습니다)와 SSM 등록을 직접 지우며, CloudFormation 스택이 실제로 사라질 때까지 확인합니다. 이 스크립트는 plan 출력과 문법 검사까지만 했고 실제 삭제는 아직 실행하지 않았습니다.</p>
+</div>
+</body>
+</html>

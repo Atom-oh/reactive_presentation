@@ -15,9 +15,9 @@ paginate: true
 
 `Karpenter 기반` `관리형 노드` `자동 스케일링`
 
-확인: **2026-10-07** · EKS **1.37** · 직접 설치 Karpenter **v1.14.1**
+확인: **2026-10-15** · EKS **1.37** · 직접 설치 Karpenter **v1.15.0**
 
-[버전 호환성·변경 사항·공식 출처](version-update.md): 공식 호환성 표 기준 Kubernetes 1.37은 Karpenter **1.15.x** 필요 (v1.14.1은 1.36까지)
+[버전 호환성·변경 사항·공식 출처](version-update.md): 직접 설치한 Karpenter는 공식 호환성 표 기준 Kubernetes 1.37에 **1.15.x** 필요 (v1.14.1은 1.36까지). Auto Mode는 AWS가 관리하므로 Karpenter 버전을 고르지 않습니다.
 
 <!-- notes: EKS Auto Mode의 내부 아키텍처를 깊이 있게 살펴보는 시간입니다. Karpenter 기반의 관리형 노드 프로비저닝과 자동 스케일링에 대해 학습합니다. -->
 
@@ -35,9 +35,9 @@ paginate: true
 
 **Pod = 앱 실행 단위 · Node = Pod가 실행되는 서버.**
 
-최신 버전 상세는 접어서 제공: EKS 1.37, 직접 설치한 Karpenter v1.14.1. Auto Mode는 별도 Helm 버전을 지정하지 않습니다. [공식 검토 결과](version-update.md)
+최신 버전 상세는 접어서 제공: EKS 1.37, 직접 설치한 Karpenter v1.15.0. Auto Mode는 별도 Helm 버전을 지정하지 않습니다. [공식 검토 결과](version-update.md)
 
-<!-- notes: {timing: 2min} [요약] Karpenter는 Pod에 맞는 노드를 고르는 역할입니다. Auto Mode에서는 AWS가 이 기능과 노드 OS·주요 인프라 구성 요소를 관리합니다. 팀은 Pod 요청량, 배치 조건, 서비스 가용성을 설계합니다. Pod는 애플리케이션 실행 단위, Node는 Pod가 실행되는 서버라고 먼저 설명하세요. 오늘의 기준은 EKS 1.37과 직접 설치한 Karpenter v1.14.1입니다. 단, Karpenter 공식 호환성 표는 Kubernetes 1.37에 Karpenter 1.15.x를 요구합니다. 1.37 클러스터에 직접 설치한다면 v1.15 업그레이드 안내를 먼저 확인합니다. {cue: transition} 다음에는 팀이 직접 운영할 범위를 비교합니다. -->
+<!-- notes: {timing: 2min} [요약] Karpenter는 Pod에 맞는 노드를 고르는 역할입니다. Auto Mode에서는 AWS가 이 기능과 노드 OS·주요 인프라 구성 요소를 관리합니다. 팀은 Pod 요청량, 배치 조건, 서비스 가용성을 설계합니다. Pod는 애플리케이션 실행 단위, Node는 Pod가 실행되는 서버라고 먼저 설명하세요. 오늘의 기준은 EKS 1.37과 직접 설치한 Karpenter v1.15.0입니다. Karpenter 공식 호환성 표는 Kubernetes 1.37에 Karpenter 1.15.x를 요구합니다. v1.14.1에서 올라온다면 v1.15 업그레이드 안내의 메트릭 label 변경과 Node Repair 동작 변경을 먼저 확인합니다. {cue: transition} 다음에는 팀이 직접 운영할 범위를 비교합니다. -->
 
 ---
 
@@ -52,7 +52,7 @@ paginate: true
 - 팀이 Controller·CRD·IAM·AMI를 관리
 - NodePool + EC2NodeClass로 노드를 제어
 - AMI·노드 구성을 직접 제어해야 할 때 검토
-- v1.14.1: Controller와 CRD를 함께 업데이트
+- v1.15.0: Controller와 CRD를 함께 업데이트 (Kubernetes 1.37은 1.15.x 필요)
 
 
 ### Auto Mode
@@ -61,7 +61,8 @@ paginate: true
 |------|------|
 | 특징 | Karpenter 기반, AWS 관리형, 인스턴스 다양화 |
 | 스케일링 | Balanced 기본 정책 (EKS 1.37 신규 풀), 수요 기반 프로비저닝 |
-| 비용 | EC2 비용 + Auto Mode 관리 비용, 커스텀 풀에서 Spot 활용 |
+| 비용 | EC2 비용 + Auto Mode 관리 비용 (2026-07부터 GPU 계열 인하), 커스텀 풀에서 Spot 활용 |
+| 2026 추가 기능 | NodeClass `advancedCompute`, EFA 인터페이스, ARC zonal shift 대응, EC2 상태 검사 실패 노드 자동 교체 |
 | 적합 워크로드 | 가변적 워크로드, 다양한 인스턴스 요구사항 |
 
 ### Managed Node Group
@@ -203,6 +204,7 @@ Subnet과 스토리지를 바꾸며 생성된 YAML을 비교하세요.
 - **Subnet**: Private / Public (예제의 network-type 태그로 선택)
 - **노드 로컬 스토리지**: 80Gi / 100Gi / 200Gi
 - **IAM 역할·Security Group**: 환경별 역할과 검색 태그 준비
+- **고급 노드 설정 (2026-10 추가)**: `advancedCompute`로 kubelet, kernel sysctl, hugepages를 조정. 바꾸면 기존 노드는 Drift로 교체
 
 ```yaml
 apiVersion: eks.amazonaws.com/v1
@@ -222,9 +224,24 @@ spec:
     size: 80Gi
 ```
 
+```yaml
+# 선택: advancedCompute (2026-10 추가). 필요한 항목만 지정
+spec:
+  advancedCompute:
+    kubelet:
+      maxPods: 60            # 1-110, IP 수와 110 중 작은 값이 상한
+    kernel:
+      sysctl:
+        net.core.somaxconn: 4096
+    hugepages:
+      pages:
+        - size: "2Mi"
+          count: 512         # Pod는 hugepages-2Mi를 요청해야 사용
+```
+
 > 사전 조건: 노드 역할에 EC2 유형 Access Entry와 AmazonEKSAutoNodePolicy 연결. 예제 태그가 있는 subnet·security group과 필요한 네트워크 경로 준비.
 
-<!-- notes: Auto Mode는 eks.amazonaws.com/v1의 NodeClass를 사용합니다. AMI와 OS 보안은 AWS가 관리합니다. 직접 설치한 Karpenter의 EC2NodeClass, amiFamily, blockDeviceMappings, metadataOptions 예제와 혼용하지 않습니다. workload NodeClass와 같은 IAM 역할의 EC2 Access Entry 및 AmazonEKSAutoNodePolicy를 먼저 준비합니다. -->
+<!-- notes: Auto Mode는 eks.amazonaws.com/v1의 NodeClass를 사용합니다. AMI와 OS 보안은 AWS가 관리합니다. 직접 설치한 Karpenter의 EC2NodeClass, amiFamily, blockDeviceMappings, metadataOptions 예제와 혼용하지 않습니다. workload NodeClass와 같은 IAM 역할의 EC2 Access Entry 및 AmazonEKSAutoNodePolicy를 먼저 준비합니다. 2026-10부터 advancedCompute로 kubelet(maxPods, eviction, 로그 회전), 지원 목록의 kernel sysctl, hugepages를 조정할 수 있습니다. 실행 중인 노드에 바로 적용되지 않고 Drift로 교체된 새 노드부터 반영됩니다. static hugepages와 EFA는 같은 NodeClass에 함께 쓸 수 없습니다. -->
 
 ---
 
@@ -490,7 +507,7 @@ Consolidation 애니메이션:
 
 작은 절감·큰 중단에서는 Balanced가 유지하는 방향으로 판단합니다. 이는 교육용 정성 예시이며 실제 점수 계산기가 아닙니다. 실제 결정에는 배치 가능성, PDB, 교체 예산 등도 영향을 줍니다.
 
-EKS 1.37 신규 Auto Mode 풀은 Balanced가 기본입니다. 직접 설치한 Karpenter v1.14에서는 명시적으로 선택합니다.
+EKS 1.37 신규 Auto Mode 풀은 Balanced가 기본입니다. 직접 설치한 Karpenter v1.15도 기본값이 WhenEmptyOrUnderutilized이므로 명시적으로 선택합니다.
 
 <!-- notes: {timing: 3min} [요약] WhenEmpty는 빈 노드, WhenEmptyOrUnderutilized는 가능한 비용 절감, Balanced는 절감과 중단 비용을 함께 봅니다. 작은 절감·큰 중단 버튼부터 시작해 정책 간 판단 관점을 비교하세요. 이어서 빈 노드, 큰 절감·작은 중단을 선택합니다. 이 화면은 실제 점수 계산기를 재현한 것이 아니라 판단 관점을 설명하는 정성 예시입니다. 실제 스케줄링 제약과 PDB·예산 확인은 여전히 필요합니다. {cue: transition} 비용 정리와 별도로 새 설정을 반영하는 Drift를 살펴봅니다. -->
 

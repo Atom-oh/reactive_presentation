@@ -190,7 +190,7 @@ HTML에서는 네 단계 버튼 또는 ↑ ↓로 이동합니다. **용량·앱
 **먼저 이해하기 / PriorityClass / Deployment** 탭으로 개념과 YAML을 나눕니다. 단계 버튼은 앞뒤로 이동하고, 처음부터 버튼은 예약 상태로 되돌립니다.
 
 - 이 예시는 더미 Pod 방식입니다. Spot뿐 아니라 On-Demand 용량에도 적용할 수 있습니다.
-- 직접 설치한 Karpenter **v1.14**에서는 **Capacity Buffers API가 v1beta1로 승격**됐습니다. 별도 방식이며 Controller와 CRD 업데이트를 함께 확인합니다. Auto Mode 지원을 의미하지 않습니다.
+- 직접 설치한 Karpenter **v1.14**에서 **Capacity Buffers API가 v1beta1로 승격**됐고 v1.15.0도 같습니다. 기능은 `CapacityBuffer` feature gate(alpha, 기본 꺼짐)로 켭니다. 별도 방식이며 Controller와 CRD 업데이트를 함께 확인합니다. Auto Mode 지원을 의미하지 않습니다.
 - 노드가 있어도 이미지 다운로드·앱 초기화는 필요합니다. 버퍼 자체가 Spot이면 함께 회수될 수도 있습니다.
 
 [최신 기능의 적용 범위](version-update.md#spot-회수와-여유-용량을-읽는-기준)
@@ -244,7 +244,7 @@ spec:
 
 > **핵심 원리:** `value: -1` → 기본값 0보다 낮은 우선순위. 더 높은 우선순위 Pod가 필요하면 Dummy Pod를 축출(Preemption)할 수 있습니다. 배치 조건이 맞을 때 노드 대기를 줄입니다.
 
-<!-- notes: {timing: 3min} [요약] 버퍼는 앱에 내줄 여유 용량이며 유지 비용이 듭니다. 더미보다 앱의 우선순위가 높고 배치 조건이 맞아야 선점할 수 있습니다. 세 버튼으로 자리 확보, 앱 배치, 버퍼 복원을 보여줍니다. 기존 노드에 남은 자리가 없다는 예시이며 required podAntiAffinity 때문에 복원된 더미 두 개는 서로 다른 노드에 둡니다. v1.14 Capacity Buffers API는 직접 설치 환경의 별도 방식으로 구분합니다. {cue: transition} 이제 여유 용량과 별개인 노드 수명을 봅니다. -->
+<!-- notes: {timing: 3min} [요약] 버퍼는 앱에 내줄 여유 용량이며 유지 비용이 듭니다. 더미보다 앱의 우선순위가 높고 배치 조건이 맞아야 선점할 수 있습니다. 세 버튼으로 자리 확보, 앱 배치, 버퍼 복원을 보여줍니다. 기존 노드에 남은 자리가 없다는 예시이며 required podAntiAffinity 때문에 복원된 더미 두 개는 서로 다른 노드에 둡니다. Capacity Buffers API(v1.14에서 v1beta1, v1.15는 feature gate로 사용)는 직접 설치 환경의 별도 방식으로 구분합니다. {cue: transition} 이제 여유 용량과 별개인 노드 수명을 봅니다. -->
 
 ---
 

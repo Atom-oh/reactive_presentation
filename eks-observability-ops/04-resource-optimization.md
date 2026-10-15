@@ -19,23 +19,23 @@ paginate: true
 # VPA + Auto Mode 시너지
 
 ### VPA
-- Pod 리소스 사용량 분석
-- 최적 requests/limits 추천
-- CPU/Memory 자동 조정
-- 14일 히스토리 기반 분석
+- Pod CPU/Memory 사용량 관찰
+- requests 추천 (limits는 기존 비율 유지)
+- Recreate 또는 InPlaceOrRecreate로 적용
+- CPU: 24h 반감기, Memory: 일별 피크 8일 (기본값)
 
 ### Auto Mode
-- 실제 Pod requests 기반 선택
-- 최적 인스턴스 타입 매칭
-- Bin-packing 최적화
-- Consolidation 자동 수행
+- Pod requests 합계로 노드 선택
+- NodePool 조건 안에서 인스턴스 매칭
+- requests가 줄면 노드에 빈자리 발생
+- Consolidation이 삭제 또는 교체 판단
 
 ### Key Points
-| VPA | Auto Mode | Synergy |
+| VPA | Auto Mode | 주의 |
 |-----|-----------|---------|
-| Pod의 CPU/Memory 요청을 자동으로 최적화 | 최적화된 요청 기반으로 적합한 인스턴스 자동 선택 | 리소스 낭비 감소 + 노드 비용 절감 |
+| Pod의 CPU/Memory requests를 사용량에 맞게 조정 | 줄어든 requests로 빈 노드를 정리 (EKS 1.37 신규 풀은 Balanced 기본) | 같은 CPU/Memory 메트릭으로 HPA와 함께 쓰지 않기 |
 
-<!-- notes: VPA는 Pod 레벨의 최적화, Auto Mode는 노드 레벨의 최적화를 담당합니다. 두 가지가 함께 작동하면 시너지 효과가 발생합니다. -->
+<!-- notes: {timing: 1.5min} [요약] VPA는 Pod requests를, Auto Mode는 노드를 다룹니다. requests가 줄면 노드에 빈자리가 생기고 Consolidation이 삭제나 교체를 판단합니다. 같은 CPU, Memory 메트릭으로 HPA와 함께 쓰지 않습니다. -->
 
 ---
 
@@ -90,7 +90,7 @@ spec:
 ```
 
 ### Recreate
-**Recreate 모드**: 추천값이 변경되면 Pod를 재생성하여 적용합니다. 잠시 다운타임이 발생할 수 있습니다.
+**Recreate 모드**: 추천값과 차이가 크면 Updater가 Pod를 evict하고, Admission Controller가 새 Pod에 추천값을 넣습니다. VPA 1.5부터 기본 모드입니다.
 
 **장점**: 즉시 최적화 적용, 리소스 효율성 극대화, 자동화된 관리
 
@@ -112,14 +112,33 @@ spec:
     updateMode: "Recreate"
 ```
 
-### Auto
-**Auto 모드**: VPA가 자동으로 최적의 방식(Initial 또는 Recreate)을 선택합니다.
+### InPlaceOrRecreate
+**InPlaceOrRecreate 모드 (VPA 1.6 GA)**: Pod를 재시작하지 않고 `resize` subresource로 requests를 바꿉니다. in-place가 불가능하면 evict로 전환합니다.
 
-**장점**: 최소 개입, 상황에 맞는 자동 선택, 편리한 관리
+**장점**: 재시작 없이 조정, Kubernetes 1.35부터 in-place resize GA
 
-**단점**: 예측 어려움, 세밀한 제어 불가, 현재는 Recreate와 동일
+**단점**: QoS class는 바꿀 수 없음, 노드 여유가 없으면 결국 evict
 
-**권장 사용 사례**: 일반적인 웹 서비스, 마이크로서비스, 유연한 운영 환경
+**권장 사용 사례**: 재시작 비용이 큰 서비스, EKS 1.35 이상. evict 없는 `InPlace` 모드는 VPA 1.8에서도 alpha
+
+```yaml
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: my-app-vpa
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-app
+  updatePolicy:
+    updateMode: "InPlaceOrRecreate"
+```
+
+### Auto (deprecated)
+**Auto 모드**: VPA 1.5부터 deprecated이며 현재 Recreate와 같게 동작합니다. 향후 API 버전에서 제거될 예정이므로 Recreate 또는 InPlaceOrRecreate를 명시합니다.
+
+**권장 사용 사례**: 신규 설정에는 사용하지 않음. 기존 Auto 설정은 명시적 모드로 전환
 
 ```yaml
 apiVersion: autoscaling.k8s.io/v1
@@ -135,7 +154,7 @@ spec:
     updateMode: "Auto"
 ```
 
-<!-- notes: VPA 모드 선택은 워크로드 특성에 따라 결정합니다. 프로덕션에서는 Off 모드로 먼저 분석한 후, 안정적인 추천값이 나오면 다른 모드로 전환하는 것을 권장합니다. -->
+<!-- notes: {timing: 2.5min} [요약] Off로 관찰, Initial은 새 Pod에만, Recreate는 evict 후 재생성(VPA 1.5부터 기본), InPlaceOrRecreate는 resize를 먼저 시도합니다. Auto는 deprecated입니다. -->
 
 ---
 
@@ -148,19 +167,19 @@ spec:
 **시각화 내용**:
 - 파란색 바: 현재 Request 값
 - 초록색 바: 실제 Usage 값
-- 노란색 점선: VPA 추천값 (Usage의 115% 기준)
+- 노란색 점선: VPA target (사용량 P90 × 1.15, VPA 1.8 기본값)
 - 우측에 절감률(%) 표시
 
 **VPA Recommendation 예시**:
 ```
 target: CPU 345m, Memory 589Mi
-lowerBound: CPU 300m, Memory 512Mi
-upperBound: CPU 400m, Memory 700Mi
+lowerBound: CPU 173m, Memory 353Mi   # P50 기반, 교육용 근사
+upperBound: CPU 863m, Memory 1178Mi  # P95 기반, 교육용 근사
 ```
 
 Request가 Usage보다 훨씬 크면 리소스 낭비가 발생하고, VPA는 적정 수준으로 낮춰줍니다.
 
-<!-- notes: VPA는 실제 사용량에 15% 정도의 여유(headroom)를 두고 추천값을 계산합니다. 이 시뮬레이터를 통해 리소스 절감 효과를 미리 확인할 수 있습니다. -->
+<!-- notes: {timing: 2min} [요약] VPA 1.8 기본 target은 CPU, Memory 모두 P90 사용량에 15% 여유를 더한 값입니다. lowerBound는 P50, upperBound는 P95 기반이며 화면의 bound는 교육용 근사입니다. 최소 추천값은 CPU 25m, Memory 250Mi입니다. -->
 
 ---
 
@@ -168,16 +187,16 @@ Request가 Usage보다 훨씬 크면 리소스 낭비가 발생하고, VPA는 �
 # VPA + Auto Mode 연동 패턴
 ## 리소스 최적화에서 노드 비용 절감까지의 자동화 흐름
 
-1. **VPA 리소스 모니터링** - 14일간 Pod CPU/Memory 사용 패턴 분석
-2. **추천값 생성** - 분석 결과: CPU 300m, Memory 512Mi 권장
-3. **Pod Requests 업데이트** - VPA가 Pod spec 자동 수정 (Recreate/Auto 모드)
-4. **Auto Mode 변경 감지** - 새로운 Pod requests를 기반으로 스케줄링 재평가
-5. **최적 인스턴스 선택** - c6g.large에서 c6g.medium으로 다운사이징
-6. **Consolidation 수행** - 오버프로비저닝된 노드 통합, 빈 노드 제거
+1. **VPA 리소스 모니터링**: CPU 24h 반감기 histogram, Memory 일별 피크 8일
+2. **추천값 생성**: target = P90 × 1.15, CPU 300m, Memory 512Mi
+3. **Pod Requests 업데이트**: InPlaceOrRecreate는 먼저 in-place, 불가하면 evict. limits는 기존 비율 유지
+4. **노드에 빈자리 발생**: 노드는 그대로이고 requests 합계만 줄어듦. 직접 설치 Karpenter v1.14+는 spec과 status.allocatedResources 중 큰 값으로 계산
+5. **Consolidation 판단**: 빈 노드 삭제 또는 더 저렴한 노드로 교체. Balanced는 절감액 대비 Pod 중단 비용 평가
+6. **결과 확인**: 예시(us-east-1 On-Demand 가정) 3x c6g.large → 2x c6g.large, 약 33%. 재시작, Pending, 지연을 함께 측정
 
-> **Tip**: VPA Off 모드로 먼저 분석한 후, 안정적인 추천값이 나오면 Recreate 또는 Auto 모드로 전환하세요.
+> **Tip**: VPA Off 모드로 최소 8일 이상 관찰한 후, Recreate 또는 InPlaceOrRecreate를 명시해 적용하세요.
 
-<!-- notes: 이 흐름은 완전 자동화되어 있습니다. VPA가 리소스를 최적화하면 Auto Mode가 이를 감지하고 노드 구성을 자동으로 조정합니다. -->
+<!-- notes: {timing: 2.5min} [요약] VPA가 requests를 줄여도 노드는 바로 바뀌지 않습니다. 빈자리가 생기면 Consolidation이 판단합니다. Auto Mode 내부 동작은 AWS 문서에 따로 설명이 없으므로 단정하지 않습니다. -->
 
 ---
 
@@ -196,14 +215,14 @@ Request가 Usage보다 훨씬 크면 리소스 낭비가 발생하고, VPA는 �
 ### Production Best Practices
 
 - **CPU**: request만 설정, limit 없음 - Burstable로 CPU throttling 방지
-- **Memory**: request == limit - Guaranteed로 OOM 방지
-- **권장 패턴**: CPU request only + Memory guaranteed
+- **Memory**: request == limit, 다른 Pod의 메모리 압박으로 인한 eviction 위험 감소
+- **권장 패턴**: CPU request only + Memory request == limit (Pod QoS는 Burstable)
 
 ```yaml
 resources:
   requests:
     cpu: "500m"        # CPU request only
-    memory: "512Mi"    # Memory guaranteed
+    memory: "512Mi"    # Memory request == limit
   limits:
     # cpu: (no limit)  # Allows bursting
     memory: "512Mi"    # Same as request
@@ -215,7 +234,7 @@ resources:
 
 <!-- type: content -->
 
-# KEDA — Event-Driven Autoscaling
+# KEDA: Event-Driven Autoscaling
 
 **HPA를 넘어서: 이벤트 기반 스케일링과 Scale-to-Zero**
 
@@ -227,7 +246,7 @@ Event Sources (SQS / MSK / Prometheus) → **KEDA (ScaledObject)** → HPA (자�
 
 | 항목 | HPA (기본) | KEDA |
 |------|-----------|------|
-| 메트릭 소스 | CPU / Memory만 | **60+ 외부 스케일러** (SQS, MSK, Prometheus 등) |
+| 메트릭 소스 | CPU / Memory만 | **70+ 스케일러** (SQS, Kafka, Prometheus 등) |
 | 최소 레플리카 | min: 1 | **min: 0** (Scale-to-Zero → 비용 절감) |
 | 설정 방식 | HPA 리소스 직접 관리 | ScaledObject → HPA 자동 생성/관리 |
 | Prometheus 연동 | Prometheus Adapter 필요 | 네이티브 PromQL 지원 |
@@ -235,7 +254,9 @@ Event Sources (SQS / MSK / Prometheus) → **KEDA (ScaledObject)** → HPA (자�
 
 ### 핵심 장점
 - **Scale-to-Zero**: 트래픽 없을 때 0으로 축소, 비용 절감
-- **60+ Scalers**: AWS, GCP, Azure, Kafka, Redis 등
+- **70+ Scalers**: AWS, GCP, Azure, Kafka, Redis 등
+
+KEDA v2.21(2026-09-23)의 테스트 범위는 Kubernetes 1.34 ~ 1.36입니다. EKS 1.37은 공식 테스트 범위 밖이므로 스테이징에서 먼저 검증합니다. KEDA는 EKS add-on이 아니며 Helm으로 설치합니다.
 - **PromQL Native**: 기존 Prometheus 인프라 재활용
 - **CRD 기반**: GitOps 친화적 선언형 관리
 
@@ -271,10 +292,10 @@ spec:
       awsRegion: ap-northeast-2
 ```
 
-- `aws-sqs-queue` — Prometheus 불필요
-- `queueLength: "5"` — 메시지 5개당 Pod 1개
+- `aws-sqs-queue`: Prometheus 불필요
+- `queueLength: "5"`: 메시지 5개당 Pod 1개
 - **Scale-to-Zero**: 큐 비어있으면 Pod 0
-- IRSA 기반 인증 (`TriggerAuthentication`)
+- IRSA 기반 인증 (`TriggerAuthentication`, `podIdentity.provider: aws`. `aws-eks`는 deprecated)
 
 ### MSK Kafka
 
@@ -302,8 +323,9 @@ spec:
 
 - `prometheus` 스케일러로 Consumer Lag 모니터링
 - `kafka_consumergroup_lag` 메트릭 활용
+- 대안: `kafka` 스케일러 + `sasl: aws_msk_iam` (KEDA에 `aws-msk` 타입은 없음)
 
-> **주의:** MSK는 Scale-to-Zero 비권장 — Consumer가 0이면 Lag 감지 불가 → minReplicaCount: 1 유지
+> **주의:** Scale-to-Zero는 0에서 다시 뜰 때 consumer group rebalance와 첫 처리 지연이 생깁니다. 지연에 민감하면 minReplicaCount: 1을 유지합니다.
 
 ### ALB
 
@@ -330,7 +352,7 @@ spec:
       metricStatPeriod: "60"
 ```
 
-- `aws-cloudwatch` 스케일러 — Prometheus 불필요
+- `aws-cloudwatch` 스케일러: Prometheus 불필요
 - `RequestCountPerTarget` 메트릭
 
 <!-- notes: AWS 네이티브 메트릭(SQS, MSK, ALB)을 KEDA 스케일러로 직접 사용하여 Prometheus Adapter 없이 정확한 스케일링이 가능합니다. -->
@@ -388,36 +410,36 @@ Canvas 애니메이션:
 ---
 
 <!-- type: compare -->
-# 비용 절감 사례 (Before/After)
-## VPA + Auto Mode 최적화 실제 적용 결과
+# 비용 절감 계산 예시 (Before/After)
+## 가정: us-east-1 On-Demand, 730시간/월, 사용량 불변, Spot 미반영. 실제 고객 결과가 아닙니다
 
 ### Before (최적화 전)
-- **Nodes**: 20개 (m5.xlarge)
-- **CPU 활용률**: 25%
-- **Memory 활용률**: 30%
-- **월 비용**: $5,840
+- **Nodes**: 20개 m5.xlarge (80 vCPU, 320GiB), $0.192/h
+- **CPU 활용률**: 25% (20 vCPU 사용)
+- **Memory 활용률**: 30% (96GiB 사용)
+- **월 비용**: $2,803
 
 ### After (최적화 후)
-- **Nodes**: 8개 (m6g.large, c6g.xlarge 혼합)
-- **CPU 활용률**: 65%
-- **Memory 활용률**: 70%
-- **월 비용**: $1,752
+- **Nodes**: 8개 m6g.xlarge (32 vCPU, 128GiB), $0.154/h
+- **CPU 활용률**: 약 63% (20/32 vCPU)
+- **Memory 활용률**: 75%
+- **월 비용**: $899
 
 ---
 
 <!-- type: content -->
-# Total Savings: 70%
+# 예시 절감률: 약 68%
 
-### 절감 요소 분석
+### 절감 요인
 
-| 최적화 항목 | 절감률 |
+| 항목 | 이 예시에서 |
 |------------|--------|
-| VPA 리소스 적정화 | 20-40% |
-| Graviton (ARM) 전환 | 20% |
-| Spot 활용 | 60-70% |
-| Consolidation | 10-30% |
+| requests 적정화 | 노드 20 → 8 |
+| Graviton 단가 | $0.192 → $0.154/h |
+| Spot | 이 예시에 미반영 |
+| 측정할 것 | 재시작, Pending, 지연 |
 
-<!-- notes: 이 사례에서는 VPA로 리소스를 적정화하고, Auto Mode가 Graviton 인스턴스와 Spot을 활용하여 70%의 비용 절감을 달성했습니다. -->
+<!-- notes: {timing: 1.5min} [요약] 실제 고객 사례가 아닌 계산 예시입니다. 20대 m5.xlarge는 월 약 $2,803, 8대 m6g.xlarge는 월 약 $899로 약 68%입니다. 절감률은 환경마다 다르므로 수치를 약속하지 않습니다. -->
 
 ---
 
@@ -426,10 +448,11 @@ Canvas 애니메이션:
 ## 리소스 최적화를 위한 운영 가이드
 
 ### VPA 설정
-- [ ] VPA를 Off 모드로 먼저 분석 (2주)
+- [ ] VPA를 Off 모드로 먼저 분석 (메모리 기본 창 8일 이상)
 - [ ] 핵심 워크로드부터 VPA 적용
 - [ ] CPU는 request만, Memory는 request=limit
-- [ ] Disruption Budget으로 안전한 교체
+- [ ] 적용은 Recreate 또는 InPlaceOrRecreate 명시 (Auto 사용 안 함)
+- [ ] CPU/Memory는 VPA와 HPA 중 하나만 사용
 
 ### NodePool 전략
 - [ ] NodePool 분리: 웹/배치/GPU
@@ -462,7 +485,7 @@ Canvas 애니메이션:
 
 - **Karpenter 공식 문서** - 직접 설치한 Karpenter의 설정, 호환성 (Kubernetes 1.37은 1.15.x 필요). Auto Mode NodeClass와 구분.
   - https://karpenter.sh/docs/
-  - [2026-10-07 버전 검토·공식 출처](version-update.md)
+  - [2026-10-15 버전 검토와 공식 출처](version-update.md)
 
 ### Observability
 - **Grafana 상관분석 가이드** - Logs, Metrics, Traces 연동을 위한 Grafana 데이터소스 설정 가이드.
@@ -471,7 +494,7 @@ Canvas 애니메이션:
 - **OpenTelemetry 공식 문서** - 분산 추적 및 관측성 표준. SDK, Collector, 계측 가이드.
   - https://opentelemetry.io/docs/
 
-- **VPA GitHub Repository** - Vertical Pod Autoscaler 공식 리포지토리. 설치, 구성, FAQ.
+- **VPA GitHub Repository** - VPA 1.8.0 (Kubernetes 1.36 ~ 1.38). 설치, updateMode, Recommender flag.
   - https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler
 
 <!-- notes: 이 리소스들을 통해 더 깊이 있는 학습을 할 수 있습니다. 특히 GitBook의 한국어 자료가 실습에 유용합니다. -->
@@ -483,16 +506,16 @@ Canvas 애니메이션:
 ## Key Takeaways
 
 ### BLOCK 01: EKS Auto Mode 내부 아키텍처
-Auto Mode는 Karpenter 기반 - NodePool/NodeClass로 세밀한 제어 가능. 인스턴스 선택, Consolidation, Drift 처리 자동화.
+Auto Mode는 AWS가 관리하는 Karpenter 기반 노드 관리. NodePool과 NodeClass로 제어하고, 직접 설치한 Karpenter(v1.15.0)와 API와 운영 책임이 다릅니다.
 
 ### BLOCK 02: 노드 라이프사이클 모니터링
-Prometheus 쿼리 + AlertManager로 노드 가시성 확보. Spot 인터럽트 대응, expireAfter 전략으로 Day-2 운영 안정화.
+Pod, 노드, 이벤트 순서로 진단. Spot 회수 대응, expireAfter와 Disruption Budget으로 Day-2 운영 안정화.
 
 ### BLOCK 03: 3-Signal Correlation
-Exemplars + Derived Fields + tracesToLogs로 Logs/Metrics/Traces 상관분석. MTTR 단축 및 근본 원인 분석 가속화.
+Exemplars, Derived Fields, tracesToLogsV2로 Logs, Metrics, Traces 상관분석. 근본 원인 분석 가속화.
 
-### BLOCK 04: VPA + Auto Mode 최적화
-VPA로 리소스 requests 최적화, Auto Mode가 최적 노드 선택. 조합하면 70%+ 비용 절감 가능.
+### BLOCK 04: VPA + KEDA + Auto Mode 최적화
+VPA(InPlaceOrRecreate)로 requests 조정, KEDA로 이벤트 기반 스케일링, Auto Mode Consolidation으로 빈 노드 정리.
 
 <!-- notes: 4개 블록의 핵심 내용을 정리했습니다. 각 블록의 내용이 서로 연결되어 있으며, 종합적으로 적용하면 EKS 운영을 크게 개선할 수 있습니다. -->
 
@@ -506,6 +529,6 @@ VPA로 리소스 requests 최적화, Auto Mode가 최적 노드 선택. 조합�
 
 **피드백은 더 나은 콘텐츠를 만드는 데 큰 힘이 됩니다.**
 
-Session: EKS Auto Mode & Observability (2 Hours)
+Session: EKS Auto Mode & Karpenter 운영 (2 Hours)
 
 <!-- notes: 질문을 받고, 추가 설명이 필요한 부분을 다룹니다. -->

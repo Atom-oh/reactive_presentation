@@ -228,6 +228,10 @@
     #slide-14 .card { padding: 12px; }
     #slide-14 .card ul { margin-bottom: 0; }
     #slide-14 .card li { margin-bottom: 2px; font-size: .95rem; }
+    /* Slide 12: OTel pipeline, narrower detail panel + two YAML columns */
+    #slide-12 .columns > #component-detail { flex: 0 0 32%; }
+    #slide-12 .columns > .col-2 { flex: 1; min-width: 0; }
+    #slide-12 .code-block { line-height: 1.5; margin: 0; }
   </style>
 </head>
 <body>
@@ -347,11 +351,12 @@
           <div>
             <div class="card" style="margin-bottom: 16px;">
               <h3>Exemplar란?</h3>
-              <p style="margin-bottom: 12px;">히스토그램 메트릭의 특정 데이터 포인트에 <strong>TraceID</strong>를 첨부하여 해당 요청의 트레이스로 바로 이동할 수 있게 해주는 기능</p>
+              <p style="margin-bottom: 12px;">메트릭(주로 히스토그램)의 특정 데이터 포인트에 <strong>TraceID</strong>를 첨부하여 해당 요청의 트레이스로 바로 이동할 수 있게 해주는 기능</p>
               <ul>
-                <li>Prometheus 2.26+ 지원</li>
-                <li>히스토그램/Summary 메트릭에 적용</li>
+                <li>Prometheus 2.26+: <code>--enable-feature=exemplar-storage</code> 필요 (3.x에서도 feature flag)</li>
+                <li>OpenMetrics 기준 Counter, Histogram bucket에 적용 (Summary 불가)</li>
                 <li>OpenMetrics 형식 필요</li>
+                <li>AMP는 Exemplar 미지원 (AWS AMG 문서 기준)</li>
               </ul>
             </div>
             <div class="callout callout-info">
@@ -381,6 +386,8 @@
         </div>
         <div style="margin-top: auto; padding-top: 8px; text-align: right;">
           <a href="https://atomoh.gitbook.io/kubernetes-docs/operations-guide/ops/09-observability-stack#5-grafana-연동" target="_blank" style="font-size: .75rem; color: var(--text-muted); text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">📖 더 알아보기: Exemplars & Grafana 연동 설정</a>
+          <span style="margin: 0 6px; color: var(--border);">|</span>
+          <a href="https://docs.aws.amazon.com/grafana/latest/userguide/amp-configure-exemplars.html" target="_blank" style="font-size: .75rem; color: var(--text-muted); text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">출처: AWS AMG Exemplars 문서</a>
         </div>
       </div>
     </section>
@@ -403,6 +410,7 @@
               <h3>핵심 설정</h3>
               <ul>
                 <li><strong>url:</strong> Prometheus/AMP 엔드포인트</li>
+                <li><strong>AMP:</strong> SigV4 인증 필요. Amazon Managed Grafana 12부터 core Prometheus 플러그인은 SigV4 미지원, <strong>Amazon Managed Service for Prometheus</strong> 데이터소스 플러그인 사용</li>
                 <li><strong>exemplarTraceIdDestinations:</strong> 트레이스 연결 설정</li>
                 <li><strong>httpMethod:</strong> GET 또는 POST</li>
               </ul>
@@ -442,7 +450,7 @@
       <span class="key">maxLines</span>: <span class="number">1000</span>
       <span class="key">derivedFields</span>:
         - <span class="key">name</span>: <span class="string">TraceID</span>
-          <span class="key">regex</span>: <span class="string">'"traceId":"([a-f0-9]+)"'</span>
+          <span class="key">matcherRegex</span>: <span class="string">'"traceId":"([a-f0-9]+)"'</span>
           <span class="key">url</span>: <span class="string">'$${__value.raw}'</span>
           <span class="key">datasourceUid</span>: <span class="string">tempo</span></div>
           </div>
@@ -453,9 +461,10 @@
             <div>
               <h3>핵심 설정</h3>
               <ul>
-                <li><strong>tracesToLogs:</strong> 트레이스 → 로그 연결</li>
+                <li><strong>tracesToLogsV2:</strong> 트레이스 → 로그 연결</li>
                 <li><strong>tracesToMetrics:</strong> 트레이스 → 메트릭 연결</li>
-                <li><strong>serviceMap:</strong> 서비스 맵 활성화</li>
+                <li><strong>serviceMap:</strong> 서비스 맵 (<code>traces_service_graph_*</code> 메트릭 필요)</li>
+                <li><strong>nodeGraph:</strong> 트레이스 그래프 뷰 활성화</li>
               </ul>
             </div>
             <div class="code-block" style="font-size: 0.8rem;">
@@ -464,18 +473,30 @@
     <span class="key">type</span>: <span class="string">tempo</span>
     <span class="key">url</span>: <span class="string">http://tempo:3200</span>
     <span class="key">jsonData</span>:
-      <span class="key">tracesToLogs</span>:
+      <span class="key">tracesToLogsV2</span>:
         <span class="key">datasourceUid</span>: <span class="string">loki</span>
-        <span class="key">tags</span>: [<span class="string">'namespace'</span>, <span class="string">'pod'</span>]
+        <span class="key">tags</span>: [{ <span class="key">key</span>: <span class="string">'namespace'</span> }, { <span class="key">key</span>: <span class="string">'pod'</span> }]
         <span class="key">filterByTraceID</span>: <span class="value">true</span>
       <span class="key">tracesToMetrics</span>:
         <span class="key">datasourceUid</span>: <span class="string">prometheus</span>
+        <span class="key">tags</span>: [{ <span class="key">key</span>: <span class="string">'service.name'</span>, <span class="key">value</span>: <span class="string">'service'</span> }]
+        <span class="key">queries</span>:
+          - <span class="key">name</span>: <span class="string">'Request rate'</span>
+            <span class="comment"># OTel connector는 traces_span_metrics_*</span>
+            <span class="key">query</span>: >-
+                <span class="string">sum(rate(traces_spanmetrics_calls_total{$$__tags}[5m]))</span>
       <span class="key">serviceMap</span>:
-        <span class="key">datasourceUid</span>: <span class="string">prometheus</span></div>
+        <span class="key">datasourceUid</span>: <span class="string">prometheus</span>
+      <span class="key">nodeGraph</span>:
+        <span class="key">enabled</span>: <span class="value">true</span></div>
           </div>
         </div>
         <div style="margin-top: auto; padding-top: 8px; text-align: right;">
           <a href="https://atomoh.gitbook.io/kubernetes-docs/operations-guide/ops/09-observability-stack#5-grafana-연동" target="_blank" style="font-size: .75rem; color: var(--text-muted); text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">📖 더 알아보기: Grafana 연동 가이드</a>
+          <span style="margin: 0 6px; color: var(--border);">|</span>
+          <a href="https://grafana.com/docs/grafana/latest/datasources/loki/configure/" target="_blank" style="font-size: .75rem; color: var(--text-muted); text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">출처: Grafana Loki 데이터소스 provisioning</a>
+          <span style="margin: 0 6px; color: var(--border);">|</span>
+          <a href="https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/" target="_blank" style="font-size: .75rem; color: var(--text-muted); text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">출처: Grafana Tempo 데이터소스 provisioning</a>
         </div>
       </div>
     </section>
@@ -494,20 +515,20 @@
             <button class="btn" id="btn-reset-lt">Reset</button>
           </div>
         </div>
-        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 12px;">Tempo는 트레이스 저장소, Loki는 로그 저장소 — Grafana가 양쪽을 <strong>조회</strong>하며 연결합니다. 로그의 traceId로 트레이스를 찾거나, 트레이스의 메타데이터로 관련 로그를 필터링합니다.</p>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 12px;">Tempo는 트레이스 저장소, Loki는 로그 저장소: Grafana가 양쪽을 <strong>조회</strong>하며 연결합니다. 로그의 traceId로 트레이스를 찾거나, 트레이스의 메타데이터로 관련 로그를 필터링합니다.</p>
         <div class="col-2">
           <div class="code-block" style="font-size: 0.78rem;">
             <span class="code-label">Loki → Tempo (Derived Fields)</span>
 <span class="key">derivedFields</span>:
   - <span class="key">name</span>: <span class="string">TraceID</span>
-    <span class="key">regex</span>: <span class="string">'"traceId":"([a-f0-9]+)"'</span>
+    <span class="key">matcherRegex</span>: <span class="string">'"traceId":"([a-f0-9]+)"'</span>
     <span class="key">datasourceUid</span>: <span class="string">tempo</span>
 </div>
           <div class="code-block" style="font-size: 0.78rem;">
-            <span class="code-label">Tempo → Loki (tracesToLogs)</span>
-<span class="key">tracesToLogs</span>:
+            <span class="code-label">Tempo → Loki (tracesToLogsV2)</span>
+<span class="key">tracesToLogsV2</span>:
   <span class="key">datasourceUid</span>: <span class="string">loki</span>
-  <span class="key">tags</span>: [<span class="string">'namespace'</span>, <span class="string">'pod'</span>]
+  <span class="key">tags</span>: [{ <span class="key">key</span>: <span class="string">'namespace'</span> }, { <span class="key">key</span>: <span class="string">'pod'</span> }]
   <span class="key">filterByTraceID</span>: <span class="value">true</span>
 </div>
         </div>
@@ -520,7 +541,7 @@
     <!-- Slide 7: Derived Fields & Regex Tester -->
     <section class="slide" id="slide-7">
       <div class="slide-header">
-        <h1>Derived Fields & tracesToLogs 설정</h1>
+        <h1>Derived Fields & tracesToLogsV2 설정</h1>
       </div>
       <div class="slide-body">
         <div class="card">
@@ -529,7 +550,7 @@
             <input type="text" id="regex-input" value='"traceId":"([a-f0-9]+)"' placeholder="정규식 입력">
             <button class="btn btn-primary" id="btn-test-regex">테스트</button>
           </div>
-          <div class="log-sample" id="log-sample">{"timestamp":"2024-01-15T10:30:00Z","level":"ERROR","traceId":"abc123def456789012345678","service":"payment-service","message":"Payment failed: Connection timeout to RDS"}</div>
+          <div class="log-sample" id="log-sample">{"timestamp":"2024-01-15T10:30:00Z","level":"ERROR","traceId":"4bf92f3577b34da6a3ce929d0e0e4736","service":"payment-service","message":"Payment failed: Connection timeout to RDS"}</div>
           <div class="extracted-value" id="extracted-value" style="display: none;">
             추출된 값: <span id="extracted-text"></span>
           </div>
@@ -581,6 +602,7 @@
             <div class="traceql-query">{ span.http.method = "POST" }</div>
             <p class="traceql-desc">HTTP POST 요청이 포함된 트레이스를 검색합니다.</p>
           </div>
+          <p class="traceql-desc" style="font-size: 0.8rem; color: var(--text-muted);">참고: 최신 OTel semconv는 <code>http.request.method</code>, <code>http.response.status_code</code>를 사용합니다. 구형 SDK는 <code>http.method</code>, <code>http.status_code</code>를 emit하므로 SDK 버전에 맞춰 속성명을 선택하세요.</p>
         </div>
 
         <div class="tab-content" data-tab="error">
@@ -612,7 +634,7 @@
           </div>
           <div class="traceql-example">
             <div class="traceql-query">{ resource.service.name = "api-gateway" && status = error } | count() > 5</div>
-            <p class="traceql-desc">api-gateway에서 에러 span이 5개 이상인 트레이스를 검색합니다.</p>
+            <p class="traceql-desc">api-gateway에서 에러 span이 5개 초과인 트레이스를 검색합니다.</p>
           </div>
         </div>
 
@@ -670,7 +692,7 @@
     <section class="slide" id="slide-10">
       <div class="slide-header" style="margin-bottom: 6px;">
         <h1>RED Method vs 4 Golden Signals</h1>
-        <p class="subtitle">두 방법론의 관계와 차이 — 메트릭 3개가 겹칩니다</p>
+        <p class="subtitle">두 방법론의 관계와 차이: 메트릭 3개가 겹칩니다</p>
       </div>
       <div class="slide-body" style="gap: 8px;">
         <div class="columns" style="gap: 14px; flex: 0 0 auto;">
@@ -680,7 +702,7 @@
               <span style="background: var(--orange); color: #000; font-weight: 700; padding: 2px 8px; border-radius: 4px; font-size: .75rem;">RED</span>
               <span style="color: var(--text-secondary); font-size: .82rem;">Tom Wilkie (Grafana Labs)</span>
             </div>
-            <p style="font-size: .82rem; color: var(--text-muted); margin-bottom: 8px;"><strong style="color: var(--text-primary);">마이크로서비스</strong> 관점 — "내 서비스가 잘 응답하는가?"</p>
+            <p style="font-size: .82rem; color: var(--text-muted); margin-bottom: 8px;"><strong style="color: var(--text-primary);">마이크로서비스</strong> 관점: "내 서비스가 잘 응답하는가?"</p>
             <div style="display: flex; gap: 8px;">
               <div class="card metric-card" id="red-rate" style="padding: 6px; flex: 1;">
                 <div class="metric-value" style="color: var(--blue); font-size: 1.4rem;" data-normal="1,247" data-fault="342">1,247</div>
@@ -702,7 +724,7 @@
               <span style="background: var(--cyan); color: #000; font-weight: 700; padding: 2px 8px; border-radius: 4px; font-size: .75rem;">4 Golden</span>
               <span style="color: var(--text-secondary); font-size: .82rem;">Google SRE Book (2016)</span>
             </div>
-            <p style="font-size: .82rem; color: var(--text-muted); margin-bottom: 8px;"><strong style="color: var(--text-primary);">인프라 + 서비스</strong> 관점 — "시스템 전체가 건강한가?"</p>
+            <p style="font-size: .82rem; color: var(--text-muted); margin-bottom: 8px;"><strong style="color: var(--text-primary);">인프라 + 서비스</strong> 관점: "시스템 전체가 건강한가?"</p>
             <div style="display: flex; gap: 8px;">
               <div class="card metric-card" id="golden-latency" style="padding: 6px; flex: 1;">
                 <div class="metric-value" style="color: var(--yellow); font-size: 1.4rem;" data-normal="45ms" data-fault="2,340ms">45ms</div>
@@ -735,7 +757,7 @@
                 <tr><td><strong style="color:var(--blue);">Rate</strong></td><td>=</td><td><strong style="color:var(--blue);">Traffic</strong></td><td style="font-family:var(--font-mono); font-size:.75rem; color:var(--text-muted);">rate(http_requests_total[5m])</td></tr>
                 <tr><td><strong style="color:var(--red);">Errors</strong></td><td>=</td><td><strong style="color:var(--red);">Errors</strong></td><td style="font-family:var(--font-mono); font-size:.75rem; color:var(--text-muted);">rate(http_requests_total{code=~"5.."}[5m])</td></tr>
                 <tr><td><strong style="color:var(--yellow);">Duration</strong></td><td>=</td><td><strong style="color:var(--yellow);">Latency</strong></td><td style="font-family:var(--font-mono); font-size:.75rem; color:var(--text-muted);">histogram_quantile(0.99, ...)</td></tr>
-                <tr><td style="color:var(--text-muted);">—</td><td style="color:var(--accent);">+</td><td><strong style="color:var(--cyan);">Saturation</strong></td><td style="font-family:var(--font-mono); font-size:.75rem; color:var(--text-muted);">container_memory_usage / limits</td></tr>
+                <tr><td style="color:var(--text-muted);">없음</td><td style="color:var(--accent);">+</td><td><strong style="color:var(--cyan);">Saturation</strong></td><td style="font-family:var(--font-mono); font-size:.75rem; color:var(--text-muted);">container_memory_usage / limits</td></tr>
               </tbody>
             </table>
           </div>
@@ -860,6 +882,8 @@ ERROR: Unable to acquire connection within 5s
           <div class="pipeline-stage" data-component="processors">Processors</div>
           <span class="pipeline-arrow">→</span>
           <div class="pipeline-stage" data-component="exporters">Exporters</div>
+          <span class="pipeline-arrow">+</span>
+          <div class="pipeline-stage" data-component="connectors">Connectors</div>
         </div>
 
         <div class="columns">
@@ -868,7 +892,7 @@ ERROR: Unable to acquire connection within 5s
               <h3>Receivers</h3>
               <p style="margin-bottom: 12px;">텔레메트리 데이터 수신</p>
               <ul>
-                <li><strong>OTLP (gRPC)</strong>: 4317 포트 <span style="color: var(--text-muted); font-size: 0.78rem;">— OpenTelemetry Protocol</span></li>
+                <li><strong>OTLP (gRPC)</strong>: 4317 포트 <span style="color: var(--text-muted); font-size: 0.78rem;">(OpenTelemetry Protocol)</span></li>
                 <li><strong>OTLP (HTTP)</strong>: 4318 포트</li>
                 <li><strong>Jaeger</strong>: 14250/14268 포트</li>
                 <li><strong>Zipkin</strong>: 9411 포트</li>
@@ -876,63 +900,94 @@ ERROR: Unable to acquire connection within 5s
             </div>
             <div class="card" id="processors-detail" style="display: none;">
               <h3>Processors</h3>
-              <p style="margin-bottom: 12px;">데이터 변환 및 필터링</p>
+              <p style="margin-bottom: 12px;">데이터 변환 및 필터링 (순서대로 실행)</p>
               <ul>
-                <li><strong>batch</strong>: 배치 처리로 효율성 향상</li>
-                <li><strong>tail_sampling</strong>: 에러/느린 요청 우선 샘플링</li>
-                <li><strong>spanmetrics</strong>: span에서 메트릭 생성</li>
+                <li><strong>memory_limiter</strong>: 메모리 한도 보호, 항상 첫 번째</li>
+                <li><strong>tail_sampling</strong>: 에러/느린 요청 우선 샘플링 (<code>decision_wait: 10s</code>)</li>
+                <li><strong>batch</strong>: 배치 처리로 효율성 향상, 마지막</li>
                 <li><strong>attributes</strong>: 속성 추가/수정/삭제</li>
               </ul>
+              <div class="callout callout-warning" style="margin-top: 10px; padding: 8px 12px; font-size: 0.8rem;">
+                tail_sampling은 한 trace의 모든 span이 <strong>같은 Collector</strong>에 도착해야 합니다. 여러 replica라면 앞단에 traceID 기준 <code>loadbalancing</code> exporter를 두세요.
+              </div>
             </div>
             <div class="card" id="exporters-detail" style="display: none;">
               <h3>Exporters</h3>
               <p style="margin-bottom: 12px;">백엔드로 데이터 전송</p>
               <ul>
-                <li><strong>otlp/tempo</strong>: Tempo로 트레이스 전송</li>
-                <li><strong>loki</strong>: Loki로 로그 전송</li>
-                <li><strong>prometheusremotewrite</strong>: Prometheus로 메트릭 전송</li>
+                <li><strong>otlp_grpc/tempo</strong>: Tempo로 트레이스 전송 (<code>otlp</code>는 v0.144부터 deprecated alias)</li>
+                <li><strong>otlp_http/loki</strong>: Loki 3.x native OTLP endpoint로 로그 전송 (<code>loki</code> exporter는 contrib v0.131.0에서 제거)</li>
+                <li><strong>prometheusremotewrite</strong>: Prometheus로 메트릭 전송 (Prometheus는 <code>--web.enable-remote-write-receiver</code>, AMP는 <code>sigv4auth</code> 필요)</li>
+              </ul>
+            </div>
+            <div class="card" id="connectors-detail" style="display: none;">
+              <h3>Connectors</h3>
+              <p style="margin-bottom: 12px;">파이프라인과 파이프라인을 연결</p>
+              <ul>
+                <li><strong>spanmetrics</strong>: processor가 아니라 <strong>connector</strong>. traces 파이프라인의 exporter이자 metrics 파이프라인의 receiver</li>
+                <li>span에서 RED 메트릭(calls, duration) 생성</li>
+                <li>샘플링 전 전체 span으로 계산해야 정확하므로 별도 traces 파이프라인에 연결</li>
               </ul>
             </div>
           </div>
-          <div class="code-block" style="font-size: 0.72rem;">
-            <span class="code-label">otel-collector-config.yaml</span>
+          <div class="col-2" style="gap: 12px;">
+          <div class="code-block" style="font-size: 0.7rem;">
+            <span class="code-label">otel-collector-config.yaml (1/2)</span>
 <span class="key">receivers</span>:
-  <span class="key">otlp</span>:
-    <span class="key">protocols</span>:
-      <span class="key">grpc</span>: { <span class="key">endpoint</span>: <span class="string">"0.0.0.0:4317"</span> }
-      <span class="key">http</span>: { <span class="key">endpoint</span>: <span class="string">"0.0.0.0:4318"</span> }
+  <span class="key">otlp</span>:  <span class="comment"># 4317, 4318</span>
+    <span class="key">protocols</span>: { <span class="key">grpc</span>: {}, <span class="key">http</span>: {} }
 
 <span class="key">processors</span>:
-  <span class="key">batch</span>:
-    <span class="key">timeout</span>: <span class="string">5s</span>
-    <span class="key">send_batch_size</span>: <span class="number">1000</span>
+  <span class="key">memory_limiter</span>:
+    <span class="key">check_interval</span>: <span class="string">1s</span>
+    <span class="key">limit_percentage</span>: <span class="number">80</span>
   <span class="key">tail_sampling</span>:
-    <span class="key">policies</span>:
-      - <span class="key">name</span>: <span class="string">errors</span>
-        <span class="key">type</span>: <span class="string">status_code</span>
-        <span class="key">status_code</span>: { <span class="key">status_codes</span>: [<span class="string">ERROR</span>] }
-      - <span class="key">name</span>: <span class="string">slow</span>
-        <span class="key">type</span>: <span class="string">latency</span>
-        <span class="key">latency</span>: { <span class="key">threshold_ms</span>: <span class="number">1000</span> }
-      - <span class="key">name</span>: <span class="string">default</span>
-        <span class="key">type</span>: <span class="string">probabilistic</span>
-        <span class="key">probabilistic</span>: { <span class="key">sampling_percentage</span>: <span class="number">10</span> }
+    <span class="key">decision_wait</span>: <span class="string">10s</span>
+    <span class="key">policies</span>: [...]  <span class="comment"># errors, slow, 10%</span>
+  <span class="key">batch</span>: { <span class="key">timeout</span>: <span class="string">5s</span> }
+
+<span class="key">connectors</span>:
+  <span class="key">spanmetrics</span>: {}  <span class="comment"># traces → RED metrics</span>
 
 <span class="key">exporters</span>:
-  <span class="key">otlp/tempo</span>:
+  <span class="key">otlp_grpc/tempo</span>:  <span class="comment"># 구 이름 otlp</span>
     <span class="key">endpoint</span>: <span class="string">tempo-distributor:4317</span>
-  <span class="key">prometheusremotewrite</span>:
-    <span class="key">endpoint</span>: <span class="string">http://prometheus:9090/api/v1/write</span>
-
+    <span class="key">tls</span>: { <span class="key">insecure</span>: <span class="value">true</span> }  <span class="comment"># 운영은 실제 TLS</span>
+  <span class="key">otlp_http/loki</span>:  <span class="comment"># loki exporter 대체</span>
+    <span class="key">endpoint</span>: <span class="string">http://loki-gateway/otlp</span>
+    <span class="key">tls</span>: { <span class="key">insecure</span>: <span class="value">true</span> }
+  <span class="key">prometheusremotewrite</span>:  <span class="comment"># AMP는 sigv4auth</span>
+    <span class="key">endpoint</span>: <span class="string">http://prometheus:9090/api/v1/write</span></div>
+          <div class="code-block" style="font-size: 0.7rem;">
+            <span class="code-label">otel-collector-config.yaml (2/2)</span>
 <span class="key">service</span>:
   <span class="key">pipelines</span>:
     <span class="key">traces</span>:
       <span class="key">receivers</span>: [<span class="string">otlp</span>]
-      <span class="key">processors</span>: [<span class="string">batch</span>, <span class="string">tail_sampling</span>]
-      <span class="key">exporters</span>: [<span class="string">otlp/tempo</span>]</div>
+      <span class="key">processors</span>:
+        [<span class="string">memory_limiter</span>, <span class="string">tail_sampling</span>, <span class="string">batch</span>]
+      <span class="key">exporters</span>: [<span class="string">otlp_grpc/tempo</span>]
+    <span class="key">traces/spanmetrics</span>:  <span class="comment"># 샘플링 전 전체 span</span>
+      <span class="key">receivers</span>: [<span class="string">otlp</span>]
+      <span class="key">exporters</span>: [<span class="string">spanmetrics</span>]
+    <span class="key">metrics</span>:
+      <span class="key">receivers</span>: [<span class="string">otlp</span>, <span class="string">spanmetrics</span>]
+      <span class="key">processors</span>: [<span class="string">memory_limiter</span>, <span class="string">batch</span>]
+      <span class="key">exporters</span>: [<span class="string">prometheusremotewrite</span>]
+    <span class="key">logs</span>:
+      <span class="key">receivers</span>: [<span class="string">otlp</span>]
+      <span class="key">processors</span>: [<span class="string">memory_limiter</span>, <span class="string">batch</span>]
+      <span class="key">exporters</span>: [<span class="string">otlp_http/loki</span>]
+
+<span class="comment"># Prometheus: remote-write receiver 활성화</span>
+<span class="comment"># tail_sampling: 한 trace의 span을</span>
+<span class="comment"># 같은 Collector로 (loadbalancing)</span></div>
+          </div>
         </div>
         <div style="margin-top: auto; padding-top: 8px; text-align: right;">
           <a href="https://atomoh.gitbook.io/kubernetes-docs/operations-guide/ops/09-observability-stack#1-관측성-스택-아키텍처" target="_blank" style="font-size: .75rem; color: var(--text-muted); text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">📖 더 알아보기: 관측성 스택 아키텍처</a>
+          <span style="margin: 0 6px; color: var(--border);">|</span>
+          <a href="https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/CHANGELOG.md" target="_blank" style="font-size: .75rem; color: var(--text-muted); text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">출처: opentelemetry-collector-contrib CHANGELOG</a>
         </div>
       </div>
     </section>
@@ -959,8 +1014,8 @@ ERROR: Unable to acquire connection within 5s
                 <div class="label">일일 트레이스</div>
               </div>
               <div class="sampling-metric cost">
-                <div class="value" id="monthly-cost">$450</div>
-                <div class="label">월 저장 비용</div>
+                <div class="value" id="monthly-cost">$1,500</div>
+                <div class="label">월 저장 비용 (예시 가정)</div>
               </div>
               <div class="sampling-metric errors">
                 <div class="value" id="error-capture">100%</div>
@@ -971,9 +1026,20 @@ ERROR: Unable to acquire connection within 5s
             <div class="callout callout-info" style="margin-top: 16px;">
               <strong>Tip:</strong> Tail Sampling을 사용하면 샘플링률을 낮춰도 모든 에러를 캡처할 수 있습니다.
             </div>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">예시 가정: 100% 기준 일 10M 트레이스, 트레이스 100만 건당 월 $50 저장 비용. 실제 비용은 span 크기, 보존 기간, 백엔드에 따라 달라집니다.</p>
+            <div class="card" style="margin-top: 16px; border-color: var(--cyan);">
+              <h3 style="color: var(--cyan);">Adaptive Sampling이란?</h3>
+              <p style="font-size: 0.85rem; margin-top: 8px;">트래픽 양에 따라 <strong>샘플링률을 자동 조절</strong>하는 전략. OTEL Collector의 <code>tail_sampling</code> + <code>probabilistic_sampler</code>를 조합하여 구현합니다.</p>
+              <ul style="font-size: 0.85rem; margin-top: 8px;">
+                <li><strong>Low traffic</strong> (< 100 req/s): 50% 수집, 데이터 충분</li>
+                <li><strong>Normal</strong> (100-1k req/s): 10% 수집, 비용 최적화</li>
+                <li><strong>High traffic</strong> (> 1k req/s): 1-5% 수집, 저장소 보호</li>
+                <li>에러/느린 요청은 항상 100% 수집 (Tail Sampling과 동일)</li>
+              </ul>
+            </div>
           </div>
           <div>
-            <h3>샘플링 전략 비교</h3>
+            <h3>샘플링 전략 비교 <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 400;">(수치는 예시 가정)</span></h3>
             <table style="font-size: 0.85rem;">
               <thead>
                 <tr>
@@ -1020,16 +1086,6 @@ ERROR: Unable to acquire connection within 5s
               </ul>
             </div>
 
-            <div class="card" style="margin-top: 12px; border-color: var(--cyan);">
-              <h3 style="color: var(--cyan);">Adaptive Sampling이란?</h3>
-              <p style="font-size: 0.85rem; margin-top: 8px;">트래픽 양에 따라 <strong>샘플링률을 자동 조절</strong>하는 전략. OTEL Collector의 <code>tail_sampling</code> + <code>probabilistic_sampler</code>를 조합하여 구현합니다.</p>
-              <ul style="font-size: 0.85rem; margin-top: 8px;">
-                <li><strong>Low traffic</strong> (< 100 req/s): 50% 수집 — 데이터 충분</li>
-                <li><strong>Normal</strong> (100-1k req/s): 10% 수집 — 비용 최적화</li>
-                <li><strong>High traffic</strong> (> 1k req/s): 1-5% 수집 — 저장소 보호</li>
-                <li>에러/느린 요청은 항상 100% 수집 (Tail Sampling과 동일)</li>
-              </ul>
-            </div>
           </div>
         </div>
         <div style="margin-top: auto; padding-top: 8px; text-align: right;">
@@ -1053,7 +1109,7 @@ ERROR: Unable to acquire connection within 5s
               <ul>
                 <li><strong>Exemplars:</strong> 메트릭 → 트레이스 연결</li>
                 <li><strong>Derived Fields:</strong> 로그 → 트레이스 연결</li>
-                <li><strong>tracesToLogs:</strong> 트레이스 → 로그 연결</li>
+                <li><strong>tracesToLogsV2:</strong> 트레이스 → 로그 연결</li>
                 <li><strong>TraceQL:</strong> 강력한 트레이스 쿼리 언어</li>
                 <li><strong>Tail Sampling:</strong> 비용 효율적 샘플링</li>
               </ul>
@@ -1065,7 +1121,7 @@ ERROR: Unable to acquire connection within 5s
               <div class="quiz-options">
                 <button class="quiz-option" data-correct="true">Exemplars</button>
                 <button class="quiz-option" data-correct="false">Derived Fields</button>
-                <button class="quiz-option" data-correct="false">tracesToLogs</button>
+                <button class="quiz-option" data-correct="false">tracesToLogsV2</button>
                 <button class="quiz-option" data-correct="false">Annotations</button>
               </div>
               <div class="quiz-feedback"></div>
@@ -1124,18 +1180,18 @@ ERROR: Unable to acquire connection within 5s
       presenterNotes: {
         1: '세션 시작 슬라이드.\n\n자기소개 후 Block 3 개요 안내.\n이번 블록에서는 관측성 데이터의 상관 분석(Correlation)을 다룹니다.\n\n핵심 질문: "메트릭에서 이상을 발견했을 때, 관련 트레이스와 로그를 얼마나 빨리 찾을 수 있나요?"\n\n상관 분석 = Metrics, Traces, Logs 세 가지 시그널을 서로 연결해서 한 화면에서 탐색하는 것.\n이것이 가능해지면 MTTR(Mean Time To Resolution)이 50% 이상 단축됩니다.',
         2: '청중에게 공감을 이끌어내세요.\n\n"CloudWatch에서 에러율 급증을 봤는데, 어떤 요청이 실패한 건지 찾으려면 로그를 grep 하고, 트레이스를 별도 도구에서 검색하고... 이 과정에 30분이 걸린다면?"\n\n이게 바로 상관 분석이 해결하는 문제입니다.\n- 도구 간 컨텍스트 스위칭 비용\n- 시간대를 수동으로 맞추는 번거로움\n- TraceID를 복사-붙여넣기하는 수작업\n\nGrafana 스택(Prometheus + Loki + Tempo)을 사용하면 클릭 한 번으로 시그널 간 이동이 가능합니다.',
-        3: '관측성 3대 축(Three Pillars)과 각각의 역할:\n\n■ Metrics (Prometheus/AMP)\n- "무슨 일이 일어났는지" — 숫자로 표현\n- 예: CPU 사용률 90%, 에러율 5%, 응답 시간 2초\n- 시계열 데이터, 대시보드와 알림의 기반\n- 저장 비용이 낮고 장기 보관에 적합\n\n■ Traces (Tempo)\n- "어디서 일어났는지" — 요청의 전체 경로 추적\n- 예: API Gateway → Auth → Payment → DB 각 구간의 소요 시간\n- 마이크로서비스 간 호출 관계와 병목 지점 파악\n- 하나의 요청이 여러 서비스를 거치는 과정을 시각화\n\n■ Logs (Loki)\n- "왜 일어났는지" — 상세 컨텍스트\n- 예: "Connection timeout to RDS at 10.0.1.5:3306"\n- 에러 메시지, 스택 트레이스, 변수 값 등 디버깅 정보\n\nGrafana가 이 세 가지를 하나의 UI에서 연결해주는 통합 플랫폼입니다.\n각 도구가 별개로 동작하면 의미가 없고, 서로 연결되어야 진정한 가치가 생깁니다.',
-        4: '★ 핵심 애니메이션 슬라이드 — 천천히 시연하세요.\n\n"에러 시뮬레이션" 버튼을 클릭하면 3-Signal 상관 분석 과정을 보여줍니다.\n\n시연 순서:\n1. 메트릭 그래프에서 에러율 급등 → 빨간 점 (Exemplar) 표시\n2. Exemplar 클릭 → 해당 요청의 TraceID로 Tempo 이동\n3. 트레이스에서 에러 발생 구간 확인 (어느 서비스에서 실패했는지)\n4. 트레이스의 메타데이터(namespace, pod)로 Loki에서 관련 로그 조회\n\n이 전체 흐름이 Grafana에서 클릭만으로 이루어집니다.\n\nExemplar가 핵심 연결 고리입니다 — 메트릭 포인트에 TraceID가 첨부되어 있어서\n메트릭 그래프에서 바로 특정 요청의 트레이스로 점프할 수 있습니다.',
-        5: '★ Exemplar(엑셈플라) 상세 설명:\n\n■ Exemplar란 무엇인가?\n- "대표 샘플"이라는 뜻. 히스토그램 메트릭의 특정 버킷에 속하는 실제 요청 하나를 골라서\n  그 요청의 TraceID를 메트릭 데이터에 첨부하는 기술입니다.\n\n■ 왜 필요한가?\n- 메트릭은 집계 데이터 (평균, p99 등) — "p99 latency가 2초다"는 알지만\n  "어떤 요청이 2초 걸렸는지"는 메트릭만으로 알 수 없음\n- Exemplar가 있으면 "이 2초짜리 요청의 TraceID는 abc123이다"를 알 수 있음\n- Grafana에서 메트릭 그래프의 데이터 포인트 위에 ◆ 다이아몬드 마커로 표시됨\n  → 클릭하면 Tempo에서 해당 트레이스를 바로 열 수 있음\n\n■ 동작 조건:\n- Prometheus 2.26+ (--enable-feature=exemplar-storage 플래그 필요)\n- 앱에서 OpenMetrics 형식으로 메트릭을 노출해야 함\n- 클라이언트 라이브러리가 Exemplar를 지원해야 함 (Go: prometheus/client_golang, Java: Micrometer)\n- 히스토그램 또는 Summary 타입 메트릭에만 적용 가능 (Counter/Gauge에는 안 됨)\n\n■ YAML 설정 포인트 (오른쪽 코드):\n- exemplarTraceIdDestinations: Grafana가 Exemplar의 TraceID를 어디로 보낼지 설정\n- datasourceUid: "tempo" → Tempo 데이터소스로 연결\n- urlDisplayLabel: "View Trace" → Grafana UI에서 보이는 링크 텍스트\n\n■ 주의사항:\n- 모든 요청에 Exemplar를 붙이면 저장 비용 증가 → 샘플링 비율 조절 필요\n- AMP(Amazon Managed Prometheus)에서도 Exemplar 지원 (2023년부터)',
-        6: '★ Grafana 데이터소스 설정 — 탭을 하나씩 클릭하며 설명하세요.\n\n핵심: 세 데이터소스(Prometheus, Loki, Tempo)가 서로를 참조하는 설정을 해야 상관 분석이 작동합니다.\n\n■ Prometheus 탭:\n- exemplarTraceIdDestinations: 메트릭 → 트레이스 연결의 핵심\n- name: "traceID" → Exemplar에 포함된 TraceID 필드명\n- datasourceUid: "tempo" → 이 TraceID를 Tempo에서 조회하라는 의미\n\n■ Loki 탭:\n- derivedFields: Loki에서 가장 중요한 상관 분석 설정!\n- "Derived Field"란? 로그 원문에서 정규식으로 값을 추출해서 클릭 가능한 링크로 만드는 기능\n- 예: JSON 로그에서 "traceId":"abc123"을 정규식으로 추출 → abc123을 Tempo 링크로 변환\n- regex: \'\"traceId\":\"([a-f0-9]+)\"\' → 캡처 그룹 ()이 핵심. 괄호 안의 값이 추출됨\n- datasourceUid: "tempo" → 추출한 TraceID를 Tempo에서 조회\n- url: \'$${__value.raw}\' → 추출한 값을 그대로 URL에 사용\n\n★ derivedFields를 쉽게 설명하면:\n"로그 줄에서 TraceID를 자동으로 찾아서 파란색 클릭 링크로 만들어주는 기능"\n로그를 보다가 TraceID 링크를 클릭하면 → Tempo에서 해당 트레이스가 바로 열립니다.\n\n■ Tempo 탭:\n- tracesToLogs: 트레이스 → 로그 연결 (반대 방향)\n- datasourceUid: "loki" → 로그를 Loki에서 조회\n- tags: [namespace, pod] → 트레이스의 이 태그 값으로 Loki 로그를 필터링\n- filterByTraceID: true → TraceID로도 로그를 필터링 (로그에 traceId가 포함된 경우)\n- tracesToMetrics: 트레이스에서 관련 메트릭 패널로 이동\n- serviceMap: Tempo가 수집한 트레이스 데이터로 서비스 의존성 그래프를 자동 생성\n\n이 세 탭의 설정이 모두 완료되면 Grafana에서 어떤 시그널에서 시작해도\n나머지 두 시그널로 클릭만으로 이동할 수 있습니다.',
-        7: '★ Loki ↔ Tempo 양방향 연동 상세:\n\n이 슬라이드는 앞 슬라이드에서 설명한 설정이 실제로 어떻게 작동하는지 보여줍니다.\n\n■ 방향 1: Loki → Tempo (버튼 클릭하여 시연)\n- 사용하는 설정: Loki의 derivedFields\n- 동작 과정:\n  1. 개발자가 Grafana Explore에서 Loki 로그를 조회\n  2. 로그 줄에서 traceId 필드를 발견\n  3. derivedFields의 정규식이 자동으로 TraceID를 추출\n  4. "TraceID" 라벨이 클릭 가능한 링크로 표시됨\n  5. 클릭하면 Grafana가 Tempo 데이터소스에서 해당 TraceID를 조회\n  6. 트레이스 Waterfall 뷰가 열림\n\n■ 방향 2: Tempo → Loki (두 번째 버튼 클릭)\n- 사용하는 설정: Tempo의 tracesToLogs\n- 동작 과정:\n  1. 개발자가 Tempo에서 트레이스를 보고 있음\n  2. "Logs for this span" 버튼이 자동으로 표시됨\n  3. 클릭하면 Grafana가 Loki에 쿼리를 보냄\n  4. 쿼리 조건: namespace=payment, pod=payment-xyz (tags에서 가져옴)\n  5. + filterByTraceID가 true면 traceId 필터도 추가\n  6. 해당 Pod의 로그가 시간 범위에 맞춰 표시됨\n\n이 양방향 설정이 바로 "상관 분석"의 핵심입니다.\n로그에서 시작해도, 트레이스에서 시작해도, 클릭 한 번으로 서로 이동 가능합니다.',
-        8: '★ Derived Fields & 정규식 테스터 상세:\n\n■ Derived Fields가 뭔가요? (비유로 설명)\n- 로그가 "편지"라면, Derived Fields는 "편지에서 전화번호를 형광펜으로 표시해서 클릭 가능한 링크로 만드는 것"\n- Loki 자체는 로그를 저장만 함 → Grafana의 Derived Fields 설정이 로그 내용을 분석해서 링크를 생성\n\n■ 정규식(regex) 동작 설명:\n- 예시 로그: {"traceId":"abc123def456789012345678","service":"payment"}\n- 정규식: "traceId":"([a-f0-9]+)"\n- 이 정규식이 하는 일:\n  1. "traceId":" 라는 문자열을 찾음\n  2. 그 뒤에 오는 소문자 hex 문자열([a-f0-9]+)을 캡처\n  3. 캡처된 값 = abc123def456789012345678\n  4. 이 값이 Tempo 링크의 TraceID로 사용됨\n\n■ 캡처 그룹 () 이 왜 필수인가?\n- 괄호 없이 "traceId":"[a-f0-9]+" 라고 쓰면 → 매칭은 되지만 값을 추출할 수 없음\n- 괄호 ()로 감싼 부분만 추출됨\n- 첫 번째 캡처 그룹이 자동으로 사용됨\n\n■ 테스터 시연:\n- 기본 정규식으로 테스트 버튼 클릭 → 추출된 TraceID 확인\n- 정규식을 변경해보며 다른 패턴도 시연 가능\n\n■ 주의사항:\n- 로그 형식이 바뀌면 정규식도 업데이트해야 함 (CI/CD에서 검증 추천)\n- JSON 로그를 강력히 권장 — 구조화되어 파싱이 정확함\n- 비구조화 로그(plain text)는 정규식이 깨지기 쉬움\n- W3C Trace Context 형식(traceparent 헤더)을 사용하면 표준화된 패턴 사용 가능',
-        9: '★ TraceQL 소개:\n\n■ TraceQL이란?\n- Tempo 2.0부터 도입된 트레이스 전용 쿼리 언어\n- SQL처럼 조건을 지정해서 원하는 트레이스를 검색\n- 이전에는 TraceID를 알아야만 트레이스를 찾을 수 있었음 → TraceQL로 조건 기반 검색 가능\n\n■ 탭별 설명:\n\n[기본 탭]\n- { resource.service.name = "payment-service" } → 서비스명으로 필터\n- resource.* = 트레이스를 생성한 리소스(서비스, Pod 등)의 속성\n- span.* = 개별 span의 속성 (HTTP method, URL 등)\n\n[에러 탭]\n- { status = error } → 에러 span이 포함된 트레이스\n- status는 OpenTelemetry 표준 필드 (ok, error, unset)\n- span.http.status_code >= 500 → HTTP 5xx 에러\n\n[지연 탭]\n- { duration > 1s } → 1초 이상 걸린 span\n- SLO 위반 트레이스 찾을 때 유용 (예: p99 목표 500ms)\n\n[복합 탭]\n- && 연산자로 여러 조건 조합\n- | count() > 5 → 집계 함수 지원 (Tempo 2.2+)\n\n[체인 탭] ← 가장 강력한 기능\n- >> (descendant) 연산자: "A 서비스에서 B 서비스로 이어지는 호출 경로"\n- 예: { service = "api-gateway" } >> { service = "payment" && status = error }\n  → "API Gateway를 거쳐 Payment에서 에러가 난 요청"을 정확히 찾음\n- 마이크로서비스 디버깅에서 가장 유용한 패턴\n\n■ 실무 팁:\n- Grafana Explore → Tempo → TraceQL 탭에서 직접 작성 가능\n- 자동완성 지원됨\n- 대시보드 변수($service)와 조합하면 동적 필터링 가능',
-        10: 'Service Map 시각화 — 장애 주입 버튼으로 시연하세요.\n\n■ Service Map이란?\n- Tempo가 수집한 트레이스 데이터를 기반으로 자동 생성되는 서비스 의존성 그래프\n- 별도 설정 불필요 — Tempo datasource에서 serviceMap.datasourceUid만 설정하면 됨\n- Prometheus의 span metrics를 사용하여 각 서비스의 상태를 표시\n\n■ 시각적 표현:\n- 초록색 노드: 정상 (에러율 < 1%, p99 < 500ms)\n- 노란색 노드: 느림 (p99 > 500ms)\n- 빨간색 노드: 에러 발생 (에러율 > 1%)\n- 선(edge)의 굵기: 서비스 간 트래픽 양\n\n■ "장애 주입" 버튼 클릭 후:\n- payment-service가 빨간색으로 변하면서 연쇄 영향 확인\n- 장애가 downstream으로 전파되는 과정 시각화\n- 실제 장애 시 어떤 서비스를 먼저 살펴봐야 하는지 파악 가능\n\n■ 실무 활용:\n- 온콜 엔지니어가 가장 먼저 보는 화면\n- 어떤 서비스가 문제인지 1초 만에 파악 가능\n- 노드 클릭 → 해당 서비스의 트레이스 목록으로 이동',
+        3: '관측성 3대 축(Three Pillars)과 각각의 역할:\n\n■ Metrics (Prometheus/AMP)\n- "무슨 일이 일어났는지": 숫자로 표현\n- 예: CPU 사용률 90%, 에러율 5%, 응답 시간 2초\n- 시계열 데이터, 대시보드와 알림의 기반\n- 저장 비용이 낮고 장기 보관에 적합\n\n■ Traces (Tempo)\n- "어디서 일어났는지": 요청의 전체 경로 추적\n- 예: API Gateway → Auth → Payment → DB 각 구간의 소요 시간\n- 마이크로서비스 간 호출 관계와 병목 지점 파악\n- 하나의 요청이 여러 서비스를 거치는 과정을 시각화\n\n■ Logs (Loki)\n- "왜 일어났는지": 상세 컨텍스트\n- 예: "Connection timeout to RDS at 10.0.1.5:3306"\n- 에러 메시지, 스택 트레이스, 변수 값 등 디버깅 정보\n\nGrafana가 이 세 가지를 하나의 UI에서 연결해주는 통합 플랫폼입니다.\n각 도구가 별개로 동작하면 의미가 없고, 서로 연결되어야 진정한 가치가 생깁니다.',
+        4: '★ 핵심 애니메이션 슬라이드: 천천히 시연하세요.\n\n"에러 시뮬레이션" 버튼을 클릭하면 3-Signal 상관 분석 과정을 보여줍니다.\n\n시연 순서:\n1. 메트릭 그래프에서 에러율 급등 → 빨간 점 (Exemplar) 표시\n2. Exemplar 클릭 → 해당 요청의 TraceID로 Tempo 이동\n3. 트레이스에서 에러 발생 구간 확인 (어느 서비스에서 실패했는지)\n4. 트레이스의 메타데이터(namespace, pod)로 Loki에서 관련 로그 조회\n\n이 전체 흐름이 Grafana에서 클릭만으로 이루어집니다.\n\nExemplar가 핵심 연결 고리입니다: 메트릭 포인트에 TraceID가 첨부되어 있어서\n메트릭 그래프에서 바로 특정 요청의 트레이스로 점프할 수 있습니다.',
+        5: '★ Exemplar(엑셈플라) 상세 설명:\n\n■ Exemplar란 무엇인가?\n- "대표 샘플"이라는 뜻. 히스토그램 메트릭의 특정 버킷에 속하는 실제 요청 하나를 골라서\n  그 요청의 TraceID를 메트릭 데이터에 첨부하는 기술입니다.\n\n■ 왜 필요한가?\n- 메트릭은 집계 데이터 (평균, p99 등): "p99 latency가 2초다"는 알지만\n  "어떤 요청이 2초 걸렸는지"는 메트릭만으로 알 수 없음\n- Exemplar가 있으면 "이 2초짜리 요청의 TraceID는 abc123이다"를 알 수 있음\n- Grafana에서 메트릭 그래프의 데이터 포인트 위에 ◆ 다이아몬드 마커로 표시됨\n  → 클릭하면 Tempo에서 해당 트레이스를 바로 열 수 있음\n\n■ 동작 조건:\n- Prometheus 2.26+ (--enable-feature=exemplar-storage 플래그 필요, Prometheus 3.x에서도 여전히 feature flag)\n- 앱에서 OpenMetrics 형식으로 메트릭을 노출해야 함\n- 클라이언트 라이브러리가 Exemplar를 지원해야 함 (Go: prometheus/client_golang, Java: Micrometer)\n- OpenMetrics 기준 Counter와 Histogram bucket에 적용 (Summary, Gauge에는 적용 안 됨)\n\n■ YAML 설정 포인트 (오른쪽 코드):\n- exemplarTraceIdDestinations: Grafana가 Exemplar의 TraceID를 어디로 보낼지 설정\n- datasourceUid: "tempo" → Tempo 데이터소스로 연결\n- urlDisplayLabel: "View Trace" → Grafana UI에서 보이는 링크 텍스트\n\n■ 주의사항:\n- 모든 요청에 Exemplar를 붙이면 저장 비용 증가 → 샘플링 비율 조절 필요\n- AMP(Amazon Managed Service for Prometheus)는 Exemplar를 지원하지 않음: "Exemplars are not supported in Amazon Managed Service for Prometheus"\n  → Exemplar 시연은 self-managed Prometheus 기준. AMP 환경에서는 Loki derivedFields, TraceQL 검색으로 트레이스 진입\n\n출처: https://docs.aws.amazon.com/grafana/latest/userguide/amp-configure-exemplars.html',
+        6: '★ Grafana 데이터소스 설정: 탭을 하나씩 클릭하며 설명하세요.\n\n핵심: 세 데이터소스(Prometheus, Loki, Tempo)가 서로를 참조하는 설정을 해야 상관 분석이 작동합니다.\n\n■ Prometheus 탭:\n- exemplarTraceIdDestinations: 메트릭 → 트레이스 연결의 핵심\n- AMP 사용 시 SigV4 인증 필요. Amazon Managed Grafana 12부터 core Prometheus 플러그인은 SigV4를 지원하지 않으므로 Amazon Managed Service for Prometheus 데이터소스 플러그인을 사용\n- name: "traceID" → Exemplar에 포함된 TraceID 필드명\n- datasourceUid: "tempo" → 이 TraceID를 Tempo에서 조회하라는 의미\n\n■ Loki 탭:\n- derivedFields: Loki에서 가장 중요한 상관 분석 설정!\n- "Derived Field"란? 로그 원문에서 정규식으로 값을 추출해서 클릭 가능한 링크로 만드는 기능\n- 예: JSON 로그에서 "traceId":"abc123"을 정규식으로 추출 → abc123을 Tempo 링크로 변환\n- matcherRegex: \'\"traceId\":\"([a-f0-9]+)\"\' → 캡처 그룹 ()이 핵심. 괄호 안의 값이 추출됨\n- datasourceUid: "tempo" → 추출한 TraceID를 Tempo에서 조회\n- url: \'$${__value.raw}\' → 추출한 값을 그대로 URL에 사용\n\n★ derivedFields를 쉽게 설명하면:\n"로그 줄에서 TraceID를 자동으로 찾아서 파란색 클릭 링크로 만들어주는 기능"\n로그를 보다가 TraceID 링크를 클릭하면 → Tempo에서 해당 트레이스가 바로 열립니다.\n\n■ Tempo 탭:\n- tracesToLogsV2: 트레이스 → 로그 연결 (반대 방향, 구 tracesToLogs 키는 legacy)\n- datasourceUid: "loki" → 로그를 Loki에서 조회\n- tags: [{ key: namespace }, { key: pod }] → V2 형식. 트레이스의 이 태그 값으로 Loki 로그를 필터링\n- filterByTraceID: true → TraceID로도 로그를 필터링 (로그에 traceId가 포함된 경우)\n- tracesToMetrics: 트레이스에서 관련 메트릭 패널로 이동. tags로 span 속성을 라벨에 매핑하고 queries에 $$__tags를 넣어 사용 (provisioning 파일에서는 $를 $$로 escape)\n- 메트릭 이름은 생성기에 따라 다름: Tempo metrics-generator는 traces_spanmetrics_*, OTel spanmetrics connector 기본값은 traces_span_metrics_*\n- serviceMap: traces_service_graph_* 메트릭이 있는 Prometheus를 지정 (Service Map 슬라이드 참고)\n- nodeGraph.enabled: true → 트레이스 화면에서 node graph 뷰 활성화\n\n이 세 탭의 설정이 모두 완료되면 Grafana에서 어떤 시그널에서 시작해도\n나머지 두 시그널로 클릭만으로 이동할 수 있습니다.\n\n출처: Grafana 문서의 Loki, Tempo 데이터소스 provisioning 예시 (grafana.com/docs/grafana/latest/datasources/loki, .../datasources/tempo)',
+        7: '★ Loki ↔ Tempo 양방향 연동 상세:\n\n이 슬라이드는 앞 슬라이드에서 설명한 설정이 실제로 어떻게 작동하는지 보여줍니다.\n\n■ 방향 1: Loki → Tempo (버튼 클릭하여 시연)\n- 사용하는 설정: Loki의 derivedFields\n- 동작 과정:\n  1. 개발자가 Grafana Explore에서 Loki 로그를 조회\n  2. 로그 줄에서 traceId 필드를 발견\n  3. derivedFields의 정규식이 자동으로 TraceID를 추출\n  4. "TraceID" 라벨이 클릭 가능한 링크로 표시됨\n  5. 클릭하면 Grafana가 Tempo 데이터소스에서 해당 TraceID를 조회\n  6. 트레이스 Waterfall 뷰가 열림\n\n■ 방향 2: Tempo → Loki (두 번째 버튼 클릭)\n- 사용하는 설정: Tempo의 tracesToLogsV2\n- 동작 과정:\n  1. 개발자가 Tempo에서 트레이스를 보고 있음\n  2. "Logs for this span" 버튼이 자동으로 표시됨\n  3. 클릭하면 Grafana가 Loki에 쿼리를 보냄\n  4. 쿼리 조건: namespace=payment, pod=payment-xyz (tags에서 가져옴)\n  5. + filterByTraceID가 true면 traceId 필터도 추가\n  6. 해당 Pod의 로그가 시간 범위에 맞춰 표시됨\n\n이 양방향 설정이 바로 "상관 분석"의 핵심입니다.\n로그에서 시작해도, 트레이스에서 시작해도, 클릭 한 번으로 서로 이동 가능합니다.',
+        8: '★ Derived Fields & 정규식 테스터 상세:\n\n■ Derived Fields가 뭔가요? (비유로 설명)\n- 로그가 "편지"라면, Derived Fields는 "편지에서 전화번호를 형광펜으로 표시해서 클릭 가능한 링크로 만드는 것"\n- Loki 자체는 로그를 저장만 함 → Grafana의 Derived Fields 설정이 로그 내용을 분석해서 링크를 생성\n\n■ 정규식(regex) 동작 설명:\n- 예시 로그: {"traceId":"4bf92f3577b34da6a3ce929d0e0e4736","service":"payment"}\n- 정규식: "traceId":"([a-f0-9]+)"\n- 이 정규식이 하는 일:\n  1. "traceId":" 라는 문자열을 찾음\n  2. 그 뒤에 오는 소문자 hex 문자열([a-f0-9]+)을 캡처\n  3. 캡처된 값 = 4bf92f3577b34da6a3ce929d0e0e4736\n  4. 이 값이 Tempo 링크의 TraceID로 사용됨\n\n■ 캡처 그룹 () 이 왜 필수인가?\n- 괄호 없이 "traceId":"[a-f0-9]+" 라고 쓰면 → 매칭은 되지만 값을 추출할 수 없음\n- 괄호 ()로 감싼 부분만 추출됨\n- 첫 번째 캡처 그룹이 자동으로 사용됨\n\n■ 테스터 시연:\n- 기본 정규식으로 테스트 버튼 클릭 → 추출된 TraceID 확인\n- 정규식을 변경해보며 다른 패턴도 시연 가능\n\n■ 주의사항:\n- 로그 형식이 바뀌면 정규식도 업데이트해야 함 (CI/CD에서 검증 추천)\n- JSON 로그를 강력히 권장: 구조화되어 파싱이 정확함\n- 비구조화 로그(plain text)는 정규식이 깨지기 쉬움\n- W3C Trace Context 형식(traceparent 헤더)을 사용하면 표준화된 패턴 사용 가능',
+        9: '★ TraceQL 소개:\n\n■ TraceQL이란?\n- Tempo 2.0부터 도입된 트레이스 전용 쿼리 언어\n- SQL처럼 조건을 지정해서 원하는 트레이스를 검색\n- 이전에는 TraceID를 알아야만 트레이스를 찾을 수 있었음 → TraceQL로 조건 기반 검색 가능\n\n■ 탭별 설명:\n\n[기본 탭]\n- { resource.service.name = "payment-service" } → 서비스명으로 필터\n- resource.* = 트레이스를 생성한 리소스(서비스, Pod 등)의 속성\n- span.* = 개별 span의 속성 (HTTP method, URL 등)\n\n[에러 탭]\n- { status = error } → 에러 span이 포함된 트레이스\n- status는 OpenTelemetry 표준 필드 (ok, error, unset)\n- span.http.status_code >= 500 → HTTP 5xx 에러\n- 참고: 최신 OTel semconv는 http.request.method, http.response.status_code를 사용. 구형 SDK는 http.method, http.status_code를 emit하므로 앱의 SDK 버전에 맞춰 속성명을 고르세요\n\n[지연 탭]\n- { duration > 1s } → 1초 이상 걸린 span\n- SLO 위반 트레이스 찾을 때 유용 (예: p99 목표 500ms)\n\n[복합 탭]\n- && 연산자로 여러 조건 조합\n- | count() > 5 → 집계 함수 지원 (Tempo 2.0+), 에러 span이 5개 초과인 spanset\n\n[체인 탭] ← 가장 강력한 기능\n- >> (descendant) 연산자: "A 서비스에서 B 서비스로 이어지는 호출 경로"\n- 예: { resource.service.name = "api-gateway" } >> { resource.service.name = "payment-service" && status = error }\n  → "API Gateway를 거쳐 Payment에서 에러가 난 요청"을 정확히 찾음\n- 마이크로서비스 디버깅에서 가장 유용한 패턴\n\n■ 실무 팁:\n- Grafana Explore → Tempo → TraceQL 탭에서 직접 작성 가능\n- 자동완성 지원됨\n- 대시보드 변수($service)와 조합하면 동적 필터링 가능',
+        10: 'Service Map 시각화: 장애 주입 버튼으로 시연하세요.\n\n■ Service Map이란?\n- Tempo가 수집한 트레이스 데이터를 기반으로 자동 생성되는 서비스 의존성 그래프\n- 별도 설정이 필요합니다. 트레이스만으로는 그려지지 않고 service graph 메트릭이 있어야 함\n  1. Tempo metrics-generator의 service-graphs processor(또는 Alloy service graphs)를 활성화\n  2. 생성된 traces_service_graph_* 메트릭(request_total, request_failed_total, request_server_seconds 등)을 Prometheus로 remote-write\n  3. 그다음 Tempo datasource에서 serviceMap.datasourceUid로 그 Prometheus를 지정\n- 노드 상태(에러율, 지연)는 이 service graph 메트릭으로 계산됨\n\n■ 시각적 표현:\n- 초록색 노드: 정상 (에러율 < 1%, p99 < 500ms)\n- 노란색 노드: 느림 (p99 > 500ms)\n- 빨간색 노드: 에러 발생 (에러율 > 1%)\n- 선(edge)의 굵기: 서비스 간 트래픽 양\n\n■ "장애 주입" 버튼 클릭 후:\n- payment-service가 빨간색으로 변하면서 연쇄 영향 확인\n- 장애가 downstream으로 전파되는 과정 시각화\n- 실제 장애 시 어떤 서비스를 먼저 살펴봐야 하는지 파악 가능\n\n■ 실무 활용:\n- 온콜 엔지니어가 가장 먼저 보는 화면\n- 어떤 서비스가 문제인지 1초 만에 파악 가능\n- 노드 클릭 → 해당 서비스의 트레이스 목록으로 이동',
         11: '★ RED Method vs 4 Golden Signals:\n\n■ RED Method (Tom Wilkie, Grafana Labs 2018)\n- Rate: 초당 요청 수 (처리량)\n- Errors: 에러율 (실패한 요청 비율)\n- Duration: 응답 시간 (보통 p50, p95, p99)\n- "내 서비스가 요청을 잘 처리하고 있는가?"에 초점\n- 마이크로서비스/API 레벨 모니터링에 적합\n\n■ 4 Golden Signals (Google SRE Book 2016)\n- Latency: 응답 시간 (= RED의 Duration)\n- Traffic: 요청량 (= RED의 Rate)\n- Errors: 에러율 (= RED의 Errors)\n- Saturation: 리소스 포화도 ← 유일한 차이!\n  - CPU/Memory/Disk 사용률\n  - "시스템이 얼마나 꽉 차 있는가"\n  - 예: Memory 96% → 곧 OOM 발생 가능\n\n■ 핵심 인사이트:\n- 3개 메트릭(Rate=Traffic, Errors=Errors, Duration=Latency)은 완전히 동일\n- Saturation만 추가된 것 → RED는 Golden Signals의 서브셋\n- 실무에서는 둘 다 씁니다: 서비스 대시보드에 RED, 인프라 대시보드에 Saturation 추가\n\n■ "장애 시뮬레이션" 버튼:\n- 정상 값 → 장애 값으로 변화하는 것을 보여줌\n- Rate 1247 → 342 (급감), Errors 0.12% → 5.2% (급증), Saturation 72% → 96%\n- 이런 패턴이 보이면 즉시 대응해야 함',
-        12: '장애 분석 워크플로우 — 실제 순서대로 설명하세요.\n\n■ 실제 장애 대응 5단계:\n\n1단계: Alert 수신\n- Prometheus Alertmanager → Slack/PagerDuty\n- 예: "payment-service p99 latency > 2s for 5min"\n- 여기서 이미 어떤 서비스인지, 어떤 메트릭인지 정보를 얻음\n\n2단계: Dashboard 확인 (RED/Golden Signals)\n- Grafana 대시보드에서 문제 범위 파악\n- 에러율은 얼마나? 언제부터? 특정 엔드포인트만?\n- Rate 변화로 트래픽 패턴 확인 (트래픽 급증? 아니면 평소와 같은데 에러만 증가?)\n\n3단계: Exemplar → Trace 분석\n- 메트릭 그래프에서 Exemplar(◆) 클릭\n- 또는 TraceQL로 검색: { service = "payment" && status = error && duration > 2s }\n- Waterfall 뷰에서 어느 구간이 느린지, 어디서 에러가 나는지 확인\n- 예: payment → DB 호출에서 5초 timeout 발생 확인\n\n4단계: Trace → Log 확인\n- tracesToLogs 설정으로 해당 Pod의 로그 자동 조회\n- 에러 메시지 확인: "Connection refused to RDS primary endpoint"\n- 이제 root cause 파악: RDS failover 발생\n\n5단계: 조치 및 확인\n- RDS 상태 확인 → primary endpoint 복구 대기 또는 수동 failover\n- Grafana 대시보드에서 복구 확인\n\n이 전체 과정이 Grafana 안에서 클릭만으로 진행됩니다.\n팀 전체가 이 워크플로우를 공유하면 MTTR이 크게 단축됩니다.',
-        13: '★ OpenTelemetry Collector 파이프라인:\n\n■ OTEL Collector란?\n- 벤더 중립적인 텔레메트리 데이터 수집/가공/전송 에이전트\n- 앱에서 보내는 트레이스/메트릭/로그를 받아서 원하는 백엔드로 보내줌\n- "중앙 우체국" 같은 역할\n\n■ 3단계 파이프라인:\n\n1. Receivers (수신)\n- OTLP gRPC (4317 포트): OpenTelemetry 표준 프로토콜\n- OTLP HTTP (4318 포트): REST API 방식\n- Jaeger/Zipkin: 레거시 시스템 호환\n- 여러 수신기를 동시에 활성화 가능\n\n2. Processors (가공) ← 가장 중요!\n- batch: 데이터를 모아서 한 번에 전송 (네트워크 효율성)\n- tail_sampling: ★ 스마트 샘플링 (다음 슬라이드에서 상세 설명)\n- spanmetrics: span 데이터에서 RED 메트릭을 자동 생성 → Service Map에 사용됨\n- attributes: 속성 추가/삭제 (예: 민감 정보 제거)\n\n3. Exporters (전송)\n- otlp/tempo: 트레이스 → Tempo\n- prometheusremotewrite: 메트릭 → Prometheus/AMP\n- loki: 로그 → Loki\n\n■ 핵심 장점:\n- 앱은 OTLP로만 보내면 됨 → 백엔드가 바뀌어도 앱 코드 변경 불필요\n- Collector 설정만 변경하면 Jaeger에서 Tempo로, Datadog에서 Prometheus로 전환 가능\n- EKS에서는 DaemonSet 또는 Deployment로 배포\n\n■ YAML 코드 설명 (오른쪽):\n- service.pipelines.traces: receivers → processors → exporters 순서 정의\n- tail_sampling 정책: errors(에러 100%), slow(1초 이상 100%), default(나머지 10%)',
-        14: '★ 비용 효율적 샘플링 전략:\n\n■ 왜 샘플링이 필요한가?\n- 트레이스 데이터는 매우 큼 (요청 하나당 수십 KB)\n- 하루 수억 요청 × 30KB = 수 TB → 저장 비용 폭발\n- 하지만 정상 요청의 트레이스는 거의 안 봄 → 비용 낭비\n\n■ 두 가지 샘플링 방식:\n\n1. Head-based sampling (헤드 기반)\n- 요청 시작 시점에 샘플링 여부 결정 (예: 10% 확률로 수집)\n- 장점: 간단, SDK 레벨에서 설정\n- 단점: 에러 요청도 90% 확률로 버림! → 장애 분석 불가능\n\n2. Tail-based sampling (테일 기반) ★ 권장\n- 트레이스가 완료된 후에 샘플링 여부 결정\n- "결과를 보고 나서 보관할지 결정"\n- 에러/느린 요청: 100% 보관 (중요한 것은 무조건 수집)\n- 정상 요청: 10%만 보관 (비용 절감)\n\n■ 슬라이더 시연:\n- 샘플링률을 1% → 100%로 조절하며 비용/커버리지 변화 확인\n- 권장 설정: 에러 100%, 느린 요청(>1s) 100%, 나머지 10%\n- 이 설정으로 비용 80% 절감하면서 문제 분석 능력 100% 유지\n\n■ OTEL Collector에서의 설정:\n- tail_sampling processor 사용 (앞 슬라이드 YAML 참조)\n- decision_wait: 10s (트레이스 완료 대기 시간)\n- 정책 우선순위: errors > slow > probabilistic',
+        12: '장애 분석 워크플로우: 실제 순서대로 설명하세요.\n\n■ 실제 장애 대응 5단계:\n\n1단계: Alert 수신\n- Prometheus Alertmanager → Slack/PagerDuty\n- 예: "payment-service p99 latency > 2s for 5min"\n- 여기서 이미 어떤 서비스인지, 어떤 메트릭인지 정보를 얻음\n\n2단계: Dashboard 확인 (RED/Golden Signals)\n- Grafana 대시보드에서 문제 범위 파악\n- 에러율은 얼마나? 언제부터? 특정 엔드포인트만?\n- Rate 변화로 트래픽 패턴 확인 (트래픽 급증? 아니면 평소와 같은데 에러만 증가?)\n\n3단계: Exemplar → Trace 분석\n- 메트릭 그래프에서 Exemplar(◆) 클릭\n- 또는 TraceQL로 검색: { resource.service.name = "payment-service" && status = error && duration > 2s }\n- Waterfall 뷰에서 어느 구간이 느린지, 어디서 에러가 나는지 확인\n- 예: payment → DB 호출에서 5초 timeout 발생 확인\n\n4단계: Trace → Log 확인\n- tracesToLogsV2 설정으로 해당 Pod의 로그 자동 조회\n- 에러 메시지 확인: "Connection refused to RDS primary endpoint"\n- 이제 root cause 파악: RDS failover 발생\n\n5단계: 조치 및 확인\n- RDS 상태 확인 → primary endpoint 복구 대기 또는 수동 failover\n- Grafana 대시보드에서 복구 확인\n\n이 전체 과정이 Grafana 안에서 클릭만으로 진행됩니다.\n팀 전체가 이 워크플로우를 공유하면 MTTR이 크게 단축됩니다.',
+        13: '★ OpenTelemetry Collector 파이프라인:\n\n■ OTEL Collector란?\n- 벤더 중립적인 텔레메트리 데이터 수집/가공/전송 에이전트\n- 앱에서 보내는 트레이스/메트릭/로그를 받아서 원하는 백엔드로 보내줌\n- "중앙 우체국" 같은 역할\n\n■ 3단계 파이프라인:\n\n1. Receivers (수신)\n- OTLP gRPC (4317 포트): OpenTelemetry 표준 프로토콜\n- OTLP HTTP (4318 포트): REST API 방식\n- Jaeger/Zipkin: 레거시 시스템 호환\n- 여러 수신기를 동시에 활성화 가능\n\n2. Processors (가공) ← 가장 중요! 나열 순서대로 실행\n- memory_limiter: 첫 번째. check_interval 1s, limit_percentage 80, spike_limit_percentage 25로 OOM 방지\n- tail_sampling: ★ 스마트 샘플링 (decision_wait 10s, 다음 슬라이드에서 상세 설명)\n  주의: 한 trace의 모든 span이 같은 Collector에 도착해야 함 → replica가 여러 개면 앞단 Collector에 loadbalancing exporter(routing_key: traceID)를 둠\n- batch: 마지막. 데이터를 모아서 한 번에 전송 (네트워크 효율성)\n- attributes: 속성 추가/삭제 (예: 민감 정보 제거)\n\n3. Exporters (전송)\n- otlp_grpc/tempo: 트레이스 → Tempo. otlp는 Collector v0.144부터 deprecated alias\n- otlp_http/loki: 로그 → Loki 3.x native OTLP endpoint(http://loki-gateway/otlp). loki exporter는 contrib v0.131.0에서 제거됨\n- prometheusremotewrite: 메트릭 → Prometheus/AMP. Prometheus는 --web.enable-remote-write-receiver 플래그 필요, AMP는 sigv4auth extension 필요\n- tls insecure: true는 클러스터 내부 데모용. 운영에서는 실제 TLS 사용\n\n4. Connectors (파이프라인 연결)\n- spanmetrics는 이제 processor가 아니라 connector: traces 파이프라인의 exporter이면서 metrics 파이프라인의 receiver\n- span에서 RED 메트릭 생성. 샘플링 후 데이터로 계산하면 왜곡되므로 샘플링 없는 별도 traces 파이프라인(traces/spanmetrics)에 연결\n\n■ 핵심 장점:\n- 앱은 OTLP로만 보내면 됨 → 백엔드가 바뀌어도 앱 코드 변경 불필요\n- Collector 설정만 변경하면 Jaeger에서 Tempo로, Datadog에서 Prometheus로 전환 가능\n- EKS에서는 DaemonSet 또는 Deployment로 배포\n\n■ YAML 코드 설명 (오른쪽):\n- service.pipelines.traces: receivers → processors → exporters 순서 정의\n- tail_sampling 정책: errors(에러 100%), slow(1초 이상 100%), default(나머지 10%)\n\n출처: opentelemetry-collector-contrib CHANGELOG (github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/CHANGELOG.md)',
+        14: '★ 비용 효율적 샘플링 전략:\n\n■ 왜 샘플링이 필요한가?\n- 트레이스 데이터는 매우 큼 (요청 하나당 수십 KB)\n- 하루 수억 요청 × 30KB = 수 TB → 저장 비용 폭발\n- 하지만 정상 요청의 트레이스는 거의 안 봄 → 비용 낭비\n\n■ 두 가지 샘플링 방식:\n\n1. Head-based sampling (헤드 기반)\n- 요청 시작 시점에 샘플링 여부 결정 (예: 10% 확률로 수집)\n- 장점: 간단, SDK 레벨에서 설정\n- 단점: 에러 요청도 90% 확률로 버림! → 장애 분석 불가능\n\n2. Tail-based sampling (테일 기반) ★ 권장\n- 트레이스가 완료된 후에 샘플링 여부 결정\n- "결과를 보고 나서 보관할지 결정"\n- 에러/느린 요청: 100% 보관 (중요한 것은 무조건 수집)\n- 정상 요청: 10%만 보관 (비용 절감)\n\n■ 슬라이더 시연:\n- 샘플링률을 1% → 100%로 조절하며 비용/커버리지 변화 확인\n- 권장 설정: 에러 100%, 느린 요청(>1s) 100%, 나머지 10%\n- 예시: 에러와 느린 요청이 적은 환경이라면 저장량을 크게 줄이면서 문제 트레이스는 모두 보존 (절감률은 트래픽 구성에 따라 다름)\n- 화면의 비용 수치는 예시 가정(100% 기준 일 10M 트레이스, 100만 건당 월 $50)이며 실제 비용이 아님\n\n■ OTEL Collector에서의 설정:\n- tail_sampling processor 사용 (앞 슬라이드 YAML 참조)\n- decision_wait: 10s (트레이스 완료 대기 시간)\n- 모든 span이 같은 Collector로 가도록 traceID 기준 loadbalancing exporter 사용\n- 정책 우선순위: errors > slow > probabilistic',
         15: '퀴즈를 통해 핵심 개념을 복습합니다.\n\n정답 설명 준비:\n\n• Exemplar 질문: Exemplar는 히스토그램 메트릭에 TraceID를 첨부하는 기술.\n  메트릭 그래프에서 ◆ 클릭 → 해당 요청의 트레이스로 이동.\n\n• derivedFields 질문: Loki 데이터소스 설정에서 정규식으로 로그의 TraceID를 추출해\n  클릭 가능한 Tempo 링크로 만드는 기능.\n\n• TraceQL 질문: >> 연산자는 descendant(하위) 관계를 의미.\n  A >> B = "A span의 하위에 B span이 있는 트레이스".\n\n• 샘플링 질문: Tail-based sampling은 트레이스 완료 후 결정.\n  에러/느린 요청은 100%, 정상은 10%로 비용 절감.\n\n틀린 항목이 있으면 해당 슬라이드 번호를 안내하세요.',
         16: '수고하셨습니다.\n\n5분 휴식 후 마지막 Block 4에서는 리소스 최적화와 비용 관리를 다룹니다.\n- VPA (Vertical Pod Autoscaler)\n- KEDA (이벤트 기반 오토스케일링)\n- 비용 최적화 체크리스트\n\n질문이 있으시면 휴식 시간에 받겠습니다.'
       },
@@ -1566,7 +1622,7 @@ ERROR: Unable to acquire connection within 5s
       } else {
         btnStart.style.display = 'none';
         btnNext.style.display = 'none';
-        label.textContent = phaseLabelsBtn[6] + ' — 완료!';
+        label.textContent = phaseLabelsBtn[6] + ': 완료!';
       }
     }
 
@@ -1825,7 +1881,7 @@ ERROR: Unable to acquire connection within 5s
         ctx.fillStyle = Colors.cyan;
         ctx.font = `600 ${fMd}px Pretendard`;
         ctx.textAlign = 'center';
-        ctx.fillText('tracesToLogs', (arrowX1 + arrowX2) / 2, arrowY2 + h * 0.08);
+        ctx.fillText('tracesToLogsV2', (arrowX1 + arrowX2) / 2, arrowY2 + h * 0.08);
       } else {
         ctx.setLineDash([dashLen, dashLen]);
         ctx.beginPath();
@@ -1869,7 +1925,7 @@ ERROR: Unable to acquire connection within 5s
       const extractedValue = document.getElementById('extracted-value');
       const extractedText = document.getElementById('extracted-text');
 
-      const originalLog = '{"timestamp":"2024-01-15T10:30:00Z","level":"ERROR","traceId":"abc123def456789012345678","service":"payment-service","message":"Payment failed: Connection timeout to RDS"}';
+      const originalLog = '{"timestamp":"2024-01-15T10:30:00Z","level":"ERROR","traceId":"4bf92f3577b34da6a3ce929d0e0e4736","service":"payment-service","message":"Payment failed: Connection timeout to RDS"}';
 
       try {
         const regex = new RegExp(regexInput);

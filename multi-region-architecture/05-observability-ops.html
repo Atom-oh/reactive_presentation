@@ -7,542 +7,337 @@
   <meta name="generator" content="remarp">
   <meta name="remarp-version" content="1">
   <meta name="remarp-source" content="05-observability-ops.md">
-  <meta name="remarp-block" content="default">
+  <meta name="remarp-block" content="05-observability-ops">
   <link rel="stylesheet" href="./common/theme.css">
   <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
+  <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
   
-  
-  <script>window.__remarpTheme = {"colors": {}, "footer": "Multi-Region Architecture Deep Dive \u2014 L300+", "pagination": true, "fonts": {}};</script>
+  <script>window.__remarpTheme = {"colors": {"dk1": "#000000", "lt1": "#FFFFFF", "dk2": "#161D26", "lt2": "#F3F3F7", "accent1": "#41B3FF", "accent2": "#AD5CFF", "accent3": "#00E500", "accent4": "#FF5C85", "accent5": "#FF693C", "accent6": "#FBD332", "hlink": "#41B1E8", "folHlink": "#41B1E8"}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}};</script>
 </head>
 <body>
-<div class="slide-deck">
-<div class="slide" data-remarp-id="s0" style="background:linear-gradient(135deg, #1a1f35 0%, #0d1117 50%, #161b2e 100%); padding:0; overflow:hidden;">
-  <div style="position:absolute; top:-20%; right:-10%; width:60%; height:80%; background:radial-gradient(ellipse, rgba(108,92,231,0.15) 0%, transparent 70%); pointer-events:none;"></div>
-  <div style="position:absolute; left:5%; top:42%; width:80px; height:3px; background:linear-gradient(90deg, #6c5ce7, #a29bfe); border-radius:2px;"></div>
-  <h1 style="position:absolute; left:5%; top:45%; font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:60%; margin:0;">Observability & Operations</h1>
-  <p style="position:absolute; left:5%; top:60%; font-size:1.3rem; color:rgba(255,255,255,0.7); width:60%; margin:0;">Cross-Region Monitoring, Cost Optimization, Production Readiness</p>
-  
+<div class="slide-deck theme-dark">
+<div class="slide title-slide" data-remarp-id="s0">
+    <h1>Block 5: Observability & Operations</h1>
+  <p class="meta">수집 → 샘플링 → 저장 → 리전 간 상관 → 비용 → 부하 테스트 → SLO → 출시 준비</p>
 </div>
 
 <div class="slide" data-remarp-id="s1">
-  <div class="slide-header" data-remarp-id="s1-header"><h2>Observability Stack Overview</h2></div>
+  <div class="slide-header" data-remarp-id="s1-header"><h2>텔레메트리는 리전 안에서 끝낸다</h2></div>
   <div class="slide-body" data-remarp-id="s1-body">
-    <p><!-- Slide 2: Observability Stack Overview --></p>
-<div class="flow-h" style="flex-wrap:wrap; gap:0.8rem; justify-content:center; align-items:flex-start;">
-  <div class="flow-group bg-blue" style="min-width:140px;" data-fragment-index="1">
-    <div class="flow-group-label">App Pods (20 svc)</div>
-    <div class="flow-v" style="gap:0.3rem;">
-      <div class="flow-box" style="font-size:0.8rem;">OTLP export</div>
-    </div>
+    <p><!-- Slide 2: 관측 스택 전체 그림 (HTML architecture) --></p>
+<style>
+.mr05-stack .flow-group-label { font-weight: var(--weight-bold); color: var(--on-surface); }
+.mr05-stack .flow-box { word-break: keep-all; }
+.mr05-sub { display: block; color: var(--text-secondary); font-size: var(--fs-caption); margin-top: var(--space-1); word-break: keep-all; }
+.mr05-legend { margin-top: var(--space-4); }
+.mr05-legend .callout { word-break: keep-all; }
+.mr05-legend strong { color: var(--info); }
+.mr05-legend .mr05-ok { color: var(--success); }
+</style>
+<div class="flow-h mr05-stack">
+  <div class="flow-group bg-blue fragment fade-right" data-fragment-index="1">
+    <div class="flow-group-label">사용자 경로</div>
+    <div class="flow-box">CloudFront<span class="mr05-sub">유일한 public 진입점</span></div>
+    <div class="flow-box">VPC origin → internal ALB<span class="mr05-sub">X-Amzn-Trace-Id 추가</span></div>
   </div>
-  <div class="flow-arrow">→</div>
-  <div class="flow-group bg-orange" style="min-width:180px;" data-fragment-index="2">
-    <div class="flow-group-label">OTel Collector</div>
-    <div class="flow-v" style="gap:0.3rem;">
-      <div class="flow-box" style="font-size:0.8rem;">DaemonSet</div>
-      <div class="flow-box" style="font-size:0.8rem;">ADOT 0.40.0</div>
-      <div class="flow-box" style="font-size:0.8rem;">tail_sampling</div>
-    </div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="2">→</div>
+  <div class="flow-group bg-green fragment fade-right" data-fragment-index="2">
+    <div class="flow-group-label">App Pod</div>
+    <div class="flow-box">OTel SDK<span class="mr05-sub">W3C traceparent 전파</span></div>
+    <div class="flow-box">order, payment<span class="mr05-sub">catalog, cart</span></div>
   </div>
-  <div class="flow-arrow">→</div>
-  <div class="flow-col" style="gap:0.5rem;" data-fragment-index="3">
-    <div class="flow-group bg-purple" style="min-width:150px;">
-      <div class="flow-group-label">Traces</div>
-      <div class="flow-h" style="gap:0.3rem;">
-        <div class="icon-item sm"><img src="common/aws-icons/services/Arch_AWS-X-Ray_48.svg"><span>X-Ray</span></div>
-        <div class="flow-box" style="font-size:0.75rem;">Tempo→S3</div>
-      </div>
-    </div>
-    <div class="flow-group bg-green" style="min-width:150px;">
-      <div class="flow-group-label">Metrics</div>
-      <div class="icon-item sm"><img src="common/aws-icons/services/Arch_Amazon-Managed-Service-for-Prometheus_48.svg"><span>Prometheus</span></div>
-      <div class="flow-box" style="font-size:0.75rem;">kube-prom 68.4.0</div>
-    </div>
-    <div class="flow-group bg-pink" style="min-width:150px;">
-      <div class="flow-group-label">Logs</div>
-      <div class="icon-item sm"><img src="common/aws-icons/services/Arch_Amazon-CloudWatch_48.svg"><span>CloudWatch</span></div>
-    </div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="3">→</div>
+  <div class="flow-group bg-orange fragment fade-right" data-fragment-index="3">
+    <div class="flow-group-label">Collector 2계층</div>
+    <div class="flow-box">Agent (DaemonSet)<span class="mr05-sub">traceID로 분배</span></div>
+    <div class="flow-box">Gateway (Deployment)<span class="mr05-sub">tail_sampling</span></div>
   </div>
-  <div class="flow-arrow">→</div>
-  <div class="flow-group bg-accent" style="min-width:120px;" data-fragment-index="4">
-    <div class="flow-group-label">Visualization</div>
-    <div class="flow-box" style="font-size:0.85rem;">Grafana</div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="4">→</div>
+  <div class="flow-group bg-purple fragment fade-right" data-fragment-index="4">
+    <div class="flow-group-label">리전 로컬 backend</div>
+    <div class="flow-box">Amazon Managed Service for Prometheus</div>
+    <div class="flow-box">Tempo on S3 또는 CloudWatch (X-Ray)</div>
   </div>
 </div>
-<p style="margin-top:16px; font-size:0.85rem; color:var(--text-muted); text-align:center;">
-  <strong>Dual Export</strong>: Tempo (S3 장기 저장) + X-Ray (managed, 서비스 맵)
-</p>
+<div class="card-grid mr05-legend fragment" data-reveal="stagger" data-fragment-index="5">
+  <div class="callout callout-info"><strong>같은 스택을 두 번</strong> us-east-1과 us-west-2에 동일하게 배포합니다. 한 리전 장애가 다른 리전의 관측을 끊지 않도록 합니다.</div>
+  <div class="callout callout-success"><strong class="mr05-ok">조회만 전역으로</strong> Grafana가 두 리전 data source를 함께 조회합니다. 데이터 이동은 필요한 경우에만 합니다.</div>
+</div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s2">
-  <div class="slide-header" data-remarp-id="s2-header"><h2>OTel Collector Configuration</h2></div>
+  <div class="slide-header" data-remarp-id="s2-header"><h2>Collector는 2계층으로 나눈다</h2></div>
   <div class="slide-body" data-remarp-id="s2-body">
     <div class="tab-bar">
-            <button class="tab-btn active" data-tab="receivers-processors">Receivers & Processors</button>
-      <button class="tab-btn" data-tab="exporters-pipeline">Exporters & Pipeline</button>
+            <button class="tab-btn active" data-tab="agent-daemonset">Agent (DaemonSet)</button>
+      <button class="tab-btn" data-tab="gateway-tail-sampling">Gateway (tail sampling)</button>
+      <button class="tab-btn" data-tab="export-x-ray-otlp">Export (X-Ray OTLP)</button>
     </div>
-        <div class="tab-content active" data-tab="receivers-processors">
+        <div class="tab-content active" data-tab="agent-daemonset">
+<p>노드 로컬에서 받아 <strong>trace ID 기준으로</strong> Gateway에 분배합니다.</p>
 <div class="code-block"><span class="key">receivers</span>:
   <span class="key">otlp</span>:
     <span class="key">protocols</span>:
-      <span class="key">grpc</span>:
-        <span class="key">endpoint</span>: 0.0.0.0:4317
-      <span class="key">http</span>:
-        <span class="key">endpoint</span>: 0.0.0.0:4318
-
+      <span class="key">grpc</span>: { endpoint: <span class="string">"${env:MY_POD_IP}:4317"</span> }
 <span class="key">processors</span>:
-  <span class="key">memory_limiter</span>:
-    <span class="key">check_interval</span>: 1s
-    <span class="key">limit_mib</span>: 512
-    <span class="key">spike_limit_mib</span>: 128
-
+  <span class="key">memory_limiter</span>: { check_interval: 1s, limit_percentage: 80, spike_limit_percentage: 25 }
+<span class="key">exporters</span>:
+  <span class="key">loadbalancing</span>:
+    <span class="key">routing_key</span>: traceID
+    <span class="key">protocol</span>:
+      <span class="key">otlp</span>: { timeout: 1s }
+    <span class="key">resolver</span>:
+      <span class="key">k8s</span>: { service: otel-gateway.observability, ports: [4317] }</div>
+</div>
+    <div class="tab-content" data-tab="gateway-tail-sampling">
+<div class="code-block"><span class="key">processors</span>:
+  <span class="key">memory_limiter</span>: { check_interval: 1s, limit_percentage: 80, spike_limit_percentage: 25 }
+  <span class="key">batch</span>: {}                     # 기본값 8192건, 200ms
   <span class="key">tail_sampling</span>:
-    <span class="key">decision_wait</span>: 10s
+    <span class="key">decision_wait</span>: 30s          # 기본값 30s
+    <span class="key">num_traces</span>: 50000           # 기본값 50000
+    <span class="key">expected_new_traces_per_sec</span>: 2000
     <span class="key">policies</span>:
-      - name: errors-policy
+      - name: keep-errors
         <span class="key">type</span>: status_code
         <span class="key">status_code</span>: { status_codes: [ERROR] }
-      - name: slow-policy
+      - name: keep-slow
         <span class="key">type</span>: latency
         <span class="key">latency</span>: { threshold_ms: 500 }
-      - name: default-policy
+      - name: baseline
         <span class="key">type</span>: probabilistic
         <span class="key">probabilistic</span>: { sampling_percentage: 10 }</div>
 </div>
-    <div class="tab-content" data-tab="exporters-pipeline">
-<div class="code-block"><span class="key">exporters</span>:
-  otlp/tempo:
-    <span class="key">endpoint</span>: tempo.observability:4317
-    <span class="key">tls</span>:
-      <span class="key">insecure</span>: <span class="keyword">true</span>
-
-  <span class="key">awsxray</span>:
-    <span class="key">region</span>: ${AWS_REGION}
-    <span class="key">index_all_attributes</span>: <span class="keyword">true</span>
-
+    <div class="tab-content" data-tab="export-x-ray-otlp">
+<div class="code-block"><span class="key">extensions</span>:
+  sigv4auth/traces: { region: us-east-1, service: xray }
+<span class="key">exporters</span>:
+  otlphttp/xray:
+    <span class="key">compression</span>: gzip
+    <span class="key">traces_endpoint</span>: https:<span class="comment">//xray.us-east-1.amazonaws.com/v1/traces</span>
+    <span class="key">auth</span>: { authenticator: sigv4auth/traces }
 <span class="key">service</span>:
+  <span class="key">extensions</span>: [sigv4auth/traces]
   <span class="key">pipelines</span>:
     <span class="key">traces</span>:
       <span class="key">receivers</span>: [otlp]
       <span class="key">processors</span>: [memory_limiter, tail_sampling, batch]
-      <span class="key">exporters</span>: [otlp/tempo, awsxray]
-    <span class="key">metrics</span>:
-      <span class="key">receivers</span>: [otlp]
-      <span class="key">processors</span>: [memory_limiter, batch]
-      <span class="key">exporters</span>: [prometheusremotewrite]</div>
+      <span class="key">exporters</span>: [otlphttp/xray]</div>
+<p>X-Ray OTLP endpoint는 <strong>Transaction Search 활성화</strong>가 전제입니다. us-west-2 Gateway는 region과 endpoint만 바꿉니다.</p>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s3">
-  <div class="slide-header" data-remarp-id="s3-header"><h2>Tail-Based Sampling Strategy</h2></div>
+  <div class="slide-header" data-remarp-id="s3-header"><h2>tail sampling은 같은 인스턴스가 전제</h2></div>
   <div class="slide-body" data-remarp-id="s3-body">
-    <p><!-- Slide 4: Tail-Based Sampling Strategy --></p>
-<div class="col-2" style="gap:1.5rem;">
-  <div>
-    <h4 style="margin:0 0 0.75rem 0; color:var(--accent);">Why Tail > Head Sampling?</h4>
-    <div class="card" style="padding:1rem; margin-bottom:0.75rem;">
-      <p style="margin:0; font-size:0.9rem;"><strong>Head Sampling</strong>: 요청 시작 시 샘플링 결정</p>
-      <p style="margin:0.5rem 0 0 0; font-size:0.85rem; color:var(--text-muted);">문제: 에러/지연 발생 전에 결정 → 중요 트레이스 누락</p>
-    </div>
-    <div class="card" style="padding:1rem; border-color:var(--green);">
-      <p style="margin:0; font-size:0.9rem;"><strong>Tail Sampling</strong>: 전체 트레이스 완료 후 결정</p>
-      <p style="margin:0.5rem 0 0 0; font-size:0.85rem; color:var(--green);">장점: 에러/지연 여부 확인 후 선택적 저장</p>
-    </div>
-  </div>
-  <div>
-    <h4 style="margin:0 0 0.75rem 0; color:var(--cyan);">Sampling Policies</h4>
-    <table class="data-table" style="width:100%; font-size:0.85rem;">
-      <thead>
-        <tr style="background:var(--bg-card);">
-          <th style="padding:8px; text-align:left;">Policy</th>
-          <th style="padding:8px; text-align:center;">Rate</th>
-          <th style="padding:8px; text-align:left;">Condition</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr style="border-bottom:1px solid var(--border);">
-          <td style="padding:8px;"><span style="color:var(--red);">errors</span></td>
-          <td style="padding:8px; text-align:center; font-weight:600;">100%</td>
-          <td style="padding:8px;">status_code = ERROR</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
-          <td style="padding:8px;"><span style="color:#fdcb6e;">slow</span></td>
-          <td style="padding:8px; text-align:center; font-weight:600;">100%</td>
-          <td style="padding:8px;">latency > 500ms</td>
-        </tr>
-        <tr>
-          <td style="padding:8px;"><span style="color:var(--text-muted);">default</span></td>
-          <td style="padding:8px; text-align:center;">10%</td>
-          <td style="padding:8px;">probabilistic</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    <p><!-- Slide 4: Tail sampling 전제와 효과 --></p>
+<style>
+.mr05-ts .metric-card { text-align: left; }
+.mr05-ts .metric-value { font-size: var(--fs-subtitle); }
+.mr05-t-danger { color: var(--danger); font-weight: var(--weight-bold); }
+.mr05-t-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.mr05-t-accent { color: var(--accent); font-weight: var(--weight-bold); }
+.mr05-t-info { color: var(--info); font-weight: var(--weight-bold); }
+.mr05-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.mr05-ts-row { margin-top: var(--space-4); }
+</style>
+<div class="card-grid mr05-ts" data-reveal="stagger">
+  <div class="metric-card"><strong class="mr05-t-danger">에러 trace</strong><div class="metric-value">100%</div><div class="mr05-muted">status_code = ERROR</div></div>
+  <div class="metric-card"><strong class="mr05-t-warning">느린 trace</strong><div class="metric-value">100%</div><div class="mr05-muted">latency ≥ 500ms</div></div>
+  <div class="metric-card"><strong class="mr05-t-accent">나머지</strong><div class="metric-value">10%</div><div class="mr05-muted">probabilistic baseline</div></div>
+  <div class="metric-card"><strong class="mr05-t-info">예시 보존량</strong><div class="metric-value">약 12.7%</div><div class="mr05-muted">에러 1%, 느림 2% 가정: 3% + 97% × 10%</div></div>
 </div>
-<div style="margin-top:1rem; padding:12px 16px; background:rgba(0,214,143,0.1); border:1px solid var(--green); border-radius:8px; text-align:center;">
-  <strong style="color:var(--green);">Storage Savings: ~90%</strong>
-  <span style="color:var(--text-muted); margin-left:12px;">while keeping 100% of errors & slow traces</span>
+<div class="card-grid mr05-ts-row">
+  <div class="callout callout-danger fragment fade-up" data-fragment-index="1"><strong class="mr05-t-danger">같은 trace, 같은 인스턴스</strong><div class="mr05-muted">trace의 모든 span이 한 Collector에 모여야 판단할 수 있습니다. Gateway를 늘리면 앞단에 traceID 라우팅이 필수입니다.</div></div>
+  <div class="callout callout-warning fragment fade-up" data-fragment-index="2"><strong class="mr05-t-warning">메모리 = 유입률 × 대기</strong><div class="mr05-muted">2,000 trace/s × 30s = 60,000개가 메모리에 머뭅니다. num_traces 50000보다 크면 판단 전에 밀려납니다.</div></div>
+  <div class="callout callout-info fragment fade-up" data-fragment-index="3"><strong class="mr05-t-info">늦게 오는 span</strong><div class="mr05-muted">decision_wait 뒤에 도착한 span은 이미 내려진 결정을 따릅니다. 비동기 consumer가 긴 trace는 대기 시간을 따로 봅니다.</div></div>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s4">
-  <div class="slide-header" data-remarp-id="s4-header"><h2>Grafana Tempo Integration</h2></div>
+  <div class="slide-header" data-remarp-id="s4-header"><h2>백엔드는 Tempo와 X-Ray 중 고른다</h2></div>
   <div class="slide-body" data-remarp-id="s4-body">
-    <p><!-- Slide 5: Grafana Tempo Integration --></p>
-<div class="col-2" style="gap:1.5rem;">
-  <div>
-    <h4 style="margin:0 0 0.75rem 0; color:var(--accent);">Architecture</h4>
-    <div class="flow-v" style="gap:0.5rem;">
-      <div class="flow-box bg-orange" style="width:100%;">OTel Collector</div>
-      <div class="flow-arrow">↓</div>
-      <div class="flow-box bg-purple" style="width:100%;">Tempo (Monolithic)</div>
-      <div class="flow-arrow">↓</div>
-      <div class="flow-group bg-blue" style="width:100%;">
-        <div class="flow-group-label">S3 Backend</div>
-        <div class="flow-box" style="font-size:0.8rem;">Parquet blocks</div>
-      </div>
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="x-ray-transaction-search">X-Ray + Transaction Search</button>
+      <button class="tab-btn" data-tab="tempo-3-x-self-managed">Tempo 3.x (self-managed)</button>
+      <button class="tab-btn" data-tab="tab-2">선택 기준</button>
+      <button class="tab-btn" data-tab="x-ray-sdk">X-Ray SDK 상태</button>
     </div>
-    <div class="card" style="margin-top:0.75rem; padding:0.75rem;">
-      <p style="margin:0; font-size:0.85rem;"><strong>Retention</strong>: 30 days hot, 90 days warm</p>
-      <p style="margin:0.25rem 0 0 0; font-size:0.85rem;"><strong>Compression</strong>: zstd (60% savings)</p>
-    </div>
-  </div>
-  <div>
-    <h4 style="margin:0 0 0.75rem 0; color:var(--cyan);">S3 Lifecycle Policy</h4>
-    <table class="data-table" style="width:100%; font-size:0.85rem;">
-      <thead>
-        <tr style="background:var(--bg-card);">
-          <th style="padding:8px; text-align:left;">Tier</th>
-          <th style="padding:8px; text-align:center;">Days</th>
-          <th style="padding:8px; text-align:right;">Cost/GB</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr style="border-bottom:1px solid var(--border);">
-          <td style="padding:8px;">S3 Standard</td>
-          <td style="padding:8px; text-align:center;">0-30</td>
-          <td style="padding:8px; text-align:right;">$0.023</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
-          <td style="padding:8px;">S3 IA</td>
-          <td style="padding:8px; text-align:center;">30-90</td>
-          <td style="padding:8px; text-align:right;">$0.0125</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border);">
-          <td style="padding:8px;">Glacier IR</td>
-          <td style="padding:8px; text-align:center;">90-365</td>
-          <td style="padding:8px; text-align:right;">$0.004</td>
-        </tr>
-        <tr style="background:var(--bg-card);">
-          <td style="padding:8px; color:var(--red);">Delete</td>
-          <td style="padding:8px; text-align:center;">365+</td>
-          <td style="padding:8px; text-align:right;">-</td>
-        </tr>
-      </tbody>
-    </table>
-    <div style="margin-top:0.75rem; padding:8px 12px; background:var(--bg-card); border-radius:6px; text-align:center;">
-      <span style="font-size:0.85rem; color:var(--text-muted);">Est. Cost:</span>
-      <strong style="color:var(--accent); margin-left:8px;">~$185/mo per region</strong>
-    </div>
-  </div>
+        <div class="tab-content active" data-tab="x-ray-transaction-search">
+<table><thead><tr><th>항목</th><th>2026-10-15 기준</th></tr></thead><tbody><tr><td>수집 경로</td><td>OTLP endpoint, SigV4 (<code>service: xray</code>)</td></tr><tr><td>저장 위치</td><td>CloudWatch Logs <code>aws/spans</code> log group</td></tr><tr><td>검색</td><td>모든 span을 attribute로 검색, trace 최대 10,000 span</td></tr><tr><td>인덱싱</td><td>수집 span의 1%는 trace summary로 무료 인덱싱</td></tr><tr><td>수집 요금</td><td>$0.35/GB (첫 10 TB, us-east-1 list price)</td></tr></tbody></table>
+</div>
+    <div class="tab-content" data-tab="tempo-3-x-self-managed">
+<table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody><tr><td>저장</td><td>S3에 Parquet 블록 (<code>storage.trace.backend: s3</code>)</td></tr><tr><td>쓰기 경로</td><td>3.0에서 ingester 제거, block-builder와 live-store</td></tr><tr><td>배포 모드</td><td>monolithic은 Kafka 불필요, microservices는 Kafka 호환 큐</td></tr><tr><td>질의</td><td>TraceQL, 구조 연산자 <code>>></code>, <code>></code>, <code>~</code></td></tr><tr><td>service graph</td><td>metrics-generator <code>service_graphs</code>, 기본 비활성</td></tr></tbody></table>
+</div>
+    <div class="tab-content" data-tab="tab-2">
+<table><thead><tr><th>질문</th><th>Transaction Search</th><th>Tempo</th></tr></thead><tbody><tr><td>운영 부담</td><td>관리형</td><td>클러스터 직접 운영</td></tr><tr><td>샘플링</td><td>100% 수집 후 일부 인덱싱</td><td>tail sampling 결과만 저장</td></tr><tr><td>AWS 연계</td><td>Application Signals, SLO</td><td>Grafana 생태계</td></tr><tr><td>비용 성격</td><td>GB당 수집 요금</td><td>S3 + 컴퓨트</td></tr></tbody></table>
+</div>
+    <div class="tab-content" data-tab="x-ray-sdk">
+<p>X-Ray SDK와 daemon은 <strong>2026-02-25부터 maintenance mode</strong>입니다. 보안 수정만 릴리스되며 X-Ray 서비스 자체는 계속 지원됩니다. 신규 계측은 OpenTelemetry(ADOT SDK 또는 upstream SDK)로 시작합니다.</p>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s5">
-  <div class="slide-header" data-remarp-id="s5-header"><h2>Cross-Region Trace Correlation</h2></div>
+  <div class="slide-header" data-remarp-id="s5-header"><h2>trace ID는 리전을 넘어 이어진다</h2></div>
   <div class="slide-body" data-remarp-id="s5-body">
-    <p><!-- Slide 6: Cross-Region Trace Correlation --></p>
-<div class="col-2" style="gap:1.5rem;">
-  <div>
-    <h4 style="margin:0 0 0.75rem 0; color:var(--accent);">TraceQL Examples</h4>
-    <div class="code-block" style="font-size:0.8rem; margin-bottom:0.75rem;">
-<span class="comment"># 특정 서비스의 에러 트레이스</span>
-<span class="key">{</span> <span class="string">resource.service.name</span> = <span class="value">"order-service"</span> <span class="key">}</span>
-  | <span class="key">status</span> = <span class="value">error</span>
-
-<span class="comment"># 500ms 이상 걸린 결제 요청</span>
-<span class="key">{</span> <span class="string">span.http.route</span> = <span class="value">"/api/payments"</span> <span class="key">}</span>
-  | <span class="key">duration</span> > <span class="value">500ms</span>
-
-<span class="comment"># Cross-region 트레이스 (us-east → us-west)</span>
-<span class="key">{</span> <span class="string">resource.cloud.region</span> = <span class="value">"us-east-1"</span> <span class="key">}</span>
-  >> <span class="key">{</span> <span class="string">resource.cloud.region</span> = <span class="value">"us-west-2"</span> <span class="key">}</span></div>
-    <h4 style="margin:0.75rem 0 0.5rem 0; color:var(--cyan);">Service Map Generation</h4>
-    <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">
-      Tempo <code>metrics_generator</code>가 span 데이터에서 자동으로 서비스 의존성 그래프 생성
-    </p>
+    <p><!-- Slide 6: 리전 간 trace 상관 --></p>
+<style>
+.mr05-xr .flow-box { word-break: keep-all; }
+.mr05-xr .flow-group-label { font-weight: var(--weight-bold); color: var(--on-surface); }
+.mr05-xr-sub { display: block; color: var(--text-secondary); font-size: var(--fs-caption); margin-top: var(--space-1); }
+.mr05-xr-opts { margin-top: var(--space-4); }
+.mr05-xr-opts strong { color: var(--accent); }
+.mr05-xr-opts .mr05-rec { color: var(--success); }
+.mr05-xr-code { margin-top: var(--space-3); }
+</style>
+<div class="flow-h mr05-xr">
+  <div class="flow-group bg-blue" data-fragment-index="1">
+    <div class="flow-group-label">us-west-2</div>
+    <div class="flow-box">cart-service<span class="mr05-xr-sub">trace 시작, cloud.region = us-west-2</span></div>
   </div>
-  <div>
-    <h4 style="margin:0 0 0.75rem 0; color:var(--green);">Logs-to-Traces Correlation</h4>
-    <div class="card" style="padding:0.75rem; margin-bottom:0.5rem;">
-      <p style="margin:0; font-size:0.85rem;"><strong>1. TraceID Injection</strong></p>
-      <div class="code-block" style="font-size:0.75rem; margin-top:0.5rem;">
-<span class="comment"># Application log format</span>
-<span class="key">{"level"</span>:<span class="string">"error"</span>,
- <span class="key">"traceId"</span>:<span class="value">"abc123..."</span>,
- <span class="key">"spanId"</span>:<span class="value">"def456..."</span>,
- <span class="key">"msg"</span>:<span class="string">"payment failed"</span><span class="key">}</span></div>
-    </div>
-    <div class="card" style="padding:0.75rem;">
-      <p style="margin:0; font-size:0.85rem;"><strong>2. Grafana Derived Fields</strong></p>
-      <div class="code-block" style="font-size:0.75rem; margin-top:0.5rem;">
-<span class="comment"># Loki datasource config</span>
-<span class="key">derivedFields</span>:
-  - <span class="key">name</span>: <span class="string">TraceID</span>
-    <span class="key">matcherRegex</span>: <span class="string">"traceId\":\"([^\"]+)"</span>
-    <span class="key">url</span>: <span class="string">"$${__value.raw}"</span>
-    <span class="key">datasourceUid</span>: <span class="string">tempo</span></div>
-    </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-group bg-orange">
+    <div class="flow-group-label">traceparent 헤더</div>
+    <div class="flow-box">같은 trace ID<span class="mr05-xr-sub">TGW peering 경유 사설 호출</span></div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-group bg-purple">
+    <div class="flow-group-label">us-east-1 (write primary)</div>
+    <div class="flow-box">order → payment<span class="mr05-xr-sub">span은 us-east-1 backend에 저장</span></div>
   </div>
 </div>
+<div class="card-grid mr05-xr-opts fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="callout callout-success"><strong class="mr05-rec">A. 리전별 저장 (기본)</strong> 각 리전 backend에 그대로 두고 trace ID로 양쪽을 조회합니다. 장애 격리가 우선입니다.</div>
+  <div class="callout callout-info"><strong>B. sampled 사본만 이동</strong> Gateway에 원격 exporter를 하나 더 둡니다. tail sampling 뒤라 바이트가 작지만 리전 간 전송 요금이 붙습니다.</div>
+</div>
+<div class="code-block mr05-xr-code fragment fade-up" data-fragment-index="2"><span class="comment"># B 구성에서 한 Tempo에 두 리전 span이 있을 때</span>
+<span class="key">{</span> resource.cloud.region = <span class="string">"us-west-2"</span> <span class="key">}</span> &gt;&gt; <span class="key">{</span> resource.cloud.region = <span class="string">"us-east-1"</span> &amp;&amp; status = <span class="value">error</span> <span class="key">}</span></div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s6">
-  <div class="slide-header" data-remarp-id="s6-header"><h2>Cost Analysis — $9,600 ~ $12,400/month</h2></div>
+  <div class="slide-header" data-remarp-id="s6-header"><h2>OAM은 리전을 넘지 않는다</h2></div>
   <div class="slide-body" data-remarp-id="s6-body">
-    <p><!-- Slide 7: Cost Analysis Overview --></p>
-<div style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center;">
-  <div class="card" style="flex:1; min-width:200px; max-width:250px; padding:1rem; text-align:center; border-top:3px solid var(--accent);">
-    <img src="common/aws-icons/services/Arch_Amazon-EC2_48.svg" style="width:40px; margin-bottom:0.5rem;">
-    <div style="font-size:1.5rem; font-weight:700; color:var(--accent);">$3,186-4,586</div>
-    <div style="font-size:0.85rem; color:var(--text-muted);">Compute (33-37%)</div>
-    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.25rem;">EKS + EC2 (Karpenter)</div>
-  </div>
-  <div class="card" style="flex:1; min-width:200px; max-width:250px; padding:1rem; text-align:center; border-top:3px solid var(--cyan);">
-    <img src="common/aws-icons/services/Arch_Amazon-RDS_48.svg" style="width:40px; margin-bottom:0.5rem;">
-    <div style="font-size:1.5rem; font-weight:700; color:var(--cyan);">$2,560</div>
-    <div style="font-size:0.85rem; color:var(--text-muted);">Database (21-27%)</div>
-    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.25rem;">Aurora + DocDB + ElastiCache</div>
-  </div>
-  <div class="card" style="flex:1; min-width:200px; max-width:250px; padding:1rem; text-align:center; border-top:3px solid #fdcb6e;">
-    <img src="common/aws-icons/services/Arch_Amazon-MSK_48.svg" style="width:40px; margin-bottom:0.5rem;">
-    <div style="font-size:1.5rem; font-weight:700; color:#fdcb6e;">$1,620</div>
-    <div style="font-size:0.85rem; color:var(--text-muted);">Messaging (13-17%)</div>
-    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.25rem;">MSK kafka.m5.large x6</div>
-  </div>
-  <div class="card" style="flex:1; min-width:200px; max-width:250px; padding:1rem; text-align:center; border-top:3px solid var(--green);">
-    <img src="common/aws-icons/services/Arch_Amazon-OpenSearch-Service_48.svg" style="width:40px; margin-bottom:0.5rem;">
-    <div style="font-size:1.5rem; font-weight:700; color:var(--green);">$1,560</div>
-    <div style="font-size:0.85rem; color:var(--text-muted);">Search (13-16%)</div>
-    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.25rem;">OpenSearch r6g.large x4</div>
-  </div>
+    <p><!-- Slide 7: CloudWatch 다계정, 다리전 --></p>
+<style>
+.mr05-cw .metric-card { text-align: left; }
+.mr05-cw-a { color: var(--accent); font-weight: var(--weight-bold); }
+.mr05-cw-i { color: var(--info); font-weight: var(--weight-bold); }
+.mr05-cw-w { color: var(--warning); font-weight: var(--weight-bold); }
+.mr05-cw-s { color: var(--success); font-weight: var(--weight-bold); }
+.mr05-cw ul { margin: var(--space-2) 0 0; padding-left: var(--space-4); color: var(--text-secondary); font-size: var(--fs-card); word-break: keep-all; }
+.mr05-cw li { margin-bottom: var(--space-1); }
+.mr05-cw-rec { margin-top: var(--space-4); word-break: keep-all; }
+</style>
+<div class="card-grid mr05-cw">
+  <div class="metric-card fragment fade-up" data-fragment-index="1"><strong class="mr05-cw-a">Cross-account observability (OAM)</strong>
+    <ul><li>sink와 link는 같은 Region에서만 연결</li><li>계정당 Region별 sink 1개</li><li>monitoring 계정당 source 최대 100,000</li><li>metrics, logs, traces를 복제 없이 조회</li></ul></div>
+  <div class="metric-card fragment fade-up" data-fragment-index="2"><strong class="mr05-cw-i">Centralization rules</strong>
+    <ul><li>Organizations 기반, source Region 여러 개 선택</li><li>destination Region + backup Region</li><li>@aws.account, @aws.region 필드 보존</li><li>첫 사본 무료, 추가 사본 $0.05/GB</li></ul></div>
+  <div class="metric-card fragment fade-up" data-fragment-index="3"><strong class="mr05-cw-w">Cross-account cross-Region 대시보드</strong>
+    <ul><li>metrics와 alarm 위젯용</li><li>logs와 traces는 지원하지 않음</li><li>alarm은 telemetry가 있는 Region에 생성</li></ul></div>
 </div>
-<div style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; margin-top:1rem;">
-  <div class="card" style="flex:1; min-width:150px; max-width:180px; padding:0.75rem; text-align:center;">
-    <div style="font-size:1.1rem; font-weight:600; color:var(--text);">$452+</div>
-    <div style="font-size:0.8rem; color:var(--text-muted);">Networking</div>
-    <div style="font-size:0.7rem; color:var(--text-secondary);">NAT+TGW+NLB</div>
-  </div>
-  <div class="card" style="flex:1; min-width:150px; max-width:180px; padding:0.75rem; text-align:center;">
-    <div style="font-size:1.1rem; font-weight:600; color:var(--text);">$50-500</div>
-    <div style="font-size:0.8rem; color:var(--text-muted);">Edge</div>
-    <div style="font-size:0.7rem; color:var(--text-secondary);">CloudFront+WAF</div>
-  </div>
-  <div class="card" style="flex:1; min-width:150px; max-width:180px; padding:0.75rem; text-align:center;">
-    <div style="font-size:1.1rem; font-weight:600; color:var(--text);">$150-400</div>
-    <div style="font-size:0.8rem; color:var(--text-muted);">Observability</div>
-    <div style="font-size:0.7rem; color:var(--text-secondary);">CW+X-Ray+Prom</div>
-  </div>
-  <div class="card" style="flex:1; min-width:150px; max-width:180px; padding:0.75rem; text-align:center;">
-    <div style="font-size:1.1rem; font-weight:600; color:var(--text);">$29</div>
-    <div style="font-size:0.8rem; color:var(--text-muted);">Security</div>
-    <div style="font-size:0.7rem; color:var(--text-secondary);">KMS+Secrets Mgr</div>
-  </div>
-</div>
+<div class="callout callout-success mr05-cw-rec fragment zoom-in" data-fragment-index="4"><strong class="mr05-cw-s">시나리오 적용</strong> monitoring 계정에 us-east-1, us-west-2 sink를 각각 만들고, 로그는 Centralization rule로 us-east-1에 모으며 backup Region을 us-west-2로 둡니다.</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s7">
-  <div class="slide-header" data-remarp-id="s7-header"><h2>Cost Breakdown by Service</h2></div>
+<div class="slide" data-remarp-id="s7" data-fit="shrink">
+  <div class="slide-header" data-remarp-id="s7-header"><h2>변동비는 바이트 수가 정한다</h2></div>
   <div class="slide-body" data-remarp-id="s7-body">
-    <p><!-- Slide 8: Cost by Category Detail --></p>
-<div style="overflow-x:auto;">
-<table class="data-table" style="width:100%; font-size:0.82rem; border-collapse:collapse;">
-  <thead>
-    <tr style="background:var(--bg-card); border-bottom:2px solid var(--border);">
-      <th style="padding:8px 10px; text-align:left; color:var(--text-muted);">Category</th>
-      <th style="padding:8px 10px; text-align:left; color:var(--text-muted);">Service</th>
-      <th style="padding:8px 10px; text-align:left; color:var(--text-muted);">Spec</th>
-      <th style="padding:8px 10px; text-align:right; color:var(--text-muted);">Cost/mo</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr style="border-bottom:1px solid var(--border);">
-      <td rowspan="3" style="padding:8px 10px; vertical-align:top; font-weight:600; color:var(--accent);">Compute</td>
-      <td style="padding:8px 10px;">EKS Control Plane</td>
-      <td style="padding:8px 10px; color:var(--text-muted);">x2 regions</td>
-      <td style="padding:8px 10px; text-align:right;">$146</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
-      <td style="padding:8px 10px;">Karpenter EC2</td>
-      <td style="padding:8px 10px; color:var(--text-muted);">m6i/c6i.xlarge variable</td>
-      <td style="padding:8px 10px; text-align:right;">$2,800-4,200</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border);">
-      <td style="padding:8px 10px;">Bootstrap Node Group</td>
-      <td style="padding:8px 10px; color:var(--text-muted);">t3.medium x2 regions</td>
-      <td style="padding:8px 10px; text-align:right;">$240</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
-      <td rowspan="4" style="padding:8px 10px; vertical-align:top; font-weight:600; color:var(--cyan);">Database</td>
-      <td style="padding:8px 10px;">Aurora DSQL</td>
-      <td style="padding:8px 10px; color:var(--text-muted);">us-east-1 only (serverless)</td>
-      <td style="padding:8px 10px; text-align:right;">$200-500</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border);">
-      <td style="padding:8px 10px;">DocumentDB</td>
-      <td style="padding:8px 10px; color:var(--text-muted);">r6g.large x4 (Global)</td>
-      <td style="padding:8px 10px; text-align:right;">$1,480</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
-      <td style="padding:8px 10px;">ElastiCache</td>
-      <td style="padding:8px 10px; color:var(--text-muted);">r6g.large x4 (Valkey)</td>
-      <td style="padding:8px 10px; text-align:right;">$880</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border);">
-      <td style="padding:8px 10px;">OpenSearch</td>
-      <td style="padding:8px 10px; color:var(--text-muted);">r6g.large x4 + master x3</td>
-      <td style="padding:8px 10px; text-align:right;">$1,560</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
-      <td style="padding:8px 10px; font-weight:600; color:#fdcb6e;">Messaging</td>
-      <td style="padding:8px 10px;">MSK</td>
-      <td style="padding:8px 10px; color:var(--text-muted);">kafka.m5.large x3 x2 regions</td>
-      <td style="padding:8px 10px; text-align:right;">$1,620</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border);">
-      <td rowspan="3" style="padding:8px 10px; vertical-align:top; font-weight:600; color:var(--green);">Network</td>
-      <td style="padding:8px 10px;">NAT Gateway</td>
-      <td style="padding:8px 10px; color:var(--text-muted);">x4 (2 per region)</td>
-      <td style="padding:8px 10px; text-align:right;">$270</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
-      <td style="padding:8px 10px;">Transit Gateway</td>
-      <td style="padding:8px 10px; color:var(--text-muted);">x2 regions + attachments</td>
-      <td style="padding:8px 10px; text-align:right;">$146</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border);">
-      <td style="padding:8px 10px;">NLB</td>
-      <td style="padding:8px 10px; color:var(--text-muted);">x2 regions</td>
-      <td style="padding:8px 10px; text-align:right;">$36+</td>
-    </tr>
-  </tbody>
-</table>
+    <p><!-- Slide 8: 비용 계산기 (interactive) --></p>
+<style>
+.mr05-calc { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); align-items: start; }
+.mr05-ctrl { display: flex; flex-direction: column; gap: var(--space-2); }
+.mr05-row { display: grid; grid-template-columns: 11rem 1fr; align-items: center; gap: var(--space-3); }
+.mr05-row label { color: var(--text-secondary); font-size: var(--fs-card); word-break: keep-all; }
+.mr05-calc .slider-value { min-width: 6.5rem; }
+.mr05-opt { display: flex; gap: var(--space-3); align-items: center; color: var(--text-secondary); font-size: var(--fs-card); }
+.mr05-opt input { accent-color: var(--accent); }
+.mr05-out { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.mr05-out .metric-value { font-size: var(--fs-subtitle); white-space: nowrap; }
+.mr05-out .mr05-total { grid-column: span 2; }
+.mr05-out .mr05-total .metric-value { color: var(--accent); }
+.mr05-note { color: var(--text-secondary); font-size: var(--fs-caption); margin-top: var(--space-2); word-break: keep-all; }
+</style>
+<div class="mr05-calc" data-reveal="static">
+  <div class="mr05-ctrl">
+    <div class="mr05-row"><label for="mr05-xr">리전 간 복제 GB/일</label><div class="slider-container"><input type="range" id="mr05-xr" min="0" max="2000" step="10" value="300"><span class="slider-value" id="mr05-xr-v">300</span></div></div>
+    <div class="mr05-row"><label for="mr05-nat">NAT 처리 GB/일</label><div class="slider-container"><input type="range" id="mr05-nat" min="0" max="1000" step="10" value="100"><span class="slider-value" id="mr05-nat-v">100</span></div></div>
+    <div class="mr05-row"><label for="mr05-log">로그 수집 GB/일</label><div class="slider-container"><input type="range" id="mr05-log" min="0" max="500" step="5" value="50"><span class="slider-value" id="mr05-log-v">50</span></div></div>
+    <div class="mr05-row"><label for="mr05-span">span 생성 GB/일</label><div class="slider-container"><input type="range" id="mr05-span" min="0" max="200" step="1" value="20"><span class="slider-value" id="mr05-span-v">20</span></div></div>
+    <div class="mr05-row"><label for="mr05-keep">tail sampling 보존율</label><div class="slider-container"><input type="range" id="mr05-keep" min="5" max="100" step="1" value="13"><span class="slider-value" id="mr05-keep-v">13%</span></div></div>
+    <div class="mr05-opt"><label><input type="checkbox" id="mr05-ia"> 로그를 Infrequent Access class로</label></div>
+    <div class="mr05-note">us-east-1 list price, 2026-10-15 Pricing API 기준, 30일/월, 730시간/월. 리전 간 $0.02/GB, NAT $0.045/GB와 $0.045/시간, Logs $0.50 또는 $0.25/GB, span $0.35/GB, EKS $0.10/시간.</div>
+  </div>
+  <div class="mr05-out">
+    <div class="metric-card"><div class="metric-value" id="mr05-o-xr">-</div><div class="metric-label">리전 간 전송</div></div>
+    <div class="metric-card"><div class="metric-value" id="mr05-o-nat">-</div><div class="metric-label">NAT 데이터 처리</div></div>
+    <div class="metric-card"><div class="metric-value" id="mr05-o-log">-</div><div class="metric-label">로그 수집</div></div>
+    <div class="metric-card"><div class="metric-value" id="mr05-o-span">-</div><div class="metric-label">span 수집</div></div>
+    <div class="metric-card"><div class="metric-value" id="mr05-o-fix">-</div><div class="metric-label">고정: EKS 2개 + NAT GW 6개</div></div>
+    <div class="metric-card"><div class="metric-value" id="mr05-o-share">-</div><div class="metric-label">변동비 중 리전 간 비중</div></div>
+    <div class="metric-card mr05-total"><div class="metric-value" id="mr05-o-tot">-</div><div class="metric-label">월 합계 (컴퓨트, DB, 스토리지 제외)</div></div>
+  </div>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s8">
-  <div class="slide-header" data-remarp-id="s8-header"><h2>Cost Optimization Opportunities</h2></div>
+  <div class="slide-header" data-remarp-id="s8-header"><h2>최적화는 바이트를 줄이는 일</h2></div>
   <div class="slide-body" data-remarp-id="s8-body">
-    <p><!-- Slide 9: Cost Optimization Opportunities --></p>
-<table class="data-table" style="width:100%; font-size:0.85rem; border-collapse:collapse;">
-  <thead>
-    <tr style="background:var(--bg-card); border-bottom:2px solid var(--border);">
-      <th style="padding:10px 12px; text-align:left; color:var(--text-muted);">Optimization</th>
-      <th style="padding:10px 12px; text-align:center; color:var(--text-muted);">Savings</th>
-      <th style="padding:10px 12px; text-align:center; color:var(--text-muted);">Effort</th>
-      <th style="padding:10px 12px; text-align:left; color:var(--text-muted);">Notes</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr style="border-bottom:1px solid var(--border);" data-fragment-index="1">
-      <td style="padding:10px 12px;"><strong>Karpenter Spot Expansion</strong></td>
-      <td style="padding:10px 12px; text-align:center; color:var(--green); font-weight:600;">30-40% EC2</td>
-      <td style="padding:10px 12px; text-align:center;"><span style="color:var(--green);">L</span></td>
-      <td style="padding:10px 12px; font-size:0.8rem;">worker-tier, batch-tier NodePool에 Spot 우선 설정</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);" data-fragment-index="1">
-      <td style="padding:10px 12px;"><strong>DocumentDB Downsize</strong></td>
-      <td style="padding:10px 12px; text-align:center; color:var(--green); font-weight:600;">$370/mo</td>
-      <td style="padding:10px 12px; text-align:center;"><span style="color:var(--green);">L</span></td>
-      <td style="padding:10px 12px; font-size:0.8rem;">r6g.large → r6g.medium (현재 CPU &lt;20%)</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border);" data-fragment-index="2">
-      <td style="padding:10px 12px;"><strong>MSK Serverless</strong></td>
-      <td style="padding:10px 12px; text-align:center; color:var(--green); font-weight:600;">50-70%</td>
-      <td style="padding:10px 12px; text-align:center;"><span style="color:#fdcb6e;">M</span></td>
-      <td style="padding:10px 12px; font-size:0.8rem;">저트래픽 시 유리 (현재 provisioned 유휴)</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);" data-fragment-index="2">
-      <td style="padding:10px 12px;"><strong>OpenSearch Scale-down</strong></td>
-      <td style="padding:10px 12px; text-align:center; color:var(--green); font-weight:600;">$520/mo</td>
-      <td style="padding:10px 12px; text-align:center;"><span style="color:var(--green);">L</span></td>
-      <td style="padding:10px 12px; font-size:0.8rem;">dedicated master 제거 (현재 search 미사용)</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border);" data-fragment-index="3">
-      <td style="padding:10px 12px;"><strong>Reserved Instances 1yr</strong></td>
-      <td style="padding:10px 12px; text-align:center; color:var(--green); font-weight:600;">30-40% DB</td>
-      <td style="padding:10px 12px; text-align:center;"><span style="color:var(--green);">L</span></td>
-      <td style="padding:10px 12px; font-size:0.8rem;">DocumentDB, ElastiCache, OpenSearch</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);" data-fragment-index="3">
-      <td style="padding:10px 12px;"><strong>NAT → NAT Instance</strong></td>
-      <td style="padding:10px 12px; text-align:center; color:var(--green); font-weight:600;">$200/mo</td>
-      <td style="padding:10px 12px; text-align:center;"><span style="color:#fdcb6e;">M</span></td>
-      <td style="padding:10px 12px; font-size:0.8rem;">t4g.micro + ASG (HA 구성)</td>
-    </tr>
-  </tbody>
-</table>
-<div style="margin-top:12px; padding:12px 16px; background:rgba(0,214,143,0.1); border:1px solid var(--green); border-radius:8px; text-align:center;">
-  <strong style="color:var(--green);">Total Savings Potential: $2,500 - $3,500 / month</strong>
-  <span style="color:var(--text-muted); margin-left:12px;">(25-35% reduction)</span>
+    <p><!-- Slide 9: 비용 최적화 --></p>
+<style>
+.mr05-opt-grid .metric-card { text-align: left; }
+.mr05-o-a { color: var(--accent); font-weight: var(--weight-bold); }
+.mr05-o-s { color: var(--success); font-weight: var(--weight-bold); }
+.mr05-o-i { color: var(--info); font-weight: var(--weight-bold); }
+.mr05-o-w { color: var(--warning); font-weight: var(--weight-bold); }
+.mr05-o-d { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.mr05-o-tag { display: inline-block; margin-left: var(--space-2); }
+</style>
+<div class="card-grid mr05-opt-grid fragment" data-reveal="stagger" data-reveal-anim="right" data-fragment-index="1">
+  <div class="metric-card"><strong class="mr05-o-s">S3 gateway endpoint</strong><span class="badge badge-green mr05-o-tag">즉시</span><div class="mr05-o-d">S3 트래픽을 NAT에서 빼면 GB당 $0.045 처리 요금이 사라집니다. gateway endpoint는 추가 요금이 없습니다.</div></div>
+  <div class="metric-card"><strong class="mr05-o-s">sampled span만 이동</strong><span class="badge badge-green mr05-o-tag">즉시</span><div class="mr05-o-d">원격 리전 exporter는 tail sampling 뒤에 둡니다. 원본 span을 리전 간으로 보내지 않습니다.</div></div>
+  <div class="metric-card"><strong class="mr05-o-i">복제 범위 축소</strong><span class="badge badge-blue mr05-o-tag">설계</span><div class="mr05-o-d">MSK Replicator topic 필터, 리전 로컬로 재생성 가능한 cache와 search index는 복제 대신 재구축을 검토합니다.</div></div>
+  <div class="metric-card"><strong class="mr05-o-i">로그 class 분리</strong><span class="badge badge-blue mr05-o-tag">설계</span><div class="mr05-o-d">감사, 디버그 로그는 IA class($0.25/GB)로 보냅니다. IA에서 쓸 수 없는 기능은 사전에 확인합니다.</div></div>
+  <div class="metric-card"><strong class="mr05-o-w">컴퓨트 통합</strong><span class="badge badge-yellow mr05-o-tag">튜닝</span><div class="mr05-o-d">stateless tier NodePool은 Spot과 Graviton을 허용하고 Karpenter consolidation을 켭니다. 할인 폭은 시점마다 다릅니다.</div></div>
+  <div class="metric-card"><strong class="mr05-o-a">측정이 먼저</strong><span class="badge badge-yellow mr05-o-tag">상시</span><div class="mr05-o-d">Cost Explorer를 usage type으로 묶어 USE1-USW2 전송, NAT, DataProcessing을 주 단위로 봅니다.</div></div>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s9">
-  <div class="slide-header" data-remarp-id="s9-header"><h2>Performance Bottlenecks</h2></div>
+  <div class="slide-header" data-remarp-id="s9-header"><h2>병목은 클라이언트 기본값에 숨는다</h2></div>
   <div class="slide-body" data-remarp-id="s9-body">
-    <p><!-- Slide 10: Performance Bottlenecks --></p>
-<div class="col-2" style="gap:1rem;">
-  <div>
-    <h4 style="margin:0 0 0.75rem 0; color:var(--red);">P0 — Critical Bugs</h4>
-    <div class="card" style="padding:12px; margin-bottom:8px; border-left:3px solid var(--red);">
-      <div style="font-weight:600; margin-bottom:4px;">1. Python Valkey MOVED error</div>
-      <div style="font-size:0.82rem; color:var(--text-muted);">Redis() → RedisCluster() 필요</div>
-      <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">영향: 7개 Python 서비스</div>
-    </div>
-    <div class="card" style="padding:12px; margin-bottom:8px; border-left:3px solid var(--red);">
-      <div style="font-weight:600; margin-bottom:4px;">2. DSQL connection pool default</div>
-      <div style="font-size:0.82rem; color:var(--text-muted);">기본값 4/CPU → exhaustion 발생</div>
-      <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">영향: 6개 Go 서비스</div>
-    </div>
-    <div class="card" style="padding:12px; border-left:3px solid var(--red);">
-      <div style="font-weight:600; margin-bottom:4px;">3. DocumentDB Motor maxPoolSize</div>
-      <div style="font-size:0.82rem; color:var(--text-muted);">default 100 → Pod scale 시 초과</div>
-      <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">영향: 7개 Python 서비스</div>
-    </div>
-  </div>
-  <div>
-    <h4 style="margin:0 0 0.75rem 0; color:#fdcb6e;">P1 — Improvements</h4>
-    <div class="card" style="padding:12px; margin-bottom:8px; border-left:3px solid #fdcb6e;">
-      <div style="font-weight:600; margin-bottom:4px;">4. API GW MaxIdleConnsPerHost = 2</div>
-      <div style="font-size:0.82rem; color:var(--text-muted);">Backend 연결 병목 → 100으로 상향</div>
-    </div>
-    <div class="card" style="padding:12px; margin-bottom:8px; border-left:3px solid #fdcb6e;">
-      <div style="font-weight:600; margin-bottom:4px;">5. Java SimpleClientHttpRequestFactory</div>
-      <div style="font-size:0.82rem; color:var(--text-muted);">Connection pooling 없음 → RestTemplate + pooling</div>
-    </div>
-    <h4 style="margin:0.75rem 0 0.5rem 0; color:var(--green);">Quick Wins</h4>
-    <div class="card" style="padding:12px; border-left:3px solid var(--green);">
-      <div style="font-size:0.85rem;">
-        <strong>Product cache TTL 5min</strong> → DocDB 부하 감소<br>
-        <strong>CloudFront API cache 1min</strong> → Origin 요청 50%↓
-      </div>
-    </div>
-  </div>
+    <p><!-- Slide 10: 성능 병목 --></p>
+<style>
+.mr05-perf .metric-card { text-align: left; }
+.mr05-p-d { color: var(--danger); font-weight: var(--weight-bold); }
+.mr05-p-w { color: var(--warning); font-weight: var(--weight-bold); }
+.mr05-p-s { color: var(--success); font-weight: var(--weight-bold); }
+.mr05-p-t { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.mr05-p-t code { font-size: var(--fs-caption); }
+.mr05-perf-qw { margin-top: var(--space-4); word-break: keep-all; }
+.mr05-perf .card-grid, .mr05-perf.card-grid { grid-template-columns: 1fr 1fr; }
+.mr05-p-fix { color: var(--on-surface); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; }
+.mr05-p-fix b { color: var(--success); }
+</style>
+<div class="card-grid mr05-perf">
+  <div class="metric-card fragment fade-up" data-fragment-index="1"><strong class="mr05-p-d">Valkey cluster mode</strong><div class="mr05-p-t">cluster-aware client가 아니면 다른 shard 키에서 MOVED 응답을 처리하지 못합니다. </div><div class="mr05-p-fix"><b>조치</b> Python은 <code>RedisCluster</code> 계열 client로 교체</div></div>
+  <div class="metric-card fragment fade-up" data-fragment-index="2"><strong class="mr05-p-d">Go pgxpool</strong><div class="mr05-p-t"><code>MaxConns</code> 기본값은 max(4, NumCPU)입니다. 작은 Pod에서는 4개라 고부하에서 대기열이 생깁니다.</div><div class="mr05-p-fix"><b>조치</b> <code>pool_max_conns</code>를 부하 테스트로 정하고 명시</div></div>
+  <div class="metric-card fragment fade-up" data-fragment-index="3"><strong class="mr05-p-w">PyMongo / Motor</strong><div class="mr05-p-t"><code>maxPoolSize</code> 기본 100입니다. Pod 수 × 100이 DocumentDB 연결 한도를 넘지 않는지 계산합니다.</div><div class="mr05-p-fix"><b>조치</b> HPA 최대 Pod 수 기준으로 pool 크기 역산</div></div>
+  <div class="metric-card fragment fade-up" data-fragment-index="4"><strong class="mr05-p-w">Go http.Transport</strong><div class="mr05-p-t"><code>DefaultMaxIdleConnsPerHost</code>는 2입니다. 내부 API 호출이 많으면 연결을 계속 새로 맺습니다.</div><div class="mr05-p-fix"><b>조치</b> 공유 Transport에 <code>MaxIdleConnsPerHost</code> 상향</div></div>
 </div>
+<div class="callout callout-success mr05-perf-qw fragment zoom-in" data-fragment-index="5"><strong class="mr05-p-s">Quick win</strong> catalog의 GET 응답에 짧은 TTL cache를 두고, CloudFront cache behavior로 상품 조회 경로를 캐싱해 origin 요청을 줄입니다.</div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s10">
-  <div class="slide-header" data-remarp-id="s10-header"><h2>Load Test Strategy (k6)</h2></div>
+  <div class="slide-header" data-remarp-id="s10-header"><h2>부하 테스트는 네 가지 모양으로</h2></div>
   <div class="slide-body" data-remarp-id="s10-body">
     <div class="tab-bar">
             <button class="tab-btn active" data-tab="baseline">Baseline</button>
@@ -551,32 +346,19 @@
       <button class="tab-btn" data-tab="soak">Soak</button>
     </div>
         <div class="tab-content active" data-tab="baseline">
-<div class="code-block"><span class="comment">// Profile 1: Baseline (100 VUs, 10min)</span>
-<span class="comment">// 현재 상태의 기준선 측정</span>
-<span class="keyword">export</span> <span class="keyword">const</span> options = {
+<div class="code-block"><span class="keyword">export</span> <span class="keyword">const</span> options = {
   <span class="key">vus</span>: 100,
   <span class="key">duration</span>: <span class="string">'10m'</span>,
   <span class="key">thresholds</span>: {
-    <span class="key">http_req_duration</span>: [<span class="string">'p95&lt;500'</span>],
-    <span class="key">http_req_failed</span>: [<span class="string">'rate&lt;0.01'</span>],
+    <span class="key">http_req_duration</span>: [<span class="string">'p(95)&lt;300'</span>, <span class="string">'p(99)&lt;500'</span>],
+    <span class="key">http_req_failed</span>: [<span class="string">'rate&lt;0.001'</span>],
+    <span class="string">'http_req_duration{endpoint:orders}'</span>: [<span class="string">'p(95)&lt;500'</span>],
   },
 };
-
-<span class="keyword">export</span> default <span class="keyword">function</span>() {
-  <span class="comment">// 60% Browse, 15% Purchase, 20% Search, 5% Seller</span>
-  <span class="keyword">const</span> scenario = weightedRandom([
-    { weight: 60, fn: browseProducts },
-    { weight: 15, fn: purchaseFlow },
-    { weight: 20, fn: searchProducts },
-    { weight: 5, fn: sellerDashboard },
-  ]);
-  scenario();
-}</div>
+<span class="comment">// 트래픽 비율: browse 60, search 20, purchase 15, seller 5</span></div>
 </div>
     <div class="tab-content" data-tab="ramp-up">
-<div class="code-block"><span class="comment">// Profile 2: Ramp-up (100→1000 VUs, 30min)</span>
-<span class="comment">// 점진적 부하 증가로 breaking point 탐색</span>
-<span class="keyword">export</span> <span class="keyword">const</span> options = {
+<div class="code-block"><span class="keyword">export</span> <span class="keyword">const</span> options = {
   <span class="key">stages</span>: [
     { duration: <span class="string">'5m'</span>, target: 100 },
     { duration: <span class="string">'10m'</span>, target: 500 },
@@ -584,368 +366,156 @@
     { duration: <span class="string">'5m'</span>, target: 0 },
   ],
   <span class="key">thresholds</span>: {
-    <span class="key">http_req_duration</span>: [<span class="string">'p95&lt;500'</span>, <span class="string">'p99&lt;1000'</span>],
+    <span class="key">http_req_duration</span>: [{ threshold: <span class="string">'p(99)&lt;1000'</span>, abortOnFail: <span class="keyword">true</span>, delayAbortEval: <span class="string">'1m'</span> }],
   },
 };</div>
 </div>
     <div class="tab-content" data-tab="spike">
-<div class="code-block"><span class="comment">// Profile 4: Spike (500→2000→500 VUs, 15min)</span>
-<span class="comment">// 급격한 부하 증가 시 auto-scaling 반응 테스트</span>
-<span class="keyword">export</span> <span class="keyword">const</span> options = {
-  <span class="key">stages</span>: [
-    { duration: <span class="string">'2m'</span>, target: 500 },
-    { duration: <span class="string">'1m'</span>, target: 2000 },  <span class="comment">// spike</span>
-    { duration: <span class="string">'5m'</span>, target: 2000 },  <span class="comment">// sustain</span>
-    { duration: <span class="string">'2m'</span>, target: 500 },   <span class="comment">// recovery</span>
-    { duration: <span class="string">'5m'</span>, target: 500 },
-  ],
-};
-
-<span class="comment">// Karpenter scaling 반응 시간 측정</span>
-<span class="comment">// 목표: 2분 내 노드 프로비저닝</span></div>
-</div>
-    <div class="tab-content" data-tab="soak">
-<div class="code-block"><span class="comment">// Profile 5: Soak Test (300 VUs, 4hr)</span>
-<span class="comment">// 메모리 누수, 연결 누수 탐지</span>
-<span class="keyword">export</span> <span class="keyword">const</span> options = {
-  <span class="key">vus</span>: 300,
-  <span class="key">duration</span>: <span class="string">'4h'</span>,
-  <span class="key">thresholds</span>: {
-    <span class="key">http_req_duration</span>: [<span class="string">'p95&lt;300'</span>],
-    <span class="key">http_req_failed</span>: [<span class="string">'rate&lt;0.001'</span>],
+<div class="code-block"><span class="keyword">export</span> <span class="keyword">const</span> options = {
+  <span class="key">scenarios</span>: {
+    <span class="key">spike</span>: {
+      <span class="key">executor</span>: <span class="string">'ramping-arrival-rate'</span>,
+      <span class="key">startRate</span>: 500, timeUnit: <span class="string">'1s'</span>,
+      <span class="key">preAllocatedVUs</span>: 500, maxVUs: 3000,
+      <span class="key">stages</span>: [
+        { duration: <span class="string">'2m'</span>, target: 500 },
+        { duration: <span class="string">'1m'</span>, target: 2000 },
+        { duration: <span class="string">'5m'</span>, target: 2000 },
+        { duration: <span class="string">'2m'</span>, target: 500 },
+      ],
+    },
   },
 };
-
-<span class="comment">// 모니터링 항목:</span>
-<span class="comment">// - Pod memory usage trend</span>
-<span class="comment">// - DB connection count</span>
-<span class="comment">// - Goroutine/Thread count</span>
-<span class="comment">// - File descriptor usage</span></div>
+<span class="comment">// 관찰: Karpenter 노드 준비 시간, HPA 반응, 5xx</span></div>
+</div>
+    <div class="tab-content" data-tab="soak">
+<p><code>vus: 300</code>, <code>duration: '4h'</code>로 4시간 유지합니다. 지표 대신 <strong>추세</strong>를 봅니다.</p>
+<table><thead><tr><th>관찰 대상</th><th>누수 신호</th></tr></thead><tbody><tr><td>Pod 메모리</td><td>시간에 비례해 증가</td></tr><tr><td>DB 연결 수</td><td>pool 한도에 수렴 후 대기</td></tr><tr><td>goroutine, thread</td><td>반환되지 않고 누적</td></tr><tr><td>tail sampling 메모리</td><td>num_traces 도달 후 drop</td></tr></tbody></table>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s11">
-  <div class="slide-header" data-remarp-id="s11-header"><h2>Target Metrics (SLOs)</h2></div>
+  <div class="slide-header" data-remarp-id="s11-header"><h2>SLO는 burn rate로 경보한다</h2></div>
   <div class="slide-body" data-remarp-id="s11-body">
-    <p><!-- Slide 12: Target Metrics (SLOs) --></p>
-<div class="col-2" style="gap:1.5rem;">
-  <div>
-    <h4 style="margin:0 0 0.75rem 0; color:var(--accent);">Latency SLOs</h4>
-    <table class="data-table" style="width:100%; font-size:0.9rem;">
-      <thead>
-        <tr style="background:var(--bg-card);">
-          <th style="padding:10px; text-align:left;">Percentile</th>
-          <th style="padding:10px; text-align:right;">Target</th>
-          <th style="padding:10px; text-align:center;">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr style="border-bottom:1px solid var(--border);">
-          <td style="padding:10px;">p50</td>
-          <td style="padding:10px; text-align:right; font-weight:600;">< 100ms</td>
-          <td style="padding:10px; text-align:center;"><span style="color:var(--green);">TBD</span></td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
-          <td style="padding:10px;">p95</td>
-          <td style="padding:10px; text-align:right; font-weight:600;">< 300ms</td>
-          <td style="padding:10px; text-align:center;"><span style="color:var(--green);">TBD</span></td>
-        </tr>
-        <tr>
-          <td style="padding:10px;">p99</td>
-          <td style="padding:10px; text-align:right; font-weight:600;">< 500ms</td>
-          <td style="padding:10px; text-align:center;"><span style="color:var(--green);">TBD</span></td>
-        </tr>
-      </tbody>
-    </table>
-    <h4 style="margin:1rem 0 0.75rem 0; color:var(--cyan);">Throughput & Availability</h4>
-    <div class="card" style="padding:1rem;">
-      <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
-        <span>Sustained Throughput</span>
-        <strong style="color:var(--cyan);">5,000 RPS</strong>
-      </div>
-      <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
-        <span>Error Rate</span>
-        <strong style="color:var(--green);">< 0.1%</strong>
-      </div>
-      <div style="display:flex; justify-content:space-between;">
-        <span>Availability</span>
-        <strong style="color:var(--accent);">99.9%</strong>
-      </div>
-    </div>
-  </div>
-  <div>
-    <h4 style="margin:0 0 0.75rem 0; color:#fdcb6e;">Per-Endpoint Targets</h4>
-    <table class="data-table" style="width:100%; font-size:0.85rem;">
-      <thead>
-        <tr style="background:var(--bg-card);">
-          <th style="padding:8px; text-align:left;">Endpoint</th>
-          <th style="padding:8px; text-align:right;">p95</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr style="border-bottom:1px solid var(--border);">
-          <td style="padding:8px;">GET /products</td>
-          <td style="padding:8px; text-align:right;">< 200ms</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
-          <td style="padding:8px;">GET /products/:id</td>
-          <td style="padding:8px; text-align:right;">< 150ms</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border);">
-          <td style="padding:8px;">POST /orders</td>
-          <td style="padding:8px; text-align:right;">< 500ms</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
-          <td style="padding:8px;">POST /payments</td>
-          <td style="padding:8px; text-align:right;">< 500ms</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border);">
-          <td style="padding:8px;">GET /search</td>
-          <td style="padding:8px; text-align:right;">< 300ms</td>
-        </tr>
-        <tr style="background:var(--bg-card);">
-          <td style="padding:8px;">GET /seller/dashboard</td>
-          <td style="padding:8px; text-align:right;">< 400ms</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    <p><!-- Slide 12: SLO와 burn rate --></p>
+<style>
+.mr05-slo .metric-value { font-size: var(--fs-subtitle); }
+.mr05-slo-row { margin-top: var(--space-4); }
+.mr05-s-a { color: var(--accent); font-weight: var(--weight-bold); }
+.mr05-s-i { color: var(--info); font-weight: var(--weight-bold); }
+.mr05-s-w { color: var(--warning); font-weight: var(--weight-bold); }
+.mr05-s-t { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="card-grid mr05-slo" data-reveal="stagger">
+  <div class="metric-card"><div class="metric-value">99.9%</div><div class="metric-label">가용성, 30일</div></div>
+  <div class="metric-card"><div class="metric-value">p95 &lt; 300ms</div><div class="metric-label">전체 latency</div></div>
+  <div class="metric-card"><div class="metric-value">p99 &lt; 500ms</div><div class="metric-label">orders, payments</div></div>
+  <div class="metric-card"><div class="metric-value">43.2분</div><div class="metric-label">30일 error budget</div></div>
+</div>
+<div class="card-grid mr05-slo-row">
+  <div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="mr05-s-i">Application Signals SLO</strong><div class="mr05-s-t">period-based와 request-based 두 방식입니다. SLO당 burn rate 설정은 최대 10개입니다.</div></div>
+  <div class="callout callout-warning fragment fade-up" data-fragment-index="2"><strong class="mr05-s-w">burn rate</strong><div class="mr05-s-t">baseline error rate = 100% - 목표입니다. 99.9%면 0.1%가 기준이고, 1보다 크면 budget을 빨리 씁니다.</div></div>
+  <div class="callout callout-success fragment zoom-in" data-fragment-index="3"><strong class="mr05-s-a">리전별 SLO</strong><div class="mr05-s-t">SLO는 리전마다 따로 둡니다. 전역 평균은 한 리전 장애를 희석해 경보를 늦춥니다.</div></div>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s12">
-  <div class="slide-header" data-remarp-id="s12-header"><h2>Gap Analysis Summary</h2></div>
+  <div class="slide-header" data-remarp-id="s12-header"><h2>P0 네 개가 출시를 막는다</h2></div>
   <div class="slide-body" data-remarp-id="s12-body">
-    <p><!-- Slide 13: Gap Analysis Summary --></p>
-<div class="flow-h" style="flex-wrap:wrap; gap:0.75rem; justify-content:center;">
-  <div class="flow-group" style="border:2px solid var(--red); background:rgba(255,107,107,0.08); min-width:260px; max-width:300px;" data-fragment-index="1">
-    <div class="flow-group-label" style="color:var(--red);">P0 — Production Blockers</div>
-    <div class="flow-v" style="gap:0.4rem; padding:0.4rem;">
-      <div class="flow-box" style="display:flex; align-items:center; gap:6px; font-size:0.85rem;">
-        <img src="common/aws-icons/services/Arch_Amazon-Cognito_48.svg" style="width:28px;">
-        <div>
-          <strong>Authentication</strong>
-          <div style="font-size:0.75rem; color:var(--text-muted);">인증 미들웨어 없음</div>
-        </div>
-      </div>
-      <div class="flow-box" style="display:flex; align-items:center; gap:6px; font-size:0.85rem;">
-        <img src="common/aws-icons/services/Arch_Amazon-MSK_48.svg" style="width:28px;">
-        <div>
-          <strong>Event Bus → MSK</strong>
-          <div style="font-size:0.75rem; color:var(--text-muted);">Mock publish only</div>
-        </div>
-      </div>
-    </div>
+    <p><!-- Slide 13: Gap 분석과 로드맵 --></p>
+<style>
+.mr05-gap { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); }
+.mr05-gap .card { display: flex; flex-direction: column; gap: var(--space-2); }
+.mr05-g-h { display: flex; justify-content: space-between; align-items: center; font-weight: var(--weight-bold); }
+.mr05-g-d { color: var(--danger); }
+.mr05-g-w { color: var(--warning); }
+.mr05-g-i { color: var(--info); }
+.mr05-g-item { color: var(--on-surface); font-size: var(--fs-card); word-break: keep-all; }
+.mr05-g-item span { display: block; color: var(--text-secondary); font-size: var(--fs-caption); }
+.mr05-g-phase { margin-top: auto; color: var(--text-secondary); font-size: var(--fs-caption); border-top: 1px solid var(--border); padding-top: var(--space-2); }
+</style>
+<div class="mr05-gap">
+  <div class="card fragment fade-up" data-fragment-index="1">
+    <div class="mr05-g-h"><span class="mr05-g-d">P0 출시 차단, 데이터 보호</span><span class="badge badge-red">Phase 1, 2주</span></div>
+    <div class="mr05-g-item">인증 미들웨어 없음<span>gateway가 누구의 호출이든 통과</span></div>
+    <div class="mr05-g-item">event bus가 mock publish<span>MSK consumer 7개가 이벤트를 못 받음</span></div>
+    <div class="mr05-g-item">MSK Replicator 미구성<span>리전 간 topic, consumer offset 동기화 없음</span></div>
+    <div class="mr05-g-item">Aurora Global DB 전환 준비 미흡<span>rds.global_db_rpo 미설정, global writer endpoint 미적용</span></div>
+    <div class="mr05-g-phase">완료 기준: 인증 통합 테스트, 이벤트 end-to-end trace, us-west-2 topic 복제 lag 확인</div>
   </div>
-  <div class="flow-group" style="border:2px solid #fdcb6e; background:rgba(253,203,110,0.08); min-width:260px; max-width:300px;" data-fragment-index="2">
-    <div class="flow-group-label" style="color:#fdcb6e;">P1 — High Risk</div>
-    <div class="flow-v" style="gap:0.4rem; padding:0.4rem;">
-      <div class="flow-box" style="display:flex; align-items:center; gap:6px; font-size:0.85rem;">
-        <img src="common/aws-icons/services/Arch_AWS-WAF_48.svg" style="width:28px;">
-        <div>
-          <strong>WAF Reactivation</strong>
-          <div style="font-size:0.75rem; color:var(--text-muted);">Bot Control 차단 중</div>
-        </div>
-      </div>
-      <div class="flow-box" style="display:flex; align-items:center; gap:6px; font-size:0.85rem;">
-        <img src="common/aws-icons/services/Arch_Amazon-OpenSearch-Service_48.svg" style="width:28px;">
-        <div>
-          <strong>Search → OpenSearch</strong>
-          <div style="font-size:0.75rem; color:var(--text-muted);">strings.Contains mock</div>
-        </div>
-      </div>
-      <div class="flow-box" style="display:flex; align-items:center; gap:6px; font-size:0.85rem;">
-        <img src="common/aws-icons/services/Arch_Amazon-Aurora_48.svg" style="width:28px;">
-        <div>
-          <strong>DSQL Multi-Region</strong>
-          <div style="font-size:0.75rem; color:var(--text-muted);">us-east-1 only</div>
-        </div>
-      </div>
-    </div>
+  <div class="card fragment fade-up" data-fragment-index="2">
+    <div class="mr05-g-h"><span class="mr05-g-w">P1 운영 위험</span><span class="badge badge-yellow">Phase 2, 4주</span></div>
+    <div class="mr05-g-item">WAF Bot Control이 synthetic 차단<span>모니터링 체크 실패, scope-down 필요</span></div>
+    <div class="mr05-g-item">search가 문자열 비교 mock<span>OpenSearch 연동 전</span></div>
+    <div class="mr05-g-phase">함께 처리: 클라이언트 기본값 4건 수정</div>
   </div>
-  <div class="flow-group" style="border:2px solid var(--accent); background:rgba(108,92,231,0.08); min-width:260px; max-width:300px;" data-fragment-index="3">
-    <div class="flow-group-label" style="color:var(--accent);">P2 — Improvements</div>
-    <div class="flow-v" style="gap:0.4rem; padding:0.4rem;">
-      <div class="flow-box" style="display:flex; align-items:center; gap:6px; font-size:0.85rem;">
-        <img src="common/aws-icons/services/Arch_Amazon-MSK_48.svg" style="width:28px;">
-        <div>
-          <strong>MSK Replicator</strong>
-          <div style="font-size:0.75rem; color:var(--text-muted);">Cross-region sync</div>
-        </div>
-      </div>
-      <div class="flow-box" style="display:flex; align-items:center; gap:6px; font-size:0.85rem;">
-        <img src="common/aws-icons/services/Arch_AWS-CodePipeline_48.svg" style="width:28px;">
-        <div>
-          <strong>CI/CD Automation</strong>
-          <div style="font-size:0.75rem; color:var(--text-muted);">Manual deploys 상태</div>
-        </div>
-      </div>
-    </div>
+  <div class="card fragment fade-up" data-fragment-index="3">
+    <div class="mr05-g-h"><span class="mr05-g-i">P2 개선</span><span class="badge badge-blue">Phase 3, 2주</span></div>
+    <div class="mr05-g-item">CI/CD 수동 배포<span>두 리전 동시 배포 파이프라인</span></div>
+    <div class="mr05-g-phase">Phase 4 상시: k6 4개 프로필, SLO 튜닝, 비용 최적화</div>
   </div>
 </div>
-<p style="margin-top:12px; font-size:0.85rem; color:var(--text-muted); text-align:center;">
-  총 <strong>7개 Gap</strong> | P0 해결 없이는 Production 불가
-</p>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s13">
-  <div class="slide-header" data-remarp-id="s13-header"><h2>Production Readiness Roadmap</h2></div>
+  <div class="slide-header" data-remarp-id="s13-header"><h2>Key Takeaways</h2></div>
   <div class="slide-body" data-remarp-id="s13-body">
-    <div class="timeline">
-            <div class="timeline-step" data-step="1" data-remarp-id="s13-step-0">
-      <div class="timeline-dot" style="width:1.67rem;height:1.67rem;font-size:0.82rem">1</div>
-      <div class="timeline-label" style="max-width:5rem">Phase 1 (2주)</div>
-      <div class="timeline-desc">P0 Gaps 해결 Authentication + Event Bus MSK 연동</div>
-    </div>
-      <div class="timeline-connector"></div>
-      <div class="timeline-step" data-step="2" data-remarp-id="s13-step-1">
-      <div class="timeline-dot" style="width:1.67rem;height:1.67rem;font-size:0.82rem">2</div>
-      <div class="timeline-label" style="max-width:5rem">Phase 2 (4주)</div>
-      <div class="timeline-desc">P1 Gaps + Performance WAF 재설정, Search→OpenSearch, DSQL Multi-Region 성능 버그 수정 (Valkey, Pool)</div>
-    </div>
-      <div class="timeline-connector"></div>
-      <div class="timeline-step" data-step="3" data-remarp-id="s13-step-2">
-      <div class="timeline-dot" style="width:1.67rem;height:1.67rem;font-size:0.82rem">3</div>
-      <div class="timeline-label" style="max-width:5rem">Phase 3 (2주)</div>
-      <div class="timeline-desc">P2 Gaps + DR MSK Replicator, CI/CD Pipeline DR 자동화 (EventBridge + Lambda)</div>
-    </div>
-      <div class="timeline-connector"></div>
-      <div class="timeline-step" data-step="4" data-remarp-id="s13-step-3">
-      <div class="timeline-dot" style="width:1.67rem;height:1.67rem;font-size:0.82rem">4</div>
-      <div class="timeline-label" style="max-width:5rem">Phase 4 (ongoing)</div>
-      <div class="timeline-desc">Load Test + Optimization k6 전체 프로필 실행 비용 최적화 적용</div>
-    </div>
-    </div>
+    <p><!-- Slide 14: Key Takeaways --></p>
+<style>
+.mr05-kt .metric-card { text-align: left; }
+.mr05-k-a { color: var(--accent); font-weight: var(--weight-bold); }
+.mr05-k-s { color: var(--success); font-weight: var(--weight-bold); }
+.mr05-k-w { color: var(--warning); font-weight: var(--weight-bold); }
+.mr05-k-t { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="card-grid mr05-kt fragment" data-reveal="stagger" data-reveal-anim="zoom" data-reveal-pace="slow" data-fragment-index="1">
+  <div class="metric-card"><strong class="mr05-k-a">1. 리전 로컬 관측</strong><div class="mr05-k-t">텔레메트리는 리전 안에서 끝내고 조회만 전역으로 모읍니다.</div></div>
+  <div class="metric-card"><strong class="mr05-k-a">2. Collector 2계층</strong><div class="mr05-k-t">traceID 라우팅 없이는 tail sampling을 확장할 수 없습니다.</div></div>
+  <div class="metric-card"><strong class="mr05-k-a">3. OTel이 표준</strong><div class="mr05-k-t">X-Ray SDK는 maintenance mode, OTLP endpoint와 Transaction Search로 갑니다.</div></div>
+  <div class="metric-card"><strong class="mr05-k-s">4. OAM은 리전 안</strong><div class="mr05-k-t">리전마다 sink, 리전 간 집계는 Centralization rule입니다.</div></div>
+  <div class="metric-card"><strong class="mr05-k-s">5. 바이트가 비용</strong><div class="mr05-k-t">리전 간 $0.02/GB, NAT $0.045/GB. 측정하고 줄입니다.</div></div>
+  <div class="metric-card"><strong class="mr05-k-w">6. 출시는 P0부터</strong><div class="mr05-k-t">gap, 성능, 부하 테스트, 비용 순서로 리전별 SLO에 맞춥니다.</div></div>
+</div>
   </div>
-  
-<script>(function() {
-  const slide = document.currentScript.closest('.slide');
-  if (!slide) return;
-  const steps = slide.querySelectorAll('.timeline-step');
-  const connectors = slide.querySelectorAll('.timeline-connector');
-  let current = 0;
-  function update() {
-    steps.forEach((s, i) => {
-      s.classList.remove('active', 'done');
-      if (i < current) s.classList.add('done');
-      else if (i === current) s.classList.add('active');
-    });
-    connectors.forEach((c, i) => {
-      c.classList.toggle('done', i < current);
-    });
-  }
-  update();
-  slide.__canvasStep = function(dir) {
-    if (dir === 'next' && current < 3) current++;
-    else if (dir === 'prev' && current > 0) current--;
-    else return (dir === 'next') ? false : false;
-    update();
-    return current;
-  };
-  slide.dataset.slideAction = 'canvas-step';
-  slide.dataset.canvasMaxStep = '3';
-})();</script>
 </div>
 
 <div class="slide" data-remarp-id="s14">
-  <div class="slide-header" data-remarp-id="s14-header"><h2>Key Takeaways</h2></div>
-  <div class="slide-body" data-remarp-id="s14-body">
-    <p><!-- Slide 15: Key Takeaways --></p>
-<div class="col-2" style="gap:1.5rem; margin-bottom:1rem;">
-  <div class="card" style="padding:1rem; border-left:3px solid var(--accent);">
-    <h4 style="margin:0 0 0.5rem 0; color:var(--accent);">Observability Stack</h4>
-    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem;">
-      <li>OTel Collector + Tail Sampling</li>
-      <li>Storage 90% 절감, 에러 100% 보존</li>
-      <li>Tempo + X-Ray dual export</li>
-      <li>Logs-to-Traces correlation</li>
-    </ul>
-  </div>
-  <div class="card" style="padding:1rem; border-left:3px solid var(--cyan);">
-    <h4 style="margin:0 0 0.5rem 0; color:var(--cyan);">Cost Optimization</h4>
-    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem;">
-      <li>월 $9,600-12,400 총 비용</li>
-      <li>$2,500-3,500 절감 가능 (25-35%)</li>
-      <li>Quick wins: Spot, DB downsize</li>
-      <li>Medium-term: MSK Serverless, RI</li>
-    </ul>
-  </div>
-  <div class="card" style="padding:1rem; border-left:3px solid var(--red);">
-    <h4 style="margin:0 0 0.5rem 0; color:var(--red);">Production Blockers</h4>
-    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem;">
-      <li>P0: Authentication, Event Bus</li>
-      <li>P1: WAF, Search, DSQL Multi-Region</li>
-      <li>P0 해결 없이 Production 불가</li>
-      <li>8주 로드맵으로 해결</li>
-    </ul>
-  </div>
-  <div class="card" style="padding:1rem; border-left:3px solid var(--green);">
-    <h4 style="margin:0 0 0.5rem 0; color:var(--green);">Performance & Testing</h4>
-    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem;">
-      <li>P0 bugs: Valkey, DSQL pool, Motor</li>
-      <li>SLO: p95 &lt;300ms, 5K RPS</li>
-      <li>k6 4가지 프로필로 검증</li>
-      <li>Soak test로 누수 탐지</li>
-    </ul>
-  </div>
-</div>
-<div style="text-align:center;">
-  <div class="flow-h" style="justify-content:center; gap:0.5rem; flex-wrap:wrap;">
-    <span style="background:var(--red); color:#fff; padding:6px 12px; border-radius:4px; font-size:0.85rem;">1. P0 Gaps</span>
-    <span style="color:var(--text-muted);">→</span>
-    <span style="background:#fdcb6e; color:#1a1f35; padding:6px 12px; border-radius:4px; font-size:0.85rem;">2. Performance Fix</span>
-    <span style="color:var(--text-muted);">→</span>
-    <span style="background:var(--accent); color:#fff; padding:6px 12px; border-radius:4px; font-size:0.85rem;">3. Load Test</span>
-    <span style="color:var(--text-muted);">→</span>
-    <span style="background:var(--green); color:#fff; padding:6px 12px; border-radius:4px; font-size:0.85rem;">4. Cost Optimize</span>
-  </div>
-</div>
+  <div class="slide-header" data-remarp-id="s14-header"><h2>Knowledge Check (1/2)</h2></div>
+  <div class="slide-body" data-remarp-id="s14-body" style="overflow-y:auto">
+    <div class="quiz" data-quiz="s14-q1">
+      <div class="quiz-question">Q1: tail sampling Gateway를 여러 개로 늘릴 때 반드시 필요한 것은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">decision_wait를 0으로 설정</button>
+<button class="quiz-option" data-correct="true">trace ID 기준으로 span을 같은 인스턴스에 보내는 loadbalancing exporter</button>
+<button class="quiz-option" data-correct="false">probabilistic 정책을 100%로 설정</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="s14-q2">
+      <div class="quiz-question">Q2: CloudWatch cross-account observability(OAM)에 대한 설명으로 맞는 것은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">하나의 sink로 모든 리전의 source 계정을 연결한다</button>
+<button class="quiz-option" data-correct="true">sink와 link가 같은 Region이어야 하므로 리전마다 sink가 필요하다</button>
+<button class="quiz-option" data-correct="false">logs와 traces는 공유할 수 없다</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s15">
-  <div class="slide-header" data-remarp-id="s15-header"><h2>Knowledge Check</h2></div>
+  <div class="slide-header" data-remarp-id="s15-header"><h2>Knowledge Check (2/2)</h2></div>
   <div class="slide-body" data-remarp-id="s15-body" style="overflow-y:auto">
-    <div class="quiz" data-quiz="q1">
-      <div class="quiz-question">Q1: Tail-Based Sampling의 핵심 장점은?</div>
+    <div class="quiz" data-quiz="s15-q3">
+      <div class="quiz-question">Q3: us-east-1 → us-west-2 리전 간 데이터 전송 list price는? (2026-10-15 기준)</div>
       <div class="quiz-options">
-        <button class="quiz-option" data-correct="false">트레이스 시작 시 빠른 결정</button>
-<button class="quiz-option" data-correct="true">에러/지연 확인 후 선택적 저장으로 중요 데이터 100% 보존</button>
-<button class="quiz-option" data-correct="false">모든 트레이스 저장</button>
-<button class="quiz-option" data-correct="false">CPU 사용량 감소</button>
-      </div>
-      <div class="quiz-feedback"></div>
-    </div>
-<div class="quiz" data-quiz="q2">
-      <div class="quiz-question">Q2: OTel Collector에서 tail_sampling의 decision_wait 역할은?</div>
-      <div class="quiz-options">
-        <button class="quiz-option" data-correct="false">샘플링 비율 결정</button>
-<button class="quiz-option" data-correct="false">메모리 제한 설정</button>
-<button class="quiz-option" data-correct="true">트레이스의 모든 span을 모으기 위한 대기 시간</button>
-<button class="quiz-option" data-correct="false">배치 크기 설정</button>
-      </div>
-      <div class="quiz-feedback"></div>
-    </div>
-<div class="quiz" data-quiz="q3">
-      <div class="quiz-question">Q3: 비용 최적화에서 가장 빠르게 적용할 수 있는 항목은?</div>
-      <div class="quiz-options">
-        <button class="quiz-option" data-correct="true">Karpenter Spot 확장, DocumentDB downsize</button>
-<button class="quiz-option" data-correct="false">MSK Serverless 전환</button>
-<button class="quiz-option" data-correct="false">Reserved Instances 1년 계약</button>
-<button class="quiz-option" data-correct="false">NAT Instance 전환</button>
-      </div>
-      <div class="quiz-feedback"></div>
-    </div>
-<div class="quiz" data-quiz="q4">
-      <div class="quiz-question">Q4: Production Blocker (P0) Gap에 해당하는 것은?</div>
-      <div class="quiz-options">
-        <button class="quiz-option" data-correct="false">WAF Bot Control 설정</button>
-<button class="quiz-option" data-correct="false">MSK Replicator 구성</button>
-<button class="quiz-option" data-correct="true">Authentication 미들웨어 없음</button>
-<button class="quiz-option" data-correct="false">CI/CD Pipeline 자동화</button>
+        <button class="quiz-option" data-correct="false">$0.00/GB, 같은 국가 안 리전 간은 무료</button>
+<button class="quiz-option" data-correct="false">$0.01/GB</button>
+<button class="quiz-option" data-correct="true">$0.02/GB</button>
+<button class="quiz-option" data-correct="false">$0.09/GB</button>
       </div>
       <div class="quiz-feedback"></div>
     </div>
@@ -954,11 +524,11 @@
 
 <div class="slide" data-remarp-id="s16">
   <div class="center-content" style="height:100%; gap:1.5rem;">
-    <h1 style="font-size:3rem; background:linear-gradient(135deg, var(--accent-light), var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Thank You</h1>
-    <p style="color:var(--text-secondary); font-size:1.1rem;">Thank You</p>
-    <p style="color:var(--text-muted); font-size:1rem; margin-top:0.5rem;">수고하셨습니다!</p>
+    <h1 style="font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:calc(var(--fs-title) * 1.5); color:var(--text-primary);">Thank You</h1>
+    <p style="color:var(--text-secondary); font-size:var(--fs-subtitle);">Multi-Region Architecture Deep Dive, 감사합니다</p>
+    <p style="color:var(--text-muted); font-size:var(--fs-card); margin-top:0.5rem;">수고하셨습니다!</p>
     <div style="display:flex; gap:1rem; margin-top:1.5rem;">
-            <a href="index.html" class="btn btn-primary btn-sm" style="text-decoration:none;">← 목차로 돌아가기</a>
+            <a href="toc.html" class="btn btn-primary" style="text-decoration:none;">← 목차로 돌아가기</a>
     </div>
   </div>
 </div>
@@ -967,31 +537,63 @@
 <script src="./common/slide-framework.js"></script>
 <script src="./common/quiz-component.js"></script>
 <script src="./common/presenter-view.js"></script>
-
+<script>
+(function(){
+var MR05 = { XR: 0.02, NATGB: 0.045, NATH: 0.045, LOG: 0.50, LOGIA: 0.25, SPAN: 0.35, EKSH: 0.10, H: 730, D: 30 };
+function mr05usd(n) { return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
+function mr05v(id) { return parseFloat(document.getElementById(id).value); }
+function mr05update() {
+  var xr = mr05v('mr05-xr'), nat = mr05v('mr05-nat'), log = mr05v('mr05-log'), span = mr05v('mr05-span'), keep = mr05v('mr05-keep');
+  var ia = document.getElementById('mr05-ia').checked;
+  document.getElementById('mr05-xr-v').textContent = xr;
+  document.getElementById('mr05-nat-v').textContent = nat;
+  document.getElementById('mr05-log-v').textContent = log;
+  document.getElementById('mr05-span-v').textContent = span;
+  document.getElementById('mr05-keep-v').textContent = keep + '%';
+  var cXr = xr * MR05.D * MR05.XR;
+  var cNat = nat * MR05.D * MR05.NATGB;
+  var cLog = log * MR05.D * (ia ? MR05.LOGIA : MR05.LOG);
+  var cSpan = span * (keep / 100) * MR05.D * MR05.SPAN;
+  var cFix = 2 * MR05.EKSH * MR05.H + 6 * MR05.NATH * MR05.H;
+  var variable = cXr + cNat + cLog + cSpan;
+  document.getElementById('mr05-o-xr').textContent = mr05usd(cXr);
+  document.getElementById('mr05-o-nat').textContent = mr05usd(cNat);
+  document.getElementById('mr05-o-log').textContent = mr05usd(cLog);
+  document.getElementById('mr05-o-span').textContent = mr05usd(cSpan);
+  document.getElementById('mr05-o-fix').textContent = mr05usd(cFix);
+  document.getElementById('mr05-o-share').textContent = variable > 0 ? Math.round(cXr / variable * 100) + '%' : '0%';
+  document.getElementById('mr05-o-tot').textContent = mr05usd(variable + cFix);
+}
+['mr05-xr', 'mr05-nat', 'mr05-log', 'mr05-span', 'mr05-keep'].forEach(function (id) { document.getElementById(id).addEventListener('input', mr05update); });
+document.getElementById('mr05-ia').addEventListener('change', mr05update);
+mr05update();
+})();
+</script>
 <script>
   
   const presenterNotes = {
-    1: "[1min] 마지막 블록입니다. 지금까지 아키텍처 개요, 데이터 싱크, 트래픽 라우팅, DR/Failover를 다뤘고, 이제 운영의 핵심인 Observability와 Production Readiness를 살펴보겠습니다.\n\n이 블록에서는 네 가지를 다룹니다. 첫째, Cross-Region Observability Stack — 20개 서비스에서 나오는 메트릭, 로그, 트레이스를 어떻게 수집하고 분석하는지. 둘째, Tail-Based Sampling — 트레이스 저장 비용을 90% 줄이면서 중요한 데이터는 100% 보존하는 전략. 셋째, Cost Analysis — 월 $9,600-12,400 비용의 상세 내역과 최적화 기회. 넷째, Production Readiness — Gap 분석, 성능 병목점, Load Test 전략까지.\n\n\n먼저 Observability Stack 전체 구조부터 보겠습니다.",
-    2: "⏸️ [3min] 전체 Observability 파이프라인입니다. 왼쪽부터 오른쪽으로 데이터가 흐릅니다.\n\n먼저 20개 서비스의 Pod들이 OTLP 프로토콜로 텔레메트리를 내보냅니다. 각 서비스에는 OpenTelemetry SDK가 instrumentation되어 있고, 메트릭, 로그, 트레이스 세 가지 신호를 모두 내보냅니다.\n\n그 다음 OTel Collector입니다. AWS Distro for OpenTelemetry 0.40.0 버전을 DaemonSet으로 배포했습니다. 여기서 핵심은 tail_sampling processor입니다. 모든 트레이스를 저장하면 비용이 폭발하니까, 에러와 느린 요청만 100% 저장하고 정상 요청은 10%만 샘플링합니다.\n\n\nCollector에서 나온 데이터는 세 갈래로 갑니다. 트레이스는 Tempo와 X-Ray 둘 다로 보냅니다. Tempo는 S3에 장기 저장하고, X-Ray는 AWS 서비스 맵과 통합을 위해 씁니다. 메트릭은 kube-prometheus-stack 68.4.0으로 가고, 로그는 CloudWatch Logs로 갑니다.\n\n마지막으로 Grafana에서 모든 데이터를 통합 조회합니다. Tempo, Prometheus, CloudWatch 세 가지 데이터소스를 연결해서 하나의 대시보드에서 메트릭-로그-트레이스 상관분석이 가능합니다.\n\n\nOTel Collector 설정을 자세히 보겠습니다.",
-    3: "⏸️ [3min] OTel Collector 설정의 핵심 부분입니다.\n\n첫 번째 탭은 Receivers와 Processors입니다. OTLP receiver가 gRPC 4317, HTTP 4318 포트에서 텔레메트리를 받습니다. memory_limiter는 OOM을 방지하기 위해 512MiB 제한을 걸었습니다.\n\n핵심은 tail_sampling processor입니다. decision_wait 10초 동안 트레이스의 모든 span을 모은 다음 샘플링 결정을 내립니다. 세 가지 정책이 있는데요, errors-policy는 에러가 있는 트레이스를 100% 저장합니다. slow-policy는 500ms 이상 걸린 요청을 100% 저장합니다. default-policy는 나머지를 10%만 샘플링합니다.\n\n\n두 번째 탭은 Exporters와 Pipeline입니다. Tempo로는 OTLP로 내보내고, X-Ray로는 awsxray exporter를 씁니다. index_all_attributes를 true로 해서 모든 span 속성을 검색 가능하게 했습니다.\n\nPipeline 정의를 보면, traces 파이프라인은 otlp → memory_limiter → tail_sampling → batch → tempo,xray 순서입니다. metrics는 tail_sampling이 없고 바로 prometheusremotewrite로 갑니다.\n\n\ntail_sampling의 효과를 구체적인 숫자로 보겠습니다.",
-    4: "⏸️ [2min] Tail-Based Sampling이 왜 중요한지 설명드리겠습니다.\n\nHead Sampling은 요청이 시작될 때 \"이 요청을 추적할까 말까\"를 결정합니다. 문제는 요청이 끝나기 전에 결정하니까, 나중에 에러가 나거나 느려져도 이미 샘플링에서 제외됐으면 트레이스가 없습니다. 디버깅할 때 정작 필요한 데이터가 없는 거죠.\n\nTail Sampling은 트레이스의 모든 span이 도착할 때까지 기다렸다가 결정합니다. 에러가 났는지, 얼마나 걸렸는지 다 확인한 후에 저장 여부를 정합니다.\n\n\n오른쪽 테이블이 우리 정책입니다. 에러가 있으면 무조건 100% 저장합니다. 500ms 이상 걸린 요청도 100% 저장합니다. 나머지 정상 요청은 10%만 샘플링합니다.\n\n결과적으로 저장 비용은 90% 절감되면서, 장애 분석에 필요한 모든 에러와 지연 트레이스는 100% 보존됩니다. 이게 핵심입니다.\n\n\n이렇게 샘플링된 트레이스가 Tempo에 어떻게 저장되는지 보겠습니다.",
-    5: "⏸️ [2min] Tempo 아키텍처입니다. Monolithic 모드로 배포해서 단일 Pod에서 ingester, querier, compactor 역할을 다 합니다. 트래픽이 많지 않을 때는 이게 더 효율적입니다.\n\n백엔드는 S3입니다. Parquet 포맷으로 블록을 저장하고, zstd 압축을 써서 저장 용량을 60% 줄였습니다.\n\n\n오른쪽은 S3 Lifecycle Policy입니다. 최근 30일 데이터는 Standard에서 빠르게 조회합니다. 30-90일은 Infrequent Access로 내려서 비용을 절반으로 줄입니다. 90일 이후에는 Glacier Instant Retrieval로 가는데, 여전히 밀리초 단위로 조회 가능하면서 비용은 GB당 $0.004입니다. 1년이 지나면 삭제합니다.\n\n이 구조로 리전당 월 $185 정도 비용이 예상됩니다. 두 리전이면 $370인데, 모든 트레이스를 저장하는 것보다 훨씬 저렴합니다.\n\n\nTempo와 다른 데이터소스 간 상관분석 방법을 보겠습니다.",
-    6: "⏸️ [2min] Tempo의 TraceQL로 트레이스를 검색하는 예시입니다.\n\n첫 번째 쿼리는 order-service의 에러 트레이스를 찾습니다. 두 번째는 /api/payments 엔드포인트에서 500ms 이상 걸린 요청을 찾습니다. 세 번째가 재미있는데, Cross-region 트레이스를 찾습니다. us-east-1에서 시작해서 us-west-2로 넘어간 트레이스를 쿼리합니다. >> 연산자가 \"자식 span\"을 의미합니다.\n\n\n오른쪽은 Logs-to-Traces correlation입니다. 로그에서 에러를 발견했을 때 해당 트레이스로 바로 점프하는 기능입니다.\n\n먼저 애플리케이션 로그에 traceId와 spanId를 JSON 필드로 넣습니다. 대부분의 OpenTelemetry SDK가 자동으로 해줍니다. 그 다음 Grafana의 Loki 데이터소스에 derivedFields를 설정합니다. 정규식으로 traceId를 추출하고, 클릭하면 Tempo로 연결됩니다.\n\n이렇게 하면 로그에서 에러를 보고 → 클릭 → 전체 트레이스 확인 → 어떤 서비스에서 지연이 발생했는지 바로 파악할 수 있습니다.\n\n\n이제 전체 비용 분석으로 넘어가겠습니다.",
-    7: "⏸️ [2min] 전체 비용 분석입니다. 월 $9,600에서 $12,400 사이로 추정됩니다.\n\n가장 큰 비중은 Compute입니다. EKS Control Plane 두 개가 고정 $146이고, 나머지는 Karpenter가 프로비저닝하는 EC2 비용입니다. 트래픽에 따라 $3,000에서 $4,500까지 변동됩니다.\n\nDatabase는 Aurora DSQL, DocumentDB, ElastiCache를 합쳐서 약 $2,560입니다. DSQL은 사용량 기반이라 변동이 있지만 DocumentDB와 ElastiCache는 인스턴스 비용이 고정입니다.\n\n\nMSK가 $1,620으로 상당히 큽니다. kafka.m5.large 브로커 3개씩 두 리전이니까요. OpenSearch도 $1,560으로 비슷한 규모입니다.\n\n아래 작은 카드들은 부가 비용입니다. Networking이 $452 이상인데, NAT Gateway가 가장 큽니다. Edge는 트래픽에 따라 $50에서 $500까지 변동되고, Observability는 CloudWatch, X-Ray, Prometheus 합쳐서 $150-400입니다.\n\n\n이 비용을 어떻게 줄일 수 있는지 보겠습니다.",
-    8: "⏸️ [2min] 서비스별 상세 비용입니다.\n\nCompute 섹션을 보면, EKS Control Plane은 리전당 $73로 고정입니다. Karpenter EC2가 가장 변동폭이 큰데, 트래픽에 따라 $2,800에서 $4,200까지 갑니다. Bootstrap Node Group은 시스템 Pod용으로 t3.medium을 쓰는데 월 $240입니다.\n\nDatabase 섹션에서 DocumentDB가 $1,480으로 가장 큽니다. r6g.large 4개인데, primary 2개와 replica 2개입니다. OpenSearch도 $1,560으로 비슷한데, dedicated master 3개가 포함되어 있습니다.\n\n\nMSK가 $1,620입니다. kafka.m5.large 브로커 3개씩 두 리전이니까요. 이건 provisioned 모드라서 트래픽이 적어도 비용이 나갑니다.\n\nNetwork에서 NAT Gateway가 $270입니다. 시간당 요금 + 데이터 처리 요금이 합쳐진 건데, 이게 의외로 큽니다.\n\n\n이 비용을 어디서 줄일 수 있는지 보겠습니다.",
-    9: "⏸️ [3min] 비용 최적화 기회입니다. 총 $2,500에서 $3,500 월 절감이 가능합니다.\n\n가장 쉬운 건 Karpenter Spot 확장입니다. 현재 critical-tier만 On-Demand를 쓰고 있는데, worker-tier와 batch-tier NodePool에 Spot 인스턴스 우선 설정을 추가하면 EC2 비용이 30-40% 줄어듭니다. Effort가 Low라서 바로 할 수 있습니다.\n\nDocumentDB는 현재 CPU 사용률이 20% 미만인데 r6g.large를 쓰고 있습니다. r6g.medium으로 내리면 월 $370 절약됩니다. 이것도 Low effort입니다.\n\n\nMSK Serverless는 medium effort지만 효과가 큽니다. 현재 provisioned 클러스터가 유휴 상태일 때도 비용이 나가는데, Serverless로 바꾸면 실제 사용량만 과금됩니다. 트래픽이 적을 때 50-70% 절감이 가능합니다.\n\nOpenSearch는 dedicated master 3개가 있는데, 현재 search 서비스가 실제로 OpenSearch를 안 쓰고 있어서 dedicated master를 제거하면 월 $520 절약됩니다.\n\nReserved Instances는 1년 약정으로 DocumentDB, ElastiCache, OpenSearch에 적용하면 30-40% 할인됩니다. NAT Gateway를 NAT Instance로 바꾸면 월 $200 정도 절약되는데, t4g.micro + ASG로 HA 구성이 가능합니다.\n\n\n다음으로 성능 병목점을 보겠습니다.",
-    10: "⏸️ [3min] 성능 병목점입니다. P0 Critical bug 3개와 P1 Improvement 2개가 있습니다.\n\nP0 첫째, Python Valkey 연결입니다. 현재 Redis() 클라이언트를 쓰는데, Valkey는 클러스터 모드라서 MOVED 리다이렉션 에러가 납니다. RedisCluster()로 바꿔야 합니다. 7개 Python 서비스가 영향받습니다.\n\n둘째, DSQL connection pool입니다. Go의 database/sql 기본값이 CPU당 4개인데, 고부하 시 connection exhaustion이 발생합니다. SetMaxOpenConns, SetMaxIdleConns를 명시적으로 설정해야 합니다. 6개 Go 서비스가 해당됩니다.\n\n셋째, DocumentDB Motor입니다. Python Motor 드라이버의 maxPoolSize 기본값이 100인데, Pod이 10개로 scale되면 1000개 연결이 열리고 DocumentDB의 max_connections를 초과합니다.\n\n\nP1으로 api-gateway의 MaxIdleConnsPerHost가 2입니다. 백엔드 20개 서비스에 각각 2개씩만 연결을 유지하니까 병목이 됩니다. 100으로 올려야 합니다.\n\nJava 서비스들은 SimpleClientHttpRequestFactory를 쓰는데 connection pooling이 없습니다. Apache HttpClient로 바꾸고 pooling을 적용해야 합니다.\n\nQuick Win으로 product-catalog에 5분 TTL 캐시를 넣으면 DocumentDB 부하가 크게 줄고, CloudFront에서 GET /products/* 경로에 1분 캐시를 설정하면 Origin 요청이 50% 이상 줄어듭니다.\n\n\n이 성능 문제를 검증하기 위한 Load Test 전략을 보겠습니다.",
-    11: "⏸️ [3min] k6 Load Test 프로필 4가지입니다. Kubernetes Operator로 클러스터 안에서 실행하고, 결과는 Prometheus로 보냅니다.\n\n첫 번째 Baseline입니다. 100 VU로 10분간 현재 상태의 기준선을 측정합니다. 시나리오 비중은 Browse 60%, Purchase 15%, Search 20%, Seller 5%입니다. p95 500ms 미만, 에러율 1% 미만이 threshold입니다.\n\n두 번째 Ramp-up입니다. 100에서 1000 VU까지 30분간 점진적으로 올립니다. 어느 지점에서 latency가 급격히 증가하는지, breaking point를 찾는 테스트입니다.\n\n\n세 번째 Spike입니다. 500 VU에서 갑자기 2000으로 올렸다가 다시 내립니다. Karpenter가 얼마나 빨리 노드를 프로비저닝하는지, auto-scaling 반응 시간을 측정합니다. 목표는 2분 내 노드 프로비저닝입니다.\n\n네 번째 Soak입니다. 300 VU로 4시간 동안 지속합니다. 메모리 누수, DB 연결 누수, Goroutine 증가 같은 장기 실행 시에만 나타나는 문제를 탐지합니다.\n\n\nTarget 메트릭과 SLO를 정리하겠습니다.",
-    12: "⏸️ [2min] SLO 타겟 메트릭입니다.\n\nLatency SLO는 세 가지 퍼센타일로 정의했습니다. p50은 100ms 미만, p95는 300ms 미만, p99는 500ms 미만입니다. p50이 빠르면 대부분의 사용자 경험이 좋고, p99가 통제되면 최악의 경우도 관리 가능합니다.\n\nThroughput은 5,000 RPS를 sustained로 버텨야 합니다. 피크 시간대 예상 트래픽의 2배 정도를 여유분으로 잡은 겁니다. Error Rate은 0.1% 미만, Availability는 99.9%입니다.\n\n\n오른쪽은 엔드포인트별 세부 타겟입니다. 읽기 위주인 /products는 200ms 미만, 상품 상세는 150ms 미만으로 빨라야 합니다. 쓰기 작업인 /orders와 /payments는 트랜잭션이 포함되니까 500ms까지 허용합니다. Search는 300ms, Seller Dashboard는 400ms입니다.\n\n이 타겟들을 Load Test에서 threshold로 설정하고, 통과 여부로 릴리즈 판단을 합니다.\n\n\nProduction Readiness를 위한 Gap Analysis를 보겠습니다.",
-    13: "⏸️ [2min] Gap Analysis 요약입니다. 총 7개 Gap이 있고, 우선순위별로 분류했습니다.\n\nP0, Production Blocker가 두 개입니다. 첫째 Authentication이 아예 없습니다. api-gateway에 인증 미들웨어가 없고, 누구나 API를 호출할 수 있는 상태입니다. 둘째 event-bus 서비스가 MSK에 실제로 publish하지 않습니다. 7개 consumer 서비스가 이벤트를 못 받고 있습니다.\n\n\nP1은 운영 리스크입니다. WAF Bot Control이 curl과 headless browser를 차단해서 모니터링 체크가 실패합니다. Search 서비스는 strings.Contains()로 mock 검색을 하고 있고요. DSQL이 us-east-1에만 있어서 진정한 Multi-Region이 아닙니다.\n\nP2는 개선사항입니다. MSK Replicator로 Cross-region sync를 구성해야 하고, CI/CD가 수동 상태입니다.\n\nP0 두 개가 해결되기 전까지는 Production 런칭이 불가능합니다.\n\n\n이 Gap들을 해결하기 위한 로드맵을 보겠습니다.",
-    14: "⏸️ [2min] Production Readiness 로드맵을 4개 Phase로 정리했습니다.\n\nPhase 1은 2주입니다. P0 Gap인 Authentication과 Event Bus MSK 연동을 해결합니다. Authentication이 가장 크고 복잡한데, Cognito User Pool 설정, JWT 미들웨어 구현, 각 서비스 integration 테스트까지 2주가 빠듯합니다. Event Bus는 병렬로 진행하면 됩니다.\n\nPhase 2는 4주입니다. P1 Gap들과 성능 버그를 수정합니다. WAF scope-down rule 설정, Search 서비스의 OpenSearch 연동, DSQL Linked Clusters 구성이 여기에 들어갑니다. 동시에 Valkey ClusterClient, DSQL pool 설정, Motor maxPoolSize 같은 성능 버그도 수정합니다.\n\n\nPhase 3는 2주입니다. P2 Gap인 MSK Replicator와 CI/CD Pipeline을 구축합니다. DR 자동화도 여기서 합니다. EventBridge가 CloudWatch Alarm을 받아서 Lambda로 DocumentDB/ElastiCache promote를 자동화하는 거죠.\n\nPhase 4는 ongoing입니다. k6 Load Test 전체 프로필을 실행하고, 결과에 따라 튜닝합니다. 비용 최적화도 이 시점에 적용합니다. Spot 확장, DB downsize, RI 계약 같은 것들이요.\n\n\n전체 내용을 정리하겠습니다.",
-    15: "⏸️ [2min] 전체 내용을 네 가지로 정리하겠습니다.\n\n첫째, Observability입니다. OTel Collector와 Tail-Based Sampling으로 저장 비용 90%를 절감하면서 에러와 지연 트레이스는 100% 보존합니다. Tempo와 X-Ray 둘 다로 export해서 장기 저장과 AWS 통합을 모두 확보합니다.\n\n둘째, Cost입니다. 월 $9,600-12,400 비용 중 $2,500-3,500를 절감할 수 있습니다. Spot 확장과 DB downsize는 바로 할 수 있는 quick win이고, MSK Serverless와 RI는 중기적으로 적용합니다.\n\n\n셋째, Production Blockers입니다. Authentication과 Event Bus가 P0입니다. 이것 없이는 Production 런칭 불가능합니다. 8주 로드맵으로 P0부터 P2까지 순차 해결합니다.\n\n넷째, Performance입니다. Valkey, DSQL pool, Motor 세 가지 P0 bug를 수정하고, k6로 SLO를 검증합니다. Soak test로 장기 실행 시 누수도 탐지합니다.\n\n권장 순서는 P0 Gap 먼저, Performance Fix, Load Test, 마지막에 Cost Optimize입니다.\n\n\n이제 마지막 퀴즈로 이 블록을 마무리하겠습니다.",
-    16: "[3min] 마지막 퀴즈입니다. 4문제를 풀어보시죠.\n\nQ1은 Tail-Based Sampling의 핵심 장점입니다. 정답은 B, \"에러/지연 확인 후 선택적 저장으로 중요 데이터 100% 보존\"입니다. Head Sampling은 시작 시 결정하니까 에러 발생 전에 버려질 수 있지만, Tail은 다 보고 결정합니다.\n\nQ2는 decision_wait의 역할입니다. 정답은 C, 트레이스의 모든 span을 모으기 위한 대기 시간입니다. 분산 시스템에서 span이 여러 서비스에서 비동기로 도착하니까, 전체를 모을 때까지 기다려야 에러 여부를 판단할 수 있습니다.\n\nQ3은 가장 빠른 비용 최적화입니다. 정답은 A, Karpenter Spot 확장과 DocumentDB downsize입니다. 둘 다 Effort가 Low이고, 설정 변경만으로 바로 적용됩니다.\n\nQ4는 P0 Gap입니다. 정답은 C, Authentication 미들웨어 없음입니다. 이것 없이는 누구나 API를 호출할 수 있어서 Production 런칭이 불가능합니다.",
-    17: "[1min] 수고하셨습니다. 이것으로 Multi-Region Architecture Deep Dive 전체 프레젠테이션을 마칩니다.\n\n다섯 블록을 통해 Foundation, Data Sync, Traffic Routing, DR/Failover, 그리고 Observability & Operations까지 전체적으로 살펴봤습니다.\n\n핵심 메시지를 다시 정리하면: Multi-Region 아키텍처는 단순히 리전을 두 개 쓰는 게 아니라, 데이터 일관성, 트래픽 라우팅, DR 자동화, Observability가 모두 갖춰져야 진정한 Active-Active가 됩니다.\n\n질문이 있으시면 편하게 해주세요."
+    1: "\u23f8\ufe0f [0.5min] [\uc694\uc57d]\n\u2022 \ub9c8\uc9c0\ub9c9 \ube14\ub85d\uc740 \"\ub450 \ub9ac\uc804\uc744 \uc5b4\ub5bb\uac8c \ubcf4\uace0, \uc5bc\ub9c8\uc5d0 \uc6b4\uc601\ud558\uace0, \uc5b8\uc81c \ucd9c\uc2dc\ud560 \uc218 \uc788\ub294\uac00\"\n\u2022 \uad00\uce21 \uc2a4\ud0dd, tail sampling, trace backend, \ub9ac\uc804 \uac04 \uc0c1\uad00, CloudWatch \ub2e4\uacc4\uc815, \ube44\uc6a9, \uc131\ub2a5, SLO, \ucd9c\uc2dc \ub85c\ub4dc\ub9f5 \uc21c\uc11c\n\u2022 \ubaa8\ub4e0 \uac00\uaca9\uacfc \uc124\uc815 \ud0a4\ub294 2026-10-15 \uae30\uc900 AWS \ubb38\uc11c, Pricing API, upstream README\ub85c \uc7ac\ud655\uc778\n\n\uc9c0\uae08\uae4c\uc9c0 Foundation, Data Sync, Traffic Routing, DR\uacfc Failover\ub97c \ubd24\uc2b5\ub2c8\ub2e4. \ub9c8\uc9c0\ub9c9 \ube14\ub85d\uc740 \uc6b4\uc601\uc785\ub2c8\ub2e4. \ub450 \ub9ac\uc804\uc5d0\uc11c \ub3d9\uc2dc\uc5d0 \uc77c\uc5b4\ub098\ub294 \uc77c\uc744 \uc5b4\ub5bb\uac8c \ud55c \ud654\uba74\uc5d0 \ubaa8\uc73c\uace0, \uadf8 \ube44\uc6a9\uc740 \uc5bc\ub9c8\uc774\uba70, \ucd9c\uc2dc \uc804\uc5d0 \ubb34\uc5c7\uc744 \uac80\uc99d\ud574\uc57c \ud558\ub294\uc9c0 30\ubd84 \ub3d9\uc548 \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uc2dc\ub098\ub9ac\uc624\ub294 \uadf8\ub300\ub85c \uc774\uc5b4\uac11\ub2c8\ub2e4. order, payment, catalog, cart \uc11c\ube44\uc2a4\uac00 us-east-1 primary, us-west-2 secondary\uc5d0\uc11c \ub3d9\uc791\ud558\ub294 e-commerce\uc785\ub2c8\ub2e4.\n\n\uba3c\uc800 \uad00\uce21 \uc2a4\ud0dd \uc804\uccb4 \uadf8\ub9bc\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    2: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 \uc0ac\uc6a9\uc790 \ud2b8\ub798\ud53d\uc740 CloudFront \u2192 VPC origin \u2192 internal ALB, \ucef4\ud4e8\ud2b8\uc5d0 public IP \uc5c6\uc74c\n\u2022 App Pod\ub294 OTel SDK\ub85c W3C traceparent\ub97c \uc804\ud30c\n\u2022 Collector\ub294 Agent(DaemonSet)\uc640 Gateway 2\uacc4\uce35, Gateway\uc5d0\uc11c tail sampling\n\u2022 backend\ub294 \ub9ac\uc804 \ub85c\uceec\uc5d0 \ub450\uace0 \uc870\ud68c\ub9cc \uc804\uc5ed\uc73c\ub85c \ubaa8\uc74c\n\n\uc67c\ucabd\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \uc0ac\uc6a9\uc790 \uc694\uccad\uc740 CloudFront\uac00 \uc720\uc77c\ud55c public \uc9c4\uc785\uc810\uc774\uace0, VPC origin\uc744 \ud1b5\ud574 internal ALB\ub85c \ub4e4\uc5b4\uc635\ub2c8\ub2e4. ALB\ub294 \uc694\uccad\uc5d0 X-Amzn-Trace-Id \ud5e4\ub354\ub97c \ucd94\uac00\ud558\ubbc0\ub85c edge \ub2e4\uc74c \uccab hop\ubd80\ud130 \ucd94\uc801\uc774 \uac00\ub2a5\ud569\ub2c8\ub2e4.\nApp Pod\uc5d0\uc11c\ub294 OpenTelemetry SDK\uac00 W3C traceparent \ud5e4\ub354\ub85c trace context\ub97c \ub118\uae41\ub2c8\ub2e4. \ud154\ub808\uba54\ud2b8\ub9ac\ub294 \ub178\ub4dc\ub9c8\ub2e4 \uc788\ub294 Agent Collector\ub85c \uac00\uace0, Agent\ub294 trace ID \uae30\uc900\uc73c\ub85c Gateway Collector\uc5d0 \ubd84\ubc30\ud569\ub2c8\ub2e4. tail sampling\uc740 Gateway\uc5d0\uc11c \ud569\ub2c8\ub2e4.\n\n\uac00\uc7a5 \uc911\uc694\ud55c \uc6d0\uce59\uc740 \ud154\ub808\uba54\ud2b8\ub9ac\ub97c \ub9ac\uc804 \uc548\uc5d0\uc11c \ub05d\ub0b8\ub2e4\ub294 \uac83\uc785\ub2c8\ub2e4. us-east-1 \uc7a5\uc560 \ub54c us-west-2\uc758 \uad00\uce21\uae4c\uc9c0 \ud568\uaed8 \ub04a\uae30\uba74 \uc548 \ub418\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4. \ub450 \ub9ac\uc804\uc744 \ud55c \ud654\uba74\uc5d0 \ubcf4\ub294 \uac83\uc740 Grafana\uc5d0\uc11c \ub450 data source\ub97c \uc870\ud68c\ud558\ub294 \uac83\uc73c\ub85c \ud574\uacb0\ud558\uace0, \ub370\uc774\ud130 \uc790\uccb4\ub97c \uc62e\uae30\ub294 \uac83\uc740 \ub4a4\uc5d0\uc11c \ubcfc \ube44\uc6a9 \ub54c\ubb38\uc5d0 \ucd5c\uc18c\ud654\ud569\ub2c8\ub2e4.\n\n\uc774 Collector 2\uacc4\uce35\uc744 \uc2e4\uc81c \uc124\uc815\uc73c\ub85c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 ALB X-Amzn-Trace-Id: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-request-tracing.html\n\u2022 CloudFront VPC origins: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html",
+    3: "\u23f8\ufe0f [2.5min] [\uc694\uc57d]\n\u2022 Agent\ub294 loadbalancing exporter\uc758 routing_key: traceID\ub85c \uac19\uc740 trace\ub97c \uac19\uc740 Gateway\uc5d0 \ubcf4\ub0c4\n\u2022 Gateway\uc758 tail_sampling: decision_wait \uae30\ubcf8 30s, num_traces \uae30\ubcf8 50000\n\u2022 Gateway pipeline \uc21c\uc11c: memory_limiter, tail_sampling, batch (batch\ub294 \uae30\ubcf8\uac12 8192\uac74, 200ms)\n\u2022 X-Ray\ub294 \uc774\uc81c OTLP endpoint(xray.\u003cregion>.amazonaws.com/v1/traces)\uc5d0 SigV4\ub85c \uc804\uc1a1\n\u2022 OTLP endpoint \uc0ac\uc6a9 \uc804 Transaction Search \ud65c\uc131\ud654 \ud544\uc694\n\nAgent \ud0ed\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. receiver\ub294 Pod IP\uc5d0\ub9cc \ubc14\uc778\ub529\ud588\uace0, memory_limiter\ub294 \ud37c\uc13c\ud2b8 \uae30\ubc18\uc73c\ub85c \uac78\uc5c8\uc2b5\ub2c8\ub2e4. \ud575\uc2ec\uc740 loadbalancing exporter\uc785\ub2c8\ub2e4. routing_key\ub97c traceID\ub85c \ub450\uba74 \uac19\uc740 trace\uc758 span\uc774 \ud56d\uc0c1 \uac19\uc740 Gateway \uc778\uc2a4\ud134\uc2a4\ub85c \uac11\ub2c8\ub2e4. resolver\ub294 k8s \ud0c0\uc785\uc73c\ub85c Gateway Service\ub97c \"\uc774\ub984.\ub124\uc784\uc2a4\ud398\uc774\uc2a4\" \ud615\uc2dd\uc73c\ub85c \uc9c0\uc815\ud569\ub2c8\ub2e4.\n\nGateway \ud0ed\uc740 tail_sampling\uc785\ub2c8\ub2e4. decision_wait\uc640 num_traces\ub294 upstream \uae30\ubcf8\uac12\uc744 \uadf8\ub300\ub85c \uc801\uc5c8\uc2b5\ub2c8\ub2e4. \uc5d0\ub7ec\ub294 \ubaa8\ub450, 500ms \ub118\ub294 \uc694\uccad\uc740 \ubaa8\ub450, \ub098\uba38\uc9c0\ub294 10%\ub9cc \ub0a8\uae30\ub294 \uc138 \uc815\ucc45\uc785\ub2c8\ub2e4. Gateway\uc5d0\ub3c4 memory_limiter\ub97c \ub450\uace0, batch\ub294 \uae30\ubcf8\uac12 \uadf8\ub300\ub85c \uc815\uc758\ud569\ub2c8\ub2e4. pipeline \uc21c\uc11c\ub294 upstream \uad8c\uc7a5\ub300\ub85c memory_limiter\uac00 \ub9e8 \uc55e, sampling \ub2e4\uc74c, batch\ub294 exporter \ubc14\ub85c \uc55e\uc785\ub2c8\ub2e4. \ubc84\ub824\uc9c8 span\uae4c\uc9c0 \ubb36\uc5b4 \ubcf4\ub0b4\uc9c0 \uc54a\uc73c\ub824\ub294 \uac83\uc785\ub2c8\ub2e4.\nExport \ud0ed\uc740 2026\ub144 \uae30\uc900 \uad8c\uc7a5 \uacbd\ub85c\uc785\ub2c8\ub2e4. \uc608\uc804\ucc98\ub7fc X-Ray daemon\uc774\ub098 awsxray exporter\ub97c \uc4f0\uc9c0 \uc54a\uace0, \ud45c\uc900 otlphttp exporter\uc5d0 sigv4auth extension\uc73c\ub85c X-Ray OTLP endpoint\uc5d0 \uc9c1\uc811 \ubcf4\ub0c5\ub2c8\ub2e4. \uc774 endpoint\ub294 \uacc4\uc815\uc5d0 Transaction Search\uac00 \ucf1c\uc838 \uc788\uc5b4\uc57c \ub3d9\uc791\ud569\ub2c8\ub2e4.\n\ntail sampling\uc5d0\ub294 \ubc18\ub4dc\uc2dc \uc54c\uc544\uc57c \ud560 \uc804\uc81c\uac00 \uc788\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 tail_sampling README (\uae30\ubcf8\uac12, \uc815\ucc45 \ubb38\ubc95, stability beta): https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/tailsamplingprocessor (\ud655\uc778\uc77c 2026-10-15)\n\u2022 batch processor README (send_batch_size 8192, timeout 200ms \uae30\ubcf8\uac12): https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor\n\u2022 processor \uad8c\uc7a5 \uc21c\uc11c (memory_limiter, sampling, batch): https://github.com/open-telemetry/opentelemetry-collector/blob/main/processor/README.md\n\u2022 loadbalancing exporter README (routing_key, k8s resolver): https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/loadbalancingexporter\n\u2022 OTLP endpoint\uc640 sigv4auth \uc608\uc2dc: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-OTLPSimplesetup.html\n\u2022 Transaction Search \uc804\uc81c: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-OTLP-UsingADOT.html",
+    4: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 \uc815\ucc45 \uc608\uc2dc: \uc5d0\ub7ec 100%, 500ms \uc774\uc0c1 100%, \ub098\uba38\uc9c0 10%\n\u2022 \uc5d0\ub7ec 1%, \ub290\ub9bc 2% \uac00\uc815\uc774\uba74 \ubcf4\uc874\ub7c9 \uc57d 12.7%, \uc989 \uc800\uc7a5\ub7c9 \uc57d 87% \uac10\uc18c (\uc2dc\ub098\ub9ac\uc624 \uacc4\uc0b0)\n\u2022 tail sampling\uc740 trace \uc804\uccb4\uac00 \ud55c \uc778\uc2a4\ud134\uc2a4\uc5d0 \ubaa8\uc5ec\uc57c \ub3d9\uc791\n\u2022 \ud544\uc694 \uba54\ubaa8\ub9ac\ub294 trace \uc720\uc785\ub960 \u00d7 decision_wait\ub85c \uacc4\uc0b0, num_traces\uc640 \ube44\uad50\n\n\uc704 \uce74\ub4dc\ub294 \uc815\ucc45\ubcc4 \ubcf4\uc874 \ube44\uc728\uc785\ub2c8\ub2e4. \uc2dc\ub098\ub9ac\uc624\uc5d0\uc11c \uc5d0\ub7ec\uac00 1%, \ub290\ub9b0 \uc694\uccad\uc774 2%\ub77c\uace0 \uac00\uc815\ud558\uba74 3%\ub294 \uc804\ubd80 \ub0a8\uace0 \ub098\uba38\uc9c0 97%\uc758 10%\uac00 \ub0a8\uc544 \uc57d 12.7%\uac00 \uc800\uc7a5\ub429\ub2c8\ub2e4. \uc608\uc804 \uc790\ub8cc\uc758 \"90% \uc808\uac10\"\uc740 \uc774\ub807\uac8c \uac00\uc815\uc5d0 \ub530\ub77c \ub2ec\ub77c\uc9c0\ub294 \uc22b\uc790\ub77c \uacc4\uc0b0\uc2dd\uc73c\ub85c \ubc14\uafe8\uc2b5\ub2c8\ub2e4.\n\n\uc544\ub798 \uc138 \uac00\uc9c0\uac00 \uc6b4\uc601 \ud568\uc815\uc785\ub2c8\ub2e4. \uccab\uc9f8, README\uac00 \uba85\uc2dc\ud558\ub4ef trace\uc758 \ubaa8\ub4e0 span\uc774 \uac19\uc740 Collector \uc778\uc2a4\ud134\uc2a4\uc5d0 \ub3c4\ucc29\ud574\uc57c \ud569\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc55e \uc2ac\ub77c\uc774\ub4dc\uc758 Agent \uacc4\uce35\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.\n\ub458\uc9f8, \uba54\ubaa8\ub9ac\uc785\ub2c8\ub2e4. \ucd08\ub2f9 2,000 trace\uc5d0 30\ucd08\ub97c \uae30\ub2e4\ub9ac\uba74 60,000\uac1c\ub97c \ub4e4\uace0 \uc788\uc5b4\uc57c \ud558\ub294\ub370 num_traces \uae30\ubcf8\uac12\uc740 50,000\uc785\ub2c8\ub2e4. \uc774 \uac12\uc744 \ub118\uc73c\uba74 \ud310\ub2e8 \uc804\uc5d0 \uc624\ub798\ub41c trace\uac00 \ubc00\ub824\ub0a9\ub2c8\ub2e4.\n\uc14b\uc9f8, decision_wait \uc774\ud6c4\uc5d0 \ub3c4\ucc29\ud55c span\uc740 \uc774\ubbf8 \ub0b4\ub824\uc9c4 \uacb0\uc815\uc744 \ub530\ub985\ub2c8\ub2e4. MSK consumer\ucc98\ub7fc \ube44\ub3d9\uae30\ub85c \uae38\uac8c \uc774\uc5b4\uc9c0\ub294 trace\ub294 \ub530\ub85c \ud655\uc778\ud558\uc138\uc694. \uc774 processor\uc758 traces stability\ub294 \uc544\uc9c1 beta\uc785\ub2c8\ub2e4.\n\n\uc774\ub807\uac8c \ub0a8\uae34 trace\ub97c \uc5b4\ub514\uc5d0 \uc800\uc7a5\ud560\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 tail_sampling README: \"All spans for a given trace MUST be received by the same collector instance\", num_traces \uae30\ubcf8 50000, decision_wait \uae30\ubcf8 30s (\ud655\uc778\uc77c 2026-10-15)",
+    5: "\u2753 \u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 Transaction Search: span\uc744 aws/spans\uc5d0 100% \uc800\uc7a5, 1%\ub294 \ubb34\ub8cc \uc778\ub371\uc2f1, $0.35/GB(\uccab 10TB)\n\u2022 Tempo 3.x: ingester \uc81c\uac70, block-builder\uc640 live-store, S3 Parquet, TraceQL\n\u2022 Transaction Search\ub294 \"\ubaa8\ub450 \uc218\uc9d1\", Tempo\ub294 \"tail sampling \uacb0\uacfc\ub9cc \uc800\uc7a5\"\uc774 \uae30\ubcf8 \uc131\uaca9\n\u2022 X-Ray SDK, daemon\uc740 2026-02-25\ubd80\ud130 maintenance mode\n\n\uccab \ud0ed\uc740 AWS \uad00\ub9ac\ud615 \uacbd\ub85c\uc785\ub2c8\ub2e4. Transaction Search\ub97c \ucf1c\uba74 X-Ray\ub85c \ub4e4\uc5b4\uc624\ub294 span\uc774 CloudWatch Logs\uc758 aws/spans log group\uc5d0 \uc800\uc7a5\ub418\uace0, 1%\ub294 trace summary\ub85c \ubb34\ub8cc \uc778\ub371\uc2f1\ub429\ub2c8\ub2e4. \uc218\uc9d1 \uc694\uae08\uc740 us-east-1 \uae30\uc900 \uccab 10TB\uac00 GB\ub2f9 0.35\ub2ec\ub7ec\uc785\ub2c8\ub2e4.\n\ub450 \ubc88\uc9f8 \ud0ed\uc740 Tempo\uc785\ub2c8\ub2e4. \uc608\uc804 \uc790\ub8cc\ub294 Tempo 2.x \uad6c\uc870\ub85c \uc124\uba85\ud588\ub294\ub370, Tempo 3.0\uc5d0\uc11c ingester \uae30\ubc18 \uc4f0\uae30 \uacbd\ub85c\uac00 \uc81c\uac70\ub410\uc2b5\ub2c8\ub2e4. microservices \ubaa8\ub4dc\ub294 distributor \ub4a4\uc5d0 Kafka \ud638\ud658 \ud050\ub97c \ub450\uace0 block-builder\uc640 live-store\uac00 \uc18c\ube44\ud569\ub2c8\ub2e4. monolithic \ubaa8\ub4dc\ub294 Kafka \uc5c6\uc774 \ub3d9\uc791\ud569\ub2c8\ub2e4.\n\n\uc120\ud0dd \uae30\uc900 \ud0ed\uc5d0\uc11c \uc911\uc694\ud55c \ucc28\uc774\ub294 \uc0d8\ud50c\ub9c1 \ucca0\ud559\uc785\ub2c8\ub2e4. Transaction Search\ub294 span\uc744 \uc804\ubd80 \ubc1b\uc544 \uc800\uc7a5\ud558\ub294 \uac83\uc744 \uc804\uc81c\ub85c \ud558\ubbc0\ub85c, \uadf8 \uc55e\uc5d0\uc11c tail sampling\uc744 \uc138\uac8c \uac78\uba74 Application Signals \uc9c0\ud45c\uac00 \uc65c\uace1\ub420 \uc218 \uc788\uc2b5\ub2c8\ub2e4. Tempo\ub294 tail sampling \uacb0\uacfc\ub9cc \uc800\uc7a5\ud558\ub294 \uad6c\uc131\uc774 \uc790\uc5f0\uc2a4\ub7fd\uc2b5\ub2c8\ub2e4.\n\n\uc5ec\ub7ec\ubd84 \ud300\uc740 \uad00\uce21 \ud50c\ub7ab\ud3fc\uc744 \uc9c1\uc811 \uc6b4\uc601\ud560 \uc778\ub825\uc774 \uc788\ub098\uc694? \uc774 \uc9c8\ubb38\uc774 \uc120\ud0dd\uc744 \uac70\uc758 \uacb0\uc815\ud569\ub2c8\ub2e4.\n\n\ub2e4\uc74c\uc740 trace\uac00 \ub9ac\uc804\uc744 \ub118\uc5b4\uac08 \ub54c\uc785\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 Transaction Search: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search.html\n\u2022 1% \ubb34\ub8cc \uc778\ub371\uc2f1: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Enable-TransactionSearch.html\n\u2022 span \uc694\uae08 $0.35/0.20/0.15 per GB: AWS Pricing API, AmazonCloudWatch USE1-Application-Signals-Bytes (publication 2026-10-07), https://aws.amazon.com/cloudwatch/pricing/\n\u2022 Tempo 3.0 \ubcc0\uacbd: https://github.com/grafana/tempo/releases (v3.1.0 \ucd5c\uc2e0, \ud655\uc778\uc77c 2026-10-15), https://grafana.com/docs/tempo/latest/configuration/\n\u2022 X-Ray SDK maintenance: https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-migration.html",
+    6: "\u23f8\ufe0f [2.5min] [\uc694\uc57d]\n\u2022 W3C traceparent\uac00 \uc804\ud30c\ub418\uba74 \ub9ac\uc804\uc774 \ub2ec\ub77c\ub3c4 trace ID\ub294 \ud558\ub098\n\u2022 span\uc740 \uc2e4\ud589\ub41c \ub9ac\uc804\uc758 backend\uc5d0 \uc800\uc7a5\ub418\ubbc0\ub85c \uc804\uccb4 trace\ub294 \uc790\ub3d9\uc73c\ub85c \ud55c \uacf3\uc5d0 \ubaa8\uc774\uc9c0 \uc54a\uc74c\n\u2022 \uae30\ubcf8\uc740 \ub9ac\uc804\ubcc4 \uc800\uc7a5 + trace ID \uc591\ucabd \uc870\ud68c, \ud544\uc694 \uc2dc sampled span\ub9cc \uc6d0\uaca9 \ubcf5\uc0ac\n\u2022 cloud.region resource attribute\ub294 resourcedetection processor\ub85c \ubd80\uc5ec\n\n\uc2dc\ub098\ub9ac\uc624 \ud750\ub984\uc785\ub2c8\ub2e4. \uc11c\ubd80 \uc0ac\uc6a9\uc790\uc758 cart \uc694\uccad\uc774 us-west-2\uc5d0\uc11c \uc2dc\uc791\ud558\uace0, \uc8fc\ubb38 \uc4f0\uae30\ub294 write primary\uc778 us-east-1\uc758 order\uc640 payment\ub85c \ub118\uc5b4\uac11\ub2c8\ub2e4. traceparent \ud5e4\ub354\uac00 \uc804\ud30c\ub418\uba74 \ub450 \ub9ac\uc804\uc758 span\uc740 \uac19\uc740 trace ID\ub97c \uac00\uc9d1\ub2c8\ub2e4.\n\n\uc5ec\uae30\uc11c \uc624\ud574\ud558\uae30 \uc26c\uc6b4 \uc810\uc774 \uc788\uc2b5\ub2c8\ub2e4. trace ID\uac00 \uac19\ub2e4\uace0 \ud574\uc11c span\uc774 \ud55c \uacf3\uc5d0 \ubaa8\uc774\uc9c0\ub294 \uc54a\uc2b5\ub2c8\ub2e4. \uac01 span\uc740 \uc2e4\ud589\ub41c \ub9ac\uc804\uc758 Collector\uc640 backend\ub85c \uac11\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc120\ud0dd\uc9c0\uac00 \ub450 \uac00\uc9c0\uc785\ub2c8\ub2e4.\nA\ub294 \ub9ac\uc804\ubcc4\ub85c \uc800\uc7a5\ud558\uace0 trace ID\ub85c \uc591\ucabd backend\ub97c \uc870\ud68c\ud558\ub294 \ubc29\uc2dd\uc785\ub2c8\ub2e4. \ub9ac\uc804 \uc7a5\uc560 \uc2dc\uc5d0\ub3c4 \ubc18\ub300\ud3b8 \uad00\uce21\uc774 \uc0b4\uc544 \uc788\uc73c\ubbc0\ub85c \uae30\ubcf8\uac12\uc73c\ub85c \uad8c\uc7a5\ud569\ub2c8\ub2e4.\nB\ub294 Gateway\uc5d0 \uc6d0\uaca9 \ub9ac\uc804 exporter\ub97c \ud558\ub098 \ub354 \ubd99\uc5ec sampled span \uc0ac\ubcf8\uc744 \ubcf4\ub0b4\ub294 \ubc29\uc2dd\uc785\ub2c8\ub2e4. tail sampling \ub4a4\ub77c \uc591\uc740 \uc791\uc9c0\ub9cc GB\ub2f9 \ub9ac\uc804 \uac04 \uc804\uc1a1 \uc694\uae08\uc774 \ubd99\uc2b5\ub2c8\ub2e4.\n\uc544\ub798 TraceQL\uc740 B\ucc98\ub7fc \ud55c Tempo\uc5d0 \ub450 \ub9ac\uc804 span\uc774 \uc788\uc744 \ub54c \uc4f8 \uc218 \uc788\ub294 \uad6c\uc870 \ucffc\ub9ac\ub85c, us-west-2 span\uc758 \ud558\uc704\uc5d0\uc11c \uc5d0\ub7ec \ub09c us-east-1 span\uc744 \ucc3e\uc2b5\ub2c8\ub2e4. \uad6c\uc870 \uc5f0\uc0b0\uc790\ub294 \ud56d\uc0c1 \uc624\ub978\ucabd \uc870\uac74\uc758 span\uc744 \ubc18\ud658\ud569\ub2c8\ub2e4.\n\nCloudWatch \ucabd\uc740 \uacc4\uc815\uacfc \ub9ac\uc804\uc744 \uc5b4\ub5bb\uac8c \ubb36\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\uc57d\uc5b4]\n\u2022 TGW: Transit Gateway\n\n[\ucd9c\ucc98]\n\u2022 TraceQL \uad6c\uc870 \uc5f0\uc0b0\uc790: https://grafana.com/docs/tempo/latest/traceql/construct-traceql-queries/ (\ud655\uc778\uc77c 2026-10-15)\n\u2022 OTel propagators (tracecontext, baggage, xray): https://opentelemetry.io/docs/languages/sdk-configuration/general/",
+    7: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 OAM(cross-account observability)\uc740 sink\uc640 link\uac00 \uac19\uc740 Region, \ub9ac\uc804\ub9c8\ub2e4 sink \ud544\uc694\n\u2022 \ub9ac\uc804\uc744 \ub118\ub294 \uc9d1\uacc4\ub294 CloudWatch Centralization rule, backup Region \uc9c0\uc815 \uac00\ub2a5\n\u2022 Centralization \uccab \uc0ac\ubcf8 \ubb34\ub8cc, \ucd94\uac00 \uc0ac\ubcf8 GB\ub2f9 $0.05, \ub9ac\uc804 \uac04 \uc804\uc1a1 \uc694\uae08\uc740 \ubcc4\ub3c4\uc77c \uc218 \uc788\uc74c\n\u2022 cross-Region \ub300\uc2dc\ubcf4\ub4dc\ub294 metrics\uc640 alarm\ub9cc, logs\uc640 traces \ubbf8\uc9c0\uc6d0\n\nCloudWatch\uc5d0\uc11c \"\uc5ec\ub7ec \uacc4\uc815, \uc5ec\ub7ec \ub9ac\uc804\uc744 \ud55c \uacf3\uc5d0\uc11c\"\ub77c\ub294 \uc694\uad6c\ub294 \uc138 \uac00\uc9c0 \uae30\ub2a5\uc73c\ub85c \ub098\ub269\ub2c8\ub2e4. \uccab\uc9f8 OAM, \uc989 cross-account observability\ub294 \uc774\ub984\uacfc \ub2ec\ub9ac \ub9ac\uc804\uc744 \ub118\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. sink\uc640 link\uac00 \uac19\uc740 Region\uc5d0 \uc788\uc5b4\uc57c \ud558\uace0, \uacc4\uc815\ub2f9 Region\ubcc4 sink\ub294 \ud558\ub098\uc785\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc6b0\ub9ac \uc2dc\ub098\ub9ac\uc624\ub294 monitoring \uacc4\uc815\uc5d0 us-east-1\uacfc us-west-2 sink\ub97c \ub530\ub85c \ub9cc\ub4ed\ub2c8\ub2e4.\n\n\ub458\uc9f8, \ub9ac\uc804\uc744 \ub118\ub294 \uc9d1\uacc4\ub294 Centralization rule\uc785\ub2c8\ub2e4. Organizations\uc5d0\uc11c source \uacc4\uc815\uacfc source Region\uc744 \uace0\ub974\uace0, destination Region\uacfc backup Region\uc744 \uc9c0\uc815\ud569\ub2c8\ub2e4. \ubcf5\uc0ac\ub41c \ub85c\uadf8\uc5d0\ub294 \uc6d0\ub798 \uacc4\uc815\uacfc \ub9ac\uc804 \ud544\ub4dc\uac00 \ubd99\uc2b5\ub2c8\ub2e4. \uccab \uc0ac\ubcf8\uc740 \ubb34\ub8cc\uc774\uace0 \ucd94\uac00 \uc0ac\ubcf8\uc740 GB\ub2f9 0.05\ub2ec\ub7ec\uc774\uba70, \ub9ac\uc804 \uac04 \uc804\uc1a1 \uc694\uae08\uc774 \ubcc4\ub3c4\ub85c \uc0dd\uae38 \uc218 \uc788\ub2e4\uace0 \uac00\uaca9\ud45c\uc5d0 \uba85\uc2dc\ub3fc \uc788\uc2b5\ub2c8\ub2e4.\n\uc14b\uc9f8, cross-account cross-Region \ub300\uc2dc\ubcf4\ub4dc\ub294 metrics\uc640 alarm\uc6a9\uc774\uace0 logs\uc640 traces\ub294 \uc9c0\uc6d0\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\n\uc774\uc81c \ube44\uc6a9\uc744 \uc22b\uc790\ub85c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 CreateSink \"one sink per Region\", CreateLink \"100,000 source accounts, five monitoring accounts\": https://docs.aws.amazon.com/OAM/latest/APIReference/API_CreateSink.html\n\u2022 same-Region \uc81c\uc57d, cross-Region \ub300\uc2dc\ubcf4\ub4dc \ubc94\uc704: https://docs.aws.amazon.com/prescriptive-guidance/latest/patterns/centralize-monitoring-by-using-amazon-cloudwatch-observability-access-manager.html\n\u2022 Centralization: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatchLogs_Centralization.html\n\u2022 \ucd94\uac00 \uc0ac\ubcf8 $0.05/GB, \uc804\uc1a1 \uc694\uae08 \ubcc4\ub3c4: https://aws.amazon.com/cloudwatch/omni/pricing/ (\ud655\uc778\uc77c 2026-10-15)",
+    8: "\u23f8\ufe0f \ud83c\udfac [2.5min] [\uc694\uc57d]\n\u2022 \ub2e8\uac00\ub294 Pricing API\ub85c \ud655\uc778\ud55c us-east-1 list price (2026-10-15)\n\u2022 \ub9ac\uc804 \uac04 \uc804\uc1a1 us-east-1 \u2192 us-west-2 $0.02/GB, NAT \ucc98\ub9ac $0.045/GB, NAT \uc2dc\uac04 $0.045\n\u2022 CloudWatch Logs Standard $0.50/GB, IA $0.25/GB, span $0.35/GB(\uccab 10TB), EKS \ud074\ub7ec\uc2a4\ud130 $0.10/\uc2dc\uac04\n\u2022 \uae30\ubcf8\uac12(300/100/50/20GB, 13%)\uc774\uba74 \uc6d4 \ud569\uacc4 \uc57d $1,435, \ucef4\ud4e8\ud2b8\uc640 DB \uc778\uc2a4\ud134\uc2a4\ub294 \uc81c\uc678\n\u2022 NAT Gateway\ub294 \ub9ac\uc804\ub2f9 3 AZ, AZ\ub9c8\ub2e4 1\uac1c\ub85c \ub450 \ub9ac\uc804 6\uac1c (Block 1 \uc124\uacc4)\n\n\uc608\uc804 \uc790\ub8cc\ub294 \uc778\uc2a4\ud134\uc2a4 \ud0c0\uc785\ubcc4\ub85c \uc6d4 9,600\uc5d0\uc11c 12,400\ub2ec\ub7ec\ub97c \uc81c\uc2dc\ud588\uc9c0\ub9cc, \uc778\uc2a4\ud134\uc2a4 \uc138\ub300\uc640 \uac00\uaca9\uc774 \ubc14\ub00c\uc5b4 \uadf8\ub300\ub85c \uc4f8 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ub300\uc2e0 \ub9ac\uc804 \uc6b4\uc601\uc5d0 \uace0\uc720\ud55c \ube44\uc6a9, \uc989 \ubc14\uc774\ud2b8\uc5d0 \ube44\ub840\ud558\ub294 \ud56d\ubaa9\uc744 \uc9c1\uc811 \uacc4\uc0b0\ud574 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uae30\ubcf8\uac12\uc5d0\uc11c \ub9ac\uc804 \uac04 \ubcf5\uc81c 300GB/\uc77c\uc740 \uc6d4 180\ub2ec\ub7ec, NAT 100GB/\uc77c\uc740 135\ub2ec\ub7ec, \ub85c\uadf8 50GB/\uc77c\uc740 750\ub2ec\ub7ec, span 20GB/\uc77c\uc5d0 13% \ubcf4\uc874\uc774\uba74 \uc57d 27\ub2ec\ub7ec\uc785\ub2c8\ub2e4. \uace0\uc815\ube44\ub294 EKS \ud074\ub7ec\uc2a4\ud130 2\uac1c 146\ub2ec\ub7ec\uc640 NAT Gateway 6\uac1c 197\ub2ec\ub7ec\uc785\ub2c8\ub2e4. Block 1\uc5d0\uc11c \ub9ac\uc804\ub9c8\ub2e4 3\uac1c AZ\uc5d0 NAT Gateway\ub97c \ud558\ub098\uc529 \ub480\uc73c\ub2c8 \ub450 \ub9ac\uc804\uc774\uba74 6\uac1c\uc785\ub2c8\ub2e4. \ud569\uacc4\ub294 \uc57d 1,435\ub2ec\ub7ec\uc785\ub2c8\ub2e4.\n\ubcf5\uc81c \uc2ac\ub77c\uc774\ub354\ub97c 2,000GB\uae4c\uc9c0 \uc62c\ub824\ubcf4\uc138\uc694. \ub9ac\uc804 \uac04 \uc804\uc1a1\uc774 \uc6d4 1,200\ub2ec\ub7ec\uac00 \ub418\uba70 \ubcc0\ub3d9\ube44\uc758 \uac00\uc7a5 \ud070 \ud56d\ubaa9\uc774 \ub429\ub2c8\ub2e4. \ub85c\uadf8 IA \uccb4\ud06c\ubc15\uc2a4\ub97c \ucf1c\uba74 \ub85c\uadf8 \ube44\uc6a9\uc774 \uc808\ubc18\uc774 \ub429\ub2c8\ub2e4.\n\n\uc8fc\uc758\ud560 \uc810\uc740 \uc774 \ub2e8\uac00\uac00 \ubaa9\ub85d \uac00\uaca9\uc774\ub77c\ub294 \uac83\uc785\ub2c8\ub2e4. \ud560\uc778 \uacc4\uc57d, Free Tier, \ub2e4\ub978 \ubc29\ud5a5 \uc804\uc1a1, DB \uc11c\ube44\uc2a4\ubcc4 \ubcf5\uc81c \uc694\uae08(\uc608: Aurora Global Database\uc758 \ubcf5\uc81c I/O, MSK Replicator \ucc98\ub9ac\ub7c9)\uc740 \ud3ec\ud568\ud558\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. Cost Explorer\uc5d0\uc11c usage type USE1-USW2-AWS-Out-Bytes\ub85c \uc2e4\uc81c \uac12\uc744 \ud655\uc778\ud558\uc138\uc694.\n\n\uadf8\ub7fc \uc5b4\ub514\uc11c \uc904\uc77c \uc218 \uc788\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 AWS Pricing API (\ud655\uc778\uc77c 2026-10-15): AWSDataTransfer USE1-USW2-AWS-Out-Bytes $0.02/GB (publication 2026-09-16); AmazonEC2 NatGateway-Hours $0.045, NatGateway-Bytes $0.045/GB (2026-10-15); AmazonCloudWatch USE1-DataProcessing-Bytes $0.50/GB, USE1-DataProcessingIA-Bytes $0.25/GB, USE1-Application-Signals-Bytes $0.35/GB \uccab 10TB (2026-10-07); AmazonEKS USE1-AmazonEKS-Hours:perCluster $0.10 (2026-09-28)\n\u2022 \uae30\ubcf8\uac12 \uc7ac\uacc4\uc0b0: 300\u00d730\u00d70.02=180, 100\u00d730\u00d70.045=135, 50\u00d730\u00d70.5=750, 20\u00d70.13\u00d730\u00d70.35=27.3, \ubcc0\ub3d9 1,092.3, \uace0\uc815 146+197.1=343.1 (NAT 6\u00d70.045\u00d7730=197.1), \ud569\uacc4 1,435.4",
+    9: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 S3 gateway endpoint\ub294 \ubb34\ub8cc, NAT \ucc98\ub9ac \uc694\uae08($0.045/GB)\uc744 \ubc14\ub85c \uc81c\uac70\n\u2022 \ub9ac\uc804 \uac04\uc73c\ub85c\ub294 sampled span\ub9cc, \uc6d0\ubcf8\uc740 \ubcf4\ub0b4\uc9c0 \uc54a\uc74c\n\u2022 \uc7ac\uc0dd\uc131 \uac00\ub2a5\ud55c \ub370\uc774\ud130(cache, search index)\ub294 \ubcf5\uc81c \ub300\uc2e0 \uc7ac\uad6c\ucd95 \uac80\ud1a0\n\u2022 \ub85c\uadf8 IA class, Spot\uacfc Graviton, consolidation\uc740 \uae30\ub2a5 \uc81c\uc57d\uacfc \uc2dc\uc810\ubcc4 \uac00\uaca9\uc744 \ud655\uc778\n\n\uce74\ub4dc\ub294 \ud6a8\uacfc\uac00 \ube68\ub9ac \ub098\ub294 \uc21c\uc11c\ub85c \ubc30\uce58\ud588\uc2b5\ub2c8\ub2e4. \uac00\uc7a5 \uc26c\uc6b4 \uac83\uc740 S3 gateway endpoint\uc785\ub2c8\ub2e4. ECR \uc774\ubbf8\uc9c0 \ub808\uc774\uc5b4\ub098 Tempo \ube14\ub85d\ucc98\ub7fc S3\ub85c \uac00\ub294 \ud2b8\ub798\ud53d\uc774 NAT\ub97c \uc9c0\ub098\uba74 GB\ub2f9 0.045\ub2ec\ub7ec\uac00 \ubd99\ub294\ub370, gateway endpoint\ub294 \ucd94\uac00 \uc694\uae08\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.\n\ub450 \ubc88\uc9f8\ub294 trace \uc0ac\ubcf8\uc744 \ub9ac\uc804 \uac04\uc73c\ub85c \ubcf4\ub0bc \ub54c sampled \uacb0\uacfc\ub9cc \ubcf4\ub0b4\ub294 \uac83\uc785\ub2c8\ub2e4.\n\n\uc138 \ubc88\uc9f8\ub294 \uc124\uacc4 \ud310\ub2e8\uc785\ub2c8\ub2e4. \ubaa8\ub4e0 \ub370\uc774\ud130\ub97c \ubcf5\uc81c\ud560 \ud544\uc694\ub294 \uc5c6\uc2b5\ub2c8\ub2e4. \uc6d0\ubcf8 DB\uc5d0\uc11c \ub2e4\uc2dc \ub9cc\ub4e4 \uc218 \uc788\ub294 cache\ub098 search index\ub294 \uc7a5\uc560 \uc2dc \uc7ac\uad6c\ucd95\ud558\ub294 \ud3b8\uc774 \uc2f8\uace0 \ub2e8\uc21c\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \ub2e4\ub9cc RTO\uc640 \ub9de\ub294\uc9c0\ub294 Block 4\uc758 \uae30\uc900\uc73c\ub85c \ud310\ub2e8\ud569\ub2c8\ub2e4.\n\ub85c\uadf8 IA class\ub294 GB\ub2f9 0.25\ub2ec\ub7ec\ub85c \uc808\ubc18\uc774\uc9c0\ub9cc Standard\uc640 \uae30\ub2a5 \ucc28\uc774\uac00 \uc788\uc73c\ub2c8 \uc4f0\ub294 \uae30\ub2a5\uc744 \uba3c\uc800 \ud655\uc778\ud558\uc138\uc694. \uc608\uc804 \uc790\ub8cc\uc5d0 \uc788\ub358 \"Spot 30\uc5d0\uc11c 40% \uc808\uac10\", \"MSK Serverless 50\uc5d0\uc11c 70%\" \uac19\uc740 \uc218\uce58\ub294 \uac80\uc99d\ud560 \uc218 \uc5c6\uc5b4 \ube90\uc2b5\ub2c8\ub2e4.\n\n\ube44\uc6a9 \ub2e4\uc74c\uc740 \uc131\ub2a5\uc785\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 S3 gateway endpoint \ubb34\ub8cc: https://docs.aws.amazon.com/vpc/latest/privatelink/gateway-endpoints.html\n\u2022 NAT \ucc98\ub9ac $0.045/GB, Logs IA $0.25/GB: AWS Pricing API (\ud655\uc778\uc77c 2026-10-15)\n\u2022 Log classes: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html",
+    10: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 \uc2dc\ub098\ub9ac\uc624 \ucf54\ub4dc \ub9ac\ubdf0\uc5d0\uc11c \ub098\uc628 \ubcd1\ubaa9 4\uac1c, \ubaa8\ub450 \ub77c\uc774\ube0c\ub7ec\ub9ac \uae30\ubcf8\uac12 \ubb38\uc81c\n\u2022 Valkey cluster mode\ub294 cluster-aware client \ud544\uc694(MOVED \ucc98\ub9ac)\n\u2022 pgxpool MaxConns \uae30\ubcf8 max(4, NumCPU), Motor maxPoolSize \uae30\ubcf8 100, Go MaxIdleConnsPerHost \uae30\ubcf8 2\n\u2022 quick win\uc740 catalog cache\uc640 CloudFront \uce90\uc2f1\n\n\uc774 \uc2dc\ub098\ub9ac\uc624 \uc11c\ube44\uc2a4\ub4e4\uc758 \ucf54\ub4dc \ub9ac\ubdf0\uc5d0\uc11c \ub098\uc628 \ubcd1\ubaa9\uc785\ub2c8\ub2e4. \uacf5\ud1b5\uc810\uc740 \ubaa8\ub450 \ub77c\uc774\ube0c\ub7ec\ub9ac \uae30\ubcf8\uac12\uc774\ub77c\ub294 \uac83\uc785\ub2c8\ub2e4.\n\uccab\uc9f8, ElastiCache for Valkey\ub97c cluster mode\ub85c \uc4f0\uba74\uc11c \ub2e8\uc77c \ub178\ub4dc\uc6a9 client\ub97c \uc4f0\uba74 \ub2e4\ub978 shard\uc758 \ud0a4\uc5d0 \ub300\ud574 MOVED \uc751\ub2f5\uc744 \ubc1b\uc2b5\ub2c8\ub2e4. cluster-aware client\ub85c \ubc14\uafd4\uc57c \ud569\ub2c8\ub2e4.\n\ub458\uc9f8, Go\uc758 pgxpool\uc740 MaxConns \uae30\ubcf8\uac12\uc774 4\uc640 CPU \uc218 \uc911 \ud070 \uac12\uc785\ub2c8\ub2e4. \uc608\uc804 \uc790\ub8cc\uc5d0 \"database/sql \uae30\ubcf8 CPU\ub2f9 4\uac1c\"\ub77c\uace0 \uc801\ud600 \uc788\uc5c8\ub294\ub370 \uc815\ud655\ud788\ub294 pgxpool\uc758 \uae30\ubcf8\uac12\uc785\ub2c8\ub2e4.\n\n\uc14b\uc9f8, PyMongo\uc640 Motor\uc758 maxPoolSize \uae30\ubcf8\uac12\uc740 100\uc785\ub2c8\ub2e4. Pod\uac00 20\uac1c\ub85c \ub298\uba74 \uc774\ub860\uc0c1 2,000\uac1c \uc5f0\uacb0\uc774 \uc5f4\ub9b4 \uc218 \uc788\uc73c\ub2c8 \uc778\uc2a4\ud134\uc2a4 \uc5f0\uacb0 \ud55c\ub3c4\uc640 \ube44\uad50\ud574\uc57c \ud569\ub2c8\ub2e4.\n\ub137\uc9f8, Go \ud45c\uc900 http.Transport\ub294 \ud638\uc2a4\ud2b8\ub2f9 \uc720\ud734 \uc5f0\uacb0\uc744 2\uac1c\ub9cc \uc720\uc9c0\ud569\ub2c8\ub2e4. \uc11c\ube44\uc2a4 \uac04 \ud638\ucd9c\uc774 \ub9ce\uc740 gateway\uc5d0\uc11c\ub294 \uac12\uc744 \uc62c\ub9bd\ub2c8\ub2e4.\n\uc774 \uc218\uce58\ub4e4\uc740 \ub2e4\uc74c \uc2ac\ub77c\uc774\ub4dc\uc758 \ubd80\ud558 \ud14c\uc2a4\ud2b8\ub85c \uac80\uc99d\ud569\ub2c8\ub2e4.\n\n\n[\ucd9c\ucc98]\n\u2022 pgxpool MaxConns \uae30\ubcf8\uac12: https://pkg.go.dev/github.com/jackc/pgx/v5/pgxpool (\ud655\uc778\uc77c 2026-10-15)\n\u2022 Go DefaultMaxIdleConnsPerHost = 2: https://pkg.go.dev/net/http#DefaultMaxIdleConnsPerHost\n\u2022 PyMongo maxPoolSize \uae30\ubcf8 100: https://pymongo.readthedocs.io/en/stable/api/pymongo/mongo_client.html\n\u2022 ElastiCache cluster mode client: https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/Replication.Redis-RedisCluster.html",
+    11: "\u2753 \u23f8\ufe0f [2.5min] [\uc694\uc57d]\n\u2022 Baseline, Ramp-up, Spike, Soak \ub124 \uac00\uc9c0 \ud504\ub85c\ud544\n\u2022 threshold \ubb38\ubc95\uc740 'p(95)\u003c300' \ud615\uc2dd, \ud0dc\uadf8\ubcc4 threshold\uc640 abortOnFail \uc0ac\uc6a9\n\u2022 Spike\ub294 ramping-arrival-rate(open model)\ub85c \ucd08\ub2f9 \uc694\uccad \uc218\ub97c \uc9c1\uc811 \uc81c\uc5b4\n\u2022 Soak\ub294 \uc808\ub300\uac12\ubcf4\ub2e4 \uba54\ubaa8\ub9ac, \uc5f0\uacb0, goroutine \ucd94\uc138\ub97c \ubd04\n\nBaseline \ud0ed\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \uc608\uc804 \uc790\ub8cc\uc5d0\ub294 threshold\uac00 'p95\u003c500'\uc73c\ub85c \uc801\ud600 \uc788\uc5c8\ub294\ub370, k6 \ubb38\ubc95\uc740 'p(95)\u003c500'\uc785\ub2c8\ub2e4. \uc798\ubabb \uc4f0\uba74 \ud14c\uc2a4\ud2b8\uac00 \uc2dc\uc791\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ud0dc\uadf8\ub85c orders \uc5d4\ub4dc\ud3ec\uc778\ud2b8\ub9cc \ub530\ub85c \uae30\uc900\uc744 \uc904 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\nRamp-up\uc740 VU\ub97c \ub2e8\uacc4\uc801\uc73c\ub85c \ub298\ub9ac\uba70, abortOnFail\ub85c p99\uac00 1\ucd08\ub97c \ub118\uc73c\uba74 \ud14c\uc2a4\ud2b8\ub97c \uc911\ub2e8\ud569\ub2c8\ub2e4. delayAbortEval\ub85c \ucd08\uae30 \uc6cc\ubc0d\uc5c5 \uad6c\uac04\uc740 \ud3c9\uac00\uc5d0\uc11c \ube8d\ub2c8\ub2e4.\n\nSpike\ub294 ramping-arrival-rate executor\ub97c \uc501\ub2c8\ub2e4. VU \uc218\uac00 \uc544\ub2c8\ub77c \ucd08\ub2f9 \uc694\uccad \uc218\ub97c \uace0\uc815\ud558\ub294 open model\uc774\ub77c, \uc11c\ubc84\uac00 \ub290\ub824\uc838\ub3c4 \ubd80\ud558\uac00 \uc904\uc9c0 \uc54a\uc544 \uc2e4\uc81c \ud2b8\ub798\ud53d \ud3ed\uc8fc\uc640 \ube44\uc2b7\ud569\ub2c8\ub2e4. \uc774\ub54c Karpenter \ub178\ub4dc\uac00 \uc900\ube44\ub418\ub294 \uc2dc\uac04\uacfc HPA \ubc18\uc751\uc744 \uac19\uc774 \uae30\ub85d\ud569\ub2c8\ub2e4.\nSoak\ub294 4\uc2dc\uac04 \ub3d9\uc548 \ucd94\uc138\ub97c \ubd05\ub2c8\ub2e4. \uc55e\uc5d0\uc11c \ubcf8 \uc5f0\uacb0 pool\uacfc tail sampling \uba54\ubaa8\ub9ac\uac00 \uc5ec\uae30\uc11c \ub4dc\ub7ec\ub0a9\ub2c8\ub2e4.\n\n\ubd80\ud558 \ud14c\uc2a4\ud2b8\ub97c CloudFront \uc55e\uc5d0\uc11c \ud560\uc9c0, internal ALB\uc5d0 \uc9c1\uc811 \ud560\uc9c0\ub3c4 \uc815\ud574\uc57c \ud569\ub2c8\ub2e4. edge\uae4c\uc9c0 \ud3ec\ud568\ud558\ub824\uba74 AWS \uc2dc\ubbac\ub808\uc774\uc158 \uc774\ubca4\ud2b8 \uc815\ucc45\uc744 \uba3c\uc800 \ud655\uc778\ud558\uc138\uc694.\n\n\uc774 \ud14c\uc2a4\ud2b8\uc758 \ud569\uaca9\uc120\uc774 SLO\uc785\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 k6 thresholds \ubb38\ubc95, abortOnFail, delayAbortEval: https://grafana.com/docs/k6/latest/using-k6/thresholds/ (\ud655\uc778\uc77c 2026-10-15)\n\u2022 ramping-arrival-rate: https://grafana.com/docs/k6/latest/using-k6/scenarios/executors/ramping-arrival-rate/\n\u2022 AWS Simulated Events: https://aws.amazon.com/security/ddos-simulation-testing/",
+    12: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 \uc2dc\ub098\ub9ac\uc624 \ubaa9\ud45c: \uac00\uc6a9\uc131 99.9%, p95 300ms, \uc4f0\uae30 \uacbd\ub85c p99 500ms\n\u2022 99.9% 30\uc77c error budget = 30 \u00d7 24 \u00d7 60 \u00d7 0.001 = 43.2\ubd84\n\u2022 Application Signals\ub294 period-based, request-based SLO\uc640 burn rate \uc54c\ub78c \uc9c0\uc6d0\n\u2022 SLO\uc640 \uc54c\ub78c\uc740 \ub9ac\uc804\ubcc4\ub85c, \uc804\uc5ed \ud3c9\uade0\uc740 \uc7a5\uc560\ub97c \ud76c\uc11d\n\n\uc704 \uc22b\uc790\ub294 \uc774 \uc2dc\ub098\ub9ac\uc624\uc758 \ubaa9\ud45c\uc785\ub2c8\ub2e4. 99.9% \uac00\uc6a9\uc131\uc740 30\uc77c \uae30\uc900\uc73c\ub85c 43.2\ubd84\uc758 error budget\uc785\ub2c8\ub2e4.\nCloudWatch Application Signals\ub294 SLO\ub97c \ub450 \ubc29\uc2dd\uc73c\ub85c \ub9cc\ub4ed\ub2c8\ub2e4. period-based\ub294 \uc815\uc0c1 \uae30\uac04\uc758 \ube44\uc728, request-based\ub294 \uc131\uacf5 \uc694\uccad\uc758 \ube44\uc728\uc785\ub2c8\ub2e4. burn rate\ub294 baseline error rate \ub300\ube44 \uc2e4\uc81c \uc5d0\ub7ec \ube44\uc728\uc774\uba70, SLO \ud558\ub098\uc5d0 burn rate \uc124\uc815\uc744 \ucd5c\ub300 10\uac1c\uae4c\uc9c0 \ub458 \uc218 \uc788\uace0 \uac01\uac01 \uc54c\ub78c\uc744 \uac78 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\n\uc2e4\ubb34 \ud301\uc740 \uc9e7\uc740 \ucc3d\uacfc \uae34 \ucc3d\uc744 \uac19\uc774 \uc4f0\ub294 multi-window \ubc29\uc2dd\uc785\ub2c8\ub2e4. \uadf8\ub9ac\uace0 SLO\ub97c \ub9ac\uc804\ubcc4\ub85c \ub461\ub2c8\ub2e4. \ub450 \ub9ac\uc804 \ud3c9\uade0\uc744 \ubcf4\uba74 us-west-2\uac00 \uc808\ubc18 \uc7a5\uc560\uc5ec\ub3c4 \uc804\uccb4 \uc218\uce58\ub294 \ubaa9\ud45c \uadfc\ucc98\uc5d0 \uba38\ubb3c \uc218 \uc788\uc2b5\ub2c8\ub2e4. Block 3\uc758 Route 53 health check\uc640\ub3c4 \uc774 \ub9ac\uc804\ubcc4 \uc9c0\ud45c\ub97c \uc5f0\uacb0\ud569\ub2c8\ub2e4.\n\n\ub9c8\uc9c0\ub9c9\uc73c\ub85c \ucd9c\uc2dc\uae4c\uc9c0 \ub0a8\uc740 \uac04\uadf9\uc744 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 Application Signals SLO, burn rate \uc815\uc758: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-ServiceLevelObjectives.html\n\u2022 BurnRateConfigurations \ucd5c\ub300 10: https://docs.aws.amazon.com/applicationsignals/latest/APIReference/API_UpdateServiceLevelObjective.html (\ud655\uc778\uc77c 2026-10-15)",
+    13: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 \uc2dc\ub098\ub9ac\uc624 gap 7\uac1c: P0 4\uac1c, P1 2\uac1c, P2 1\uac1c\n\u2022 P0(\uc778\uc99d, event bus mock, MSK Replicator)\uc774 \ud574\uacb0\ub418\uae30 \uc804\uc5d0\ub294 \ucd9c\uc2dc \ubd88\uac00, Block 4 \ub85c\ub4dc\ub9f5\uc758 P0 \ub370\uc774\ud130 \ubcf4\ud638\uc640 \uac19\uc740 \ud56d\ubaa9\n\u2022 P1\uc758 Aurora Global Database gap: rds.global_db_rpo \ubbf8\uc124\uc815, \uc571\uc774 global writer endpoint \ub300\uc2e0 \ud074\ub7ec\uc2a4\ud130 endpoint \uc0ac\uc6a9\n\u2022 Phase 1 2\uc8fc, Phase 2 4\uc8fc, Phase 3 2\uc8fc, Phase 4\ub294 \uc0c1\uc2dc\n\u2022 \uac01 Phase \uc644\ub8cc \uae30\uc900\uc744 \uad00\uce21 \ub370\uc774\ud130\ub85c \ud655\uc778\n\n\uc774 \uc2dc\ub098\ub9ac\uc624 \ucf54\ub4dc\ubca0\uc774\uc2a4\ub97c \uc810\uac80\ud55c \uacb0\uacfc\uc785\ub2c8\ub2e4. \uc67c\ucabd P0 \ub124 \uac1c\uac00 \ucd9c\uc2dc\ub97c \ub9c9\uc2b5\ub2c8\ub2e4. gateway\uc5d0 \uc778\uc99d\uc774 \uc5c6\uace0, event bus\uac00 MSK\uc5d0 \uc2e4\uc81c\ub85c publish\ud558\uc9c0 \uc54a\uc544 consumer\ub4e4\uc774 \uc774\ubca4\ud2b8\ub97c \ubc1b\uc9c0 \ubabb\ud569\ub2c8\ub2e4. \uadf8\ub9ac\uace0 MSK Replicator\uac00 \uc544\uc9c1 \uc5c6\uc5b4\uc11c us-east-1\uc774 \uba48\ucd94\uba74 \uadf8 \uc2dc\uc810\uae4c\uc9c0\uc758 \uc774\ubca4\ud2b8\uac00 us-west-2\uc5d0 \uc5c6\uc2b5\ub2c8\ub2e4. \ub137\uc9f8, order\uc640 payment\uac00 \uc4f0\ub294 Aurora PostgreSQL Global Database\ub294 \ubcf5\uc81c\ub294 \ub3cc\uace0 \uc788\uc9c0\ub9cc \uc804\ud658 \uc900\ube44\uac00 \ub35c \ub410\uc2b5\ub2c8\ub2e4. rds.global_db_rpo\uac00 \uc5c6\uc5b4 RPO \uc0c1\ud55c\uc774 \uc5c6\uace0, \uc571\uc774 global writer endpoint \ub300\uc2e0 us-east-1 \ud074\ub7ec\uc2a4\ud130 endpoint\ub97c \uc9c1\uc811 \uc368\uc11c failover \ud6c4 \uc571 \uc124\uc815\uc744 \ubc14\uafd4\uc57c \ud569\ub2c8\ub2e4. Block 4 \ub85c\ub4dc\ub9f5\uc5d0\uc11c \ub370\uc774\ud130 \ubcf4\ud638\ub97c P0\ub85c \ub454 \uac83\uacfc \uac19\uc740 \uc774\uc720\uc785\ub2c8\ub2e4. Phase 1\uc758 2\uc8fc \uc548\uc5d0 \ud574\uacb0\ud558\uace0, \uc644\ub8cc \uae30\uc900\uc740 \uc774\ubca4\ud2b8\uac00 producer\uc5d0\uc11c consumer\uae4c\uc9c0 \ud558\ub098\uc758 trace\ub85c \ubcf4\uc774\uace0, us-west-2\uc5d0\uc11c \ubcf5\uc81c lag\uac00 \uad00\uce21\ub418\ub294 \uac83\uc785\ub2c8\ub2e4. \uc55e\uc5d0\uc11c \ub9cc\ub4e0 \uad00\uce21 \uc2a4\ud0dd\uc774 \ubc14\ub85c \uac80\uc99d \ub3c4\uad6c\uac00 \ub429\ub2c8\ub2e4.\n\nP1\uc740 \uc6b4\uc601 \uc704\ud5d8\uc785\ub2c8\ub2e4. WAF Bot Control\uc774 synthetic \ubaa8\ub2c8\ud130\ub9c1 \uc694\uccad\uc744 \ub9c9\uace0 \uc788\uace0, search\ub294 \uc544\uc9c1 mock\uc785\ub2c8\ub2e4. \uc804\ud658 \uc808\ucc28 \uc790\uccb4\ub294 Block 4\uc5d0\uc11c \ub2e4\ub918\uc2b5\ub2c8\ub2e4. \uc55e\uc5d0\uc11c \ubcf8 \ud074\ub77c\uc774\uc5b8\ud2b8 \uae30\ubcf8\uac12 4\uac74\ub3c4 \uc774 Phase\uc5d0\uc11c \ud568\uaed8 \uace0\uce69\ub2c8\ub2e4.\nP2\ub294 CI/CD \uc790\ub3d9\ud654\uc785\ub2c8\ub2e4. \uadf8 \ub4a4 Phase 4\ub294 \ubd80\ud558 \ud14c\uc2a4\ud2b8, SLO \ud29c\ub2dd, \ube44\uc6a9 \ucd5c\uc801\ud654\ub97c \uc0c1\uc2dc\ub85c \ub3cc\ub9bd\ub2c8\ub2e4. \uc21c\uc11c\uac00 \uc911\uc694\ud569\ub2c8\ub2e4. \uae30\ub2a5 gap\uc744 \ub2eb\uae30 \uc804\uc5d0 \ube44\uc6a9 \ucd5c\uc801\ud654\ub97c \ud558\uba74 \uce21\uc815 \uae30\uc900\uc774 \uacc4\uc18d \ubc14\ub01d\ub2c8\ub2e4.\n\n\uc804\uccb4 \ub0b4\uc6a9\uc744 \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 Aurora PostgreSQL managed RPO, rds.global_db_rpo: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-global-database-disaster-recovery.html\n\u2022 Aurora Global Database global writer endpoint: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-global-database-connecting.html\n\u2022 MSK Replicator: https://docs.aws.amazon.com/msk/latest/developerguide/msk-replicator.html",
+    14: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n\u2022 \uad00\uce21\uc740 \ub9ac\uc804 \ub85c\uceec, \uc870\ud68c\ub9cc \uc804\uc5ed\n\u2022 tail sampling \ud655\uc7a5\uc5d0\ub294 traceID \ub77c\uc6b0\ud305 \ud544\uc218, X-Ray\ub294 OTel \uacbd\ub85c\ub85c\n\u2022 OAM\uc740 \uac19\uc740 Region, \ub9ac\uc804 \uac04\uc740 Centralization\n\u2022 \ube44\uc6a9\uc740 \ub9ac\uc804 \uac04\uacfc NAT \ubc14\uc774\ud2b8, \ucd9c\uc2dc\ub294 P0\ubd80\ud130\n\n\uc5ec\uc12f \uac00\uc9c0\ub85c \uc815\ub9ac\ud569\ub2c8\ub2e4. \ud154\ub808\uba54\ud2b8\ub9ac\ub294 \ub9ac\uc804 \uc548\uc5d0\uc11c \ub05d\ub0b4\uace0, Collector\ub294 2\uacc4\uce35\uc73c\ub85c \ub098\ub220 traceID\ub85c \ub77c\uc6b0\ud305\ud569\ub2c8\ub2e4. X-Ray\ub294 SDK\uac00 maintenance mode\uc5d0 \ub4e4\uc5b4\uac14\uc73c\ub2c8 OpenTelemetry\uc640 OTLP endpoint\ub85c \uac11\ub2c8\ub2e4.\n\nCloudWatch OAM\uc740 \ub9ac\uc804\uc744 \ub118\uc9c0 \uc54a\uc73c\ubbc0\ub85c \ub9ac\uc804\ub9c8\ub2e4 sink\ub97c \ub9cc\ub4e4\uace0, \ub9ac\uc804 \uac04 \uc9d1\uacc4\ub294 Centralization rule\ub85c \ud569\ub2c8\ub2e4. \ube44\uc6a9\uc740 \ub9ac\uc804\uc744 \ub118\ub294 \ubc14\uc774\ud2b8\uc640 NAT\ub97c \uc9c0\ub098\ub294 \ubc14\uc774\ud2b8\uac00 \uc815\ud569\ub2c8\ub2e4. \ub9c8\uc9c0\ub9c9\uc73c\ub85c \ucd9c\uc2dc\ub294 P0 gap\ubd80\ud130, \ub9ac\uc804\ubcc4 SLO\ub97c \ud569\uaca9\uc120\uc73c\ub85c \uc0bc\uc2b5\ub2c8\ub2e4.\n\n\ud034\uc988\ub85c \ud655\uc778\ud574 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    15: "[1min] [\uc694\uc57d]\n\u2022 Q1: loadbalancing exporter, routing_key: traceID\n\u2022 Q2: OAM\uc740 \uac19\uc740 Region, \ub9ac\uc804\ub9c8\ub2e4 sink\n\u2022 \uc624\ub2f5\uc774\uba74 \"Collector 2\uacc4\uce35\", \"OAM\uc740 \ub9ac\uc804\uc744 \ub118\uc9c0 \uc54a\ub294\ub2e4\" \uc2ac\ub77c\uc774\ub4dc\ub85c \ub3cc\uc544\uac00 \ud655\uc778\n\n\ub450 \ubb38\uc81c\ub97c \uba3c\uc800 \ud480\uc5b4\ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n1\ubc88\uc740 loadbalancing exporter\uc785\ub2c8\ub2e4. \uac19\uc740 trace\uc758 span\uc774 \ub2e4\ub978 Gateway\ub85c \ud769\uc5b4\uc9c0\uba74 \uc5d0\ub7ec \uc5ec\ubd80\ub97c \ud310\ub2e8\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. decision_wait\ub97c 0\uc73c\ub85c \ub450\uba74 span\uc774 \ub2e4 \uc624\uae30 \uc804\uc5d0 \ud310\ub2e8\ud558\uac8c \ub429\ub2c8\ub2e4.\n2\ubc88\uc740 \ub9ac\uc804\ub9c8\ub2e4 sink\uac00 \ud544\uc694\ud558\ub2e4\ub294 \uac83\uc785\ub2c8\ub2e4. OAM\uc740 logs\uc640 traces\ub3c4 \uacf5\uc720\ud558\ubbc0\ub85c \uc138 \ubc88\uc9f8 \ubcf4\uae30\ub3c4 \ud2c0\ub9bd\ub2c8\ub2e4.\n\n\ub9c8\uc9c0\ub9c9 \ud55c \ubb38\uc81c\ub294 \ube44\uc6a9\uc785\ub2c8\ub2e4.",
+    16: "[0.5min] [\uc694\uc57d]\n\u2022 Q3: $0.02/GB (Pricing API, USE1-USW2-AWS-Out-Bytes)\n\u2022 $0.09/GB\ub294 \uc778\ud130\ub137 \uc804\uc1a1 \uc694\uae08\ub300\uc640 \ud63c\ub3d9\ud558\uae30 \uc26c\uc6b4 \uc22b\uc790\n\n3\ubc88\uc740 GB\ub2f9 0.02\ub2ec\ub7ec\uc785\ub2c8\ub2e4. \uac19\uc740 \uad6d\uac00 \uc548\uc774\ub77c\ub3c4 \ub9ac\uc804 \uac04 \uc804\uc1a1\uc740 \ubb34\ub8cc\uac00 \uc544\ub2c8\uba70, 0.09\ub2ec\ub7ec\ub294 \uc778\ud130\ub137\uc73c\ub85c \ub098\uac00\ub294 \uc804\uc1a1 \uc694\uae08\ub300\uc640 \ud63c\ub3d9\ud558\uae30 \uc26c\uc6b4 \uc22b\uc790\uc785\ub2c8\ub2e4. \ud558\ub8e8 1TB\ub97c \ubcf5\uc81c\ud558\uba74 \uc6d4 \uc57d 600\ub2ec\ub7ec\ub77c\ub294 \uac10\uac01\uc744 \uae30\uc5b5\ud574 \ub450\uc138\uc694.\n\n\uc774\uac83\uc73c\ub85c \ub9c8\ubb34\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.",
+    17: "\u2753 [0.5min] [\uc694\uc57d]\n\u2022 \ub2e4\uc12f \ube14\ub85d \uc644\ub8cc: Foundation, Data Sync, Traffic Routing, DR\uacfc Failover, Observability\uc640 Operations\n\u2022 \uac00\uaca9\uacfc \uc124\uc815 \ud0a4\ub294 2026-10-15 \uae30\uc900, \uc801\uc6a9 \uc804 \ucd5c\uc2e0 \ubb38\uc11c\ub85c \uc7ac\ud655\uc778\n\u2022 \ubaa9\ucc28\ub85c \ub3cc\uc544\uac00 \ub2e4\ub978 \ube14\ub85d\uc744 \ubcf5\uc2b5 \uac00\ub2a5\n\n\uc774\uac83\uc73c\ub85c Multi-Region Architecture Deep Dive\ub97c \ub9c8\uce69\ub2c8\ub2e4. \ub2e4\uc12f \ube14\ub85d\uc5d0 \uac78\uccd0 \ub9ac\uc804 \uae30\ubc18 \uc124\uacc4, \ub370\uc774\ud130 \ubcf5\uc81c, \ud2b8\ub798\ud53d \ub77c\uc6b0\ud305, DR \uc790\ub3d9\ud654, \uadf8\ub9ac\uace0 \uad00\uce21\uacfc \uc6b4\uc601\uae4c\uc9c0 \uc0b4\ud3b4\ubd24\uc2b5\ub2c8\ub2e4. \uc624\ub298 \ubcf4\uc5ec\ub4dc\ub9b0 \uac00\uaca9\uacfc \uc124\uc815 \ud0a4\ub294 2026\ub144 10\uc6d4 15\uc77c \uae30\uc900\uc774\ub2c8 \uc801\uc6a9 \uc804\uc5d0 \ub2e4\uc2dc \ud655\uc778\ud574 \uc8fc\uc138\uc694.\n\n\uc9c8\ubb38 \ubc1b\uaca0\uc2b5\ub2c8\ub2e4."
   };
   const deck = new SlideFramework({
+    logoSrc: "./common/pptx-theme/images/logo_1.png",
     
-    footer: 'Multi-Region Architecture Deep Dive — L300+',
+    footer: "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.",
     
     pagination: true,
     sidebar: true,

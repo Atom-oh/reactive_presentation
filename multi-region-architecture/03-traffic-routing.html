@@ -3,713 +3,507 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Multi-Region Architecture Deep Dive</title>
+  <title>Traffic Routing & Edge</title>
   <meta name="generator" content="remarp">
   <meta name="remarp-version" content="1">
   <meta name="remarp-source" content="03-traffic-routing.md">
-  <meta name="remarp-block" content="default">
+  <meta name="remarp-block" content="03-traffic-routing">
   <link rel="stylesheet" href="./common/theme.css">
   <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
+  <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
   
-  
-  <script>window.__remarpTheme = {"colors": {}, "footer": "Multi-Region Architecture Deep Dive \u2014 L300+", "pagination": true, "fonts": {}};</script>
+  <script>window.__remarpTheme = {"colors": {"dk1": "#000000", "lt1": "#FFFFFF", "dk2": "#161D26", "lt2": "#F3F3F7", "accent1": "#41B3FF", "accent2": "#AD5CFF", "accent3": "#00E500", "accent4": "#FF5C85", "accent5": "#FF693C", "accent6": "#FBD332", "hlink": "#41B1E8", "folHlink": "#41B1E8"}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}};</script>
 </head>
 <body>
-<div class="slide-deck">
-<div class="slide" data-remarp-id="s0" style="background:linear-gradient(135deg, #1a1f35 0%, #0d1117 50%, #161b2e 100%); padding:0; overflow:hidden;">
-  <div style="position:absolute; top:-20%; right:-10%; width:60%; height:80%; background:radial-gradient(ellipse, rgba(108,92,231,0.15) 0%, transparent 70%); pointer-events:none;"></div>
-  <div style="position:absolute; left:5%; top:42%; width:80px; height:3px; background:linear-gradient(90deg, #6c5ce7, #a29bfe); border-radius:2px;"></div>
-  <h1 style="position:absolute; left:5%; top:45%; font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:60%; margin:0;">Traffic Routing & Edge</h1>
-  <p style="position:absolute; left:5%; top:60%; font-size:1.3rem; color:rgba(255,255,255,0.7); width:60%; margin:0;">Global Traffic Management with Route53, CloudFront & WAF</p>
-  
+<div class="slide-deck theme-dark">
+<div class="slide title-slide" data-remarp-id="s0">
+    <h1>Block 3: Traffic Routing & Edge</h1>
+  <p class="meta">공개 입구는 CloudFront 하나, 리전 선택은 Edge에서, 절체 스위치는 데이터 플레인에</p>
 </div>
 
 <div class="slide" data-remarp-id="s1">
-  <div class="slide-header" data-remarp-id="s1-header"><h2>End-to-End Traffic Flow</h2></div>
+  <div class="slide-header" data-remarp-id="s1-header"><h2>공개 입구는 CloudFront 하나뿐</h2></div>
   <div class="slide-body" data-remarp-id="s1-body">
-    <p><!-- Slide 2: End-to-End Traffic Flow --></p>
-<div class="flow-v" style="gap:0.6rem; padding:0.3rem;">
-  <!-- Row 1: User Request -->
-  <div class="flow-h" style="justify-content:center; gap:1.5rem;">
-    <div class="flow-box bg-dark" style="min-width:140px; padding:0.8rem;" data-fragment-index="1">
-      <span style="font-size:1.8rem;">👤</span>
-      <span style="font-size:0.9rem;">mall.example.com</span>
-    </div>
-    <div class="flow-arrow" data-fragment-index="2">→</div>
-    <div class="flow-box bg-blue" style="min-width:140px;" data-fragment-index="2">
-      <img src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" style="width:36px;">
-      <span>Route53</span>
-      <span style="font-size:0.65rem; color:rgba(255,255,255,0.6);">CNAME → CloudFront</span>
-    </div>
+    <p><!-- Slide 2: End-to-End 흐름 --></p>
+<style>
+.mr03-t-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.mr03-t-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.mr03-t-success { color: var(--success); font-weight: var(--weight-bold); }
+.mr03-t-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.mr03-t-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.mr03-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-1); word-break: keep-all; overflow-wrap: break-word; }
+.mr03-note { font-size: var(--fs-caption); color: var(--text-secondary); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: break-word; }
+.mr03-take { margin-top: var(--space-3); }
+.mr03-ico { width: 2.25rem; height: 2.25rem; vertical-align: middle; margin-right: var(--space-2); }
+.mr03-flow { align-items: stretch; }
+.mr03-flow .flow-group { flex: 1 1 0; min-width: 0; }
+.mr03-flow .flow-box { font-size: var(--fs-caption); word-break: keep-all; overflow-wrap: anywhere; }
+.mr03-flow .flow-box .mr03-ico { display: block; margin: 0 auto var(--space-1); }
+.mr03-flow .flow-arrow { align-self: center; }
+.mr03-code { font-variant-ligatures: none; font-family: var(--font-mono); font-size: var(--fs-caption); white-space: pre; background: var(--surface-2); border: 1px solid var(--surface-3); border-radius: var(--radius-md); padding: var(--space-3); overflow: hidden; line-height: 1.5; margin: 0; }
+.mr03-split { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); align-items: start; }
+.mr03-split.mr03-codesplit { grid-template-columns: 1.5fr 1fr; }
+.mr03-stack { display: flex; flex-direction: column; gap: var(--space-3); }
+.mr03-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.mr03-table { width: 100%; font-size: var(--fs-card); word-break: keep-all; overflow-wrap: break-word; }
+.slide .mr03-table code, .slide .mr03-muted code, .slide .mr03-note code, .slide .mr03-t-accent code, .slide .mr03-t-info code, .slide .mr03-t-success code, .slide .mr03-t-warning code, .slide .mr03-t-danger code { font-family: var(--font-mono); white-space: normal; overflow-wrap: anywhere; word-break: break-all; }
+.slide .mr03-table th { font-size: var(--fs-card); }
+.mr03-calc { display: flex; flex-direction: column; gap: var(--space-3); }
+.mr03-row { display: grid; grid-template-columns: 9rem 1fr; align-items: center; gap: var(--space-3); }
+.mr03-row label { color: var(--text-secondary); font-size: var(--fs-card); }
+.mr03-calc .slider-value { min-width: 6rem; }
+.mr03-calc .metric-value { font-size: var(--fs-subtitle); white-space: nowrap; }
+.mr03-btns { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.mr03-btns .btn { color: var(--on-surface); font-size: var(--fs-card); }
+.mr03-btns .btn.active { border-color: var(--accent); color: var(--accent); }
+.mr03-out { font-family: var(--font-mono); font-size: var(--fs-card); background: var(--surface-2); border: 1px solid var(--surface-3); border-radius: var(--radius-md); padding: var(--space-3); line-height: 1.6; min-height: 7.5rem; white-space: pre-wrap; word-break: keep-all; }
+.mr03-prio { display: flex; flex-direction: column; gap: var(--space-2); }
+.mr03-prio-row { display: grid; grid-template-columns: 3rem 15rem 1fr; gap: var(--space-3); align-items: center; padding: var(--space-2) var(--space-3); background: var(--surface-1); border: 1px solid var(--surface-3); border-radius: var(--radius-md); }
+.mr03-prio-num { font-family: var(--font-mono); color: var(--accent); font-weight: var(--weight-bold); font-size: var(--fs-card); }
+.mr03-prio-name { font-weight: var(--weight-bold); font-size: var(--fs-card); }
+.mr03-prio-row .mr03-muted { margin-top: 0; font-size: var(--fs-caption); }
+</style>
+<div class="flow-h mr03-flow">
+  <div class="flow-group fragment fade-right" data-fragment-index="1">
+    <div class="flow-group-label">사용자</div>
+    <div class="flow-box">브라우저, 앱<br>mall.<wbr>example.com</div>
+    <div class="flow-box"><img class="mr03-ico" src="./common/aws-icons/services/Arch_Amazon-Route-53_48.svg" alt="Amazon Route 53">Route 53<br>alias → CloudFront</div>
   </div>
-
-  <div class="flow-arrow" style="font-size:1.3rem;" data-fragment-index="3">↓</div>
-
-  <!-- Row 2: Edge Layer -->
-  <div class="flow-h" style="justify-content:center; gap:1rem;">
-    <div class="flow-group bg-orange" style="padding:0.8rem 1.2rem;" data-fragment-index="3">
-      <div class="flow-group-label">Edge Layer</div>
-      <div class="flow-h" style="gap:1rem;">
-        <div class="icon-item">
-          <img src="common/aws-icons/services/Arch_Amazon-CloudFront_48.svg" style="width:40px;">
-          <span>CloudFront</span>
-        </div>
-        <div class="icon-item">
-          <img src="common/aws-icons/services/Arch_AWS-WAF_48.svg" style="width:40px;">
-          <span>WAF</span>
-        </div>
-      </div>
-    </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-group fragment fade-right" data-fragment-index="2">
+    <div class="flow-group-label">Edge: 유일한 공개 입구</div>
+    <div class="flow-box"><img class="mr03-ico" src="./common/aws-icons/services/Arch_Amazon-CloudFront_48.svg" alt="Amazon CloudFront">CloudFront</div>
+    <div class="flow-box"><img class="mr03-ico" src="./common/aws-icons/services/Arch_AWS-WAF_48.svg" alt="AWS WAF">WAF web ACL</div>
   </div>
-
-  <div class="flow-arrow" style="font-size:1.3rem;" data-fragment-index="4">↓</div>
-
-  <!-- Row 3: Origin Routing Split -->
-  <div class="flow-h" style="justify-content:center; gap:2rem;">
-    <!-- Static Path -->
-    <div class="flow-box bg-green" style="min-width:160px; padding:0.7rem;" data-fragment-index="4">
-      <div style="font-size:0.75rem; color:rgba(255,255,255,0.7); margin-bottom:0.3rem;">/static/*</div>
-      <div class="flow-h" style="gap:0.5rem; align-items:center;">
-        <img src="common/aws-icons/services/Arch_Amazon-Simple-Storage-Service_48.svg" style="width:32px;">
-        <div style="text-align:left;">
-          <span style="font-size:0.85rem;">S3 + OAC</span>
-        </div>
-      </div>
-    </div>
-    <!-- API Path -->
-    <div class="flow-box bg-purple" style="min-width:200px; padding:0.7rem;" data-fragment-index="5">
-      <div style="font-size:0.75rem; color:rgba(255,255,255,0.7); margin-bottom:0.3rem;">/api/*</div>
-      <div class="flow-h" style="gap:0.5rem; align-items:center;">
-        <img src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" style="width:28px;">
-        <span style="font-size:0.8rem;">api-internal.example.com</span>
-      </div>
-      <div style="font-size:0.65rem; color:rgba(255,255,255,0.5); margin-top:0.3rem;">Route53 Latency-based</div>
-    </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-group fragment fade-right" data-fragment-index="3">
+    <div class="flow-group-label">Behavior 분기</div>
+    <div class="flow-box">/static/*<br>→ S3 (OAC)</div>
+    <div class="flow-box">/api/*<br>→ CF Function<br>→ origin group</div>
   </div>
-
-  <div class="flow-arrow" style="font-size:1.3rem;" data-fragment-index="6">↓</div>
-
-  <!-- Row 4: Regional Backend -->
-  <div class="flow-h" style="justify-content:center; gap:1.5rem;">
-    <div class="flow-group bg-blue" style="padding:0.6rem 1rem;" data-fragment-index="6">
-      <div class="flow-group-label">us-east-1 / us-west-2</div>
-      <div class="flow-h" style="gap:0.8rem;">
-        <div class="flow-box" style="padding:0.4rem 0.8rem;">
-          <img src="common/aws-icons/services/Arch_Elastic-Load-Balancing_48.svg" style="width:28px;">
-          <span style="font-size:0.75rem;">NLB</span>
-          <span style="font-size:0.6rem; color:rgba(255,255,255,0.5);">Prefix-list SG</span>
-        </div>
-        <div class="flow-arrow" style="font-size:0.9rem;">→</div>
-        <div class="flow-box" style="padding:0.4rem 0.8rem;">
-          <img src="common/aws-icons/services/Arch_Amazon-Elastic-Kubernetes-Service_48.svg" style="width:28px;">
-          <span style="font-size:0.75rem;">api-gateway</span>
-        </div>
-        <div class="flow-arrow" style="font-size:0.9rem;">→</div>
-        <div class="flow-box" style="padding:0.4rem 0.8rem; background:rgba(255,255,255,0.05);">
-          <span style="font-size:0.75rem;">Backend MSA</span>
-        </div>
-      </div>
-    </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-group fragment fade-right" data-fragment-index="4">
+    <div class="flow-group-label">VPC origin</div>
+    <div class="flow-box"><img class="mr03-ico" src="./common/aws-icons/services/Arch_Elastic-Load-Balancing_48.svg" alt="Elastic Load Balancing">internal ALB<br>us-east-1 (primary)</div>
+    <div class="flow-box">internal ALB<br>us-west-2 (secondary)</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-group fragment fade-right" data-fragment-index="4">
+    <div class="flow-group-label">EKS 서비스</div>
+    <div class="flow-box"><img class="mr03-ico" src="./common/aws-icons/services/Arch_Amazon-Elastic-Kubernetes-Service_48.svg" alt="Amazon EKS">order, payment</div>
+    <div class="flow-box">catalog, cart</div>
   </div>
 </div>
+<div class="callout callout-danger mr03-take fragment zoom-in" data-fragment-index="5"><strong class="mr03-t-danger">금지 목록</strong><div class="mr03-muted">internet-facing LB, compute의 public IP, 보안 그룹의 0.0.0.0/0 및 ::/0 ingress. 우회 경로가 하나라도 있으면 WAF와 Edge 정책이 무력화됩니다.</div></div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s2">
-  <div class="slide-header" data-remarp-id="s2-header"><h2>Route53 Latency-Based Routing</h2></div>
+  <div class="slide-header" data-remarp-id="s2-header"><h2>리전 선택은 DNS가 아니라 Edge에서</h2></div>
   <div class="slide-body" data-remarp-id="s2-body">
-    <div class="columns">
-<div class="col">
-<h3>How It Works</h3>
-<ul><li class="fragment fade-in" data-fragment-index="2"><strong>Latency Measurement</strong>
-<ul><li>AWS measures RTT from 20+ edge locations</li><li>Updates every ~24 hours</li><li>NOT real-time user latency</li></ul></li></ul>
-<ul><li class="fragment fade-in" data-fragment-index="3"><strong>DNS Resolution</strong>
-<ul><li>User DNS query → nearest resolver</li><li>Route53 returns lowest-latency region IP</li><li>TTL: 60 seconds (balance: freshness vs load)</li></ul></li></ul>
-<ul><li class="fragment fade-in" data-fragment-index="4"><strong>Automatic Failover</strong>
-<ul><li>Health check fails → remove from rotation</li><li>Traffic shifts to healthy region</li><li>Recovery → automatic re-addition</li></ul></li></ul>
-</div><div class="col">
-<h3>Health Check Configuration</h3>
-<div class="code-block"><span class="key">Type</span>: HTTP
-<span class="key">Endpoint</span>: /health
-<span class="key">Port</span>: 443
-<span class="key">Protocol</span>: HTTPS
-<span class="key">Interval</span>: 30 seconds
-Failure Threshold: 3</div>
-<div class="fragment fade-in" data-fragment-index="0"><h3>DNS Records</h3>
-<table><thead><tr><th>Record</th><th>Type</th><th>Routing</th></tr></thead><tbody><tr><td><code>mall.example.com</code></td><td>CNAME</td><td>→ CloudFront</td></tr><tr><td><code>api-internal.example.com</code></td><td>A</td><td>Latency (2 regions)</td></tr></tbody></table>
-</div><div class="fragment fade-in" data-fragment-index="1"><h3>Latency Targets</h3>
-<ul><li>us-east-1 → NLB IP (Primary)</li><li>us-west-2 → NLB IP (Secondary)</li></ul>
+    <p><!-- Slide 3: 리전 선택 DNS vs Edge --></p>
+<div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
+  <button class="tab-btn active">Route 53 latency (DNS)</button>
+  <button class="tab-btn">CloudFront Function + KVS (Edge)</button>
+  <button class="tab-btn">Viewer request 코드</button>
 </div>
-</div>
+<div class="tc">
+  <div class="card-grid">
+    <div class="metric-card"><strong class="mr03-t-accent">판단 근거</strong><div class="mr03-muted">recursive resolver IP, 또는 EDNS0 client subnet이 있으면 잘린 client IP. 회사 resolver가 다른 대륙이면 엉뚱한 리전이 나올 수 있음</div></div>
+    <div class="metric-card"><strong class="mr03-t-accent">latency 데이터</strong><div class="mr03-muted">일정 기간 측정값 기반이라 바뀔 수 있음. 이번 주 Oregon이 다음 주 다른 리전이 될 수 있음 (실시간 측정 아님)</div></div>
+    <div class="metric-card"><strong class="mr03-t-info">요금</strong><div class="mr03-muted">latency 질의 $0.60/M, 표준 질의 $0.40/M. CloudFront로 가는 alias 질의는 무료</div></div>
+    <div class="metric-card"><strong class="mr03-t-warning">VPC origin과의 관계</strong><div class="mr03-muted">VPC origin은 ALB ARN에 묶임. DNS 응답을 바꿔도 다른 리전 ALB로 가지 않으므로 공개 경로의 리전 선택은 Edge에서 해야 함</div></div>
   </div>
-</div></div>
+</div>
+<div class="tc" hidden>
+  <div class="card-grid">
+    <div class="metric-card"><strong class="mr03-t-success">viewer request 함수</strong><div class="mr03-muted">우선순위: session affinity cookie → weighted → geo (<code>CloudFront-Viewer-Country-Region</code>)</div></div>
+    <div class="metric-card"><strong class="mr03-t-success"><code>cf.createRequestOriginGroup()</code></strong><div class="mr03-muted">선택한 리전의 VPC origin을 primary로, 다른 리전을 secondary로 하는 origin group을 요청마다 구성</div></div>
+    <div class="metric-card"><strong class="mr03-t-info">KeyValueStore</strong><div class="mr03-muted">가중치, 활성 리전 값을 함수 재배포 없이 변경. 값은 invocation 사이에 반영</div></div>
+    <div class="metric-card"><strong class="mr03-t-info">요금</strong><div class="mr03-muted">Functions $0.10/M invocation, KVS read $0.03/M (각각 월 2M 무료)</div></div>
+  </div>
+</div>
+<div class="tc" hidden>
+  <div class="mr03-split mr03-codesplit">
+  <pre class="mr03-code">import cf from 'cloudfront';
+const kvs = cf.kvs();
+async function handler(event) {
+  const req = event.request;
+  const pin = req.cookies['mr-region'];  // affinity
+  const region = pin ? pin.value
+    : (await kvs.get('routing', { format: 'json' })).active;
+  const ids = region === 'us-west-2'
+    ? ['alb-usw2', 'alb-use1'] : ['alb-use1', 'alb-usw2'];
+  cf.createRequestOriginGroup({
+    originIds: ids.map(id =&gt; ({ originId: id })),
+    failoverCriteria: { statusCodes: [500, 502, 503, 504] }
+  });
+  return req;
+}</pre>
+  <div class="mr03-stack">
+    <div class="metric-card"><strong class="mr03-t-accent">runtime 2.0, viewer request</strong><div class="mr03-muted">origin 수정 helper는 viewer request 이벤트에서만 동작</div></div>
+    <div class="metric-card"><strong class="mr03-t-info">behavior 기본값</strong><div class="mr03-muted">기본 origin을 origin group으로 둔 behavior에 연결</div></div>
+    <div class="metric-card"><strong class="mr03-t-warning">입력 처리</strong><div class="mr03-muted">쿠키가 us-west-2가 아니면 us-east-1 순서로 처리 (설명용 예시)</div></div>
+  </div>
+  </div>
+</div>
+<div class="callout callout-info mr03-take fragment zoom-in" data-fragment-index="1"><strong class="mr03-t-info">한 줄 정리</strong><div class="mr03-muted">공개 경로는 Edge가 리전을 고르고, Route 53 latency는 private hosted zone의 내부 서비스 이름처럼 DNS가 직접 스위치인 곳에 씁니다.</div></div>
+  </div>
+</div>
 
 <div class="slide" data-remarp-id="s3">
-  <div class="slide-header" data-remarp-id="s3-header"><h2>Route53 Health Checks</h2></div>
+  <div class="slide-header" data-remarp-id="s3-header"><h2>헬스체크는 internal ALB를 못 본다</h2></div>
   <div class="slide-body" data-remarp-id="s3-body">
-    <p><!-- Slide 4: Route53 Health Checks --></p>
-<div class="col-2" style="gap:1.5rem; align-items:start;">
-  <!-- Public DNS -->
-  <div class="card" style="padding:1rem;" data-fragment-index="1">
-    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.8rem;">
-      <img src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" style="width:32px;">
-      <h4 style="margin:0; color:#FF9900;">Public DNS</h4>
-    </div>
-    <div style="font-family:monospace; font-size:0.85rem; background:rgba(0,0,0,0.3); padding:0.6rem; border-radius:4px; margin-bottom:0.8rem;">
-      <span style="color:#00d68f;">mall.example.com</span>
-    </div>
-    <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">
-      <div><strong>Type:</strong> CNAME</div>
-      <div><strong>Target:</strong> d1234567890.cloudfront.net</div>
-      <div><strong>Health Check:</strong> None (CloudFront handles)</div>
-    </div>
+    <p><!-- Slide 4: 헬스체크 --></p>
+<div class="mr03-split">
+  <div class="mr03-grid2" data-reveal="stagger">
+    <div class="metric-card"><strong class="mr03-t-accent">판정 규칙</strong><div class="mr03-muted">전 세계 checker 중 18% 초과가 healthy라고 보고하면 healthy</div></div>
+    <div class="metric-card"><strong class="mr03-t-accent">간격, 임계값</strong><div class="mr03-muted">간격 10초(fast, 유료 옵션) 또는 30초, 생성 후 변경 불가. 연속 실패 1~10 (기본 3)</div></div>
+    <div class="metric-card"><strong class="mr03-t-info">HTTP(S) 기준</strong><div class="mr03-muted">TCP 연결 4초 이내, 연결 후 2초 이내 2xx/3xx. HTTPS 체크는 인증서를 검증하지 않음</div></div>
+    <div class="metric-card"><strong class="mr03-t-warning">VPC 내부 대상</strong><div class="mr03-muted">checker는 VPC 밖에 있음. internal ALB는 CloudWatch alarm 기반 health check로 감시</div></div>
   </div>
-
-  <!-- Internal API DNS -->
-  <div class="card" style="padding:1rem;" data-fragment-index="2">
-    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.8rem;">
-      <img src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" style="width:32px;">
-      <h4 style="margin:0; color:#00cec9;">Internal API DNS</h4>
+  <div class="mr03-calc">
+    <div class="mr03-row"><label>판정 주기</label><div class="mr03-btns" id="mr03-hc-int"><button class="btn btn-sm" data-v="10">10초 fast</button><button class="btn btn-sm active" data-v="30">30초</button><button class="btn btn-sm" data-v="60">alarm 1분</button></div></div>
+    <div class="mr03-row"><label for="mr03-hc-th">연속 실패</label><div class="slider-container"><input type="range" id="mr03-hc-th" min="1" max="10" step="1" value="3"><span class="slider-value" id="mr03-hc-th-v">3회</span></div></div>
+    <div class="mr03-row"><label for="mr03-hc-ttl">레코드 TTL</label><div class="slider-container"><input type="range" id="mr03-hc-ttl" min="10" max="300" step="10" value="60"><span class="slider-value" id="mr03-hc-ttl-v">60초</span></div></div>
+    <div class="card-grid">
+      <div class="metric-card"><div class="metric-value" id="mr03-hc-det">-</div><div class="metric-label">감지 (주기 × 횟수)</div></div>
+      <div class="metric-card"><div class="metric-value" id="mr03-hc-tot">-</div><div class="metric-label">DNS 전환 근사 (+TTL)</div></div>
     </div>
-    <div style="font-family:monospace; font-size:0.85rem; background:rgba(0,0,0,0.3); padding:0.6rem; border-radius:4px; margin-bottom:0.8rem;">
-      <span style="color:#00d68f;">api-internal.example.com</span>
-    </div>
-    <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">
-      <div><strong>Type:</strong> A Record (Latency-based)</div>
-      <div><strong>Targets:</strong></div>
-      <div style="margin-left:1rem;">• us-east-1 NLB IP</div>
-      <div style="margin-left:1rem;">• us-west-2 NLB IP</div>
-      <div><strong>Health Check:</strong> HTTP 200 on /health</div>
-    </div>
-  </div>
-</div>
-
-<!-- Health Check Details -->
-<div class="card" style="margin-top:1rem; padding:1rem; border-left:3px solid var(--green);" data-fragment-index="3">
-  <h4 style="margin:0 0 0.5rem; color:var(--green);">Health Check Parameters</h4>
-  <div class="flow-h" style="gap:2rem; flex-wrap:wrap;">
-    <div style="font-size:0.85rem;">
-      <span style="color:var(--text-muted);">Endpoint:</span>
-      <code>/health</code>
-    </div>
-    <div style="font-size:0.85rem;">
-      <span style="color:var(--text-muted);">Protocol:</span>
-      <code>HTTPS:443</code>
-    </div>
-    <div style="font-size:0.85rem;">
-      <span style="color:var(--text-muted);">Interval:</span>
-      <code>30s</code>
-    </div>
-    <div style="font-size:0.85rem;">
-      <span style="color:var(--text-muted);">Failure Threshold:</span>
-      <code>3</code>
-    </div>
-    <div style="font-size:0.85rem;">
-      <span style="color:var(--text-muted);">Regions:</span>
-      <code>us-east-1, us-west-2, eu-west-1</code>
-    </div>
+    <div class="mr03-note">AWS 블로그의 근사식 Failover = TTL + Interval × Threshold. resolver가 TTL을 지키지 않거나 alarm 평가 지연이 있으면 더 길어집니다. 요금: AWS endpoint 체크 $0.50/월, 옵션 기능(HTTPS, fast 등)마다 $1.00/월.</div>
   </div>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s4">
-  <div class="slide-header" data-remarp-id="s4-header"><h2>CloudFront Distribution</h2></div>
+  <div class="slide-header" data-remarp-id="s4-header"><h2>절체 스위치는 데이터 플레인에 둔다</h2></div>
   <div class="slide-body" data-remarp-id="s4-body">
-    <div class="tab-bar">
-            <button class="tab-btn active" data-tab="api-behavior">API Behavior</button>
-      <button class="tab-btn" data-tab="static-behavior">Static Behavior</button>
-      <button class="tab-btn" data-tab="spa-fallback">SPA Fallback</button>
-    </div>
-        <div class="tab-content active" data-tab="api-behavior">
-<div class="code-block">Path Pattern: /api/*
-<span class="key">Origin</span>: api-internal.example.com (NLB)
-Cache Policy: CachingDisabled
-<span class="comment">  # No caching for dynamic API responses</span>
-Origin Request Policy: AllViewerExceptHostHeader
-<span class="comment">  # Forward all headers except Host</span>
-Allowed Methods: GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE
-<span class="comment">  # All HTTP methods for REST API</span>
-Viewer Protocol: HTTPS only
-<span class="key">Compress</span>: <span class="keyword">true</span></div>
+    <p><!-- Slide 5: Route 53 ARC --></p>
+<div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
+  <button class="tab-btn active">Routing control</button>
+  <button class="tab-btn">Region switch</button>
+  <button class="tab-btn">Readiness check 종료</button>
 </div>
-    <div class="tab-content" data-tab="static-behavior">
-<div class="code-block">Path Pattern: /static/*
-<span class="key">Origin</span>: mall-static-assets.s3.amazonaws.com
-Cache Policy: CachingOptimized
-  <span class="key">TTL</span>: 86400 (24 hours)
-<span class="comment">  # Long cache for immutable assets</span>
-Origin Access: OAC (Origin Access Control)
-<span class="comment">  # S3 bucket not publicly accessible</span>
-Allowed Methods: GET, HEAD
-Viewer Protocol: HTTPS only
-<span class="key">Compress</span>: <span class="keyword">true</span></div>
+<div class="tc">
+  <div class="card-grid">
+    <div class="metric-card"><strong class="mr03-t-accent">on/off 스위치</strong><div class="mr03-muted">routing control 상태가 Route 53 health check로 노출되어 failover 레코드를 움직임</div></div>
+    <div class="metric-card"><strong class="mr03-t-accent">클러스터</strong><div class="mr03-muted">5개 리전 엔드포인트로 상태 조회, 변경. 한 리전이 장애여도 다른 엔드포인트 사용</div></div>
+    <div class="metric-card"><strong class="mr03-t-info">safety rule</strong><div class="mr03-muted">"최소 1개 ON" 같은 assertion, gating 규칙으로 두 리전을 동시에 끄는 실수 방지</div></div>
+    <div class="metric-card"><strong class="mr03-t-warning">요금</strong><div class="mr03-muted">클러스터 $2.50/시간 (계정당 최대 2개). 여러 routing control을 한 클러스터에</div></div>
+  </div>
 </div>
-    <div class="tab-content" data-tab="spa-fallback">
-<div class="code-block">Path Pattern: /* (Default)
-<span class="key">Origin</span>: mall-static-assets.s3.amazonaws.com
-Cache Policy: CachingOptimized
-Custom Error Response:
-  Error Code: 403, 404
-  Response Page: /index.html
-  Response Code: 200
-<span class="comment">  # SPA client-side routing support</span></div>
+<div class="tc" hidden>
+  <div class="card-grid">
+    <div class="metric-card"><strong class="mr03-t-success">plan = workflow</strong><div class="mr03-muted">activate/deactivate workflow 안에 execution block을 순차, 병렬로 배치. active/passive, active/active 모두</div></div>
+    <div class="metric-card"><strong class="mr03-t-success">execution block 예</strong><div class="mr03-muted">Route 53 health check, routing control, Aurora Global DB, EKS resource scaling, Lambda custom action, manual approval</div></div>
+    <div class="metric-card"><strong class="mr03-t-info">활성화할 리전에서 실행</strong><div class="mr03-muted">Regional data plane 구조라 장애 리전에 의존하지 않음. CloudWatch alarm으로 자동 트리거 가능</div></div>
+    <div class="metric-card"><strong class="mr03-t-warning">요금, 연결점</strong><div class="mr03-muted">plan당 $70/월. 우리 구조에서는 Lambda block이 KVS의 활성 리전 값을 바꾸는 설계가 가능 (설계 예시)</div></div>
+  </div>
 </div>
+<div class="tc" hidden>
+  <div class="card-grid">
+    <div class="callout callout-warning"><strong class="mr03-t-warning">2026-04-30부터 신규 고객 불가</strong><div class="mr03-muted">ARC readiness check는 신규 가입이 닫혔고 기존 고객은 계속 사용 가능</div></div>
+    <div class="callout callout-info"><strong class="mr03-t-info">새 설계에서는</strong><div class="mr03-muted">Region switch plan과 정기 연습, 리전별 capacity alarm으로 "절체 가능한 상태"를 확인</div></div>
+    <div class="callout callout-success"><strong class="mr03-t-success">Route 53 accelerated recovery</strong><div class="mr03-muted">2025-11 출시. us-east-1 장애 시 대부분 1시간 안에 public hosted zone 레코드 변경을 복구, 추가 비용 없음</div></div>
+  </div>
+</div>
+<div class="callout callout-info mr03-take fragment zoom-in" data-fragment-index="1"><strong class="mr03-t-info">한 줄 정리</strong><div class="mr03-muted">장애 시 control plane API(레코드 편집, 배포)에 기대지 말고, 미리 만든 스위치의 상태만 바꾸세요.</div></div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s5">
-  <div class="slide-header" data-remarp-id="s5-header"><h2>CloudFront Origin Shield</h2></div>
+  <div class="slide-header" data-remarp-id="s5-header"><h2>Behavior: 캐시할 것과 안 할 것</h2></div>
   <div class="slide-body" data-remarp-id="s5-body">
-    <div class="columns">
-<div class="col">
-<h3>What is Origin Shield?</h3>
-<ul><li class="fragment fade-in" data-fragment-index="2"><strong>Additional caching layer</strong> at regional edge</li><li class="fragment fade-in" data-fragment-index="3">Positioned between edge locations and origin</li><li class="fragment fade-in" data-fragment-index="4">Single point of origin contact per region</li></ul>
-<div class="fragment fade-in" data-fragment-index="0"><h3>Configuration</h3>
-<div class="code-block">Origin Shield Region: us-east-1
-<span class="comment">  # Closest to primary origin</span>
-<span class="key">Enabled</span>: <span class="keyword">true</span></div>
-</div><div class="fragment fade-in" data-fragment-index="1"><h3>How It Works</h3>
-<div class="code-block">User → Edge Location → Origin Shield → Origin
-         (400+ PoPs)    (1 region)     (NLB)</div>
-</div><div class="col">
-</div><h3>Benefits</h3>
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="api">/api/*</button>
+      <button class="tab-btn" data-tab="static">/static/*</button>
+      <button class="tab-btn" data-tab="default">Default (*)</button>
+    </div>
+        <div class="tab-content active" data-tab="api">
+<p>동적 API: 캐시 끄고, 함수가 리전을 고른 origin group으로</p>
+<div class="code-block"><span class="key">PathPattern</span>: /api/*
+<span class="key">TargetOriginId</span>: og-api            # origin group (alb-use1, alb-usw2)
+<span class="key">CachePolicy</span>: Managed-CachingDisabled
+<span class="key">OriginRequestPolicy</span>: Managed-AllViewerExceptHostHeader
+<span class="key">AllowedMethods</span>: [GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE]
+<span class="key">ViewerProtocolPolicy</span>: redirect-to-https
+<span class="key">FunctionAssociations</span>:
+  - EventType: viewer-request
+    <span class="key">Function</span>: mr-region-router    # KVS 연결, 앞 슬라이드 코드</div>
 </div>
+    <div class="tab-content" data-tab="static">
+<p>버전이 붙은 정적 자산: 길게 캐시, S3는 OAC로만</p>
+<div class="code-block"><span class="key">PathPattern</span>: /static/*
+<span class="key">TargetOriginId</span>: s3-assets         # OAC, 버킷 public access 차단
+<span class="key">CachePolicy</span>: Managed-CachingOptimized   # 기본 TTL 1일
+<span class="key">AllowedMethods</span>: [GET, HEAD]
+<span class="key">Compress</span>: <span class="keyword">true</span>
+<span class="key">ViewerProtocolPolicy</span>: redirect-to-https
+<span class="comment"># 파일명에 해시를 넣어 배포마다 새 URL (invalidation 최소화)</span></div>
+</div>
+    <div class="tab-content" data-tab="default">
+<p>SPA 라우팅: custom error response 대신 함수로 rewrite</p>
+<div class="code-block"><span class="key">PathPattern</span>: <span class="string">"*"</span>                  # default behavior
+<span class="key">TargetOriginId</span>: s3-assets
+<span class="key">CachePolicy</span>: Managed-CachingOptimized
+<span class="key">FunctionAssociations</span>:
+  - EventType: viewer-request
+    <span class="key">Function</span>: spa-rewrite         # 확장자 없는 경로 → /index.html
+<span class="comment"># CustomErrorResponses(403/404 → 200 index.html)는 배포 전체에 적용되어</span>
+<span class="comment"># /api/*의 404까지 HTML 200으로 바꿔 버림</span></div>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s6">
-  <div class="slide-header" data-remarp-id="s6-header"><h2>CloudFront Origin Failover</h2></div>
+  <div class="slide-header" data-remarp-id="s6-header"><h2>Origin 잠금: VPC origin과 SG</h2></div>
   <div class="slide-body" data-remarp-id="s6-body">
-    <p><!-- Slide 7: CloudFront Origin Failover --></p>
-<div class="flow-v" style="gap:1rem; padding:0.5rem;">
-  <!-- Origin Group -->
-  <div class="card" style="padding:1rem; border-left:3px solid var(--accent);" data-fragment-index="1">
-    <h4 style="margin:0 0 0.8rem; color:var(--accent);">Origin Group: api-origin-group</h4>
-    <div class="flow-h" style="gap:2rem; justify-content:center;">
-      <div class="flow-box bg-green" style="min-width:180px; padding:0.8rem;">
-        <div style="font-size:0.7rem; color:rgba(255,255,255,0.6); margin-bottom:0.3rem;">Primary Origin</div>
-        <div style="font-weight:600;">api-internal.example.com</div>
-        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem;">us-east-1 NLB (via Route53)</div>
-      </div>
-      <div class="flow-arrow" style="color:var(--text-muted);">failover →</div>
-      <div class="flow-box bg-orange" style="min-width:180px; padding:0.8rem;">
-        <div style="font-size:0.7rem; color:rgba(255,255,255,0.6); margin-bottom:0.3rem;">Secondary Origin</div>
-        <div style="font-weight:600;">api-secondary.example.com</div>
-        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem;">us-west-2 NLB (direct)</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Failover Criteria -->
-  <div class="col-2" style="gap:1rem;">
-    <div class="card" style="padding:1rem;" data-fragment-index="2">
-      <h4 style="margin:0 0 0.5rem; color:var(--cyan);">Failover Triggers</h4>
-      <ul style="margin:0; padding-left:1.2rem; font-size:0.85rem; line-height:1.8;">
-        <li>HTTP 500, 502, 503, 504</li>
-        <li>Connection timeout</li>
-        <li>Origin not reachable</li>
-      </ul>
-    </div>
-    <div class="card" style="padding:1rem;" data-fragment-index="3">
-      <h4 style="margin:0 0 0.5rem; color:var(--green);">Failover Speed</h4>
-      <ul style="margin:0; padding-left:1.2rem; font-size:0.85rem; line-height:1.8;">
-        <li><strong>Sub-second switching</strong></li>
-        <li>No DNS propagation delay</li>
-        <li>Automatic recovery on primary health</li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- Note -->
-  <div style="padding:0.6rem 1rem; background:rgba(255,153,0,0.1); border-radius:6px; font-size:0.8rem; text-align:center;" data-fragment-index="4">
-    <strong style="color:#FF9900;">Note:</strong> Origin Failover operates at CloudFront level, independent of Route53 health checks.
-    Both layers provide redundancy.
+    <p><!-- Slide 7: VPC origin + 잠금 --></p>
+<div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
+  <button class="tab-btn active">준비 조건</button>
+  <button class="tab-btn">SG 설계</button>
+  <button class="tab-btn">제약 사항</button>
+  <button class="tab-btn">가드레일</button>
+</div>
+<div class="tc">
+  <div class="card-grid">
+    <div class="metric-card"><strong class="mr03-t-accent">Internet gateway</strong><div class="mr03-muted">VPC에 붙어 있어야 함. "인터넷 트래픽을 받는 VPC" 표시용이며 origin 라우팅에는 쓰지 않음</div></div>
+    <div class="metric-card"><strong class="mr03-t-accent">private subnet IP</strong><div class="mr03-muted">CloudFront가 service-managed ENI를 만들 IPv4 1개 이상 (dual-stack이면 IPv6도)</div></div>
+    <div class="metric-card"><strong class="mr03-t-info">ALB Active 후 생성</strong><div class="mr03-muted">VPC origin은 Deployed까지 최대 15분. ALB, NLB, EC2 지원 (GWLB, TLS listener NLB 불가)</div></div>
+    <div class="metric-card"><strong class="mr03-t-warning">AZ 예외</strong><div class="mr03-muted">us-east-1은 use1-az3 제외, us-west-2는 전체 지원. ALB subnet AZ ID를 확인</div></div>
   </div>
 </div>
+<div class="tc" hidden>
+  <div class="card-grid">
+    <div class="callout callout-success"><strong class="mr03-t-success">권장: Service SG 참조</strong><div class="mr03-muted"><code>CloudFront-VPCOrigins-Service-SG</code>를 소스로. 내 distribution 트래픽으로만 제한되어 가장 엄격 (VPC origin 생성 후 가능, 이 SG는 편집 금지)</div></div>
+    <div class="callout callout-info"><strong class="mr03-t-info">대안: managed prefix list</strong><div class="mr03-muted"><code>com.amazonaws.global.<wbr>cloudfront.<wbr>origin-facing</code> (dual-stack은 ipv6 목록도). 모든 CloudFront 고객의 origin-facing IP라 더 넓음</div></div>
+    <div class="callout callout-warning"><strong class="mr03-t-warning">prefix list weight 55</strong><div class="mr03-muted">SG 기본 60 rules 중 55 사용. HTTP, HTTPS 두 규칙이면 110이라 quota 초과, 443 하나만 열기</div></div>
+  </div>
+</div>
+<div class="tc" hidden>
+  <table class="data-table mr03-table">
+    <thead><tr><th>항목</th><th>VPC origin에서</th><th>대응</th></tr></thead>
+    <tbody>
+      <tr><td>gRPC</td><td>미지원</td><td>gRPC는 별도 경로 설계 (예외 심사)</td></tr>
+      <tr><td>Lambda@Edge origin request/response</td><td>미지원</td><td>origin 선택은 viewer request CloudFront Function으로</td></tr>
+      <tr><td><code>updateRequestOrigin()</code></td><td>요청 실패</td><td><code>selectRequestOriginById()</code>, <code>createRequestOriginGroup()</code></td></tr>
+      <tr><td>NACL</td><td>inbound 미평가, outbound는 평가</td><td>반환 경로용 ephemeral TCP 1024~65535 outbound 허용</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="tc" hidden>
+  <div class="card-grid">
+    <div class="metric-card"><strong class="mr03-t-danger">ALB scheme</strong><div class="mr03-muted">항상 <code>internal</code>. internet-facing LB는 생성 자체를 IaC 정책 검사에서 차단</div></div>
+    <div class="metric-card"><strong class="mr03-t-danger">public IP</strong><div class="mr03-muted">EC2, EKS 노드, ECS task에 public IP, EIP 금지. subnet 자동 할당도 끔</div></div>
+    <div class="metric-card"><strong class="mr03-t-danger">SG ingress</strong><div class="mr03-muted">0.0.0.0/0, ::/0 금지. 소스는 SG 참조 또는 사설 CIDR만, 배포 후 AWS Config로 상시 점검</div></div>
+  </div>
+</div>
+<div class="callout callout-info mr03-take fragment zoom-in" data-fragment-index="1"><strong class="mr03-t-info">한 줄 정리</strong><div class="mr03-muted">ALB를 private subnet에 숨기고, SG는 VPC origin Service SG에서 443만 받으면 WAF를 우회할 경로가 사라집니다.</div></div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s7">
-  <div class="slide-header" data-remarp-id="s7-header"><h2>WAF Rule Stack</h2></div>
+  <div class="slide-header" data-remarp-id="s7-header"><h2>Origin Shield: 캐시될 때만 이득</h2></div>
   <div class="slide-body" data-remarp-id="s7-body">
-    <p><!-- Slide 8: WAF Rule Stack --></p>
-<div class="flow-v" style="gap:0.5rem; padding:0.3rem;">
-  <!-- Layer 5: Top -->
-  <div class="card" style="padding:0.7rem 1rem; border-left:3px solid #EF4444;" data-fragment-index="1">
-    <div class="flow-h" style="justify-content:space-between; align-items:center;">
-      <div>
-        <span style="font-size:0.7rem; color:rgba(255,255,255,0.5);">Priority 1</span>
-        <h4 style="margin:0.2rem 0 0; font-size:0.95rem;">GeoRestriction</h4>
-      </div>
-      <div style="text-align:right; font-size:0.8rem;">
-        <div style="color:var(--green);">Allow: KR, US, JP</div>
-        <div style="color:var(--red);">Block: All others</div>
-      </div>
+    <p><!-- Slide 8: Origin Shield --></p>
+<div class="mr03-split">
+  <div class="mr03-stack">
+    <div class="flow-h mr03-flow">
+      <div class="flow-group"><div class="flow-group-label">Edge</div><div class="flow-box">서울, 도쿄, 시애틀 PoP</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-group"><div class="flow-group-label">Regional edge cache</div><div class="flow-box">여러 REC</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-group"><div class="flow-group-label">Origin Shield</div><div class="flow-box">us-east-1<br>(origin과 같은 리전)</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-group"><div class="flow-group-label">Origin</div><div class="flow-box">ALB, S3</div></div>
     </div>
+    <div class="metric-card"><strong class="mr03-t-accent">origin마다 지정</strong><div class="mr03-muted">origin group이면 alb-use1은 us-east-1, alb-usw2는 us-west-2로 각자 Shield 리전을 둠</div></div>
   </div>
-
-  <div class="flow-arrow" style="font-size:1rem; color:var(--text-muted);">↓</div>
-
-  <div class="card" style="padding:0.7rem 1rem; border-left:3px solid #F59E0B;" data-fragment-index="2">
-    <div class="flow-h" style="justify-content:space-between; align-items:center;">
-      <div>
-        <span style="font-size:0.7rem; color:rgba(255,255,255,0.5);">Priority 2</span>
-        <h4 style="margin:0.2rem 0 0; font-size:0.95rem;">RateLimit</h4>
-      </div>
-      <div style="text-align:right; font-size:0.8rem;">
-        <div><strong>2,000</strong> requests / 5 min / IP</div>
-        <div style="color:var(--text-muted);">Action: Block</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="flow-arrow" style="font-size:1rem; color:var(--text-muted);">↓</div>
-
-  <div class="card" style="padding:0.7rem 1rem; border-left:3px solid #3B82F6;" data-fragment-index="3">
-    <div class="flow-h" style="justify-content:space-between; align-items:center;">
-      <div>
-        <span style="font-size:0.7rem; color:rgba(255,255,255,0.5);">Priority 3</span>
-        <h4 style="margin:0.2rem 0 0; font-size:0.95rem;">AWSManagedRulesKnownBadInputsRuleSet</h4>
-      </div>
-      <div style="text-align:right; font-size:0.8rem;">
-        <div style="color:var(--text-muted);">Log4j, SSRF, etc.</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="flow-arrow" style="font-size:1rem; color:var(--text-muted);">↓</div>
-
-  <div class="card" style="padding:0.7rem 1rem; border-left:3px solid #8B5CF6;" data-fragment-index="4">
-    <div class="flow-h" style="justify-content:space-between; align-items:center;">
-      <div>
-        <span style="font-size:0.7rem; color:rgba(255,255,255,0.5);">Priority 4</span>
-        <h4 style="margin:0.2rem 0 0; font-size:0.95rem;">AWSManagedRulesSQLiRuleSet</h4>
-      </div>
-      <div style="text-align:right; font-size:0.8rem;">
-        <div style="color:var(--text-muted);">SQL Injection patterns</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="flow-arrow" style="font-size:1rem; color:var(--text-muted);">↓</div>
-
-  <div class="card" style="padding:0.7rem 1rem; border-left:3px solid #10B981;" data-fragment-index="5">
-    <div class="flow-h" style="justify-content:space-between; align-items:center;">
-      <div>
-        <span style="font-size:0.7rem; color:rgba(255,255,255,0.5);">Priority 5</span>
-        <h4 style="margin:0.2rem 0 0; font-size:0.95rem;">AWSManagedRulesCommonRuleSet</h4>
-      </div>
-      <div style="text-align:right; font-size:0.8rem;">
-        <div style="color:var(--text-muted);">OWASP Top 10</div>
-      </div>
-    </div>
+  <div class="mr03-stack">
+    <div class="callout callout-warning fragment fade-left" data-fragment-index="1"><strong class="mr03-t-warning">동적 요청은 항상 과금</strong><div class="mr03-muted">PUT, POST, PATCH, DELETE와 TTL 3600초 미만 또는 캐시 비활성 GET, HEAD는 Shield가 언제나 추가 계층</div></div>
+    <div class="callout callout-success fragment fade-left" data-fragment-index="2"><strong class="mr03-t-success">캐시 요청은 일부만 과금</strong><div class="mr03-muted">Shield와 같은 리전의 REC에서 오는 요청은 Shield를 건너뛰어 무과금, 다른 리전 REC에서 올 때만 과금</div></div>
+    <div class="callout callout-info fragment zoom-in" data-fragment-index="3"><strong class="mr03-t-info">판단</strong><div class="mr03-muted">/static/*은 켬. /api/*는 모든 요청이 과금 대상이므로 지연 개선을 측정한 뒤 결정. 미국 요금 $0.0075/10K</div></div>
   </div>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s8">
-  <div class="slide-header" data-remarp-id="s8-header"><h2>WAF Custom Rules — Terraform</h2></div>
+  <div class="slide-header" data-remarp-id="s8-header"><h2>Origin failover는 GET만 구한다</h2></div>
   <div class="slide-body" data-remarp-id="s8-body">
-    <p><!-- Slide 9: WAF Custom Rules (Terraform) --></p>
-<div class="code-block" style="font-size:0.75rem; max-height:420px; overflow-y:auto;">
-<span class="comment"># Rate Limiting Rule</span>
-<span class="key">resource</span> <span class="string">"aws_wafv2_web_acl"</span> <span class="string">"mall_waf"</span> {
-  <span class="key">name</span>  = <span class="string">"mall-waf-acl"</span>
-  <span class="key">scope</span> = <span class="string">"CLOUDFRONT"</span>
-
-  <span class="key">rule</span> {
-    <span class="key">name</span>     = <span class="string">"RateLimitRule"</span>
-    <span class="key">priority</span> = <span class="value">2</span>
-
-    <span class="key">action</span> { <span class="key">block</span> {} }
-
-    <span class="key">statement</span> {
-      <span class="key">rate_based_statement</span> {
-        <span class="key">limit</span>              = <span class="value">2000</span>
-        <span class="key">aggregate_key_type</span> = <span class="string">"IP"</span>
-      }
-    }
-
-    <span class="key">visibility_config</span> {
-      <span class="key">sampled_requests_enabled</span>   = <span class="value">true</span>
-      <span class="key">cloudwatch_metrics_enabled</span> = <span class="value">true</span>
-      <span class="key">metric_name</span>                = <span class="string">"RateLimitRule"</span>
-    }
-  }
-
-  <span class="comment"># Geo Restriction Rule</span>
-  <span class="key">rule</span> {
-    <span class="key">name</span>     = <span class="string">"GeoRestriction"</span>
-    <span class="key">priority</span> = <span class="value">1</span>
-
-    <span class="key">action</span> { <span class="key">block</span> {} }
-
-    <span class="key">statement</span> {
-      <span class="key">not_statement</span> {
-        <span class="key">statement</span> {
-          <span class="key">geo_match_statement</span> {
-            <span class="key">country_codes</span> = [<span class="string">"KR"</span>, <span class="string">"US"</span>, <span class="string">"JP"</span>]
-          }
-        }
-      }
-    }
-  }
-}
+    <p><!-- Slide 9: Origin failover 시뮬레이터 --></p>
+<div class="mr03-split">
+  <div class="mr03-calc">
+    <div class="mr03-row"><label>viewer 메서드</label><div class="mr03-btns" id="mr03-fo-m"><button class="btn btn-sm active" data-v="GET">GET /api/catalog</button><button class="btn btn-sm" data-v="POST">POST /api/orders</button></div></div>
+    <div class="mr03-row"><label>primary 응답</label><div class="mr03-btns" id="mr03-fo-s"><button class="btn btn-sm" data-v="200">200</button><button class="btn btn-sm active" data-v="503">503</button><button class="btn btn-sm" data-v="timeout">연결 timeout</button></div></div>
+    <div class="mr03-out" id="mr03-fo-out" aria-live="polite"></div>
+  </div>
+  <div class="mr03-stack" data-reveal="stagger">
+    <div class="metric-card"><strong class="mr03-t-accent">조건</strong><div class="mr03-muted">설정한 상태 코드(예: 500, 502, 503, 504) 또는 연결 실패, timeout. viewer 메서드가 GET, HEAD, OPTIONS일 때만</div></div>
+    <div class="metric-card"><strong class="mr03-t-warning">stateless</strong><div class="mr03-muted">health 상태를 기억하지 않아 모든 요청이 primary부터 시도. 장애 중에는 요청마다 지연이 붙음</div></div>
+    <div class="metric-card"><strong class="mr03-t-info">timeout 튜닝</strong><div class="mr03-muted">connection attempts 1~3 (기본 3) × connection timeout 1~10초 (기본 10) → 기본값이면 넘어가기까지 최대 약 30초</div></div>
+  </div>
 </div>
+<div class="callout callout-danger mr03-take fragment zoom-in" data-fragment-index="1"><strong class="mr03-t-danger">쓰기 요청은 앱이 책임</strong><div class="mr03-muted">POST /api/orders는 primary 오류가 그대로 사용자에게 갑니다. idempotency key + client retry, 그리고 KVS 활성 리전 전환으로 새 요청을 옮기세요.</div></div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s9">
-  <div class="slide-header" data-remarp-id="s9-header"><h2>Block everything else</h2></div>
+  <div class="slide-header" data-remarp-id="s9-header"><h2>WAF 순서: 넓게 거르고 좁게 본다</h2></div>
   <div class="slide-body" data-remarp-id="s9-body">
-    <div class="columns">
-<div class="col">
-<h3>Current Problem</h3>
-</div><div class="col">
-<h3>Solution: Scope-Down Rules</h3>
-</div>
+    <p><!-- Slide 10: WAF 규칙 스택 --></p>
+<div class="mr03-split">
+  <div class="mr03-prio fragment" data-reveal="stagger" data-reveal-anim="up" data-fragment-index="1">
+    <div class="mr03-prio-row"><span class="mr03-prio-num">0</span><span class="mr03-prio-name">IP allow/block set</span><span class="mr03-muted">운영팀 명시 결정, 가장 먼저</span></div>
+    <div class="mr03-prio-row"><span class="mr03-prio-num">1</span><span class="mr03-prio-name">Anti-DDoS AMR</span><span class="mr03-muted"><code>AWSManagedRulesAntiDDoSRuleSet</code>, 상단 배치, scope-down 금지</span></div>
+    <div class="mr03-prio-row"><span class="mr03-prio-num">2</span><span class="mr03-prio-name">Rate-based</span><span class="mr03-muted">window 60, 120, 300, 600초, 약 10초마다 평가</span></div>
+    <div class="mr03-prio-row"><span class="mr03-prio-num">3</span><span class="mr03-prio-name">IP reputation</span><span class="mr03-muted">AmazonIpReputationList, AnonymousIpList</span></div>
+    <div class="mr03-prio-row"><span class="mr03-prio-num">4</span><span class="mr03-prio-name">Exploit</span><span class="mr03-muted">CommonRuleSet, KnownBadInputs, SQLiRuleSet</span></div>
+    <div class="mr03-prio-row"><span class="mr03-prio-num">5</span><span class="mr03-prio-name">Bot Control + label 규칙</span><span class="mr03-muted">scope-down 적용, 뒤에서 label로 예외 처리</span></div>
+  </div>
+  <div class="mr03-stack">
+    <div class="metric-card fragment fade-left" data-fragment-index="2"><strong class="mr03-t-accent">scope CLOUDFRONT</strong><div class="mr03-muted">CloudFront용 web ACL은 us-east-1에서 생성. ALB용 REGIONAL ACL과 별개</div></div>
+    <div class="metric-card fragment fade-left" data-fragment-index="2"><strong class="mr03-t-info">WCU</strong><div class="mr03-muted">web ACL 기본 1,500 WCU. 초과 시 500 WCU마다 $0.20/M 요청 추가</div></div>
+    <div class="metric-card fragment fade-left" data-fragment-index="2"><strong class="mr03-t-warning">요금</strong><div class="mr03-muted">web ACL $5/월, 규칙 또는 rule group $1/월, 요청 $0.60/M</div></div>
+  </div>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s10">
-  <div class="slide-header" data-remarp-id="s10-header"><h2>Prefix-List Security</h2></div>
+  <div class="slide-header" data-remarp-id="s10-header"><h2>Bot Control은 Count로 시작한다</h2></div>
   <div class="slide-body" data-remarp-id="s10-body">
-    <p><!-- Slide 11: Prefix-List Security --></p>
-<div class="flow-v" style="gap:1rem; padding:0.5rem;">
-  <!-- Main Diagram -->
-  <div class="flow-h" style="justify-content:center; gap:1.5rem;">
-    <div class="flow-box bg-orange" style="padding:0.8rem 1.2rem;" data-fragment-index="1">
-      <div class="icon-item">
-        <img src="common/aws-icons/services/Arch_Amazon-CloudFront_48.svg" style="width:40px;">
-        <span>CloudFront</span>
-      </div>
-      <div style="font-size:0.7rem; color:rgba(255,255,255,0.6); margin-top:0.3rem;">400+ Edge Locations</div>
-    </div>
-    <div class="flow-arrow" data-fragment-index="2">→</div>
-    <div class="flow-box bg-green" style="padding:0.8rem 1.2rem;" data-fragment-index="2">
-      <div style="font-size:0.8rem; margin-bottom:0.3rem;">Security Group</div>
-      <div style="font-size:0.7rem; color:var(--green);">Prefix-list ONLY</div>
-    </div>
-    <div class="flow-arrow" data-fragment-index="2">→</div>
-    <div class="flow-box bg-blue" style="padding:0.8rem 1.2rem;" data-fragment-index="2">
-      <div class="icon-item">
-        <img src="common/aws-icons/services/Arch_Elastic-Load-Balancing_48.svg" style="width:40px;">
-        <span>NLB</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Security Group Details -->
-  <div class="col-2" style="gap:1rem;">
-    <div class="card" style="padding:1rem; border-left:3px solid var(--green);" data-fragment-index="3">
-      <h4 style="margin:0 0 0.5rem; color:var(--green);">Allowed (Prefix-List)</h4>
-      <div class="code-block" style="font-size:0.75rem; margin:0;">
-<span class="key">Inbound Rule</span>:
-  <span class="key">Type</span>: <span class="string">HTTPS (443)</span>
-  <span class="key">Source</span>: <span class="string">com.amazonaws.global.cloudfront.origin-facing</span>
-  <span class="comment"># AWS-managed prefix list</span>
-  <span class="comment"># Auto-updates with CloudFront IPs</span>
-      </div>
-    </div>
-    <div class="card" style="padding:1rem; border-left:3px solid var(--red);" data-fragment-index="4">
-      <h4 style="margin:0 0 0.5rem; color:var(--red);">Blocked</h4>
-      <div style="font-size:0.85rem; line-height:1.8;">
-        <div style="text-decoration:line-through; color:var(--text-muted);">0.0.0.0/0 (Any IP)</div>
-        <div style="text-decoration:line-through; color:var(--text-muted);">Direct ALB/NLB access</div>
-        <div style="text-decoration:line-through; color:var(--text-muted);">WAF bypass attempts</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Key Point -->
-  <div style="padding:0.8rem 1rem; background:rgba(239,68,68,0.1); border-radius:8px; border-left:3px solid var(--red);" data-fragment-index="5">
-    <div style="font-size:0.9rem; font-weight:600; color:var(--red); margin-bottom:0.3rem;">Zero 0.0.0.0/0 Policy</div>
-    <div style="font-size:0.85rem; color:var(--text-secondary);">
-      All traffic MUST pass through CloudFront + WAF. Direct access to NLB bypasses all security controls and is strictly prohibited.
-    </div>
+    <p><!-- Slide 11: Bot Control --></p>
+<div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
+  <button class="tab-btn active">레벨과 요금</button>
+  <button class="tab-btn">쇼핑몰의 함정</button>
+  <button class="tab-btn">Count 오버라이드</button>
+</div>
+<div class="tc">
+  <div class="card-grid">
+    <div class="metric-card"><strong class="mr03-t-accent">Common</strong><div class="mr03-muted">자기 신고형 봇, 검증된 봇 분류. 구독 $10/월, 월 10M 요청 무료, 이후 $1/M</div></div>
+    <div class="metric-card"><strong class="mr03-t-warning">Targeted</strong><div class="mr03-muted">정교한 봇 탐지. 월 1M 요청 무료, 이후 $10/M. flat-rate 플랜에서는 미지원</div></div>
+    <div class="metric-card"><strong class="mr03-t-success">verified bot</strong><div class="mr03-muted">검색 엔진 등은 차단하지 않고 <code>bot:verified</code> label만 붙임. web bot auth label은 v4.0 이상</div></div>
   </div>
 </div>
+<div class="tc" hidden>
+  <div class="card-grid">
+    <div class="callout callout-danger"><strong class="mr03-t-danger">모바일 앱</strong><div class="mr03-muted"><code>SignalNonBrowserUserAgent</code>는 기본 Block. 앱의 비브라우저 User-Agent가 막힘</div></div>
+    <div class="callout callout-warning"><strong class="mr03-t-warning">서버 간 호출</strong><div class="mr03-muted">결제사 webhook, 파트너 SDK, synthetic 모니터링이 HTTP library 분류로 잡힐 수 있음</div></div>
+    <div class="callout callout-info"><strong class="mr03-t-info">scope-down</strong><div class="mr03-muted">사람이 쓰는 경로만 검사 (예: /api/payments/webhook 제외). 탐지 범위와 Bot Control 요청 요금이 함께 줄어듦</div></div>
+  </div>
+</div>
+<div class="tc" hidden>
+  <pre class="mr03-code">"ManagedRuleGroupStatement": {
+  "VendorName": "AWS",
+  "Name": "AWSManagedRulesBotControlRuleSet",
+  "ManagedRuleGroupConfigs": [
+    { "AWSManagedRulesBotControlRuleSet": { "InspectionLevel": "COMMON" } }
+  ],
+  "RuleActionOverrides": [
+    { "Name": "SignalNonBrowserUserAgent", "ActionToUse": { "Count": {} } }
+  ]
+}
+// 다음 규칙: label awswaf:managed:aws:bot-control:signal:non_browser_user_agent
+//            AND NOT (앱 User-Agent) → Block</pre>
+  <div class="mr03-note">1) Count로 배포 → 2) WAF 로그에서 label 분포 확인 → 3) label + 조건으로 예외 규칙 → 4) Block 전환</div>
+</div>
+<div class="callout callout-info mr03-take fragment zoom-in" data-fragment-index="1"><strong class="mr03-t-info">한 줄 정리</strong><div class="mr03-muted">Bot Control의 결정은 label로 남기고, 차단은 우리가 쓴 다음 규칙이 하게 만드세요.</div></div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s11">
-  <div class="slide-header" data-remarp-id="s11-header"><h2>Global Accelerator vs CloudFront</h2></div>
-  <div class="slide-body" data-remarp-id="s11-body" data-compare-mode="side-by-side">
-    <div class="compare-toggle">
-            <button class="compare-btn active" data-compare="global-accelerator">Global Accelerator</button>
-      <button class="compare-btn" data-compare="cloudfront">CloudFront</button>
-    </div>
-    <div class="col-2" style="flex:1">
-            <div class="card compare-content active compare-highlight" data-compare="global-accelerator" data-remarp-id="s11-left">
-<h3 style="color:var(--text-accent);margin-bottom:.5rem">Global Accelerator</h3>
-<ul><li><strong>Anycast IP</strong> (2 static IPs globally)</li><li><strong>Protocols</strong>: TCP, UDP (Layer 4)</li><li><strong>Routing</strong>: Consistent endpoint routing</li><li><strong>Use Case</strong>: Non-HTTP, gaming, IoT</li><li><strong>Pricing</strong>: Per-flow ($0.025/hr + data)</li><li><strong>Caching</strong>: None (passthrough)</li><li><strong>WAF Integration</strong>: No</li></ul>
+  <div class="slide-header" data-remarp-id="s11-header"><h2>CloudFront와 GA는 층이 다르다</h2></div>
+  <div class="slide-body" data-remarp-id="s11-body">
+    <p><!-- Slide 12: GA vs CloudFront --></p>
+<div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
+  <button class="tab-btn active">비교표</button>
+  <button class="tab-btn">우리 선택</button>
 </div>
-      <div class="card compare-content active" data-compare="cloudfront" data-remarp-id="s11-right">
-<h3 style="color:var(--text-accent);margin-bottom:.5rem">CloudFront</h3>
-<ul><li><strong>DNS-based</strong> routing</li><li><strong>Protocols</strong>: HTTP/HTTPS only (Layer 7)</li><li><strong>Routing</strong>: Latency-based to edge</li><li><strong>Use Case</strong>: Web apps, APIs, static content</li><li><strong>Pricing</strong>: Per-request ($0.0085/10K) + data</li><li><strong>Caching</strong>: Yes (edge caching)</li><li><strong>WAF Integration</strong>: Yes (native)</li></ul>
+<div class="tc">
+  <table class="data-table mr03-table">
+    <thead><tr><th>항목</th><th><img class="mr03-ico" src="./common/aws-icons/services/Arch_Amazon-CloudFront_48.svg" alt="Amazon CloudFront">CloudFront</th><th><img class="mr03-ico" src="./common/aws-icons/services/Arch_AWS-Global-Accelerator_48.svg" alt="AWS Global Accelerator">Global Accelerator</th></tr></thead>
+    <tbody>
+      <tr><td>계층, 프로토콜</td><td>L7 HTTP(S), WebSocket</td><td>L4 TCP, UDP</td></tr>
+      <tr><td>입구 주소</td><td>DNS 이름 (Anycast static IP 옵션 있음)</td><td>고정 anycast IPv4 2개</td></tr>
+      <tr><td>캐시, WAF</td><td>Edge 캐시, WAF를 Edge에서 적용</td><td>캐시 없음, WAF는 뒤쪽 ALB에 붙임</td></tr>
+      <tr><td>리전 분배</td><td>origin group, CloudFront Function</td><td>traffic dial, endpoint weight, 자동 failover</td></tr>
+      <tr><td>private origin</td><td>VPC origin (ALB, NLB, EC2)</td><td>internal ALB endpoint (client IP 보존)</td></tr>
+      <tr><td>과금</td><td>요청 + 전송량, AWS origin fetch 무료</td><td>$0.025/시간 + DT-Premium (미국→미국 $0.015/GB) + public IPv4</td></tr>
+    </tbody>
+  </table>
 </div>
-    </div>
+<div class="tc" hidden>
+  <div class="card-grid">
+    <div class="callout callout-success"><strong class="mr03-t-success">쇼핑몰: CloudFront 단독</strong><div class="mr03-muted">HTTP(S) 트래픽, 정적 캐시, Edge WAF, VPC origin이 모두 필요</div></div>
+    <div class="callout callout-warning"><strong class="mr03-t-warning">GA는 예외 심사</strong><div class="mr03-muted">비HTTP(TCP/UDP) 요구가 생기면 별도 공개 입구가 되므로 보안 검토 후 결정</div></div>
+    <div class="callout callout-info"><strong class="mr03-t-info">고정 IP 요구</strong><div class="mr03-muted">파트너 방화벽 allowlist 때문이라면 CloudFront Anycast static IP를 먼저 검토</div></div>
+  </div>
+</div>
+<div class="callout callout-info mr03-take fragment zoom-in" data-fragment-index="1"><strong class="mr03-t-info">한 줄 정리</strong><div class="mr03-muted">HTTP라면 CloudFront, 비HTTP라면 GA. 둘 다 쓰면 공개 입구가 두 개가 된다는 사실부터 인정하세요.</div></div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s12">
-  <div class="slide-header" data-remarp-id="s12-header"><h2>When to Use Each</h2></div>
+  <div class="slide-header" data-remarp-id="s12-header"><h2>Edge 비용: 종량제 vs 정액제</h2></div>
   <div class="slide-body" data-remarp-id="s12-body">
-    <p><!-- Slide 13: When to Use Each --></p>
-<div class="flow-v" style="gap:0.8rem; padding:0.5rem; align-items:center;">
-  <!-- Decision Start -->
-  <div class="flow-box bg-blue" style="padding:0.8rem 1.5rem;" data-fragment-index="1">
-    <span style="font-weight:600;">Need Global Traffic Distribution?</span>
-  </div>
-
-  <div class="flow-arrow" style="font-size:1.2rem;">↓ Yes</div>
-
-  <!-- First Decision -->
-  <div class="flow-h" style="gap:2rem; justify-content:center;">
-    <div class="flow-v" style="gap:0.5rem; align-items:center;" data-fragment-index="2">
-      <div class="flow-box bg-orange" style="padding:0.6rem 1rem;">
-        <span>Need Edge Caching?</span>
-      </div>
-      <div class="flow-arrow">↓ Yes</div>
-      <div class="flow-box bg-green" style="padding:0.8rem 1.2rem;">
-        <img src="common/aws-icons/services/Arch_Amazon-CloudFront_48.svg" style="width:32px;">
-        <span style="font-weight:600;">CloudFront</span>
-      </div>
+    <p><!-- Slide 13: Edge 비용 계산기 --></p>
+<div class="mr03-calc">
+  <div class="mr03-split">
+    <div class="mr03-stack">
+      <div class="mr03-row"><label for="mr03-c-req">월 요청 수</label><div class="slider-container"><input type="range" id="mr03-c-req" min="10" max="500" step="10" value="100"><span class="slider-value" id="mr03-c-req-v">100M</span></div></div>
+      <div class="mr03-row"><label for="mr03-c-tb">월 전송량</label><div class="slider-container"><input type="range" id="mr03-c-tb" min="1" max="10" step="1" value="5"><span class="slider-value" id="mr03-c-tb-v">5TB</span></div></div>
+      <div class="mr03-row"><label for="mr03-c-bot">Bot Control</label><label><input type="checkbox" id="mr03-c-bot" checked> Common, 전체 요청 검사</label></div>
+      <div class="mr03-note" id="mr03-c-break"></div>
     </div>
-
-    <div class="flow-v" style="gap:0.5rem; align-items:center;" data-fragment-index="3">
-      <div class="flow-box bg-orange" style="padding:0.6rem 1rem;">
-        <span>Need TCP/UDP?</span>
-      </div>
-      <div class="flow-arrow">↓ Yes</div>
-      <div class="flow-box bg-purple" style="padding:0.8rem 1.2rem;">
-        <img src="common/aws-icons/services/Arch_AWS-Global-Accelerator_48.svg" style="width:32px;">
-        <span style="font-weight:600;">Global Accelerator</span>
-      </div>
-    </div>
-
-    <div class="flow-v" style="gap:0.5rem; align-items:center;" data-fragment-index="4">
-      <div class="flow-box bg-orange" style="padding:0.6rem 1rem;">
-        <span>Need Both?</span>
-      </div>
-      <div class="flow-arrow">↓ Yes</div>
-      <div class="flow-box bg-accent" style="padding:0.8rem 1.2rem;">
-        <span style="font-weight:600;">CF + GA</span>
-        <span style="font-size:0.75rem; color:rgba(255,255,255,0.7);">Combined</span>
-      </div>
+    <div class="card-grid">
+      <div class="metric-card"><div class="metric-value" id="mr03-c-payg">-</div><div class="metric-label">종량제 합계 (월)</div></div>
+      <div class="metric-card"><div class="metric-value">$1,000</div><div class="metric-label">flat-rate Premium (월)</div></div>
     </div>
   </div>
-
-  <!-- Use Cases -->
-  <div class="col-3" style="gap:1rem; margin-top:1rem; width:100%;">
-    <div class="card" style="padding:0.8rem; text-align:center;" data-fragment-index="5">
-      <div style="font-size:0.9rem; font-weight:600; color:var(--green); margin-bottom:0.3rem;">CloudFront</div>
-      <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.5;">
-        Web apps<br>REST APIs<br>Static assets<br>Video streaming
-      </div>
-    </div>
-    <div class="card" style="padding:0.8rem; text-align:center;" data-fragment-index="5">
-      <div style="font-size:0.9rem; font-weight:600; color:var(--purple); margin-bottom:0.3rem;">Global Accelerator</div>
-      <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.5;">
-        Gaming<br>VoIP/Real-time<br>IoT devices<br>Non-HTTP APIs
-      </div>
-    </div>
-    <div class="card" style="padding:0.8rem; text-align:center;" data-fragment-index="5">
-      <div style="font-size:0.9rem; font-weight:600; color:var(--accent); margin-bottom:0.3rem;">Combined</div>
-      <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.5;">
-        Web + Gaming<br>HTTP + WebSocket<br>Multi-protocol apps
-      </div>
-    </div>
-  </div>
+  <div class="callout callout-warning fragment fade-up" data-fragment-index="1"><strong class="mr03-t-warning">이 구조는 Premium이 필요합니다.</strong><div class="mr03-muted">VPC origin은 Business 이상, 자동 origin failover와 Origin Shield는 Premium 전용. Premium 기본 한도 500M 요청, 50TB. 추정 가정: 미국 viewer, 전송량 첫 10TB 구간, 1TB=1,000GB 근사, WAF 규칙 8개, Anti-DDoS AMR, 로그, Route 53, ARC 제외.</div></div>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s13">
-  <div class="slide-header" data-remarp-id="s13-header"><h2>Edge Network Cost Analysis</h2></div>
+  <div class="slide-header" data-remarp-id="s13-header"><h2>Knowledge Check</h2></div>
   <div class="slide-body" data-remarp-id="s13-body">
-    <p><!-- Slide 14: Edge Network Cost Analysis --></p>
-<div class="flow-v" style="gap:1rem; padding:0.3rem;">
-  <!-- Cost Table -->
-  <table class="data-table" style="width:100%; font-size:0.85rem;">
-    <thead>
-      <tr style="background:var(--bg-card);">
-        <th style="padding:10px 12px; text-align:left;">Service</th>
-        <th style="padding:10px 12px; text-align:right;">Monthly Cost</th>
-        <th style="padding:10px 12px; text-align:left;">Pricing Model</th>
-        <th style="padding:10px 12px; text-align:left;">Notes</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr style="border-bottom:1px solid var(--border);" data-fragment-index="1">
-        <td style="padding:10px 12px;">
-          <div class="flow-h" style="gap:0.5rem; align-items:center;">
-            <img src="common/aws-icons/services/Arch_Amazon-CloudFront_48.svg" style="width:24px;">
-            <strong>CloudFront</strong>
-          </div>
-        </td>
-        <td style="padding:10px 12px; text-align:right; color:var(--accent); font-weight:600;">$50 - $500</td>
-        <td style="padding:10px 12px;">Requests + Data transfer</td>
-        <td style="padding:10px 12px; color:var(--text-muted);">Traffic-dependent</td>
-      </tr>
-      <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);" data-fragment-index="2">
-        <td style="padding:10px 12px;">
-          <div class="flow-h" style="gap:0.5rem; align-items:center;">
-            <img src="common/aws-icons/services/Arch_AWS-WAF_48.svg" style="width:24px;">
-            <strong>WAF</strong>
-          </div>
-        </td>
-        <td style="padding:10px 12px; text-align:right; color:var(--green); font-weight:600;">$0</td>
-        <td style="padding:10px 12px;">ACL + Rules + Requests</td>
-        <td style="padding:10px 12px; color:var(--text-muted);">Currently disabled in prod</td>
-      </tr>
-      <tr style="border-bottom:1px solid var(--border);" data-fragment-index="3">
-        <td style="padding:10px 12px;">
-          <div class="flow-h" style="gap:0.5rem; align-items:center;">
-            <img src="common/aws-icons/services/Arch_Elastic-Load-Balancing_48.svg" style="width:24px;">
-            <strong>NLB (×2)</strong>
-          </div>
-        </td>
-        <td style="padding:10px 12px; text-align:right; color:var(--cyan); font-weight:600;">$36 + LCU</td>
-        <td style="padding:10px 12px;">$18/NLB + LCU charges</td>
-        <td style="padding:10px 12px; color:var(--text-muted);">2 regions × $18 base</td>
-      </tr>
-      <tr style="background:var(--bg-card);" data-fragment-index="4">
-        <td style="padding:10px 12px;">
-          <div class="flow-h" style="gap:0.5rem; align-items:center;">
-            <img src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" style="width:24px;">
-            <strong>Route53</strong>
-          </div>
-        </td>
-        <td style="padding:10px 12px; text-align:right; color:var(--purple); font-weight:600;">~$5</td>
-        <td style="padding:10px 12px;">Hosted zones + Queries</td>
-        <td style="padding:10px 12px; color:var(--text-muted);">$0.50/zone + $0.40/M queries</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <!-- Cost Optimization Tips -->
-  <div class="col-2" style="gap:1rem;">
-    <div class="card" style="padding:0.8rem; border-left:3px solid var(--green);" data-fragment-index="5">
-      <h4 style="margin:0 0 0.5rem; font-size:0.9rem; color:var(--green);">Cost Optimization</h4>
-      <ul style="margin:0; padding-left:1.2rem; font-size:0.8rem; line-height:1.6;">
-        <li>Origin Shield: 30-60% origin request reduction</li>
-        <li>Cache optimization: Higher TTL for static</li>
-        <li>Compression: Brotli/Gzip enabled</li>
-      </ul>
+    <p><!-- Slide 14: Knowledge Check --></p>
+<style>
+.mr03-quiz { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); align-items: start; }
+.mr03-quiz .quiz { margin: 0; }
+.mr03-quiz .quiz-question { font-size: var(--fs-card); word-break: keep-all; }
+.mr03-quiz .quiz-option { font-size: var(--fs-caption); word-break: keep-all; text-align: left; }
+</style>
+<div class="mr03-quiz" data-reveal="static">
+  <div class="quiz" data-quiz="mr03-q1">
+    <div class="quiz-question">Q1: POST /api/orders 처리 중 primary origin이 503을 반환하면?</div>
+    <div class="quiz-options">
+      <button class="quiz-option" data-correct="false">CloudFront가 secondary 리전으로 자동 재시도한다</button>
+      <button class="quiz-option" data-correct="true">503이 그대로 viewer에게 간다 (GET, HEAD, OPTIONS만 failover)</button>
+      <button class="quiz-option" data-correct="false">Route 53 health check가 즉시 DNS를 바꾼다</button>
     </div>
-    <div class="card" style="padding:0.8rem; border-left:3px solid var(--orange);" data-fragment-index="5">
-      <h4 style="margin:0 0 0.5rem; font-size:0.9rem; color:var(--orange);">Cost Drivers</h4>
-      <ul style="margin:0; padding-left:1.2rem; font-size:0.8rem; line-height:1.6;">
-        <li>Data transfer out (largest component)</li>
-        <li>HTTPS request count</li>
-        <li>Origin requests (cache miss)</li>
-      </ul>
+    <div class="quiz-feedback"></div>
+  </div>
+  <div class="quiz" data-quiz="mr03-q2">
+    <div class="quiz-question">Q2: VPC origin 뒤 internal ALB의 SG 소스로 가장 엄격한 것은?</div>
+    <div class="quiz-options">
+      <button class="quiz-option" data-correct="false">443에 모든 IPv4 허용, 대신 WAF로 보호</button>
+      <button class="quiz-option" data-correct="false">CloudFront managed prefix list를 모든 포트에</button>
+      <button class="quiz-option" data-correct="true">CloudFront-VPCOrigins-Service-SG에서 443만</button>
     </div>
+    <div class="quiz-feedback"></div>
+  </div>
+  <div class="quiz" data-quiz="mr03-q3">
+    <div class="quiz-question">Q3: Bot Control(Common)을 켠 뒤 모바일 앱 요청이 막혔다. 원인과 대응은?</div>
+    <div class="quiz-options">
+      <button class="quiz-option" data-correct="true">SignalNonBrowserUserAgent 기본 Block, Count 오버라이드 후 label 기반 예외</button>
+      <button class="quiz-option" data-correct="false">Rate-based window가 짧아서, 600초로 늘린다</button>
+      <button class="quiz-option" data-correct="false">verified bot으로 분류되어서, Targeted로 올린다</button>
+    </div>
+    <div class="quiz-feedback"></div>
   </div>
 </div>
   </div>
@@ -719,100 +513,25 @@ Custom Error Response:
   <div class="slide-header" data-remarp-id="s14-header"><h2>Key Takeaways</h2></div>
   <div class="slide-body" data-remarp-id="s14-body">
     <p><!-- Slide 15: Key Takeaways --></p>
-<div class="col-2" style="gap:1.5rem;">
-  <div class="card" style="padding:1.2rem; border-left:3px solid var(--accent);">
-    <h4 style="margin:0 0 0.8rem; color:var(--accent);">Traffic Routing</h4>
-    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
-      <li>Route53 Latency-based for regional failover</li>
-      <li>CloudFront for global edge caching</li>
-      <li>Origin Shield: 50-90% origin reduction</li>
-      <li>Origin Failover: sub-second switching</li>
-    </ul>
-  </div>
-  <div class="card" style="padding:1.2rem; border-left:3px solid var(--cyan);">
-    <h4 style="margin:0 0 0.8rem; color:var(--cyan);">Edge Security</h4>
-    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
-      <li>WAF rule stack: Geo → Rate → Managed</li>
-      <li>Bot Control: Count mode first, then Block</li>
-      <li>Prefix-list SG: Zero 0.0.0.0/0 policy</li>
-      <li>All traffic MUST pass CloudFront + WAF</li>
-    </ul>
-  </div>
-  <div class="card" style="padding:1.2rem; border-left:3px solid var(--green);">
-    <h4 style="margin:0 0 0.8rem; color:var(--green);">Architecture Decisions</h4>
-    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
-      <li>CloudFront over GA: HTTP + caching + WAF</li>
-      <li>OAC for S3: No public bucket access</li>
-      <li>NLB over ALB: Lower latency, prefix-list support</li>
-      <li>DNS TTL 60s: Balance freshness vs load</li>
-    </ul>
-  </div>
-  <div class="card" style="padding:1.2rem; border-left:3px solid #e17055;">
-    <h4 style="margin:0 0 0.8rem; color:#e17055;">Cost Optimization</h4>
-    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
-      <li>CloudFront: $50-500/mo (traffic-based)</li>
-      <li>Origin Shield ROI: 30-60% savings</li>
-      <li>Cache TTL tuning for static assets</li>
-      <li>Compression: Brotli + Gzip enabled</li>
-    </ul>
-  </div>
+<div class="card-grid" data-reveal="stagger">
+  <div class="metric-card"><strong class="mr03-t-accent">입구는 하나</strong><div class="mr03-muted">CloudFront → VPC origin → internal ALB. internet-facing LB, public IP, 0.0.0.0/0 없음</div></div>
+  <div class="metric-card"><strong class="mr03-t-accent">리전은 Edge가 고름</strong><div class="mr03-muted">CloudFront Function + KVS + <code>createRequestOriginGroup()</code>, DNS latency는 내부 이름에</div></div>
+  <div class="metric-card"><strong class="mr03-t-info">감지와 스위치 분리</strong><div class="mr03-muted">internal ALB는 alarm 기반 health check, 절체는 routing control, Region switch</div></div>
+  <div class="metric-card"><strong class="mr03-t-warning">failover는 GET만</strong><div class="mr03-muted">쓰기 API는 idempotency key, 재시도, 활성 리전 전환으로 보완</div></div>
+  <div class="metric-card"><strong class="mr03-t-warning">Bot Control은 Count부터</strong><div class="mr03-muted">모바일 앱, webhook을 label로 확인한 뒤 Block</div></div>
+  <div class="metric-card"><strong class="mr03-t-success">비용은 구조로 결정</strong><div class="mr03-muted">VPC origin + failover + Shield면 flat-rate는 Premium. 종량제와 실측 비교</div></div>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s15">
-  <div class="slide-header" data-remarp-id="s15-header"><h2>Knowledge Check</h2></div>
-  <div class="slide-body" data-remarp-id="s15-body" style="overflow-y:auto">
-    <div class="quiz" data-quiz="q1">
-      <div class="quiz-question">Q1: Route53 Latency-based Routing의 latency 측정 주기는?</div>
-      <div class="quiz-options">
-        <button class="quiz-option" data-correct="false">실시간 (요청마다)</button>
-<button class="quiz-option" data-correct="true">약 24시간마다 (AWS Edge에서)</button>
-<button class="quiz-option" data-correct="false">매 분마다</button>
-<button class="quiz-option" data-correct="false">Health Check 간격과 동일</button>
-      </div>
-      <div class="quiz-feedback"></div>
-    </div>
-<div class="quiz" data-quiz="q2">
-      <div class="quiz-question">Q2: CloudFront Origin Failover의 전환 속도는?</div>
-      <div class="quiz-options">
-        <button class="quiz-option" data-correct="false">DNS TTL 만료 후 (60초+)</button>
-<button class="quiz-option" data-correct="false">Health Check 실패 후 (90초+)</button>
-<button class="quiz-option" data-correct="true">Sub-second (같은 요청 내 재시도)</button>
-<button class="quiz-option" data-correct="false">수동 전환 필요</button>
-      </div>
-      <div class="quiz-feedback"></div>
-    </div>
-<div class="quiz" data-quiz="q3">
-      <div class="quiz-question">Q3: Prefix-list Security Group의 핵심 목적은?</div>
-      <div class="quiz-options">
-        <button class="quiz-option" data-correct="false">비용 절감</button>
-<button class="quiz-option" data-correct="false">성능 향상</button>
-<button class="quiz-option" data-correct="true">WAF 우회 방지 (CloudFront 강제)</button>
-<button class="quiz-option" data-correct="false">로깅 활성화</button>
-      </div>
-      <div class="quiz-feedback"></div>
-    </div>
-<div class="quiz" data-quiz="q4">
-      <div class="quiz-question">Q4: WAF Bot Control을 처음 활성화할 때 권장 설정은?</div>
-      <div class="quiz-options">
-        <button class="quiz-option" data-correct="false">Block 모드로 즉시 활성화</button>
-<button class="quiz-option" data-correct="true">Count 모드로 2주 분석 후 Block</button>
-<button class="quiz-option" data-correct="false">특정 국가만 적용</button>
-<button class="quiz-option" data-correct="false">Rate Limit과 함께 활성화</button>
-      </div>
-      <div class="quiz-feedback"></div>
-    </div>
-  </div>
-</div>
-
-<div class="slide" data-remarp-id="s16">
   <div class="center-content" style="height:100%; gap:1.5rem;">
-    <h1 style="font-size:3rem; background:linear-gradient(135deg, var(--accent-light), var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Thank You</h1>
-    <p style="color:var(--text-secondary); font-size:1.1rem;">Thank You</p>
-    <p style="color:var(--text-muted); font-size:1rem; margin-top:0.5rem;">수고하셨습니다!</p>
+    <h1 style="font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:calc(var(--fs-title) * 1.5); color:var(--text-primary);">Thank You</h1>
+    <p style="color:var(--text-secondary); font-size:var(--fs-subtitle);">Block 3: Traffic Routing & Edge 완료</p>
+    
     <div style="display:flex; gap:1rem; margin-top:1.5rem;">
-            <a href="index.html" class="btn btn-primary btn-sm" style="text-decoration:none;">← 목차로 돌아가기</a>
+            <a href="toc.html" class="btn" style="text-decoration:none;">← 목차로 돌아가기</a>
+      <a href="04-dr-failover.html" class="btn btn-primary" style="text-decoration:none;">다음: DR & Failover Automation →</a>
     </div>
   </div>
 </div>
@@ -821,31 +540,120 @@ Custom Error Response:
 <script src="./common/slide-framework.js"></script>
 <script src="./common/quiz-component.js"></script>
 <script src="./common/presenter-view.js"></script>
-
+<script>
+(function(){
+(function () {
+  var INT = 30;
+  var th = document.getElementById('mr03-hc-th');
+  var ttl = document.getElementById('mr03-hc-ttl');
+  var box = document.getElementById('mr03-hc-int');
+  function fmt(s) { return s >= 60 ? (Math.floor(s / 60) + '분 ' + (s % 60) + '초') : (s + '초'); }
+  function update() {
+    var t = parseInt(th.value, 10), l = parseInt(ttl.value, 10);
+    document.getElementById('mr03-hc-th-v').textContent = t + '회';
+    document.getElementById('mr03-hc-ttl-v').textContent = l + '초';
+    document.getElementById('mr03-hc-det').textContent = fmt(INT * t);
+    document.getElementById('mr03-hc-tot').textContent = fmt(INT * t + l);
+  }
+  box.addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    box.querySelectorAll('button').forEach(function (x) { x.classList.remove('active'); });
+    b.classList.add('active'); INT = parseInt(b.getAttribute('data-v'), 10); update();
+  });
+  th.addEventListener('input', update);
+  ttl.addEventListener('input', update);
+  update();
+})();
+})();
+</script>
+<script>
+(function(){
+(function () {
+  var M = 'GET', S = '503';
+  var out = document.getElementById('mr03-fo-out');
+  function render() {
+    var lines = ['1) ' + M + ' → primary alb-use1 (us-east-1)'];
+    if (S === '200') {
+      lines.push('2) 200 OK → viewer에 응답 (failover 없음)');
+    } else {
+      var why = S === 'timeout' ? '연결 실패 (attempts × timeout 소진, 기본값 최대 약 30초)' : '503 (failover 코드)';
+      lines.push('2) primary: ' + why);
+      if (M === 'GET') {
+        lines.push('3) 같은 요청을 secondary alb-usw2 (us-west-2)로 재시도');
+        lines.push('결과: 사용자는 성공 응답, 대신 지연이 추가됨');
+      } else {
+        lines.push('3) POST는 failover 대상이 아님 → secondary 시도 없음');
+        lines.push('결과: 사용자에게 ' + (S === 'timeout' ? '504' : '503') + ' 반환, 앱이 재시도해야 함');
+      }
+    }
+    out.textContent = lines.join('\n');
+  }
+  function bind(id, set) {
+    var box = document.getElementById(id);
+    box.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      box.querySelectorAll('button').forEach(function (x) { x.classList.remove('active'); });
+      b.classList.add('active'); set(b.getAttribute('data-v')); render();
+    });
+  }
+  bind('mr03-fo-m', function (v) { M = v; });
+  bind('mr03-fo-s', function (v) { S = v; });
+  render();
+})();
+})();
+</script>
+<script>
+(function(){
+(function () {
+  var req = document.getElementById('mr03-c-req');
+  var tb = document.getElementById('mr03-c-tb');
+  var bot = document.getElementById('mr03-c-bot');
+  function usd(n) { return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
+  function update() {
+    var m = parseInt(req.value, 10), t = parseInt(tb.value, 10);
+    document.getElementById('mr03-c-req-v').textContent = m + 'M';
+    document.getElementById('mr03-c-tb-v').textContent = t + 'TB';
+    var dto = Math.max(0, t * 1000 - 1000) * 0.085;
+    var rq = Math.max(0, m - 10) * 1.0;
+    var waf = 5 + 8 + m * 0.60;
+    var bc = bot.checked ? 10 + Math.max(0, m - 10) * 1.0 : 0;
+    var fn = Math.max(0, m - 2) * 0.10 + Math.max(0, m - 2) * 0.03;
+    var total = dto + rq + waf + bc + fn;
+    document.getElementById('mr03-c-payg').textContent = usd(total);
+    document.getElementById('mr03-c-break').textContent =
+      '전송 ' + usd(dto) + ' + 요청 ' + usd(rq) + ' + WAF ' + usd(waf) + ' + Bot ' + usd(bc) + ' + Functions/KVS ' + usd(fn);
+  }
+  req.addEventListener('input', update);
+  tb.addEventListener('input', update);
+  bot.addEventListener('change', update);
+  update();
+})();
+})();
+</script>
 <script>
   
   const presenterNotes = {
-    1: "[1min] Block 3에 오신 것을 환영합니다. 이번 블록에서는 Multi-Region Shopping Mall의 트래픽 라우팅과 Edge 보안을 깊이 있게 다루겠습니다.\n\n사용자 요청이 어떻게 글로벌 Edge 네트워크를 거쳐 백엔드에 도달하는지, Route53의 Latency-based Routing, CloudFront의 캐싱 전략, WAF의 보안 규칙 스택까지 약 30분간 살펴봅니다.\n\n\n먼저 End-to-End 트래픽 플로우부터 시작하겠습니다.",
-    2: "⏸️ [3min] End-to-End 트래픽 플로우를 단계별로 살펴보겠습니다.\n\n사용자가 mall.example.com으로 접속하면, Route53이 CNAME 레코드로 CloudFront 도메인을 반환합니다. 이 첫 번째 DNS 조회가 글로벌 트래픽 분산의 시작점입니다.\n\nCloudFront에서 요청 경로에 따라 두 가지 분기가 발생합니다. /static/* 경로는 S3 버킷으로 직접 라우팅되어 정적 자산을 서빙합니다. OAC(Origin Access Control)가 S3 버킷을 보호하므로 CloudFront를 거치지 않은 직접 접근은 불가능합니다.\n\n\n/api/* 경로는 api-internal.example.com으로 라우팅됩니다. 여기서 두 번째 Route53 조회가 발생하는데, 이번에는 Latency-based Routing으로 사용자에게 가장 가까운 리전의 NLB IP를 반환합니다.\n\nNLB의 Security Group이 핵심 보안 포인트입니다. CloudFront Managed Prefix List만 허용하므로, 모든 트래픽이 반드시 CloudFront와 WAF를 거쳐야 합니다. 0.0.0.0/0은 절대 허용하지 않습니다.\n\n\nRoute53의 Latency-based Routing 동작 방식을 자세히 살펴보겠습니다.",
-    3: "⏸️ [3min] Route53 Latency-based Routing의 동작 방식을 이해하는 것이 중요합니다.\n\n먼저 오해를 바로잡자면, Route53이 실시간 사용자 latency를 측정하는 것이 아닙니다. AWS가 전 세계 20개 이상의 Edge Location에서 각 리전까지의 RTT를 주기적으로 측정하고, 이 데이터를 약 24시간마다 업데이트합니다.\n\n사용자의 DNS 쿼리가 들어오면, Route53은 사용자의 DNS Resolver 위치를 기준으로 가장 낮은 latency를 가진 리전의 IP를 반환합니다. TTL은 60초로 설정했는데, 너무 짧으면 DNS 쿼리 부하가 증가하고 너무 길면 failover가 늦어지기 때문입니다.\n\n\nHealth Check는 30초마다 /health 엔드포인트를 호출합니다. 3번 연속 실패하면 해당 리전이 rotation에서 제외되고, 모든 트래픽이 남은 healthy 리전으로 이동합니다. 복구되면 자동으로 다시 추가됩니다.\n\nDNS 레코드 구조를 보면, mall.example.com은 CloudFront를 가리키는 CNAME이고, api-internal.example.com은 Latency-based A 레코드로 두 리전의 NLB를 가리킵니다.\n\n\nHealth Check 상세 설정을 더 살펴보겠습니다.",
-    4: "⏸️ [2min] Route53 Health Check 구성을 자세히 보겠습니다.\n\nPublic DNS인 mall.example.com은 CloudFront로 CNAME되어 있어 별도 Health Check가 필요 없습니다. CloudFront가 자체적으로 Origin Health를 관리하기 때문입니다.\n\n핵심은 api-internal.example.com입니다. Latency-based A 레코드로 두 리전의 NLB IP를 가리키며, 각 리전에 대해 독립적인 Health Check가 동작합니다.\n\n\nHealth Check는 3개 리전에서 동시에 실행됩니다 — us-east-1, us-west-2, eu-west-1. 모든 checker가 실패를 보고해야 unhealthy로 판정되므로, 일시적인 네트워크 이슈로 인한 false positive를 방지합니다.\n\n30초 간격으로 /health 엔드포인트를 호출하고, 3번 연속 실패 시 약 90초 후에 failover가 시작됩니다. 이 시간이 너무 길다면 interval을 10초로 줄일 수 있지만, Health Check 비용이 증가합니다.\n\n\nCloudFront Distribution 설정으로 넘어가겠습니다.",
-    5: "⏸️ [3min] CloudFront Distribution의 세 가지 Behavior를 탭으로 구분했습니다.\n\nAPI Behavior는 /api/* 경로를 처리합니다. 캐싱을 완전히 비활성화하고, 모든 HTTP 메서드를 허용합니다. Origin Request Policy에서 Host 헤더만 제외하고 모든 헤더를 Origin으로 전달하는데, 이는 NLB가 원본 요청 정보를 받아야 하기 때문입니다.\n\n\nStatic Behavior는 /static/* 경로의 정적 자산을 처리합니다. 24시간 TTL로 강력하게 캐싱하고, OAC를 통해 S3에 접근합니다. S3 버킷은 퍼블릭 접근이 차단되어 있어 CloudFront를 거치지 않으면 접근할 수 없습니다.\n\nSPA Fallback은 Default Behavior로, React/Vue 같은 SPA의 client-side routing을 지원합니다. 존재하지 않는 경로로 요청이 오면 403/404 대신 index.html을 반환하고 200 상태를 보냅니다. 이렇게 하면 /products/123 같은 deep link가 정상 동작합니다.\n\n\nCloudFront Origin Shield 설정을 살펴보겠습니다.",
-    6: "⏸️ [3min] Origin Shield는 CloudFront의 추가 캐싱 레이어입니다. 전 세계 400개 이상의 Edge Location과 Origin 사이에 위치해서, Origin으로 가는 요청을 집약합니다.\n\n동작 방식을 보면, 기존에는 각 Edge Location이 개별적으로 Origin에 요청했습니다. 예를 들어 도쿄, 서울, 싱가포르에서 같은 콘텐츠를 요청하면 Origin에 3번 요청이 갑니다.\n\nOrigin Shield를 켜면, 이 세 요청이 모두 us-east-1의 Shield 레이어로 먼저 갑니다. Shield에 캐시가 있으면 Origin에 요청하지 않고 바로 응답합니다. 없으면 한 번만 Origin에 요청하고 결과를 캐싱합니다.\n\n\n실제 효과는 50-90%의 Origin 요청 감소입니다. 트래픽 패턴에 따라 다르지만, 글로벌 사용자가 많을수록 효과가 큽니다.\n\n비용 분석을 보면, Shield 자체 비용은 10,000 요청당 약 $0.0075로 저렴합니다. Origin 요청 감소로 인한 NLB 비용 절감, EKS 부하 감소 등을 고려하면 순 절감 효과는 30-60%에 달합니다.\n\nShield 리전은 Origin에 가장 가까운 us-east-1로 설정했습니다. Shield와 Origin 사이의 latency를 최소화하기 위해서입니다.\n\n\nOrigin Failover 설정을 살펴보겠습니다.",
-    7: "⏸️ [2min] CloudFront Origin Failover는 Origin Group을 통해 구성됩니다. Primary Origin이 실패하면 자동으로 Secondary Origin으로 전환됩니다.\n\n현재 설정에서 Primary는 api-internal.example.com으로, Route53 Latency-based Routing을 통해 가장 가까운 NLB로 라우팅됩니다. Secondary는 api-secondary.example.com으로, us-west-2 NLB를 직접 가리킵니다.\n\nFailover가 발생하는 조건은 5xx 에러, 연결 타임아웃, Origin 도달 불가입니다. 4xx 에러는 클라이언트 오류이므로 failover를 트리거하지 않습니다.\n\n\n가장 중요한 장점은 sub-second switching입니다. DNS 기반 failover는 TTL 만료를 기다려야 하지만, CloudFront Origin Failover는 같은 요청 내에서 즉시 Secondary로 재시도합니다. 사용자는 약간의 latency 증가만 경험하고 실패를 인지하지 못합니다.\n\nRoute53 Health Check와 CloudFront Origin Failover가 독립적으로 동작한다는 점을 기억하세요. 두 레이어가 각각 redundancy를 제공하므로 더 강력한 장애 대응이 가능합니다.\n\n\nWAF 규칙 스택을 살펴보겠습니다.",
-    8: "⏸️ [3min] WAF 규칙은 스택 형태로 위에서 아래로 평가됩니다. Priority 숫자가 낮을수록 먼저 평가됩니다.\n\n가장 먼저 GeoRestriction을 평가합니다. 한국, 미국, 일본 외의 국가에서 오는 요청은 바로 차단합니다. 이 쇼핑몰의 서비스 대상 지역이 이 세 국가이기 때문입니다.\n\n다음은 RateLimit입니다. IP당 5분에 2,000 요청을 초과하면 차단합니다. 이 수치는 정상 사용자의 브라우징 패턴을 분석해서 설정했습니다. 일반 사용자는 5분에 100-200 요청 정도이므로 충분한 여유가 있습니다.\n\n\nAWS Managed Rules 세 개를 순서대로 적용합니다. KnownBadInputs는 Log4j 취약점, SSRF 공격 패턴을 탐지합니다. SQLi RuleSet은 SQL Injection 패턴을, CommonRuleSet은 OWASP Top 10 취약점을 포괄적으로 탐지합니다.\n\n규칙 순서가 중요합니다. Geo와 RateLimit을 먼저 평가해서 명확히 차단할 트래픽을 걸러내고, 남은 트래픽에 대해서만 비용이 더 드는 Managed Rules를 평가합니다.\n\n\nTerraform 코드로 구현을 살펴보겠습니다.",
-    9: "⏸️ [2min] WAF Custom Rules의 Terraform 구현입니다.\n\nrate_based_statement에서 limit은 5분 단위로 측정됩니다. 2000으로 설정하면 5분에 2,000 요청을 초과하는 IP를 차단합니다. aggregate_key_type을 IP로 설정해서 소스 IP 기준으로 집계합니다.\n\nGeo Restriction은 not_statement로 구현합니다. country_codes에 허용할 국가 목록을 넣고, 이를 not으로 감싸면 \"허용 국가가 아니면 차단\"이 됩니다.\n\n\nvisibility_config는 모니터링에 필수입니다. sampled_requests_enabled로 샘플 요청을 로깅하고, CloudWatch 메트릭을 활성화해서 얼마나 많은 요청이 각 규칙에 매칭되는지 모니터링합니다.\n\nscope가 CLOUDFRONT인 점을 주목하세요. WAF가 CloudFront와 연동될 때는 반드시 us-east-1에 배포해야 합니다. 다른 리전에 배포하면 연동이 실패합니다.\n\n\nBot Control 관련 이슈와 해결책을 살펴보겠습니다.",
-    10: "⏸️ [3min] Bot Control은 강력하지만 주의해서 사용해야 합니다. 현재 우리 환경에서는 비활성화되어 있는데, 그 이유를 설명드리겠습니다.\n\nBot Control을 활성화하면 curl, wget, headless browser가 모두 차단됩니다. 문제는 Route53 Health Check도 automated user-agent를 사용하므로 차단된다는 것입니다. Health Check가 차단되면 모든 리전이 unhealthy로 판정되어 서비스 장애가 발생합니다.\n\n\n해결책은 Scope-Down Rules입니다. 먼저 2주간 Count Mode로 운영합니다. Block 대신 Count로 설정하면 실제 차단 없이 어떤 요청이 매칭되는지 CloudWatch에서 분석할 수 있습니다.\n\n분석 결과를 바탕으로 Phase 2에서 선택적 Block을 적용합니다. Route53 Health Check, Datadog Synthetics 같은 정상적인 자동화 도구의 User-Agent를 allowlist에 추가하고, 나머지 bad bot만 차단합니다.\n\n핵심 교훈은 Bot Control을 절대 처음부터 Block 모드로 켜지 말라는 것입니다. 항상 Count 모드로 시작해서 트래픽 패턴을 파악하고, allowlist를 구축한 후에 Block으로 전환해야 합니다.\n\n\nPrefix-List Security Group에 대해 살펴보겠습니다.",
-    11: "⏸️ [3min] Prefix-List Security는 우리 보안 아키텍처의 핵심입니다.\n\nCloudFront Managed Prefix List는 AWS가 관리하는 IP 목록으로, 전 세계 400개 이상 Edge Location의 IP 주소를 포함합니다. 이 목록은 AWS가 Edge Location을 추가하거나 IP를 변경할 때 자동으로 업데이트됩니다.\n\nSecurity Group에서 이 Prefix List만 허용하면, NLB로 들어오는 모든 트래픽이 반드시 CloudFront를 거쳐야 합니다. CloudFront를 거친다는 것은 WAF 검사를 통과했다는 의미입니다.\n\n\n0.0.0.0/0을 절대 사용하지 않는 이유가 여기 있습니다. 만약 NLB에 0.0.0.0/0을 허용하면, 공격자가 NLB IP를 직접 찾아서 WAF를 우회할 수 있습니다. CloudFront DNS를 거치지 않고 직접 NLB IP로 요청을 보내면 WAF 규칙이 전혀 적용되지 않습니다.\n\n이것이 우리가 \"Zero 0.0.0.0/0 Policy\"를 엄격하게 적용하는 이유입니다. 모든 인바운드 트래픽은 반드시 CloudFront와 WAF를 거쳐야 하며, 이를 우회하는 경로는 존재하지 않아야 합니다.\n\n\nGlobal Accelerator와 CloudFront를 비교해 보겠습니다.",
-    12: "⏸️ [3min] Global Accelerator와 CloudFront는 둘 다 글로벌 트래픽 분산 서비스지만, 동작 방식이 완전히 다릅니다.\n\nGlobal Accelerator는 Anycast IP를 제공합니다. 전 세계 어디서든 같은 IP로 접속하면 가장 가까운 AWS Edge로 라우팅됩니다. Layer 4에서 동작하므로 TCP, UDP 모두 지원하고, 게임 서버나 IoT처럼 HTTP가 아닌 프로토콜에 적합합니다.\n\nCloudFront는 DNS 기반으로 동작합니다. Layer 7 HTTP/HTTPS만 지원하지만, Edge에서 캐싱이 가능하고 WAF와 네이티브로 통합됩니다. 웹 애플리케이션과 API에 최적화되어 있습니다.\n\n\n가격 구조도 다릅니다. Global Accelerator는 시간당 과금 + 데이터 전송량으로, 트래픽이 적어도 기본 비용이 발생합니다. CloudFront는 요청 수 + 데이터 전송량으로, 트래픽에 비례해서 과금됩니다.\n\n우리 쇼핑몰은 HTTP/HTTPS 웹 트래픽이고, Edge 캐싱과 WAF 통합이 필요하므로 CloudFront를 선택했습니다. 만약 실시간 게임이나 IoT 디바이스 통신이 있었다면 Global Accelerator를 고려했을 것입니다.\n\n\n언제 어떤 서비스를 선택해야 하는지 의사결정 플로우를 보겠습니다.",
-    13: "⏸️ [2min] 의사결정 플로우차트를 통해 어떤 서비스를 선택할지 결정할 수 있습니다.\n\n첫 번째 질문은 Edge Caching이 필요한가입니다. 정적 콘텐츠나 반복 요청이 많다면 CloudFront의 캐싱이 큰 이점을 제공합니다. Origin 부하를 줄이고 응답 속도를 높입니다.\n\n두 번째 질문은 TCP/UDP 프로토콜이 필요한가입니다. HTTP가 아닌 프로토콜을 사용해야 한다면 Global Accelerator가 유일한 선택입니다. CloudFront는 HTTP/HTTPS만 지원합니다.\n\n\n두 가지가 모두 필요하다면 조합해서 사용합니다. 예를 들어 게임 서버가 HTTP REST API와 UDP 게임 트래픽을 모두 처리한다면, REST API는 CloudFront로, 게임 트래픽은 Global Accelerator로 라우팅합니다.\n\n우리 쇼핑몰은 순수 HTTP/HTTPS 웹 애플리케이션이고, 정적 자산 캐싱과 WAF 통합이 핵심 요구사항이므로 CloudFront 단독으로 충분합니다.\n\n\nEdge 네트워크의 비용 분석을 살펴보겠습니다.",
-    14: "⏸️ [2min] Edge 네트워크의 월간 비용을 분석해 보겠습니다.\n\nCloudFront는 트래픽에 따라 $50에서 $500 사이로 변동합니다. 주요 비용 요소는 데이터 전송량과 요청 수입니다. 캐싱을 잘 활용하면 Origin 요청을 줄여서 비용을 절감할 수 있습니다.\n\nWAF는 현재 프로덕션에서 비활성화되어 있어 $0입니다. 활성화하면 Web ACL $5 + Rules × $1 + 요청당 $0.60/M이 추가됩니다. Bot Control을 켜면 상당한 비용이 추가되므로 신중하게 결정해야 합니다.\n\n\nNLB는 리전당 $18 기본 비용에 LCU(Load Balancer Capacity Unit) 요금이 추가됩니다. 두 리전이니까 기본 $36이고, 트래픽에 따라 LCU 비용이 추가됩니다.\n\nRoute53은 가장 저렴해서 월 $5 정도입니다. Hosted Zone당 $0.50, 쿼리 100만 건당 $0.40입니다.\n\n비용 최적화의 핵심은 캐시 적중률을 높이는 것입니다. Origin Shield로 30-60% Origin 요청을 줄이고, 정적 자산 TTL을 길게 설정하고, Brotli/Gzip 압축으로 데이터 전송량을 줄입니다.\n\n\n이 블록의 핵심 내용을 정리하겠습니다.",
-    15: "[2min] Block 3의 핵심 내용을 정리하겠습니다.\n\nTraffic Routing에서 기억할 점은, Route53 Latency-based Routing으로 리전 failover를 처리하고, CloudFront Origin Failover로 sub-second 전환을 제공한다는 것입니다. Origin Shield를 활용하면 Origin 요청을 50-90% 줄일 수 있습니다.\n\nEdge Security의 핵심은 WAF 규칙 스택과 Zero 0.0.0.0/0 정책입니다. 모든 트래픽이 반드시 CloudFront와 WAF를 거쳐야 합니다. Bot Control은 Count 모드로 먼저 분석한 후 Block으로 전환해야 합니다.\n\nArchitecture Decisions에서, CloudFront를 선택한 이유는 HTTP 캐싱과 WAF 통합 때문입니다. NLB를 사용한 이유는 prefix-list 지원과 낮은 latency 때문입니다.\n\n비용 최적화에서는 Origin Shield의 ROI가 30-60%로 가장 효과적이고, 정적 자산 캐시 TTL 튜닝과 압축 활성화가 추가 절감 포인트입니다.\n\n\n질문이 있으시면 지금 받겠습니다. 다음 블록에서는 DR과 Failover Automation을 다루겠습니다.",
-    16: "[3min] 4개의 퀴즈 문제로 이 블록의 핵심 개념을 확인하겠습니다.\n\nQ1: Route53 Latency-based Routing은 실시간 측정이 아닙니다. AWS가 Edge Location에서 약 24시간마다 측정하고 업데이트합니다.\n\nQ2: CloudFront Origin Failover는 DNS 기반이 아니라 같은 요청 내에서 재시도하므로 sub-second입니다.\n\nQ3: Prefix-list SG의 핵심은 WAF 우회 방지입니다. 모든 트래픽이 CloudFront를 거치도록 강제합니다.\n\nQ4: Bot Control은 반드시 Count 모드로 시작해야 합니다. 처음부터 Block하면 Health Check 같은 정상 자동화 도구도 차단됩니다.",
-    17: "[30sec] Block 3를 마무리합니다. Route53, CloudFront, WAF를 활용한 글로벌 트래픽 라우팅과 Edge 보안을 살펴봤습니다.\n\n다음 Block 4에서는 DR과 Failover Automation을 다루겠습니다. Aurora DSQL 단일 리전 리스크, MSK Replicator, 그리고 자동화된 failover 프로세스를 설명합니다.\n\n질문이 있으시면 말씀해 주세요."
+    1: "[0.5min] [\uc694\uc57d]\n\u2022 \uc774 \ube14\ub85d\uc758 \uc9c8\ubb38: \"\uc0ac\uc6a9\uc790 \uc694\uccad\uc774 \uc5b4\ub5a4 \uacbd\ub85c\ub85c, \uc5b4\ub290 \ub9ac\uc804\uc758 \uc5b4\ub5a4 \uc11c\ube44\uc2a4\uc5d0 \ub3c4\ub2ec\ud558\ub294\uac00\"\n\u2022 \uc21c\uc11c: \uc804\uccb4 \ud750\ub984 \u2192 \ub9ac\uc804 \uc120\ud0dd(DNS vs Edge) \u2192 \ud5ec\uc2a4\uccb4\ud06c, ARC \u2192 CloudFront \uad6c\uc131 \u2192 Origin \uc7a0\uae08 \u2192 WAF, Bot Control \u2192 GA \ube44\uad50 \u2192 \ube44\uc6a9\n\u2022 \uc1fc\ud551\ubab0 \uc2dc\ub098\ub9ac\uc624 \uc720\uc9c0: order, payment, catalog, cart \uc11c\ube44\uc2a4, us-east-1 primary + us-west-2 secondary\nBlock 3\uc5d0\uc11c\ub294 \ud2b8\ub798\ud53d\uc774 \ub4e4\uc5b4\uc624\ub294 \uae38\uc744 \ub530\ub77c\uac00 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \uc55e \ube14\ub85d\uc5d0\uc11c \ub370\uc774\ud130\ub97c \ub450 \ub9ac\uc804\uc5d0 \uc5b4\ub5bb\uac8c \ubcf5\uc81c\ud558\ub294\uc9c0 \ubd24\ub2e4\uba74, \uc774\ubc88\uc5d0\ub294 \uc0ac\uc6a9\uc790\uc758 \uc694\uccad\uc774 \uc5b4\ub290 \ub9ac\uc804\uc73c\ub85c \uac08\uc9c0 \ub204\uac00 \uacb0\uc815\ud558\uace0, \uc7a5\uc560 \ub54c \uadf8 \uacb0\uc815\uc744 \uc5b4\ub5bb\uac8c \ubc14\uafb8\ub294\uc9c0\uac00 \uc8fc\uc81c\uc785\ub2c8\ub2e4.\n\ud575\uc2ec \uc6d0\uce59 \ud558\ub098\ub97c \uba3c\uc800 \ub9d0\uc500\ub4dc\ub9ac\uba74, \uc774 \uc544\ud0a4\ud14d\ucc98\uc758 \uacf5\uac1c \uc785\uad6c\ub294 CloudFront \ud558\ub098\ubfd0\uc785\ub2c8\ub2e4. \ub85c\ub4dc \ubc38\ub7f0\uc11c\ub294 \ubaa8\ub450 internal\uc774\uace0, CloudFront VPC origin\uc73c\ub85c\ub9cc \ub4e4\uc5b4\uc635\ub2c8\ub2e4.\n\n\uba3c\uc800 \uc694\uccad \ud558\ub098\uac00 \uac70\uce58\ub294 \uc804\uccb4 \uacbd\ub85c\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    2: "\u2753 \u23f8\ufe0f [2.5min] [\uc694\uc57d]\n\u2022 Route 53\uc740 apex\ub97c CloudFront\ub85c alias, \ub9ac\uc804 \uc120\ud0dd\uc740 DNS\uac00 \uc544\ub2c8\ub77c CloudFront\uc5d0\uc11c \ud568\n\u2022 /static/*\uc740 S3 + OAC, /api/*\ub294 CloudFront Function\uc774 \uace0\ub978 origin group\uc73c\ub85c\n\u2022 origin\uc740 \ub450 \ub9ac\uc804\uc758 internal ALB, CloudFront VPC origin\uc73c\ub85c\ub9cc \uc5f0\uacb0\n\u2022 internet-facing LB, public IP, 0.0.0.0/0 ingress\ub294 \uc124\uacc4\uc5d0\uc11c \uc544\uc608 \uc874\uc7ac\ud558\uc9c0 \uc54a\uc74c\n\uc67c\ucabd\ubd80\ud130 \ud074\ub9ad\ud558\uba70 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \uc0ac\uc6a9\uc790\uac00 mall.example.com\uc744 \uc870\ud68c\ud558\uba74 Route 53\uc774 alias \ub808\ucf54\ub4dc\ub85c CloudFront\ub97c \ub3cc\ub824\uc90d\ub2c8\ub2e4. \uc11c\ube0c\ub3c4\uba54\uc778\uc774\ub77c CNAME\ub3c4 \ub3d9\uc791\ud558\uc9c0\ub9cc alias A\uc640 AAAA\ub97c \uad8c\uc7a5\ud569\ub2c8\ub2e4. CloudFront\ub97c \uac00\ub9ac\ud0a4\ub294 alias \uc9c8\uc758\ub294 \uc694\uae08\uc774 \uc5c6\uace0, apex \ub3c4\uba54\uc778(example.com)\uc740 \uc560\ucd08\uc5d0 CNAME\uc744 \uc4f8 \uc218 \uc5c6\uc5b4\uc11c alias\ub9cc \uac00\ub2a5\ud569\ub2c8\ub2e4.\n\nCloudFront\uc5d0\ub294 WAF web ACL\uc774 \ubd99\uc2b5\ub2c8\ub2e4. CloudFront\uc6a9 web ACL\uc740 scope\uac00 CLOUDFRONT\uc774\uace0 us-east-1\uc5d0\uc11c \ub9cc\ub4ed\ub2c8\ub2e4. \uadf8\ub2e4\uc74c behavior\uac00 \uacbd\ub85c\ubcc4\ub85c \ub098\ub269\ub2c8\ub2e4. \uc815\uc801 \uc790\uc0b0\uc740 S3\uc640 OAC, API\ub294 viewer request \ud568\uc218\uac00 \ub9ac\uc804\uc744 \uace0\ub978 \ub4a4 origin group\uc73c\ub85c \ubcf4\ub0c5\ub2c8\ub2e4.\norigin\uc740 \uac01 \ub9ac\uc804\uc758 internal ALB\uc774\uace0 CloudFront VPC origin\uc73c\ub85c \uc5f0\uacb0\ub429\ub2c8\ub2e4. \uc608\uc804 \ubc84\uc804\uc740 public NLB\uc5d0 prefix list\ub97c \uac70\ub294 \uad6c\uc870\uc600\ub294\ub370, \uc774\ubc88\uc5d0\ub294 \ub85c\ub4dc \ubc38\ub7f0\uc11c \uc790\uccb4\ub97c \uc778\ud130\ub137\uc5d0\uc11c \ubcf4\uc774\uc9c0 \uc54a\uac8c \ubc14\uafe8\uc2b5\ub2c8\ub2e4.\n\n\uc5ec\ub7ec\ubd84 \ud658\uacbd\uc5d0 CloudFront\ub97c \uac70\uce58\uc9c0 \uc54a\uace0 \ub4e4\uc5b4\uc62c \uc218 \uc788\ub294 \uacbd\ub85c\uac00 \ub0a8\uc544 \uc788\ub098\uc694? \ud14c\uc2a4\ud2b8\uc6a9\uc73c\ub85c \uc7a0\uae50 \uc5f4\uc5b4 \ub454 internet-facing ALB \ud558\ub098\uac00 WAF \uc804\uccb4\ub97c \uc6b0\ud68c\ud558\uac8c \ub9cc\ub4ed\ub2c8\ub2e4.\n\n\uadf8\ub7fc \"\uc5b4\ub290 \ub9ac\uc804\uc73c\ub85c \ubcf4\ub0bc\uc9c0\"\ub294 \ub204\uac00 \uacb0\uc815\ud558\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n[\ucd9c\ucc98]\n\u2022 CloudFront VPC origins: docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html",
+    3: "\u2753 \u23f8\ufe0f [2.5min] [\uc694\uc57d]\n\u2022 Route 53 latency\ub294 resolver \uc704\uce58 \uae30\ubc18\uc774\uba70 \uc2e4\uc2dc\uac04 \uce21\uc815\uc774 \uc544\ub2d8\n\u2022 VPC origin\uc740 ALB ARN\uc5d0 \uace0\uc815\ub418\ubbc0\ub85c \uacf5\uac1c \uacbd\ub85c\uc758 \ub9ac\uc804 \uc120\ud0dd\uc740 CloudFront Function\uc774 \ub2f4\ub2f9\n\u2022 cf.createRequestOriginGroup()\uc73c\ub85c \uc120\ud0dd \ub9ac\uc804\uc744 primary, \ubc18\ub300 \ub9ac\uc804\uc744 secondary\ub85c \uad6c\uc131\n\u2022 \ud65c\uc131 \ub9ac\uc804\uacfc \uac00\uc911\uce58\ub294 KeyValueStore\uc5d0 \ub450\uace0 \uc7ac\ubc30\ud3ec \uc5c6\uc774 \ubcc0\uacbd\n\uccab \ubc88\uc9f8 \ud0ed\uc740 Route 53 latency routing\uc785\ub2c8\ub2e4. \ud310\ub2e8 \uadfc\uac70\ub294 \uc0ac\uc6a9\uc790\uc758 \uc2e4\uc81c \uc9c0\uc5f0\uc774 \uc544\ub2c8\ub77c resolver IP\uc774\uace0, resolver\uac00 EDNS0 client subnet\uc744 \ubcf4\ub0b4\uba74 \uc798\ub9b0 client IP\ub97c \uc501\ub2c8\ub2e4. \uc9c0\uc5f0 \ub370\uc774\ud130\ub3c4 \uc77c\uc815 \uae30\uac04 \uce21\uc815\ud55c \uac12\uc774\ub77c \ubc14\ub014 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \uc608\uc804 \uc790\ub8cc\uc758 \"24\uc2dc\uac04\ub9c8\ub2e4 \uac31\uc2e0\", \"20\uac1c \uc774\uc0c1 \uc704\uce58\uc5d0\uc11c \uce21\uc815\" \uac19\uc740 \uc22b\uc790\ub294 \uacf5\uc2dd \ubb38\uc11c\uc5d0\uc11c \ud655\uc778\ub418\uc9c0 \uc54a\uc544 \ube90\uc2b5\ub2c8\ub2e4.\n\n\uc911\uc694\ud55c \uac74 VPC origin\uacfc\uc758 \uad00\uacc4\uc785\ub2c8\ub2e4. VPC origin\uc740 \ud2b9\uc815 ALB\uc758 ARN\uc73c\ub85c \ub9cc\ub4e4\uae30 \ub54c\ubb38\uc5d0 DNS \uc751\ub2f5\uc744 \ubc14\uafd4\uc11c \ub2e4\ub978 \ub9ac\uc804 ALB\ub85c \ubcf4\ub0b4\ub294 \ubc29\uc2dd\uc774 \ud1b5\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c \ub450 \ubc88\uc9f8 \ud0ed\ucc98\ub7fc viewer request CloudFront Function\uc774 \ub9ac\uc804\uc744 \uace0\ub974\uace0, createRequestOriginGroup\uc73c\ub85c \uadf8 \ub9ac\uc804\uc744 primary\ub85c \ud558\ub294 origin group\uc744 \ub9cc\ub4ed\ub2c8\ub2e4. AWS \ube14\ub85c\uadf8\uc758 multi-Region active-active \uc0d8\ud50c\uc774 \uc774 \uad6c\uc870\uc785\ub2c8\ub2e4.\n\uc138 \ubc88\uc9f8 \ud0ed\uc774 \ucd5c\uc18c \ucf54\ub4dc\uc785\ub2c8\ub2e4. \ucfe0\ud0a4\ub85c \uace0\uc815\ub41c \ub9ac\uc804\uc774 \uc788\uc73c\uba74 \uadf8\ub300\ub85c \uc4f0\uace0, \uc5c6\uc73c\uba74 KVS\uc758 routing \ud0a4\uc5d0\uc11c \ud65c\uc131 \ub9ac\uc804\uc744 \uc77d\uc2b5\ub2c8\ub2e4. \uc7a5\uc560 \ub54c\ub294 KVS \uac12\ub9cc \ubc14\uafb8\uba74 \uc0c8 \uc138\uc158\ubd80\ud130 \ub2e4\ub978 \ub9ac\uc804\uc73c\ub85c \uac11\ub2c8\ub2e4.\n\n\ucfe0\ud0a4\ub85c \uace0\uc815\ub41c \uae30\uc874 \uc138\uc158\uc740 \uc5b4\ub5bb\uac8c \ub420\uae4c\uc694? primary\uac00 \uc5d0\ub7ec\ub97c \ub0b4\uba74 GET\uc740 secondary\ub85c \ub118\uc5b4\uac00\uc9c0\ub9cc POST\ub294 \ub118\uc5b4\uac00\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uc774\uac74 \uc7a0\uc2dc \ub4a4 origin failover \uc2ac\ub77c\uc774\ub4dc\uc5d0\uc11c \ub2e4\uc2dc \ubd05\ub2c8\ub2e4.\n\n\ub2e4\uc74c\uc740 \uc7a5\uc560\ub97c \"\uac10\uc9c0\"\ud558\ub294 \ucabd, \ud5ec\uc2a4\uccb4\ud06c\uc785\ub2c8\ub2e4.\n[\ucd9c\ucc98]\n\u2022 Route 53 latency routing: docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-latency.html\n\u2022 CloudFront Functions origin \uc218\uc815 helper: docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/helper-functions-origin-modification.html\n\u2022 KVS get(): .../functions-custom-methods.html, \uc694\uae08: aws.amazon.com/cloudfront/pricing/pay-as-you-go/, aws.amazon.com/route53/pricing/\n\u2022 AWS \ube14\ub85c\uadf8 \"Building Multi-Region Active-Active Architectures with CloudFront VPC origins and Advanced Routing\"",
+    4: "\ud83c\udfac \u23f8\ufe0f [2.5min] [\uc694\uc57d]\n\u2022 18% \ucd08\uacfc checker\uac00 healthy\uba74 healthy: \uc77c\ubd80 \uc9c0\uc5ed \ub124\ud2b8\uc6cc\ud06c \ubb38\uc81c\ub85c \uc624\ud310\ud558\uc9c0 \uc54a\uae30 \uc704\ud55c \uac12\n\u2022 \uac04\uaca9 10\ucd08 \ub610\ub294 30\ucd08(\uc0dd\uc131 \ud6c4 \ubcc0\uacbd \ubd88\uac00), \uc5f0\uc18d \uc2e4\ud328 1~10, \uae30\ubcf8 3\n\u2022 Route 53 checker\ub294 VPC \ubc16\uc5d0 \uc788\uc73c\ubbc0\ub85c internal ALB\ub294 CloudWatch alarm \uae30\ubc18 health check\n\u2022 \uc804\ud658 \uc2dc\uac04 \uadfc\uc0ac: TTL + \uc8fc\uae30 \u00d7 \ud69f\uc218\n\uc67c\ucabd \uce74\ub4dc\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \uc608\uc804 \uc790\ub8cc\uc5d0\ub294 \"\ubaa8\ub4e0 checker\uac00 \uc2e4\ud328\ud574\uc57c unhealthy\"\ub77c\uace0 \uc801\ud600 \uc788\uc5c8\ub294\ub370, \uc815\ud655\ud55c \uaddc\uce59\uc740 18%\uc785\ub2c8\ub2e4. checker\uc758 18%\ub97c \ub118\uac8c healthy\ub77c\uace0 \ubcf4\uace0\ud558\uba74 healthy, 18% \uc774\ud558\uba74 unhealthy\uc785\ub2c8\ub2e4.\n\uac04\uaca9\uc740 10\ucd08\uc640 30\ucd08 \uc911\uc5d0\uc11c \uace0\ub974\uace0, \ud55c \ubc88 \ub9cc\ub4e4\uba74 \ubc14\uafc0 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. 10\ucd08 fast interval\uc740 \uc720\ub8cc \uc635\uc158\uc785\ub2c8\ub2e4. HTTP \uccb4\ud06c\ub294 TCP \uc5f0\uacb0 4\ucd08, \uc5f0\uacb0 \ud6c4 2\ucd08 \uc548\uc5d0 2xx\ub098 3xx\ub97c \ubc1b\uc544\uc57c \ud558\uace0, HTTPS \uccb4\ud06c\ub294 \uc778\uc99d\uc11c\ub97c \uac80\uc99d\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\n\uc6b0\ub9ac \uad6c\uc870\uc5d0\uc11c \uac00\uc7a5 \uc911\uc694\ud55c \uce74\ub4dc\ub294 \ub124 \ubc88\uc9f8\uc785\ub2c8\ub2e4. Route 53 checker\ub294 VPC \ubc16\uc5d0 \uc788\uc5b4\uc11c internal ALB\uc5d0 \uc9c1\uc811 \uc811\uc18d\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. public IP\ub97c \ubd99\uc774\ub294 \uac74 \uae08\uc9c0\uc774\ubbc0\ub85c, ALB\uc758 UnHealthyHostCount\ub098 5xx \ube44\uc728\ub85c CloudWatch alarm\uc744 \ub9cc\ub4e4\uace0 \uadf8 alarm \uc0c1\ud0dc\ub97c \ubcf4\ub294 health check\ub97c \uc501\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd \uacc4\uc0b0\uae30\uc5d0\uc11c 30\ucd08, 3\ud68c, TTL 60\ucd08\uba74 \uac10\uc9c0 1\ubd84 30\ucd08, \uc804\ud658\uc740 \uc57d 2\ubd84 30\ucd08\uc785\ub2c8\ub2e4. fast 10\ucd08\ub85c \ubc14\uafb8\uba74 \uac10\uc9c0 30\ucd08, \uc804\ud658 1\ubd84 30\ucd08\uac00 \ub429\ub2c8\ub2e4. alarm 1\ubd84 \uc8fc\uae30\ub85c \ubc14\uafd4 \ubcf4\uc2dc\uba74 alarm \uae30\ubc18 \uccb4\ud06c\uac00 \ub354 \ub290\ub9ac\ub2e4\ub294 \uac83\ub3c4 \ubcf4\uc785\ub2c8\ub2e4.\n\n\uac10\uc9c0 \ub2e4\uc74c\uc740 \"\ub204\uac00 \uc2a4\uc704\uce58\ub97c \ub204\ub974\ub294\uac00\"\uc785\ub2c8\ub2e4. Route 53 ARC\ub97c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n[\ucd9c\ucc98]\n\u2022 docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-determining-health-of-endpoints.html (18%, 4\ucd08/2\ucd08, HTTPS \uc778\uc99d\uc11c \ubbf8\uac80\uc99d)\n\u2022 .../health-checks-creating-values.html (10/30\ucd08, \ubcc0\uacbd \ubd88\uac00), AWS News Blog \"Route 53 Health Check Improvements\" (1~10, \uae30\ubcf8 3, \uadfc\uc0ac\uc2dd)\n\u2022 CloudFormation AWS::Route53::HealthCheck \"Private Hosted Zones\" \uc808, aws.amazon.com/route53/pricing/",
+    5: "\u2753 \u23f8\ufe0f [2.5min] [\uc694\uc57d]\n\u2022 Routing control: on/off \uc2a4\uc704\uce58, 5\uac1c \ub9ac\uc804 \uc5d4\ub4dc\ud3ec\uc778\ud2b8 \ud074\ub7ec\uc2a4\ud130, safety rule\ub85c \uc2e4\uc218 \ubc29\uc9c0, \ud074\ub7ec\uc2a4\ud130 $2.50/\uc2dc\uac04\n\u2022 Region switch: \ub9ac\uc804 \uc804\ud658 workflow\ub97c plan\uc73c\ub85c, \ud65c\uc131\ud654\ud560 \ub9ac\uc804\uc5d0\uc11c \uc2e4\ud589, plan\ub2f9 $70/\uc6d4\n\u2022 Readiness check\ub294 2026-04-30\ubd80\ud130 \uc2e0\uaddc \uace0\uac1d \ubd88\uac00\n\u2022 Route 53 accelerated recovery: us-east-1 \uc7a5\uc560 \uc2dc \ub300\ubd80\ubd84 1\uc2dc\uac04 \uc548\uc5d0 public DNS \ub808\ucf54\ub4dc \ubcc0\uacbd \ubcf5\uad6c\n\uccab \ubc88\uc9f8 \ud0ed, routing control\uc740 \ubbf8\ub9ac \ub9cc\ub4e4\uc5b4 \ub454 on/off \uc2a4\uc704\uce58\uc785\ub2c8\ub2e4. \uc0c1\ud0dc\uac00 Route 53 health check\ub85c \ub178\ucd9c\ub418\ubbc0\ub85c failover \ub808\ucf54\ub4dc\uc640 \ubb36\uc5b4 \uc4f0\uace0, \uc0c1\ud0dc \ubcc0\uacbd\uc740 5\uac1c \ub9ac\uc804 \uc5d4\ub4dc\ud3ec\uc778\ud2b8\ub97c \uac00\uc9c4 \ud074\ub7ec\uc2a4\ud130\uc5d0 \ud558\ubbc0\ub85c \ud55c \ub9ac\uc804\uc774 \uc544\ud30c\ub3c4 \uc2a4\uc704\uce58\ub97c \ub204\ub97c \uc218 \uc788\uc2b5\ub2c8\ub2e4. safety rule\ub85c \ub450 \ub9ac\uc804\uc744 \ub3d9\uc2dc\uc5d0 \ub044\ub294 \uc2e4\uc218\ub97c \ub9c9\uc2b5\ub2c8\ub2e4. \ud074\ub7ec\uc2a4\ud130 \ube44\uc6a9\uc774 \uc2dc\uac04\ub2f9 2.5\ub2ec\ub7ec\ub77c \uc6d4 \uc57d 1,800\ub2ec\ub7ec \uc218\uc900\uc774\ub77c\ub294 \uc810\ub3c4 \uae30\uc5b5\ud574 \ub450\uc138\uc694.\n\n\ub450 \ubc88\uc9f8 \ud0ed, Region switch\ub294 2025\ub144\uc5d0 \ub098\uc628 orchestration \uae30\ub2a5\uc785\ub2c8\ub2e4. DB \uc2b9\uaca9, EKS \uc2a4\ucf00\uc77c, DNS \uc804\ud658 \uac19\uc740 \ub2e8\uacc4\ub97c plan\uc73c\ub85c \ub9cc\ub4e4\uace0, \ud65c\uc131\ud654\ud560 \ub9ac\uc804\uc5d0\uc11c \uc2e4\ud589\ud569\ub2c8\ub2e4. \uc6b0\ub9ac \uad6c\uc870\ucc98\ub7fc \uacf5\uac1c \uacbd\ub85c\ub97c CloudFront Function\uc774 \uace0\ub974\ub294 \uacbd\uc6b0\uc5d0\ub294 Lambda custom action block\uc774 KVS\uc758 \ud65c\uc131 \ub9ac\uc804 \uac12\uc744 \ubc14\uafb8\ub294 \ubc29\uc2dd\uc73c\ub85c \uc5f0\uacb0\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \uc774 \uc5f0\uacb0\uc740 \uc81c\uac00 \uc81c\uc548\ud558\ub294 \uc124\uacc4 \uc608\uc2dc\uc774\uace0 AWS\uac00 \uc81c\uacf5\ud558\ub294 \uc804\uc6a9 block\uc740 \uc544\ub2d9\ub2c8\ub2e4.\n\uc138 \ubc88\uc9f8 \ud0ed, \uc608\uc804 \uc790\ub8cc\uc5d0\uc11c \ucd94\ucc9c\ud558\ub358 readiness check\ub294 2026\ub144 4\uc6d4 30\uc77c\ubd80\ud130 \uc2e0\uaddc \uace0\uac1d\uc5d0\uac8c \uc5f4\ub824 \uc788\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uc0c8\ub85c \uc124\uacc4\ud55c\ub2e4\uba74 Region switch plan \uc5f0\uc2b5\uacfc capacity alarm\uc73c\ub85c \ub300\uc2e0\ud569\ub2c8\ub2e4.\n\n\uc9c0\ub09c\ud574 us-east-1 \uc774\uc288 \ub54c DNS \ub808\ucf54\ub4dc\ub97c \ubabb \ubc14\uafd4\uc11c \uace4\ub780\ud588\ub358 \uacbd\ud5d8\uc774 \uc788\uc73c\uc2e0\uac00\uc694? \uadf8 \ubb38\uc81c\ub97c \uaca8\ub0e5\ud55c \uac83\uc774 Route 53 accelerated recovery\uc785\ub2c8\ub2e4.\n\n\ub2e4\uc74c\uc740 CloudFront \uc548\ucabd, behavior \uad6c\uc131\uc785\ub2c8\ub2e4.\n[\ucd9c\ucc98]\n\u2022 aws.amazon.com/application-recovery-controller/pricing/ (\ud074\ub7ec\uc2a4\ud130 $2.50/\uc2dc\uac04, \ucd5c\ub300 2\uac1c, plan $70/\uc6d4, readiness \uc2e0\uaddc \ubd88\uac00 2026-04-30)\n\u2022 docs.aws.amazon.com/r53recovery/latest/dg/data-and-control-planes-rs.html, ARC Region switch API ExecutionBlockConfiguration\n\u2022 What's New 2025-11 \"Amazon Route 53 announces accelerated recovery for managing public DNS records\"",
+    6: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 /api/*: CachingDisabled + AllViewerExceptHostHeader, \ubaa8\ub4e0 \uba54\uc11c\ub4dc, viewer request \ud568\uc218\ub85c origin group \uc120\ud0dd\n\u2022 /static/*: CachingOptimized, OAC, \ud30c\uc77c\uba85 \ud574\uc2dc\ub85c invalidation \ucd5c\uc18c\ud654\n\u2022 Default: SPA rewrite\ub294 \ud568\uc218\ub85c, custom error response\ub294 \ubc30\ud3ec \uc804\uccb4\uc5d0 \uac78\ub824 API 404\ub97c \uac00\ub9bc\n\uc138 \ud0ed\uc785\ub2c8\ub2e4. \uccab \ubc88\uc9f8 /api/*\ub294 \uce90\uc2dc\ub97c \ub044\uace0, Host\ub97c \ube80 viewer \ud5e4\ub354\ub97c origin\uc73c\ub85c \uc804\ub2ec\ud558\ub294 managed \uc815\ucc45\uc744 \uc501\ub2c8\ub2e4. Host\ub97c \uadf8\ub300\ub85c \ub118\uae30\uba74 ALB \uc778\uc99d\uc11c, \ub77c\uc6b0\ud305\uacfc \uc5b4\uae0b\ub098\ub294 \ubb38\uc81c\uac00 \uc0dd\uae30\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4. target\uc740 \ub2e8\uc77c origin\uc774 \uc544\ub2c8\ub77c origin group\uc774\uace0, \uc55e\uc5d0\uc11c \ubcf8 \ud568\uc218\uac00 \uc694\uccad\ub9c8\ub2e4 primary\ub97c \uc815\ud569\ub2c8\ub2e4.\n\n\ub450 \ubc88\uc9f8 /static/*\uc740 CachingOptimized\ub85c \uae38\uac8c \uce90\uc2dc\ud558\uace0 S3\ub294 OAC\ub85c\ub9cc \uc811\uadfc\ud558\uac8c \ud569\ub2c8\ub2e4. \ud30c\uc77c\uba85\uc5d0 \ud574\uc2dc\ub97c \ub123\uc73c\uba74 \ubc30\ud3ec \ub54c invalidation\uc744 \uac70\uc758 \uc548 \ud574\ub3c4 \ub429\ub2c8\ub2e4.\n\uc138 \ubc88\uc9f8\uac00 \uc2e4\ubb34\uc5d0\uc11c \uc790\uc8fc \ud130\uc9c0\ub294 \ubd80\ubd84\uc785\ub2c8\ub2e4. \uc608\uc804 \uc790\ub8cc\ub294 SPA\ub97c \uc704\ud574 403, 404\ub97c index.html 200\uc73c\ub85c \ubc14\uafb8\ub294 custom error response\ub97c \uc37c\ub294\ub370, \uc774 \uc124\uc815\uc740 behavior\uac00 \uc544\ub2c8\ub77c distribution \uc804\uccb4\uc5d0 \uc801\uc6a9\ub429\ub2c8\ub2e4. \uadf8\ub7ec\uba74 /api/orders/123\uc774 404\ub97c \ub0b4\ub3c4 \ud074\ub77c\uc774\uc5b8\ud2b8\ub294 HTML\uacfc 200\uc744 \ubc1b\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c default behavior\uc5d0 viewer request \ud568\uc218\ub85c rewrite\ud558\ub294 \ubc29\uc2dd\uc73c\ub85c \ubc14\uafe8\uc2b5\ub2c8\ub2e4.\n\n\uc774\uc81c origin \ucabd, VPC origin\uacfc \ubcf4\uc548 \uadf8\ub8f9\uc744 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n[\ucd9c\ucc98]\n\u2022 CloudFront managed cache/origin request policies, CustomErrorResponses\ub294 DistributionConfig \uc218\uc900 \uc124\uc815 (CloudFront API Reference)",
+    7: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 VPC origin \uc804\uc81c: IGW \ubd80\ucc29(\ub77c\uc6b0\ud305\uc5d4 \ubbf8\uc0ac\uc6a9), private subnet \uc5ec\uc720 IP, ALB Active, \uc0dd\uc131 \ud6c4 Deployed\uae4c\uc9c0 \ucd5c\ub300 15\ubd84\n\u2022 us-east-1\uc740 use1-az3\uc5d0\uc11c VPC origin \ubbf8\uc9c0\uc6d0\n\u2022 SG \uc18c\uc2a4\ub294 CloudFront-VPCOrigins-Service-SG\uac00 \uac00\uc7a5 \uc5c4\uaca9, prefix list\ub294 weight 55\n\u2022 \uc81c\uc57d: gRPC, Lambda@Edge origin trigger, updateRequestOrigin() \ubbf8\uc9c0\uc6d0, outbound NACL\uc740 \ud3c9\uac00\ub428\n\uccab \ud0ed\uc740 \uc900\ube44 \uc870\uac74\uc785\ub2c8\ub2e4. \uc758\uc678\uc778 \uc810\uc740 internet gateway\uac00 VPC\uc5d0 \uc788\uc5b4\uc57c \ud55c\ub2e4\ub294 \uac83\uc778\ub370, \ubb38\uc11c \ud45c\ud604\ub300\ub85c \"\uc778\ud130\ub137 \ud2b8\ub798\ud53d\uc744 \ubc1b\ub294 VPC\"\ub77c\ub294 \ud45c\uc2dc\uc77c \ubfd0 \ub77c\uc6b0\ud305\uc5d0 \uc4f0\uc774\uc9c0 \uc54a\uace0 ALB\ub294 private subnet\uc5d0 \uadf8\ub300\ub85c \ub461\ub2c8\ub2e4. \uadf8\ub9ac\uace0 us-east-1\uc5d0\uc11c\ub294 use1-az3\uac00 VPC origin\uc744 \uc9c0\uc6d0\ud558\uc9c0 \uc54a\uc73c\ub2c8 ALB subnet\uc758 AZ ID\ub97c \ud655\uc778\ud558\uc138\uc694. AZ \uc774\ub984\uc774 \uc544\ub2c8\ub77c ID\uc785\ub2c8\ub2e4.\n\n\ub450 \ubc88\uc9f8 \ud0ed, \ubcf4\uc548 \uadf8\ub8f9 \uc18c\uc2a4\ub294 \ub450 \uac00\uc9c0\uc785\ub2c8\ub2e4. CloudFront\uac00 \ub9cc\ub4dc\ub294 Service SG\ub97c \ucc38\uc870\ud558\uba74 \ub0b4 distribution \ud2b8\ub798\ud53d\ub9cc \ubc1b\uc2b5\ub2c8\ub2e4. managed prefix list\ub294 \ubaa8\ub4e0 CloudFront \uace0\uac1d\uc758 origin-facing IP\ub77c\uc11c \ub354 \ub113\uace0, weight\uac00 55\ub77c \uae30\ubcf8 quota 60 \uaddc\uce59\uc5d0\uc11c \uac70\uc758 \ub2e4 \uc501\ub2c8\ub2e4. \uadf8\ub798\uc11c 443 \ud558\ub098\ub9cc \uc5fd\ub2c8\ub2e4.\n\uc138 \ubc88\uc9f8 \ud0ed\uc758 \uc81c\uc57d \uc911 updateRequestOrigin\uc774 VPC origin\uc5d0 \uc548 \ub41c\ub2e4\ub294 \uc810\uc774 \uc55e\uc758 \ud568\uc218 \uc124\uacc4\uc640 \uc9c1\uacb0\ub429\ub2c8\ub2e4. \ub124 \ubc88\uc9f8 \ud0ed\uc740 \uc6b0\ub9ac \ud300 \uac00\ub4dc\ub808\uc77c\uc785\ub2c8\ub2e4. internal scheme, public IP \uae08\uc9c0, 0.0.0.0/0 \uae08\uc9c0\ub97c IaC \uac80\uc0ac\uc640 AWS Config\ub85c \uc774\uc911 \uc810\uac80\ud569\ub2c8\ub2e4.\n\n\ub2e4\uc74c\uc740 origin \ubd80\ud558\ub97c \uc904\uc774\ub294 Origin Shield\uc785\ub2c8\ub2e4.\n[\ucd9c\ucc98]\n\u2022 docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html (IGW, ENI, 15\ubd84, AZ \uc608\uc678, SG \uc635\uc158, \ubbf8\uc9c0\uc6d0 \uae30\ub2a5, NACL)\n\u2022 docs.aws.amazon.com/vpc/latest/userguide/working-with-aws-managed-prefix-lists.html (weight 55, SG \uae30\ubcf8 60)",
+    8: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n\u2022 Origin Shield\ub294 REC\uc640 origin \uc0ac\uc774\uc758 \ucd94\uac00 \uce90\uc2dc \uacc4\uce35, origin\uacfc \uac00\uc7a5 \uac00\uae4c\uc6b4 \ub9ac\uc804\uc5d0 \ub460\n\u2022 origin group\uc5d0\uc11c\ub294 origin\ub9c8\ub2e4 Shield \ub9ac\uc804 \uc9c0\uc815\n\u2022 \ub3d9\uc801 \uc694\uccad(\uc4f0\uae30 \uba54\uc11c\ub4dc, TTL 3600\ucd08 \ubbf8\ub9cc GET)\uc740 \ud56d\uc0c1 \uacfc\uae08 \ub300\uc0c1\n\u2022 /static/*\uc740 \ucf1c\uace0, /api/*\ub294 \uce21\uc815 \ud6c4 \uacb0\uc815\nOrigin Shield\ub294 regional edge cache \ub4a4\uc5d0 \ud558\ub098 \ub354 \ub450\ub294 \uce90\uc2dc\uc785\ub2c8\ub2e4. \uc5ec\ub7ec REC\uc5d0\uc11c \uac19\uc740 \uac1d\uccb4\ub97c \uc694\uccad\ud574\ub3c4 Shield\uac00 \ubaa8\uc544\uc11c origin\uc5d0\ub294 \ud55c \ubc88\ub9cc \uac11\ub2c8\ub2e4. Shield \ub9ac\uc804\uc740 origin\uacfc \uac00\uc7a5 \uac00\uae4c\uc6b4 \ub9ac\uc804, \uc6b0\ub9ac \uacbd\uc6b0 \uac01 ALB\uc640 \uac19\uc740 \ub9ac\uc804\uc785\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd\uc744 \ud074\ub9ad\ud558\uba70 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \ube44\uc6a9 \uaddc\uce59\uc774 \uc124\uacc4\ub97c \ubc14\uafc9\ub2c8\ub2e4. POST \uac19\uc740 \uc4f0\uae30 \uc694\uccad\uacfc TTL 3600\ucd08 \ubbf8\ub9cc GET\uc740 Shield\uac00 \ud56d\uc0c1 \ucd94\uac00 \uacc4\uce35\uc774\ub77c \ubaa8\ub450 \uacfc\uae08\ub429\ub2c8\ub2e4. \uce90\uc2dc\ub97c \ub048 /api/*\uc5d0 Shield\ub97c \ucf1c\uba74 \uc694\uccad \uc804\ubd80\uac00 \uacfc\uae08 \ub300\uc0c1\uc774 \ub429\ub2c8\ub2e4. \ubc18\ub300\ub85c \uce90\uc2dc \uc694\uccad\uc740 Shield\uc640 \uac19\uc740 \ub9ac\uc804\uc758 REC\uc5d0\uc11c \uc624\uba74 \uac74\ub108\ub6f0\ubbc0\ub85c \uacfc\uae08\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\uc608\uc804 \uc790\ub8cc\uc758 \"origin \uc694\uccad 50~90% \uac10\uc18c\", \"\uc21c \uc808\uac10 30~60%\"\ub294 \uadfc\uac70\uac00 \uc5c6\uc5b4 \ube90\uc2b5\ub2c8\ub2e4. \ud6a8\uacfc\ub294 \uce90\uc2dc \uc801\uc911\ub960\uacfc \ud2b8\ub798\ud53d \ubd84\ud3ec\uc5d0 \ub530\ub77c \ub2e4\ub974\ub2c8 CloudFront \ub9ac\ud3ec\ud2b8\ub85c \uc9c1\uc811 \uce21\uc815\ud558\uc138\uc694.\n\n\uc774\uc81c origin group\uc774 \uc2e4\uc81c\ub85c \uc5b8\uc81c \ub118\uc5b4\uac00\ub294\uc9c0, origin failover\ub97c \uc9c1\uc811 \ub20c\ub7ec \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n[\ucd9c\ucc98]\n\u2022 docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/origin-shield.html \"Estimate Origin Shield costs\"\n\u2022 aws.amazon.com/cloudfront/pricing/pay-as-you-go/ (Origin Shield \ubbf8\uad6d $0.0075/10,000 \uc694\uccad)",
+    9: "\u2753 \u23f8\ufe0f \ud83c\udfac [2.5min] [\uc694\uc57d]\n\u2022 origin group failover\ub294 viewer \uba54\uc11c\ub4dc\uac00 GET, HEAD, OPTIONS\uc77c \ub54c\ub9cc \ub3d9\uc791\n\u2022 \uc0c1\ud0dc\ub97c \uae30\uc5b5\ud558\uc9c0 \uc54a\uc544 \uc694\uccad\ub9c8\ub2e4 primary\ubd80\ud130 \uc2dc\ub3c4\n\u2022 \uae30\ubcf8 timeout(3\ud68c \u00d7 10\ucd08)\uc774\uba74 \ub118\uc5b4\uac00\uae30\uae4c\uc9c0 \ucd5c\ub300 \uc57d 30\ucd08\n\u2022 POST \uc8fc\ubb38, \uacb0\uc81c\ub294 idempotency key\uc640 \uc7ac\uc2dc\ub3c4, KVS \ub9ac\uc804 \uc804\ud658\uc73c\ub85c \ud574\uacb0\n\n\uc67c\ucabd \ubc84\ud2bc\uc73c\ub85c \uc9c1\uc811 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. GET\uc5d0 503\uc774\uba74 CloudFront\uac00 \uac19\uc740 \uc694\uccad\uc744 us-west-2\ub85c \ub2e4\uc2dc \ubcf4\ub0b4\uace0 \uc0ac\uc6a9\uc790\ub294 \uc131\uacf5\uc744 \ubc1b\uc2b5\ub2c8\ub2e4. \uc774\uc81c POST /api/orders\ub85c \ubc14\uafd4 \ubcf4\uc138\uc694. \ub611\uac19\uc774 503\uc778\ub370 secondary \uc2dc\ub3c4\uac00 \uc5c6\uc2b5\ub2c8\ub2e4. CloudFront\ub294 GET, HEAD, OPTIONS\uac00 \uc544\ub2c8\uba74 failover\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uc608\uc804 \uc790\ub8cc\uc758 \"sub-second switching, \uc0ac\uc6a9\uc790\ub294 \uc2e4\ud328\ub97c \uc778\uc9c0\ud558\uc9c0 \ubabb\ud55c\ub2e4\"\ub294 \uc4f0\uae30 \uc694\uccad\uc5d0\uc11c\ub294 \uc0ac\uc2e4\uc774 \uc544\ub2d9\ub2c8\ub2e4.\n\n\uc5f0\uacb0 timeout\uc744 \ub20c\ub7ec \ubcf4\uba74, \uae30\ubcf8\uac12\uc778 \uc5f0\uacb0 \uc2dc\ub3c4 3\ud68c\uc640 \uc5f0\uacb0 timeout 10\ucd08\uac00 \ub2e4 \uc18c\uc9c4\ub41c \ub4a4\uc5d0\uc57c \ub118\uc5b4\uac11\ub2c8\ub2e4. \ucd5c\ub300 \uc57d 30\ucd08\uc785\ub2c8\ub2e4. \uadf8\ub9ac\uace0 origin group\uc740 \uc0c1\ud0dc\ub97c \uae30\uc5b5\ud558\uc9c0 \uc54a\uc73c\ubbc0\ub85c \uc7a5\uc560\uac00 \uc774\uc5b4\uc9c0\ub294 \ub3d9\uc548 \ubaa8\ub4e0 \uc694\uccad\uc774 \uc774 \ub300\uae30\ub97c \ubc18\ubcf5\ud569\ub2c8\ub2e4. \uc2dc\ub3c4 \ud69f\uc218\uc640 timeout\uc744 \uc904\uc774\ub418, \uc815\uc0c1 \uc9c0\uc5f0 \ubd84\ud3ec\ub97c \ubcf4\uace0 \uc815\ud558\uc138\uc694.\n\n\uc8fc\ubb38, \uacb0\uc81c API\uc5d0 idempotency key\uac00 \uc788\ub098\uc694? \uc5c6\ub2e4\uba74 \ud074\ub77c\uc774\uc5b8\ud2b8 \uc7ac\uc2dc\ub3c4\uac00 \uc911\ubcf5 \uc8fc\ubb38\uc744 \ub9cc\ub4ed\ub2c8\ub2e4. \uc774\uac74 Block 2\uc758 \ub370\uc774\ud130 \uc77c\uad00\uc131\uacfc\ub3c4 \uc5f0\uacb0\ub429\ub2c8\ub2e4.\n\n\uacbd\ub85c\uc640 \uc808\uccb4\ub97c \ubd24\uc73c\ub2c8 \uc774\uc81c Edge\uc758 \ubc29\uc5b4, WAF\ub85c \ub118\uc5b4\uac00\uaca0\uc2b5\ub2c8\ub2e4.\n[\ucd9c\ucc98]\n\u2022 docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/RequestAndResponseBehaviorOriginGroups.html (GET, HEAD, OPTIONS\ub9cc)\n\u2022 CloudFormation Origin ConnectionTimeout 1~10\ucd08 \uae30\ubcf8 10, CloudFront Functions helper (connectionAttempts 1~3)",
+    10: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 \uc21c\uc11c: \uba85\uc2dc IP \ubaa9\ub85d \u2192 Anti-DDoS AMR \u2192 rate-based \u2192 reputation \u2192 exploit \u2192 Bot Control\n\u2022 Anti-DDoS AMR\uc740 \uc0c1\ub2e8, scope-down \uc5c6\uc774 (baseline \uc815\ud655\ub3c4)\n\u2022 rate-based\ub294 window 60/120/300/600\ucd08 \uc911 \uc120\ud0dd, \uc57d 10\ucd08\ub9c8\ub2e4 \ud3c9\uac00\n\u2022 CloudFront\uc6a9 web ACL\uc740 us-east-1, \uae30\ubcf8 1,500 WCU, $5 + $1/\uaddc\uce59 + $0.60/M\n\ubc88\ud638\uac00 \uace7 priority\uc785\ub2c8\ub2e4. 0\ubc88\uc740 \uc6b4\uc601\ud300\uc774 \uba85\uc2dc\uc801\uc73c\ub85c \ub0b4\ub9b0 \ud5c8\uc6a9, \ucc28\ub2e8 \uacb0\uc815\uc774\ub77c \uac00\uc7a5 \uba3c\uc800 \ub461\ub2c8\ub2e4. 1\ubc88\uc740 2025\ub144\uc5d0 \ucd94\uac00\ub41c Anti-DDoS managed rule group\uc785\ub2c8\ub2e4. AWS \uac00\uc774\ub4dc\ub294 IP \ubaa9\ub85d \ubc14\ub85c \ub4a4\uc5d0 \ub450\uace0 scope-down\uc744 \uc4f0\uc9c0 \ub9d0\ub77c\uace0 \ud569\ub2c8\ub2e4. \ud2b8\ub798\ud53d baseline\uc744 \ud559\uc2b5\ud558\ub294 \ubc29\uc2dd\uc774\ub77c \ubcf4\ub294 \uc694\uccad\uc774 \uc904\uba74 \ud310\ub2e8\uc774 \ubd80\uc815\ud655\ud574\uc9c0\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4.\n\n2\ubc88 rate-based\ub294 \uc774\uc81c window\ub97c 60\ucd08\ubd80\ud130 600\ucd08\uae4c\uc9c0 \uace0\ub97c \uc218 \uc788\uc2b5\ub2c8\ub2e4. \uc608\uc804 \uc790\ub8cc\uc758 \"5\ubd84 2,000\uac74\"\uc740 \uace0\uc815\uac12\uc774 \uc544\ub2c8\ub77c \ud558\ub098\uc758 \uc608\uc2dc\uc600\uc744 \ubfd0\uc774\ub2c8, \uc815\uc0c1 \uc0ac\uc6a9\uc790 \ubd84\ud3ec\ub97c \ubcf4\uace0 \uc815\ud558\uc138\uc694. 3, 4\ubc88\uc740 managed rule group\uc774\uace0, 5\ubc88 Bot Control\uc740 \ub2e4\uc74c \uc2ac\ub77c\uc774\ub4dc\uc5d0\uc11c \uc790\uc138\ud788 \ubd05\ub2c8\ub2e4.\n\uc624\ub978\ucabd\uc740 \uc6b4\uc601 \uc0ac\uc2e4\uc785\ub2c8\ub2e4. CloudFront\uc6a9 web ACL\uc740 us-east-1\uc5d0\uc11c \ub9cc\ub4e4\uace0, \uae30\ubcf8 1,500 WCU\ub97c \ub118\uae30\uba74 \uc694\uccad\ub2f9 \ucd94\uac00 \uc694\uae08\uc774 \ubd99\uc2b5\ub2c8\ub2e4.\n\nBot Control\uc740 \ucf1c\ub294 \uc21c\uac04 \uc1fc\ud551\ubab0 \ubaa8\ubc14\uc77c \uc571\uc744 \ub9c9\uc744 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \uc65c \uadf8\ub7f0\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n[\ucd9c\ucc98]\n\u2022 repost.aws/knowledge-center/waf-mitigate-ddos-attacks (Anti-DDoS \ubc30\uce58, scope-down \uae08\uc9c0)\n\u2022 WAF RateBasedStatement EvaluationWindowSec (60/120/300/600, \uae30\ubcf8 300, \uc57d 10\ucd08\ub9c8\ub2e4 \ud3c9\uac00)\n\u2022 aws.amazon.com/waf/pricing/ (web ACL $5, \uaddc\uce59 $1, $0.60/M, 1,500 WCU, 500 WCU\ub2f9 $0.20/M)",
+    11: "\u2753 \u23f8\ufe0f [2.5min] [\uc694\uc57d]\n\u2022 Common: $10/\uc6d4 + 10M \ubb34\ub8cc \ud6c4 $1/M, Targeted: 1M \ubb34\ub8cc \ud6c4 $10/M (flat-rate \ubbf8\uc9c0\uc6d0)\n\u2022 SignalNonBrowserUserAgent\ub294 \uae30\ubcf8 Block: \ubaa8\ubc14\uc77c \uc571, \uc11c\ubc84 \uac04 \ud638\ucd9c\uc774 \ub9c9\ud790 \uc218 \uc788\uc74c\n\u2022 \uaddc\uce59 \uc624\ubc84\ub77c\uc774\ub4dc\ub85c Count \u2192 label \ubd84\uc11d \u2192 \uc608\uc678 \uaddc\uce59 \u2192 Block \uc21c\uc11c\n\u2022 scope-down\uc740 \uc624\ud0d0\uacfc \uc694\uccad \uc694\uae08\uc744 \uac19\uc774 \uc904\uc784\n\uccab \ud0ed\uc740 \ub808\ubca8\uc785\ub2c8\ub2e4. Common\uc740 \uc2a4\uc2a4\ub85c \ubd07\uc774\ub77c\uace0 \ubc1d\ud788\ub294 \ud074\ub77c\uc774\uc5b8\ud2b8\uc640 \uac80\uc99d\ub41c \ubd07\uc744 \ubd84\ub958\ud558\uace0, Targeted\ub294 \ub354 \uc815\uad50\ud55c \ud0d0\uc9c0\ub97c \ud569\ub2c8\ub2e4. \uc694\uae08 \uad6c\uc870\uac00 \uc5f4 \ubc30 \ucc28\uc774\ub098\ub2c8 Targeted\ub294 \ub85c\uadf8\uc778, \uacb0\uc81c\ucc98\ub7fc \ud544\uc694\ud55c \uacbd\ub85c\uc5d0\ub9cc scope-down\uc73c\ub85c \uc501\ub2c8\ub2e4.\n\n\ub450 \ubc88\uc9f8 \ud0ed\uc774 \uc774 \ube14\ub85d\uc5d0\uc11c \uac00\uc7a5 \uc2e4\uc804\uc801\uc778 \ub0b4\uc6a9\uc785\ub2c8\ub2e4. SignalNonBrowserUserAgent \uaddc\uce59\uc740 \uae30\ubcf8 \ub3d9\uc791\uc774 Block\uc774\uace0, AWS \ubb38\uc11c\uc5d0\ub3c4 \ubaa8\ubc14\uc77c \uc571\uc740 \ubcf4\ud1b5 \ube44\ube0c\ub77c\uc6b0\uc800 User-Agent\ub77c\uc11c \uc774 \uaddc\uce59\uc5d0 \ub9c9\ud78c\ub2e4\uace0 \uc801\ud600 \uc788\uc2b5\ub2c8\ub2e4. \uc1fc\ud551\ubab0 \ud2b8\ub798\ud53d\uc758 \uc0c1\ub2f9 \ubd80\ubd84\uc774 \uc571\uc774\ub77c\uba74 \ucf1c\ub294 \uc21c\uac04 \uc7a5\uc560\uc785\ub2c8\ub2e4. \uacb0\uc81c\uc0ac webhook\uc774\ub098 \ubaa8\ub2c8\ud130\ub9c1\ub3c4 \ube44\uc2b7\ud558\uac8c \uc7a1\ud790 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\uc138 \ubc88\uc9f8 \ud0ed\ucc98\ub7fc \uadf8 \uaddc\uce59\ub9cc Count\ub85c \uc624\ubc84\ub77c\uc774\ub4dc\ud558\uba74 label\uc740 \uadf8\ub300\ub85c \ubd99\uace0 \ucc28\ub2e8\uc740 \uc548 \ub429\ub2c8\ub2e4. \uadf8\ub2e4\uc74c \uc6b0\ub9ac \uaddc\uce59\uc5d0\uc11c label\uacfc \uc571 User-Agent \uc870\uac74\uc744 \uc870\ud569\ud574 \ucc28\ub2e8\ud569\ub2c8\ub2e4.\n\n\ud604\uc7ac WAF \ub85c\uadf8\uc5d0\uc11c non_browser_user_agent label\uc774 \ubd99\uc740 \uc694\uccad \ube44\uc728\uc744 \ubcf4\uc2e0 \uc801 \uc788\ub098\uc694? \uadf8 \uc22b\uc790\uac00 Block \uc804\ud658 \uc804\uc5d0 \ubc18\ub4dc\uc2dc \ud655\uc778\ud560 \uac12\uc785\ub2c8\ub2e4.\n\n\uc5ec\uae30\uae4c\uc9c0\uac00 CloudFront \ucabd\uc785\ub2c8\ub2e4. Global Accelerator\ub294 \uc5b8\uc81c \uc4f0\ub294\uc9c0 \ube44\uad50\ud574 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n[\ucd9c\ucc98]\n\u2022 docs.aws.amazon.com/waf/latest/developerguide/waf-bot-control-example-user-agent-exception.html (\ubaa8\ubc14\uc77c \uc571, Count \uc624\ubc84\ub77c\uc774\ub4dc \uc608\uc2dc)\n\u2022 aws.amazon.com/waf/pricing/ (Bot Control \uad6c\ub3c5, \ubb34\ub8cc \ud55c\ub3c4, \uc694\uccad \uc694\uae08), CloudFront flat-rate \ubbf8\uc9c0\uc6d0 \uae30\ub2a5 \ud45c (Targeted Bots)\n\u2022 aws.amazon.com/waf/faqs/ (web bot auth, v4.0 \uc774\uc0c1)",
+    12: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n\u2022 CloudFront: L7, \uce90\uc2dc, Edge WAF, VPC origin, AWS origin fetch \ubb34\ub8cc\n\u2022 GA: L4 TCP/UDP, \uace0\uc815 anycast IPv4 2\uac1c, traffic dial\uacfc endpoint weight, internal ALB endpoint \uac00\ub2a5\n\u2022 GA \uc694\uae08: $0.025/\uc2dc\uac04 + DT-Premium + public IPv4 \uc694\uae08\n\u2022 \uc774 \uc544\ud0a4\ud14d\ucc98\uc758 \uac00\ub4dc\ub808\uc77c\uc0c1 \uacf5\uac1c \uc785\uad6c\ub294 CloudFront \ud558\ub098, GA\ub294 \uc608\uc678 \uc2ec\uc0ac\n\ub450 \uc11c\ube44\uc2a4\ub294 \uac19\uc740 \"\uae00\ub85c\ubc8c \uac00\uc18d\"\uc73c\ub85c \ubb36\uc774\uc9c0\ub9cc \ub3d9\uc791\ud558\ub294 \uce35\uc774 \ub2e4\ub985\ub2c8\ub2e4. CloudFront\ub294 HTTP\ub97c \uc774\ud574\ud558\ubbc0\ub85c \uce90\uc2dc\ud558\uace0 WAF\ub97c Edge\uc5d0\uc11c \uc801\uc6a9\ud569\ub2c8\ub2e4. GA\ub294 TCP, UDP\ub97c \uace0\uc815 IP\ub85c \ubc1b\uc544 AWS \ubc31\ubcf8\uc73c\ub85c \uac00\uc7a5 \uac00\uae4c\uc6b4 \ub9ac\uc804 endpoint\uc5d0 \ub118\uae30\uba70, traffic dial\ub85c \ub9ac\uc804 \ube44\uc728\uc744 \uc870\uc815\ud569\ub2c8\ub2e4.\n\n\uc608\uc804 \uc790\ub8cc\uc5d0 GA\ub97c \"per-flow \uacfc\uae08\"\uc73c\ub85c \uc801\uc5c8\ub294\ub370 \uc815\ud655\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uace0\uc815 \uc2dc\uac04\ub2f9 \uc694\uae08 0.025\ub2ec\ub7ec\uc640 \uc9c0\ubc30\uc801 \ubc29\ud5a5 \ud2b8\ub798\ud53d\uc758 DT-Premium, \uadf8\ub9ac\uace0 public IPv4 \uc8fc\uc18c \uc694\uae08\uc785\ub2c8\ub2e4. CloudFront \uc694\uccad \ub2e8\uac00\ub3c4 2026\ub144 \ud604\uc7ac \ubbf8\uad6d HTTPS \uae30\uc900 1\ub9cc \uac74\ub2f9 0.0100\ub2ec\ub7ec\uc785\ub2c8\ub2e4.\n\uc6b0\ub9ac \uc1fc\ud551\ubab0\uc740 \uc21c\uc218 HTTP(S)\ub77c CloudFront \ub2e8\ub3c5\uc785\ub2c8\ub2e4. GA\ub97c \ucd94\uac00\ud558\uba74 \uacf5\uac1c \uc785\uad6c\uac00 \ub450 \uac1c\uac00 \ub418\ubbc0\ub85c \ubcf4\uc548 \uac80\ud1a0 \ub300\uc0c1\uc785\ub2c8\ub2e4. \uace0\uc815 IP\uac00 \ud544\uc694\ud55c \uc774\uc720\uac00 \ud30c\ud2b8\ub108 allowlist\ub77c\uba74 CloudFront\uc758 Anycast static IP\ub97c \uba3c\uc800 \ubcf4\uc138\uc694.\n\n\ub9c8\uc9c0\ub9c9\uc73c\ub85c \uc774 Edge \uad6c\uc131\uc774 \ud55c \ub2ec\uc5d0 \uc5bc\ub9c8\uc778\uc9c0 \uacc4\uc0b0\ud574 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n[\ucd9c\ucc98]\n\u2022 aws.amazon.com/global-accelerator/pricing/ ($0.025/\uc2dc\uac04, DT-Premium \uc9c0\ubc30 \ubc29\ud5a5, \ubbf8\uad6d\u2192\ubbf8\uad6d $0.015/GB, public IPv4 \uc694\uae08)\n\u2022 docs.aws.amazon.com/global-accelerator (internal ALB endpoint, client IP preservation), repost \"global-accelerator-failover-different-region\" (traffic dial, weight)",
+    13: "\u23f8\ufe0f \ud83c\udfac [2min] [\uc694\uc57d]\n\u2022 \uc885\ub7c9\uc81c: \uc804\uc1a1 $0.085/GB(\ubbf8\uad6d, 1TB \ubb34\ub8cc \ud6c4 \uccab 10TB \uad6c\uac04), HTTPS $0.0100/10K(10M \ubb34\ub8cc), WAF, Bot Control, Functions, KVS \ud569\uc0b0\n\u2022 flat-rate: \uc694\uccad, \uc804\uc1a1 \ucd08\uacfc \uc694\uae08 \uc5c6\uc74c, WAF \ucc28\ub2e8 \uc694\uccad\uc740 \ud55c\ub3c4\uc5d0 \ubbf8\ud3ec\ud568\n\u2022 \uc774 \uc544\ud0a4\ud14d\ucc98\ub294 VPC origin(Business \uc774\uc0c1) + origin failover, Origin Shield(Premium \uc804\uc6a9) \u2192 Premium $1,000\n\u2022 \uae30\ubcf8\uac12 100M \uc694\uccad, 5TB\uba74 \uc885\ub7c9\uc81c\uac00 \uc800\ub834, 500M, 10TB\uba74 Premium\uc774 \uc800\ub834\n\n\uae30\ubcf8\uac12 100M \uc694\uccad, 5TB\uc5d0\uc11c \uc885\ub7c9\uc81c\ub294 \uc57d 616\ub2ec\ub7ec\uc785\ub2c8\ub2e4. \uc804\uc1a1\ub7c9\uc774 340\ub2ec\ub7ec\ub85c \uac00\uc7a5 \ud06c\uace0, Bot Control\uc744 \uc804\uccb4 \uc694\uccad\uc5d0 \uac78\uba74 100\ub2ec\ub7ec\uac00 \ubd99\uc2b5\ub2c8\ub2e4. \uc2ac\ub77c\uc774\ub354\ub97c 500M, 10TB\uae4c\uc9c0 \uc62c\ub824 \ubcf4\uc2dc\uba74 2,100\ub2ec\ub7ec\ub97c \ub118\uc5b4 Premium 1,000\ub2ec\ub7ec\ubcf4\ub2e4 \ube44\uc2f8\uc9d1\ub2c8\ub2e4.\n\n\uc544\ub798 \uacbd\uace0\uac00 \ud575\uc2ec\uc785\ub2c8\ub2e4. 2025\ub144 11\uc6d4\uc5d0 \ub098\uc628 flat-rate \ud50c\ub79c\uc740 \uae30\ub2a5\uc774 \ud2f0\uc5b4\ubcc4\ub85c \ub2e4\ub985\ub2c8\ub2e4. VPC origin\uc740 Business\ubd80\ud130, \uc790\ub3d9 origin failover\uc640 Origin Shield\ub294 Premium\uc5d0\ub9cc \uc788\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc774 \uba40\ud2f0\ub9ac\uc804 \uad6c\uc870\ub77c\uba74 \ube44\uad50 \ub300\uc0c1\uc740 Business 200\ub2ec\ub7ec\uac00 \uc544\ub2c8\ub77c Premium 1,000\ub2ec\ub7ec\uc785\ub2c8\ub2e4. \uadf8\ub9ac\uace0 Targeted Bot Control\uc774\ub098 real-time log, staging distribution \uac19\uc740 \uae30\ub2a5\uc740 flat-rate\uc5d0\uc11c \uc9c0\uc6d0\ub418\uc9c0 \uc54a\uc73c\ub2c8 \ud544\uc694\ud558\uba74 \uc885\ub7c9\uc81c\uc5ec\uc57c \ud569\ub2c8\ub2e4.\n\uc608\uc804 \uc790\ub8cc\uc758 \"CloudFront \uc6d4 50~500\ub2ec\ub7ec\", \"WAF \ube44\ud65c\uc131\ud654 \uc0c1\ud0dc 0\ub2ec\ub7ec\" \uac19\uc740 \uac12\uc740 \uadfc\uac70\uac00 \uc5c6\uac70\ub098 \uc9c0\uae08 \uad6c\uc870\uc640 \ub9de\uc9c0 \uc54a\uc544 \ube90\uc2b5\ub2c8\ub2e4. \uc2e4\uc81c \uacac\uc801\uc740 Pricing Calculator\uc640 Cost Explorer \uc2e4\uce21\uc73c\ub85c \ud655\uc778\ud558\uc138\uc694.\n\n\ubc30\uc6b4 \ub0b4\uc6a9\uc744 \uc138 \ubb38\uc81c\ub85c \uc810\uac80\ud574 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n[\ucd9c\ucc98]\n\u2022 aws.amazon.com/cloudfront/pricing/pay-as-you-go/ (\uc804\uc1a1, HTTPS \uc694\uccad, \ubb34\ub8cc \ud55c\ub3c4, Functions, KVS, AWS origin fetch \ubb34\ub8cc)\n\u2022 docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/flat-rate-pricing-plan.html (\ud2f0\uc5b4\ubcc4 \uae30\ub2a5, \ud55c\ub3c4, \ubbf8\uc9c0\uc6d0 \uae30\ub2a5)\n\u2022 aws.amazon.com/waf/pricing/\n\u2022 \uc9c1\uc811 \uacc4\uc0b0(\uae30\ubcf8\uac12): \uc804\uc1a1 4,000GB \u00d7 0.085 = 340, \uc694\uccad 90 \u00d7 1.00 = 90, WAF 13 + 60 = 73, Bot 10 + 90 = 100, Functions/KVS 98 \u00d7 0.13 \u2248 12.7, \ud569\uacc4 \u2248 $616",
+    14: "\u2753 [1.5min] [\uc694\uc57d]\n\u2022 Q1: origin failover\ub294 GET, HEAD, OPTIONS\ub9cc, \uc4f0\uae30\ub294 \uc571 \uc7ac\uc2dc\ub3c4\uc640 KVS \uc804\ud658\n\u2022 Q2: VPC origin Service SG \ucc38\uc870 + 443\uc774 \uac00\uc7a5 \uc5c4\uaca9, 0.0.0.0/0\uc740 \uae08\uc9c0\n\u2022 Q3: SignalNonBrowserUserAgent \uae30\ubcf8 Block, Count \uc624\ubc84\ub77c\uc774\ub4dc + label \uc608\uc678\n1\ubc88\uc740 \ud568\uc815 \ubb38\uc81c\uc785\ub2c8\ub2e4. origin group\uc774 \uc788\uc5b4\ub3c4 POST\ub294 \ub118\uc5b4\uac00\uc9c0 \uc54a\uc73c\ubbc0\ub85c 503\uc774 \uadf8\ub300\ub85c \uac11\ub2c8\ub2e4. Route 53 health check\ub294 \uc774 \uc694\uccad \uacbd\ub85c\uc640 \ubb34\uad00\ud569\ub2c8\ub2e4.\n2\ubc88\uc740 VPC origin\uc774 \ub9cc\ub4dc\ub294 Service SG\ub97c \ucc38\uc870\ud558\uba74 \ub0b4 distribution \ud2b8\ub798\ud53d\ub9cc \ubc1b\uc2b5\ub2c8\ub2e4. prefix list\ub294 \ubaa8\ub4e0 CloudFront \uace0\uac1d IP\ub77c \ub354 \ub113\uace0, 0.0.0.0/0\uc740 WAF\uac00 \uc788\uc5b4\ub3c4 \uc6b0\ud68c \uacbd\ub85c\uac00 \ub418\ubbc0\ub85c \uae08\uc9c0\uc785\ub2c8\ub2e4.\n3\ubc88\uc740 \ubb38\uc11c\uc5d0 \uba85\uc2dc\ub41c \uc0ac\ub840\uc785\ub2c8\ub2e4. \ubaa8\ubc14\uc77c \uc571\uc740 \ube44\ube0c\ub77c\uc6b0\uc800 User-Agent\ub77c SignalNonBrowserUserAgent\uc5d0 \ub9c9\ud799\ub2c8\ub2e4.\n\n\uc138 \ubb38\uc81c \uc911 \uc5b4\ub290 \uac83\uc774 \uac00\uc7a5 \ud5f7\uac08\ub9ac\uc168\ub098\uc694? \ub300\ubd80\ubd84 1\ubc88\uc5d0\uc11c \uac08\ub9bd\ub2c8\ub2e4.\n\n\ud575\uc2ec\uc744 \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.",
+    15: "[1min] [\uc694\uc57d]\n\u2022 \uacf5\uac1c \uc785\uad6c\ub294 CloudFront \ud558\ub098, origin\uc740 VPC origin \ub4a4 internal ALB\n\u2022 \ub9ac\uc804 \uc120\ud0dd\uc740 Edge \ud568\uc218\uc640 KVS, \uc808\uccb4\ub294 \ub370\uc774\ud130 \ud50c\ub808\uc778 \uc2a4\uc704\uce58\n\u2022 origin failover\ub294 GET \uacc4\uc5f4\ub9cc, \uc4f0\uae30\ub294 \uc571\uc774 \ucc45\uc784\n\u2022 Bot Control\uc740 Count\ub85c \uc2dc\uc791, \ube44\uc6a9\uc740 \uad6c\uc870\uac00 \uc815\ud568\n\uc5ec\uc12f \uc7a5\uc758 \uce74\ub4dc\ub85c \uc815\ub9ac\ud569\ub2c8\ub2e4. \uccab\uc9f8, \uc785\uad6c\ub294 \ud558\ub098\uc785\ub2c8\ub2e4. \ub458\uc9f8, \uacf5\uac1c \uacbd\ub85c\uc758 \ub9ac\uc804 \uc120\ud0dd\uc740 DNS\uac00 \uc544\ub2c8\ub77c Edge \ud568\uc218\uac00 \ud569\ub2c8\ub2e4. \uc14b\uc9f8, \uac10\uc9c0\ub294 alarm \uae30\ubc18 health check, \uc2a4\uc704\uce58\ub294 routing control\uacfc Region switch\ub85c \ubd84\ub9ac\ud569\ub2c8\ub2e4.\n\ub137\uc9f8, origin failover\ub294 GET \uacc4\uc5f4\ub9cc \uad6c\ud558\ubbc0\ub85c \uc8fc\ubb38, \uacb0\uc81c\ub294 \uc571\uc774 \uc7ac\uc2dc\ub3c4\uc640 \uba71\ub4f1\uc131\uc744 \ucc45\uc784\uc9d1\ub2c8\ub2e4. \ub2e4\uc12f\uc9f8, Bot Control\uc740 Count\ubd80\ud130 \uc2dc\uc791\ud569\ub2c8\ub2e4. \uc5ec\uc12f\uc9f8, VPC origin\uacfc failover\ub97c \uc4f0\ub294 \uc21c\uac04 flat-rate \ube44\uad50 \ub300\uc0c1\uc740 Premium\uc785\ub2c8\ub2e4.\n\n\ub2e4\uc74c \ube14\ub85d\uc5d0\uc11c\ub294 \uc774 \uc2a4\uc704\uce58\ub97c \uc2e4\uc81c\ub85c \ub204\ub974\ub294 DR\uacfc failover \uc790\ub3d9\ud654\ub97c \ub2e4\ub8f9\ub2c8\ub2e4.",
+    16: "\u2753 [0.5min] [\uc694\uc57d]\n\u2022 Block 3 \ud575\uc2ec: \uc785\uad6c \ud558\ub098(CloudFront VPC origin), Edge\uc5d0\uc11c \ub9ac\uc804 \uc120\ud0dd, \ub370\uc774\ud130 \ud50c\ub808\uc778 \uc2a4\uc704\uce58\n\u2022 Q&A \ud6c4 5\ubd84 \ud734\uc2dd, \ub2e4\uc74c\uc740 Block 4 DR & Failover Automation\nBlock 3\uc744 \ub9c8\uce69\ub2c8\ub2e4. \uae30\uc5b5\ud560 \uac83\uc740 \uc138 \uac00\uc9c0\uc785\ub2c8\ub2e4. \uacf5\uac1c \uc785\uad6c\ub294 CloudFront \ud558\ub098, \ub9ac\uc804 \uc120\ud0dd\uc740 Edge \ud568\uc218, \uc808\uccb4\ub294 \ubbf8\ub9ac \ub9cc\ub4e0 \uc2a4\uc704\uce58\uc785\ub2c8\ub2e4.\n\n\uc9c8\ubb38 \uc788\uc73c\uc2dc\uba74 \uc9c0\uae08 \ubc1b\uaca0\uc2b5\ub2c8\ub2e4. 5\ubd84 \uc26c\uace0 Block 4\uc5d0\uc11c \uc774 \uc2a4\uc704\uce58\ub97c \uc790\ub3d9\ud654\ud558\ub294 \ubc29\ubc95\uc744 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4."
   };
   const deck = new SlideFramework({
+    logoSrc: "./common/pptx-theme/images/logo_1.png",
     
-    footer: 'Multi-Region Architecture Deep Dive — L300+',
+    footer: "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.",
     
     pagination: true,
     sidebar: true,

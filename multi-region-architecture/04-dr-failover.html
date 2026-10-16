@@ -7,781 +7,435 @@
   <meta name="generator" content="remarp">
   <meta name="remarp-version" content="1">
   <meta name="remarp-source" content="04-dr-failover.md">
-  <meta name="remarp-block" content="default">
+  <meta name="remarp-block" content="04-dr-failover">
   <link rel="stylesheet" href="./common/theme.css">
   <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
+  <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
   
-  
-  <script>window.__remarpTheme = {"colors": {}, "footer": "Multi-Region Architecture Deep Dive \u2014 L300+", "pagination": true, "fonts": {}};</script>
+  <script>window.__remarpTheme = {"colors": {"dk1": "#000000", "lt1": "#FFFFFF", "dk2": "#161D26", "lt2": "#F3F3F7", "accent1": "#41B3FF", "accent2": "#AD5CFF", "accent3": "#00E500", "accent4": "#FF5C85", "accent5": "#FF693C", "accent6": "#FBD332", "hlink": "#41B1E8", "folHlink": "#41B1E8"}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}};</script>
 </head>
 <body>
-<div class="slide-deck">
-<div class="slide" data-remarp-id="s0" style="background:linear-gradient(135deg, #1a1f35 0%, #0d1117 50%, #161b2e 100%); padding:0; overflow:hidden;">
-  <div style="position:absolute; top:-20%; right:-10%; width:60%; height:80%; background:radial-gradient(ellipse, rgba(108,92,231,0.15) 0%, transparent 70%); pointer-events:none;"></div>
-  <div style="position:absolute; left:5%; top:42%; width:80px; height:3px; background:linear-gradient(90deg, #6c5ce7, #a29bfe); border-radius:2px;"></div>
-  <h1 style="position:absolute; left:5%; top:45%; font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:60%; margin:0;">DR & Failover Automation</h1>
-  <p style="position:absolute; left:5%; top:60%; font-size:1.3rem; color:rgba(255,255,255,0.7); width:60%; margin:0;">Disaster Recovery 현황 분석과 자동화 전략 (30min)</p>
-  
+<div class="slide-deck theme-dark">
+<div class="slide title-slide" data-remarp-id="s0">
+    <h1>Block 4: DR & Failover Automation</h1>
+  <p class="meta">전략 선택 → 장애 시나리오 → 자동화 파이프라인 → 훈련과 검증</p>
 </div>
 
 <div class="slide" data-remarp-id="s1">
-  <div class="slide-header" data-remarp-id="s1-header"><h2>DR Current State — Risk Assessment</h2></div>
+  <div class="slide-header" data-remarp-id="s1-header"><h2>DR 전략은 비용과 RTO의 교환</h2></div>
   <div class="slide-body" data-remarp-id="s1-body">
-    <p><!-- Slide 2: DR Current State - Risk Assessment --></p>
-<div style="overflow-x:auto;">
-<table class="data-table" style="width:100%; border-collapse:collapse; font-size:0.82rem;">
-  <thead>
-    <tr style="background:var(--bg-card); border-bottom:2px solid var(--border);">
-      <th style="padding:10px 12px; text-align:left; color:var(--text-muted);">Component</th>
-      <th style="padding:10px 12px; text-align:center; color:var(--text-muted);">DR Capability</th>
-      <th style="padding:10px 12px; text-align:center; color:var(--text-muted);">Failover Type</th>
-      <th style="padding:10px 12px; text-align:center; color:var(--text-muted);">Risk Level</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr style="border-bottom:1px solid var(--border);" data-fragment-index="1">
-      <td style="padding:10px 12px;"><img src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" style="width:24px; vertical-align:middle; margin-right:8px;">Traffic Routing</td>
-      <td style="padding:10px 12px; text-align:center;"><span style="color:var(--green);">Auto failover</span></td>
-      <td style="padding:10px 12px; text-align:center;"><span style="background:var(--green); color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem;">Auto</span></td>
-      <td style="padding:10px 12px; text-align:center;"><span style="background:rgba(0,214,143,0.15); color:var(--green); padding:4px 10px; border-radius:4px;">LOW</span></td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);" data-fragment-index="2">
-      <td style="padding:10px 12px;"><img src="common/aws-icons/services/Arch_Amazon-Aurora_48.svg" style="width:24px; vertical-align:middle; margin-right:8px;">Aurora DSQL</td>
-      <td style="padding:10px 12px; text-align:center; color:var(--red); font-weight:600;">NO DR (single region)</td>
-      <td style="padding:10px 12px; text-align:center;"><span style="background:var(--red); color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem;">None</span></td>
-      <td style="padding:10px 12px; text-align:center;"><span style="background:rgba(255,107,107,0.15); color:var(--red); padding:4px 10px; border-radius:4px; font-weight:600;">CRITICAL</span></td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border);" data-fragment-index="3">
-      <td style="padding:10px 12px;"><img src="common/aws-icons/services/Arch_Amazon-DocumentDB_48.svg" style="width:24px; vertical-align:middle; margin-right:8px;">DocumentDB</td>
-      <td style="padding:10px 12px; text-align:center;">Global Cluster</td>
-      <td style="padding:10px 12px; text-align:center;"><span style="background:#fdcb6e; color:#1a1f35; padding:2px 8px; border-radius:4px; font-size:0.75rem;">Manual CLI</span></td>
-      <td style="padding:10px 12px; text-align:center;"><span style="background:rgba(253,203,110,0.15); color:#fdcb6e; padding:4px 10px; border-radius:4px;">HIGH</span></td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);" data-fragment-index="3">
-      <td style="padding:10px 12px;"><img src="common/aws-icons/services/Arch_Amazon-ElastiCache_48.svg" style="width:24px; vertical-align:middle; margin-right:8px;">ElastiCache</td>
-      <td style="padding:10px 12px; text-align:center;">Global Datastore</td>
-      <td style="padding:10px 12px; text-align:center;"><span style="background:#fdcb6e; color:#1a1f35; padding:2px 8px; border-radius:4px; font-size:0.75rem;">Manual CLI</span></td>
-      <td style="padding:10px 12px; text-align:center;"><span style="background:rgba(253,203,110,0.15); color:#fdcb6e; padding:4px 10px; border-radius:4px;">MEDIUM</span></td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border);" data-fragment-index="4">
-      <td style="padding:10px 12px;"><img src="common/aws-icons/services/Arch_Amazon-MSK_48.svg" style="width:24px; vertical-align:middle; margin-right:8px;">MSK</td>
-      <td style="padding:10px 12px; text-align:center; color:var(--red); font-weight:600;">NO DR (per-region)</td>
-      <td style="padding:10px 12px; text-align:center;"><span style="background:var(--red); color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem;">None</span></td>
-      <td style="padding:10px 12px; text-align:center;"><span style="background:rgba(255,107,107,0.15); color:var(--red); padding:4px 10px; border-radius:4px; font-weight:600;">CRITICAL</span></td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);" data-fragment-index="5">
-      <td style="padding:10px 12px;"><img src="common/aws-icons/services/Arch_Amazon-OpenSearch-Service_48.svg" style="width:24px; vertical-align:middle; margin-right:8px;">OpenSearch</td>
-      <td style="padding:10px 12px; text-align:center;">Per-region (rebuild)</td>
-      <td style="padding:10px 12px; text-align:center;"><span style="background:var(--red); color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem;">Hours</span></td>
-      <td style="padding:10px 12px; text-align:center;"><span style="background:rgba(253,203,110,0.15); color:#fdcb6e; padding:4px 10px; border-radius:4px;">HIGH</span></td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border);" data-fragment-index="6">
-      <td style="padding:10px 12px;"><img src="common/aws-icons/services/Arch_Amazon-Simple-Storage-Service_48.svg" style="width:24px; vertical-align:middle; margin-right:8px;">S3</td>
-      <td style="padding:10px 12px; text-align:center;">Cross-Region Replication</td>
-      <td style="padding:10px 12px; text-align:center;"><span style="background:var(--green); color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem;">Auto CRR</span></td>
-      <td style="padding:10px 12px; text-align:center;"><span style="background:rgba(0,214,143,0.15); color:var(--green); padding:4px 10px; border-radius:4px;">LOW</span></td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);" data-fragment-index="6">
-      <td style="padding:10px 12px;"><img src="common/aws-icons/services/Arch_Amazon-Elastic-Kubernetes-Service_48.svg" style="width:24px; vertical-align:middle; margin-right:8px;">EKS</td>
-      <td style="padding:10px 12px; text-align:center;">Karpenter auto-provision</td>
-      <td style="padding:10px 12px; text-align:center;"><span style="background:var(--green); color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem;">Auto</span></td>
-      <td style="padding:10px 12px; text-align:center;"><span style="background:rgba(0,214,143,0.15); color:var(--green); padding:4px 10px; border-radius:4px;">LOW</span></td>
-    </tr>
-  </tbody>
-</table>
+    <p><!-- Slide 2: DR 전략 4단계 --></p>
+<style>
+.mr04-strat .metric-card { display: flex; flex-direction: column; gap: var(--space-2); }
+.mr04-tag { color: var(--accent); font-weight: var(--weight-bold); font-size: var(--fs-card); }
+.mr04-muted { color: var(--text-secondary); font-size: var(--fs-card); word-break: keep-all; overflow-wrap: anywhere; }
+.mr04-ok { color: var(--success); font-weight: var(--weight-bold); }
+.mr04-info { color: var(--info); font-weight: var(--weight-bold); }
+.mr04-warn { color: var(--warning); font-weight: var(--weight-bold); }
+.mr04-bad { color: var(--danger); font-weight: var(--weight-bold); }
+.mr04-axis { display: flex; justify-content: space-between; color: var(--text-secondary); font-size: var(--fs-card); margin: var(--space-2) 0 var(--space-4); border-top: 2px solid var(--border); padding-top: var(--space-2); }
+</style>
+<div class="card-grid mr04-strat" data-reveal="stagger" data-reveal-anim="right">
+  <div class="metric-card"><strong class="mr04-info">Backup &amp; Restore</strong><span class="mr04-tag">RPO 시간 단위, RTO 24시간 이내</span><div class="mr04-muted">복구 리전에 백업만 둡니다. 장애 시 IaC로 인프라를 만들고 데이터를 복원합니다.</div></div>
+  <div class="metric-card"><strong class="mr04-info">Pilot Light</strong><span class="mr04-tag">RPO 분 단위, RTO 수십 분</span><div class="mr04-muted">데이터 복제와 DB는 상시 가동, 애플리케이션 서버는 필요할 때 배포합니다.</div></div>
+  <div class="metric-card"><strong class="mr04-warn">Warm Standby</strong><span class="mr04-tag">RPO 초 단위, RTO 분 단위</span><div class="mr04-muted">축소된 전체 스택이 항상 실행됩니다. 장애 시 확장 후 트래픽을 받습니다.</div></div>
+  <div class="metric-card"><strong class="mr04-ok">Multi-site Active/Active</strong><span class="mr04-tag">RPO 거의 0, RTO 0에 근접</span><div class="mr04-muted">두 리전이 동시에 트래픽을 처리합니다. 비용과 데이터 일관성 설계 부담이 가장 큽니다.</div></div>
 </div>
-<p style="margin-top:12px; font-size:0.85rem; color:var(--text-muted); text-align:center;">
-  <span style="color:var(--red); font-weight:600;">CRITICAL</span>: DSQL + MSK — 리전 장애 시 <strong>완전한 데이터 손실</strong>
-</p>
+<div class="mr04-axis"><span>비용, 복잡도 낮음</span><span>RTO, RPO 짧음 →</span></div>
+<div class="callout callout-info fragment zoom-in" data-fragment-index="1"><strong class="mr04-info">이 쇼핑몰의 선택</strong> order, payment, inventory는 Aurora Global Database, catalog, cart는 global cluster, Global Datastore. 모두 쓰기는 us-east-1 한 곳인 Warm Standby이고, 양 리전 쓰기(Active/Active)는 DSQL multi-Region을 택할 때의 선택지입니다.</div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s2">
-  <div class="slide-header" data-remarp-id="s2-header"><h2>RTO/RPO Matrix</h2></div>
+  <div class="slide-header" data-remarp-id="s2-header"><h2>서비스마다 RTO, RPO가 다르다</h2></div>
   <div class="slide-body" data-remarp-id="s2-body">
-    <p><!-- Slide 3: RTO/RPO Matrix --></p>
-<table class="data-table" style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-  <thead>
-    <tr style="background:var(--bg-card); border-bottom:2px solid var(--border);">
-      <th style="padding:10px 14px; text-align:left; color:var(--text-muted);">Component</th>
-      <th style="padding:10px 14px; text-align:center; color:var(--text-muted);">RTO</th>
-      <th style="padding:10px 14px; text-align:center; color:var(--text-muted);">RPO</th>
-      <th style="padding:10px 14px; text-align:left; color:var(--text-muted);">Recovery Notes</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr style="border-bottom:1px solid var(--border);">
-      <td style="padding:10px 14px;"><strong>Traffic Routing</strong></td>
-      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--green);">1-2 min</span></td>
-      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--green);">0</span></td>
-      <td style="padding:10px 14px; color:var(--text-secondary);">Health check interval + DNS TTL</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
-      <td style="padding:10px 14px;"><strong style="color:var(--red);">Aurora DSQL</strong></td>
-      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--red);">N/A</span></td>
-      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--red); font-weight:600;">Total Loss</span></td>
-      <td style="padding:10px 14px; color:var(--text-secondary);">No cross-region replica exists</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border);">
-      <td style="padding:10px 14px;"><strong>DocumentDB</strong></td>
-      <td style="padding:10px 14px; text-align:center;"><span style="color:#fdcb6e;">5-15 min</span></td>
-      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--green);">&lt; 1 min</span></td>
-      <td style="padding:10px 14px; color:var(--text-secondary);">Manual switchover-global-cluster</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
-      <td style="padding:10px 14px;"><strong>ElastiCache</strong></td>
-      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--green);">1-5 min</span></td>
-      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--green);">&lt; 1 sec</span></td>
-      <td style="padding:10px 14px; color:var(--text-secondary);">Manual promote secondary</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border);">
-      <td style="padding:10px 14px;"><strong style="color:var(--red);">MSK</strong></td>
-      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--red);">N/A</span></td>
-      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--red); font-weight:600;">Total Loss</span></td>
-      <td style="padding:10px 14px; color:var(--text-secondary);">Replicator disabled, no offset sync</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border); background:var(--bg-card);">
-      <td style="padding:10px 14px;"><strong>S3</strong></td>
-      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--green);">Instant</span></td>
-      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--cyan);">&lt; 15 min</span></td>
-      <td style="padding:10px 14px; color:var(--text-secondary);">CRR replication lag</td>
-    </tr>
-    <tr style="border-bottom:1px solid var(--border);">
-      <td style="padding:10px 14px;"><strong>EKS</strong></td>
-      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--green);">2-5 min</span></td>
-      <td style="padding:10px 14px; text-align:center;"><span style="color:var(--green);">0</span></td>
-      <td style="padding:10px 14px; color:var(--text-secondary);">Karpenter node replacement</td>
-    </tr>
-  </tbody>
-</table>
-<div style="margin-top:16px; display:flex; gap:16px; justify-content:center;">
-  <div style="display:flex; align-items:center; gap:6px; font-size:0.8rem;">
-    <span style="width:12px; height:12px; background:var(--green); border-radius:2px;"></span>
-    <span>RTO &lt; 5min, RPO &lt; 1min</span>
-  </div>
-  <div style="display:flex; align-items:center; gap:6px; font-size:0.8rem;">
-    <span style="width:12px; height:12px; background:#fdcb6e; border-radius:2px;"></span>
-    <span>RTO 5-15min</span>
-  </div>
-  <div style="display:flex; align-items:center; gap:6px; font-size:0.8rem;">
-    <span style="width:12px; height:12px; background:var(--red); border-radius:2px;"></span>
-    <span>Unrecoverable</span>
-  </div>
-</div>
+    <p><!-- Slide 3: RTO/RPO 매트릭스 --></p>
+<table><thead><tr><th>서비스</th><th>데이터 스토어 (현재)</th><th>us-east-1 장애 시</th><th>RPO 성격</th><th>전환 방식</th></tr></thead><tbody><tr><td>order, payment, inventory</td><td>Aurora PostgreSQL Global DB</td><td>us-west-2 읽기 유지, 쓰기 중단</td><td>계획 0, 비계획은 복제 lag만큼</td><td>failover (allow-data-loss), global writer endpoint (앱 적용 필요)</td></tr><tr><td>catalog</td><td>DocumentDB global cluster</td><td>us-west-2 읽기 유지</td><td>초 단위 (비동기)</td><td>managed failover, 보통 1분 내 승격</td></tr><tr><td>cart, session</td><td>ElastiCache (Valkey) Global Datastore</td><td>us-west-2 읽기 유지</td><td>복제 지연 보통 1초 미만</td><td>수동 promote, 보통 1분 미만</td></tr><tr><td>이벤트</td><td>MSK, Replicator 미구성</td><td>us-west-2에 이벤트 없음</td><td>미처리 이벤트가 us-east-1에 남음</td><td>Replicator 구성 전에는 전환 불가</td></tr><tr><td>정적 자산</td><td>S3 CRR + RTC</td><td>복제본에서 읽기</td><td>99.99% 객체 15분 이내 설계</td><td>CloudFront origin group</td></tr><tr><td>컴퓨트</td><td>리전별 EKS 클러스터</td><td>us-west-2 확장</td><td>stateless</td><td>GitOps + 용량 확장</td></tr></tbody></table>
+<style>
+.mr04-bad { color: var(--danger); font-weight: var(--weight-bold); }
+</style>
+<div class="callout callout-danger fragment zoom-in" data-fragment-index="1"><strong class="mr04-bad">가장 약한 고리</strong> 이벤트 경로입니다. MSK Replicator가 없어 DB가 넘어가도 order.created 같은 미처리 이벤트는 us-east-1에 남습니다.</div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s3">
-  <div class="slide-header" data-remarp-id="s3-header"><h2>Scenario 1: Full Region Failure (us-east-1)</h2></div>
+  <div class="slide-header" data-remarp-id="s3-header"><h2>장애는 세 가지 크기로 온다</h2></div>
   <div class="slide-body" data-remarp-id="s3-body">
-    <p><!-- Slide 4: Scenario 1 - Full Region Failure --></p>
-<div class="col-2" style="gap:1.5rem;">
-  <div>
-    <h4 style="margin:0 0 0.8rem 0; color:var(--green);">Auto Recovery (30s - 2min)</h4>
-    <div class="card" style="padding:0.8rem; margin-bottom:0.6rem; border-left:3px solid var(--green);">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <img src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" style="width:28px;">
-        <div>
-          <strong>Route53 Health Check</strong>
-          <div style="font-size:0.8rem; color:var(--text-muted);">30s detect → traffic switch to us-west-2</div>
-        </div>
-      </div>
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="tab-0">리전 전체 장애</button>
+      <button class="tab-btn" data-tab="db">단일 DB 장애</button>
+      <button class="tab-btn" data-tab="eks">EKS 클러스터 장애</button>
     </div>
-    <div class="card" style="padding:0.8rem; margin-bottom:0.6rem; border-left:3px solid var(--green);">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <img src="common/aws-icons/services/Arch_Amazon-CloudFront_48.svg" style="width:28px;">
-        <div>
-          <strong>CloudFront Origin</strong>
-          <div style="font-size:0.8rem; color:var(--text-muted);">Follows Route53, no config change</div>
-        </div>
-      </div>
-    </div>
-    <div class="card" style="padding:0.8rem; border-left:3px solid var(--green);">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <img src="common/aws-icons/services/Arch_Amazon-Simple-Storage-Service_48.svg" style="width:28px;">
-        <div>
-          <strong>S3 CRR</strong>
-          <div style="font-size:0.8rem; color:var(--text-muted);">Already replicated, RPO &lt;15min</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div>
-    <h4 style="margin:0 0 0.8rem 0; color:#fdcb6e;">Manual Intervention (5-15min)</h4>
-    <div class="card" style="padding:0.8rem; margin-bottom:0.6rem; border-left:3px solid #fdcb6e;">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <img src="common/aws-icons/services/Arch_Amazon-DocumentDB_48.svg" style="width:28px;">
-        <div>
-          <strong>DocumentDB Failover</strong>
-          <div style="font-size:0.8rem; color:var(--text-muted);">switchover-global-cluster CLI required</div>
-        </div>
-      </div>
-    </div>
-    <div class="card" style="padding:0.8rem; border-left:3px solid #fdcb6e;">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <img src="common/aws-icons/services/Arch_Amazon-ElastiCache_48.svg" style="width:28px;">
-        <div>
-          <strong>ElastiCache Promotion</strong>
-          <div style="font-size:0.8rem; color:var(--text-muted);">failover-global-replication-group CLI</div>
-        </div>
-      </div>
-    </div>
-  </div>
+        <div class="tab-content active" data-tab="tab-0">
+<p>us-east-1 전체가 응답하지 않는 경우입니다.</p>
+<table><thead><tr><th>계층</th><th>자동</th><th>사람이 결정</th></tr></thead><tbody><tr><td>엣지 (CloudFront)</td><td>GET/HEAD/OPTIONS는 origin group으로 자동 재시도</td><td>쓰기 요청의 활성 리전 전환</td></tr><tr><td>catalog (DocumentDB)</td><td>없음</td><td>failover-global-cluster 실행</td></tr><tr><td>cart (ElastiCache)</td><td>없음</td><td>failover-global-replication-group 실행</td></tr><tr><td>order, payment (Aurora Global DB)</td><td>없음</td><td>failover-global-cluster 실행</td></tr></tbody></table>
+<p><strong>결론</strong>: 읽기는 살아남지만 주문, 결제는 DB 승격과 쓰기 리전 전환이 끝날 때까지 멈춥니다. 순서를 정한 Runbook이 필요합니다.</p>
 </div>
-
-<div style="margin-top:1rem; padding:0.8rem; background:rgba(255,107,107,0.1); border:1px solid var(--red); border-radius:8px;">
-  <h4 style="margin:0 0 0.5rem 0; color:var(--red);">DATA LOSS (Unrecoverable)</h4>
-  <div class="col-2" style="gap:1rem;">
-    <div style="font-size:0.85rem;">
-      <strong style="color:var(--red);">DSQL:</strong> 6 services lose ALL transaction data
-      <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">order, payment, inventory, user-account, shipping, warehouse</div>
-    </div>
-    <div style="font-size:0.85rem;">
-      <strong style="color:var(--red);">MSK:</strong> Unbounded event loss + offset desync
-      <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">notification, analytics, recommendation consumers affected</div>
-    </div>
-  </div>
+    <div class="tab-content" data-tab="db">
+<p>리전은 정상이고 한 데이터 스토어만 문제인 경우입니다.</p>
+<table><thead><tr><th>상황</th><th>먼저 할 일</th></tr></thead><tbody><tr><td>catalog 장애</td><td>캐시된 상품 정보로 읽기 전용 모드</td></tr><tr><td>cart 장애</td><td>세션 쿠키와 DB로 장바구니 재구성, 쓰기는 재시도 큐</td></tr><tr><td>데이터 손상 (잘못된 쓰기)</td><td>복제본에도 전파되므로 PITR, 스냅샷으로 복구</td></tr><tr><td>리전 전환 판단</td><td>"DB 하나 때문에 모든 서비스를 옮길 가치가 있는가"</td></tr></tbody></table>
+<p><strong>원칙</strong>: 리전 전체 전환보다 해당 서비스만 degrade하는 것이 먼저입니다.</p>
+</div>
+    <div class="tab-content" data-tab="eks">
+<p>노드, AZ 수준인지 클러스터 전체인지 먼저 구분합니다.</p>
+<table><thead><tr><th>범위</th><th>대응</th></tr></thead><tbody><tr><td>노드, AZ</td><td>Karpenter 노드 교체, ARC zonal shift로 해당 AZ 우회</td></tr><tr><td>drain 중</td><td>PodDisruptionBudget 없으면 replica가 동시에 빠질 수 있음</td></tr><tr><td>클러스터 전체</td><td>GitOps로 같은 상태인 us-west-2 클러스터를 EKS resource scaling block으로 확장</td></tr></tbody></table>
+<div class="code-block"><span class="key">apiVersion</span>: policy/v1
+<span class="key">kind</span>: PodDisruptionBudget
+<span class="key">metadata</span>:
+  <span class="key">name</span>: order-api-pdb
+<span class="key">spec</span>:
+  <span class="key">minAvailable</span>: 2
+  <span class="key">selector</span>:
+    <span class="key">matchLabels</span>:
+      <span class="key">app</span>: order-api</div>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s4">
-  <div class="slide-header" data-remarp-id="s4-header"><h2>Scenario 2: Individual DB Failure</h2></div>
+  <div class="slide-header" data-remarp-id="s4-header"><h2>Aurora failover는 쓰기부터 멈춘다</h2></div>
   <div class="slide-body" data-remarp-id="s4-body">
-    <div class="tab-bar">
-            <button class="tab-btn active" data-tab="dsql-failure">DSQL Failure</button>
-      <button class="tab-btn" data-tab="documentdb-failure">DocumentDB Failure</button>
-      <button class="tab-btn" data-tab="elasticache-failure">ElastiCache Failure</button>
-    </div>
-        <div class="tab-content active" data-tab="dsql-failure">
-<p><strong>Impact</strong>: 6 services affected</p>
-<ul><li>inventory, shipping, order, payment, user-account, warehouse</li></ul>
-<p><strong>Current Behavior</strong>:</p>
-<ul><li>Services fail with connection timeout</li><li>No automatic fallback</li></ul>
-<p><strong>Graceful Degradation</strong> (recommended):</p>
-<div class="code-block"><span class="comment">// Mock fallback mode</span>
-<span class="keyword">if</span> err != nil &amp;&amp; config.MockFallbackEnabled {
-    <span class="keyword">return</span> mockResponse(), nil
-}</div>
+    <p><!-- Slide 5: Aurora 비계획 failover Runbook --></p>
+<style>
+.mr04-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.mr04-sub { display: block; color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-1); word-break: keep-all; }
+.mr04-ok { color: var(--success); font-weight: var(--weight-bold); }
+.mr04-bad { color: var(--danger); font-weight: var(--weight-bold); }
+.mr04-warn { color: var(--warning); font-weight: var(--weight-bold); }
+.mr04-info { color: var(--info); font-weight: var(--weight-bold); }
+.mr04-dg { display: grid; align-items: center; gap: var(--space-3); margin-bottom: var(--space-5); }
+.mr04-node { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); text-align: center; font-weight: var(--weight-semibold); word-break: keep-all; }
+.mr04-node.mr04-key { border-color: var(--accent); }
+.mr04-arrow { color: var(--text-secondary); font-size: var(--fs-subtitle); text-align: center; }
+.mr04-dg5 { grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; }
+</style>
+<div class="mr04-dg mr04-dg5" data-reveal="stagger" data-reveal-anim="right">
+  <div class="mr04-node">1. 쓰기 중지<span class="mr04-sub">order, payment API 쓰기 차단</span></div>
+  <div class="mr04-arrow">→</div>
+  <div class="mr04-node">2. lag 기록<span class="mr04-sub">AuroraGlobalDBRPOLag로 손실 범위 추정</span></div>
+  <div class="mr04-arrow">→</div>
+  <div class="mr04-node mr04-key">3. failover<span class="mr04-sub">us-west-2에서 allow-data-loss</span></div>
+  <div class="mr04-arrow">→</div>
+  <div class="mr04-node">4. 쓰기 확인<span class="mr04-sub">global writer endpoint로 재개</span></div>
 </div>
-    <div class="tab-content" data-tab="documentdb-failure">
-<p><strong>Impact</strong>: 7 services affected</p>
-<ul><li>product-catalog, recommendation, review, wishlist, notification, analytics, user-profile</li></ul>
-<p><strong>Manual Failover Steps</strong>:</p>
-<div class="code-block">aws docdb failover-global-cluster \
-  --global-cluster-identifier production-docdb-global \
-  --target-db-cluster-identifier production-docdb-global-us-west-2</div>
-<p><strong>RTO</strong>: 5-15 minutes</p>
-<p><strong>RPO</strong>: < 1 minute</p>
-</div>
-    <div class="tab-content" data-tab="elasticache-failure">
-<p><strong>Impact</strong>: cart service (session + cache)</p>
-<p><strong>Manual Promotion</strong>:</p>
-<div class="code-block">aws elasticache failover-global-replication-group \
-  --global-replication-group-id production-elasticache \
-  --primary-region us-west-2</div>
-<p><strong>RTO</strong>: 1-5 minutes</p>
-<p><strong>Cart data</strong>: Temporary loss (rebuild from DB)</p>
+<div class="code-block fragment fade-up" data-fragment-index="1">aws rds failover-global-cluster --region us-west-2 \
+  --global-cluster-identifier shop-global \
+  --target-db-cluster-identifier "$USW2_ARN" --allow-data-loss</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="2">
+  <div class="callout callout-danger"><strong class="mr04-bad">RPO는 0이 아니다</strong><div class="mr04-muted">동기화를 기다리지 않으므로 그 순간의 복제 lag만큼 잃습니다. 보통 초 단위입니다.</div></div>
+  <div class="callout callout-warning"><strong class="mr04-warn">write fencing은 best effort</strong><div class="mr04-muted">old primary가 잠시 쓰기를 받을 수 있어 1단계가 필수입니다. DNS 캐시 TTL은 5초 수준으로 둡니다.</div></div>
+  <div class="callout callout-success"><strong class="mr04-ok">연결 문자열은 그대로</strong><div class="mr04-muted">앱이 global writer endpoint를 쓰면 새 primary를 자동으로 가리킵니다. 단 parameter group, alarm은 상속되지 않습니다.</div></div>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s5">
-  <div class="slide-header" data-remarp-id="s5-header"><h2>Missing PDB</h2></div>
+  <div class="slide-header" data-remarp-id="s5-header"><h2>RPO는 상한을 걸고 유실분은 대사한다</h2></div>
   <div class="slide-body" data-remarp-id="s5-body">
-    <div class="columns">
-<div class="col">
-<h3>Auto Recovery (Karpenter)</h3>
-<ul><li class="fragment fade-in" data-fragment-index="0"><strong>Node replacement</strong>: 2-5 minutes</li><li class="fragment fade-in" data-fragment-index="1"><strong>ArgoCD</strong>: Auto-redeploy workloads</li><li class="fragment fade-in" data-fragment-index="2"><strong>Karpenter</strong>: Provisions new nodes on demand</li></ul>
-<h3>Workload Recovery</h3>
-<ul><li class="fragment fade-in" data-fragment-index="3">Deployment rollout triggered automatically</li><li class="fragment fade-in" data-fragment-index="4">Pod scheduling to new nodes</li><li class="fragment fade-in" data-fragment-index="5">Service endpoints updated</li></ul>
-</div><div class="col">
-<h3>Current Gap</h3>
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="rpo">RPO 상한</button>
+      <button class="tab-btn" data-tab="tab-1">유실분 대사</button>
+      <button class="tab-btn" data-tab="dsql-multi-region">선택: DSQL multi-Region</button>
+    </div>
+        <div class="tab-content active" data-tab="rpo">
+<table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody><tr><td>파라미터</td><td><code>rds.global_db_rpo</code> (Aurora PostgreSQL, 초 단위, 최솟값 20초)</td></tr><tr><td>동작</td><td>모든 secondary의 RPO lag이 값을 넘으면 primary 커밋을 멈추고, 하나라도 따라잡으면 재개</td></tr><tr><td>관측</td><td><code>AuroraGlobalDBRPOLag</code> (ms) 알람으로 상한에 다가가는 것을 먼저 감지</td></tr><tr><td>2리전 주의</td><td>secondary 쪽 parameter group은 기본값 유지: failover 직후 커밋 정지 방지</td></tr><tr><td>결정</td><td>커밋 가용성과 손실 상한 중 무엇을 택할지 결제 담당 팀과 합의</td></tr></tbody></table>
 </div>
+    <div class="tab-content" data-tab="tab-1">
+<table><thead><tr><th>단계</th><th>내용</th></tr></thead><tbody><tr><td>스냅샷</td><td>old primary 회복 시 <code>rds:unplanned-global-failover-...</code> 스냅샷 생성 시도</td></tr><tr><td>비교</td><td>스냅샷을 별도 클러스터로 복원해 새 primary에 없는 마지막 트랜잭션 확인</td></tr><tr><td>외부 원장</td><td>PG 승인 내역과 대조해 주문 레코드 없는 승인 건 처리</td></tr><tr><td>재반영</td><td>DynamoDB Global Tables의 idempotency key로 중복 없이 재처리</td></tr></tbody></table>
+</div>
+    <div class="tab-content" data-tab="dsql-multi-region">
+<table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody><tr><td>구성</td><td>peered cluster 2개 (us-east-1, us-west-2) + witness 리전 (us-east-2)</td></tr><tr><td>얻는 것</td><td>두 리전 모두 쓰기, 동기 커밋으로 RPO 0, failover 명령 불필요</td></tr><tr><td>대가</td><td>쓰기마다 리전 간 왕복, OCC 충돌 재시도, 트랜잭션당 3,000 rows, 10 MiB 한도</td></tr><tr><td>적용 범위</td><td>기존 Aurora 앱 일괄 이관이 아니라 RPO 0이 필수인 원장 테이블부터 검토</td></tr></tbody></table>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s6">
-  <div class="slide-header" data-remarp-id="s6-header"><h2>DSQL Single-Region Risk — CRITICAL</h2></div>
+  <div class="slide-header" data-remarp-id="s6-header"><h2>입구는 CloudFront 하나로 고정</h2></div>
   <div class="slide-body" data-remarp-id="s6-body">
-    <p><!-- Slide 7: DSQL Single-Region Risk --></p>
-<div style="display:flex; gap:1.5rem; align-items:stretch;">
-  <div style="flex:1;">
-    <div class="card" style="padding:1rem; border:2px solid var(--red); background:rgba(255,107,107,0.08);">
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom:0.8rem;">
-        <img src="common/aws-icons/services/Arch_Amazon-Aurora_48.svg" style="width:40px;">
-        <div>
-          <h4 style="margin:0; color:var(--red);">Aurora DSQL</h4>
-          <div style="font-size:0.8rem; color:var(--text-muted);">us-east-1 ONLY</div>
-        </div>
-        <span style="margin-left:auto; background:var(--red); color:#fff; padding:4px 10px; border-radius:4px; font-size:0.75rem; font-weight:600;">SINGLE REGION</span>
-      </div>
-      <p style="font-size:0.9rem; color:var(--text-secondary); margin:0 0 0.8rem 0;">
-        Region failure = <strong style="color:var(--red);">Total data loss</strong> for 6 core services
-      </p>
-      <div style="font-size:0.85rem;">
-        <strong>Affected Services:</strong>
-        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
-          <span style="background:rgba(255,107,107,0.2); color:var(--red); padding:4px 10px; border-radius:4px; font-size:0.8rem;">order</span>
-          <span style="background:rgba(255,107,107,0.2); color:var(--red); padding:4px 10px; border-radius:4px; font-size:0.8rem;">payment</span>
-          <span style="background:rgba(255,107,107,0.2); color:var(--red); padding:4px 10px; border-radius:4px; font-size:0.8rem;">inventory</span>
-          <span style="background:rgba(255,107,107,0.2); color:var(--red); padding:4px 10px; border-radius:4px; font-size:0.8rem;">user-account</span>
-          <span style="background:rgba(255,107,107,0.2); color:var(--red); padding:4px 10px; border-radius:4px; font-size:0.8rem;">shipping</span>
-          <span style="background:rgba(255,107,107,0.2); color:var(--red); padding:4px 10px; border-radius:4px; font-size:0.8rem;">warehouse</span>
-        </div>
-      </div>
-    </div>
+    <p><!-- Slide 7: 엣지 전환 --></p>
+<style>
+.mr04-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.mr04-sub { display: block; color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-1); word-break: keep-all; }
+.mr04-ok { color: var(--success); font-weight: var(--weight-bold); }
+.mr04-warn { color: var(--warning); font-weight: var(--weight-bold); }
+.mr04-info { color: var(--info); font-weight: var(--weight-bold); }
+.mr04-dg { display: grid; align-items: center; gap: var(--space-3); margin-bottom: var(--space-5); }
+.mr04-node { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); text-align: center; font-weight: var(--weight-semibold); word-break: keep-all; }
+.mr04-node.mr04-key { border-color: var(--accent); }
+.mr04-arrow { color: var(--text-secondary); font-size: var(--fs-subtitle); text-align: center; }
+.mr04-stack { display: flex; flex-direction: column; gap: var(--space-2); border: 1px dashed var(--border); border-radius: var(--radius-md); padding: var(--space-3); }
+.mr04-stack-label { font-size: var(--fs-caption); color: var(--text-secondary); text-align: center; }
+.mr04-dg7 { grid-template-columns: 1fr auto 1.3fr auto 1.6fr auto 1fr; }
+</style>
+<div class="mr04-dg mr04-dg7">
+  <div class="mr04-node fragment fade-right" data-fragment-index="1">사용자<span class="mr04-sub">HTTPS</span></div>
+  <div class="mr04-arrow fragment fade-right" data-fragment-index="2">→</div>
+  <div class="mr04-node mr04-key fragment fade-right" data-fragment-index="2">CloudFront<span class="mr04-sub">Function + KeyValueStore</span></div>
+  <div class="mr04-arrow fragment fade-right" data-fragment-index="3">→</div>
+  <div class="mr04-stack fragment fade-right" data-fragment-index="3">
+    <div class="mr04-stack-label">Origin group</div>
+    <div class="mr04-node">VPC origin<span class="mr04-sub">us-east-1 internal ALB</span></div>
+    <div class="mr04-node">VPC origin<span class="mr04-sub">us-west-2 internal ALB</span></div>
   </div>
-
-  <div style="flex:1;">
-    <h4 style="margin:0 0 0.8rem 0; color:var(--text-secondary);">Business Impact</h4>
-    <div class="card" style="padding:0.8rem; margin-bottom:0.6rem; border-left:3px solid var(--red);">
-      <strong>Order Processing</strong>
-      <div style="font-size:0.85rem; color:var(--text-muted);">All active orders lost, no recovery</div>
-    </div>
-    <div class="card" style="padding:0.8rem; margin-bottom:0.6rem; border-left:3px solid var(--red);">
-      <strong>Payment Records</strong>
-      <div style="font-size:0.85rem; color:var(--text-muted);">Transaction history unavailable</div>
-    </div>
-    <div class="card" style="padding:0.8rem; margin-bottom:0.6rem; border-left:3px solid var(--red);">
-      <strong>Inventory State</strong>
-      <div style="font-size:0.85rem; color:var(--text-muted);">Stock levels unknown, oversell risk</div>
-    </div>
-    <div class="card" style="padding:0.8rem; border-left:3px solid var(--red);">
-      <strong>User Accounts</strong>
-      <div style="font-size:0.85rem; color:var(--text-muted);">Authentication data lost</div>
-    </div>
-  </div>
+  <div class="mr04-arrow fragment fade-right" data-fragment-index="4">→</div>
+  <div class="mr04-node fragment fade-right" data-fragment-index="4">EKS<span class="mr04-sub">리전별 클러스터</span></div>
+</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="5">
+  <div class="callout callout-success"><strong class="mr04-ok">읽기: 자동 재시도</strong><div class="mr04-muted">primary origin이 오류를 내면 GET, HEAD, OPTIONS 요청은 secondary origin으로 재시도됩니다.</div></div>
+  <div class="callout callout-warning"><strong class="mr04-warn">쓰기: 넘어가지 않음</strong><div class="mr04-muted">POST, PUT, DELETE는 origin failover 대상이 아닙니다. 활성 리전 값을 KeyValueStore에 두고 Function이 origin group을 고릅니다.</div></div>
+  <div class="callout callout-info"><strong class="mr04-info">노출 범위</strong><div class="mr04-muted">ALB는 internal, 보안 그룹은 CloudFront VPC origin 쪽만 허용합니다. 컴퓨트에 public IP를 두지 않습니다.</div></div>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s7">
-  <div class="slide-header" data-remarp-id="s7-header"><h2>DSQL Linked Clusters — Solution</h2></div>
+  <div class="slide-header" data-remarp-id="s7-header"><h2>전환은 Region switch plan으로</h2></div>
   <div class="slide-body" data-remarp-id="s7-body">
-    <div class="columns">
-<div class="col">
-<h3>Future State: Multi-Region Active-Active</h3>
-</div><div class="col">
-<h3>Interim Mitigation</h3>
+    <p><!-- Slide 8: 자동화 파이프라인 --></p>
+<style>
+.mr04-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.mr04-sub { display: block; color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-1); word-break: keep-all; }
+.mr04-ok { color: var(--success); font-weight: var(--weight-bold); }
+.mr04-warn { color: var(--warning); font-weight: var(--weight-bold); }
+.mr04-info { color: var(--info); font-weight: var(--weight-bold); }
+.mr04-dg { display: grid; align-items: center; gap: var(--space-3); margin-bottom: var(--space-5); }
+.mr04-node { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); text-align: center; font-weight: var(--weight-semibold); word-break: keep-all; }
+.mr04-node.mr04-key { border-color: var(--accent); }
+.mr04-arrow { color: var(--text-secondary); font-size: var(--fs-subtitle); text-align: center; }
+.mr04-stack { display: flex; flex-direction: column; gap: var(--space-2); border: 1px dashed var(--border); border-radius: var(--radius-md); padding: var(--space-3); }
+.mr04-stack-label { font-size: var(--fs-caption); color: var(--text-secondary); text-align: center; }
+.mr04-dg8 { grid-template-columns: 1fr auto 1fr auto 1.5fr auto 1fr; }
+</style>
+<div class="mr04-dg mr04-dg8">
+  <div class="mr04-node fragment fade-right" data-fragment-index="1">CloudWatch alarm<span class="mr04-sub">또는 수동 실행</span></div>
+  <div class="mr04-arrow fragment fade-right" data-fragment-index="2">→</div>
+  <div class="mr04-node fragment fade-right" data-fragment-index="2">Manual approval<span class="mr04-sub">실행 승인</span></div>
+  <div class="mr04-arrow fragment fade-right" data-fragment-index="3">→</div>
+  <div class="mr04-stack fragment fade-right" data-fragment-index="3">
+    <div class="mr04-stack-label">병렬 실행 (us-west-2)</div>
+    <div class="mr04-node">EKS resource scaling</div>
+    <div class="mr04-node">Aurora Global Database</div>
+    <div class="mr04-node">DocumentDB global cluster</div>
+    <div class="mr04-node">Lambda: ElastiCache promote</div>
+  </div>
+  <div class="mr04-arrow fragment fade-right" data-fragment-index="4">→</div>
+  <div class="mr04-node mr04-key fragment fade-right" data-fragment-index="4">Custom Lambda<span class="mr04-sub">KVS 활성 리전 변경</span></div>
 </div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="5">
+  <div class="callout callout-success"><strong class="mr04-ok">활성화 리전에서 실행</strong><div class="mr04-muted">Region switch는 리전별 data plane을 두고, 활성화하는 리전에서 plan을 실행합니다. 장애 리전에 의존하지 않습니다.</div></div>
+  <div class="callout callout-info"><strong class="mr04-info">기본 제공 block</strong><div class="mr04-muted">EC2 ASG, ECS, EKS, Aurora Global Database, DocumentDB, Neptune, RDS replica, ARC routing control, Route 53 health check 등.</div></div>
+  <div class="callout callout-warning"><strong class="mr04-warn">없는 것은 Lambda로</strong><div class="mr04-muted">ElastiCache Global Datastore와 CloudFront KVS 변경은 custom Lambda block으로 넣습니다.</div></div>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s8">
-  <div class="slide-header" data-remarp-id="s8-header"><h2>Automated Failover Pipeline</h2></div>
+  <div class="slide-header" data-remarp-id="s8-header"><h2>Lambda는 재실행해도 안전하게</h2></div>
   <div class="slide-body" data-remarp-id="s8-body">
-    <p><!-- Slide 9: Automated Failover Pipeline --></p>
-<div class="flow-v" style="gap:0.6rem; padding:0.5rem;">
-  <!-- Trigger Layer -->
-  <div class="flow-h" style="justify-content:center; gap:1rem;">
-    <div class="flow-group bg-red" style="padding:0.6rem 1rem;" data-fragment-index="1">
-      <div class="flow-group-label">Trigger</div>
-      <div class="icon-item">
-        <img src="common/aws-icons/services/Arch_Amazon-CloudWatch_48.svg" style="width:40px;">
-        <span>CloudWatch Alarm</span>
-      </div>
-      <div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">HealthCheckStatus = UNHEALTHY</div>
-    </div>
-  </div>
+    <p><!-- Slide 9: Failover Lambda 코드 --></p>
+<div class="code-block"><span class="keyword">import</span> boto3
+GDS, RG, REGION = <span class="string">"&lt;global-datastore-id&gt;"</span>, <span class="string">"cart-usw2"</span>, <span class="string">"us-west-2"</span>
+ec = boto3.client(<span class="string">"elasticache"</span>, region_name=REGION)  <span class="comment"># 승격할 리전</span>
 
-  <div class="flow-arrow" style="font-size:1.2rem;" data-fragment-index="2">↓</div>
-
-  <!-- EventBridge Layer -->
-  <div class="flow-h" style="justify-content:center; gap:1rem;">
-    <div class="flow-group bg-orange" style="padding:0.6rem 1rem;" data-fragment-index="2">
-      <div class="flow-group-label">Orchestration</div>
-      <div class="icon-item">
-        <img src="common/aws-icons/services/Arch_Amazon-EventBridge_48.svg" style="width:40px;">
-        <span>EventBridge Rule</span>
-      </div>
-      <div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">Pattern: cloudwatch.alarm.state_change</div>
-    </div>
-  </div>
-
-  <div class="flow-arrow" style="font-size:1.2rem;" data-fragment-index="3">↓</div>
-
-  <!-- Lambda Layer -->
-  <div class="flow-h" style="justify-content:center; gap:1rem;">
-    <div class="flow-group bg-purple" style="padding:0.6rem 1rem;" data-fragment-index="3">
-      <div class="flow-group-label">Execution (Parallel)</div>
-      <div class="flow-h" style="gap:0.8rem;">
-        <div class="flow-box" style="min-width:140px;">
-          <img src="common/aws-icons/services/Arch_AWS-Lambda_48.svg" style="width:32px;">
-          <span style="font-size:0.8rem;">DocumentDB Failover</span>
-        </div>
-        <div class="flow-box" style="min-width:140px;">
-          <img src="common/aws-icons/services/Arch_AWS-Lambda_48.svg" style="width:32px;">
-          <span style="font-size:0.8rem;">ElastiCache Promotion</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="flow-arrow" style="font-size:1.2rem;" data-fragment-index="4">↓</div>
-
-  <!-- Post-actions Layer -->
-  <div class="flow-h" style="justify-content:center; gap:1rem;">
-    <div class="flow-box bg-blue" style="padding:0.6rem 1rem;" data-fragment-index="4">
-      <img src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" style="width:28px;">
-      <span style="font-size:0.8rem;">Route53 Update</span>
-      <div style="font-size:0.65rem; color:var(--text-muted);">(if manual override needed)</div>
-    </div>
-    <div class="flow-box bg-green" style="padding:0.6rem 1rem;" data-fragment-index="4">
-      <img src="common/aws-icons/services/Arch_Amazon-Simple-Notification-Service_48.svg" style="width:28px;">
-      <span style="font-size:0.8rem;">SNS Notification</span>
-      <div style="font-size:0.65rem; color:var(--text-muted);">Ops team alert</div>
-    </div>
-  </div>
-</div>
-<div style="margin-top:0.8rem; padding:0.5rem 1rem; background:rgba(253,203,110,0.1); border-radius:6px; text-align:center; font-size:0.85rem;">
-  <strong style="color:#fdcb6e;">RTO Reduction:</strong> Manual 15min → Automated <strong style="color:var(--green);">2min</strong>
-</div>
+<span class="keyword">def</span> handler(event, context):
+    g = ec.describe_global_replication_groups(GlobalReplicationGroupId=GDS,
+        ShowMemberInfo=<span class="keyword">True</span>)[<span class="string">"GlobalReplicationGroups"</span>][0]
+    <span class="keyword">if</span> any(m[<span class="string">"ReplicationGroupId"</span>] == RG and m[<span class="string">"Role"</span>].lower() == <span class="string">"primary"</span>
+           <span class="keyword">for</span> m in g[<span class="string">"Members"</span>]):
+        <span class="keyword">return</span> {<span class="string">"status"</span>: <span class="string">"already-primary"</span>}    <span class="comment"># 재실행해도 안전</span>
+    <span class="comment"># Status로 막지 않음: 리전 장애 중에는 available이 아닐 수 있음</span>
+    ec.failover_global_replication_group(
+        GlobalReplicationGroupId=GDS, PrimaryRegion=REGION,
+        PrimaryReplicationGroupId=RG)
+    <span class="keyword">return</span> {<span class="string">"status"</span>: <span class="string">"failover-started"</span>}</div>
+<style>
+.mr04-info { color: var(--info); font-weight: var(--weight-bold); }
+</style>
+<div class="callout callout-info fragment zoom-in" data-fragment-index="1"><strong class="mr04-info">세 파라미터 필수, 상태로 막지 않는다</strong> 장애 중에는 Status가 available이 아닐 수 있어 "이미 primary인가"만 확인합니다.</div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s9">
-  <div class="slide-header" data-remarp-id="s9-header"><h2>Lambda Failover Code</h2></div>
+  <div class="slide-header" data-remarp-id="s9-header"><h2>DocumentDB 장애는 failover로</h2></div>
   <div class="slide-body" data-remarp-id="s9-body">
-    <p><!-- Slide 10: Lambda Failover Code --></p>
-<div class="col-2" style="gap:1.5rem;">
-  <div>
-    <h4 style="margin:0 0 0.5rem 0; color:var(--cyan);">DocumentDB Failover Lambda</h4>
-    <div class="code-block" style="font-size:0.75rem; padding:0.8rem;">
-<span class="keyword">import</span> boto3
-<span class="keyword">import</span> os
-
-<span class="keyword">def</span> <span class="value">handler</span>(event, context):
-    <span class="comment"># Safety flag check</span>
-    <span class="keyword">if not</span> os.environ.get(<span class="string">'ENABLE_AUTO_FAILOVER'</span>):
-        <span class="keyword">return</span> {<span class="string">'status'</span>: <span class="string">'skipped'</span>}
-
-    docdb = boto3.client(<span class="string">'docdb'</span>)
-
-    response = docdb.switchover_global_cluster(
-        GlobalClusterIdentifier=<span class="string">'production-docdb-global'</span>,
-        TargetDbClusterIdentifier=
-            <span class="string">'production-docdb-global-us-west-2'</span>
-    )
-
-    <span class="keyword">return</span> {<span class="string">'status'</span>: <span class="string">'success'</span>}
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="switchover">Switchover (계획)</button>
+      <button class="tab-btn" data-tab="failover">Failover (비계획)</button>
+      <button class="tab-btn" data-tab="tab-2">전환 후 점검</button>
     </div>
-  </div>
-
-  <div>
-    <h4 style="margin:0 0 0.5rem 0; color:var(--green);">ElastiCache Failover Lambda</h4>
-    <div class="code-block" style="font-size:0.75rem; padding:0.8rem;">
-<span class="keyword">import</span> boto3
-<span class="keyword">import</span> os
-
-<span class="keyword">def</span> <span class="value">handler</span>(event, context):
-    <span class="comment"># Safety flag check</span>
-    <span class="keyword">if not</span> os.environ.get(<span class="string">'ENABLE_AUTO_FAILOVER'</span>):
-        <span class="keyword">return</span> {<span class="string">'status'</span>: <span class="string">'skipped'</span>}
-
-    elasticache = boto3.client(<span class="string">'elasticache'</span>)
-
-    response = elasticache.failover_global_replication_group(
-        GlobalReplicationGroupId=
-            <span class="string">'production-elasticache'</span>,
-        PrimaryRegion=<span class="string">'us-west-2'</span>
-    )
-
-    <span class="keyword">return</span> {<span class="string">'status'</span>: <span class="string">'success'</span>}
-    </div>
-  </div>
+        <div class="tab-content active" data-tab="switchover">
+<p>정상 상태의 global cluster에서 primary 리전을 옮깁니다. 훈련, 리전 순환, failover 후 원복에 씁니다.</p>
+<div class="code-block">aws docdb switchover-global-cluster \
+  --region us-east-1 \
+  --global-cluster-identifier mall-catalog-global \
+  --target-db-cluster-identifier arn:aws:rds:us-west-2:&lt;ACCOUNT&gt;:cluster:catalog-usw2</div>
+<p>모든 secondary가 동기화될 때까지 기다린 뒤 전환하므로 <strong>데이터 손실이 없습니다.</strong> 모든 리전의 engine version이 같아야 하고, 역할 전환은 수 분까지 걸릴 수 있습니다.</p>
 </div>
-<div style="margin-top:1rem; padding:0.8rem; background:rgba(253,203,110,0.1); border:1px solid #fdcb6e; border-radius:8px;">
-  <div style="display:flex; align-items:center; gap:8px;">
-    <span style="font-size:1.2rem;">⚠️</span>
-    <div>
-      <strong style="color:#fdcb6e;">ENABLE_AUTO_FAILOVER Safety Flag</strong>
-      <div style="font-size:0.85rem; color:var(--text-secondary);">환경 변수로 자동 failover 활성화/비활성화 제어. 테스트 환경에서는 비활성화, 프로덕션에서만 활성화.</div>
-    </div>
-  </div>
+    <div class="tab-content" data-tab="failover">
+<p>primary 리전 장애 시 secondary를 승격합니다. 명령은 <strong>승격할 리전</strong>에서 실행합니다.</p>
+<div class="code-block">aws docdb failover-global-cluster \
+  --region us-west-2 \
+  --global-cluster-identifier mall-catalog-global \
+  --target-db-cluster-identifier arn:aws:rds:us-west-2:&lt;ACCOUNT&gt;:cluster:catalog-usw2 \
+  --allow-data-loss</div>
+<p>실행 전 <code>GlobalClusterReplicationLag</code>(ms)가 가장 작은 secondary를 고릅니다. 보통 1분 안에 승격되며 복제되지 않은 쓰기는 유실될 수 있습니다. 이전 primary는 회복 후 자동으로 secondary로 재합류합니다.</p>
+</div>
+    <div class="tab-content" data-tab="tab-2">
+<table><thead><tr><th>점검 항목</th><th>내용</th></tr></thead><tbody><tr><td>writer endpoint</td><td>바뀜: 앱이 새 endpoint를 쓰는지 확인</td></tr><tr><td>parameter group, alarm</td><td><strong>상속되지 않음</strong>: 새 primary에 다시 구성</td></tr><tr><td>다른 secondary</td><td>재구축에 수 분에서 수 시간</td></tr><tr><td>유실분</td><td><code>rds:docdb-unplanned-global-failover-...</code> snapshot을 수동 snapshot으로 복사</td></tr><tr><td>원복</td><td>원래 리전 회복 후 switchover로 수행</td></tr></tbody></table>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s10">
-  <div class="slide-header" data-remarp-id="s10-header"><h2>DocumentDB Failover — Step by Step</h2></div>
+  <div class="slide-header" data-remarp-id="s10-header"><h2>cart 캐시는 사람이 승격한다</h2></div>
   <div class="slide-body" data-remarp-id="s10-body">
-    <p><!-- Slide 11: DocumentDB Failover Steps --></p>
-<div class="card" style="padding:1rem; margin-bottom:1rem; background:rgba(0,0,0,0.2);">
-  <h4 style="margin:0 0 0.5rem 0; color:var(--cyan);">CLI Command</h4>
-  <div class="code-block" style="font-size:0.82rem; padding:0.8rem; margin:0;">
-aws docdb switchover-global-cluster \
-  --global-cluster-identifier <span class="string">production-docdb-global</span> \
-  --target-db-cluster-identifier <span class="string">production-docdb-global-us-west-2</span>
-  </div>
+    <p><!-- Slide 11: ElastiCache promotion --></p>
+<style>
+.mr04-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.mr04-sub { display: block; color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-1); word-break: keep-all; }
+.mr04-ok { color: var(--success); font-weight: var(--weight-bold); }
+.mr04-warn { color: var(--warning); font-weight: var(--weight-bold); }
+.mr04-dg { display: grid; align-items: center; gap: var(--space-3); margin-bottom: var(--space-5); }
+.mr04-node { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); text-align: center; font-weight: var(--weight-semibold); word-break: keep-all; }
+.mr04-node.mr04-key { border-color: var(--accent); }
+.mr04-arrow { color: var(--text-secondary); font-size: var(--fs-subtitle); text-align: center; }
+.mr04-stack { display: flex; flex-direction: column; gap: var(--space-2); border: 1px dashed var(--border); border-radius: var(--radius-md); padding: var(--space-3); }
+.mr04-stack-label { font-size: var(--fs-caption); color: var(--text-secondary); text-align: center; }
+.mr04-dg11 { grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; }
+</style>
+<div class="mr04-dg mr04-dg11" data-reveal="stagger" data-reveal-anim="right">
+  <div class="mr04-node">1. 쓰기 차단<span class="mr04-sub">cart API read-only</span></div>
+  <div class="mr04-arrow">→</div>
+  <div class="mr04-node mr04-key">2. promote 실행<span class="mr04-sub">us-west-2를 primary로</span></div>
+  <div class="mr04-arrow">→</div>
+  <div class="mr04-node">3. endpoint 전환<span class="mr04-sub">앱 설정 갱신</span></div>
+  <div class="mr04-arrow">→</div>
+  <div class="mr04-node">4. 재합류 확인<span class="mr04-sub">이전 primary는 secondary</span></div>
 </div>
-
-<div class="flow-h" style="justify-content:center; gap:0.5rem; flex-wrap:wrap;">
-  <div class="card" style="padding:0.8rem; min-width:140px; text-align:center;" data-fragment-index="1">
-    <div style="font-size:1.5rem; font-weight:700; color:var(--red);">30s</div>
-    <div style="font-size:0.8rem; color:var(--text-muted);">Health Check Detect</div>
-    <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:4px;">Route53 detects failure</div>
-  </div>
-  <div class="flow-arrow" style="font-size:1.5rem;">→</div>
-  <div class="card" style="padding:0.8rem; min-width:140px; text-align:center;" data-fragment-index="2">
-    <div style="font-size:1.5rem; font-weight:700; color:#fdcb6e;">10s</div>
-    <div style="font-size:0.8rem; color:var(--text-muted);">Lambda Trigger</div>
-    <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:4px;">EventBridge → Lambda</div>
-  </div>
-  <div class="flow-arrow" style="font-size:1.5rem;">→</div>
-  <div class="card" style="padding:0.8rem; min-width:140px; text-align:center;" data-fragment-index="3">
-    <div style="font-size:1.5rem; font-weight:700; color:var(--accent);">5-15m</div>
-    <div style="font-size:0.8rem; color:var(--text-muted);">Failover Execution</div>
-    <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:4px;">switchover-global-cluster</div>
-  </div>
-  <div class="flow-arrow" style="font-size:1.5rem;">→</div>
-  <div class="card" style="padding:0.8rem; min-width:140px; text-align:center;" data-fragment-index="4">
-    <div style="font-size:1.5rem; font-weight:700; color:var(--green);">30s</div>
-    <div style="font-size:0.8rem; color:var(--text-muted);">DNS Propagation</div>
-    <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:4px;">New endpoint active</div>
-  </div>
-</div>
-
-<div style="margin-top:1rem; padding:0.8rem; background:var(--bg-card); border-radius:8px;">
-  <h4 style="margin:0 0 0.5rem 0; font-size:0.9rem;">Endpoint Update</h4>
-  <div style="display:flex; gap:1rem; font-size:0.85rem;">
-    <div style="flex:1;">
-      <div style="color:var(--text-muted);">Before (us-east-1):</div>
-      <code style="font-size:0.75rem;">production-docdb-global.cluster-xxx.us-east-1.docdb.amazonaws.com</code>
-    </div>
-    <div style="flex:1;">
-      <div style="color:var(--green);">After (us-west-2):</div>
-      <code style="font-size:0.75rem;">production-docdb-global.cluster-yyy.us-west-2.docdb.amazonaws.com</code>
-    </div>
-  </div>
+<div class="code-block fragment fade-up" data-fragment-index="1">aws elasticache failover-global-replication-group \
+  --global-replication-group-id &lt;global-datastore-name&gt; \
+  --primary-region us-west-2 \
+  --primary-replication-group-id cart-usw2</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="2">
+  <div class="callout callout-warning"><strong class="mr04-warn">자동 failover 없음</strong><div class="mr04-muted">Global Datastore는 리전 장애 시 스스로 승격하지 않습니다. 승격은 보통 1분 미만입니다.</div></div>
+  <div class="callout callout-warning"><strong class="mr04-warn">전환 중 cart</strong><div class="mr04-muted">secondary는 읽기 전용이라 담기, 수정이 실패합니다. 클라이언트에서 재시도 큐로 받습니다.</div></div>
+  <div class="callout callout-success"><strong class="mr04-ok">유실 대비</strong><div class="mr04-muted">복제 지연은 보통 1초 미만. 마지막 변경분은 세션 쿠키나 주문 DB에서 재구성합니다.</div></div>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s11">
-  <div class="slide-header" data-remarp-id="s11-header"><h2>ElastiCache Promotion — Step by Step</h2></div>
+  <div class="slide-header" data-remarp-id="s11-header"><h2>로드맵: 데이터 먼저, 자동화 다음</h2></div>
   <div class="slide-body" data-remarp-id="s11-body">
-    <p><!-- Slide 12: ElastiCache Promotion --></p>
-<div class="card" style="padding:1rem; margin-bottom:1rem; background:rgba(0,0,0,0.2);">
-  <h4 style="margin:0 0 0.5rem 0; color:var(--green);">CLI Command</h4>
-  <div class="code-block" style="font-size:0.82rem; padding:0.8rem; margin:0;">
-aws elasticache failover-global-replication-group \
-  --global-replication-group-id <span class="string">production-elasticache</span> \
-  --primary-region <span class="string">us-west-2</span>
-  </div>
+    <p><!-- Slide 12: DR 개선 로드맵 --></p>
+<style>
+.mr04-road { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-5); }
+.mr04-road .metric-card { display: flex; flex-direction: column; gap: var(--space-3); }
+.mr04-pri { font-size: var(--fs-subtitle); font-weight: var(--weight-bold); }
+.mr04-road ul { margin: 0; padding-left: var(--space-5); color: var(--text-secondary); font-size: var(--fs-card); line-height: var(--leading-body); word-break: keep-all; }
+.mr04-road li + li { margin-top: var(--space-2); }
+.mr04-bad { color: var(--danger); }
+.mr04-warn { color: var(--warning); }
+.mr04-info { color: var(--info); }
+.mr04-note { margin-top: var(--space-5); }
+.mr04-muted { color: var(--text-secondary); font-size: var(--fs-card); }
+</style>
+<div class="mr04-road">
+  <div class="metric-card fragment fade-right" data-fragment-index="1"><span class="mr04-pri mr04-bad">P0 데이터 보호</span><ul><li>MSK Replicator 구성 (us-west-2), consumer offset 동기화</li><li>Aurora RPO lag 알람, rds.global_db_rpo 정책, global writer endpoint 적용</li><li>failover 유실분 대사 절차 (스냅샷, PG 승인 대조)</li></ul></div>
+  <div class="metric-card fragment fade-right" data-fragment-index="2"><span class="mr04-pri mr04-warn">P1 전환 자동화</span><ul><li>Region switch plan: 승인, EKS scaling, Aurora Global DB, DocumentDB block</li><li>custom Lambda: ElastiCache promote, CloudFront KVS 변경</li><li>전 서비스 PodDisruptionBudget</li></ul></div>
+  <div class="metric-card fragment fade-right" data-fragment-index="3"><span class="mr04-pri mr04-info">P2 검증 루프</span><ul><li>분기별 FIS 훈련과 Region switch 리허설</li><li>Resilience Hub 평가를 CI/CD에 연결</li><li>실측 RTO/RPO로 목표표 갱신</li><li>RPO 0 필수 테이블은 DSQL multi-Region 검토</li></ul></div>
 </div>
-
-<div class="flow-h" style="justify-content:center; gap:0.5rem; flex-wrap:wrap;">
-  <div class="card" style="padding:0.8rem; min-width:140px; text-align:center;" data-fragment-index="1">
-    <div style="font-size:1.5rem; font-weight:700; color:var(--red);">30s</div>
-    <div style="font-size:0.8rem; color:var(--text-muted);">Detect</div>
-    <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:4px;">Health check fail</div>
-  </div>
-  <div class="flow-arrow" style="font-size:1.5rem;">→</div>
-  <div class="card" style="padding:0.8rem; min-width:140px; text-align:center;" data-fragment-index="2">
-    <div style="font-size:1.5rem; font-weight:700; color:var(--accent);">1-5m</div>
-    <div style="font-size:0.8rem; color:var(--text-muted);">Promote</div>
-    <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:4px;">Secondary → Primary</div>
-  </div>
-  <div class="flow-arrow" style="font-size:1.5rem;">→</div>
-  <div class="card" style="padding:0.8rem; min-width:140px; text-align:center;" data-fragment-index="3">
-    <div style="font-size:1.5rem; font-weight:700; color:var(--green);">Ready</div>
-    <div style="font-size:0.8rem; color:var(--text-muted);">Writes Enabled</div>
-    <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:4px;">us-west-2 is primary</div>
-  </div>
-</div>
-
-<div style="margin-top:1.5rem;">
-  <h4 style="margin:0 0 0.8rem 0; font-size:0.9rem; color:var(--text-secondary);">Cart Service Impact</h4>
-  <div class="col-2" style="gap:1rem;">
-    <div class="card" style="padding:0.8rem; border-left:3px solid #fdcb6e;">
-      <strong style="color:#fdcb6e;">During Failover (1-5min)</strong>
-      <ul style="margin:0.5rem 0 0; padding-left:1.2rem; font-size:0.85rem; color:var(--text-secondary);">
-        <li>Cart reads: degraded (stale data)</li>
-        <li>Cart writes: fail (read-only)</li>
-        <li>Session data: may be lost</li>
-      </ul>
-    </div>
-    <div class="card" style="padding:0.8rem; border-left:3px solid var(--green);">
-      <strong style="color:var(--green);">After Promotion</strong>
-      <ul style="margin:0.5rem 0 0; padding-left:1.2rem; font-size:0.85rem; color:var(--text-secondary);">
-        <li>Full read/write restored</li>
-        <li>RPO: < 1 second (async lag)</li>
-        <li>Cart rebuild from session cookie</li>
-      </ul>
-    </div>
-  </div>
-</div>
+<div class="callout callout-info mr04-note fragment fade-up" data-fragment-index="4"><strong class="mr04-info">숫자는 비워 둔다</strong> <span class="mr04-muted">"자동화로 RTO 2분" 같은 목표는 P2 훈련에서 잰 값으로 채웁니다.</span></div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s12">
-  <div class="slide-header" data-remarp-id="s12-header"><h2>DR Improvement Roadmap</h2></div>
+  <div class="slide-header" data-remarp-id="s12-header"><h2>훈련 없는 DR은 가설일 뿐</h2></div>
   <div class="slide-body" data-remarp-id="s12-body">
-    <div class="timeline">
-            <div class="timeline-step" data-step="1" data-remarp-id="s12-step-0">
-      <div class="timeline-dot" style="width:2rem;height:2rem;font-size:0.9rem">1</div>
-      <div class="timeline-label" style="max-width:6rem">P0 — Critical (Week 1-2)</div>
-      <div class="timeline-desc">DSQL Linked Clusters 설정 MSK Replicator 활성화 6개 서비스 multi-region 쓰기 가능</div>
+    <div class="tab-bar">
+            <button class="tab-btn active" data-tab="az-power-interruption">AZ: Power Interruption</button>
+      <button class="tab-btn" data-tab="cross-region-connectivity">Cross-Region: Connectivity</button>
+      <button class="tab-btn" data-tab="region-switch">Region switch 리허설</button>
+      <button class="tab-btn" data-tab="resilience-hub">Resilience Hub</button>
     </div>
-      <div class="timeline-connector"></div>
-      <div class="timeline-step" data-step="2" data-remarp-id="s12-step-1">
-      <div class="timeline-dot" style="width:2rem;height:2rem;font-size:0.9rem">2</div>
-      <div class="timeline-label" style="max-width:6rem">P1 — High (Week 3-4)</div>
-      <div class="timeline-desc">Auto-failover Lambda + EventBridge 구축 PodDisruptionBudget 전체 서비스 적용 RTO 15min → 2min 달성</div>
-    </div>
-      <div class="timeline-connector"></div>
-      <div class="timeline-step" data-step="3" data-remarp-id="s12-step-2">
-      <div class="timeline-dot" style="width:2rem;height:2rem;font-size:0.9rem">3</div>
-      <div class="timeline-label" style="max-width:6rem">P2 — Medium (Month 2)</div>
-      <div class="timeline-desc">CloudFront Origin Failover Group 설정 Route53 health check → /health/ready 변경 OpenSearch cross-cluster search 검토</div>
-    </div>
-    </div>
+        <div class="tab-content active" data-tab="az-power-interruption">
+<p>FIS scenario library의 시나리오로, 한 AZ의 전원 손실 증상을 주입합니다.</p>
+<table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody><tr><td>대상</td><td>EC2 (EKS, ECS 노드 포함), EBS, ASG, 서브넷, ElastiCache, RDS</td></tr><tr><td>용량 제약 재현</td><td>지정한 IAM role, ASG의 새 인스턴스 시작을 막아 "용량 확보 실패"까지 시험</td></tr><tr><td>관찰 지표</td><td>Karpenter 노드 교체, zonal shift, DB writer 이동 시간</td></tr><tr><td>주기 (예시)</td><td>월 1회 비운영, 분기 1회 운영: 조직 기준으로 조정</td></tr></tbody></table>
+</div>
+    <div class="tab-content" data-tab="cross-region-connectivity">
+<p>실험 리전에서 대상 리전으로 가는 트래픽을 막고 복제를 멈춥니다. 기본 지속 시간 3시간(<code>disruptionDuration</code>).</p>
+<table><thead><tr><th>Action</th><th>효과</th></tr></thead><tbody><tr><td><code>aws:network:route-table-disrupt-cross-region-connectivity</code></td><td>서브넷의 대상 리전 경로 차단</td></tr><tr><td><code>aws:network:transit-gateway-disrupt-cross-region-connectivity</code></td><td>TGW 경유 트래픽 차단</td></tr><tr><td><code>aws:s3:bucket-pause-replication</code></td><td>S3 복제 일시 정지</td></tr><tr><td><code>aws:dynamodb:global-table-pause-replication</code></td><td>Global Table 복제 정지</td></tr></tbody></table>
+<p>AWS 관리형 서비스 트래픽은 막히지 않을 수 있습니다. DocumentDB, ElastiCache 복제는 이 시나리오로 끊기지 않으니 별도로 검증합니다.</p>
+</div>
+    <div class="tab-content" data-tab="region-switch">
+<table><thead><tr><th>단계</th><th>내용</th></tr></thead><tbody><tr><td>실행</td><td>분기 1회 plan을 실제로 실행해 us-west-2로 전환, switchover로 원복</td></tr><tr><td>측정</td><td>감지까지, 승인까지, 전환 완료까지 시간과 유실 데이터</td></tr><tr><td>장애 중 전환</td><td>FIS로 장애를 주입한 상태에서 plan 실행</td></tr><tr><td>회고</td><td>PIR로 기록하고 Runbook과 plan을 함께 갱신</td></tr></tbody></table>
+</div>
+    <div class="tab-content" data-tab="resilience-hub">
+<table><thead><tr><th>기능</th><th>내용</th></tr></thead><tbody><tr><td>Resiliency policy</td><td>Application, Infrastructure, Availability Zone, Region별 RTO/RPO 목표</td></tr><tr><td>Assessment</td><td>구성 요소를 분석해 목표 충족, 위반과 추정 RTO/RPO 표시</td></tr><tr><td>Recommendations</td><td>개선안별 예상 RTO, RPO, 비용과 alarm, FIS 실험, SOP 제안</td></tr><tr><td>CI/CD 연동</td><td>구성 변경이 목표를 깨는지 배포 전에 확인</td></tr></tbody></table>
+</div>
   </div>
-  
-<script>(function() {
-  const slide = document.currentScript.closest('.slide');
-  if (!slide) return;
-  const steps = slide.querySelectorAll('.timeline-step');
-  const connectors = slide.querySelectorAll('.timeline-connector');
-  let current = 0;
-  function update() {
-    steps.forEach((s, i) => {
-      s.classList.remove('active', 'done');
-      if (i < current) s.classList.add('done');
-      else if (i === current) s.classList.add('active');
-    });
-    connectors.forEach((c, i) => {
-      c.classList.toggle('done', i < current);
-    });
-  }
-  update();
-  slide.__canvasStep = function(dir) {
-    if (dir === 'next' && current < 2) current++;
-    else if (dir === 'prev' && current > 0) current--;
-    else return (dir === 'next') ? false : false;
-    update();
-    return current;
-  };
-  slide.dataset.slideAction = 'canvas-step';
-  slide.dataset.canvasMaxStep = '2';
-})();</script>
 </div>
 
 <div class="slide" data-remarp-id="s13">
-  <div class="slide-header" data-remarp-id="s13-header"><h2>FIS Experiment Template</h2></div>
+  <div class="slide-header" data-remarp-id="s13-header"><h2>Key Takeaways</h2></div>
   <div class="slide-body" data-remarp-id="s13-body">
-    <div class="columns">
-<div class="col">
-<h3>Drill Frequency</h3>
-</div><div class="col">
-<h3>Tools & Automation</h3>
-</div>
+    <p><!-- Slide 14: Key Takeaways --></p>
+<style>
+.mr04-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.mr04-tk { color: var(--accent); font-weight: var(--weight-bold); }
+.mr04-ok { color: var(--success); font-weight: var(--weight-bold); }
+.mr04-warn { color: var(--warning); font-weight: var(--weight-bold); }
+</style>
+<div class="card-grid fragment" data-reveal="stagger" data-reveal-anim="zoom" data-reveal-pace="slow" data-fragment-index="1">
+  <div class="metric-card"><strong class="mr04-tk">1. 기본은 단일 writer</strong><div class="mr04-muted">지금은 전부 단일 writer Warm Standby. RPO 0이 필수인 테이블만 DSQL Active/Active를 검토합니다.</div></div>
+  <div class="metric-card"><strong class="mr04-tk">2. 가장 약한 고리가 RTO, RPO</strong><div class="mr04-muted">MSK Replicator가 없으면 DB가 넘어가도 이벤트는 남습니다. Aurora failover는 lag만큼 잃고 rds.global_db_rpo로 상한을 둡니다.</div></div>
+  <div class="metric-card"><strong class="mr04-tk">3. 엣지는 읽기만 자동</strong><div class="mr04-muted">CloudFront origin failover는 GET, HEAD, OPTIONS만. 쓰기는 KVS의 활성 리전 값으로 전환합니다.</div></div>
+  <div class="metric-card"><strong class="mr04-ok">4. 전환은 plan으로</strong><div class="mr04-muted">Region switch는 활성화 리전에서 실행됩니다. 기본 block이 없는 단계는 멱등 Lambda로 채웁니다.</div></div>
+  <div class="metric-card"><strong class="mr04-ok">5. 명령을 구분</strong><div class="mr04-muted">Aurora, DocumentDB 장애는 쓰기 중지 후 failover + allow-data-loss, 계획 전환과 원복은 switchover. ElastiCache는 수동 promote.</div></div>
+  <div class="metric-card"><strong class="mr04-warn">6. 숫자는 훈련으로</strong><div class="mr04-muted">FIS 시나리오와 Region switch 리허설로 실측한 RTO/RPO만 목표표에 씁니다.</div></div>
 </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s14">
-  <div class="slide-header" data-remarp-id="s14-header"><h2>Key Takeaways</h2></div>
-  <div class="slide-body" data-remarp-id="s14-body">
-    <p><!-- Slide 15: Key Takeaways --></p>
-<div class="col-2" style="gap:1.5rem;">
-  <div class="card" style="padding:1.2rem; border-left:3px solid var(--red);">
-    <h4 style="margin:0 0 0.8rem 0; color:var(--red);">Critical Risks</h4>
-    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
-      <li><strong>DSQL</strong>: Single region, total data loss risk</li>
-      <li><strong>MSK</strong>: No replication, event loss</li>
-      <li><strong>DocumentDB/ElastiCache</strong>: Manual CLI failover</li>
-      <li>Current RTO: <span style="color:#fdcb6e;">15min manual</span></li>
-    </ul>
-  </div>
-  <div class="card" style="padding:1.2rem; border-left:3px solid var(--green);">
-    <h4 style="margin:0 0 0.8rem 0; color:var(--green);">Solutions</h4>
-    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
-      <li><strong>P0</strong>: DSQL Linked Clusters + MSK Replicator</li>
-      <li><strong>P1</strong>: Lambda + EventBridge automation</li>
-      <li><strong>P1</strong>: PDB for all 20 services</li>
-      <li>Target RTO: <span style="color:var(--green);">2min automated</span></li>
-    </ul>
-  </div>
-  <div class="card" style="padding:1.2rem; border-left:3px solid var(--accent);">
-    <h4 style="margin:0 0 0.8rem 0; color:var(--accent);">Automation Pipeline</h4>
-    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
-      <li>CloudWatch Alarm → EventBridge → Lambda</li>
-      <li>Parallel DB failover execution</li>
-      <li>SNS notification to Ops team</li>
-      <li>ENABLE_AUTO_FAILOVER safety flag</li>
-    </ul>
-  </div>
-  <div class="card" style="padding:1.2rem; border-left:3px solid var(--cyan);">
-    <h4 style="margin:0 0 0.8rem 0; color:var(--cyan);">DR Drill Strategy</h4>
-    <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem; line-height:1.8;">
-      <li><strong>Quarterly</strong>: Full region failure simulation</li>
-      <li><strong>Monthly</strong>: Individual DB failover test</li>
-      <li><strong>Weekly</strong>: Replication lag + health checks</li>
-      <li>Tool: AWS Fault Injection Simulator</li>
-    </ul>
-  </div>
-</div>
+  <div class="slide-header" data-remarp-id="s14-header"><h2>Knowledge Check</h2></div>
+  <div class="slide-body" data-remarp-id="s14-body" style="overflow-y:auto">
+    <div class="quiz" data-quiz="s14-q1">
+      <div class="quiz-question">Q1: us-east-1 장애 시 DocumentDB global cluster를 us-west-2로 넘기는 올바른 방법은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">us-east-1에서 switchover-global-cluster 실행</button>
+<button class="quiz-option" data-correct="true">us-west-2에서 failover-global-cluster를 --allow-data-loss와 함께 실행</button>
+<button class="quiz-option" data-correct="false">자동으로 승격되므로 아무것도 하지 않음</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="s14-q2">
+      <div class="quiz-question">Q2: CloudFront origin group이 secondary origin으로 재시도하는 요청은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="true">GET, HEAD, OPTIONS 요청만</button>
+<button class="quiz-option" data-correct="false">주문 POST를 포함한 모든 요청</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+<div class="quiz" data-quiz="s14-q3">
+      <div class="quiz-question">Q3: us-east-1 장애로 Aurora Global Database를 failover했을 때 맞는 설명은?</div>
+      <div class="quiz-options">
+        <button class="quiz-option" data-correct="false">switchover처럼 데이터 손실이 없다</button>
+<button class="quiz-option" data-correct="true">그 순간의 복제 lag만큼 잃을 수 있고, rds.global_db_rpo로 상한을 둘 수 있다</button>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
   </div>
 </div>
 
 <div class="slide" data-remarp-id="s15">
-  <div class="slide-header" data-remarp-id="s15-header"><h2>Knowledge Check</h2></div>
-  <div class="slide-body" data-remarp-id="s15-body" style="overflow-y:auto">
-    <div class="quiz" data-quiz="q1">
-      <div class="quiz-question">Q1: 현재 Multi-Region Mall에서 가장 심각한 DR 리스크는?</div>
-      <div class="quiz-options">
-        <button class="quiz-option" data-correct="false">Route53 Health Check 지연</button>
-<button class="quiz-option" data-correct="true">Aurora DSQL 단일 리전 구성</button>
-<button class="quiz-option" data-correct="false">ElastiCache 수동 failover</button>
-<button class="quiz-option" data-correct="false">S3 CRR 15분 지연</button>
-      </div>
-      <div class="quiz-feedback"></div>
-    </div>
-<div class="quiz" data-quiz="q2">
-      <div class="quiz-question">Q2: DocumentDB Global Cluster failover CLI 명령은?</div>
-      <div class="quiz-options">
-        <button class="quiz-option" data-correct="false">aws docdb promote-read-replica</button>
-<button class="quiz-option" data-correct="true">aws docdb switchover-global-cluster</button>
-<button class="quiz-option" data-correct="false">aws docdb failover-db-cluster</button>
-<button class="quiz-option" data-correct="false">aws rds failover-global-cluster</button>
-      </div>
-      <div class="quiz-feedback"></div>
-    </div>
-<div class="quiz" data-quiz="q3">
-      <div class="quiz-question">Q3: 자동화 파이프라인에서 ENABLE_AUTO_FAILOVER 플래그의 목적은?</div>
-      <div class="quiz-options">
-        <button class="quiz-option" data-correct="false">Failover 속도 향상</button>
-<button class="quiz-option" data-correct="false">로그 레벨 설정</button>
-<button class="quiz-option" data-correct="true">테스트 환경에서 실수 방지</button>
-<button class="quiz-option" data-correct="false">메트릭 수집 활성화</button>
-      </div>
-      <div class="quiz-feedback"></div>
-    </div>
-<div class="quiz" data-quiz="q4">
-      <div class="quiz-question">Q4: DR Drill에서 Full Region Failure 시뮬레이션 권장 주기는?</div>
-      <div class="quiz-options">
-        <button class="quiz-option" data-correct="false">매주</button>
-<button class="quiz-option" data-correct="false">매월</button>
-<button class="quiz-option" data-correct="true">분기별</button>
-<button class="quiz-option" data-correct="false">매년</button>
-      </div>
-      <div class="quiz-feedback"></div>
-    </div>
-  </div>
-</div>
-
-<div class="slide" data-remarp-id="s16">
   <div class="center-content" style="height:100%; gap:1.5rem;">
-    <h1 style="font-size:3rem; background:linear-gradient(135deg, var(--accent-light), var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Thank You</h1>
-    <p style="color:var(--text-secondary); font-size:1.1rem;">Thank You</p>
-    <p style="color:var(--text-muted); font-size:1rem; margin-top:0.5rem;">수고하셨습니다!</p>
+    <h1 style="font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:calc(var(--fs-title) * 1.5); color:var(--text-primary);">Thank You</h1>
+    <p style="color:var(--text-secondary); font-size:var(--fs-subtitle);">Block 4: DR & Failover Automation 완료</p>
+    
     <div style="display:flex; gap:1rem; margin-top:1.5rem;">
-            <a href="index.html" class="btn btn-primary btn-sm" style="text-decoration:none;">← 목차로 돌아가기</a>
+            <a href="toc.html" class="btn" style="text-decoration:none;">← 목차로 돌아가기</a>
+      <a href="05-observability-ops.html" class="btn btn-primary" style="text-decoration:none;">다음: Observability & Operations →</a>
     </div>
   </div>
 </div>
@@ -794,27 +448,27 @@ aws elasticache failover-global-replication-group \
 <script>
   
   const presenterNotes = {
-    1: "[1min] Block 4에 오신 것을 환영합니다. 이번 블록에서는 Multi-Region Shopping Mall의 DR과 Failover Automation을 심층적으로 다루겠습니다.\n\n지금까지 아키텍처 개요, 데이터/마이크로서비스, 운영 최적화를 다뤘습니다. 이번 블록에서는 실제 장애 상황에서 시스템이 어떻게 대응하는지, 그리고 어떻게 개선해야 하는지를 구체적으로 살펴봅니다.\n\n30분 동안 DR 현황 분석, 장애 시나리오별 대응, 그리고 자동화 파이프라인 구축까지 다룰 예정입니다.\n\n\n먼저 현재 DR 상태의 리스크 평가부터 시작하겠습니다.",
-    2: "⏸️ [3min] 현재 DR 상태를 리스크 레벨별로 평가한 테이블입니다. 색상으로 위험도를 한눈에 파악할 수 있습니다.\n\n녹색 영역은 안전합니다. Route53 Latency-based routing이 자동으로 트래픽을 전환하고, S3 Cross-Region Replication이 활성화되어 있고, EKS는 Karpenter가 노드를 자동 복구합니다.\n\n노란색 영역은 수동 개입이 필요한 부분입니다. DocumentDB Global Cluster와 ElastiCache Global Datastore는 AWS CLI로 failover를 실행해야 합니다. 자동화되어 있지 않아서 RTO가 5-15분으로 늘어납니다.\n\n\n빨간색이 가장 심각합니다. Aurora DSQL은 현재 us-east-1 단일 리전에만 존재합니다. MSK도 리전별로 독립적이어서 Replicator가 설정되어 있지 않습니다. OpenSearch는 리전 간 복제가 없어서 장애 시 전체 인덱스를 다시 빌드해야 합니다.\n\n결론적으로 DSQL과 MSK가 Critical입니다. us-east-1 장애 시 6개 핵심 서비스의 트랜잭션 데이터와 이벤트 스트림이 완전히 손실됩니다.\n\n\n각 컴포넌트의 구체적인 RTO와 RPO를 살펴보겠습니다.",
-    3: "⏸️ [2min] RTO와 RPO 매트릭스입니다. RTO는 Recovery Time Objective — 서비스 복구까지 걸리는 시간, RPO는 Recovery Point Objective — 허용 가능한 데이터 손실 시간입니다.\n\nRoute53은 RTO 1-2분, RPO 0입니다. Health check가 30초 간격이고 DNS TTL이 60초라서 최대 2분 내에 트래픽이 전환됩니다.\n\nDocumentDB는 RTO 5-15분이지만 RPO는 1분 미만입니다. Global Cluster가 비동기로 복제하지만 지연이 매우 짧습니다. 문제는 수동 switchover 명령을 실행해야 한다는 점입니다.\n\nElastiCache는 RTO 1-5분, RPO 1초 미만으로 가장 빠릅니다. Global Datastore의 복제 지연이 매우 짧기 때문입니다. 하지만 역시 수동 promote가 필요합니다.\n\n\n빨간색 행이 문제입니다. DSQL과 MSK는 RTO/RPO가 N/A입니다. 복구가 아니라 데이터 손실이죠. MSK의 경우 Replicator가 비활성화되어 있어서 consumer offset도 동기화되지 않습니다. 장애 후 어디서부터 다시 consume해야 하는지 알 수 없습니다.\n\n\n이제 실제 장애 시나리오별로 어떤 일이 발생하는지 구체적으로 살펴보겠습니다.",
-    4: "⏸️ [3min] 시나리오 1: us-east-1 전체 리전 장애입니다. 가장 심각한 케이스죠.\n\n자동으로 복구되는 부분부터 보겠습니다. Route53 Health Check가 30초 내에 us-east-1 NLB 응답 실패를 감지하고, 트래픽을 자동으로 us-west-2로 전환합니다. CloudFront는 Route53을 따라가므로 별도 설정 없이 전환됩니다. S3는 이미 CRR이 설정되어 있어서 15분 이내 데이터는 us-west-2에 있습니다.\n\n\n수동 개입이 필요한 부분입니다. DocumentDB는 switchover-global-cluster 명령을 실행해야 합니다. us-west-2 클러스터를 primary로 승격시키는 작업이죠. 5-15분 걸립니다. ElastiCache도 마찬가지로 failover-global-replication-group 명령이 필요합니다.\n\n빨간색 박스가 가장 심각한 부분입니다. DSQL은 us-east-1에만 있어서 6개 서비스의 트랜잭션 데이터가 완전히 손실됩니다. 주문, 결제, 재고 — 쇼핑몰의 핵심 데이터죠. MSK도 이벤트 스트림이 끊기고 consumer offset이 동기화되지 않아서 정확히 어디서 재시작해야 하는지 알 수 없습니다.\n\n결론적으로, 현재 us-east-1이 죽으면 시스템은 \"반쪽짜리 복구\"만 가능합니다.\n\n\n개별 DB 장애 시나리오를 살펴보겠습니다.",
-    5: "⏸️ [3min] 시나리오 2: 개별 DB 장애입니다. 탭을 전환하면서 각 케이스를 설명하겠습니다.\n\n첫 번째 탭, DSQL 장애입니다. 현재 DSQL이 죽으면 6개 서비스가 connection timeout으로 실패합니다. 자동 fallback이 없어서 500 에러가 사용자에게 노출됩니다.\n\n권장하는 해결책은 Graceful Degradation입니다. MockFallbackEnabled 플래그를 두고, DB 연결 실패 시 mock 응답을 반환하는 방식입니다. 사용자는 일부 기능이 제한되지만 전체 서비스가 죽지는 않습니다.\n\n\n두 번째 탭, DocumentDB 장애입니다. 7개 서비스가 영향받지만, Global Cluster 덕분에 수동 failover로 복구 가능합니다. 화면에 보이는 CLI 명령을 실행하면 us-west-2가 primary로 승격됩니다. RTO 5-15분, RPO 1분 미만입니다.\n\n세 번째 탭, ElastiCache 장애입니다. cart 서비스만 직접 영향받습니다. 세션과 캐시 데이터가 들어있죠. 수동 promotion으로 1-5분 내에 복구 가능하고, 장바구니 데이터는 일시적으로 손실되지만 DB에서 재구축할 수 있습니다.\n\n\nEKS 클러스터 장애 시나리오를 보겠습니다.",
-    6: "⏸️ [2min] 시나리오 3: EKS 클러스터 장애입니다. 노드나 Pod 레벨 장애를 다룹니다.\n\n자동 복구 부분은 괜찮습니다. Karpenter가 2-5분 내에 새 노드를 프로비저닝하고, ArgoCD가 자동으로 워크로드를 재배포합니다. Deployment의 replicas 설정에 따라 Pod가 새 노드에 스케줄링되고, Service 엔드포인트가 업데이트됩니다.\n\n\n하지만 현재 Gap이 있습니다. PodDisruptionBudget이 정의되어 있지 않습니다.\n\nPDB가 없으면 무슨 일이 벌어지냐면, 노드 교체 중에 모든 Pod가 동시에 evict될 수 있습니다. api-gateway Pod 3개가 같은 노드에 있었다면, 그 노드가 drain될 때 3개가 동시에 사라집니다. 새 Pod가 뜨기 전까지 서비스가 완전히 중단됩니다.\n\nminAvailable: 1만 설정해도 최소 1개 Pod는 항상 유지되어서 zero downtime을 보장할 수 있습니다. 이건 Low effort로 빠르게 적용 가능한 개선사항입니다.\n\n\nDSQL의 단일 리전 리스크를 더 자세히 살펴보겠습니다.",
-    7: "⏸️ [2min] DSQL 단일 리전 리스크를 강조하는 슬라이드입니다. 이게 현재 아키텍처의 가장 큰 약점입니다.\n\n왼쪽을 보시면, Aurora DSQL이 us-east-1에만 존재합니다. 리전 장애가 발생하면 6개 핵심 서비스의 데이터가 완전히 손실됩니다. order, payment, inventory, user-account, shipping, warehouse — 모두 쇼핑몰의 핵심 비즈니스 로직을 담당하는 서비스입니다.\n\n\n오른쪽에 비즈니스 영향을 정리했습니다. 주문 처리 — 진행 중인 모든 주문이 사라집니다. 결제 기록 — 트랜잭션 히스토리를 조회할 수 없습니다. 재고 상태 — 현재 재고 수량을 알 수 없어서 과잉 판매 위험이 있습니다. 사용자 계정 — 로그인 자체가 불가능해집니다.\n\n이건 기술적 장애가 아니라 비즈니스 중단입니다. 복구가 아니라 처음부터 다시 시작해야 하는 상황이죠.\n\n\n이 문제의 해결책인 DSQL Linked Clusters를 살펴보겠습니다.",
-    8: "⏸️ [3min] DSQL 문제의 해결책입니다. 왼쪽이 최종 목표 상태, 오른쪽이 당장 적용할 수 있는 임시 완화책입니다.\n\n최종 목표는 Linked Clusters입니다. linked_cluster_arns 설정으로 us-east-1과 us-west-2를 양방향으로 연결합니다. 동기 복제라서 RPO가 0입니다. 리전 장애 시 자동 failover되고, 읽기는 가장 가까운 리전에서, 쓰기는 어느 리전에서든 가능합니다.\n\nTerraform 코드를 보시면, aws_dsql_cluster 리소스에 linked_cluster_arns만 추가하면 됩니다. 기존 클러스터에 적용할 수 있어서 마이그레이션 부담이 적습니다.\n\n\n하지만 Linked Clusters 구축에는 시간이 걸리므로, 당장은 임시 완화책을 적용해야 합니다.\n\n첫째, 일일 자동 스냅샷입니다. 매일 스냅샷을 찍고 us-west-2로 복사합니다. 최악의 경우 24시간 데이터 손실이지만, 전체 손실보다는 훨씬 낫습니다.\n\n둘째, 애플리케이션 Mock Fallback입니다. ENABLE_MOCK_FALLBACK 플래그를 두고, DB 연결 실패 시 캐시된 데이터나 mock 응답을 반환합니다. 서비스가 완전히 죽는 것보다 제한된 기능이라도 제공하는 게 낫습니다.\n\n셋째, Event Sourcing 패턴입니다. MSK 이벤트를 source of truth로 사용해서 상태를 재구축하는 방식입니다. 하지만 이건 MSK Replicator가 먼저 설정되어야 합니다.\n\n\n이제 자동화된 Failover 파이프라인 설계를 보겠습니다.",
-    9: "⏸️ [3min] 자동화된 Failover 파이프라인 아키텍처입니다. 단계별로 설명드리겠습니다.\n\n첫 번째, 트리거입니다. CloudWatch Alarm이 Route53 Health Check 상태를 모니터링합니다. us-east-1 NLB가 UNHEALTHY로 바뀌면 알람이 발생합니다.\n\n두 번째, EventBridge Rule이 알람 상태 변경 이벤트를 캐치합니다. cloudwatch.alarm.state_change 패턴을 매칭해서 Lambda를 트리거합니다.\n\n\n세 번째, Lambda 함수들이 병렬로 실행됩니다. DocumentDB Failover Lambda는 switchover-global-cluster API를 호출하고, ElastiCache Promotion Lambda는 failover-global-replication-group API를 호출합니다. 병렬 실행이라서 시간이 단축됩니다.\n\n네 번째, 후속 작업입니다. Route53은 이미 자동 전환되지만, 수동 override가 필요한 경우를 대비해 Lambda에서 업데이트할 수 있습니다. SNS로 Ops 팀에 알림을 보내서 상황을 인지하게 합니다.\n\n하단에 보시면 RTO가 수동 15분에서 자동화로 2분으로 단축됩니다. 이게 자동화의 핵심 가치입니다.\n\n\nLambda 코드 구현을 살펴보겠습니다.",
-    10: "⏸️ [2min] Lambda 함수 구현 코드입니다. Python으로 간단하게 작성됩니다.\n\n왼쪽 DocumentDB Failover Lambda를 보시면, boto3 클라이언트를 생성하고 switchover_global_cluster API를 호출합니다. GlobalClusterIdentifier와 TargetDbClusterIdentifier를 지정하면 us-west-2가 새로운 primary가 됩니다.\n\n오른쪽 ElastiCache Failover Lambda도 비슷합니다. failover_global_replication_group API를 호출하고 PrimaryRegion을 us-west-2로 지정합니다.\n\n\n중요한 건 ENABLE_AUTO_FAILOVER 안전 플래그입니다. 이 환경 변수가 설정되어 있지 않으면 Lambda가 아무것도 하지 않고 종료됩니다.\n\n왜 이게 필요하냐면, 테스트 환경에서 실수로 프로덕션 DB를 failover하는 걸 방지하기 위해서입니다. 프로덕션 Lambda에만 이 환경 변수를 설정하고, staging이나 dev에서는 비활성화합니다.\n\n\nDocumentDB failover의 구체적인 단계와 타임라인을 보겠습니다.",
-    11: "⏸️ [2min] DocumentDB failover의 단계별 타임라인입니다.\n\n상단에 실제 CLI 명령이 있습니다. switchover-global-cluster를 호출하고 global-cluster-identifier와 target-db-cluster-identifier를 지정합니다.\n\n타임라인을 보시면, 첫 번째 30초는 Route53 Health Check가 장애를 감지하는 시간입니다. 두 번째 10초는 EventBridge가 알람을 받아서 Lambda를 트리거하는 시간입니다.\n\n\n세 번째가 실제 failover 시간입니다. 5-15분으로 가장 깁니다. DocumentDB가 내부적으로 us-west-2 클러스터를 primary로 승격하고, 복제 방향을 역전시키고, 연결을 재설정하는 과정입니다.\n\n네 번째 30초는 DNS 전파 시간입니다. 새로운 엔드포인트가 활성화되면 애플리케이션이 자동으로 새 primary에 연결됩니다.\n\n하단에 엔드포인트 변경을 보여드렸습니다. us-east-1에서 us-west-2로 바뀝니다. 애플리케이션에서 Global Cluster 엔드포인트를 사용하면 이 변경이 투명하게 처리됩니다.\n\n\nElastiCache promotion 과정을 보겠습니다.",
-    12: "⏸️ [2min] ElastiCache promotion 과정입니다. DocumentDB보다 빠릅니다.\n\nCLI 명령은 failover-global-replication-group입니다. global-replication-group-id와 primary-region을 지정하면 됩니다.\n\n타임라인을 보시면, 감지 30초 후에 1-5분 내에 promotion이 완료됩니다. DocumentDB의 5-15분보다 훨씬 빠릅니다. ElastiCache는 인메모리 데이터베이스라서 상태 전환이 더 가볍기 때문입니다.\n\n\nCart 서비스에 미치는 영향을 정리했습니다. Failover 중에는 읽기가 stale 데이터를 반환할 수 있고, 쓰기는 실패합니다. 세션 데이터도 일부 손실될 수 있습니다.\n\nPromotion 완료 후에는 full read/write가 복원됩니다. RPO가 1초 미만이라서 거의 모든 데이터가 보존됩니다. 손실된 장바구니 데이터는 세션 쿠키나 DB에서 재구축할 수 있습니다.\n\n\n전체 DR 개선 로드맵을 정리해 보겠습니다.",
-    13: "⏸️ [2min] DR 개선 로드맵을 타임라인으로 정리했습니다. ↑↓ 키로 단계별로 이동할 수 있습니다.\n\nP0, Critical입니다. 첫 1-2주 안에 완료해야 합니다. DSQL Linked Clusters를 설정해서 us-west-2에 replica를 두고, MSK Replicator를 활성화해서 이벤트 복제를 시작합니다. 이게 완료되면 6개 핵심 서비스가 진정한 multi-region으로 동작합니다.\n\n\nP1, High입니다. 3-4주차에 자동화를 구축합니다. Auto-failover Lambda와 EventBridge 파이프라인을 배포하고, PDB를 전체 20개 서비스에 적용합니다. 이걸로 RTO가 수동 15분에서 자동 2분으로 단축됩니다.\n\nP2, Medium입니다. 2개월차에 세부 개선을 진행합니다. CloudFront Origin Failover Group을 설정해서 sub-second origin 전환을 가능하게 하고, Route53 health check를 /health/ready로 변경해서 더 정확한 상태를 감지합니다. OpenSearch cross-cluster search도 검토합니다.\n\n\nDR Drill 전략을 살펴보겠습니다.",
-    14: "⏸️ [2min] DR Drill 전략입니다. 정기적인 훈련 없이는 실제 장애 시 대응이 제대로 안 됩니다.\n\n왼쪽 Drill 주기를 보시면, 분기별로 Full Region Failure 시뮬레이션을 합니다. us-east-1 전체 장애를 가정하고 완전한 failover를 실행합니다. 실제 RTO/RPO를 측정하고 모든 서비스가 복구되는지 검증합니다.\n\n월별로 Individual DB Failover를 테스트합니다. DocumentDB, ElastiCache를 번갈아가며 테스트하고, 나중에 DSQL Linked Clusters가 설정되면 그것도 추가합니다. Lambda 자동화가 제대로 동작하는지, 애플리케이션이 자동 재연결하는지 확인합니다.\n\n주별로 Health Check를 수행합니다. 복제 지연 모니터링, 트래픽 흐름 확인, 엔드포인트 연결 테스트를 합니다.\n\n\n오른쪽에 도구와 자동화입니다. AWS FIS(Fault Injection Simulator)를 사용해서 장애를 주입합니다. EC2 인스턴스 중지, 네트워크 지연 주입 등을 자동화된 실험 템플릿으로 관리합니다.\n\nRunbook 체크리스트도 중요합니다. 이해관계자 알림부터 시작해서 ENABLE_AUTO_FAILOVER 활성화, CloudWatch 대시보드 모니터링, 서비스 상태 검증, 결과 문서화, RTO/RPO 메트릭 업데이트까지 단계별로 체크합니다.\n\n\n이번 블록의 핵심 내용을 정리하겠습니다.",
-    15: "[2min] Block 4의 핵심 내용을 네 가지로 정리합니다.\n\n첫째, Critical Risks입니다. DSQL 단일 리전과 MSK 무복제가 가장 심각합니다. DocumentDB와 ElastiCache는 수동 CLI가 필요하고, 현재 RTO는 수동으로 15분입니다.\n\n둘째, Solutions입니다. P0으로 DSQL Linked Clusters와 MSK Replicator를 설정하고, P1으로 Lambda 자동화와 PDB를 전체 적용합니다. 목표 RTO는 자동화로 2분입니다.\n\n셋째, Automation Pipeline입니다. CloudWatch Alarm이 EventBridge를 통해 Lambda를 트리거하고, DB failover를 병렬로 실행합니다. SNS로 Ops 팀에 알림을 보내고, ENABLE_AUTO_FAILOVER 안전 플래그로 실수를 방지합니다.\n\n넷째, DR Drill 전략입니다. 분기별 Full region failure, 월별 Individual DB failover, 주별 Health check를 수행합니다. AWS FIS를 활용해서 장애를 자동으로 주입하고 테스트합니다.\n\n\n마지막으로 퀴즈로 이번 블록 내용을 확인해 보겠습니다.",
-    16: "[2min] 4개 문제로 이번 블록 내용을 확인해 보겠습니다.\n\nQ1, 가장 심각한 DR 리스크입니다. 정답은 Aurora DSQL 단일 리전 구성입니다. Route53 지연이나 ElastiCache 수동 failover는 복구 가능하지만, DSQL은 데이터 손실이죠.\n\nQ2, DocumentDB failover CLI입니다. switchover-global-cluster가 정답입니다. promote-read-replica는 RDS Read Replica용이고, failover-db-cluster는 단일 클러스터 AZ failover입니다.\n\nQ3, ENABLE_AUTO_FAILOVER 목적입니다. 테스트 환경에서 실수로 프로덕션 DB를 failover하는 걸 방지합니다. 프로덕션에서만 이 플래그를 활성화합니다.\n\nQ4, Full Region Failure 시뮬레이션 주기입니다. 분기별이 정답입니다. 너무 자주하면 리스크가 크고, 너무 드물면 실제 장애 시 대응이 미숙합니다.\n\n\n이것으로 Block 4를 마무리합니다.",
-    17: "[30sec] Block 4를 마무리합니다. DR 현황 분석, 장애 시나리오, 자동화 파이프라인, 그리고 개선 로드맵까지 다뤘습니다.\n\n다음 Block 5에서는 Observability와 Operations를 다룹니다. 모니터링 스택, 알림 체계, 그리고 운영 자동화를 살펴보겠습니다.\n\n질문이 있으시면 지금 받겠습니다."
+    1: "\u23f8\ufe0f [0.5min] [\uc694\uc57d]\n\u2022 Block 4\uc758 \uc9c8\ubb38: \"us-east-1\uc774 \uba48\ucd94\uba74 \uc1fc\ud551\ubab0\uc740 \uba87 \ubd84 \uc548\uc5d0, \uc5bc\ub9c8\uc758 \ub370\uc774\ud130\ub97c \uc783\uace0 \ub3cc\uc544\uc624\ub294\uac00\"\n\u2022 \uc21c\uc11c: DR \uc804\ub7b5\uacfc RTO/RPO \u2192 \uc7a5\uc560 \uc2dc\ub098\ub9ac\uc624 3\uac1c \u2192 Aurora failover\uc640 RPO \uad00\ub9ac \u2192 \uc790\ub3d9\ud654 \u2192 DB\ubcc4 \uc808\ucc28 \u2192 \ub85c\ub4dc\ub9f5, \ud6c8\ub828\n\u2022 \uae30\uc900\uc77c 2026-10-15, \ubaa8\ub4e0 API\uc640 \uc218\uce58\ub294 AWS \uacf5\uc2dd \ubb38\uc11c\ub85c \uc7ac\ud655\uc778\n\nBlock 4\uc5d0\uc11c\ub294 DR\uacfc Failover \uc790\ub3d9\ud654\ub97c \ub2e4\ub8f9\ub2c8\ub2e4. \uc9c0\uae08\uae4c\uc9c0 \ubcf8 order, payment, catalog, cart \uc11c\ube44\uc2a4\ub97c \uadf8\ub300\ub85c \ub450\uace0, us-east-1 primary\uc640 us-west-2 secondary \uad6c\uc131\uc5d0\uc11c \ub9ac\uc804 \uc7a5\uc560\uac00 \ub0ac\uc744 \ub54c \ubb34\uc2a8 \uc77c\uc774 \uc77c\uc5b4\ub098\ub294\uc9c0 \ub530\ub77c\uac00 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uc804\ub7b5\uacfc \ubaa9\ud45c\uce58\ub97c \uba3c\uc800 \uc815\ud558\uace0, \uc7a5\uc560 \uc2dc\ub098\ub9ac\uc624\ub97c \ubcf8 \ub2e4\uc74c, \uadf8 \uac04\uadf9\uc744 \uc790\ub3d9\ud654\uc640 \ud6c8\ub828\uc73c\ub85c \uba54\uc6b0\ub294 \uc21c\uc11c\uc785\ub2c8\ub2e4.\n\n\uba3c\uc800 DR \uc804\ub7b5 \ub124 \uac00\uc9c0\ubd80\ud130 \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.",
+    2: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 Well-Architected REL13-BP02\uc758 \ub124 \uac00\uc9c0 \uc804\ub7b5, \uc624\ub978\ucabd\uc73c\ub85c \uac08\uc218\ub85d \ube44\uc6a9\uc740 \ub298\uace0 RTO/RPO\ub294 \uc904\uc5b4\ub4e6\n\u2022 Backup & Restore: RPO \uc2dc\uac04, RTO 24\uc2dc\uac04 \uc774\ub0b4 / Pilot Light: RPO \ubd84, RTO \uc218\uc2ed \ubd84\n\u2022 Warm Standby: RPO \ucd08, RTO \ubd84 / Active/Active: RPO \uac70\uc758 0, RTO 0\uc5d0 \uadfc\uc811\n\u2022 \uc774 \uc1fc\ud551\ubab0: \ub370\uc774\ud130 \uacc4\uce35 \uc804\uccb4\uac00 Warm Standby (Aurora Global DB, DocumentDB global cluster, Global Datastore)\n\u2022 \uc591 \ub9ac\uc804 \uc4f0\uae30\uc640 RPO 0\uc774 \ud544\uc694\ud55c \ud14c\uc774\ube14\ub9cc DSQL multi-Region (Active/Active) \uac80\ud1a0\n\nAWS Well-Architected \uc2e0\ub8b0\uc131 \uc6d0\uce59\uc740 \ub2e4\uc911 \ub9ac\uc804 DR \uc804\ub7b5\uc744 \ub124 \uac00\uc9c0\ub85c \ub098\ub215\ub2c8\ub2e4. \uc67c\ucabd Backup & Restore\ub294 \uac00\uc7a5 \uc2f8\uc9c0\ub9cc RTO\uac00 \ud558\ub8e8 \uc774\ub0b4, Pilot Light\ub294 \ub370\uc774\ud130\ub9cc \uc0c1\uc2dc \ubcf5\uc81c\ud558\uace0 \uc571\uc740 \ud544\uc694\ud560 \ub54c \ub744\uc6c1\ub2c8\ub2e4.\nWarm Standby\ub294 \ucd95\uc18c\ub41c \uc804\uccb4 \uc2a4\ud0dd\uc744 \ud56d\uc0c1 \ub3cc\ub9ac\uace0, Active/Active\ub294 \ub450 \ub9ac\uc804\uc774 \ub3d9\uc2dc\uc5d0 \ud2b8\ub798\ud53d\uc744 \ubc1b\uc2b5\ub2c8\ub2e4.\n\n\uc6b0\ub9ac \uc1fc\ud551\ubab0\uc740 Block 2\uc5d0\uc11c \uc815\ud55c \ub300\ub85c \ub370\uc774\ud130 \uacc4\uce35 \uc804\uccb4\uac00 Warm Standby\uc785\ub2c8\ub2e4. order, payment, inventory\ub294 Aurora PostgreSQL Global Database\ub85c, us-west-2 secondary\uac00 \ub85c\uceec \uc77d\uae30\ub97c \ubc1b\uace0 \uc4f0\uae30\ub294 write forwarding\uc73c\ub85c us-east-1 primary\uc5d0 \ubcf4\ub0c5\ub2c8\ub2e4. catalog\uc640 cart\ub3c4 \uac19\uc740 \ub2e8\uc77c writer \uad6c\uc870\uc785\ub2c8\ub2e4. RPO\ub294 \ucd08 \ub2e8\uc704, RTO\ub294 \ubd84 \ub2e8\uc704\uac00 \ud604\uc2e4\uc801\uc778 \ubaa9\ud45c\uc785\ub2c8\ub2e4.\n\uacb0\uc81c \uc6d0\uc7a5\ucc98\ub7fc \uc591 \ub9ac\uc804 \uc4f0\uae30\uc640 RPO 0\uc774 \uaf2d \ud544\uc694\ud55c \ud14c\uc774\ube14\uc774 \uc0dd\uae30\uba74, \uadf8\ub54c DSQL multi-Region\uc774 Active/Active\ub85c \uac00\ub294 \uacbd\ub85c\uac00 \ub429\ub2c8\ub2e4. \uc774 \uc120\ud0dd\uc774 \ub098\uba38\uc9c0 \uc2ac\ub77c\uc774\ub4dc\uc758 \uc804\uc81c\uc785\ub2c8\ub2e4.\n\n\uadf8\ub7fc \uc11c\ube44\uc2a4\ubcc4\ub85c \uc9c0\uae08 RTO\uc640 RPO\uac00 \uc5b4\ub5a4 \uc0c1\ud0dc\uc778\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 REL13-BP02: https://docs.aws.amazon.com/wellarchitected/2024-06-27/framework/rel_planning_for_recovery_disaster_recovery.html",
+    3: "\u23f8\ufe0f [2.5min] [\uc694\uc57d]\n\u2022 Aurora Global DB: \uacc4\ud68d switchover\ub294 RPO 0, \ube44\uacc4\ud68d failover\ub294 \uadf8 \uc21c\uac04\uc758 \ubcf5\uc81c lag\ub9cc\ud07c \uc190\uc2e4 (\ubcf4\ud1b5 \ucd08 \ub2e8\uc704)\n\u2022 DocumentDB global cluster: RPO \ucd08 \ub2e8\uc704, managed failover \uc2dc \ubcf4\ud1b5 1\ubd84 \ub0b4 secondary \uc2b9\uaca9\n\u2022 ElastiCache Global Datastore: \ubcf5\uc81c \uc9c0\uc5f0 \ubcf4\ud1b5 1\ucd08 \ubbf8\ub9cc, \uc790\ub3d9 failover \uc5c6\uc74c, promote \ubcf4\ud1b5 1\ubd84 \ubbf8\ub9cc\n\u2022 MSK Replicator\ub294 \uc544\uc9c1 \ubbf8\uad6c\uc131: \ub9ac\uc804 \uc7a5\uc560 \uc2dc \ubbf8\ucc98\ub9ac \uc774\ubca4\ud2b8\uac00 us-east-1\uc5d0 \uac07\ud798 (\ub85c\ub4dc\ub9f5 P0)\n\u2022 S3 RTC\ub294 99.99% \uac1d\uccb4\ub97c 15\ubd84 \ub0b4 \ubcf5\uc81c\ud558\ub3c4\ub85d \uc124\uacc4, SLA\ub294 99.9%\n\n\ud45c\uc758 \uc22b\uc790\ub294 \ubaa8\ub450 AWS \ubb38\uc11c\uc5d0 \ub098\uc628 \"\ubcf4\ud1b5\" \uac12\uc785\ub2c8\ub2e4. \uc6b0\ub9ac \ud658\uacbd\uc758 \uc2e4\uce21\uc774 \uc544\ub2c8\ub2c8 \ud6c8\ub828\uc5d0\uc11c \uc9c1\uc811 \uc7ac\uc57c \ud569\ub2c8\ub2e4.\n\ub9e8 \uc704 \ud589\ubd80\ud130 \ubcf4\uba74, order, payment, inventory\ub294 Aurora PostgreSQL Global Database\uc785\ub2c8\ub2e4. us-west-2 secondary\uac00 \uc77d\uae30\ub97c \uacc4\uc18d \ubc1b\uc73c\ub2c8 \uc870\ud68c\ub294 \uc0b4\uc544 \uc788\uc9c0\ub9cc, \uc4f0\uae30\ub294 primary\uac00 \uc2b9\uaca9\ub420 \ub54c\uae4c\uc9c0 \uba48\ucda5\ub2c8\ub2e4. \uacc4\ud68d\ub41c switchover\ub294 \ub370\uc774\ud130 \uc190\uc2e4\uc774 \uc5c6\uace0, \ub9ac\uc804 \uc7a5\uc560 \ub54c \uc4f0\ub294 failover\ub294 \uadf8 \uc21c\uac04\uc758 \ubcf5\uc81c lag\ub9cc\ud07c\uc744 \uc783\uc2b5\ub2c8\ub2e4.\ncatalog\uc758 DocumentDB global cluster\ub3c4 \ube44\ub3d9\uae30 \ubcf5\uc81c\ub77c RPO\uac00 \ucd08 \ub2e8\uc704\uc774\uace0, managed failover\ub97c \ud558\uba74 \ubcf4\ud1b5 1\ubd84 \uc548\uc5d0 secondary\uac00 writer\uac00 \ub429\ub2c8\ub2e4. cart\uc758 ElastiCache Global Datastore\ub294 \ubcf5\uc81c\uac00 \ubcf4\ud1b5 1\ucd08 \ubbf8\ub9cc\uc774\uc9c0\ub9cc \uc790\ub3d9 failover\uac00 \uc5c6\uc5b4\uc11c \ub204\uad70\uac00 promote\ub97c \uc2e4\ud589\ud574\uc57c \ud569\ub2c8\ub2e4.\n\n\ubb38\uc81c\ub294 \uc774\ubca4\ud2b8 \ud589\uc785\ub2c8\ub2e4. MSK Replicator\uac00 \uc544\uc9c1 \uad6c\uc131\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c DB\ub97c us-west-2\ub85c \ub118\uaca8\ub3c4 us-east-1 broker\uc5d0 \uc313\uc778 order.created \uac19\uc740 \ubbf8\ucc98\ub9ac \uc774\ubca4\ud2b8\ub294 \ub530\ub77c\uc624\uc9c0 \uc54a\uace0, \uacb0\uc81c\uc640 \uc7ac\uace0 \ud6c4\uc18d \ucc98\ub9ac\uac00 \ub04a\uae41\ub2c8\ub2e4. Block 2\uc5d0\uc11c \ubcf8 Replicator\uc640 offset \ub3d9\uae30\ud654\ub97c \ubd99\uc774\ub294 \uac83\uc774 \ub85c\ub4dc\ub9f5 P0\uc785\ub2c8\ub2e4. \ubd99\uc778 \ub4a4\uc5d0\ub3c4 offset\uc740 \uadfc\uc0ac\uac12\uc774\ub77c consumer\ub294 \uba71\ub4f1\uc774\uc5b4\uc57c \ud569\ub2c8\ub2e4. S3 RTC\ub294 99.99%\ub97c 15\ubd84 \uc548\uc5d0 \ubcf5\uc81c\ud558\ub3c4\ub85d \uc124\uacc4\ub410\uace0 SLA\ub294 99.9%\uc785\ub2c8\ub2e4.\n\n\uc774 \uc0c1\ud0dc\ub85c \uc138 \uac00\uc9c0 \uc7a5\uc560 \uc2dc\ub098\ub9ac\uc624\ub97c \ub3cc\ub824 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 Aurora Global DB switchover, failover: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-global-database-disaster-recovery.html\n\u2022 DocumentDB DR: https://docs.aws.amazon.com/documentdb/latest/devguide/global-clusters-disaster-recovery.html\n\u2022 ElastiCache FAQ (\uc790\ub3d9 failover \uc5c6\uc74c, 1\ubd84 \ubbf8\ub9cc): https://aws.amazon.com/elasticache/faqs/\n\u2022 MSK Replicator offset sync: https://docs.aws.amazon.com/msk/latest/developerguide/msk-replicator-bidirectional-offset-sync.html\n\u2022 S3 RTC: https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication-add-config.html , https://aws.amazon.com/s3/faqs/",
+    4: "\u2753 \u23f8\ufe0f [3min] [\uc694\uc57d]\n\u2022 \ub9ac\uc804 \uc7a5\uc560: \uc77d\uae30\ub294 CloudFront origin group\uc73c\ub85c \ub118\uc5b4\uac00\uc9c0\ub9cc \uc4f0\uae30\uc640 DB \uc2b9\uaca9\uc740 \uc0ac\ub78c\uc774 \uacb0\uc815\n\u2022 \ub2e8\uc77c DB \uc7a5\uc560: \ub9ac\uc804 \uc804\ud658\ubcf4\ub2e4 \uc11c\ube44\uc2a4\ubcc4 degrade\uac00 \uba3c\uc800, \ub370\uc774\ud130 \uc190\uc0c1\uc740 \ubcf5\uc81c\ub85c \ubabb \ub9c9\uc74c\n\u2022 EKS \uc7a5\uc560: \ub178\ub4dc, AZ\ub294 Karpenter\uc640 zonal shift, \ud074\ub7ec\uc2a4\ud130 \uc804\uccb4\ub294 \uc0c1\ub300 \ub9ac\uc804 \ud655\uc7a5\n\u2022 PDB\uac00 \uc5c6\uc73c\uba74 drain \uc911 replica\uac00 \ub3d9\uc2dc\uc5d0 \ube60\uc9c8 \uc218 \uc788\uc74c\n\n\uccab \ubc88\uc9f8 \ud0ed, \ub9ac\uc804 \uc804\uccb4 \uc7a5\uc560\uc785\ub2c8\ub2e4. CloudFront origin group\uc740 GET, HEAD, OPTIONS\ub9cc secondary origin\uc73c\ub85c \uc7ac\uc2dc\ub3c4\ud569\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc0c1\ud488 \uc870\ud68c\ub294 \uacc4\uc18d\ub418\uc9c0\ub9cc \uc8fc\ubb38 POST\ub294 \ub118\uc5b4\uac00\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. Aurora Global Database, DocumentDB, ElastiCache \ubaa8\ub450 \ub9ac\uc804 \uac04 \uc2b9\uaca9\uc740 \uc790\ub3d9\uc774 \uc544\ub2c8\ub77c\uc11c \uba85\ub839\uc744 \ub204\uad70\uac00 \uc2e4\ud589\ud574\uc57c \ud569\ub2c8\ub2e4.\n\n\ub450 \ubc88\uc9f8 \ud0ed\uc740 DB \ud558\ub098\ub9cc \uc544\ud50c \ub54c\uc785\ub2c8\ub2e4. \uc774\ub54c \ub9ac\uc804 \uc804\uccb4\ub97c \uc62e\uae30\uba74 \uc624\ud788\ub824 \uc704\ud5d8\uc774 \ucee4\uc9d1\ub2c8\ub2e4. \ud574\ub2f9 \uc11c\ube44\uc2a4\ub9cc \uc77d\uae30 \uc804\uc6a9\uc774\ub098 \uce90\uc2dc \uc751\ub2f5\uc73c\ub85c degrade\ud558\ub294 \ucabd\uc774 \uba3c\uc800\uc785\ub2c8\ub2e4. \uadf8\ub9ac\uace0 \uc798\ubabb\ub41c \uc4f0\uae30\ub85c \uc778\ud55c \ub370\uc774\ud130 \uc190\uc0c1\uc740 \ubcf5\uc81c\uac00 \ub9c9\uc544\uc8fc\uc9c0 \ubabb\ud569\ub2c8\ub2e4. \ubcf5\uc81c\ubcf8\uc5d0\ub3c4 \uadf8\ub300\ub85c \uc804\ud30c\ub418\ub2c8\uae4c\uc694. \uc774\uac74 PITR\uc774\ub098 \uc2a4\ub0c5\uc0f7\uc758 \uc601\uc5ed\uc785\ub2c8\ub2e4.\n\uc138 \ubc88\uc9f8 \ud0ed, EKS\uc785\ub2c8\ub2e4. \ub178\ub4dc\ub098 AZ \uc7a5\uc560\ub294 Karpenter\uc640 ARC zonal shift\uac00 \ud574\uacb0\ud569\ub2c8\ub2e4. \ud074\ub7ec\uc2a4\ud130 \uc804\uccb4\ub97c \uc783\uc73c\uba74 us-west-2 \ud074\ub7ec\uc2a4\ud130\ub97c \ud0a4\uc6b0\ub294 \ucabd\uc774\uace0, \uadf8\ub7ec\ub824\uba74 GitOps\ub85c \ub450 \ud074\ub7ec\uc2a4\ud130 \uc0c1\ud0dc\ub97c \uac19\uac8c \uc720\uc9c0\ud574\uc57c \ud569\ub2c8\ub2e4.\n\n\uc9c0\uae08 \uc6b4\uc601 \uc911\uc778 Deployment\uc5d0 PDB\uac00 \uba87 \uac1c\ub098 \uac78\ub824 \uc788\ub294\uc9c0 \uc544\uc2dc\ub098\uc694?\n\n\uc8fc\ubb38\uacfc \uacb0\uc81c\ub97c \uc954 Aurora\uc758 \ube44\uacc4\ud68d failover \uc808\ucc28\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 CloudFront origin failover \ub300\uc0c1 \uba54\uc11c\ub4dc: https://aws.amazon.com/blogs/networking-and-content-delivery/building-multi-region-active-active-architectures-with-cloudfront-vpc-origins-and-advanced-routing/\n\u2022 EKS resource scaling block: https://docs.aws.amazon.com/r53recovery/latest/dg/eks-resource-scaling-block.html",
+    5: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 \ube44\uacc4\ud68d failover \uc21c\uc11c: \uc4f0\uae30 \uc911\uc9c0 \u2192 RPO lag \uae30\ub85d \u2192 us-west-2\uc5d0\uc11c failover-global-cluster --allow-data-loss \u2192 global writer endpoint\ub85c \uc4f0\uae30 \uc7ac\uac1c \ud655\uc778\n\u2022 \ub3d9\uae30\ud654\ub97c \uae30\ub2e4\ub9ac\uc9c0 \uc54a\uc73c\ubbc0\ub85c RPO\ub294 \uadf8 \uc21c\uac04\uc758 \ubcf5\uc81c lag, \ubcf4\ud1b5 \ucd08 \ub2e8\uc704\n\u2022 write fencing\uc740 best effort: \uc571 \uc4f0\uae30\ub97c \uba3c\uc800 \uba48\ucd94\uace0 DNS \uce90\uc2dc TTL\uc740 5\ucd08 \uc218\uc900\n\u2022 global writer endpoint \ub355\ubd84\uc5d0 \uc5f0\uacb0 \ubb38\uc790\uc5f4\uc740 \uadf8\ub300\ub85c, parameter group\uacfc alarm\uc740 \uc0c8 primary\uc5d0 \ub2e4\uc2dc \uad6c\uc131\n\u2022 \uc6d0\ub798 \ub9ac\uc804\uc774 \ud68c\ubcf5\ub418\uba74 secondary\ub85c \uc7ac\ud569\ub958, failback\uc740 switchover\ub85c\n\nBlock 2\uc5d0\uc11c switchover\uc640 failover\uc758 \ucc28\uc774\ub97c \ubd24\uc73c\ub2c8, \uc5ec\uae30\uc11c\ub294 \ub9ac\uc804 \uc7a5\uc560\uac00 \ub09c \ub0a0\uc758 \uc2e4\uc81c \uc21c\uc11c\ub97c \uc815\ub9ac\ud569\ub2c8\ub2e4. \ub124 \ub2e8\uacc4\uc785\ub2c8\ub2e4.\n\uccab\uc9f8, order\uc640 payment API\uc758 \uc4f0\uae30\ub97c \uba3c\uc800 \ub9c9\uc2b5\ub2c8\ub2e4. \ub458\uc9f8, \uc2b9\uaca9\ud560 us-west-2 secondary\uc758 AuroraGlobalDBRPOLag\ub97c \uae30\ub85d\ud574 \ub461\ub2c8\ub2e4. \uc774 \uac12\uc774 \uc774\ubc88 \uc7a5\uc560\uc5d0\uc11c \uc783\uc744 \uc218 \uc788\ub294 \ub370\uc774\ud130\uc758 \ubc94\uc704\uc774\uace0, \ub098\uc911\uc5d0 \ub300\uc0ac\ud560 \ub54c \uae30\uc900\uc774 \ub429\ub2c8\ub2e4.\n\n\uc14b\uc9f8, failover-global-cluster\ub97c allow-data-loss\uc640 \ud568\uaed8 \uc2e4\ud589\ud569\ub2c8\ub2e4. region \uc635\uc158\uc740 \uc2b9\uaca9\ud560 us-west-2\uc785\ub2c8\ub2e4. \ub137\uc9f8, \uc571\uc774 global writer endpoint\ub85c \ub2e4\uc2dc \uc4f8 \uc218 \uc788\ub294\uc9c0 \ud655\uc778\ud569\ub2c8\ub2e4. \uc774 endpoint\ub294 \uc0c8 primary\ub97c \uac00\ub9ac\ud0a4\ub2c8 \uc5f0\uacb0 \ubb38\uc790\uc5f4\uc740 \ubc14\uafb8\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\uc65c \uc4f0\uae30\ubd80\ud130 \uba48\ucd94\ub290\ub0d0. Aurora\ub294 old primary\uc758 \uc4f0\uae30\ub97c \ub9c9\ub294 write fencing\uc744 \uc2dc\ub3c4\ud558\uc9c0\ub9cc \ubb38\uc11c\uac00 best effort\ub77c\uace0 \uba85\uc2dc\ud569\ub2c8\ub2e4. \ub9c9\uc9c0 \ubabb\ud558\uba74 \uc7a0\uae50 \ub450 \ub9ac\uc804\uc774 \uc4f0\uae30\ub97c \ubc1b\ub294 split-brain\uc774 \uc0dd\uae38 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c \ubb38\uc11c\ub3c4 \uc571 \uc4f0\uae30\ub97c \uba3c\uc800 \uba48\ucd94\uace0 DNS \uce90\uc2dc TTL\uc744 5\ucd08 \uc815\ub3c4\ub85c \ub0ae\ucd94\ub77c\uace0 \uad8c\uc7a5\ud569\ub2c8\ub2e4.\n\ub9c8\uc9c0\ub9c9 \uce74\ub4dc\ub3c4 \ub193\uce58\uae30 \uc27d\uc2b5\ub2c8\ub2e4. parameter group\uacfc alarm\uc740 \uc0c8 primary\ub85c \ub530\ub77c\uc624\uc9c0 \uc54a\uc73c\ub2c8 us-west-2 \ucabd\uc5d0 \ubbf8\ub9ac \uac19\uc740 \uad6c\uc131\uc744 \ub9cc\ub4e4\uc5b4 \ub450\uc138\uc694. us-east-1\uc774 \ud68c\ubcf5\ub418\uba74 Aurora\uac00 secondary\ub85c \ub2e4\uc2dc \ubd99\uc774\uace0, \uc6d0\ubcf5\uc740 switchover\ub85c \ud569\ub2c8\ub2e4.\n\n\uadf8\ub7fc \uadf8 \"lag\ub9cc\ud07c\uc758 \uc190\uc2e4\"\uc744 \uc5b4\ub5bb\uac8c \uc81c\ud55c\ud558\uace0, \uc783\uc740 \uac83\uc740 \uc5b4\ub5bb\uac8c \ucc3e\uc744\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 Aurora Global DB \ube44\uacc4\ud68d failover \uc808\ucc28, write fencing, DNS TTL 5\ucd08, \ud30c\ub77c\ubbf8\ud130 \ube44\uc0c1\uc18d: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-global-database-disaster-recovery.html\n\u2022 Global writer endpoint: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-global-database-connecting.html",
+    6: "\u23f8\ufe0f [2.5min] [\uc694\uc57d]\n\u2022 rds.global_db_rpo: \ubaa8\ub4e0 secondary\uac00 \uc0c1\ud55c\uc744 \ub118\uc73c\uba74 primary \ucee4\ubc0b\uc744 \uba48\ucdb0 \uc190\uc2e4 \uc0c1\ud55c\uc744 \ubcf4\uc7a5, \ucd5c\uc19f\uac12 20\ucd08, \ub3d9\uc801 \ud30c\ub77c\ubbf8\ud130\n\u2022 \ub9ac\uc804 2\uac1c \uad6c\uc131\uc774\uba74 secondary \ucabd parameter group\uc740 \uae30\ubcf8\uac12 \uc720\uc9c0\n\u2022 \uc720\uc2e4\ubd84\uc740 rds:unplanned-global-failover \uc2a4\ub0c5\uc0f7, PG \uc2b9\uc778 \ub0b4\uc5ed, idempotency key\ub85c \ucc3e\uc544 \uc7ac\ubc18\uc601\n\u2022 RPO 0\uc774 \ud544\uc218\ub77c\uba74 DSQL multi-Region (peered cluster 2\uac1c + witness)\uc774 \uc120\ud0dd\uc9c0, \ub300\uac00\ub294 \uc4f0\uae30 \uc9c0\uc5f0\uacfc \ud2b8\ub79c\uc7ad\uc158 \uc81c\uc57d\n\nfailover\uc758 RPO\ub294 0\uc774 \uc544\ub2c8\ub77c\uace0 \ud588\uc2b5\ub2c8\ub2e4. \uadf8\ub807\ub2e4\uba74 \ub0a8\uc740 \uc77c\uc740 \ub450 \uac00\uc9c0, \uc190\uc2e4\uc5d0 \uc0c1\ud55c\uc744 \uac70\ub294 \uac83\uacfc \uc783\uc740 \uac83\uc744 \ucc3e\ub294 \uac83\uc785\ub2c8\ub2e4.\n\uccab \ubc88\uc9f8 \ud0ed, Aurora PostgreSQL\uc740 rds.global_db_rpo \ud30c\ub77c\ubbf8\ud130\ub85c \uc0c1\ud55c\uc744 \uac81\ub2c8\ub2e4. \ucd5c\uc19f\uac12\uc740 20\ucd08\uc785\ub2c8\ub2e4. \ubaa8\ub4e0 secondary\uc758 lag\uc774 \uc774 \uac12\uc744 \ub118\uc73c\uba74 primary\uac00 \ucee4\ubc0b\uc744 \uba48\ucd94\uace0, \ud558\ub098\ub77c\ub3c4 \ub530\ub77c\uc7a1\uc73c\uba74 \ub2e4\uc2dc \ucee4\ubc0b\ud569\ub2c8\ub2e4. \uc190\uc2e4 \uc0c1\ud55c\uc744 \ubcf4\uc7a5\ud558\ub294 \ub300\uc2e0 \uac00\uc6a9\uc131\uc744 \ub0b4\uc8fc\ub294 \uc7a5\uce58\ub77c\uc11c, \uacb0\uc81c \ub2f4\ub2f9 \ud300\uacfc \uc5b4\ub290 \ucabd\uc744 \ud0dd\ud560\uc9c0 \ud569\uc758\ud574\uc57c \ud569\ub2c8\ub2e4. \uadf8\ub9ac\uace0 \uc6b0\ub9ac\ucc98\ub7fc \ub9ac\uc804\uc774 \ub458\ubfd0\uc774\uba74 secondary \ucabd parameter group\uc5d0\ub294 \ub123\uc9c0 \ub9c8\uc138\uc694. failover \uc9c1\ud6c4 \uc0c8 primary\uc5d0\ub294 \ub530\ub77c\uc62c secondary\uac00 \uc5c6\uc5b4\uc11c \ucee4\ubc0b\uc774 \uba48\ucd9c \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\n\ub450 \ubc88\uc9f8 \ud0ed, \ub300\uc0ac\uc785\ub2c8\ub2e4. old primary\uac00 \ud68c\ubcf5\ub418\uba74 Aurora\uac00 \uc7a5\uc560 \uc2dc\uc810\uc758 \uc2a4\ub0c5\uc0f7\uc744 \uc2dc\ub3c4\ud569\ub2c8\ub2e4. \uc774\uac78 \ubcc4\ub3c4 \ud074\ub7ec\uc2a4\ud130\ub85c \ubcf5\uc6d0\ud574 \uc0c8 primary\uc5d0 \uc5c6\ub294 \ub9c8\uc9c0\ub9c9 \ud2b8\ub79c\uc7ad\uc158\uc744 \ucc3e\uace0, PG \uc2b9\uc778 \ub0b4\uc5ed\uacfc \ub9de\ucdb0 \ubd05\ub2c8\ub2e4. \uc7ac\ubc18\uc601\uc740 idempotency key\ub85c \uc911\ubcf5 \uc5c6\uc774 \ud569\ub2c8\ub2e4. \uc774 \uc808\ucc28\uac00 \uc5c6\uc73c\uba74 \"lag\ub9cc\ud07c \uc783\ub294\ub2e4\"\ub294 \ub9d0\uc774 \"\uc5bc\ub9c8\ub97c \uc783\uc5c8\ub294\uc9c0 \ubaa8\ub978\ub2e4\"\uac00 \ub429\ub2c8\ub2e4.\n\uc138 \ubc88\uc9f8 \ud0ed\uc740 \uc120\ud0dd\uc9c0\uc785\ub2c8\ub2e4. \uacb0\uc81c \uc6d0\uc7a5\ucc98\ub7fc \ube44\uacc4\ud68d \uc7a5\uc560\uc5d0\uc11c\ub3c4 RPO 0\uc774 \uaf2d \ud544\uc694\ud558\uba74 Aurora DSQL multi-Region\uc744 \uac80\ud1a0\ud569\ub2c8\ub2e4. \ub450 \ub9ac\uc804\uc758 peered cluster\uac00 \ubaa8\ub450 \uc4f0\uae30\ub97c \ubc1b\uace0 witness \ub9ac\uc804\uc774 quorum\uc5d0 \ucc38\uc5ec\ud558\ub2c8 failover \uba85\ub839\uc774 \uc5c6\uc2b5\ub2c8\ub2e4. \ub300\uc2e0 \uc4f0\uae30\ub9c8\ub2e4 \ub9ac\uc804 \uac04 \uc655\ubcf5\uc774 \ubd99\uace0 OCC \uc7ac\uc2dc\ub3c4\uc640 \ud2b8\ub79c\uc7ad\uc158 \ud55c\ub3c4\ub97c \ubc1b\uc544\ub4e4\uc5ec\uc57c \ud558\ub2c8, \uc804\uccb4 \uc774\uad00\uc774 \uc544\ub2c8\ub77c \uaf2d \ud544\uc694\ud55c \ud14c\uc774\ube14\ubd80\ud130 \ubcf4\uc138\uc694.\n\nDB \ub2e4\uc74c\uc740 \uc0ac\uc6a9\uc790\uac00 \ub4e4\uc5b4\uc624\ub294 \uc785\uad6c, \uc5e3\uc9c0\uc785\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 rds.global_db_rpo (20\ucd08\ubd80\ud130), 2\ub9ac\uc804 \uad8c\uace0, unplanned-global-failover \uc2a4\ub0c5\uc0f7: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-global-database-disaster-recovery.html\n\u2022 Aurora DSQL multi-Region peered clusters, witness Region: https://docs.aws.amazon.com/aurora-dsql/latest/userguide/what-is-aurora-dsql.html\n\u2022 DSQL \ud2b8\ub79c\uc7ad\uc158 \ud55c\ub3c4: https://docs.aws.amazon.com/aurora-dsql/latest/userguide/CHAP_quotas.html",
+    7: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 \uacf5\uac1c \uc9c4\uc785\uc810\uc740 CloudFront \ud558\ub098, origin\uc740 VPC origin\uc73c\ub85c \uc5f0\uacb0\ud55c \ub9ac\uc804\ubcc4 internal ALB\n\u2022 origin group failover\ub294 GET, HEAD, OPTIONS\ub9cc \ub300\uc0c1\n\u2022 \uc4f0\uae30 \uc694\uccad\uc758 \ud65c\uc131 \ub9ac\uc804\uc740 KeyValueStore \uac12\uc73c\ub85c CloudFront Function\uc774 \uc120\ud0dd\n\u2022 \ub290\ub9b0 origin\uc740 failover\ub418\uc9c0 \uc54a\uc73c\ubbc0\ub85c origin timeout\uc744 \uc870\uc815\n\n\ud2b8\ub798\ud53d \uc785\uad6c\ub294 CloudFront \ud558\ub098\ub85c \uace0\uc815\ud569\ub2c8\ub2e4. \uac01 \ub9ac\uc804\uc758 ALB\ub294 internal\uc774\uace0, CloudFront VPC origin\uc73c\ub85c \uc5f0\uacb0\ud569\ub2c8\ub2e4. ALB \ubcf4\uc548 \uadf8\ub8f9\uc740 CloudFront VPC origin \ucabd\ub9cc \ubc1b\ub3c4\ub85d \uc5f4\uc5b4 \ub461\ub2c8\ub2e4.\n\norigin group\uc5d0 \ub450 \ub9ac\uc804\uc744 primary, secondary\ub85c \ub123\uc73c\uba74 \uc77d\uae30 \uc694\uccad\uc740 \uc624\ub958 \uc2dc \uc790\ub3d9\uc73c\ub85c \ub118\uc5b4\uac11\ub2c8\ub2e4. \uadf8\ub7f0\ub370 \uc774 \uc7ac\uc2dc\ub3c4\ub294 GET, HEAD, OPTIONS\uc5d0\ub9cc \uc801\uc6a9\ub429\ub2c8\ub2e4. \uc8fc\ubb38 POST\ub294 \ub118\uc5b4\uac00\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\uadf8\ub798\uc11c AWS \ube14\ub85c\uadf8\uc758 \uc0d8\ud50c\ucc98\ub7fc \ud65c\uc131 \ub9ac\uc804 \uac12\uc744 CloudFront KeyValueStore\uc5d0 \ub450\uace0, viewer request Function\uc774 \uc5b4\ub290 origin group\uc744 \uc4f8\uc9c0 \uace0\ub974\uac8c \ud569\ub2c8\ub2e4. \ub9ac\uc804 \uc804\ud658\uc740 \uacb0\uad6d \uc774 \uac12 \ud558\ub098\ub97c \ubc14\uafb8\ub294 \uc77c\uc774 \ub418\uace0, \uc774\uac8c \ub2e4\uc74c \uc2ac\ub77c\uc774\ub4dc\uc758 \uc790\ub3d9\ud654 \ub300\uc0c1\uc785\ub2c8\ub2e4. \uc751\ub2f5\uc740 \uc624\uc9c0\ub9cc \ub290\ub9b0 origin\uc740 \uc624\ub958\ub85c \ubcf4\uc9c0 \uc54a\uc73c\ub2c8 origin timeout\ub3c4 \ud568\uaed8 \uc870\uc815\ud558\uc138\uc694.\n\n\uadf8\ub7fc \uc774 \uc804\ud658\uc744 \ub204\uac00, \uc5b4\ub5a4 \uc21c\uc11c\ub85c \uc2e4\ud589\ud558\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 CloudFront VPC origins + origin group + KVS: https://aws.amazon.com/blogs/networking-and-content-delivery/building-multi-region-active-active-architectures-with-cloudfront-vpc-origins-and-advanced-routing/",
+    8: "\u2753 \u23f8\ufe0f [2.5min] [\uc694\uc57d]\n\u2022 ARC Region switch: plan, workflow, step, execution block \uad6c\uc870, CloudWatch alarm\uc73c\ub85c \uc790\ub3d9 \uc2e4\ud589 \uac00\ub2a5\n\u2022 plan\uc740 \ud65c\uc131\ud654\ud558\ub294 \ub9ac\uc804\uc758 data plane\uc5d0\uc11c \uc2e4\ud589\ub418\uc5b4 \uc7a5\uc560 \ub9ac\uc804\uc5d0 \uc758\uc874\ud558\uc9c0 \uc54a\uc74c\n\u2022 \uae30\ubcf8 block: ASG, ECS, EKS scaling, Aurora Global, DocumentDB, Neptune, RDS, routing control, Route 53 health check, \uc2b9\uc778\n\u2022 Aurora Global Database block: graceful\uc740 \uc9c0\uc815\ud55c \uae30\ubcf8 \ub3d9\uc791, ungraceful\uc5d0 Failover (data loss) \uc9c0\uc815 \uc2dc AllowDataLoss\ub85c failover\n\u2022 ElastiCache\uc640 CloudFront KVS\ub294 custom Lambda block\uc73c\ub85c \ucc98\ub9ac\n\n\uc608\uc804 \uc790\ub8cc\ub294 CloudWatch, EventBridge, Lambda\ub97c \uc9c1\uc811 \uc5ee\ub294 \uad6c\uc870\uc600\ub294\ub370, \uc9c0\uae08\uc740 ARC Region switch\uac00 \uc774 \uc624\ucf00\uc2a4\ud2b8\ub808\uc774\uc158\uc744 \uad00\ub9ac\ud615\uc73c\ub85c \uc81c\uacf5\ud569\ub2c8\ub2e4. plan \uc548\uc5d0 workflow\uac00 \uc788\uace0, step\ub9c8\ub2e4 execution block\uc744 \uc21c\ucc28\ub098 \ubcd1\ub82c\ub85c \uc2e4\ud589\ud569\ub2c8\ub2e4. CloudWatch alarm\uc744 \ud2b8\ub9ac\uac70\ub85c \ubd99\uc774\uba74 \uc790\ub3d9 \uc2e4\ud589\ub3c4 \ub429\ub2c8\ub2e4.\n\n\uac00\uc7a5 \uc911\uc694\ud55c \uc124\uacc4 \ud3ec\uc778\ud2b8\ub294 \uc2e4\ud589 \uc704\uce58\uc785\ub2c8\ub2e4. Region switch\ub294 \ud65c\uc131\ud654\ud558\ub294 \ub9ac\uc804, \uc6b0\ub9ac \uacbd\uc6b0 us-west-2\uc5d0\uc11c plan\uc744 \uc2e4\ud589\ud569\ub2c8\ub2e4. \uc7a5\uc560\uac00 \ub09c us-east-1\uc758 control plane\uc5d0 \uae30\ub300\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\uc6b0\ub9ac plan\uc740 \uc2b9\uc778 \ub2e8\uacc4 \ub2e4\uc74c\uc5d0 EKS \uc6a9\ub7c9 \ud655\uc7a5, Aurora Global Database failover, DocumentDB failover, ElastiCache promote\ub97c \ubcd1\ub82c\ub85c \ub3cc\ub9ac\uace0, \ub9c8\uc9c0\ub9c9\uc5d0 CloudFront KVS\uc758 \ud65c\uc131 \ub9ac\uc804 \uac12\uc744 \ubc14\uafc9\ub2c8\ub2e4. Aurora block\uc740 graceful \uc2e4\ud589\uc774\uba74 \uae30\ubcf8 \ub3d9\uc791\uc73c\ub85c \uace0\ub978 switchover\ub97c, ungraceful \uc2e4\ud589\uc5d0 Failover (data loss)\ub97c \uc9c0\uc815\ud574 \ub450\uba74 AllowDataLoss\ub97c \ucf20 failover\ub97c \ud638\ucd9c\ud569\ub2c8\ub2e4. \uc55e \uc2ac\ub77c\uc774\ub4dc Runbook\uc758 1\ub2e8\uacc4\uc778 \uc4f0\uae30 \uc911\uc9c0\ub294 \uc2b9\uc778 \uc9c1\ud6c4 step\uc73c\ub85c \ub450\uac70\ub098, \ub9ac\uc804 \uc804\uccb4 \uc7a5\uc560\ub77c\uba74 \uc774\ubbf8 \uc4f0\uae30\uac00 \uc2e4\ud328\ud558\ub294 \uc0c1\ud0dc\uc784\uc744 \ud655\uc778\ud558\uace0 \ub118\uc5b4\uac11\ub2c8\ub2e4. ElastiCache\uc640 KVS\ub294 \uae30\ubcf8 block\uc774 \uc5c6\uc5b4\uc11c custom Lambda block\uc744 \uc501\ub2c8\ub2e4. Region switch\ub85c \ub2e4 \ud45c\ud604\ub418\uc9c0 \uc54a\ub294 \ubcf5\uc7a1\ud55c \ubd84\uae30\ub294 Step Functions\ub97c Lambda\uc5d0\uc11c \ud638\ucd9c\ud558\ub294 \ubc29\uc2dd\uc73c\ub85c \ud655\uc7a5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\n\uc790\ub3d9 \uc2e4\ud589\uacfc \uc2b9\uc778 \ub2e8\uacc4 \uc911 \ubb34\uc5c7\uc744 \uae30\ubcf8\uc73c\ub85c \ub458\uc9c0, \uc5ec\ub7ec\ubd84 \uc870\uc9c1\uc740 \ub204\uac00 \uadf8 \ubc84\ud2bc\uc744 \ub204\ub97c \uad8c\ud55c\uc774 \uc788\ub098\uc694?\n\ncustom Lambda \ucf54\ub4dc\ub97c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 Region switch \uac1c\uc694: https://docs.aws.amazon.com/r53recovery/latest/dg/region-switch.html\n\u2022 Aurora Global Database execution block: https://docs.aws.amazon.com/r53recovery/latest/dg/aurora-global-database-block.html\n\u2022 Execution block \ubaa9\ub85d (ExecutionBlockConfiguration): https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/ARCRegionswitch/Types/ExecutionBlockConfiguration.html\n\u2022 \ucd9c\uc2dc \ube14\ub85c\uadf8 (\ub9ac\uc804\ubcc4 data plane): https://aws.amazon.com/blogs/aws/introducing-amazon-application-recovery-controller-region-switch-a-multi-region-application-recovery-service/",
+    9: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 failover_global_replication_group\uc740 GlobalReplicationGroupId, PrimaryRegion, PrimaryReplicationGroupId \uc138 \uac1c\uac00 \ud544\uc218\n\u2022 \ub300\uc0c1 \ub9ac\uc804\uc5d0\uc11c client\ub97c \ub9cc\ub4e4\uc5b4 \uc7a5\uc560 \ub9ac\uc804 API\uc5d0 \uc758\uc874\ud558\uc9c0 \uc54a\uc74c\n\u2022 \uc2e4\ud589 \uc804 \ud604\uc7ac primary\ub97c \ud655\uc778\ud574 \uc7ac\uc2e4\ud589 \uc2dc\uc5d0\ub3c4 \uc548\uc804 (\uba71\ub4f1\uc131)\n\u2022 Global Datastore Status\ub97c \uc804\uc81c \uc870\uac74\uc73c\ub85c \ub450\uc9c0 \uc54a\uc74c: primary \ub9ac\uc804 \uc7a5\uc560 \uc911\uc5d0\ub294 available\uc774 \uc544\ub2d0 \uc218 \uc788\uc74c\n\u2022 \uc9c4\ud589 \uc911 \uc791\uc5c5\uacfc \ucda9\ub3cc\ud558\uba74 API \uc624\ub958\uac00 \uadf8\ub300\ub85c \uc62c\ub77c\uac00 plan\uc774 \uc7ac\uc2dc\ub3c4\ud558\uac70\ub098 \uc0ac\ub78c\uc774 \ud310\ub2e8\n\n\uc774 Lambda\ub294 Region switch\uc758 custom Lambda block\uc5d0\uc11c \ud638\ucd9c\ub418\ub294 ElastiCache promote \ud568\uc218\uc785\ub2c8\ub2e4. \uc138 \uac00\uc9c0\ub97c \uc2e0\uacbd \uc37c\uc2b5\ub2c8\ub2e4.\n\uccab\uc9f8, CLI \ubb38\uc11c \uae30\uc900\uc73c\ub85c Global Datastore \uc774\ub984, \uc0c8 primary \ub9ac\uc804, \uc0c8 primary replication group ID \uc138 \uac1c\uac00 \ubaa8\ub450 \ud544\uc218\uc785\ub2c8\ub2e4. \uc608\uc804 \uc790\ub8cc \uc608\uc81c\uc5d0\ub294 \ub9c8\uc9c0\ub9c9 \uac12\uc774 \ube60\uc838 \uc788\uc5c8\uc2b5\ub2c8\ub2e4.\n\n\ub458\uc9f8, boto3 client\ub97c \uc2b9\uaca9\ud560 us-west-2\uc5d0\uc11c \ub9cc\ub4ed\ub2c8\ub2e4. \uc7a5\uc560 \ub9ac\uc804\uc758 API endpoint\uc5d0 \uc758\uc874\ud558\uc9c0 \uc54a\uae30 \uc704\ud574\uc11c\uc785\ub2c8\ub2e4.\n\uc14b\uc9f8, \uba71\ub4f1\uc131\uc785\ub2c8\ub2e4. \uc790\ub3d9\ud654\ub294 \uc7ac\uc2dc\ub3c4\ub418\uae30 \ub9c8\ub828\uc774\ub77c, \ub300\uc0c1\uc774 \uc774\ubbf8 primary\uba74 \uc544\ubb34\uac83\ub3c4 \ud558\uc9c0 \uc54a\uace0 \uc131\uacf5\uc744 \ubc18\ud658\ud569\ub2c8\ub2e4.\n\ud558\ub098 \ub354, \uc774\uc804 \ubc84\uc804\uc740 Global Datastore\uc758 Status\uac00 available\uc774 \uc544\ub2c8\uba74 \uc608\uc678\ub97c \ub358\uc84c\uc2b5\ub2c8\ub2e4. \uadf8\ub7f0\ub370 \uc815\uc791 primary \ub9ac\uc804\uc774 \uba48\ucd98 \uc0c1\ud669\uc5d0\uc11c\ub294 Status\uac00 available\uc774 \uc544\ub2d0 \uc218 \uc788\uace0, \uadf8\ub7ec\uba74 \uac00\uc7a5 \ud544\uc694\ud55c \uc21c\uac04\uc5d0 failover\uac00 \ub9c9\ud799\ub2c8\ub2e4. \uadf8\ub798\uc11c Status\ub85c \ub9c9\uc9c0 \uc54a\uace0 \ubc14\ub85c failover\ub97c \uc694\uccad\ud569\ub2c8\ub2e4. \ub2e4\ub978 \uc791\uc5c5\uacfc \ucda9\ub3cc\ud558\uba74 API \uc624\ub958\uac00 \uadf8\ub300\ub85c \uc62c\ub77c\uac00 plan\uc774 \uc7ac\uc2dc\ub3c4\ud558\uac70\ub098 \uc0ac\ub78c\uc774 \ud310\ub2e8\ud569\ub2c8\ub2e4. \ud658\uacbd \ubcc0\uc218 \uc77d\uae30, \uad6c\uc870\ud654 \ub85c\uadf8, SNS \uc54c\ub9bc\uc740 \ud654\uba74\uc5d0\uc11c \ube90\uc9c0\ub9cc \ud504\ub85c\ub355\uc158 \ucf54\ub4dc\uc5d0\ub294 \ub123\uc73c\uc138\uc694.\n\nDocumentDB\ub294 \uae30\ubcf8 block\uc774 \uc788\uc9c0\ub9cc, \uadf8 \uc548\uc5d0\uc11c \ubb34\uc2a8 \uc77c\uc774 \uc77c\uc5b4\ub098\ub294\uc9c0\ub294 \uc54c\uc544\uc57c \ud569\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 failover-global-replication-group: https://docs.aws.amazon.com/cli/latest/reference/elasticache/failover-global-replication-group.html\n\u2022 Custom Lambda execution block: https://docs.aws.amazon.com/r53recovery/latest/dg/region-switch.html",
+    10: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 switchover\ub294 \uacc4\ud68d\ub41c \uc804\ud658, \ub3d9\uae30\ud654 \ud6c4 \uc2e4\ud589\ub418\uc5b4 \ub370\uc774\ud130 \uc190\uc2e4 \uc5c6\uc74c\n\u2022 failover\ub294 --allow-data-loss, \uc2b9\uaca9\ud560 secondary \ub9ac\uc804\uc5d0\uc11c \uc2e4\ud589\n\u2022 \uc2b9\uaca9 \ub300\uc0c1\uc740 GlobalClusterReplicationLag\uac00 \uac00\uc7a5 \uc791\uc740 secondary\n\u2022 parameter group\uacfc alarm\uc740 \uc0c1\uc18d\ub418\uc9c0 \uc54a\uace0, \uc6d0\ubcf5\uc740 switchover\ub85c\n\n\uc608\uc804 \uc790\ub8cc\ub294 \uc7a5\uc560 \uc0c1\ud669\uc5d0\uc11c\ub3c4 switchover\ub97c \uc4f0\ub77c\uace0 \ud588\ub294\ub370, \ubb38\uc11c \uae30\uc900\uc73c\ub85c switchover\ub294 \uc815\uc0c1 \ud074\ub7ec\uc2a4\ud130\uc6a9\uc785\ub2c8\ub2e4. \ubaa8\ub4e0 secondary\uac00 \ub530\ub77c\uc7a1\uc744 \ub54c\uae4c\uc9c0 \uae30\ub2e4\ub9ac\uae30 \ub54c\ubb38\uc5d0 primary\uac00 \uc8fd\uc740 \uc0c1\ud669\uc5d0\uc11c\ub294 \ub9de\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\n\uc7a5\uc560 \ub54c\ub294 failover-global-cluster\uc5d0 allow-data-loss\ub97c \ubd99\uc785\ub2c8\ub2e4. \uc774 \uba85\ub839\uc740 \uc2b9\uaca9\ud560 \ub9ac\uc804, \uc989 us-west-2\ub97c region\uc73c\ub85c \uc9c0\uc815\ud574 \uc2e4\ud589\ud569\ub2c8\ub2e4. \ubcf5\uc81c \uc9c0\uc5f0 \uc9c0\ud45c\uac00 \uac00\uc7a5 \uc791\uc740 secondary\ub97c \uace0\ub974\uace0, \ubcf4\ud1b5 1\ubd84 \uc548\uc5d0 \uc2b9\uaca9\ub429\ub2c8\ub2e4.\n\uc138 \ubc88\uc9f8 \ud0ed\uc740 \uc0ac\ub78c\ub4e4\uc774 \ub193\uce58\ub294 \ubd80\ubd84\uc785\ub2c8\ub2e4. writer endpoint\uac00 \ubc14\ub00c\uace0, parameter group\uacfc alarm\uc740 \ub530\ub77c\uc624\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uc774\uc804 primary\uc758 \ub9c8\uc9c0\ub9c9 \uc0c1\ud0dc\ub294 \uc2dc\uc2a4\ud15c snapshot\uc73c\ub85c \ub0a8\ub294\ub370, \ubc31\uc5c5 \ubcf4\uc874 \uae30\uac04\uc774 \uc9c0\ub098\uba74 \uc0ac\ub77c\uc9c0\ub2c8 \uc218\ub3d9 snapshot\uc73c\ub85c \ubcf5\uc0ac\ud574 \ub450\uc138\uc694. \uc774 \ubaa8\ub4e0 \uacfc\uc815\uc740 Region switch\uc758 DocumentDB block\uc774 graceful\uc774\uba74 switchover, ungraceful\uc774\uba74 failover\ub85c \uc2e4\ud589\ud569\ub2c8\ub2e4.\n\ncart\uc758 ElastiCache\ub294 \uc5b4\ub5bb\uac8c \ub2e4\ub97c\uae4c\uc694.\n\n[\ucd9c\ucc98]\n\u2022 DocumentDB global cluster DR: https://docs.aws.amazon.com/documentdb/latest/devguide/global-clusters-disaster-recovery.html\n\u2022 DocumentDB execution block: https://docs.aws.amazon.com/r53recovery/latest/dg/documentdb-global-cluster-block.html",
+    11: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 Global Datastore\ub294 \uc790\ub3d9 failover\uac00 \uc5c6\uace0, promote\ub294 \ubcf4\ud1b5 1\ubd84 \ubbf8\ub9cc\n\u2022 \uc21c\uc11c: \uc4f0\uae30 \ucc28\ub2e8 \u2192 promote \u2192 endpoint \uc804\ud658 \u2192 \uc774\uc804 primary\uc758 secondary \uc7ac\ud569\ub958 \ud655\uc778\n\u2022 \uc804\ud658 \uc911 secondary\ub294 \uc77d\uae30 \uc804\uc6a9\uc774\ub77c cart \uc4f0\uae30 \uc2e4\ud328, \uc7ac\uc2dc\ub3c4 \ud050\ub85c \ud761\uc218\n\u2022 secondary \ub9ac\uc804\uc740 \ucd5c\ub300 2\uac1c\n\nElastiCache Global Datastore\ub294 FAQ\uc5d0 \uba85\uc2dc\ub41c \ub300\ub85c \uc790\ub3d9\uc73c\ub85c failover\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uc0ac\ub78c\uc774\ub4e0 \uc790\ub3d9\ud654\ub4e0 \ub204\uad70\uac00 promote\ub97c \uc2e4\ud589\ud574\uc57c \ud558\uace0, \uc2b9\uaca9\uc740 \ubcf4\ud1b5 1\ubd84 \ubbf8\ub9cc\uc5d0 \ub05d\ub0a9\ub2c8\ub2e4.\n\uc21c\uc11c\ub294 \ub124 \ub2e8\uacc4\uc785\ub2c8\ub2e4. cart API\ub97c \uc77d\uae30 \uc804\uc6a9\uc73c\ub85c \ub3cc\ub824 \uc4f0\uae30\ub97c \ub9c9\uace0, us-west-2\ub97c primary\ub85c \uc2b9\uaca9\ud558\uace0, \uc571\uc774 \uc0c8 primary endpoint\ub97c \uc4f0\uac8c \ubc14\uafbc \ub4a4, \uc774\uc804 primary\uac00 secondary\ub85c \uc7ac\ud569\ub958\ud588\ub294\uc9c0 \ud655\uc778\ud569\ub2c8\ub2e4.\n\n\uc804\ud658 \uc911\uc5d0\ub294 secondary\uac00 \uc77d\uae30 \uc804\uc6a9\uc774\ub77c \uc7a5\ubc14\uad6c\ub2c8 \ub2f4\uae30\uac00 \uc2e4\ud328\ud569\ub2c8\ub2e4. \ud074\ub77c\uc774\uc5b8\ud2b8\uc5d0\uc11c \uc7ac\uc2dc\ub3c4 \ud050\ub85c \ubc1b\uc544 \uc8fc\uba74 \uc0ac\uc6a9\uc790\ub294 \uba87 \ucd08 \uc9c0\uc5f0\ub9cc \ub290\ub08d\ub2c8\ub2e4. \ubcf5\uc81c \uc9c0\uc5f0\uc774 \ubcf4\ud1b5 1\ucd08 \ubbf8\ub9cc\uc774\ub77c \uc720\uc2e4\uc740 \uc791\uc9c0\ub9cc 0\uc740 \uc544\ub2c8\ub2c8, \uc138\uc158 \ucfe0\ud0a4\ub098 \uc8fc\ubb38 DB\ub85c \uc7ac\uad6c\uc131\ud558\ub294 \uacbd\ub85c\ub97c \ub461\ub2c8\ub2e4. \ucc38\uace0\ub85c Global Datastore\ub294 primary \uc678\uc5d0 \ucd5c\ub300 \ub450 \uac1c\uc758 secondary \ub9ac\uc804\uc744 \ub458 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\n\uc774\uc81c \uc9c0\uae08\uae4c\uc9c0\uc758 \uac04\uadf9\uc744 \uc6b0\uc120\uc21c\uc704\ub85c \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 ElastiCache FAQ: https://aws.amazon.com/elasticache/faqs/\n\u2022 Global Datastore \uae30\ub2a5 (secondary 2\uac1c, 1\ucd08 \ubbf8\ub9cc \ubcf5\uc81c): https://aws.amazon.com/elasticache/features/\n\u2022 CLI: https://docs.aws.amazon.com/cli/latest/reference/elasticache/failover-global-replication-group.html",
+    12: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n\u2022 P0: \ub370\uc774\ud130\ub97c \uc783\uc9c0 \uc54a\ub294 \uac83\uc774 \uba3c\uc800, MSK Replicator \uad6c\uc131, Aurora RPO \uc0c1\ud55c \uc815\ucc45, \uc720\uc2e4\ubd84 \ub300\uc0ac \uc808\ucc28\n\u2022 P1: \uc804\ud658\uc744 \uc0ac\ub78c\uc758 \uae30\uc5b5\uc774 \uc544\ub2c8\ub77c plan\uc73c\ub85c, Region switch (Aurora, DocumentDB block)\uc640 custom Lambda\n\u2022 P2: \uac80\uc99d \ub8e8\ud504, FIS \ud6c8\ub828\uacfc Resilience Hub \ud3c9\uac00\ub85c \uc2e4\uce21\uac12 \ud655\ubcf4, RPO 0 \ud544\uc218 \ud14c\uc774\ube14\uc740 DSQL multi-Region \uac80\ud1a0\n\n\ub85c\ub4dc\ub9f5\uc740 \uc138 \ub2e8\uacc4\uc785\ub2c8\ub2e4. \uc6b0\uc120\uc21c\uc704\uc758 \uc6d0\uce59\uc740 \"\uc790\ub3d9\ud654\ubcf4\ub2e4 \ub370\uc774\ud130\uac00 \uba3c\uc800\"\uc785\ub2c8\ub2e4. \uc544\ubb34\ub9ac \ube68\ub9ac \uc804\ud658\ud574\ub3c4 order\uc640 payment \ub370\uc774\ud130\uac00 \uc5c6\uc73c\uba74 \uc758\ubbf8\uac00 \uc5c6\uc73c\ub2c8\uae4c\uc694.\n\nP0\uc5d0\uc11c \ub370\uc774\ud130 \uacbd\ub85c\ub97c \ub2eb\uc2b5\ub2c8\ub2e4. \uc544\uc9c1 \uc5c6\ub294 MSK Replicator\ub97c \ubd99\uc5ec \uc774\ubca4\ud2b8\uac00 us-east-1\uc5d0 \uac07\ud788\uc9c0 \uc54a\uac8c \ud558\uace0, Aurora\uc758 RPO lag \uc54c\ub78c\uacfc rds.global_db_rpo \uc815\ucc45\uc744 \uc815\ud558\uace0 \uc571\uc744 global writer endpoint\ub85c \uc62e\uae30\uace0, failover \ud6c4 \uc720\uc2e4\ubd84\uc744 \ub300\uc0ac\ud558\ub294 \uc808\ucc28\ub97c \ub9cc\ub4ed\ub2c8\ub2e4. P1\uc5d0\uc11c Region switch plan\uc73c\ub85c \uc804\ud658\uc744 \ubb38\uc11c\uac00 \uc544\ub2cc \uc2e4\ud589 \uac00\ub2a5\ud55c \uacc4\ud68d\uc73c\ub85c \ub9cc\ub4ed\ub2c8\ub2e4. P2\ub294 \uadf8 \uacc4\ud68d\uc774 \uc2e4\uc81c\ub85c \uc791\ub3d9\ud558\ub294\uc9c0 \uacc4\uc18d \uc99d\uba85\ud558\ub294 \ub8e8\ud504\uc774\uace0, \uadf8 \uacb0\uacfc RPO 0\uc774 \uaf2d \ud544\uc694\ud55c \ud14c\uc774\ube14\uc774 \ud655\uc778\ub418\uba74 DSQL multi-Region\uc744 \uac80\ud1a0\ud569\ub2c8\ub2e4.\n\uc608\uc804 \uc790\ub8cc\uc758 \"\uc790\ub3d9\ud654\ub85c RTO 15\ubd84\uc5d0\uc11c 2\ubd84\" \uac19\uc740 \uc22b\uc790\ub294 \uadfc\uac70\uac00 \uc5c6\uc5b4 \ube90\uc2b5\ub2c8\ub2e4. \ubaa9\ud45c\uce58\ub294 P2 \ud6c8\ub828\uc5d0\uc11c \uc7b0 \uc2e4\uce21\uac12\uc73c\ub85c \ucc44\uc6b0\uc138\uc694.\n\n\ub9c8\uc9c0\ub9c9 \ub2e8\uacc4, \ud6c8\ub828\uacfc \uac80\uc99d \ub3c4\uad6c\ub97c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    13: "\u23f8\ufe0f [2.5min] [\uc694\uc57d]\n\u2022 AZ: Power Interruption\uc740 \ud55c AZ \uc804\uc6d0 \uc190\uc2e4\uc744 \uc8fc\uc785, \uc6a9\ub7c9 \ud655\ubcf4 \uc2e4\ud328\uae4c\uc9c0 \uc7ac\ud604 \uac00\ub2a5\n\u2022 Cross-Region: Connectivity\ub294 \ub9ac\uc804 \uac04 \uacbd\ub85c \ucc28\ub2e8\uacfc S3, DynamoDB \ubcf5\uc81c \uc815\uc9c0, \uae30\ubcf8 3\uc2dc\uac04\n\u2022 Region switch \ub9ac\ud5c8\uc124\ub85c \uc2e4\uc81c \uc804\ud658 \uc2dc\uac04\uc744 \uce21\uc815\ud558\uace0 switchover\ub85c \uc6d0\ubcf5\n\u2022 Resilience Hub\ub294 \uc7a5\uc560 \uc720\ud615\ubcc4 RTO/RPO \uc815\ucc45\uc73c\ub85c \ud3c9\uac00\ud558\uace0 \uac1c\uc120\uc548 \uc81c\uc2dc\n\n\uccab \ubc88\uc9f8 \ud0ed, AZ Power Interruption\uc740 \ud55c AZ\uc758 \uc804\uc6d0\uc744 \ubf51\uc740 \uc0c1\ud669\uc744 \ud749\ub0b4 \ub0c5\ub2c8\ub2e4. \ud2b9\uc815 IAM role\uc774\ub098 ASG\uac00 \uc0c8 \uc778\uc2a4\ud134\uc2a4\ub97c \ubabb \ub744\uc6b0\uac8c \ub9c9\ub294 \uc635\uc158\uc774 \uc788\uc5b4\uc11c, \"\uc7a5\uc560 AZ \ubc16\uc5d0\uc11c \uc6a9\ub7c9\uc744 \ud655\ubcf4\ud558\uc9c0 \ubabb\ud558\ub294\" \uc0c1\ud669\uae4c\uc9c0 \uc2dc\ud5d8\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \uc8fc\uae30\ub294 \uc608\uc2dc\uc774\ub2c8 \uc870\uc9c1 \uae30\uc900\uc73c\ub85c \uc815\ud558\uc138\uc694.\n\ub450 \ubc88\uc9f8 \ud0ed\uc740 \ub9ac\uc804 \uac04 \uc5f0\uacb0 \ucc28\ub2e8\uc785\ub2c8\ub2e4. \ub77c\uc6b0\ud2b8 \ud14c\uc774\ube14\uacfc TGW \uacbd\ub85c\ub97c \ub9c9\uace0 S3, DynamoDB \ubcf5\uc81c\ub97c \uba48\ucda5\ub2c8\ub2e4. \ub2e8, AWS \uad00\ub9ac\ud615 \uc11c\ube44\uc2a4 \ud2b8\ub798\ud53d\uc740 \ub9c9\ud788\uc9c0 \uc54a\uc744 \uc218 \uc788\uc5b4\uc11c DocumentDB\ub098 ElastiCache\uc758 \ubcf5\uc81c\ub294 \uc774\uac78\ub85c \ub04a\uc5b4\uc9c0\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uc774 \ubd80\ubd84\uc740 \ucc29\uac01\ud558\uae30 \uc27d\uc2b5\ub2c8\ub2e4.\n\n\uc138 \ubc88\uc9f8 \ud0ed, Region switch \ub9ac\ud5c8\uc124\uc740 \uc2e4\uc81c\ub85c plan\uc744 \ub3cc\ub824 us-west-2\ub85c \uac14\ub2e4\uac00 switchover\ub85c \ub3cc\uc544\uc624\ub294 \ud6c8\ub828\uc785\ub2c8\ub2e4. \uac10\uc9c0, \uc2b9\uc778, \uc804\ud658 \uc644\ub8cc \uc2dc\uac04\uc744 \ub530\ub85c \uc7ac\uc57c \uc5b4\ub514\uac00 \ubcd1\ubaa9\uc778\uc9c0 \ubcf4\uc785\ub2c8\ub2e4.\n\ub124 \ubc88\uc9f8 \ud0ed, Resilience Hub\ub294 \uc7a5\uc560 \uc720\ud615\ubcc4 RTO/RPO \uc815\ucc45\uc744 \uc815\ud558\uace0 \uc571\uc774 \uadf8\uac78 \uc9c0\ud0a4\ub294\uc9c0 \ud3c9\uac00\ud569\ub2c8\ub2e4. \uac1c\uc120\uc548\uacfc \ud568\uaed8 alarm, FIS \uc2e4\ud5d8, SOP\uae4c\uc9c0 \uc81c\uc548\ud558\ub2c8, CI/CD\uc5d0 \ubd99\uc5ec \uad6c\uc131 \ubcc0\uacbd\uc774 \ubaa9\ud45c\ub97c \uae68\ub294\uc9c0 \ubc30\ud3ec \uc804\uc5d0 \uc7a1\uc73c\uc138\uc694.\n\n\uc774\ubc88 \ube14\ub85d\uc744 \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 FIS \uc2dc\ub098\ub9ac\uc624 \ucd9c\uc2dc: https://aws.amazon.com/blogs/aws/use-aws-fault-injection-service-to-demonstrate-multi-region-and-multi-az-application-resilience/\n\u2022 Cross-Region: Connectivity: https://docs.aws.amazon.com/fis/latest/userguide/cross-region-scenario.html\n\u2022 Action \ubaa9\ub85d: https://aws.amazon.com/blogs/mt/scaling-aws-fault-injection-service-across-your-organization-and-regions/\n\u2022 Resilience Hub RTO/RPO: https://docs.aws.amazon.com/help-panel/resilience-hub/latest/console/assessment-report-rto.html\n\u2022 Resilience Hub \ucd94\ucc9c: https://aws.amazon.com/blogs/publicsector/track-application-resiliency-in-public-sector-organizations-using-aws-resilience-hub/",
+    14: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n\u2022 \ub2e8\uc77c writer Warm Standby, \uac00\uc7a5 \uc57d\ud55c \uace0\ub9ac (MSK Replicator \ubbf8\uad6c\uc131, Aurora failover RPO), \uc5e3\uc9c0\uc758 \uc77d\uae30 \uc804\uc6a9 \uc790\ub3d9 failover\n\u2022 Region switch plan\uacfc \uba71\ub4f1 Lambda\n\u2022 Aurora, DocumentDB\ub294 failover\uc640 switchover \uad6c\ubd84, ElastiCache \uc218\ub3d9 promote\n\u2022 \ubaa9\ud45c \uc218\uce58\ub294 \ud6c8\ub828 \uc2e4\uce21\uac12\uc73c\ub85c\n\n\uc5ec\uc12f \uac00\uc9c0\ub85c \uc815\ub9ac\ud569\ub2c8\ub2e4. \uc9c0\uae08 \ub370\uc774\ud130 \uacc4\uce35\uc740 \ubaa8\ub450 \ub2e8\uc77c writer Warm Standby\uc774\uace0, RPO 0\uc774 \uaf2d \ud544\uc694\ud55c \ud14c\uc774\ube14\ub9cc DSQL\uc744 \uac80\ud1a0\ud569\ub2c8\ub2e4. \uc804\uccb4 RTO\uc640 RPO\ub294 \uac00\uc7a5 \uc57d\ud55c \uace0\ub9ac\uac00 \uacb0\uc815\ud569\ub2c8\ub2e4. \uc9c0\uae08\uc740 \ubbf8\uad6c\uc131\uc778 MSK Replicator, \uadf8\ub9ac\uace0 lag\ub9cc\ud07c \uc783\ub294 Aurora failover\uc785\ub2c8\ub2e4. \uc5e3\uc9c0\ub294 \uc77d\uae30\ub9cc \uc790\ub3d9\uc73c\ub85c \ub118\uc5b4\uac11\ub2c8\ub2e4.\n\n\uc804\ud658\uc740 \uc0ac\ub78c\uc758 \uae30\uc5b5\uc774 \uc544\ub2c8\ub77c Region switch plan\uc73c\ub85c \uc2e4\ud589\ud558\uace0, \uae30\ubcf8 block\uc774 \uc5c6\ub294 \ub2e8\uacc4\ub294 \uc7ac\uc2e4\ud589\uc5d0 \uc548\uc804\ud55c Lambda\ub85c \ucc44\uc6c1\ub2c8\ub2e4. Aurora\uc640 DocumentDB\ub294 \uc4f0\uae30\ub97c \uba48\ucd98 \ub4a4 \uc7a5\uc560 \ub54c failover, \uacc4\ud68d \uc804\ud658\uacfc \uc6d0\ubcf5\uc740 switchover\uc785\ub2c8\ub2e4. \ub9c8\uc9c0\ub9c9\uc73c\ub85c, \ubaa9\ud45c\ud45c\uc758 \uc22b\uc790\ub294 \ud6c8\ub828\uc5d0\uc11c \uc7b0 \uac12\ub9cc \uc501\ub2c8\ub2e4.\n\n\ud034\uc988\ub85c \ud655\uc778\ud574 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    15: "[1.5min] [\uc694\uc57d]\n\u2022 Q1: \uc7a5\uc560 \uc2dc\ub294 \uc2b9\uaca9\ud560 \ub9ac\uc804\uc5d0\uc11c failover + allow-data-loss, switchover\ub294 \uc815\uc0c1 \ud074\ub7ec\uc2a4\ud130\uc6a9\n\u2022 Q2: origin failover\ub294 GET, HEAD, OPTIONS\ub9cc \ub300\uc0c1\n\u2022 Q3: Aurora failover\ub294 lag\ub9cc\ud07c \uc190\uc2e4 \uac00\ub2a5, rds.global_db_rpo\ub85c \uc0c1\ud55c, global writer endpoint\ub85c \uc5f0\uacb0 \ubb38\uc790\uc5f4 \uc720\uc9c0\n\n\uc138 \ubb38\uc81c\uc785\ub2c8\ub2e4. 1\ubc88\uc740 DocumentDB \uba85\ub839 \uad6c\ubd84, 2\ubc88\uc740 \uc5e3\uc9c0\uc758 \ud55c\uacc4, 3\ubc88\uc740 Aurora failover\uc758 RPO\uc785\ub2c8\ub2e4.\n\n1\ubc88 \uc815\ub2f5\uc740 us-west-2\uc5d0\uc11c failover\uc640 allow-data-loss\uc785\ub2c8\ub2e4. switchover\ub294 \ubaa8\ub4e0 secondary \ub3d9\uae30\ud654\ub97c \uae30\ub2e4\ub9ac\uae30 \ub54c\ubb38\uc5d0 primary\uac00 \uc8fd\uc740 \uc0c1\ud669\uc5d0\ub294 \ub9de\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. 2\ubc88\uc740 GET, HEAD, OPTIONS\ub9cc \uc7ac\uc2dc\ub3c4\ub418\ub2c8 \uc8fc\ubb38 POST\ub294 \ub118\uc5b4\uac00\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. 3\ubc88\uc740 lag\ub9cc\ud07c \uc783\uc744 \uc218 \uc788\ub2e4\ub294 \uac83\uc785\ub2c8\ub2e4. \ub370\uc774\ud130 \uc190\uc2e4\uc774 \uc5c6\ub294 \uac83\uc740 \uacc4\ud68d\ub41c switchover\ubfd0\uc785\ub2c8\ub2e4. \ub367\ubd99\uc5ec global writer endpoint\ub97c \uc4f0\uba74 failover \ud6c4\uc5d0\ub3c4 \uc5f0\uacb0 \ubb38\uc790\uc5f4\uc740 \ubc14\uafb8\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\ud2c0\ub9b0 \ubb38\ud56d\uc740 \"DocumentDB \uc7a5\uc560\ub294 failover\ub85c\", \"\uc785\uad6c\ub294 CloudFront \ud558\ub098\ub85c \uace0\uc815\", \"Aurora failover\ub294 \uc4f0\uae30\ubd80\ud130 \uba48\ucd98\ub2e4\" \uc2ac\ub77c\uc774\ub4dc\ub85c \ub3cc\uc544\uac00 \ud655\uc778\ud558\uc138\uc694.",
+    16: "\u2753 [0.5min] [\uc694\uc57d]\n\u2022 Block 4 \uc644\ub8cc: \uc804\ub7b5, \uc2dc\ub098\ub9ac\uc624, Aurora failover\uc640 RPO, \uc5e3\uc9c0, Region switch, DB\ubcc4 \uc808\ucc28, \ud6c8\ub828\n\u2022 Q&A \ud6c4 5\ubd84 \ud734\uc2dd, \ub2e4\uc74c\uc740 Block 5 Observability & Operations\n\nBlock 4\ub97c \ub9c8\uce69\ub2c8\ub2e4. \ub370\uc774\ud130 \uacbd\ub85c\ub97c \uba3c\uc800 \ub2eb\uace0, \uc804\ud658\uc740 plan\uc73c\ub85c, \uc22b\uc790\ub294 \ud6c8\ub828\uc73c\ub85c \uc99d\uba85\ud55c\ub2e4\ub294 \uc138 \uac00\uc9c0\ub97c \uae30\uc5b5\ud574 \uc8fc\uc138\uc694.\n\n\uc9c8\ubb38 \uc788\uc73c\uc2dc\uba74 \uc9c0\uae08 \ubc1b\uaca0\uc2b5\ub2c8\ub2e4. \uc7a0\uc2dc \uc26c\uace0 Block 5\uc5d0\uc11c \uc774 \uc804\ud658\uc744 \uc5b4\ub5bb\uac8c \uad00\uce21\ud558\uace0 \uc6b4\uc601\ud558\ub294\uc9c0 \uc774\uc5b4\uac00\uaca0\uc2b5\ub2c8\ub2e4."
   };
   const deck = new SlideFramework({
+    logoSrc: "./common/pptx-theme/images/logo_1.png",
     
-    footer: 'Multi-Region Architecture Deep Dive — L300+',
+    footer: "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.",
     
     pagination: true,
     sidebar: true,

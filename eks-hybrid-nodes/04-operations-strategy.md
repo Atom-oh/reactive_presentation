@@ -138,7 +138,7 @@ taint 탭에서 중요한 건, Hybrid taint가 자동으로 붙지 않는다는 
 <div class="card-grid fragment" data-reveal="stagger" data-fragment-index="6">
   <div class="callout callout-warning"><strong class="text-warning">자동 복귀 없음</strong><div class="on-surface-muted">온프레미스 용량이 돌아와도 실행 중인 cloud Pod는 자동으로 돌아오지 않습니다.</div></div>
   <div class="callout callout-info"><strong class="text-info">포화 감지기가 아님</strong><div class="on-surface-muted">Karpenter는 조건에 맞는 Pending Pod에 반응합니다. 온프레미스 슬롯을 먼저 채우는 것도 보장하지 않습니다.</div></div>
-  <div class="callout callout-danger"><strong class="text-danger">버전 요구</strong><div class="on-surface-muted">Kubernetes 1.36은 Karpenter 1.13 이상이 필요합니다.</div></div>
+  <div class="callout callout-danger"><strong class="text-danger">버전 요구</strong><div class="on-surface-muted">Kubernetes 1.36은 Karpenter 1.13 이상, 1.37은 1.15.x가 필요합니다.</div></div>
   <div class="callout callout-info"><strong class="text-info">막힐 수 있는 곳</strong><div class="on-surface-muted">AWS quota, 인스턴스 가용성, subnet IP, IAM, 노드 bootstrap, 워크로드 의존성.</div></div>
 </div>
 :::
@@ -150,17 +150,18 @@ taint 탭에서 중요한 건, Hybrid taint가 자동으로 붙지 않는다는 
 • Karpenter는 Pending Pod에 반응해 EC2 용량을 만들며, 온프레미스 서버를 추가하지 않음
 • 클라우드 풀은 opt-in taint와 toleration으로 범위를 제한
 • 클라우드 Pod의 자동 복귀는 없고 별도 통제된 재배치가 필요
-• Kubernetes 1.36에는 Karpenter 1.13 이상 필요
+• Kubernetes 1.36에는 Karpenter 1.13 이상, 1.37에는 1.15.x 필요
 
 흔한 오해가 "온프레미스가 가득 차면 Karpenter가 감지해서 클라우드로 넘긴다"는 설명입니다. 실제로는 스케줄되지 못해 Pending이 된 Pod, 그것도 NodePool 조건과 toleration이 맞는 Pod에 반응하는 것입니다.
 {cue: pause}
 그리고 온프레미스 용량이 다시 생겨도 이미 뜬 클라우드 Pod는 돌아오지 않습니다. 되돌리려면 데이터와 가용성을 고려한 별도의 rollout이나 eviction 정책이 필요합니다.
-버전도 확인하세요. 문서 기준으로 Kubernetes 1.36은 Karpenter 1.13 이상이 필요하고, 예제 CRD는 1.14.1로 확인했다고 되어 있습니다. 또 EC2NodeClass의 instance profile은 SSM이나 Roles Anywhere용 Hybrid 역할이 아니라 별도로 준비한 EC2 노드 profile입니다.
+버전도 확인하세요. 문서 기준으로 Kubernetes 1.36은 Karpenter 1.13 이상이 필요하고, 예제 CRD는 1.14.1로 확인했다고 되어 있습니다. 2026-10-15 기준 공식 호환성 표는 1.37에 Karpenter 1.15.x를 요구하고 최신 릴리스는 v1.15.0입니다. 또 EC2NodeClass의 instance profile은 SSM이나 Roles Anywhere용 Hybrid 역할이 아니라 별도로 준비한 EC2 노드 profile입니다.
 {cue: transition}
 다음은 반대 방향, 줄일 때 어떤 Pod가 먼저 사라지는지 보겠습니다.
 
 [출처]
 • D/06 "Cloud burst pool 준비" (Karpenter 호환성 1.36 → ≥1.13, 예제 1.14.1)
+• Karpenter 호환성 표 (1.37 → 1.15.x): https://karpenter.sh/docs/upgrading/compatibility/
 :::
 
 ---
@@ -202,12 +203,13 @@ controller.kubernetes.io/pod-deletion-cost annotation은 ReplicaSet을 줄일 �
 하지만 비교 순서에서 deletion cost는 네 번째입니다. 그래서 cost 1000을 준 온프레미스 Pod라도 NotReady 상태라면 cost 0인 정상 클라우드 Pod보다 먼저 제거될 수 있습니다. cost 1000은 eviction이나 노드 장애로부터의 보호가 아닙니다.
 {cue: pause}
 그럼 "Pod가 만들어질 때 webhook으로 노드 위치를 보고 cost를 자동으로 넣자"는 아이디어는 어떨까요? CREATE 요청 시점에는 아직 spec.nodeName이 없습니다. 최종 노드를 알 수 없으니 운영 해법으로 설치하지 않는다는 것이 문서의 결론입니다.
-대안은 스케줄링 이후에 소유한 Pod 하나씩 patch하는 방식입니다. 문서의 예제는 Pod UID, resourceVersion, nodeName을 test로 걸어서 동시 변경 시 안전하게 실패하도록 합니다. Karpenter 1.14.1도 pod-deletion-cost를 eviction-cost 계산에 쓰지만 이는 휴리스틱이지 금지 규칙은 아닙니다.
+대안은 스케줄링 이후에 소유한 Pod 하나씩 patch하는 방식입니다. 문서의 예제는 Pod UID, resourceVersion, nodeName을 test로 걸어서 동시 변경 시 안전하게 실패하도록 합니다. Karpenter 1.14.1도 pod-deletion-cost를 eviction-cost 계산에 쓰지만 이는 휴리스틱이지 금지 규칙은 아닙니다. Karpenter 1.15부터는 Consolidation 판단에 karpenter.sh/disruption-cost annotation을 읽고, pod-deletion-cost로 Consolidation을 조정하는 방식은 deprecated입니다.
 {cue: transition}
 이제 GPU 쪽으로 넘어가겠습니다.
 
 [출처]
 • D/06 "Pod deletion cost는 선호도" (L311-320), "Binding 후 소유한 Pod 하나에 cost 부여" (L328)
+• Karpenter 1.15 업그레이드 안내 (disruption-cost, pod-deletion-cost deprecated): https://karpenter.sh/docs/upgrading/upgrade-guide/
 • 데모 2 (bursting과 pod-deletion-cost): https://github.com/Atom-oh/eks-hybrid-demo 의 RUNBOOK.md 데모 2, demo2-burst/run-compare.sh 결과 표 (private 저장소)
 :::
 

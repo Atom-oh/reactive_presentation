@@ -546,7 +546,7 @@ kubectl describe nodeclaim &lt;nodeclaim&gt;</div></div><div class="card learn-c
             <div class="tab-content active" data-tab="op-concept">
               <div class="buffer-options">
                 <div class="card learn-card"><h3>이 예시: 더미 Pod로 예약</h3><p>빈자리를 낮은 우선순위 Pod가 차지합니다. 실제 앱이 더 높은 우선순위이고 배치 조건이 맞으면 자리를 내줍니다.</p></div>
-                <div class="card learn-card"><h3>v1.14: Capacity Buffers API</h3><p>직접 설치한 Karpenter는 여유 용량을 선언하는 API도 제공합니다. v1.14에서 <code>v1beta1</code>로 승격됐습니다.</p><p><a href="version-update.md#spot-회수와-여유-용량을-읽는-기준">CRD·적용 범위 확인</a> · Auto Mode의 지원을 의미하지 않습니다.</p></div>
+                <div class="card learn-card"><h3>Capacity Buffers API</h3><p>직접 설치한 Karpenter는 여유 용량을 선언하는 API도 제공합니다. v1.14에서 <code>v1beta1</code>로 승격됐고, v1.15.0에서도 <code>CapacityBuffer</code> feature gate(alpha, 기본 꺼짐)로 켭니다.</p><p><a href="version-update.md#spot-회수와-여유-용량을-읽는-기준">CRD·적용 범위 확인</a> · Auto Mode의 지원을 의미하지 않습니다.</p></div>
               </div>
             </div>
             <div class="tab-content" data-tab="op-priority">
@@ -835,7 +835,7 @@ kubectl get nodes -o wide</div></div></div></li>
         4: "{timing: 3min} [요약] Pod → NodeClaim → 이벤트 순서로 원인을 좁힙니다. 첫 탭에서는 Pending과 FailedScheduling을 구분하고, 두 번째는 노드 요청의 생성·등록·Ready 상태, 세 번째는 교체 시각과 이유를 봅니다. 결과를 먼저 보지 않고 인스턴스 수부터 늘리면 다른 원인을 놓칠 수 있습니다. 명령어를 외우기보다 오른쪽의 무엇을 읽어야 하는지를 먼저 설명하세요. {cue: transition} 반복해서 볼 질문을 대시보드로 옮겨봅니다.",
         5: "{timing: 2min} [요약] 노드 수 변화, Pending, Spot 의존도, 시작 지연이라는 네 가지 질문으로 대시보드를 읽습니다. KSM 수집과 라벨 allowlist가 필요합니다. P99는 직접 설치한 Karpenter의 Pod 시작 시간으로 Node Ready 시간과 구분합니다. {cue: transition} 회수 상황에서 어떻게 대응하는지 봅니다.",
         6: '{timing: 3min} [요약] Spot 회수 대응은 종료 처리와 대체 용량 준비가 겹쳐 진행됩니다. 3단계에서 두 영역을 함께 짚으세요. 직접 설치한 Karpenter는 EventBridge와 SQS interruption queue 구성이 필요하며 Auto Mode는 AWS가 관리합니다. 4단계에서 준비 지연 버튼을 선택해 Pending이 남을 수 있음을 보여줍니다. 실제 앱은 기존 프로세스가 이동하는 대신 새 Pod로 다시 실행됩니다. PDB와 NodePool 예산으로 EC2 회수를 취소할 수 없습니다. 2분은 stop/terminate 통지에 대한 설명이며 hibernate에는 같은 유예가 없습니다. {cue: transition} 노드 대기를 줄이려면 여유 자리를 미리 준비할 수 있습니다.',
-        7: '{timing: 3min} [요약] 버퍼는 앱이 쓸 여유 용량을 미리 준비하는 방법이며 유지 비용이 듭니다. 더미 Pod보다 앱의 우선순위가 높고 배치 조건이 맞아야 선점할 수 있습니다. 세 버튼으로 자리 확보, 앱 배치, 버퍼 복원을 보여줍니다. 이 그림은 기존 노드에 남은 자리가 없다고 가정합니다. required podAntiAffinity 때문에 복원된 더미 두 개는 서로 다른 노드에 배치합니다. YAML은 선택해서 확인하고 v1.14 Capacity Buffers API는 직접 설치 환경의 별도 방식이라고 구분합니다. Auto Mode 지원을 추정하지 않습니다. {cue: transition} 이제 여유 용량과 별개인 노드 수명을 봅니다.',
+        7: '{timing: 3min} [요약] 버퍼는 앱이 쓸 여유 용량을 미리 준비하는 방법이며 유지 비용이 듭니다. 더미 Pod보다 앱의 우선순위가 높고 배치 조건이 맞아야 선점할 수 있습니다. 세 버튼으로 자리 확보, 앱 배치, 버퍼 복원을 보여줍니다. 이 그림은 기존 노드에 남은 자리가 없다고 가정합니다. required podAntiAffinity 때문에 복원된 더미 두 개는 서로 다른 노드에 배치합니다. YAML은 선택해서 확인하고 Capacity Buffers API(v1.14에서 v1beta1, v1.15는 feature gate로 사용)는 직접 설치 환경의 별도 방식이라고 구분합니다. Auto Mode 지원을 추정하지 않습니다. {cue: transition} 이제 여유 용량과 별개인 노드 수명을 봅니다.',
         8: "{timing: 3min} [요약] 14일은 기본 만료 설정, 24시간은 노드 종료 시작 후 기본 유예, 21일은 서비스의 최대 수명입니다. 세 값을 더해서 교체 일정을 계산하지 않습니다. 세 정책 버튼을 눌러 expireAfter만 바뀌는 것을 확인하세요. 7일을 모든 프로덕션의 권장값으로 설명하지 않습니다. 전체 YAML은 질문이 있을 때 펼치고 spec.template.spec 위치만 짚습니다. {cue: transition} 만료 전에 노드가 바뀌는 대표 사례인 Drift를 봅니다.",
         9: "{timing: 3min} [요약] rev A/B는 교육용 AMI 구분입니다. 단계 버튼을 하나씩 눌러 기존 노드에서 새 노드로 Pod가 이동하는 과정을 봅니다. Auto Mode는 AWS가 AMI를 관리합니다. PDB와 노드 예산은 앱·노드의 서로 다른 중단 범위를 제어합니다. {cue: transition} 진단한 상태를 알림으로 연결합니다.",
         10: '알림은 kube-state-metrics 기반입니다. NotReady와 Unschedulable은 증상이며 프로비저닝 실패 또는 Spot 중단 원인은 NodeClaim 이벤트로 확인합니다. HighCPURequests는 CPU 예약 비율이며 실제 사용량과 구분합니다.',

@@ -81,11 +81,12 @@ paginate: true
 
 ## Exemplar란?
 
-히스토그램 메트릭의 특정 데이터 포인트에 **TraceID**를 첨부하여 해당 요청의 트레이스로 바로 이동할 수 있게 해주는 기능
+메트릭(주로 히스토그램)의 특정 데이터 포인트에 **TraceID**를 첨부하여 해당 요청의 트레이스로 바로 이동할 수 있게 해주는 기능
 
-- Prometheus 2.26+ 지원
-- 히스토그램/Summary 메트릭에 적용
+- Prometheus 2.26+: `--enable-feature=exemplar-storage` 필요 (3.x에서도 feature flag)
+- OpenMetrics 기준 Counter, Histogram bucket에 적용 (Summary 불가)
 - OpenMetrics 형식 필요
+- AMP는 Exemplar 미지원 (AWS AMG 문서 기준)
 
 > **동작 원리:** 메트릭 그래프에서 특정 데이터 포인트 클릭 -> TraceID 확인 -> Tempo에서 상세 트레이스 조회
 
@@ -104,7 +105,9 @@ datasources:
           urlDisplayLabel: "View Trace"
 ```
 
-<!-- notes: Exemplar는 메트릭 그래프에서 다이아몬드 모양으로 표시됩니다. 클릭하면 해당 요청의 트레이스로 바로 이동할 수 있습니다. -->
+출처: [AWS AMG: Exemplars](https://docs.aws.amazon.com/grafana/latest/userguide/amp-configure-exemplars.html) ("Exemplars are not supported in Amazon Managed Service for Prometheus")
+
+<!-- notes: Exemplar는 메트릭 그래프에서 다이아몬드 모양으로 표시됩니다. 클릭하면 해당 요청의 트레이스로 바로 이동할 수 있습니다. OpenMetrics에서 Exemplar는 Counter와 Histogram bucket에 붙고 Summary에는 붙지 않습니다. AMP는 Exemplar를 지원하지 않으므로 이 흐름은 self-managed Prometheus 기준입니다. -->
 
 ---
 
@@ -115,7 +118,8 @@ datasources:
 ### Prometheus
 
 **핵심 설정:**
-- **endpoint:** Prometheus/AMP 엔드포인트
+- **url:** Prometheus/AMP 엔드포인트
+- **AMP:** SigV4 인증 필요. Amazon Managed Grafana 12부터 core Prometheus 플러그인은 SigV4 미지원, **Amazon Managed Service for Prometheus** 데이터소스 플러그인 사용
 - **exemplarTraceIdDestinations:** 트레이스 연결 설정
 - **httpMethod:** GET 또는 POST
 
@@ -136,7 +140,7 @@ datasources:
 ### Loki
 
 **핵심 설정:**
-- **endpoint:** Loki 게이트웨이 URL
+- **url:** Loki 게이트웨이 URL
 - **derivedFields:** TraceID 추출 정규식
 - **maxLines:** 최대 로그 라인 수
 
@@ -158,9 +162,10 @@ datasources:
 ### Tempo
 
 **핵심 설정:**
-- **tracesToLogs:** 트레이스 -> 로그 연결
+- **tracesToLogsV2:** 트레이스 -> 로그 연결
 - **tracesToMetrics:** 트레이스 -> 메트릭 연결
-- **serviceMap:** 서비스 맵 활성화
+- **serviceMap:** 서비스 맵 (`traces_service_graph_*` 메트릭 필요)
+- **nodeGraph:** 트레이스 그래프 뷰 활성화
 
 ```yaml
 datasources:
@@ -168,17 +173,26 @@ datasources:
     type: tempo
     url: http://tempo:3200
     jsonData:
-      tracesToLogs:
+      tracesToLogsV2:
         datasourceUid: loki
-        tags: ['namespace', 'pod']
+        tags: [{ key: 'namespace' }, { key: 'pod' }]
         filterByTraceID: true
       tracesToMetrics:
         datasourceUid: prometheus
+        tags: [{ key: 'service.name', value: 'service' }]
+        queries:
+          - name: 'Request rate'
+            # OTel connector는 traces_span_metrics_*
+            query: 'sum(rate(traces_spanmetrics_calls_total{$$__tags}[5m]))'
       serviceMap:
         datasourceUid: prometheus
+      nodeGraph:
+        enabled: true
 ```
 
-<!-- notes: 각 데이터소스 설정에서 다른 데이터소스와의 연결을 정의합니다. 이것이 상관관계의 핵심입니다. -->
+출처: Grafana 문서 [Loki 데이터소스](https://grafana.com/docs/grafana/latest/datasources/loki/configure/), [Tempo 데이터소스](https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/) provisioning 예시
+
+<!-- notes: 각 데이터소스 설정에서 다른 데이터소스와의 연결을 정의합니다. 이것이 상관관계의 핵심입니다. tracesToLogsV2는 tags를 { key } 객체 배열로 받습니다. provisioning 파일에서는 $를 $$로 escape합니다. -->
 
 ---
 
@@ -191,7 +205,7 @@ datasources:
 - Loki에는 traceId가 포함된 로그 라인들이 표시됨
 - Tempo에는 span waterfall이 표시됨
 - "Loki -> Tempo" 버튼 클릭 시: Derived Fields를 통해 화살표가 Loki에서 Tempo로 이동
-- "Tempo -> Loki" 버튼 클릭 시: tracesToLogs를 통해 화살표가 Tempo에서 Loki로 이동
+- "Tempo -> Loki" 버튼 클릭 시: tracesToLogsV2를 통해 화살표가 Tempo에서 Loki로 이동
 
 ## Loki -> Tempo (Derived Fields)
 
@@ -202,12 +216,12 @@ derivedFields:
     datasourceUid: tempo
 ```
 
-## Tempo -> Loki (tracesToLogs)
+## Tempo -> Loki (tracesToLogsV2)
 
 ```yaml
-tracesToLogs:
+tracesToLogsV2:
   datasourceUid: loki
-  tags: ['namespace', 'pod']
+  tags: [{ key: 'namespace' }, { key: 'pod' }]
   filterByTraceID: true
 ```
 
@@ -217,20 +231,20 @@ tracesToLogs:
 
 <!-- type: content -->
 
-# Derived Fields & tracesToLogs 설정
+# Derived Fields & tracesToLogsV2 설정
 
 ## 정규식 테스터
 
 샘플 로그:
 ```json
-{"timestamp":"2024-01-15T10:30:00Z","level":"ERROR","traceId":"abc123def456789012345678","service":"payment-service","message":"Payment failed: Connection timeout to RDS"}
+{"timestamp":"2024-01-15T10:30:00Z","level":"ERROR","traceId":"4bf92f3577b34da6a3ce929d0e0e4736","service":"payment-service","message":"Payment failed: Connection timeout to RDS"}
 ```
 
 ## 일반적인 TraceID 패턴
 
 | 형식 | 정규식 |
 |------|--------|
-| JSON 필드 | `"traceId":"([a-f0-9]+"` |
+| JSON 필드 | `"traceId":"([a-f0-9]+)"` |
 | W3C Trace Context | `traceparent.*-([a-f0-9]{32})-` |
 | Jaeger | `uber-trace-id:([a-f0-9]+):` |
 
@@ -262,6 +276,8 @@ payment-service에서 발생한 모든 트레이스를 검색합니다.
 { span.http.method = "POST" }
 ```
 HTTP POST 요청이 포함된 트레이스를 검색합니다.
+
+> 참고: 최신 OTel semconv는 `http.request.method`, `http.response.status_code`를 사용합니다. 구형 SDK는 `http.method`, `http.status_code`를 emit하므로 SDK 버전에 맞춰 속성명을 선택하세요.
 
 ### 에러
 
@@ -297,7 +313,7 @@ HTTP 4xx/5xx 에러이면서 500ms 이상 걸린 트레이스를 검색합니다
 ```
 { resource.service.name = "api-gateway" && status = error } | count() > 5
 ```
-api-gateway에서 에러 span이 5개 이상인 트레이스를 검색합니다.
+api-gateway에서 에러 span이 5개 초과인 트레이스를 검색합니다.
 
 ### 체인
 
@@ -311,7 +327,7 @@ api-gateway에서 payment-service로 이어지는 호출 경로를 가진 트레
 ```
 HTTP GET 이후 100ms 이상 걸리는 DB SELECT가 있는 트레이스를 검색합니다.
 
-<!-- notes: TraceQL은 LogQL과 비슷한 문법을 가지고 있습니다. 복잡한 트레이스 검색이 가능합니다. -->
+<!-- notes: TraceQL은 LogQL과 비슷한 문법을 가지고 있습니다. 복잡한 트레이스 검색이 가능합니다. count() 같은 집계는 Tempo 2.0+에서 지원합니다. -->
 
 ---
 
@@ -339,7 +355,7 @@ HTTP GET 이후 100ms 이상 걸리는 DB SELECT가 있는 트레이스를 검�
 | Slow (p99 > 500ms) | 노란색 |
 | Error (> 1%) | 빨간색 |
 
-<!-- notes: Service Map은 마이크로서비스 간의 의존성을 시각화합니다. 장애 전파 경로를 파악하는 데 유용합니다. -->
+<!-- notes: Service Map은 마이크로서비스 간의 의존성을 시각화합니다. 장애 전파 경로를 파악하는 데 유용합니다. 별도 설정이 필요합니다: Tempo metrics-generator의 service-graphs processor(또는 Alloy service graphs)가 traces_service_graph_* 메트릭을 Prometheus로 remote-write해야 하고, 그다음 Tempo 데이터소스의 serviceMap.datasourceUid로 그 Prometheus를 지정합니다. -->
 
 ---
 
@@ -347,12 +363,12 @@ HTTP GET 이후 100ms 이상 걸리는 DB SELECT가 있는 트레이스를 검�
 
 # RED Method vs 4 Golden Signals
 
-**두 방법론의 관계와 차이 — 메트릭 3개가 겹칩니다**
+**두 방법론의 관계와 차이: 메트릭 3개가 겹칩니다**
 
 ### RED Method
 
 - **출처:** Tom Wilkie (Grafana Labs)
-- **관점:** 마이크로서비스 — "내 서비스가 잘 응답하는가?"
+- **관점:** 마이크로서비스: "내 서비스가 잘 응답하는가?"
 
 | Rate | Errors | Duration |
 |------|--------|----------|
@@ -362,7 +378,7 @@ HTTP GET 이후 100ms 이상 걸리는 DB SELECT가 있는 트레이스를 검�
 ### 4 Golden Signals
 
 - **출처:** Google SRE Book (2016)
-- **관점:** 인프라 + 서비스 — "시스템 전체가 건강한가?"
+- **관점:** 인프라 + 서비스: "시스템 전체가 건강한가?"
 
 | Latency | Traffic | Errors | **Saturation** |
 |---------|---------|--------|------------|
@@ -376,7 +392,7 @@ HTTP GET 이후 100ms 이상 걸리는 DB SELECT가 있는 트레이스를 검�
 | **Rate** | = | **Traffic** | `rate(http_requests_total[5m])` |
 | **Errors** | = | **Errors** | `rate(http_requests_total{code=~"5.."}[5m])` |
 | **Duration** | = | **Latency** | `histogram_quantile(0.99, ...)` |
-| — | + | **Saturation** | `container_memory_usage / limits` |
+| 없음 | + | **Saturation** | `container_memory_usage / limits` |
 
 > **핵심:** Saturation이 유일한 차이. RED는 "서비스가 요청을 잘 처리하는가"에 집중, Golden Signals는 "리소스가 포화되고 있는가"까지 포함합니다.
 
@@ -443,17 +459,24 @@ HTTP GET 이후 100ms 이상 걸리는 DB SELECT가 있는 트레이스를 검�
 - **Zipkin**: 9411 포트
 
 ## Processors
-데이터 변환 및 필터링
-- **batch**: 배치 처리로 효율성 향상
-- **tail_sampling**: 에러/느린 요청 우선 샘플링
-- **spanmetrics**: span에서 메트릭 생성
+데이터 변환 및 필터링 (나열 순서대로 실행)
+- **memory_limiter**: 메모리 한도 보호, 항상 첫 번째
+- **tail_sampling**: 에러/느린 요청 우선 샘플링 (`decision_wait: 10s`)
+- **batch**: 배치 처리로 효율성 향상, 마지막
 - **attributes**: 속성 추가/수정/삭제
+
+> **주의:** tail_sampling은 한 trace의 모든 span이 **같은 Collector**에 도착해야 합니다. 여러 replica라면 앞단에 traceID 기준 `loadbalancing` exporter를 두세요.
 
 ## Exporters
 백엔드로 데이터 전송
-- **otlp/tempo**: Tempo로 트레이스 전송
-- **loki**: Loki로 로그 전송
-- **prometheusremotewrite**: Prometheus로 메트릭 전송
+- **otlp_grpc/tempo**: Tempo로 트레이스 전송 (`otlp`는 Collector v0.144부터 deprecated alias)
+- **otlp_http/loki**: Loki 3.x native OTLP endpoint로 로그 전송 (`loki` exporter는 contrib v0.131.0에서 제거)
+- **prometheusremotewrite**: Prometheus로 메트릭 전송 (Prometheus는 `--web.enable-remote-write-receiver`, AMP는 `sigv4auth` 필요)
+
+## Connectors
+파이프라인과 파이프라인을 연결
+- **spanmetrics**: processor가 아니라 **connector**. traces 파이프라인의 exporter이자 metrics 파이프라인의 receiver
+- span에서 RED 메트릭(calls, duration) 생성. 샘플링 전 전체 span으로 계산해야 정확하므로 별도 traces 파이프라인에 연결
 
 ```yaml
 receivers:
@@ -463,10 +486,12 @@ receivers:
       http: { endpoint: "0.0.0.0:4318" }
 
 processors:
-  batch:
-    timeout: 5s
-    send_batch_size: 1000
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 80
+    spike_limit_percentage: 25
   tail_sampling:
+    decision_wait: 10s
     policies:
       - name: errors
         type: status_code
@@ -477,10 +502,24 @@ processors:
       - name: default
         type: probabilistic
         probabilistic: { sampling_percentage: 10 }
+  batch:
+    timeout: 5s
+    send_batch_size: 1000
+
+connectors:
+  spanmetrics: {}  # traces → RED metrics
 
 exporters:
-  otlp/tempo:
+  # otlp는 v0.144부터 deprecated alias
+  otlp_grpc/tempo:
     endpoint: tempo-distributor:4317
+    tls: { insecure: true }  # 클러스터 내부 예시, 운영은 실제 TLS
+  # loki exporter 제거(v0.131.0): Loki 3.x native OTLP
+  otlp_http/loki:
+    endpoint: http://loki-gateway/otlp
+    tls: { insecure: true }
+  # Prometheus: --web.enable-remote-write-receiver 필요
+  # AMP: auth: { authenticator: sigv4auth } 추가
   prometheusremotewrite:
     endpoint: http://prometheus:9090/api/v1/write
 
@@ -488,9 +527,22 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [batch, tail_sampling]
-      exporters: [otlp/tempo]
+      processors: [memory_limiter, tail_sampling, batch]
+      exporters: [otlp_grpc/tempo]
+    traces/spanmetrics:  # 샘플링 전 전체 span
+      receivers: [otlp]
+      exporters: [spanmetrics]
+    metrics:
+      receivers: [otlp, spanmetrics]
+      processors: [memory_limiter, batch]
+      exporters: [prometheusremotewrite]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp_http/loki]
 ```
+
+출처: [opentelemetry-collector-contrib CHANGELOG](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/CHANGELOG.md)
 
 <!-- notes: OTel Collector는 텔레메트리 데이터의 수집, 처리, 전송을 담당합니다. tail_sampling이 비용 최적화의 핵심입니다. -->
 
@@ -502,13 +554,15 @@ service:
 
 ## 샘플링률 조절
 
-| 일일 트레이스 | 월 저장 비용 | Error 캡처율 |
+| 일일 트레이스 | 월 저장 비용 (예시 가정) | Error 캡처율 |
 |--------------|-------------|-------------|
-| 1M | $450 | 100% |
+| 1M | $1,500 | 100% |
+
+> 예시 가정: 100% 기준 일 10M 트레이스, 트레이스 100만 건당 월 $50 저장 비용. 실제 비용은 span 크기, 보존 기간, 백엔드에 따라 달라집니다.
 
 > **Tip:** Tail Sampling을 사용하면 샘플링률을 낮춰도 모든 에러를 캡처할 수 있습니다.
 
-## 샘플링 전략 비교
+## 샘플링 전략 비교 (수치는 예시 가정)
 
 | 전략 | 샘플링률 | 비용 절감 | Error 캡처 |
 |------|---------|----------|-----------|
@@ -535,7 +589,7 @@ service:
 
 - **Exemplars:** 메트릭 -> 트레이스 연결
 - **Derived Fields:** 로그 -> 트레이스 연결
-- **tracesToLogs:** 트레이스 -> 로그 연결
+- **tracesToLogsV2:** 트레이스 -> 로그 연결
 - **TraceQL:** 강력한 트레이스 쿼리 언어
 - **Tail Sampling:** 비용 효율적 샘플링
 
@@ -543,7 +597,7 @@ service:
 
 - [x] Exemplars
 - [ ] Derived Fields
-- [ ] tracesToLogs
+- [ ] tracesToLogsV2
 - [ ] Annotations
 
 ## Quiz 2: Loki에서 TraceID를 추출하는 설정은?
@@ -560,4 +614,4 @@ service:
 - [ ] Random Sampling
 - [ ] No Sampling
 
-<!-- notes: Block 3의 핵심은 3가지 시그널을 연결하는 것입니다. Exemplars, Derived Fields, tracesToLogs가 핵심 설정입니다. -->
+<!-- notes: Block 3의 핵심은 3가지 시그널을 연결하는 것입니다. Exemplars, Derived Fields, tracesToLogsV2가 핵심 설정입니다. -->

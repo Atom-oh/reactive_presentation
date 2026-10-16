@@ -13,15 +13,16 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 24px;
-      padding: 24px;
+      gap: 1.5rem;
+      padding: 1rem 1.5rem;
     }
     .synergy-box {
       background: var(--bg-card);
       border: 2px solid var(--border);
       border-radius: 16px;
       padding: 24px;
-      width: 320px;
+      flex: 0 1 40%;
+      max-width: 36rem;
       text-align: center;
       transition: all var(--transition-normal);
     }
@@ -49,7 +50,7 @@
       gap: 8px;
     }
     .synergy-arrow-line {
-      width: 80px;
+      width: 5rem;
       height: 3px;
       background: linear-gradient(90deg, var(--accent), var(--green));
       position: relative;
@@ -65,7 +66,7 @@
     .synergy-arrow-text {
       font-size: .75rem;
       color: var(--text-muted);
-      max-width: 100px;
+      max-width: 8rem;
       text-align: center;
     }
     .key-points {
@@ -770,24 +771,24 @@
           <div class="synergy-box vpa">
             <h3>VPA</h3>
             <ul>
-              <li>Pod 리소스 사용량 분석</li>
-              <li>최적 requests/limits 추천</li>
-              <li>CPU/Memory 자동 조정</li>
-              <li>14일 히스토리 기반 분석</li>
+              <li>Pod CPU/Memory 사용량 관찰</li>
+              <li>requests 추천 (limits는 기존 비율 유지)</li>
+              <li>Recreate 또는 InPlaceOrRecreate로 적용</li>
+              <li>CPU: 24h 반감기, Memory: 일별 피크 8일 (기본값)</li>
             </ul>
           </div>
           <div class="synergy-arrow">
             <div class="synergy-arrow-text">VPA 최적화된 requests</div>
             <div class="synergy-arrow-line"></div>
-            <div class="synergy-arrow-text">Auto Mode가 최적 노드 선택</div>
+            <div class="synergy-arrow-text">Auto Mode가 노드 정리 판단</div>
           </div>
           <div class="synergy-box auto">
             <h3>Auto Mode</h3>
             <ul>
-              <li>실제 Pod requests 기반 선택</li>
-              <li>최적 인스턴스 타입 매칭</li>
-              <li>Bin-packing 최적화</li>
-              <li>Consolidation 자동 수행</li>
+              <li>Pod requests 합계로 노드 선택</li>
+              <li>NodePool 조건 안에서 인스턴스 매칭</li>
+              <li>requests가 줄면 노드에 빈자리 발생</li>
+              <li>Consolidation이 삭제 또는 교체 판단</li>
             </ul>
           </div>
         </div>
@@ -795,17 +796,17 @@
           <div class="key-point">
             <div class="key-point-icon" style="color: var(--accent);">&#9881;</div>
             <h4>VPA</h4>
-            <p>Pod의 CPU/Memory 요청을 자동으로 최적화</p>
+            <p>Pod의 CPU/Memory requests를 사용량에 맞게 조정</p>
           </div>
           <div class="key-point">
             <div class="key-point-icon" style="color: var(--green);">&#9889;</div>
             <h4>Auto Mode</h4>
-            <p>최적화된 요청 기반으로 적합한 인스턴스 자동 선택</p>
+            <p>줄어든 requests로 빈 노드를 정리 (EKS 1.37 신규 풀은 Balanced 기본)</p>
           </div>
           <div class="key-point">
             <div class="key-point-icon" style="color: var(--yellow);">&#10004;</div>
-            <h4>Synergy</h4>
-            <p>리소스 낭비 감소 + 노드 비용 절감</p>
+            <h4>주의</h4>
+            <p>같은 CPU/Memory 메트릭으로 HPA와 함께 쓰지 않기</p>
           </div>
         </div>
         <div style="margin-top: auto; padding-top: 8px; text-align: right;">
@@ -825,7 +826,8 @@
           <button class="mode-btn active" data-mode="off">Off</button>
           <button class="mode-btn" data-mode="initial">Initial</button>
           <button class="mode-btn" data-mode="recreate">Recreate</button>
-          <button class="mode-btn" data-mode="auto">Auto</button>
+          <button class="mode-btn" data-mode="inplace">InPlaceOrRecreate</button>
+          <button class="mode-btn" data-mode="auto">Auto (deprecated)</button>
         </div>
 
         <div class="mode-content active" data-mode="off">
@@ -900,15 +902,15 @@
           <div class="mode-detail">
             <div class="mode-info">
               <h4>Recreate 모드</h4>
-              <p>추천값이 변경되면 Pod를 재생성하여 적용합니다. 잠시 다운타임이 발생할 수 있습니다.</p>
+              <p>추천값과 차이가 크면 Updater가 Pod를 evict하고, Admission Controller가 새 Pod에 추천값을 넣습니다. VPA 1.5부터 기본 모드입니다.</p>
               <div class="pros-cons">
                 <div class="pros">
                   <h5>장점</h5>
-                  <p>즉시 최적화 적용, 리소스 효율성 극대화, 자동화된 관리</p>
+                  <p>모든 Kubernetes 버전에서 동작, 동작이 예측 가능</p>
                 </div>
                 <div class="cons">
                   <h5>단점</h5>
-                  <p>Pod 재시작 발생, PDB 설정 필요, 잠재적 다운타임</p>
+                  <p>Pod 재시작 발생, PDB와 레플리카 2개 이상 필요</p>
                 </div>
               </div>
               <div class="use-case">
@@ -930,24 +932,58 @@
           </div>
         </div>
 
-        <div class="mode-content" data-mode="auto">
+        <div class="mode-content" data-mode="inplace">
           <div class="mode-detail">
             <div class="mode-info">
-              <h4>Auto 모드</h4>
-              <p>Recreate와 동일하게 동작합니다. (deprecated — Recreate 사용 권장)</p>
+              <h4>InPlaceOrRecreate 모드 (VPA 1.6 GA)</h4>
+              <p>Pod를 재시작하지 않고 <code>resize</code> subresource로 requests를 바꿉니다. 노드에 자리가 없는 등 in-place가 불가능하면 evict로 전환합니다.</p>
               <div class="pros-cons">
                 <div class="pros">
                   <h5>장점</h5>
-                  <p>최소 개입, 자동 리소스 조정, 편리한 관리</p>
+                  <p>재시작 없이 조정, Kubernetes 1.35부터 in-place resize GA</p>
                 </div>
                 <div class="cons">
                   <h5>단점</h5>
-                  <p>Deprecated 상태, Recreate와 동일, Pod 재시작 발생</p>
+                  <p>QoS class는 바꿀 수 없음, 노드 여유가 없으면 결국 evict</p>
                 </div>
               </div>
               <div class="use-case">
                 <h5>권장 사용 사례</h5>
-                <p>일반적인 웹 서비스, 마이크로서비스, 유연한 운영 환경</p>
+                <p>재시작 비용이 큰 서비스, EKS 1.35 이상 클러스터. evict 없는 <code>InPlace</code> 모드는 VPA 1.8에서도 alpha</p>
+              </div>
+            </div>
+            <div class="code-block"><span class="code-label">YAML</span><span class="key">apiVersion</span>: <span class="string">autoscaling.k8s.io/v1</span>
+<span class="key">kind</span>: <span class="string">VerticalPodAutoscaler</span>
+<span class="key">metadata</span>:
+  <span class="key">name</span>: <span class="string">my-app-vpa</span>
+<span class="key">spec</span>:
+  <span class="key">targetRef</span>:
+    <span class="key">apiVersion</span>: <span class="string">apps/v1</span>
+    <span class="key">kind</span>: <span class="string">Deployment</span>
+    <span class="key">name</span>: <span class="string">my-app</span>
+  <span class="key">updatePolicy</span>:
+    <span class="key">updateMode</span>: <span class="string">"InPlaceOrRecreate"</span></div>
+          </div>
+        </div>
+
+        <div class="mode-content" data-mode="auto">
+          <div class="mode-detail">
+            <div class="mode-info">
+              <h4>Auto 모드</h4>
+              <p>VPA 1.5부터 deprecated이며 현재 Recreate와 같게 동작합니다. 향후 API 버전에서 제거될 예정이므로 Recreate 또는 InPlaceOrRecreate를 명시합니다.</p>
+              <div class="pros-cons">
+                <div class="pros">
+                  <h5>장점</h5>
+                  <p>기존 매니페스트와 호환</p>
+                </div>
+                <div class="cons">
+                  <h5>단점</h5>
+                  <p>Deprecated, 의미가 바뀔 수 있음, Pod 재시작 발생</p>
+                </div>
+              </div>
+              <div class="use-case">
+                <h5>권장 사용 사례</h5>
+                <p>신규 설정에는 사용하지 않음. 기존 Auto 설정은 명시적 모드로 전환</p>
               </div>
             </div>
             <div class="code-block"><span class="code-label">YAML</span><span class="key">apiVersion</span>: <span class="string">autoscaling.k8s.io/v1</span>
@@ -990,14 +1026,14 @@
               </div>
             </div>
             <div class="control-group">
-              <label>CPU 실제 사용량 (Usage)</label>
+              <label>CPU 사용량 P90 (Usage)</label>
               <div class="control-row">
                 <input type="range" id="cpu-usage" min="50" max="4000" value="300" step="50">
                 <span class="control-value" id="cpu-usage-val">300m</span>
               </div>
             </div>
             <div class="control-group">
-              <label>Memory 실제 사용량 (Usage)</label>
+              <label>Memory 일별 피크의 P90 (Usage)</label>
               <div class="control-row">
                 <input type="range" id="mem-usage" min="64" max="8192" value="512" step="64">
                 <span class="control-value" id="mem-usage-val">512Mi</span>
@@ -1011,7 +1047,7 @@
             <div class="simulator-results">
               <div class="savings-display">
                 <div class="savings-label">예상 리소스 절감률</div>
-                <div class="savings-value" id="savings-pct">65%</div>
+                <div class="savings-value" id="savings-pct">68%</div>
               </div>
               <div class="yaml-output" id="vpa-yaml"># VPA Recommendation Status
 recommendation:
@@ -1019,14 +1055,14 @@ recommendation:
   - containerName: app
     target:
       cpu: "345m"
-      memory: "640Mi"
+      memory: "589Mi"
     lowerBound:
       cpu: "173m"
-      memory: "384Mi"
+      memory: "353Mi"
     upperBound:
       cpu: "863m"
-      memory: "1280Mi"
-# Savings: CPU 66% | Mem 69%</div>
+      memory: "1178Mi"
+# Savings: CPU 66% | Mem 71%</div>
             </div>
           </div>
         </div>
@@ -1046,42 +1082,42 @@ recommendation:
               <div class="flow-step-num">1</div>
               <div class="flow-step-content">
                 <h4>VPA 리소스 모니터링</h4>
-                <p>14일간 Pod CPU/Memory 사용 패턴 분석</p>
+                <p>CPU 24h 반감기 histogram, Memory 일별 피크 8일</p>
               </div>
             </div>
             <div class="flow-step" data-step="2">
               <div class="flow-step-num">2</div>
               <div class="flow-step-content">
                 <h4>추천값 생성</h4>
-                <p>분석 결과: CPU 300m, Memory 512Mi 권장</p>
+                <p>target = P90 × 1.15: CPU 300m, Memory 512Mi</p>
               </div>
             </div>
             <div class="flow-step" data-step="3">
               <div class="flow-step-num">3</div>
               <div class="flow-step-content">
                 <h4>Pod Requests 업데이트</h4>
-                <p>VPA가 Pod spec 자동 수정 (Recreate/Auto 모드)</p>
+                <p>InPlaceOrRecreate: 먼저 in-place, 불가하면 evict</p>
               </div>
             </div>
             <div class="flow-step" data-step="4">
               <div class="flow-step-num">4</div>
               <div class="flow-step-content">
-                <h4>Auto Mode 변경 감지</h4>
-                <p>새로운 Pod requests를 기반으로 스케줄링 재평가</p>
+                <h4>노드에 빈자리 발생</h4>
+                <p>노드는 그대로이고 requests 합계만 줄어듦</p>
               </div>
             </div>
             <div class="flow-step" data-step="5">
               <div class="flow-step-num">5</div>
               <div class="flow-step-content">
-                <h4>최적 인스턴스 선택</h4>
-                <p>c6g.large에서 c6g.medium으로 다운사이징</p>
+                <h4>Consolidation 판단</h4>
+                <p>빈 노드 삭제 또는 더 저렴한 노드로 교체</p>
               </div>
             </div>
             <div class="flow-step" data-step="6">
               <div class="flow-step-num">6</div>
               <div class="flow-step-content">
-                <h4>Consolidation 수행</h4>
-                <p>오버프로비저닝된 노드 통합, 빈 노드 제거</p>
+                <h4>결과 확인</h4>
+                <p>노드 수, Pod 재시작, 비용을 함께 측정</p>
               </div>
             </div>
           </div>
@@ -1097,71 +1133,65 @@ recommendation:
               <div class="flow-detail" data-step="1" style="display:none;">
                 <h3 style="color: var(--accent);">📊 리소스 모니터링</h3>
                 <div class="code-block" style="margin-top: 8px; font-size: 0.75rem;">
-<span class="comment"># VPA가 수집하는 메트릭</span>
-CPU 사용량 (14일 P95): <span class="value">280m</span> / 요청: <span class="string">500m</span>
-Memory 사용량 (P95):   <span class="value">420Mi</span> / 요청: <span class="string">1Gi</span>
-
-<span class="comment"># 사용률</span>
-CPU Utilization:    <span class="value">56%</span>  ← 과잉 할당
-Memory Utilization: <span class="value">41%</span>  ← 과잉 할당</div>
+<span class="comment"># Recommender 기본값 (VPA 1.8)</span>
+CPU:    decaying histogram, 반감기 <span class="value">24h</span>
+Memory: 24h 피크 × <span class="value">8</span>개 구간 (8일)
+<span class="comment"># 예시 관측값</span>
+CPU P90:    <span class="value">260m</span> / 요청: <span class="string">500m</span>
+Memory P90: <span class="value">445Mi</span> / 요청: <span class="string">1Gi</span></div>
               </div>
               <div class="flow-detail" data-step="2" style="display:none;">
                 <h3 style="color: var(--yellow);">💡 추천값 생성</h3>
                 <div class="code-block" style="margin-top: 8px; font-size: 0.75rem;">
-<span class="comment"># kubectl describe vpa my-app-vpa</span>
+<span class="comment"># target = P90 × (1 + 0.15)</span>
 Recommendation:
   Container: my-app
     <span class="key">Lower Bound</span>:  CPU: <span class="value">200m</span>,  Mem: <span class="value">350Mi</span>
     <span class="key">Target</span>:       CPU: <span class="value">300m</span>,  Mem: <span class="value">512Mi</span>  ← 권장
     <span class="key">Upper Bound</span>:  CPU: <span class="value">450m</span>,  Mem: <span class="value">700Mi</span>
     <span class="key">Uncapped</span>:     CPU: <span class="value">300m</span>,  Mem: <span class="value">512Mi</span></div>
-                <p style="font-size: 0.8rem; color: var(--green); margin-top: 8px;">→ CPU 40% 절감, Memory 50% 절감 가능</p>
+                <p style="font-size: 0.8rem; color: var(--green); margin-top: 8px;">→ requests 기준 CPU 40%, Memory 50% 감소 (예시)</p>
               </div>
               <div class="flow-detail" data-step="3" style="display:none;">
                 <h3 style="color: var(--green);">🔄 Pod Requests 업데이트</h3>
                 <div class="code-block" style="margin-top: 8px; font-size: 0.75rem;">
-<span class="comment"># VPA가 Pod spec 수정</span>
+<span class="comment"># InPlaceOrRecreate: resize 시도, 실패 시 evict</span>
 resources:
   requests:
     cpu: <span class="string">500m</span> → <span class="value">300m</span>  <span class="comment"># -40%</span>
     memory: <span class="string">1Gi</span> → <span class="value">512Mi</span>  <span class="comment"># -50%</span>
   limits:
     cpu: <span class="string">1000m</span> → <span class="value">600m</span>
-    memory: <span class="string">2Gi</span> → <span class="value">1Gi</span></div>
+    memory: <span class="string">2Gi</span> → <span class="value">1Gi</span>
+<span class="comment"># limits는 기존 request:limit 비율 유지</span></div>
               </div>
               <div class="flow-detail" data-step="4" style="display:none;">
-                <h3 style="color: var(--blue);">🔍 Auto Mode 변경 감지</h3>
+                <h3 style="color: var(--blue);">🔍 노드에 빈자리 발생</h3>
                 <div class="code-block" style="margin-top: 8px; font-size: 0.75rem;">
-<span class="comment"># Karpenter가 Pod 변화 감지</span>
-Node pool capacity:
-  <span class="key">Before</span>: 3x c6g.large  (6 vCPU, 12Gi)
-  <span class="key">After</span>:  리소스 요청 감소 → 잉여 용량 발생
-
-<span class="comment"># Pod가 작아져서 더 작은 노드에 맞춤</span>
-Scheduling: c6g.medium으로 충분</div>
+<span class="comment"># 노드는 바로 바뀌지 않음</span>
+Nodes: 3x c6g.large (6 vCPU, 12Gi)
+requests 합계: 감소 → 노드마다 빈자리
+<span class="comment"># 직접 설치 Karpenter v1.14+: spec과</span>
+<span class="comment"># status.allocatedResources 중 큰 값으로 계산</span></div>
               </div>
               <div class="flow-detail" data-step="5" style="display:none;">
-                <h3 style="color: var(--cyan);">📦 최적 인스턴스 선택</h3>
+                <h3 style="color: var(--cyan);">📦 Consolidation 판단</h3>
                 <div class="code-block" style="margin-top: 8px; font-size: 0.75rem;">
-<span class="comment"># 인스턴스 다운사이징</span>
-<span class="key">Before</span>: c6g.large   ($0.068/h × 3) = <span class="string">$0.204/h</span>
-<span class="key">After</span>:  c6g.medium  ($0.034/h × 3) = <span class="value">$0.102/h</span>
-
-<span class="comment"># 시간당 절감</span>
-절감액: <span class="value">$0.102/h</span> (<span class="value">50%</span> 절감)
-월간:   <span class="value">~$73/mo</span> 절감</div>
+<span class="comment"># Pod를 옮길 수 있으면 검토</span>
+삭제: 남은 노드에 Pod가 모두 들어가면 1대 제거
+교체: 더 저렴한 노드 1대로 바꿀 수 있으면 교체
+<span class="comment"># Balanced: 절감액 대비 Pod 중단 비용 평가</span>
+<span class="comment"># PDB, Disruption Budget, do-not-disrupt 존중</span></div>
               </div>
               <div class="flow-detail" data-step="6" style="display:none;">
-                <h3 style="color: var(--green);">🗑️ Consolidation 수행</h3>
+                <h3 style="color: var(--green);">📏 결과 확인</h3>
                 <div class="code-block" style="margin-top: 8px; font-size: 0.75rem;">
-<span class="comment"># Karpenter Consolidation</span>
-감지: node-2 utilization < 30%
-행동: Pod를 node-1, node-3로 이동
-결과: node-2 <span class="string">제거</span>
-
-<span class="key">Before</span>: 3 nodes → <span class="value">After</span>: 2 nodes
-비용:   <span class="value">$0.068/h</span> 추가 절감</div>
-                <p style="font-size: 0.8rem; color: var(--green); margin-top: 8px;">→ 총 비용 절감: VPA + Consolidation = <strong>~67%</strong></p>
+<span class="comment"># 예시: us-east-1 On-Demand 가격 가정</span>
+<span class="key">Before</span>: 3x c6g.large ($0.068/h) = <span class="string">$0.204/h</span>
+<span class="key">After</span>:  2x c6g.large            = <span class="value">$0.136/h</span>
+절감: <span class="value">$0.068/h</span> (약 33%, 월 ~$50)
+<span class="comment"># 함께 볼 지표: Pod 재시작, Pending, 지연</span></div>
+                <p style="font-size: 0.8rem; color: var(--green); margin-top: 8px;">→ 실제 절감률은 워크로드와 NodePool 조건에 따라 다릅니다</p>
               </div>
             </div>
           </div>
@@ -1224,19 +1254,19 @@ Scheduling: c6g.medium으로 충분</div>
               <h4>Production Best Practices</h4>
               <ul>
                 <li><strong>CPU:</strong> request만 설정, limit 없음 - Burstable로 CPU throttling 방지</li>
-                <li><strong>Memory:</strong> request == limit - Guaranteed로 OOM 방지</li>
-                <li><strong>권장 패턴:</strong> CPU request only + Memory guaranteed</li>
+                <li><strong>Memory:</strong> request == limit, 다른 Pod의 메모리 압박으로 인한 eviction 위험 감소</li>
+                <li><strong>권장 패턴:</strong> CPU request only + Memory request == limit (Pod QoS는 Burstable)</li>
               </ul>
             </div>
             <div class="code-block" style="margin-top:16px;"><span class="code-label">Recommended Pattern</span><span class="key">resources</span>:
   <span class="key">requests</span>:
     <span class="key">cpu</span>: <span class="string">"500m"</span>        <span class="comment"># CPU request only</span>
-    <span class="key">memory</span>: <span class="string">"512Mi"</span>    <span class="comment"># Memory guaranteed</span>
+    <span class="key">memory</span>: <span class="string">"512Mi"</span>    <span class="comment"># Memory request == limit</span>
   <span class="key">limits</span>:
     <span class="comment"># cpu: (no limit)</span>    <span class="comment"># Allows bursting</span>
     <span class="key">memory</span>: <span class="string">"512Mi"</span>    <span class="comment"># Same as request</span></div>
             <div id="qos-recommendation" class="callout callout-success" style="margin-top:16px;">
-              <strong>현재 설정:</strong> CPU Burstable + Memory Guaranteed - 권장 패턴입니다!
+              <strong>현재 설정:</strong> CPU request만, Memory request == limit: 권장 패턴입니다 (Pod QoS는 Burstable).
             </div>
           </div>
         </div>
@@ -1249,8 +1279,8 @@ Scheduling: c6g.medium으로 충분</div>
     <!-- Slide 6: Cost Savings Case Study -->
     <div class="slide">
       <div class="slide-header">
-        <h1>비용 절감 사례 (Before/After)</h1>
-        <p class="subtitle">VPA + Auto Mode 최적화 실제 적용 결과</p>
+        <h1>비용 절감 계산 예시 (Before/After)</h1>
+        <p class="subtitle">가정: us-east-1 On-Demand, 730시간/월, 사용량 불변, Spot 미반영. 실제 고객 결과가 아닙니다</p>
       </div>
       <div class="slide-body">
         <div class="cost-comparison">
@@ -1258,7 +1288,7 @@ Scheduling: c6g.medium으로 충분</div>
             <h3><span>&#10006;</span> Before (최적화 전)</h3>
             <div class="cost-metric">
               <span class="cost-metric-label">Nodes</span>
-              <span class="cost-metric-value">20개 (m5.xlarge)</span>
+              <span class="cost-metric-value">20개 m5.xlarge (80 vCPU, 320GiB)</span>
             </div>
             <div class="cost-metric">
               <span class="cost-metric-label">CPU 활용률</span>
@@ -1270,48 +1300,48 @@ Scheduling: c6g.medium으로 충분</div>
             </div>
             <div class="cost-total">
               <div class="cost-total-label">월 비용</div>
-              <div class="cost-total-value" id="before-cost">$5,840</div>
+              <div class="cost-total-value" id="before-cost">$2,803</div>
             </div>
           </div>
           <div class="cost-panel after">
             <h3><span>&#10004;</span> After (최적화 후)</h3>
             <div class="cost-metric">
               <span class="cost-metric-label">Nodes</span>
-              <span class="cost-metric-value">8개 (m6g.large, c6g.xlarge 혼합)</span>
+              <span class="cost-metric-value">8개 m6g.xlarge (32 vCPU, 128GiB)</span>
             </div>
             <div class="cost-metric">
               <span class="cost-metric-label">CPU 활용률</span>
-              <span class="cost-metric-value" id="after-cpu">65%</span>
+              <span class="cost-metric-value" id="after-cpu">63%</span>
             </div>
             <div class="cost-metric">
               <span class="cost-metric-label">Memory 활용률</span>
-              <span class="cost-metric-value" id="after-mem">70%</span>
+              <span class="cost-metric-value" id="after-mem">75%</span>
             </div>
             <div class="cost-total">
               <div class="cost-total-label">월 비용</div>
-              <div class="cost-total-value" id="after-cost">$1,752</div>
+              <div class="cost-total-value" id="after-cost">$899</div>
             </div>
           </div>
         </div>
         <div class="savings-summary">
-          <h3>Total Savings</h3>
-          <div class="savings-pct" id="total-savings">70%</div>
+          <h3>예시 절감률</h3>
+          <div class="savings-pct" id="total-savings">68%</div>
           <div class="savings-breakdown">
             <div class="breakdown-item">
-              <h5>VPA 리소스 적정화</h5>
-              <div class="value">20-40%</div>
+              <h5>requests 적정화</h5>
+              <div class="value">노드 20 → 8</div>
             </div>
             <div class="breakdown-item">
-              <h5>Graviton (ARM) 전환</h5>
-              <div class="value">20%</div>
+              <h5>Graviton 단가</h5>
+              <div class="value">$0.192 → $0.154/h</div>
             </div>
             <div class="breakdown-item">
-              <h5>Spot 활용</h5>
-              <div class="value">60-70%</div>
+              <h5>Spot</h5>
+              <div class="value">이 예시에 미반영</div>
             </div>
             <div class="breakdown-item">
-              <h5>Consolidation</h5>
-              <div class="value">10-30%</div>
+              <h5>측정할 것</h5>
+              <div class="value">재시작, Pending, 지연</div>
             </div>
           </div>
         </div>
@@ -1321,7 +1351,7 @@ Scheduling: c6g.medium으로 충분</div>
     <!-- Slide 7: HPA — Horizontal Pod Autoscaler -->
     <div class="slide">
       <div class="slide-header">
-        <h1>HPA — Horizontal Pod Autoscaler</h1>
+        <h1>HPA: Horizontal Pod Autoscaler</h1>
         <p class="subtitle">CPU, Memory, Custom Metrics 기반 수평 확장</p>
       </div>
       <div class="slide-body">
@@ -1353,7 +1383,7 @@ Scheduling: c6g.medium으로 충분</div>
         <span class="key">averageUtilization:</span> <span class="number">80</span>  <span class="comment"># Memory 80%</span>
   <span class="key">behavior:</span>
     <span class="key">scaleDown:</span> { <span class="key">stabilizationWindowSeconds:</span> <span class="number">300</span> }
-    <span class="key">scaleUp:</span>:  { <span class="key">stabilizationWindowSeconds:</span> <span class="number">30</span> }</div>
+    <span class="key">scaleUp:</span>   { <span class="key">stabilizationWindowSeconds:</span> <span class="number">30</span> }</div>
               </div>
               <div class="tab-content" data-tab="hpa-custom">
                 <div class="code-block" style="font-size:.78rem;"><span class="comment"># Prometheus Adapter 설치 필요</span>
@@ -1390,15 +1420,15 @@ Scheduling: c6g.medium으로 충분</div>
                 <div class="card" style="border-left:3px solid var(--yellow); margin-bottom:10px;">
                   <h4 style="color:var(--yellow);">HPA 한계점</h4>
                   <ul style="font-size:.9rem; color:var(--text-secondary); line-height:1.8;">
-                    <li><strong>min: 1</strong> — Scale-to-Zero 불가 (비용 낭비)</li>
-                    <li><strong>Custom Metrics</strong> — Prometheus Adapter 별도 설치/관리 필요</li>
-                    <li><strong>AWS 통합</strong> — SQS, MSK 등 CloudWatch Adapter 별도 필요</li>
-                    <li><strong>PromQL 미지원</strong> — Adapter가 변환해야 하며 복잡도 증가</li>
-                    <li><strong>단일 HPA</strong> — Deployment당 1개 제한 (KEDA는 ScaledObject로 통합)</li>
+                    <li><strong>minReplicas ≥ 1</strong>: 기본적으로 Scale-to-Zero 불가 (HPAScaleToZero는 alpha feature gate)</li>
+                    <li><strong>Custom Metrics</strong>: Prometheus Adapter 별도 설치, 관리 필요</li>
+                    <li><strong>AWS 통합</strong>: SQS, MSK 등은 External metrics adapter 별도 필요</li>
+                    <li><strong>PromQL 직접 사용 불가</strong>: Adapter 규칙으로 변환해야 해서 복잡도 증가</li>
+                    <li><strong>대상당 HPA 1개</strong>: 같은 Deployment에 HPA를 여러 개 두면 서로 충돌 (KEDA는 ScaledObject 하나에 trigger 여러 개)</li>
                   </ul>
                 </div>
                 <div class="callout callout-info" style="font-size:.85rem;">
-                  <strong>KEDA가 해결하는 것:</strong> HPA를 직접 생성/관리하면서 60+ 외부 메트릭 소스를 네이티브로 지원하고 Scale-to-Zero까지 가능하게 합니다.
+                  <strong>KEDA가 해결하는 것:</strong> HPA를 직접 생성, 관리하면서 70개 이상의 스케일러를 지원하고 Scale-to-Zero까지 가능하게 합니다.
                 </div>
               </div>
             </div>
@@ -1441,7 +1471,7 @@ Scheduling: c6g.medium으로 충분</div>
     <!-- Slide 8: KEDA Overview & Architecture -->
     <div class="slide">
       <div class="slide-header">
-        <h1>KEDA — Event-Driven Autoscaling</h1>
+        <h1>KEDA: Event-Driven Autoscaling</h1>
         <p class="subtitle">HPA를 넘어서: 이벤트 기반 스케일링과 Scale-to-Zero</p>
       </div>
       <div class="slide-body">
@@ -1459,11 +1489,11 @@ Scheduling: c6g.medium으로 충분</div>
             <tr><th>항목</th><th>HPA (기본)</th><th>KEDA</th></tr>
           </thead>
           <tbody>
-            <tr><td>메트릭 소스</td><td>CPU / Memory만</td><td><strong>60+ 외부 스케일러</strong> (SQS, MSK, Prometheus 등)</td></tr>
-            <tr><td>최소 레플리카</td><td>min: 1</td><td><strong style="color:var(--accent-light)">min: 0</strong> (Scale-to-Zero → 비용 절감)</td></tr>
+            <tr><td>메트릭 소스</td><td>CPU / Memory만</td><td><strong>70+ 스케일러</strong> (SQS, Kafka, Prometheus 등)</td></tr>
+            <tr><td>최소 레플리카</td><td>min: 1 (기본)</td><td><strong style="color:var(--accent-light)">min: 0</strong> (Scale-to-Zero → 비용 절감)</td></tr>
             <tr><td>설정 방식</td><td>HPA 리소스 직접 관리</td><td>ScaledObject → HPA 자동 생성/관리</td></tr>
             <tr><td>Prometheus 연동</td><td>Prometheus Adapter 필요</td><td>네이티브 PromQL 지원</td></tr>
-            <tr><td>AWS 통합</td><td>CloudWatch Adapter 별도 설치</td><td>SQS, MSK, CloudWatch 스케일러 내장</td></tr>
+            <tr><td>AWS 통합</td><td>CloudWatch Adapter 별도 설치</td><td>SQS, Kafka(MSK IAM 포함), CloudWatch 스케일러 내장</td></tr>
           </tbody>
         </table>
         <div class="keda-benefit-grid">
@@ -1474,7 +1504,7 @@ Scheduling: c6g.medium으로 충분</div>
           </div>
           <div class="card">
             <div style="font-size:1.5rem">🔌</div>
-            <h5>60+ Scalers</h5>
+            <h5>70+ Scalers</h5>
             <p style="font-size:.75rem;color:var(--text-muted)">AWS, GCP, Azure, Kafka, Redis 등</p>
           </div>
           <div class="card">
@@ -1488,6 +1518,7 @@ Scheduling: c6g.medium으로 충분</div>
             <p style="font-size:.75rem;color:var(--text-muted)">GitOps 친화적 선언형 관리</p>
           </div>
         </div>
+        <p style="font-size:.8rem; color:var(--text-secondary); margin-top:6px;">KEDA v2.21 (2026-09-23)의 테스트 범위는 Kubernetes 1.34 ~ 1.36입니다. EKS 1.37 클러스터는 공식 테스트 범위 밖이므로 스테이징에서 먼저 검증합니다. KEDA는 EKS add-on이 아니며 Helm으로 설치합니다.</p>
         <a href="https://atomoh.gitbook.io/kubernetes-docs/autoscaling/01-keda" target="_blank" class="resource-link" style="margin-top:6px; display:inline-block; font-size:.8rem; color:var(--accent-light);">📖 더 알아보기: KEDA 실전 가이드</a>
       </div>
     </div>
@@ -1530,14 +1561,14 @@ Scheduling: c6g.medium으로 충분</div>
                 <div class="card highlight">
                   <h4 style="margin:0 0 6px">🎯 SQS 네이티브 스케일러</h4>
                   <ul style="font-size:.78rem; margin:0; padding-left:18px; line-height:1.7">
-                    <li><code>aws-sqs-queue</code> — Prometheus 불필요</li>
-                    <li><code>queueLength: "5"</code> — 메시지 5개당 Pod 1개</li>
+                    <li><code>aws-sqs-queue</code>: Prometheus 불필요</li>
+                    <li><code>queueLength: "5"</code>: 메시지 5개당 Pod 1개</li>
                     <li><strong>Scale-to-Zero</strong>: 큐 비어있으면 Pod 0</li>
-                    <li>IRSA 기반 인증 (<code>TriggerAuthentication</code>)</li>
+                    <li>IRSA 기반 인증 (<code>TriggerAuthentication</code>, <code>podIdentity.provider: aws</code>)</li>
                   </ul>
                 </div>
                 <div class="callout-info" style="font-size:.75rem; padding:8px 12px">
-                  💡 <strong>IRSA 설정 필수</strong>: TriggerAuthentication CRD로 SQS ReadOnly 권한 부여
+                  💡 <strong>IRSA 설정 필수</strong>: TriggerAuthentication의 <code>podIdentity.provider: aws</code>로 SQS 조회 권한 부여. <code>aws-eks</code>는 deprecated
                 </div>
               </div>
             </div>
@@ -1571,12 +1602,12 @@ Scheduling: c6g.medium으로 충분</div>
                   <ul style="font-size:.78rem; margin:0; padding-left:18px; line-height:1.7">
                     <li><code>prometheus</code> 스케일러로 Consumer Lag 모니터링</li>
                     <li><code>kafka_consumergroup_lag</code> 메트릭 활용</li>
-                    <li><code>threshold: "1000"</code> — Lag 1000당 Pod 1개</li>
-                    <li>기존 Prometheus 인프라 그대로 재사용</li>
+                    <li><code>threshold: "1000"</code>: Lag 1000당 Pod 1개</li>
+                    <li>대안: <code>kafka</code> 스케일러 + <code>sasl: aws_msk_iam</code> (KEDA에 <code>aws-msk</code> 타입은 없음)</li>
                   </ul>
                 </div>
                 <div class="callout-warning" style="font-size:.75rem; padding:8px 12px">
-                  ⚠️ <strong>MSK는 Scale-to-Zero 비권장</strong>: Consumer가 0이면 Lag 감지 불가 → minReplicaCount: 1 유지
+                  ⚠️ <strong>Scale-to-Zero 주의</strong>: 0에서 다시 뜰 때 consumer group rebalance와 첫 처리 지연이 생깁니다. 지연에 민감하면 minReplicaCount: 1을 유지합니다
                 </div>
               </div>
             </div>
@@ -1609,10 +1640,10 @@ Scheduling: c6g.medium으로 충분</div>
                 <div class="card highlight">
                   <h4 style="margin:0 0 6px">☁️ CloudWatch 직접 쿼리</h4>
                   <ul style="font-size:.78rem; margin:0; padding-left:18px; line-height:1.7">
-                    <li><code>aws-cloudwatch</code> 스케일러 — Prometheus 불필요</li>
+                    <li><code>aws-cloudwatch</code> 스케일러: Prometheus 불필요</li>
                     <li><code>RequestCountPerTarget</code> 메트릭</li>
                     <li>TargetGroup 단위 세밀한 제어</li>
-                    <li>IRSA로 CloudWatch ReadOnly 권한</li>
+                    <li>IRSA로 CloudWatch 조회 권한 (<code>cloudwatch:GetMetricData</code>)</li>
                   </ul>
                 </div>
                 <div class="callout-info" style="font-size:.75rem; padding:8px 12px">
@@ -1703,10 +1734,10 @@ Scheduling: c6g.medium으로 충분</div>
           <div class="checklist-section">
             <h4>VPA 설정</h4>
             <ul class="checklist">
-              <li><span class="check"></span> VPA를 Off 모드로 먼저 분석 (2주)</li>
+              <li><span class="check"></span> VPA를 Off 모드로 먼저 분석 (메모리 기본 창 8일 이상)</li>
               <li><span class="check"></span> 핵심 워크로드부터 VPA 적용</li>
               <li><span class="check"></span> CPU는 request만, Memory는 request=limit</li>
-              <li><span class="check"></span> Disruption Budget으로 안전한 교체</li>
+              <li><span class="check"></span> 적용은 Recreate 또는 InPlaceOrRecreate 명시 (Auto 사용 안 함)</li>
             </ul>
           </div>
           <div class="checklist-section">
@@ -1721,10 +1752,10 @@ Scheduling: c6g.medium으로 충분</div>
           <div class="checklist-section">
             <h4>KEDA 스케일링</h4>
             <ul class="checklist">
-              <li><span class="check"></span> IRSA로 AWS 서비스 인증 구성</li>
+              <li><span class="check"></span> TriggerAuthentication <code>podIdentity.provider: aws</code> 구성</li>
               <li><span class="check"></span> cooldownPeriod로 스케일링 진동 방지</li>
               <li><span class="check"></span> fallback 설정으로 메트릭 장애 대비</li>
-              <li><span class="check"></span> Scale to Zero는 Stateless만 적용</li>
+              <li><span class="check"></span> CPU/Memory는 VPA와 HPA 중 하나만 사용</li>
             </ul>
           </div>
           <div class="checklist-section">
@@ -1747,7 +1778,7 @@ Scheduling: c6g.medium으로 충분</div>
     <div class="slide">
       <div class="slide-header">
         <h1>추가 학습 리소스</h1>
-        <p class="subtitle">심화 학습 참고 자료 · <a href="version-update.md">2026-10-07 버전 검토·공식 출처</a></p>
+        <p class="subtitle">심화 학습 참고 자료, <a href="version-update.md">2026-10-15 버전 검토와 공식 출처</a></p>
       </div>
       <div class="slide-body">
         <div class="resource-grid">
@@ -1783,7 +1814,7 @@ Scheduling: c6g.medium으로 충분</div>
           </a>
           <a href="https://keda.sh/docs/" target="_blank" class="resource-card">
             <h4>KEDA 공식 문서</h4>
-            <p>Event-driven Autoscaling. 60+ 스케일러, ScaledObject/ScaledJob 구성 가이드.</p>
+            <p>Event-driven Autoscaling. 70+ 스케일러, ScaledObject와 ScaledJob 구성 가이드.</p>
             <span class="link-badge">keda.sh &#8594;</span>
           </a>
           <a href="https://atomoh.gitbook.io/kubernetes-docs/autoscaling/01-keda" target="_blank" class="resource-card">
@@ -1809,22 +1840,22 @@ Scheduling: c6g.medium으로 충분</div>
           <div class="summary-card">
             <div class="block-num">BLOCK 01</div>
             <h4>EKS Auto Mode 내부 아키텍처</h4>
-            <p>Auto Mode는 Karpenter 기반 - NodePool/NodeClass로 세밀한 제어 가능. 인스턴스 선택, Consolidation, Drift 처리 자동화.</p>
+            <p>Auto Mode는 AWS가 관리하는 Karpenter 기반 노드 관리. NodePool과 NodeClass로 제어하고, 직접 설치한 Karpenter(v1.15.0)와 API와 운영 책임이 다릅니다.</p>
           </div>
           <div class="summary-card">
             <div class="block-num">BLOCK 02</div>
             <h4>노드 라이프사이클 모니터링</h4>
-            <p>Prometheus 쿼리 + AlertManager로 노드 가시성 확보. Spot 인터럽트 대응, expireAfter 전략으로 Day-2 운영 안정화.</p>
+            <p>Pod, 노드, 이벤트 순서로 진단. Spot 회수 대응, expireAfter와 Disruption Budget으로 Day-2 운영 안정화.</p>
           </div>
           <div class="summary-card">
             <div class="block-num">BLOCK 03</div>
             <h4>3-Signal Correlation</h4>
-            <p>Exemplars + Derived Fields + tracesToLogs로 Logs/Metrics/Traces 상관분석. MTTR 단축 및 근본 원인 분석 가속화.</p>
+            <p>Exemplars, Derived Fields, tracesToLogsV2로 Logs, Metrics, Traces 상관분석. 근본 원인 분석 가속화.</p>
           </div>
           <div class="summary-card">
             <div class="block-num">BLOCK 04</div>
             <h4>VPA + KEDA + Auto Mode 최적화</h4>
-            <p>VPA로 리소스 최적화, KEDA로 이벤트 기반 스케일링(SQS/MSK/Istio RPS), Auto Mode가 최적 노드 선택.</p>
+            <p>VPA(InPlaceOrRecreate)로 requests 조정, KEDA로 이벤트 기반 스케일링, Auto Mode Consolidation으로 빈 노드 정리.</p>
           </div>
         </div>
       </div>
@@ -1838,7 +1869,7 @@ Scheduling: c6g.medium으로 충분</div>
         <div class="qa-feedback">
           <p>오늘 교육이 도움이 되셨나요?</p>
           <p class="highlight">피드백은 더 나은 콘텐츠를 만드는 데 큰 힘이 됩니다.</p>
-          <p style="margin-top:16px;font-size:.85rem;">Session: EKS Auto Mode & Observability (2 Hours)</p>
+          <p style="margin-top:16px;font-size:.85rem;">Session: EKS Auto Mode & Karpenter 운영 (2 Hours)</p>
         </div>
       </div>
     </div>
@@ -1847,7 +1878,7 @@ Scheduling: c6g.medium으로 충분</div>
     <div class="slide">
       <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:24px; text-align:center;">
         <h1 style="font-size:3rem; background:linear-gradient(135deg, var(--accent-light), var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Thank You</h1>
-        <p style="color:var(--text-secondary); font-size:1.1rem;">Block 4 — VPA, KEDA & 리소스 최적화 완료</p>
+        <p style="color:var(--text-secondary); font-size:1.1rem;">Block 4: VPA, KEDA, 리소스 최적화 완료</p>
         <p style="color:var(--text-muted); font-size:1rem; margin-top:8px;">수고하셨습니다! 🎉</p>
         <div style="display:flex; gap:16px; margin-top:20px;">
           <a href="index.html" class="btn btn-primary btn-sm" style="text-decoration:none;">← 목차로 돌아가기</a>
@@ -1868,20 +1899,21 @@ Scheduling: c6g.medium으로 충분</div>
       logoSrc: 'common/pptx-theme/images/logo_1.png',
       presenterNotes: {
         1: '세션 시작 슬라이드.\n\n자기소개 후 Block 4 개요 안내.\n리소스 최적화 — VPA, KEDA, 비용 관리를 다룹니다.',
-        2: 'VPA와 Auto Mode의 시너지를 강조하세요.\n- VPA: Pod 레벨 리소스 최적화\n- Auto Mode: 노드 레벨 최적화\n\n두 레이어 최적화로 실제 30-50% 비용 절감이 가능합니다.',
-        3: 'Off 모드부터 시작하는 것이 안전합니다.\n- 추천값만 확인하고 수동으로 적용\n- Auto 모드는 Pod 재시작 발생\n\nStateless 워크로드에만 Auto 적용하세요.',
-        4: 'VPA 시뮬레이터 시연 — 4개 슬라이더를 조절하며 추천값 변화를 확인.\n\n- CPU Request/Memory Request: 현재 설정값\n- CPU Usage/Memory Usage: 실제 사용량\n\nVPA 알고리즘 핵심:\n- CPU는 15% 헤드룸, Memory는 25% 헤드룸 (OOM 방지)\n- lowerBound: target의 50-60%\n- upperBound: target의 2-2.5배\n\n오른쪽 YAML은 실제 VPA recommendation 출력 형식.\n캔버스 차트로 Request vs Usage vs Target 비교를 시각적으로 확인.',
-        5: 'VPA가 requests를 조정하면 Karpenter가 적합한 노드를 자동 선택합니다.\n- updateMode: Off로 시작\n- 추천값 확인 후 점진적으로 Auto로 전환',
-        6: 'QoS 클래스별 특성을 설명하세요.\n- CPU: throttling만 발생 → Burstable 유리\n- Memory: OOMKill 위험 → Guaranteed 안전',
-        7: 'Before/After 비용 비교를 보여주세요.\n- 오버프로비저닝 환경에서 VPA + Auto Mode 적용\n- 30-50% 비용 절감 사례\n\n실제 고객 사례 기반입니다.',
-        8: 'KEDA가 HPA를 대체하는 것이 아니라 확장한다는 점을 강조하세요.\n- ScaledObject 생성 → KEDA가 자동으로 HPA 생성/관리\n- 60+ 스케일러: SQS, Kafka, Prometheus, CloudWatch 등\n- Scale to Zero: HPA는 min=1이지만 KEDA는 0까지 가능\n\n기존 Prometheus 모니터링 인프라를 그대로 활용할 수 있습니다.',
-        9: '각 AWS 서비스별 탭을 클릭하며 설명하세요.\n\nSQS: 큐 깊이 기반, Scale-to-Zero로 비용 절감\nMSK: Prometheus 스케일러로 Consumer Lag 모니터링\nALB: CloudWatch 직접 쿼리, RequestCountPerTarget 활용\n\nIRSA로 안전한 인증 구성이 핵심입니다.',
-        10: '슬라이더로 RPS를 조절하며 Pod 수 변화를 보여주세요.\n\n- threshold 50 = Pod당 50 RPS 처리\n- 200 RPS → 4 Pods, 500 RPS → 10 Pods (max)\n- 0 RPS → Scale to Zero 가능\n\n고급 패턴: Error Rate, Latency, Circuit Breaker, Cron 조합',
-        11: '체크리스트를 하나씩 클릭하며 확인하세요.\n\n도입 순서가 중요합니다:\n- 모니터링 구축\n- 현재 상태 분석\n- 리소스 최적화\n- 자동화 적용',
-        12: '추가 학습 리소스를 안내하세요.\n- AWS 공식 문서\n- Karpenter GitBook\n- KEDA 공식 문서\n\n실습 환경은 eksctl로 쉽게 구성 가능합니다.',
-        13: '4개 블록을 복습합니다.\n- Architecture: Auto Mode 구조\n- Lifecycle: Provisioner 동작\n- Observability: 모니터링\n- 이 블록: VPA 최적화 + KEDA 이벤트 기반 스케일링',
-        14: '자주 나오는 질문:\n- Auto Mode 비용: 추가 없음\n- 기존 MNG 전환: 점진적 마이그레이션 권장\n- VPA 프로덕션 안정성: Off 모드로 시작하면 안전\n- KEDA vs HPA: KEDA는 HPA 위에 동작, 공존 가능',
-        15: '수고하셨습니다.\n\n추가 질문은 Slack 채널(#eks-auto-mode)에서 받습니다.\n실습 후 궁금한 점 있으면 언제든 문의하세요.'
+        2: '{timing: 1.5min} [요약] VPA는 Pod requests를, Auto Mode는 노드를 다룹니다. requests가 줄면 노드에 빈자리가 생기고 Consolidation이 삭제나 교체를 판단합니다.\n\nVPA 기본값: CPU는 24시간 반감기 histogram, Memory는 일별 피크 8일. 같은 CPU, Memory 메트릭으로 HPA와 함께 쓰면 서로 충돌하므로 하나만 고릅니다. 절감률은 환경마다 다르므로 수치를 약속하지 않습니다. {cue: transition} 적용 방식을 고르는 updateMode로 갑니다.',
+        3: '{timing: 2.5min} [요약] Off로 관찰, Initial은 새 Pod에만, Recreate는 evict 후 재생성(VPA 1.5부터 기본), InPlaceOrRecreate는 재시작 없이 resize를 먼저 시도합니다.\n\nInPlaceOrRecreate는 VPA 1.6에서 GA이고 Kubernetes 1.35부터 in-place resize가 GA입니다. 노드에 자리가 없거나 QoS class가 바뀌어야 하면 evict로 전환됩니다. Auto는 deprecated이며 지금은 Recreate와 같습니다. evict하지 않는 InPlace 모드는 VPA 1.8에서도 alpha입니다. {cue: transition} 추천값이 어떻게 계산되는지 봅니다.',
+        4: '{timing: 2min} [요약] 슬라이더로 requests와 사용량 P90을 바꿔 target 변화를 봅니다.\n\nVPA 1.8 기본 target은 CPU, Memory 모두 P90 사용량에 15% 여유를 더한 값입니다. lowerBound는 P50, upperBound는 P95 기반이며 관찰 기간이 짧을수록 범위가 넓어집니다. 화면의 bound는 교육용 근사입니다. 최소 추천값은 CPU 25m, Memory 250Mi입니다. {cue: transition} 추천값이 노드 비용으로 이어지는 흐름을 봅니다.',
+        5: '{timing: 2.5min} [요약] VPA가 requests를 줄여도 노드는 바로 바뀌지 않습니다. 빈자리가 생기면 Consolidation이 삭제나 더 저렴한 노드로의 교체를 판단합니다.\n\nPlay로 여섯 단계를 진행하세요. 직접 설치한 Karpenter는 v1.14부터 spec과 status.allocatedResources 중 큰 값으로 Pod 크기를 계산해 in-place resize 중에도 맞게 판단합니다. Auto Mode 내부 동작은 AWS 문서에 따로 설명이 없으므로 단정하지 않습니다. 예시 가격은 us-east-1 On-Demand 가정입니다. {cue: transition} requests와 limits 설정 원칙을 봅니다.',
+        6: '{timing: 1.5min} [요약] CPU는 request만 두어 throttling을 피하고, Memory는 request와 limit을 같게 두어 노드 메모리 압박을 줄입니다. 이 조합의 Pod QoS는 Burstable입니다.\n\nGuaranteed는 모든 컨테이너의 CPU와 Memory가 request == limit일 때만입니다. in-place resize는 QoS class를 바꾸지 못한다는 점도 함께 말합니다. {cue: transition} 계산 예시로 비용을 봅니다.',
+        7: '{timing: 1.5min} [요약] 실제 고객 사례가 아닌 계산 예시입니다. us-east-1 On-Demand, 730시간, 사용량 불변, Spot 미반영을 가정합니다.\n\n20대 m5.xlarge($0.192/h)는 월 약 $2,803, 8대 m6g.xlarge($0.154/h)는 월 약 $899로 약 68%입니다. 사용량 20 vCPU, 96GiB를 그대로 두면 CPU 약 63%, Memory 75%입니다. 실제로는 Pod 재시작, Pending, 지연을 함께 측정해야 합니다. {cue: transition} 수평 확장인 HPA로 넘어갑니다.',
+        8: '{timing: 1min} [요약] HPA는 CPU, Memory와 Custom, External 메트릭으로 replicas를 계산합니다. 기본적으로 0까지 줄이지 못하고 외부 메트릭은 adapter가 필요합니다.\n\n같은 대상에 HPA를 여러 개 두면 충돌합니다. HPAScaleToZero는 alpha feature gate입니다. {cue: transition} 이 한계를 보완하는 KEDA를 봅니다.',
+        9: '{timing: 1.5min} [요약] KEDA는 HPA를 대체하지 않고 ScaledObject로 HPA를 만들어 관리합니다. 70개 이상의 스케일러와 Scale-to-Zero를 지원합니다.\n\nKEDA v2.21(2026-09-23)은 Kubernetes 1.34 ~ 1.36에서 테스트되었습니다. EKS 1.37은 공식 테스트 범위 밖이므로 스테이징에서 먼저 검증하세요. KEDA와 VPA 모두 EKS add-on이 아니며 Helm으로 설치합니다. {cue: transition} AWS 메트릭별 예제를 봅니다.',
+        10: '{timing: 2min} [요약] SQS는 aws-sqs-queue, Kafka lag는 prometheus 또는 kafka 스케일러, ALB는 aws-cloudwatch 스케일러를 씁니다.\n\n인증은 TriggerAuthentication의 podIdentity.provider: aws(IRSA)를 사용합니다. aws-eks provider는 deprecated입니다. KEDA에 aws-msk 타입은 없고 MSK IAM은 kafka 스케일러의 sasl: aws_msk_iam으로 설정합니다. Scale-to-Zero는 재시작 지연과 rebalance를 감수할 때만 씁니다. {cue: transition} Istio RPS 기반 예제를 봅니다.',
+        11: '{timing: 1min} [요약] 슬라이더로 RPS를 바꿔 Pod 수 변화를 봅니다. threshold 50은 Pod당 50 RPS입니다.\n\n200 RPS는 4 Pods, 500 RPS는 max 10 Pods입니다. 0 RPS에서 0까지 줄이면 첫 요청이 콜드 스타트를 겪습니다. Error rate나 latency trigger를 함께 두는 패턴도 소개합니다. {cue: transition} 도입 체크리스트로 정리합니다.',
+        12: '{timing: 1.5min} [요약] 관찰, 분석, 적용, 자동화 순서로 도입합니다.\n\nVPA는 Off로 최소 8일 이상 관찰하고, 적용 시 Recreate 또는 InPlaceOrRecreate를 명시합니다. CPU와 Memory는 VPA와 HPA 중 하나만 맡깁니다. KEDA 인증은 podIdentity.provider: aws를 씁니다. {cue: transition} 참고 자료를 안내합니다.',
+        13: '{timing: 0.5min} [요약] 공식 문서와 버전 검토 문서를 안내합니다.\n\n2026-10-15 기준: EKS 1.37, 직접 설치 Karpenter v1.15.0, VPA 1.8.0, KEDA v2.21.0. Auto Mode는 AWS가 관리하므로 Karpenter 버전을 고르지 않습니다. {cue: transition} 전체 과정을 요약합니다.',
+        14: '{timing: 1min} [요약] 네 블록을 복습합니다: Auto Mode와 직접 설치 Karpenter의 차이, 노드 라이프사이클 진단, 3-Signal 상관분석, VPA와 KEDA와 Consolidation의 조합.\n\n각 블록의 핵심 판단 기준을 한 문장씩 다시 말하고 질문으로 넘어갑니다.',
+        15: '자주 나오는 질문:\n- Auto Mode 비용: EC2 비용에 더해 인스턴스 유형별 Auto Mode 관리 비용이 있습니다 (2026-07부터 GPU 계열 인하)\n- 기존 MNG 전환: 워크로드별로 점진적 이전 권장\n- VPA 프로덕션 적용: Off로 관찰한 뒤 InPlaceOrRecreate 검토\n- KEDA vs HPA: KEDA는 HPA를 만들어 관리하므로 같은 대상에 별도 HPA를 두지 않습니다',
+        16: '수고하셨습니다. 목차로 돌아가 다른 블록의 실습 링크와 버전 검토 문서를 안내하세요.'
       },
       onSlideChange: (index, slide) => {
         // Trigger canvas redraw when entering slide 4 (VPA simulator)
@@ -1945,13 +1977,12 @@ Scheduling: c6g.medium으로 충분</div>
       const memUse = parseInt(document.getElementById('mem-usage').value);
 
       // Calculate VPA recommendations (realistic VPA algorithm approximation)
-      // CPU: P95-based target ≈ usage × 1.15 (CPU throttle is non-fatal)
-      // Memory: peak-based target ≈ usage × 1.25 (OOM kill is destructive)
-      const cpuRec = Math.max(100, Math.round(cpuUse * 1.15));
-      const memRec = Math.max(128, Math.round(memUse * 1.25));
+      // VPA 1.8 defaults: target = P90 usage x (1 + 0.15 margin) for both CPU and memory
+      // minimums: 25m CPU, 250Mi memory (pod-recommendation-min-*)
+      const cpuRec = Math.max(25, Math.round(cpuUse * 1.15));
+      const memRec = Math.max(250, Math.round(memUse * 1.15));
 
-      // lowerBound: ~50-60% of target (VPA's minimum safe recommendation)
-      // upperBound: ~2-3x of target (VPA's burst ceiling)
+      // lowerBound (P50) / upperBound (P95) depend on the histogram and confidence; rough teaching approximation
       const cpuLower = Math.max(50, Math.round(cpuRec * 0.5));
       const cpuUpper = Math.round(cpuRec * 2.5);
       const memLower = Math.max(64, Math.round(memRec * 0.6));
@@ -2177,7 +2208,7 @@ recommendation:
 
         if (cpuBurstable && memGuaranteed) {
           recEl.className = 'callout callout-success';
-          recEl.innerHTML = '<strong>현재 설정:</strong> CPU Burstable + Memory Guaranteed - 권장 패턴입니다!';
+          recEl.innerHTML = '<strong>현재 설정:</strong> CPU request만, Memory request == limit: 권장 패턴입니다 (Pod QoS는 Burstable).';
         } else if (qosClass === 'besteffort') {
           recEl.className = 'callout callout-danger';
           recEl.innerHTML = '<strong>경고:</strong> BestEffort는 리소스 경쟁 시 먼저 종료됩니다. Request를 설정하세요.';
@@ -2216,13 +2247,13 @@ recommendation:
       const afterMemEl = document.getElementById('after-mem');
 
       // Animate counters
-      animateValue(beforeCostEl, 0, 5840, 1500, '$');
-      animateValue(afterCostEl, 0, 1752, 1500, '$');
-      animateValue(savingsEl, 0, 70, 2000, '', '%');
+      animateValue(beforeCostEl, 0, 2803, 1500, '$');
+      animateValue(afterCostEl, 0, 899, 1500, '$');
+      animateValue(savingsEl, 0, 68, 2000, '', '%');
       animateValue(beforeCpuEl, 0, 25, 1200, '', '%');
-      animateValue(afterCpuEl, 0, 65, 1200, '', '%');
+      animateValue(afterCpuEl, 0, 63, 1200, '', '%');
       animateValue(beforeMemEl, 0, 30, 1200, '', '%');
-      animateValue(afterMemEl, 0, 70, 1200, '', '%');
+      animateValue(afterMemEl, 0, 75, 1200, '', '%');
     }
 
     function animateValue(el, start, end, duration, prefix = '', suffix = '') {

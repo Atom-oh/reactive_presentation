@@ -75,14 +75,14 @@ Drift·Spot·노드 정리로 더 일찍 교체될 수 있습니다. PDB는 Pod 
 
 [조회 명령과 결과 읽는 법 →](02-node-lifecycle.html#4)
 
-최신 검토 기준은 **2026-10-07**입니다. EKS **1.37**, 직접 설치한 Karpenter **v1.14.1**을 확인했습니다. Karpenter 공식 호환성 표는 Kubernetes **1.37에 Karpenter 1.15.x**를 요구합니다 (2026-10-12 재확인). v1.14.1은 1.36까지 해당하므로, 1.37 클러스터에 직접 설치한다면 v1.15 업그레이드 안내를 먼저 확인합니다.
+최신 검토 기준은 **2026-10-15**입니다. EKS **1.37**, 직접 설치한 Karpenter **v1.15.0**(2026-10-10 출시)을 확인했습니다. Karpenter 공식 호환성 표는 Kubernetes **1.37에 Karpenter 1.15.x**를 요구합니다. 이 조건은 직접 설치한 Karpenter에만 해당하며, Auto Mode는 AWS가 관리하므로 Karpenter 버전을 고르지 않습니다. v1.14.1은 1.36까지 해당하므로, v1.14.1에서 올라온다면 v1.15 업그레이드 안내의 메트릭 label 변경과 Node Repair 동작 변경을 먼저 확인합니다. Auto Mode는 2026-10부터 NodeClass `advancedCompute`로 kubelet, kernel sysctl, hugepages를 조정할 수 있습니다.
 
 ## 최신 내용 중 먼저 기억할 세 가지
 
 | 내용 | 쉬운 설명 | 적용 범위 |
 |---|---|---|
-| Balanced | 절감 효과와 Pod를 다시 띄우는 부담을 함께 봄 | EKS 1.37의 새 Auto Mode 풀 기본값. 직접 설치한 Karpenter v1.14는 명시적으로 선택 |
-| Capacity Buffers API | 여유 용량을 선언하는 별도 방식 | 직접 설치한 Karpenter v1.14에서 v1beta1. 더미 Pod 예제와 구분하며 Auto Mode 지원을 추정하지 않음 |
+| Balanced | 절감 효과와 Pod를 다시 띄우는 부담을 함께 봄 | EKS 1.37의 새 Auto Mode 풀 기본값. 직접 설치한 Karpenter v1.15도 기본값이 WhenEmptyOrUnderutilized라 명시적으로 선택 |
+| Capacity Buffers API | 여유 용량을 선언하는 별도 방식 | 직접 설치한 Karpenter v1.14에서 v1beta1, v1.15도 `CapacityBuffer` feature gate(alpha)로 사용. 더미 Pod 예제와 구분하며 Auto Mode 지원을 추정하지 않음 |
 | Controller + CRD | 동작하는 프로그램과 설정 형식을 함께 업데이트 | 직접 설치한 Karpenter 업그레이드. Auto Mode에 Helm 업그레이드를 적용하는 절차가 아님 |
 
 [릴리스·호환성·공식 출처 확인 →](version-update.md)

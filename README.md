@@ -11,9 +11,9 @@ PPT 대신 HTML/CSS/JS로 16:9 슬라이드를 구성하며, Canvas 애니메이
 
 | 슬라이드 | 주제 | 시간 | 슬라이드 수 | 인터랙티브 |
 |---------|------|------|-----------|-----------|
-| [EKS Auto Mode & Observability](eks-observability-ops/) | EKS Auto Mode 아키텍처, 노드 모니터링, Grafana 상관분석, VPA 최적화 | 2h | 62장 | 10 Canvas, 12 퀴즈 |
+| [EKS Auto Mode & Karpenter 운영](eks-observability-ops/) | Auto Mode와 직접 설치 Karpenter 비교, 노드 라이프사이클, Grafana 상관분석, VPA와 KEDA 최적화 | 2h | 62장 | 10 Canvas, 9 퀴즈 |
 
-EKS Auto Mode·Karpenter [버전 검토 및 공식 출처](eks-observability-ops/version-update.md) (2026-10-07): EKS **1.37**, Karpenter **v1.14.1** (Kubernetes 1.37에 직접 설치할 때는 공식 호환성 표 기준 **1.15.x** 필요, 2026-10-12 재확인). Auto Mode의 관리형 업데이트와 직접 설치한 Karpenter의 호환성·업그레이드 절차를 구분합니다.
+EKS Auto Mode·Karpenter [버전 검토 및 공식 출처](eks-observability-ops/version-update.md) (2026-10-15): EKS **1.37**, 직접 설치한 Karpenter **v1.15.0** (Kubernetes 1.37은 공식 호환성 표 기준 **1.15.x** 필요, Auto Mode는 AWS가 관리해 버전을 지정하지 않음). Auto Mode의 관리형 업데이트와 직접 설치한 Karpenter의 호환성·업그레이드 절차를 구분합니다.
 
 > 새로운 프레젠테이션이 추가되면 위 표와 `index.html` 허브 페이지에 카드를 추가합니다.
 
@@ -32,7 +32,7 @@ reactive_presentation/
 │   ├── animation-utils.js                 #   Canvas 드로잉 프리미티브
 │   └── quiz-component.js                  #   퀴즈 자동 채점
 │
-└── eks-observability-ops/                 # 프레젠테이션: EKS Auto Mode & Observability
+└── eks-observability-ops/                 # 프레젠테이션: EKS Auto Mode & Karpenter 운영
     ├── index.html                         #   목차 페이지 (블록별 타임라인)
     ├── 01-architecture.html               #   Block 1: 내부 아키텍처 (35분, 15 slides)
     ├── 02-node-lifecycle.html             #   Block 2: 노드 라이프사이클 (25분, 10 slides)

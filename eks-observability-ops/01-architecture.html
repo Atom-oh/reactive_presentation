@@ -49,6 +49,8 @@
     #nodepool-basics:has(details[open]) > .learn-callout { display: none; }
     .slide-body:has(#nodeclass-builder[open]) > .learn-grid,
     .slide-body:has(#nodeclass-builder[open]) > .learn-callout { display: none; }
+    .slide-body:has(#nodeclass-advanced[open]) > .learn-callout, .slide-body:has(#nodeclass-advanced[open]) > #nodeclass-builder, .slide-body:has(#nodeclass-builder[open]) > #nodeclass-advanced { display: none; }
+    #nodeclass-advanced table { font-size: .8rem; }
     #instance-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .65rem; }
     #instance-grid .instance-box { display: block; margin: 0; padding: .8rem; font-size: 1rem; text-align: center; }
 
@@ -299,15 +301,15 @@
     <div class="meta">
       <span class="badge badge-blue">Karpenter 기반</span>
       <span class="badge badge-green">관리형 노드</span>
-      <span class="badge badge-yellow">EKS 1.37 · Karpenter v1.14.1</span>
-      <a href="version-update.md" style="color:var(--accent-light)">2026-10-07 검토, 1.37은 Karpenter 1.15.x 필요 · 공식 출처</a>
+      <span class="badge badge-yellow">EKS 1.37 · 직접 설치 Karpenter v1.15.0</span>
+      <a href="version-update.md" style="color:var(--accent-light)">2026-10-15 검토, 직접 설치 시 1.37은 Karpenter 1.15.x 필요 (Auto Mode는 AWS 관리) · 공식 출처</a>
     </div>
   </div>
 
   <!-- Slide 2: Auto Mode란? -->
   <div class="slide ">
     <div class="slide-header"><h1>노드는 자동으로, 앱 정책은 우리가</h1><p class="subtitle">Karpenter의 역할과 Auto Mode의 관리 범위</p></div>
-    <div class="slide-body learn-body"><div class="learn-grid"><div class="card learn-card"><h3>Karpenter의 역할</h3><p>배치되지 못한 Pod에 맞는<br><strong>노드를 골라 추가</strong>합니다.</p><p>조건이 맞으면 노드를 정리해<br>불필요한 비용을 줄입니다.</p></div><div class="card learn-card"><h3>Auto Mode에서 AWS가 할 일</h3><p>Karpenter 기반 노드 관리와<br><strong>OS·주요 인프라 구성 요소</strong>를 관리합니다.</p><p>Controller 설치·패치 부담을 줄입니다.</p></div><div class="card learn-card"><h3>우리 팀이 할 일</h3><p>앱에 필요한 CPU·메모리,<br><strong>배치 조건과 중단 허용 범위</strong>를 정합니다.</p><p>앱의 가용성은 함께 설계해야 합니다.</p></div></div><div class="learn-callout"><strong>Pod = 앱 실행 단위 · Node = Pod가 실행되는 서버.</strong><br>Auto Mode를 이해할 때는 “무엇을 자동화하나”와 “누가 관리하나”를 함께 보세요.</div><details class="learn-detail"><summary>최신 버전은 무엇을 의미하나요?</summary><p>EKS: <strong>1.37</strong> · 직접 설치한 Karpenter: <strong>v1.14.1</strong> (2026-10-07 확인).</p><p>Auto Mode에 별도 Helm 버전을 지정하지 않습니다. 직접 설치한 Karpenter의 1.37 호환성은 공식 표에 아직 없습니다. <a href="version-update.md">공식 출처·변경 사항</a></p></details></div>
+    <div class="slide-body learn-body"><div class="learn-grid"><div class="card learn-card"><h3>Karpenter의 역할</h3><p>배치되지 못한 Pod에 맞는<br><strong>노드를 골라 추가</strong>합니다.</p><p>조건이 맞으면 노드를 정리해<br>불필요한 비용을 줄입니다.</p></div><div class="card learn-card"><h3>Auto Mode에서 AWS가 할 일</h3><p>Karpenter 기반 노드 관리와<br><strong>OS·주요 인프라 구성 요소</strong>를 관리합니다.</p><p>Controller 설치·패치 부담을 줄입니다.</p></div><div class="card learn-card"><h3>우리 팀이 할 일</h3><p>앱에 필요한 CPU·메모리,<br><strong>배치 조건과 중단 허용 범위</strong>를 정합니다.</p><p>앱의 가용성은 함께 설계해야 합니다.</p></div></div><div class="learn-callout"><strong>Pod = 앱 실행 단위 · Node = Pod가 실행되는 서버.</strong><br>Auto Mode를 이해할 때는 “무엇을 자동화하나”와 “누가 관리하나”를 함께 보세요.</div><details class="learn-detail"><summary>최신 버전은 무엇을 의미하나요?</summary><p>EKS: <strong>1.37</strong> · 직접 설치한 Karpenter: <strong>v1.15.0</strong> (2026-10-15 확인).</p><p>Auto Mode에 별도 Helm 버전을 지정하지 않습니다. 직접 설치한 Karpenter는 공식 호환성 표 기준 Kubernetes 1.37에 1.15.x가 필요합니다. <a href="version-update.md">공식 출처·변경 사항</a></p></details></div>
   </div>
 
   <!-- Slide 3: Auto Mode vs MNG vs Fargate -->
@@ -330,13 +332,14 @@
           <table>
             <tr><th>특징</th><td>Karpenter 기반, AWS 관리형, 인스턴스 다양화</td></tr>
             <tr><th>스케일링</th><td>Balanced 기본 정책 (EKS 1.37 신규 풀), 수요 기반 프로비저닝</td></tr>
-            <tr><th>비용</th><td>EC2 + Auto Mode 관리 비용, 커스텀 풀에서 Spot 활용</td></tr>
+            <tr><th>비용</th><td>EC2 + Auto Mode 관리 비용 (2026-07부터 GPU 계열 인하), 커스텀 풀에서 Spot 활용</td></tr>
+            <tr><th>2026 추가 기능</th><td>NodeClass advancedCompute, EFA 인터페이스, ARC zonal shift 대응, EC2 상태 검사 실패 노드 자동 교체</td></tr>
             <tr><th>적합 워크로드</th><td>가변적 워크로드, 다양한 인스턴스 요구사항</td></tr>
           </table>
         </div>
       </div>
 
-<div class="compare-content" data-compare="self-karpenter"><div class="card learn-card"><h3>설정 자유도와 운영 책임을 함께 가져갑니다</h3><table><tr><th>팀이 관리</th><td>Controller · CRD · IAM · AMI 선택/업데이트</td></tr><tr><th>노드 설정</th><td>NodePool + EC2NodeClass</td></tr><tr><th>잘 맞는 경우</th><td>AMI와 노드 구성을 직접 제어해야 할 때</td></tr><tr><th>업그레이드</th><td>v1.14.1 · Controller와 CRD를 함께 확인</td></tr></table></div></div>
+<div class="compare-content" data-compare="self-karpenter"><div class="card learn-card"><h3>설정 자유도와 운영 책임을 함께 가져갑니다</h3><table><tr><th>팀이 관리</th><td>Controller · CRD · IAM · AMI 선택/업데이트</td></tr><tr><th>노드 설정</th><td>NodePool + EC2NodeClass</td></tr><tr><th>잘 맞는 경우</th><td>AMI와 노드 구성을 직접 제어해야 할 때</td></tr><tr><th>업그레이드</th><td>v1.15.0 · Controller와 CRD를 함께 확인 (1.37은 1.15.x 필요)</td></tr></table></div></div>
       <div class="compare-content" data-compare="mng">
         <div class="card">
           <h3>Managed Node Group</h3>
@@ -519,6 +522,31 @@
         </div>
       </div>
       <p>예제의 <code>network-type</code>은 직접 붙인 subnet 태그입니다. Private subnet에는 필요한 NAT 또는 VPC endpoint 연결도 준비해야 합니다.</p>
+      </details>
+      <details class="learn-detail" id="nodeclass-advanced"><summary>2026-10 추가: advancedCompute로 노드 설정 조정하기</summary>
+      <div class="columns">
+        <div>
+          <table>
+            <tr><th>kubelet</th><td>maxPods, podPidsLimit, eviction, 컨테이너 로그 회전, allowedUnsafeSysctls</td></tr>
+            <tr><th>kernel.sysctl</th><td>지원 목록의 항목만 허용 (예: net.core.somaxconn, vm.max_map_count, ARP cache)</td></tr>
+            <tr><th>hugepages</th><td>2Mi/1Gi 고정 예약 또는 THP 정책. Pod는 hugepages-2Mi 등을 요청</td></tr>
+          </table>
+          <p>변경하면 기존 노드는 <strong>Drift로 교체</strong>되고 새 노드부터 반영됩니다. static hugepages와 EFA는 같은 NodeClass에 함께 쓸 수 없습니다.</p>
+        </div>
+        <div class="code-block"><span class="comment"># 필요한 항목만 지정</span>
+<span class="key">spec</span>:
+  <span class="key">advancedCompute</span>:
+    <span class="key">kubelet</span>:
+      <span class="key">maxPods</span>: 60   <span class="comment"># 1-110</span>
+    <span class="key">kernel</span>:
+      <span class="key">sysctl</span>:
+        <span class="key">net.core.somaxconn</span>: 4096
+    <span class="key">hugepages</span>:
+      <span class="key">pages</span>:
+        - <span class="key">size</span>: <span class="string">"2Mi"</span>
+          <span class="key">count</span>: 512</div>
+      </div>
+      <p><a href="https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html#kubelet-config">공식 문서: NodeClass kubelet, sysctl, hugepages</a></p>
       </details>
     </div>
   </div>
@@ -777,7 +805,7 @@
   <!-- Slide 12: WhenEmpty vs WhenEmptyOrUnderutilized -->
   <div class="slide ">
     <div class="slide-header"><h1>조금 싸져도 Pod를 옮길까요?</h1><p class="subtitle">상황을 고르면 세 가지 Consolidation 정책을 비교할 수 있습니다</p></div>
-    <div class="slide-body learn-body"><div id="policy-lab"><div class="learn-controls"><button class="btn" data-scenario="empty" aria-pressed="false">빈 노드</button><button class="btn" data-scenario="small" aria-pressed="true">작은 절감 · 큰 중단</button><button class="btn" data-scenario="large" aria-pressed="false">큰 절감 · 작은 중단</button></div><p id="policy-scenario-description" class="learn-note" style="margin:1rem 0" aria-live="polite"></p><div class="learn-grid"><div class="card learn-card"><h3>비었을 때만</h3><span class="learn-api">WhenEmpty</span><p>실행 중인 일반 워크로드가 없는 노드를 정리합니다.</p><span class="learn-verdict" data-policy-result="0"></span></div><div class="card learn-card"><h3>절감 기회가 있으면</h3><span class="learn-api">WhenEmptyOrUnderutilized</span><p>Pod를 옮길 수 있고 더 저렴하게 운영할 수 있으면 통합을 검토합니다.</p><span class="learn-verdict" data-policy-result="1"></span></div><div class="card learn-card"><h3>절감과 중단을 함께</h3><span class="learn-api">Balanced</span><p>비용 절감과 Pod 중단 비용을 함께 평가합니다.</p><span class="learn-verdict" data-policy-result="2"></span></div></div></div><div class="learn-callout"><strong>EKS 1.37의 새 Auto Mode NodePool 기본값은 Balanced.</strong><br>직접 설치한 Karpenter v1.14에서는 정책을 명시적으로 선택합니다.</div><p class="learn-note">교육용 정성 비교입니다. 실제 결정은 배치 가능성, PDB, 교체 예산 등에도 영향을 받습니다.</p></div>
+    <div class="slide-body learn-body"><div id="policy-lab"><div class="learn-controls"><button class="btn" data-scenario="empty" aria-pressed="false">빈 노드</button><button class="btn" data-scenario="small" aria-pressed="true">작은 절감 · 큰 중단</button><button class="btn" data-scenario="large" aria-pressed="false">큰 절감 · 작은 중단</button></div><p id="policy-scenario-description" class="learn-note" style="margin:1rem 0" aria-live="polite"></p><div class="learn-grid"><div class="card learn-card"><h3>비었을 때만</h3><span class="learn-api">WhenEmpty</span><p>실행 중인 일반 워크로드가 없는 노드를 정리합니다.</p><span class="learn-verdict" data-policy-result="0"></span></div><div class="card learn-card"><h3>절감 기회가 있으면</h3><span class="learn-api">WhenEmptyOrUnderutilized</span><p>Pod를 옮길 수 있고 더 저렴하게 운영할 수 있으면 통합을 검토합니다.</p><span class="learn-verdict" data-policy-result="1"></span></div><div class="card learn-card"><h3>절감과 중단을 함께</h3><span class="learn-api">Balanced</span><p>비용 절감과 Pod 중단 비용을 함께 평가합니다.</p><span class="learn-verdict" data-policy-result="2"></span></div></div></div><div class="learn-callout"><strong>EKS 1.37의 새 Auto Mode NodePool 기본값은 Balanced.</strong><br>직접 설치한 Karpenter v1.15도 기본값이 WhenEmptyOrUnderutilized이므로 정책을 명시적으로 선택합니다.</div><p class="learn-note">교육용 정성 비교입니다. 실제 결정은 배치 가능성, PDB, 교체 예산 등에도 영향을 받습니다.</p></div>
   </div>
 
   <!-- Slide 13: Drift 감지 -> 교체 -->
@@ -1001,11 +1029,11 @@ kubectl get nodeclaims</div></div>
     presenterNotes: {
       1: '세션 시작 슬라이드.\n\n자기소개와 세션 개요를 간략히 안내하세요.\n오늘 다룰 내용: Auto Mode 아키텍처, 노드 관리, 모니터링, 비용 최적화',
       2: 'Welcome! 이 블록에서는 Auto Mode 내부 구조와 Karpenter 기반 노드 관리를 다룹니다.\n약 35분 소요 예정.\n\n핵심 목표:\n- Auto Mode 아키텍처 이해\n- NodePool/NodeClass 설정 학습',
-      3: "{timing: 2min} [요약] Karpenter는 Pod에 맞는 노드를 고르는 역할입니다. Auto Mode에서는 AWS가 이 기능과 노드 OS·주요 인프라 구성 요소를 관리합니다. 팀은 Pod 요청량, 배치 조건, 서비스 가용성을 설계합니다. Pod는 애플리케이션 실행 단위, Node는 Pod가 실행되는 서버라고 먼저 설명하세요. 오늘의 기준은 EKS 1.37과 직접 설치한 Karpenter v1.14.1입니다. 단, Karpenter 공식 호환성 표는 Kubernetes 1.37에 Karpenter 1.15.x를 요구합니다. 1.37 클러스터에 직접 설치한다면 v1.15 업그레이드 안내를 먼저 확인합니다. {cue: transition} 다음에는 팀이 직접 운영할 범위를 비교합니다.",
+      3: "{timing: 2min} [요약] Karpenter는 Pod에 맞는 노드를 고르는 역할입니다. Auto Mode에서는 AWS가 이 기능과 노드 OS·주요 인프라 구성 요소를 관리합니다. 팀은 Pod 요청량, 배치 조건, 서비스 가용성을 설계합니다. Pod는 애플리케이션 실행 단위, Node는 Pod가 실행되는 서버라고 먼저 설명하세요. 오늘의 기준은 EKS 1.37과 직접 설치한 Karpenter v1.15.0입니다. Karpenter 공식 호환성 표는 Kubernetes 1.37에 Karpenter 1.15.x를 요구합니다. v1.14.1에서 올라온다면 v1.15 업그레이드 안내의 메트릭 label 변경과 Node Repair 동작 변경을 먼저 확인합니다. {cue: transition} 다음에는 팀이 직접 운영할 범위를 비교합니다.",
       4: "{timing: 2min} [요약] 같은 노드 자동화라도 운영 책임이 다릅니다. Auto Mode는 AWS가 노드 OS와 관리형 구성 요소를 운영합니다. 직접 설치한 Karpenter는 팀이 Controller·CRD·IAM·AMI를 관리하므로 자유도와 운영 부담이 함께 커집니다. 기존 MNG와 Fargate 비교는 추가 탭에서만 다룹니다. 어느 방식이 무조건 빠르다고 단정하지 말고 필요한 제어 수준을 물어보세요. {cue: transition} 이제 앱이 노드에 배치되는 흐름을 따라갑니다.",
       5: "{timing: 3min} [요약] Pod가 대기하고, Karpenter가 조건을 확인해 노드를 준비한 뒤, Scheduler가 Pod를 배치합니다. 첫 화면에서 전체 흐름을 보여주고 다음 단계로 한 번씩 진행하세요. 세 번째 단계에서 NodePool은 허용 조건, NodeClass는 AWS 생성 설정, NodeClaim은 한 대의 생성 요청이라는 역할만 익힙니다. Scheduler가 Karpenter를 직접 호출하거나 EC2가 Pod를 배치하는 구조로 설명하지 마세요. {cue: transition} 다음은 두 설정 중 먼저 NodePool입니다.",
       6: '{timing: 2min} [요약] 기본 풀은 일반 앱 자리와 시스템 Pod 자리로 구분합니다. general-purpose는 amd64, system은 amd64/arm64이며 둘 다 On-Demand입니다. system의 taint를 허용하는 toleration이 있어야 배치 후보가 되며, toleration만으로 그 풀에 반드시 배치되지는 않습니다. 먼저 두 탭의 역할을 읽고 YAML은 질문이 있을 때만 펼칩니다. EKS 1.37에서는 두 기본 풀 모두 Balanced를 사용합니다. {cue: transition} 허용 조건을 봤으니 AWS 생성 설정으로 넘어갑니다.',
-      7: '{timing: 2min} [요약] NodeClass는 네트워크, 권한, 저장공간을 정합니다. Auto Mode는 NodeClass, 직접 설치한 Karpenter는 EC2NodeClass이므로 YAML을 그대로 섞지 않습니다. OS와 AMI는 AWS가 관리합니다. 상세 예제를 펼친 뒤 디스크를 80Gi에서 200Gi로 바꿔 결과를 보여주세요. 예제 태그, IAM 역할, EC2 Access Entry와 AmazonEKSAutoNodePolicy는 환경에 맞게 준비합니다. {cue: transition} 앱 요구가 다르면 커스텀 NodePool로 구분합니다.',
+      7: '{timing: 2min} [요약] NodeClass는 네트워크, 권한, 저장공간을 정합니다. Auto Mode는 NodeClass, 직접 설치한 Karpenter는 EC2NodeClass이므로 YAML을 그대로 섞지 않습니다. OS와 AMI는 AWS가 관리합니다. 상세 예제를 펼친 뒤 디스크를 80Gi에서 200Gi로 바꿔 결과를 보여주세요. 예제 태그, IAM 역할, EC2 Access Entry와 AmazonEKSAutoNodePolicy는 환경에 맞게 준비합니다. 2026-10부터 두 번째 접힘 영역의 advancedCompute로 kubelet, 지원 목록의 kernel sysctl, hugepages를 조정할 수 있습니다. 실행 중인 노드에 바로 적용되지 않고 Drift로 교체된 새 노드부터 반영됩니다. {cue: transition} 앱 요구가 다르면 커스텀 NodePool로 구분합니다.',
       8: '{timing: 2min} [요약] 워크로드 목적을 먼저 고르고 조건을 확인합니다. Compute는 CPU 중심, Spot은 중단을 감수할 수 있는 작업, Graviton은 arm64 이미지 호환성, GPU는 가속기와 드라이버 지원 여부를 봅니다. 특정 계열을 모든 추론·학습에 고정 추천하지 않습니다. {cue: transition} 이 조건으로 노드가 준비되는 과정을 봅니다.',
       9: '타임라인은 설명용 시뮬레이션이며 SLA가 아닙니다. 실제 시간은 인스턴스 가용성, 네트워크, 이미지 다운로드 및 초기화에 따라 달라집니다.',
       10: '{timing: 2min} [요약] 후보를 좁히는 연습이며 실제 EC2 배치 전략이나 가격 계산기는 아닙니다. 계열, 세대, 크기를 차례로 누르면 마지막에 서로 다른 네 후보가 남습니다. 앱은 amd64와 arm64 모두 호환된다고 가정합니다. 실제 선택은 리소스와 배치 조건, 가용 용량과 가격도 반영하며 Graviton 한 종류를 고정 선호하지 않습니다. {cue: transition} 노드를 줄일 때도 Pod를 배치할 자리가 있어야 합니다.',

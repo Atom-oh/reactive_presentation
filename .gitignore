@@ -10,3 +10,6 @@ Thumbs.db
 
 # Playwright MCP
 .playwright-mcp/
+
+# Claude Code agent memory (per-repo and per-deck)
+**/.claude/agent-memory/

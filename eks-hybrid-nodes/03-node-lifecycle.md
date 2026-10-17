@@ -331,11 +331,67 @@ Bottlerocket은 완전히 다른 경로입니다. nodeadm이 없고, settings.to
 VM을 처음 켜기 전에 settings.toml을 base64로 인코딩해서 guestinfo로 넣습니다. 여기서 base64는 인코딩일 뿐입니다. 활성화 비밀이나 개인 키가 들어가니까 VM 구성과 provisioning 로그를 보호하셔야 합니다.
 공급자별 전체 설정은 AWS Bottlerocket 가이드를 그대로 따라 주세요. 슬라이드의 조각은 공통 부분만 보여 드린 것입니다. 이전 자료의 settings.hybrid.ssm 형태는 문서화된 계약이 아닙니다. 또 AWS 가이드의 TOML은 join에 필요한 최소 설정이라서, static IP 같은 네트워크 설정은 Bottlerocket settings 문서를 보고 직접 검증하셔야 합니다.
 {cue: transition}
-이제 nodeadm 경로로 돌아와서 containerd 규칙을 보겠습니다.
+그러면 Bottlerocket은 실제로 어떻게 조인하고 운영이 무엇이 다른지 보겠습니다.
 
 [출처]
 • D/04 "Bottlerocket은 별도 부트스트랩 계약 사용" 섹션
 • https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html
+:::
+
+---
+<!-- Slide 6b: Bottlerocket 조인과 운영 -->
+@type: content
+@title: Bottlerocket 조인과 운영의 차이
+
+## Bottlerocket 조인과 운영의 차이
+
+:::html
+<style>
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.flow-h { margin: 0 0 var(--space-4); }
+.flow-h .flow-box { min-width: min-content; overflow-wrap: normal; }
+.hn-flow-sub { display: block; color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: break-word; }
+</style>
+<div class="flow-h">
+  <div class="flow-box fragment fade-right" data-fragment-index="1">settings.toml<br><span class="hn-flow-sub">api-server, CA 직접 기입</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="2">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="2">guestinfo 전달<br><span class="hn-flow-sub">VM을 켜기 전, base64</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="3">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="3">eks-hybrid-setup<br><span class="hn-flow-sub">SSM 등록 또는 IRA 인증서</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="4">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="4">join, NotReady<br><span class="hn-flow-sub">CNI 설치 후 Ready</span></div>
+</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="5">
+  <div class="callout callout-info"><strong class="text-info">노드 이름</strong><div class="on-surface-muted">SSM은 등록 뒤 mi-* ID로 바뀝니다. IAM Roles Anywhere는 인증서 CN과 맞춰야 합니다.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">Pod Identity 조건</strong><div class="on-surface-muted">OS 1.39.0 이상, 애드온 1.3.7-eksbuild.2 이상. setup 명령의 credentials 파일 옵션과 hybrid-bottlerocket DaemonSet을 켭니다.</div></div>
+  <div class="callout callout-info"><strong class="text-info">label과 자격 증명 위치</strong><div class="on-surface-muted">label은 settings의 node-labels로 줍니다. 임시 자격 증명은 /var/eks-hybrid 아래에 생깁니다.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">nodeadm 절차는 쓰지 않음</strong><div class="on-surface-muted">설치, 업그레이드, 제거, 제한망 준비 모두 Bottlerocket 설정 경로를 따릅니다. VMware variant만 지원하고 베어메탈은 미지원입니다.</div></div>
+</div>
+:::
+
+
+:::notes
+{timing: 1.5min}
+[요약]
+• 흐름: settings.toml 작성 → VM을 켜기 전 guestinfo로 전달 → eks-hybrid-setup이 자격 증명을 준비하고 join
+• SSM은 노드 이름이 mi-* ID로 바뀌고, IRA는 인증서 CN과 맞춰야 함
+• Pod Identity는 OS 1.39.0과 애드온 1.3.7-eksbuild.2 이상, credentials 파일 옵션과 hybrid-bottlerocket DaemonSet 필요
+• nodeadm 기반 설치, 업그레이드, 제거, 제한망 절차는 적용되지 않음
+
+앞 장에서 Bottlerocket에는 nodeadm이 없다고 했습니다. 그러면 조인은 어떻게 할까요. settings.toml에 클러스터 정보를 적고, VM을 처음 켜기 전에 guestinfo로 넣습니다. VM이 켜지면 eks-hybrid-setup이라는 bootstrap container가 SSM에 등록하거나 IAM Roles Anywhere 인증서를 놓고 클러스터에 조인합니다. nodeadm과 달리 api-server와 CA는 자동으로 조회되지 않아서 직접 적어야 합니다.
+{cue: pause}
+운영에서 다른 점이 몇 가지 있습니다. SSM을 쓰면 등록 뒤 노드 이름이 mi로 시작하는 ID로 바뀝니다. Pod Identity를 쓰려면 Bottlerocket OS가 1.39.0 이상이어야 하고, 애드온은 1.3.7-eksbuild.2부터 Bottlerocket 전용 DaemonSet을 제공합니다. setup 명령에 --enable-credentials-file=true를 붙이고, 애드온 설정에서 daemonsets.hybrid-bottlerocket.create를 true로 켭니다. 임시 자격 증명은 /var/eks-hybrid/.aws/credentials에, label은 settings.kubernetes.node-labels에 둡니다.
+또 nodeadm 기반의 업그레이드나 제거, 제한망 준비 절차는 그대로 쓰지 않고 Bottlerocket 설정 경로를 따릅니다. 그리고 지원은 VMware variant뿐이고 베어메탈은 지원되지 않습니다.
+{cue: transition}
+이제 nodeadm 경로로 돌아와서 containerd 규칙을 보겠습니다.
+
+[출처]
+• https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html
+• https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html (Bottlerocket Pod Identity: OS 1.39.0, 애드온 1.3.7-eksbuild.2)
+• kubernetes-docs ko/eks-hybrid-nodes 04-node-bootstrap.md "Bottlerocket은 별도 부트스트랩 계약 사용", 08-operations.md, 09-bare-metal-os-setup.md
 :::
 
 ---

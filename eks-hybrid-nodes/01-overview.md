@@ -300,7 +300,7 @@ Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 
   </div>
 </div>
 <div class="callout callout-danger fragment zoom-in" data-fragment-index="3">
-  <strong class="text-danger">데이터 경계 주의</strong>: Secrets, Kubernetes 객체, 로그 등 컨트롤 플레인 데이터는 AWS에 저장됩니다. Private endpoint를 쓴다고 망분리 규정 준수가 입증되지는 않으며, Direct Connect 자체는 기본 암호화를 제공하지 않습니다.
+  <strong class="text-danger">데이터 경계 주의</strong>: Secrets, Kubernetes 객체, 로그 등 컨트롤 플레인 데이터는 AWS에 저장됩니다.
 </div>
 :::
 
@@ -311,13 +311,11 @@ Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 
 - 컨트롤 플레인은 AWS, 노드 이하는 고객 책임입니다.
 - 자격 증명 서비스는 AWS지만, 인증서, PKI, activation 준비는 고객 몫입니다.
 - Secrets, K8s 객체, 로그는 AWS 컨트롤 플레인에 저장됩니다.
-- Private endpoint가 망분리 규정 준수를 자동으로 뜻하지 않습니다.
-- Direct Connect는 기본 암호화가 없어 MACsec 또는 IPsec 검토가 필요합니다.
 
 왼쪽은 AWS가 책임지는 영역, 오른쪽은 고객이 책임지는 영역입니다. 컨트롤 플레인 구성요소와 자격 증명 서비스는 AWS가 운영하지만, 노드 OS 패치와 kubelet, containerd, CNI, 그리고 온프렘과 AWS 사이의 연결은 모두 고객이 운영합니다.
 {cue: pause}
 보안 담당자분들이 꼭 짚으셔야 할 부분이 아래 빨간 박스입니다. Kubernetes API 객체와 Secrets, 로그는 AWS가 관리하는 컨트롤 플레인에 저장됩니다. 그래서 node selector로 워크로드를 온프렘에 붙였다고 해서 데이터 주권이 입증되지는 않습니다.
-Direct Connect만으로는 암호화가 보장되지 않기 때문에 MACsec 또는 IPsec 같은 추가 보호를 검토해야 합니다. 이 주제는 Block 4에서 망분리 관점으로 다시 다룹니다.
+이 주제는 Block 4에서 망분리 관점으로 다시 다룹니다.
 근거: D/README.md "사용 사례와 데이터 경계", "아키텍처와 운영 책임"; D/11-network-separation-security.md.
 {cue: transition}
 이제 도입 전에 확인해야 할 제약을 보겠습니다.

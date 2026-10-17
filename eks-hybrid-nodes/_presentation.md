@@ -34,4 +34,7 @@ blocks:
   - name: 04-operations-strategy
     title: "운영, 워크로드, 보안 & 전략"
     duration: 30
+  - name: 05-live-demo
+    title: "라이브 데모: 직접 돌려 본 결과"
+    duration: 20
 ---

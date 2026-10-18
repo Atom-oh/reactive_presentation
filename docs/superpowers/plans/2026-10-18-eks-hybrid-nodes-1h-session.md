@@ -266,6 +266,23 @@ git commit -m "feat(eks-hybrid-nodes-1h): parts 1-2, why hybrid and architecture
 - [ ] **Step 3: 검사** `--md-only`, `03-operations.md` 오류 없음
 - [ ] **Step 4: 커밋** `git commit -m "feat(eks-hybrid-nodes-1h): part 4, operations"`
 
+### Task 4b: 실제 터미널 녹화 (V1~V3용, 2026-10-18 추가)
+
+**Files:**
+- Create: `~/eks-hybrid-demo/.work/rec/` 녹화 스크립트와 `.cast`(저장소 밖), `eks-hybrid-nodes-1h/videos/rec/r1-failover.mp4`, `r2-bursting.mp4`, `r3-alb.mp4`(터미널 녹화 영상, 1920 폭 이하, 무음)
+
+**Interfaces:**
+- Produces: 위 mp4 3개와 `videos/rec/RECORDINGS.md`(각 녹화의 명령, 실행 시각, 길이, 줄인 구간, 가린 값)
+
+- [ ] Step 1: 도구 설치 확인. `asciinema`(pip --user 또는 cargo)와 `agg`(cargo install --locked agg)
+- [ ] Step 2: R1 녹화. gateway Pod와 Lease 조회, VPC 라우트 조회, `./demo1-gateway/failover.sh`
+- [ ] Step 3: R2 녹화. 시나리오 B(Kyverno 켬, 게이트 끔) 상태에서 CPU 요청 재계산 후 3개로 재배치(녹화 전), 녹화 중 15, 10, 3으로 스케일하며 Pod 배치와 cost, NodeClaim을 주기적으로 출력
+- [ ] Step 4: R3 녹화. hybrid 타깃 상태, 부하 중 rollout restart와 타깃 교체, `./demo-lb/onprem-curl.sh 3`
+- [ ] Step 5: 계정 ID를 `.cast`에서 가린 뒤 `agg`로 변환(어두운 기본 테마, 큰 글꼴, idle 제한), ffmpeg로 mp4. 프레임을 뽑아 확인
+- [ ] Step 6: 커밋(mp4와 RECORDINGS.md만)
+
+Task 5~7은 이 녹화를 HyperFrames 영상의 터미널 장면에 `<video>` 클립으로 넣는다(V1은 다시 렌더).
+
 ### Task 5: 영상 V1 Gateway 리더 전환
 
 **Files:**

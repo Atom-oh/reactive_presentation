@@ -4,20 +4,20 @@ block: 02-networking-gateway
 ---
 
 ---
-<!-- Slide 1: 블록 커버 (Section) -->
+<!-- Slide 1: 2부 구분 (Section) -->
 @type: section
 
-# Block 2: 네트워킹 & Hybrid Nodes Gateway
+# 2부: 네트워킹 & Hybrid Nodes Gateway
 
 누가 세션을 열고, Pod CIDR은 어떻게 도달하며, Gateway는 언제 쓰는가
 
 :::notes
 {timing: 0.5min}
 [요약]
-• 이 블록의 질문은 하나입니다: "AWS 컨트롤 플레인과 온프레미스 Pod가 어떻게 서로를 찾는가"
+• 이 파트의 질문은 하나입니다: "AWS 컨트롤 플레인과 온프레미스 Pod가 어떻게 서로를 찾는가"
 • 순서: 전제 조건 → CIDR → 세션 방향 → 6가지 트래픽 패턴 → 라우팅 선택지 → Gateway
 • Gateway는 선택 사항이며, 먼저 direct routing(static/BGP)을 이해해야 비교가 됩니다
-Block 2에서는 네트워크 이야기를 합니다. 먼저 연결 전제와 CIDR 설계, 그다음 누가 세션을 여는지, 그리고 트래픽 패턴 6가지를 봅니다.
+2부에서는 네트워크 이야기를 합니다. 먼저 연결 전제와 CIDR 설계, 그다음 누가 세션을 여는지, 그리고 트래픽 패턴 6가지를 봅니다.
 후반 절반은 Pod CIDR을 라우팅하는 세 가지 방법, 즉 static, Cilium BGP, 그리고 2026년 4월에 GA 된 Hybrid Nodes Gateway를 비교합니다.
 {cue: transition}
 먼저 가장 기본인 연결 전제부터 보겠습니다.
@@ -344,14 +344,95 @@ CNI가 SNAT를 하면 응답이 node 주소로 돌아오고 connection tracking�
 • Cloud↔Hybrid 직접 라우팅: VPC, WAN, 온프렘에 Pod route 필요
 • Cloud↔Hybrid Gateway: VPC route + VXLAN 터널이 Pod 경로를 대신 제공
 • UDP 8472는 두 모드 모두에서 필요
-세 탭입니다. 첫 번째, hybrid 노드끼리입니다. Cilium이 VXLAN으로 캡슐화하고, 바깥 패킷의 주소는 node IP입니다. 그래서 캡슐화된 패킷을 나르기 위해 underlay에 Pod CIDR route가 있어야 하는 것은 아닙니다. 오버헤드는 IPv4 기준 50바이트라서 MTU 1500 환경이면 1450을 예로 듭니다. 중요한 포인트는 이 UDP 8472가 direct routing이든 Gateway든 모두 필요하다는 점입니다. 퀴즈에서 다시 묻겠습니다.
+세 탭입니다. 첫 번째, hybrid 노드끼리입니다. Cilium이 VXLAN으로 캡슐화하고, 바깥 패킷의 주소는 node IP입니다. 그래서 캡슐화된 패킷을 나르기 위해 underlay에 Pod CIDR route가 있어야 하는 것은 아닙니다. 오버헤드는 IPv4 기준 50바이트라서 MTU 1500 환경이면 1450을 예로 듭니다. 중요한 포인트는 이 UDP 8472가 direct routing이든 Gateway든 모두 필요하다는 점입니다. 꼭 기억해 두세요.
 {cue: pause}
 두 번째, cloud와 hybrid Pod가 직접 통신하려면 VPC와 사설 연결, 온프렘까지 Pod route가 있어야 합니다. 이 route를 만드는 방법이 다음 슬라이드의 주제입니다.
 세 번째, Gateway는 그 route를 만들지 않고 VXLAN 터널로 대신합니다. 구조는 뒤의 "Gateway 데이터 플레인" 슬라이드에서 자세히 보겠습니다.
 {cue: transition}
-그럼 Pod CIDR을 라우팅하는 선택지를 정리해 보겠습니다.
+라우팅 방법을 보기 전에, 클라우드 노드에는 어떤 CNI를 쓸지부터 정리하겠습니다.
 [근거]
 • 내부 문서 D/02 패턴 5, 6 (MTU/VXLAN overhead, UDP 8472), D/10 "패턴 1, 2"
+:::
+
+---
+<!-- Slide 6b: CNI 구성 선택 -->
+@type: content
+@title: CNI 구성: Cilium만 쓸까, VPC CNI와 섞을까
+
+## CNI 구성: Cilium만 쓸까, VPC CNI와 섞을까
+
+:::html
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.hn-cmp { display: grid; grid-template-columns: 1.2fr 2fr 2fr 2fr; gap: var(--space-1) var(--space-3); margin-bottom: var(--space-3); font-size: var(--fs-card); }
+.hn-cmp .hn-head { font-weight: var(--weight-bold); color: var(--accent); padding: var(--space-1) var(--space-2); }
+.hn-crit { color: var(--text-secondary); padding: var(--space-1) var(--space-2); }
+.hn-tip { position: relative; padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); border-bottom: 1px dashed var(--border); cursor: help; outline: none; }
+.hn-tip:hover, .hn-tip:focus { background: var(--accent-subtle); }
+.hn-pop { position: absolute; left: 0; top: calc(100% + var(--space-1)); width: calc(var(--space-8) * 5); padding: var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); box-shadow: var(--shadow-3); z-index: var(--z-overlay); opacity: 0; visibility: hidden; transition: opacity .15s; word-break: keep-all; overflow-wrap: anywhere; line-height: 1.5; }
+.hn-right .hn-pop { left: auto; right: 0; }
+.hn-up .hn-pop { top: auto; bottom: calc(100% + var(--space-1)); }
+.hn-tip:hover .hn-pop, .hn-tip:focus .hn-pop { opacity: 1; visibility: visible; }
+.hn-hint { font-size: var(--fs-card); color: var(--text-secondary); margin-bottom: var(--space-2); }
+.hn-hint a { color: var(--accent); }
+</style>
+<div class="hn-hint">칸에 마우스를 올리면(또는 Tab으로 포커스하면) 근거가 나옵니다. 참고: <a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html" target="_blank" rel="noopener">CNI 구성</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html" target="_blank" rel="noopener">혼합 모드 고려 사항</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html" target="_blank" rel="noopener">Gateway 전제 조건</a></div>
+<div class="hn-cmp fragment fade-up" data-fragment-index="1">
+  <div class="hn-head">기준</div><div class="hn-head">① hybrid 전용 (Cilium만)</div><div class="hn-head">② 혼합 (VPC CNI + Cilium)</div><div class="hn-head">③ 클라우드까지 Cilium</div>
+  <div class="hn-crit">AWS 지원</div>
+  <div class="hn-tip" tabindex="0">지원<span class="hn-pop">hybrid 노드의 Cilium은 AWS가 지원하는 CNI입니다. VPC CNI는 hybrid 노드와 호환되지 않습니다.</span></div>
+  <div class="hn-tip" tabindex="0">지원, 혼합 모드 권장안<span class="hn-pop">AWS 문서의 혼합 모드 권장 사항이 이 구성입니다. 클라우드 노드는 VPC CNI, hybrid 노드는 Cilium(또는 Calico)입니다.</span></div>
+  <div class="hn-tip hn-right" tabindex="0">클라우드 쪽은 미지원<span class="hn-pop">AWS 문서: AWS Cloud의 노드에서 실행하는 Cilium은 AWS가 지원하지 않습니다. 벤더 지원 계약이 있을 때만 검토합니다.</span></div>
+  <div class="hn-crit">webhook 위치</div>
+  <div class="hn-tip" tabindex="0">hybrid 노드에서 실행<span class="hn-pop">컨트롤 플레인이 webhook Pod IP로 직접 들어오므로 온프렘 Pod CIDR을 BGP나 static으로 라우팅해야 합니다.</span></div>
+  <div class="hn-tip" tabindex="0">클라우드 노드에 배치<span class="hn-pop">webhook을 클라우드 노드에 두면 온프렘 Pod CIDR을 라우팅하지 않아도 됩니다. AWS 혼합 모드 권장 사항입니다.</span></div>
+  <div class="hn-tip hn-right" tabindex="0">직접 검증 필요<span class="hn-pop">클라우드 노드의 Cilium IPAM과 라우팅 방식에 따라 컨트롤 플레인 도달 여부가 달라지고, AWS 지원 범위 밖입니다.</span></div>
+  <div class="hn-crit">클라우드와 온프렘 Pod 통신</div>
+  <div class="hn-tip" tabindex="0">해당 없음<span class="hn-pop">클라우드 노드가 없으므로 east-west 경로를 고려할 필요가 없습니다.</span></div>
+  <div class="hn-tip" tabindex="0">Pod CIDR 라우팅 또는 Gateway<span class="hn-pop">클라우드 Pod가 hybrid Pod와 직접 통신하려면 온프렘 Pod CIDR을 라우팅하거나 Hybrid Nodes Gateway를 씁니다.</span></div>
+  <div class="hn-tip hn-right" tabindex="0">Cilium 구성에 따름<span class="hn-pop">터널이나 라우팅을 직접 설계하고 운영합니다. Hybrid Nodes Gateway는 클라우드 노드에 VPC CNI가 필요해 쓸 수 없습니다.</span></div>
+  <div class="hn-crit">버스팅과 Auto Mode</div>
+  <div class="hn-tip hn-up" tabindex="0">불가<span class="hn-pop">클라우드 용량이 없으므로 Karpenter 버스팅이나 클라우드 GPU 같은 확장이 없습니다.</span></div>
+  <div class="hn-tip hn-up" tabindex="0">가능<span class="hn-pop">Karpenter NodePool로 클라우드 노드를 늘릴 수 있고, Auto Mode 노드는 내장 네트워킹을 씁니다.</span></div>
+  <div class="hn-tip hn-right hn-up" tabindex="0">제약 큼<span class="hn-pop">Auto Mode는 내장 네트워킹이라 CNI를 바꿀 수 없습니다. Karpenter 노드에 Cilium을 붙이는 것도 직접 운영합니다.</span></div>
+  <div class="hn-crit">정책과 관측 일관성</div>
+  <div class="hn-tip hn-up" tabindex="0">Cilium 하나로 통일<span class="hn-pop">NetworkPolicy, Cilium 정책, Hubble을 한 CNI로 운영합니다.</span></div>
+  <div class="hn-tip hn-up" tabindex="0">두 CNI를 나눠 운영<span class="hn-pop">표준 Kubernetes NetworkPolicy는 양쪽 CNI가 각각 적용합니다. Cilium 전용 정책과 Hubble은 hybrid 쪽에만 있습니다.</span></div>
+  <div class="hn-tip hn-right hn-up" tabindex="0">통일되지만 책임은 고객<span class="hn-pop">한 CNI로 통일되는 대신 클라우드 쪽 장애 대응과 업그레이드 책임이 고객이나 벤더에게 있습니다.</span></div>
+</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="2">
+  <div class="callout callout-success"><strong class="text-success">클라우드 노드가 있으면 ②</strong><div class="on-surface-muted">AWS 지원 범위 안의 혼합 구성입니다. webhook은 클라우드에 두고, 버스팅과 Hybrid Nodes Gateway도 쓸 수 있습니다.</div></div>
+  <div class="callout callout-info"><strong class="text-info">온프렘만 쓰면 ①</strong><div class="on-surface-muted">CNI가 하나라 단순합니다. 대신 webhook을 위해 온프렘 Pod CIDR을 라우팅해야 합니다.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">③은 신중히</strong><div class="on-surface-muted">클라우드 노드의 Cilium은 AWS 미지원이고 Hybrid Nodes Gateway와 Auto Mode를 쓸 수 없습니다.</div></div>
+</div>
+:::
+
+
+:::notes
+{timing: 2.5min}
+[요약]
+• VPC CNI는 hybrid 노드와 호환되지 않으므로 hybrid 노드는 항상 Cilium(또는 Calico)
+• 선택지는 hybrid 전용 클러스터(①), 혼합 모드(②), 클라우드 노드까지 Cilium(③)
+• 클라우드 노드가 있으면 ②가 AWS 권장안: webhook을 클라우드에 두고 버스팅과 Gateway 사용 가능
+• 온프렘만 쓰면 ①: CNI 하나로 단순하지만 webhook을 위해 온프렘 Pod CIDR 라우팅 필요
+• ③은 클라우드 쪽 Cilium이 AWS 미지원이고 Hybrid Nodes Gateway와 Auto Mode를 쓸 수 없음
+
+"Cilium만 쓰는 게 좋은가, VPC CNI와 섞는 게 좋은가"는 자주 받는 질문입니다. 먼저 전제부터 말씀드리면, VPC CNI는 hybrid 노드와 호환되지 않으니 hybrid 노드에는 항상 Cilium이 들어갑니다. 그래서 질문은 사실 "클라우드 노드에 무엇을 쓸 것인가"입니다.
+{cue: pause}
+클라우드 노드가 있는 혼합 클러스터라면 클라우드는 VPC CNI, hybrid는 Cilium으로 나누는 것이 AWS 문서의 권장 구성입니다. webhook을 클라우드 노드에 두면 온프렘 Pod CIDR을 라우팅하지 않아도 되고, Karpenter 버스팅과 Hybrid Nodes Gateway도 이 구성을 전제로 합니다.
+온프렘만 쓰는 클러스터라면 Cilium 하나로 끝나서 단순합니다. 대신 webhook이 hybrid 노드에서 돌기 때문에 컨트롤 플레인이 들어올 수 있도록 온프렘 Pod CIDR을 BGP나 static으로 라우팅해야 합니다.
+클라우드 노드까지 Cilium으로 통일하고 싶다는 요청도 있는데, AWS Cloud의 노드에서 실행하는 Cilium은 AWS가 지원하지 않습니다. Hybrid Nodes Gateway는 gateway 노드를 포함한 클라우드 노드가 VPC CNI(Auto Mode면 내장 네트워킹)여야 하고, Auto Mode는 CNI를 바꿀 수 없다는 점도 함께 말씀드립니다.
+{cue: transition}
+그러면 온프렘 Pod CIDR을 어떻게 라우팅할지, 방법별로 보겠습니다.
+
+[출처]
+• https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html (Cilium은 hybrid 노드용, AWS Cloud 노드의 Cilium은 미지원, VPC CNI는 hybrid와 비호환)
+• https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html (혼합 모드 권장 사항)
+• https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html (Hybrid Nodes Gateway 전제: gateway 노드와 클라우드 노드의 VPC CNI)
+• https://aws.amazon.com/blogs/containers/deep-dive-into-cluster-networking-for-amazon-eks-hybrid-nodes/
 :::
 
 ---
@@ -369,11 +450,12 @@ CNI가 SNAT를 하면 응답이 node 주소로 돌아오고 connection tracking�
     <tr><td>온프렘 라우터 변경</td><td>필요 (route 유지, drift 추적)</td><td>필요 (peering, ASN, prefix filter)</td><td>Pod CIDR route는 불필요 (node IP, UDP 8472은 필요)</td></tr>
     <tr><td>CNI 제약</td><td>지원되는 routable Pod 설계</td><td>Cilium BGP Control Plane</td><td>AWS Cilium VTEP + <code>l7Proxy=false</code></td></tr>
     <tr><td>HA / 처리량</td><td>네트워크 팀 설계, 라우터/링크 한계</td><td>네트워크 팀 설계, 라우터/링크 한계</td><td>Lease active-standby, 활성 Gateway 1대 한계</td></tr>
+    <tr><td>cross-AZ 비용</td><td>Pod가 있는 AZ의 TGW/VGW로 바로 나감</td><td>Pod가 있는 AZ의 TGW/VGW로 바로 나감</td><td>모든 트래픽이 leader AZ를 지남, 다른 AZ 워크로드는 cross-AZ 요금</td></tr>
     <tr><td>정리(제거)</td><td>소유한 route 정리</td><td>소유한 route/peering 정리</td><td>Helm 제거해도 VPC route는 남음</td></tr>
   </tbody>
 </table>
 <div class="card-grid fragment" style="margin-top: var(--space-3);" data-reveal="stagger" data-fragment-index="1">
-  <div class="callout callout-success"><strong class="text-success">BGP 우선</strong><div class="on-surface-muted">라우터 팀이 BGP를 운영할 수 있고 노드가 늘어날 환경. AWS 가이드가 권장하는 방식</div></div>
+  <div class="callout callout-success"><strong class="text-success">BGP 우선</strong><div class="on-surface-muted">라우터 팀이 BGP를 운영할 수 있고 노드가 늘어날 환경, 트래픽이 큰 경로. leader 1대와 cross-AZ hop이 없음. AWS 가이드가 권장하는 방식</div></div>
   <div class="callout callout-warning"><strong class="text-warning">static은 소규모, 고정 환경</strong><div class="on-surface-muted">노드, Pod CIDR 변경 때마다 수동 갱신과 장애 추적 부담</div></div>
   <div class="callout callout-info"><strong class="text-info">Gateway는 라우터 변경이 어려울 때</strong><div class="on-surface-muted">VTEP/<code>l7Proxy=false</code> 제약과 추가 hop을 수용할 수 있다면</div></div>
 </div>
@@ -385,15 +467,18 @@ CNI가 SNAT를 하면 응답이 node 주소로 돌아오고 connection tracking�
 • static/BGP는 direct routing, Gateway는 VXLAN 터널로 우회
 • Gateway가 없어도 routable Pod 설계로 webhook, ALB/NLB IP target 가능
 • BGP는 네트워크 팀의 peering 운영 능력, Gateway는 CNI 제약 수용이 판단 기준
+• 대용량 경로는 BGP: Gateway는 leader AZ로 트래픽이 모여 cross-AZ 요금과 처리량 한계가 생김
 • 정답은 하나가 아니며 비용, 운영 역량, 제약으로 결정
 세 가지 방법을 나란히 놓았습니다. static은 라우터에 prefix를 직접 넣는 방식이라 단순하지만 노드와 Pod CIDR이 바뀔 때마다 사람이 따라가야 합니다. BGP는 Cilium BGP Control Plane이 Pod CIDR을 광고하므로 노드 증감에 유연하지만 라우터 팀과 ASN, prefix filter, graceful restart를 합의해야 합니다.
 Gateway는 온프렘 Pod CIDR을 VPC에서 routable하게 만들 필요가 없다는 것이 핵심입니다. 대신 AWS가 지원하는 Cilium의 VTEP을 켜고 l7Proxy를 꺼야 하며, 활성 Gateway 한 대를 거치는 추가 hop이 생깁니다.
+비용도 봐야 합니다. Gateway를 두 AZ에 나눠도 활성 leader는 하나라서, 리더와 다른 AZ에 있는 Pod나 ALB의 hybrid 트래픽은 모두 리더의 AZ로 건너가고 AWS 문서대로 cross-AZ 전송 요금이 붙습니다. BGP나 static은 Pod가 있는 AZ에서 TGW나 VGW로 바로 나가므로 이 hop이 없습니다. 그래서 트래픽이 큰 경로는 BGP로 직접 라우팅하고, Gateway는 webhook이나 적은 양의 Pod 간 통신에 두는 구성을 권합니다.
 {cue: question}
 오해하시면 안 되는 점은 Gateway가 필수가 아니라는 겁니다. Gateway 없이도 BGP나 static으로 routable Pod를 설계하면 webhook이나 ALB IP target이 가능합니다. 우리 환경은 어느 쪽이 맞을까요? 라우터 팀의 협조 가능성이 가장 큰 변수입니다.
 {cue: transition}
 먼저 BGP 최소 예제부터 보겠습니다.
 [근거]
 • 내부 문서 D/10 "비교: 게이트웨이 사용 vs 미사용" 표, D/10 FAQ Q6, D/02 "라우팅 가능한 Pod CIDR 구성". 판단 가이드(우선순위)는 발표자 의견
+• https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html (Gateway와 VPC 리소스 간 cross-AZ 트래픽은 표준 요금)
 :::
 
 ---
@@ -533,7 +618,7 @@ BGP 세션이 Established 됐다고 끝이 아닙니다. 라우터에 의도한 
 • 2026-04-21 GA, 오픈소스(Apache-2.0), Gateway 소프트웨어 추가 요금 없음, 선택 사항
 • 목적: 온프렘 Pod CIDR을 VPC에서 routable하게 만들지 않고도 CP→webhook, Cloud↔Hybrid Pod, ALB/NLB IP target 지원
 • 한계: AWS Cilium VTEP, l7Proxy=false, 암호화 없음, 클러스터당 1개, 설치만으로 완성되지 않음
-Hybrid Nodes Gateway는 2026년 4월 21일에 GA 된 오픈소스 프로젝트입니다. 가격은 Gateway 자체 요금이 없고, 쓰는 EC2와 데이터 전송, Auto Mode 관리 요금만 냅니다.
+Hybrid Nodes Gateway는 2026년 4월 21일에 GA 된 오픈소스 프로젝트입니다. 가격은 Gateway 자체 요금이 없고, Gateway가 도는 EC2와 데이터 전송 비용만 냅니다. Gateway 노드는 Auto Mode 노드든 관리형이나 자체 관리 노드 그룹이든 상관없고, Auto Mode 노드에 올렸을 때만 그 노드의 Auto Mode 관리 요금이 더해집니다.
 무엇을 해 주느냐면, 온프렘 Pod CIDR을 VPC에서 라우팅 가능하게 만드는 숙제를 없애 줍니다. 그래서 컨트롤 플레인에서 hybrid webhook으로, cloud와 hybrid Pod 사이로, 그리고 ALB나 NLB의 IP target과 AMP managed collector로 가는 흐름이 가능해집니다. AMP는 private cluster endpoint와 route, 방화벽이 맞아야 합니다.
 {cue: pause}
 그런데 한계도 정직하게 말씀드립니다. 첫째, 설치만으로 모든 조건이 충족되진 않습니다. 둘째, AWS 빌드의 Cilium VTEP이 필요하고 l7Proxy를 꺼야 하므로 같은 설치에서 Cilium Ingress나 Gateway API, L7 정책을 같이 쓸 수 없습니다. 셋째, VXLAN은 암호화를 제공하지 않으며, 클러스터당 하나만 배포하고, 활성 Gateway 한 대가 처리량의 한계입니다.
@@ -908,110 +993,7 @@ Gateway 탭은 Gateway 노드와 hybrid 노드 사이의 UDP 8472 양방향이 �
 {cue: pause}
 이미지는 private ECR의 ecr.api와 ecr.dkr에 더해 layer 전달에 S3가 필요하고, 온프렘에서는 S3 gateway endpoint에 접근할 수 없으므로 interface endpoint를 씁니다. 워크로드 쪽은 Pod Identity를 쓰면 eks-auth, 그 밖에 sts나 logs, monitoring은 해당 client가 실제로 호출할 때만 만듭니다. 과거 자료에서 STS를 필수라고 한 것은 오류입니다. 이 구성은 인터넷 제한 환경을 뜻할 뿐 AWS와 단절된 구성은 아닙니다.
 {cue: transition}
-배운 내용을 퀴즈로 점검해 보겠습니다.
+다음은 3부, 노드 부트스트랩과 라이프사이클입니다.
 [근거]
 • 내부 문서 D/02 "AWS 엔드포인트 접근"
-:::
-
----
-<!-- Slide 18: Quiz (1/2) -->
-@type: quiz
-
-## Block 2 Quiz (1/2)
-
-**Q1: kubectl logs, exec가 동작하려면 온프렘 방화벽에서 무엇을 허용해야 하는가?**
-- [ ] 노드가 연 TCP 443 세션의 응답이면 충분하다
-- [x] CP ENI가 시작하는 kubelet TCP 10250 inbound
-- [ ] TCP 179 inbound만
-
-**Q2: UDP 8472 규칙은 언제 필요한가?**
-- [ ] Gateway를 설치한 경우에만
-- [x] direct routing과 Gateway 두 모드 모두 (hybrid 노드 간 VXLAN)
-- [ ] BGP를 쓰지 않을 때만
-
-:::notes
-{timing: 1.5min}
-[요약]
-• Q1: 10250은 CP가 시작하는 별도 inbound (443 응답으로 안 열림)
-• Q2: UDP 8472는 두 모드 모두 필요 (hybrid 노드 간 VXLAN, Gateway 모드는 Gateway 노드 구간도)
-퀴즈 두 문제씩 두 장입니다. 1번, logs나 exec를 쓰려면 컨트롤 플레인이 시작하는 TCP 10250 inbound가 필요합니다. 노드가 연 443 세션의 응답으로는 해결되지 않습니다.
-2번, UDP 8472는 두 모드 모두 필요합니다. hybrid 노드 간 VXLAN 때문이고, Gateway 모드에서는 Gateway 노드와 hybrid 노드 사이에도 같은 포트가 쓰입니다.
-{cue: question}
-방화벽 팀과의 대화에서는 이 두 가지가 가장 자주 나옵니다. 어느 쪽이 헷갈리셨나요?
-{cue: transition}
-다음 두 문제는 Gateway에 관한 것입니다.
-:::
-
----
-<!-- Slide 19: Quiz (2/2) -->
-@type: quiz
-
-## Block 2 Quiz (2/2)
-
-**Q3: helm uninstall 후 Gateway가 남기는 것은?**
-- [ ] VPC route가 원래 target으로 자동 복구된다
-- [x] 설정한 VPC route 등이 남아 수동 정리가 필요하다
-- [ ] 모든 VPC route가 자동 삭제된다
-
-**Q4: Gateway와 BGP 선택에 대한 설명으로 맞는 것은?**
-- [ ] Gateway가 없으면 webhook은 불가능하다
-- [x] Gateway는 선택 사항이며 BGP/static으로 routable Pod를 설계해도 된다
-- [ ] replica를 늘리면 처리량이 scale-out 된다
-
-:::notes
-{timing: 1.5min}
-[요약]
-• Q3: uninstall은 VPC route를 지우지 않음, 수동 정리
-• Q4: Gateway는 선택, BGP/static도 정당한 설계, replica는 처리량이 아님
-3번, helm uninstall은 VPC route를 삭제하지 않습니다. 제거 전에 기록해 둔 table, CIDR, target을 바탕으로 수동 복구하거나 삭제하고, CiliumVTEPConfig와 Pod Identity association도 정리합니다.
-4번, Gateway는 선택 사항입니다. Gateway 없이도 BGP나 static으로 routable Pod를 설계하면 webhook이 가능합니다. replica를 늘려도 active/standby라 처리량은 늘지 않고, VXLAN은 암호화를 제공하지 않습니다.
-{cue: transition}
-마무리하면서 공식 문서 링크를 정리합니다.
-:::
-
----
-<!-- Slide 20: References -->
-@type: content
-@title: 공식 문서로 이어가기
-
-## 공식 문서로 이어가기
-
-:::html
-<div class="card-grid" data-reveal="static">
-  <div class="metric-card"><strong class="text-accent">네트워킹 요구 사항</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html</div></div>
-  <div class="metric-card"><strong class="text-accent">CNI, Cilium BGP</strong><div class="on-surface-muted">…/hybrid-nodes-cni.html<br>…/hybrid-nodes-cilium-bgp.html</div></div>
-  <div class="metric-card"><strong class="text-accent">Webhook 배치</strong><div class="on-surface-muted">…/hybrid-nodes-webhooks.html</div></div>
-  <div class="metric-card"><strong class="text-info">Gateway 문서</strong><div class="on-surface-muted">…/hybrid-nodes-gateway-overview.html<br>…/hybrid-nodes-gateway-getting-started.html<br>…/hybrid-nodes-gateway-operations.html</div></div>
-  <div class="metric-card"><strong class="text-info">Gateway 소스</strong><div class="on-surface-muted">github.com/aws/eks-hybrid-nodes-gateway</div></div>
-  <div class="metric-card"><strong class="text-success">AWS Containers 블로그</strong><div class="on-surface-muted">Simplify hybrid Kubernetes networking with Amazon EKS Hybrid Nodes gateway</div></div>
-</div>
-:::
-
-:::notes
-{timing: 0.5min}
-[요약]
-• 네트워킹, CNI, BGP, webhook, Gateway 공식 문서 6묶음
-• Gateway 소스와 AWS Containers 블로그
-• 이 블록의 YAML, 명령은 내부 검토 문서 기준이며 실환경 검증 전 필수
-참고 자료를 정리했습니다. docs.aws.amazon.com/eks/latest/userguide 아래의 hybrid-nodes로 시작하는 문서들이 기준입니다. 이 블록의 YAML과 명령은 로컬 schema 수준으로 검토된 예시이므로 실제 환경에서는 승인된 창에서 직접 검증하세요.
-{cue: transition}
-질문 받겠습니다.
-:::
-
----
-<!-- Slide 21: Thank You -->
-@type: thankyou
-@toc: toc.html
-@next: 03-node-lifecycle.html
-@next-label: 다음: 노드 부트스트랩
-@message: Block 2: 네트워킹 & Gateway 완료
-
-:::notes
-{timing: 0.5min}
-[요약]
-• Block 2 핵심: 세션 방향(443은 온프렘 outbound, 10250, webhook은 온프렘 inbound), Pod CIDR 라우팅 3가지, Gateway는 선택
-• Q&A 후 5분 휴식, 다음은 Block 3 노드 부트스트랩
-Block 2를 마칩니다. 기억할 세 가지입니다. 하나, 443은 온프렘이 열고 10250과 webhook은 AWS가 엽니다. 둘, Pod CIDR 라우팅은 static, BGP, Gateway 중에서 운영 역량과 제약으로 고릅니다. 셋, Gateway는 선택 사항이고 설치는 route cutover입니다.
-{cue: question}
-질문 있으시면 지금 받겠습니다. 5분 쉬고 Block 3, 노드 부트스트랩과 라이프사이클로 이어가겠습니다.
 :::

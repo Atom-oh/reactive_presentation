@@ -7,7 +7,7 @@ date: 2026-10-07
 lang: ko
 level: 300
 audience: "클라우드/플랫폼 엔지니어, 인프라, 네트워크, 보안 담당자"
-quiz: true
+quiz: false
 duration: 120
 
 speaker:
@@ -34,4 +34,7 @@ blocks:
   - name: 04-operations-strategy
     title: "운영, 워크로드, 보안 & 전략"
     duration: 30
+  - name: 05-live-demo
+    title: "라이브 데모: 직접 돌려 본 결과"
+    duration: 20
 ---

@@ -47,8 +47,8 @@
   <p class="lead">세션 데모 3개를 실제 클러스터에서 구축하고 검증한 기록입니다. 모든 수치는 2026-10-15에 실측한 값이고, 데모 2는 시나리오별 1회 측정입니다.</p>
   <div class="nav">
     <a href="#where">확인 위치</a><a href="#env">환경과 버전</a><a href="#build">구축 순서</a><a href="#demo1">데모 1 gateway</a>
-    <a href="#demo2">데모 2 bursting</a><a href="#demo3">데모 3 GPU</a><a href="#issues">문서와 달랐던 점</a><a href="#cost">비용과 정리</a>
-    <a href="01-overview.html">세션 1블록으로</a><a href="toc.html">목차로</a>
+    <a href="#demo2">데모 2 bursting</a><a href="#demo3">데모 3 GPU</a><a href="#istio">Istio 공존</a><a href="#lb">ALB ip 타깃과 역방향</a><a href="#issues">문서와 달랐던 점</a><a href="#cost">비용과 정리</a>
+    <a href="05-live-demo.html">데모 결과 슬라이드</a><a href="01-overview.html">세션 1블록으로</a><a href="toc.html">목차로</a>
   </div>
 
   <div class="callout bad">
@@ -170,7 +170,48 @@
   </table>
   <p><code>verify.sh</code>는 GPU allocatable, 추론 Pod에 <code>istio-proxy</code>가 없는지, hostNetwork가 꺼져 있는지, 클라우드 Pod의 호출 성공과 응답 시간을 확인하고 통과했습니다. 첫 시작은 느립니다. vLLM 이미지(약 10GB)를 받는 데 4분 28초가 걸렸으니 발표 전에 미리 받아 두세요. GPU가 1개라 Deployment는 <code>strategy: Recreate</code>여야 합니다.</p>
 
-  <h2 id="issues">7. 문서와 다르게 동작한 점</h2>
+  <h2 id="istio">7. Istio와 gateway 공존 (sidecar 모드)</h2>
+  <p>gateway는 Cilium <code>l7Proxy: false</code>를 요구해서 Cilium Ingress, Gateway API, L7 정책을 같은 설치에서 쓸 수 없습니다. Istio의 L7은 sidecar Envoy가 처리하므로 영향이 없는지 같은 클러스터에서 확인했습니다. Istio 1.30.6(helm), 대상 네임스페이스는 <code>mesh-demo</code>이고 STRICT mTLS를 켰습니다. 데모용 서버와 클라이언트는 fortio로 클라우드와 hybrid 양쪽에 각각 두었습니다.</p>
+  <table>
+    <tr><th>검증</th><th>결과 (2026-10-17 실측)</th></tr>
+    <tr><td>sidecar 주입</td><td>hybrid 노드 Pod 포함 4개 모두 2/2. 최신 Istio는 sidecar를 native sidecar(init container, <code>restartPolicy: Always</code>)로 주입합니다</td></tr>
+    <tr><td>클라우드와 hybrid 양방향 호출</td><td>둘 다 200</td></tr>
+    <tr><td>STRICT mTLS</td><td>메시 밖 Pod의 평문 호출은 거부, hybrid sidecar에서 <code>mutual_tls</code> 지표 확인</td></tr>
+    <tr><td>Istio L7 정책</td><td><code>/echo</code> 200, <code>/admin/users</code> 403 (AuthorizationPolicy). 이때 Cilium은 <code>enable-l7-proxy=false</code>, <code>enable-vtep=true</code> 그대로</td></tr>
+    <tr><td>gateway 리더 전환 중 메시 트래픽</td><td>초당 40건 45초 동안 1,800건 모두 200. 전환은 5초였고 sidecar의 기본 재시도가 흡수한 것으로 보입니다</td></tr>
+  </table>
+  <table>
+    <tr><th>경로 (sidecar에서 sidecar, 순차 300회)</th><th>p50</th><th>p90</th><th>p99</th></tr>
+    <tr><td>cloud에서 cloud</td><td class="num">1.32 ms</td><td class="num">1.87 ms</td><td class="num">1.99 ms</td></tr>
+    <tr><td>cloud에서 hybrid (gateway 경유)</td><td class="num">2.46 ms</td><td class="num">2.90 ms</td><td class="num">3.00 ms</td></tr>
+    <tr><td>hybrid에서 hybrid</td><td class="num">0.62 ms</td><td class="num">0.93 ms</td><td class="num">1.00 ms</td></tr>
+    <tr><td>hybrid에서 cloud (gateway 경유)</td><td class="num">2.11 ms</td><td class="num">2.77 ms</td><td class="num">2.92 ms</td></tr>
+  </table>
+  <div class="callout warn">
+    <strong>범위와 한계</strong>
+    확인한 것은 sidecar 모드입니다. ambient 모드, gateway의 처리량 한계, 대용량 트래픽은 보지 않았습니다. 지연은 순차 요청의 값이고 부하 테스트가 아닙니다. 막히는 것은 Istio가 아니라 gateway 때문에 쓸 수 없게 되는 Cilium 자체의 L7 기능입니다.
+  </div>
+  <p>실행은 <code>./demo-istio/install.sh plan</code>과 <code>apply</code>, 그다음 <code>./demo-istio/run-tests.sh</code>입니다. 되돌릴 때는 <code>./demo-istio/install.sh remove</code>를 쓰세요.</p>
+
+  <h2 id="lb">8. ALB ip 타깃(hybrid Pod)과 역방향 경로</h2>
+  <p>두 가지 질문을 확인했습니다. ALB <code>target-type: ip</code>로 hybrid Pod IP를 붙였을 때 Pod IP가 바뀌면 누가 타깃을 갱신하는지, 그리고 온프렘에서 LB로 들어올 때 리전 노드의 Pod까지 어떻게 가는지입니다. AWS Load Balancer Controller 차트 3.6.0(Pod Identity)을 썼고, ALB는 <strong>internal</strong>이며 inbound는 VPC CIDR과 온프렘 노드 CIDR만 열었습니다.</p>
+  <table>
+    <tr><th>검증</th><th>결과 (2026-10-18 실측)</th></tr>
+    <tr><td>등록</td><td>hybrid Pod IP <code>172.17.0.202</code>, <code>172.17.0.48</code>이 ip 타깃으로 등록되고 healthy. VPC 밖 IP라서 AZ는 <code>all</code></td></tr>
+    <tr><td>리전 클라이언트에서 ALB로 hybrid Pod 호출</td><td>20/20. 경로는 ALB, VPC 라우트 <code>172.17.0.0/16</code>(gateway 리더 ENI), VXLAN, hybrid Pod</td></tr>
+    <tr><td>부하 중 rollout restart</td><td>LBC가 새 IP(<code>.230</code>, <code>.76</code>)로 타깃을 바꿔 54초에 수렴, 276건 중 실패 0</td></tr>
+    <tr><td>부하 중 gateway 리더 삭제</td><td>인계 4초, 191건 중 실패 1건. 클라이언트(busybox wget)는 재시도하지 않습니다</td></tr>
+    <tr><td>온프렘 호스트에서 internal ALB로 리전 Pod 호출</td><td>20/20. ALB 이름이 private IP로 풀리고 TGW를 지나 VPC CNI Pod로 갑니다. gateway는 관여하지 않습니다</td></tr>
+    <tr><td>온프렘 호스트에서 internal ALB로 hybrid Pod 호출</td><td>20/20. 다만 온프렘, AWS, 다시 온프렘으로 도는 hairpin 경로입니다</td></tr>
+    <tr><td>온프렘 호스트에서 hybrid NodePort로 리전 Pod 호출</td><td><strong>실패</strong>. kube-proxy가 노드 IP로 SNAT한 뒤 underlay로 보내서 gateway를 타지 않고, 클러스터 SG가 온프렘 노드 CIDR에 443만 허용합니다</td></tr>
+  </table>
+  <div class="callout warn">
+    <strong>설명할 때의 요점</strong>
+    타깃 갱신은 LBC가 하고 gateway는 경로만 줍니다. 온프렘 클라이언트가 internal LB를 쓰려면 온프렘 DNS에서 ALB 이름을 private IP로 풀 수 있어야 합니다(Route 53 Resolver inbound endpoint). AWS는 리전에서 오는 트래픽은 ALB, 온프렘에서 오는 트래픽은 온프렘 쪽 Ingress로 받으라고 권장합니다. gateway를 쓰면 Cilium L7이 꺼지므로 온프렘은 L4 LoadBalancer나 기존 LB를 씁니다. NodePort 경로를 쓰려면 리전 노드 SG에 온프렘 노드 CIDR과 앱 포트를 열어야 합니다(이 데모에서는 열지 않았습니다).
+  </div>
+  <p>실행은 <code>./demo-lb/install.sh plan</code>, <code>apply</code>, <code>apps</code>, 그다음 <code>./demo-lb/run-tests.sh</code>입니다. 되돌릴 때는 <code>./demo-lb/install.sh remove</code>를 쓰세요(ALB 삭제를 확인한 뒤 IAM까지 정리합니다).</p>
+
+  <h2 id="issues">9. 문서와 다르게 동작한 점</h2>
   <table>
     <tr><th>상황</th><th>원인과 처리</th></tr>
     <tr><td><code>nodeadm init</code>이 403으로 실패</td><td><code>eksctl</code>이 만든 role에 <code>eks:ListAccessEntries</code>가 없습니다. 문서가 안내하는 <code>--skip cluster-access-validation</code>을 썼습니다.</td></tr>
@@ -178,11 +219,13 @@
     <tr><td>Kyverno 정책 생성이 거부됨</td><td>3.9.1에서는 <code>spec.failurePolicy</code>가 금지됩니다. <code>spec.webhookConfiguration.failurePolicy</code>를 씁니다. <code>ClusterPolicy</code> 자체는 deprecated입니다.</td></tr>
     <tr><td>8개가 들어가야 할 hybrid 노드에 6개만 배치됨</td><td>Pod의 유효 요청은 컨테이너 합과 가장 큰 init container 중 큰 값입니다. Cilium agent의 100m가 init container에 있어서 계산에서 빠졌습니다.</td></tr>
     <tr><td>vLLM이 빈 모델 이름으로 종료</td><td>env 예제의 빈 <code>MODEL_ID=</code>가 고정값을 덮어썼습니다. 빈 줄을 제거했습니다.</td></tr>
-    <tr><td>옵션 데모(Cilium + Istio L7)를 이 클러스터에서 재현할 수 없음</td><td>gateway가 Cilium <code>l7Proxy: false</code>를 요구해서 L7 정책이 동작하지 않습니다. gateway 없는 별도 클러스터가 필요하고, 코드만 작성했습니다.</td></tr>
+    <tr><td>LBC 3.6.0 <code>helm install</code>이 "server is currently unable to handle the request"로 실패</td><td>차트의 <code>kind: List</code> 래퍼만 클라이언트 측 OpenAPI 검증에서 실패합니다(항목은 따로 server dry-run 통과). <code>--disable-openapi-validation</code>으로 우회했습니다.</td></tr>
+    <tr><td>ALB 타깃 그룹 생성 실패</td><td>헬스 체크 interval을 5초로 줄이면 기본 timeout 5초가 interval보다 작아야 한다는 검증에 걸립니다. timeout을 3초로 줬습니다.</td></tr>
+    <tr><td>옵션 데모의 "Cilium L7 정책과 Istio L7의 충돌"은 이 클러스터에서 재현할 수 없음</td><td>gateway가 Cilium <code>l7Proxy: false</code>를 요구해서 Cilium L7 정책이 적용되지 않기 때문입니다. 충돌 재현에는 gateway 없는 별도 클러스터가 필요합니다. 반면 Istio 자체는 gateway와 함께 동작하는 것을 위 7절에서 확인했습니다.</td></tr>
   </table>
   <p>아직 측정하지 못한 항목은 consolidation이 hybrid 노드의 빈자리를 재배치 대상으로 보는지(Karpenter는 hybrid 노드를 관리하지 않으므로 보지 않아야 합니다), hostNetwork Pod의 gateway 경로, gateway 인스턴스 타입별 처리량입니다.</p>
 
-  <h2 id="cost">8. 비용과 정리</h2>
+  <h2 id="cost">10. 비용과 정리</h2>
   <p>환경이 켜져 있는 동안 EKS 컨트롤 플레인, NAT, Transit Gateway attachment, EC2, hybrid node vCPU 요금이 계속 발생합니다. 리허설이 끝나면 다음 순서로 삭제합니다.</p>
   <pre><code>./teardown.sh plan
 ./teardown.sh apply all   # demo, karpenter, gateway, hybrid, cluster, network 순서</code></pre>

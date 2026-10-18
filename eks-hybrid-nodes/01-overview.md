@@ -11,16 +11,16 @@ block: 01-overview
 
 온프레미스를 EKS로 확장하는 가이드
 
-Block 1: 개요 & 아키텍처 | 30분
+개요, 네트워킹, 노드 운영, 라이브 데모
 
 :::notes
 {timing: 0.5min}
 [요약]
-- 오늘 세션은 총 4개 블록, 각 30분으로 구성됩니다.
-- 첫 블록은 "왜, 무엇, 어떻게 붙는가"를 다룹니다.
+- 오늘 세션은 다섯 파트로 구성됩니다.
+- 1부는 "왜, 무엇, 어떻게 붙는가"를 다룹니다.
 - 기준일은 2026년 10월이고, 예제 검토 기준은 EKS 1.36 / nodeadm 1.0.20입니다.
 
-안녕하세요. 오늘은 EKS Hybrid Nodes를 주제로 두 시간 세션을 진행합니다. 첫 번째 블록에서는 온프레미스 쿠버네티스 운영이 왜 힘든지부터 시작해서, Hybrid Nodes가 무엇이고 어떤 구조로 동작하는지, 그리고 도입 전에 꼭 알아야 할 제약과 요금까지 훑어보겠습니다.
+안녕하세요. 오늘은 EKS Hybrid Nodes를 주제로 세션을 진행합니다. 1부에서는 온프레미스 쿠버네티스 운영이 왜 힘든지부터 시작해서, Hybrid Nodes가 무엇이고 어떤 구조로 동작하는지, 그리고 도입 전에 꼭 알아야 할 제약과 요금까지 훑어보겠습니다.
 {cue: question}
 시작 전에 하나만 여쭤볼게요. 지금 온프레미스에서 직접 컨트롤 플레인을 운영하고 계신 분 계신가요?
 {cue: transition}
@@ -30,28 +30,29 @@ Block 1: 개요 & 아키텍처 | 30분
 ---
 <!-- Slide 2: 아젠다 -->
 @type: agenda
-@timing: 120min
 
 ## 오늘 세션 구성
 
-1. 개요 & 아키텍처 (30분)
-2. 네트워킹 & Hybrid Nodes Gateway (30분)
-3. 노드 부트스트랩 & 라이프사이클 (30분)
-4. 운영, 워크로드, 보안 & 전략 (30분)
+1. 개요 & 아키텍처
+2. 네트워킹 & Hybrid Nodes Gateway
+3. 노드 부트스트랩 & 라이프사이클
+4. 운영, 워크로드, 보안 & 전략
+5. 라이브 데모: 직접 돌려 본 결과
 
-> 질문은 각 Block 종료 시에 받겠습니다.
+> 질문은 마지막에 한 번에 받겠습니다.
 
 :::notes
 {timing: 1min}
 [요약]
-- Block 1: 개요, 아키텍처, 제약, 지원 범위, 자격 증명, 요금
-- Block 2: 네트워크 요구사항과 Hybrid Nodes Gateway
-- Block 3: nodeadm 기반 부트스트랩과 라이프사이클
-- Block 4: 운영, 워크로드 배치, 보안(망분리) 관점과 도입 전략
+- 1부: 개요, 아키텍처, 제약, 지원 범위, 자격 증명, 요금
+- 2부: 네트워크 요구사항, CNI 구성 선택, Hybrid Nodes Gateway
+- 3부: nodeadm과 Bottlerocket 부트스트랩, 라이프사이클
+- 4부: 운영, 워크로드 배치, 보안(망분리) 관점과 도입 전략
+- 5부: 실제 클러스터에서 돌려 본 데모 결과
 
-오늘은 30분씩 4개 블록입니다. 지금 보시는 첫 블록은 전체 그림을 잡는 단계이고, 두 번째 블록에서 네트워킹과 Gateway, 세 번째 블록에서 노드를 실제로 붙이고 업그레이드하는 과정, 마지막 블록에서 운영과 보안, 도입 전략을 다룹니다.
+오늘은 다섯 파트로 진행합니다. 1부에서 전체 그림을 잡고, 2부에서 네트워킹과 Hybrid Nodes Gateway, 3부에서 노드를 실제로 붙이고 업그레이드하는 과정, 4부에서 운영과 보안, 도입 전략을 다룹니다. 마지막 5부에서는 이 내용을 실제 클러스터에서 돌려 본 결과를 보여 드립니다.
 {cue: pause}
-궁금한 점은 각 블록이 끝날 때 받겠습니다.
+질문은 마지막에 한 번에 받겠습니다.
 {cue: transition}
 먼저 문제 정의부터 시작합니다.
 :::
@@ -198,7 +199,7 @@ Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 
 
 한 문장으로 말하면, 내 데이터센터의 서버를 AWS가 운영하는 EKS 컨트롤 플레인에 노드로 붙이는 기능입니다. 오른쪽 그림처럼 AWS 쪽에는 컨트롤 플레인과 VPC가 있고, 온프레미스의 hybrid node가 VPN이나 Direct Connect 같은 private 연결로 이어집니다.
 {cue: pause}
-그림에는 라우터와 게이트웨이가 보이는데, 이 연결과 라우팅은 고객이 준비해야 합니다. Hybrid Nodes가 네트워크를 자동으로 만들어주지는 않습니다. 이 부분은 Block 2에서 자세히 보겠습니다.
+그림에는 라우터와 게이트웨이가 보이는데, 이 연결과 라우팅은 고객이 준비해야 합니다. Hybrid Nodes가 네트워크를 자동으로 만들어주지는 않습니다. 이 부분은 2부에서 자세히 보겠습니다.
 근거: kubernetes-docs/ko/eks-hybrid-nodes/README.md 개요 및 diagrams/hybrid-nodes-highlevel-network.png (내용이 fact sheet와 일치함을 확인).
 {cue: transition}
 다음은 노드가 어떻게 등록되는지 흐름으로 보겠습니다.
@@ -300,7 +301,7 @@ Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 
   </div>
 </div>
 <div class="callout callout-danger fragment zoom-in" data-fragment-index="3">
-  <strong class="text-danger">데이터 경계 주의</strong>: Secrets, Kubernetes 객체, 로그 등 컨트롤 플레인 데이터는 AWS에 저장됩니다. Private endpoint를 쓴다고 망분리 규정 준수가 입증되지는 않으며, Direct Connect 자체는 기본 암호화를 제공하지 않습니다.
+  <strong class="text-danger">데이터 경계 주의</strong>: Secrets, Kubernetes 객체, 로그 등 컨트롤 플레인 데이터는 AWS에 저장됩니다.
 </div>
 :::
 
@@ -311,13 +312,11 @@ Outposts의 컨트롤 플레인 배치는 배포 방식에 따라 달라서 이 
 - 컨트롤 플레인은 AWS, 노드 이하는 고객 책임입니다.
 - 자격 증명 서비스는 AWS지만, 인증서, PKI, activation 준비는 고객 몫입니다.
 - Secrets, K8s 객체, 로그는 AWS 컨트롤 플레인에 저장됩니다.
-- Private endpoint가 망분리 규정 준수를 자동으로 뜻하지 않습니다.
-- Direct Connect는 기본 암호화가 없어 MACsec 또는 IPsec 검토가 필요합니다.
 
 왼쪽은 AWS가 책임지는 영역, 오른쪽은 고객이 책임지는 영역입니다. 컨트롤 플레인 구성요소와 자격 증명 서비스는 AWS가 운영하지만, 노드 OS 패치와 kubelet, containerd, CNI, 그리고 온프렘과 AWS 사이의 연결은 모두 고객이 운영합니다.
 {cue: pause}
 보안 담당자분들이 꼭 짚으셔야 할 부분이 아래 빨간 박스입니다. Kubernetes API 객체와 Secrets, 로그는 AWS가 관리하는 컨트롤 플레인에 저장됩니다. 그래서 node selector로 워크로드를 온프렘에 붙였다고 해서 데이터 주권이 입증되지는 않습니다.
-Direct Connect만으로는 암호화가 보장되지 않기 때문에 MACsec 또는 IPsec 같은 추가 보호를 검토해야 합니다. 이 주제는 Block 4에서 망분리 관점으로 다시 다룹니다.
+이 주제는 4부에서 망분리 관점으로 다시 다룹니다.
 근거: D/README.md "사용 사례와 데이터 경계", "아키텍처와 운영 책임"; D/11-network-separation-security.md.
 {cue: transition}
 이제 도입 전에 확인해야 할 제약을 보겠습니다.
@@ -407,7 +406,7 @@ Direct Connect만으로는 암호화가 보장되지 않기 때문에 MACsec 또
 | nodeadm | 현재 v1.0.20, SSM 사용 시 **1.0.19 이상** 필요 |
 | 설치 권장 | `releases/latest` 대신 릴리스를 고정하고 checksum 검증 |
 | 리전 | GovCloud (US), 중국 리전을 제외한 모든 AWS 리전 |
-| 업그레이드 주의 | 1.35 cgroup v2 필수, 1.36 containerd 2.0+, 1.37 SELinuxMount 기본 활성, kubelet flag 변경 (Block 3 점검 슬라이드) |
+| 업그레이드 주의 | 1.35 cgroup v2 필수, 1.36 containerd 2.0+, 1.37 SELinuxMount 기본 활성, kubelet flag 변경 (3부 점검 슬라이드) |
 
 ### CNI, Cilium
 
@@ -429,7 +428,7 @@ Direct Connect만으로는 암호화가 보장되지 않기 때문에 MACsec 또
 
 탭 세 개로 나눴습니다. OS 탭에서 주의할 점은 AL2023이 온프렘 가상화 환경 전용이라는 점과, Bottlerocket은 VMware 변형에 x86_64만 지원하고 nodeadm 대신 자체 bootstrap을 쓴다는 점입니다. RHEL 10이나 Ubuntu 26.04는 아직 목록에 없습니다.
 {cue: pause}
-두 번째 탭에서 버전은 EKS와 같은 버전을 지원한다고 말씀드리되, 1.37에서 hybrid 전용 검증을 했는지는 단정하지 않겠습니다. SSM을 쓸 때는 nodeadm 1.0.19 이상이 필요합니다. 1.35 이후로는 cgroup v2, containerd 2.0, 1.37의 SELinuxMount와 kubelet 변경처럼 노드 쪽에서 준비할 항목이 계속 늘고 있어서, Block 3에서 따로 점검합니다.
+두 번째 탭에서 버전은 EKS와 같은 버전을 지원한다고 말씀드리되, 1.37에서 hybrid 전용 검증을 했는지는 단정하지 않겠습니다. SSM을 쓸 때는 nodeadm 1.0.19 이상이 필요합니다. 1.35 이후로는 cgroup v2, containerd 2.0, 1.37의 SELinuxMount와 kubelet 변경처럼 노드 쪽에서 준비할 항목이 계속 늘고 있어서, 3부에서 따로 점검합니다.
 세 번째 탭의 Cilium은 AWS 빌드가 지원 범위입니다. 공식 CNI 페이지는 1.17과 1.18을 명시하고, Hybrid Nodes Gateway를 쓰려면 branch별로 1.17.13-1, 1.18.8-1, 1.19.2-1 이상이 필요합니다. CNI 페이지 예시 버전은 이보다 낮으니 Gateway 계획이 있다면 버전을 먼저 맞추세요. 업스트림 Cilium 최신 버전을 그대로 쓰면 AWS 지원 대상이 아닐 수 있습니다.
 근거: D/01-prerequisites.md "OS와 Runtime", D/README.md "계획에 반영할 제약", fact sheet(EKS 지원 버전 2026-10-07 기준), D/04-node-bootstrap.md. 버전 숫자는 시점에 따라 바뀌므로 발표 전 공식 문서로 재확인 필요.
 {cue: transition}
@@ -499,7 +498,87 @@ IAM Roles Anywhere는 PKI와 노드별 인증서, trust anchor, profile이 필�
 공통으로 기억할 점은, 로컬 CA를 둔다고 해서 AWS 없이 자격 증명을 발급받을 수 있는 것은 아니라는 점입니다. 둘 다 갱신할 때 AWS 연결이 필요합니다. 또 SSM Advanced Instances tier는 2026년 6월 30일 폐지되었고, SSM을 쓰려면 nodeadm 1.0.19 이상이어야 합니다.
 근거: D/README.md "자격 증명 프로바이더", D/01-prerequisites.md "Provider별 자격 증명", D/04-node-bootstrap.md(NodeConfig), 활성화 기본 24시간/최대 30일/RegistrationLimit은 fact sheet 기준.
 {cue: transition}
+그러면 고객은 무엇을 기준으로 고르면 될지 보겠습니다.
+:::
+
+---
+<!-- Slide 10b: 자격 증명 선택 가이드 -->
+@type: content
+@title: 어떤 자격 증명 방식을 고를까
+
+## 어떤 자격 증명 방식을 고를까
+
+:::html
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.hn-cmp { display: grid; grid-template-columns: 1fr 2fr 2fr; gap: var(--space-1) var(--space-3); margin-bottom: var(--space-3); font-size: var(--fs-card); }
+.hn-cmp .hn-head { font-weight: var(--weight-bold); color: var(--accent); padding: var(--space-1) var(--space-2); }
+.hn-crit { color: var(--text-secondary); padding: var(--space-1) var(--space-2); }
+.hn-tip { position: relative; padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); border-bottom: 1px dashed var(--border); cursor: help; outline: none; }
+.hn-tip:hover, .hn-tip:focus { background: var(--accent-subtle); }
+.hn-pop { position: absolute; left: 0; top: calc(100% + var(--space-1)); width: calc(var(--space-8) * 5); padding: var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); box-shadow: var(--shadow-3); z-index: var(--z-overlay); opacity: 0; visibility: hidden; transition: opacity .15s; word-break: keep-all; overflow-wrap: anywhere; line-height: 1.5; }
+.hn-right .hn-pop { left: auto; right: 0; }
+.hn-up .hn-pop { top: auto; bottom: calc(100% + var(--space-1)); }
+.hn-tip:hover .hn-pop, .hn-tip:focus .hn-pop { opacity: 1; visibility: visible; }
+.hn-hint { font-size: var(--fs-card); color: var(--text-secondary); margin-bottom: var(--space-2); }
+.hn-hint a, .hn-refs a { color: var(--accent); }
+</style>
+<div class="hn-hint">각 칸에 마우스를 올리면(또는 Tab으로 포커스하면) 근거와 주의점이 나옵니다. 참고: <a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html" target="_blank" rel="noopener">자격 증명 준비</a>, <a href="https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html" target="_blank" rel="noopener">단절 시 자격 증명 동작</a>, <a href="https://aws.amazon.com/systems-manager/pricing/" target="_blank" rel="noopener">SSM 요금</a></div>
+<div class="hn-cmp fragment fade-up" data-fragment-index="1">
+  <div class="hn-head">기준</div><div class="hn-head">SSM hybrid activation</div><div class="hn-head">IAM Roles Anywhere</div>
+  <div class="hn-crit">사전 준비</div>
+  <div class="hn-tip" tabindex="0">PKI 불필요, activation 코드<span class="hn-pop">Activation 코드와 ID만 있으면 등록합니다. 활성화는 기본 24시간, 최대 30일 유효하고 하나로 1~1000대까지 등록합니다. 코드가 노출되면 그 기간에 누구나 등록할 수 있으니 짧게 만들고 노드별로 전달하세요.</span></div>
+  <div class="hn-tip hn-right" tabindex="0">CA와 노드별 인증서<span class="hn-pop">trust anchor(CA), profile, role, 노드별 인증서와 개인 키가 필요합니다. 사내 PKI가 있으면 재사용하고, 없으면 AWS Private CA를 쓸 수 있지만 그 요금은 별도입니다.</span></div>
+  <div class="hn-crit">단절 후 복구</div>
+  <div class="hn-tip" tabindex="0">최대 30분 지연 가능<span class="hn-pop">끊기면 SSM agent가 지수 백오프로 재시도합니다(agent 3.3.808.0 이상은 최대 30분 간격). 자격 증명이 만료되면 네트워크가 돌아와도 갱신될 때까지 재연결되지 않고, 노드마다 시점이 다릅니다. agent를 재시작하면 바로 갱신합니다.</span></div>
+  <div class="hn-tip hn-right" tabindex="0">보통 몇 초<span class="hn-pop">kubelet이 aws_signing_helper credential-process로 필요할 때마다 자격 증명을 받기 때문에, 네트워크가 돌아오면 보통 몇 초 안에 재연결됩니다.</span></div>
+  <div class="hn-crit">세션 길이</div>
+  <div class="hn-tip" tabindex="0">1시간 고정<span class="hn-pop">바꿀 수 없습니다. 만료 전에 자동으로 교체되고, 평소에는 노드와 애플리케이션에 영향이 없습니다.</span></div>
+  <div class="hn-tip hn-right" tabindex="0">기본 1시간, 최대 12시간<span class="hn-pop">profile의 durationSeconds로 늘리고, 노드 IAM role의 MaxSessionDuration이 그보다 커야 합니다. 길게 잡으면 짧은 단절은 견디지만 유출 시 노출 시간도 길어집니다.</span></div>
+  <div class="hn-crit">노드 이름</div>
+  <div class="hn-tip hn-up" tabindex="0">mi-* ID로 자동<span class="hn-pop">SSM이 만든 managed instance ID가 노드 이름이 됩니다. 사람이 읽기 어려우니 위치와 역할은 label로 붙이세요.</span></div>
+  <div class="hn-tip hn-right hn-up" tabindex="0">인증서 CN과 연결<span class="hn-pop">role trust policy의 RoleSessionName 조건으로 노드 이름을 인증서 CN에 묶을 수 있습니다. NodeConfig에 nodeName, 인증서 경로, 키 경로를 지정합니다.</span></div>
+  <div class="hn-crit">운영 부담</div>
+  <div class="hn-tip hn-up" tabindex="0">activation과 agent 관리<span class="hn-pop">활성화 만료와 등록 한도, SSM agent 버전, 노드 제거 시 등록 해제를 관리합니다. 등록 자체는 무료지만 hybrid 노드에 Session Manager나 Run Command를 쓰면 2026-09-30부터 사용량 과금입니다.</span></div>
+  <div class="hn-tip hn-right hn-up" tabindex="0">인증서 발급, 갱신, 폐기<span class="hn-pop">노드별 인증서 배포, 만료 전 갱신, 폐기 목록(CRL) 관리를 운영해야 합니다. 인증서가 만료되면 자격 증명을 받을 수 없으니 만료 알림을 켜 두세요. IAM Roles Anywhere 자체는 추가 요금이 없습니다.</span></div>
+  <div class="hn-crit">필요한 연결</div>
+  <div class="hn-tip hn-up" tabindex="0">SSM 리전 엔드포인트<span class="hn-pop">갱신하려면 SSM 엔드포인트에 닿아야 합니다. 사설 연결만 쓰면 interface VPC endpoint(PrivateLink)를 준비합니다.</span></div>
+  <div class="hn-tip hn-right hn-up" tabindex="0">Roles Anywhere 엔드포인트<span class="hn-pop">갱신하려면 IAM Roles Anywhere 엔드포인트에 닿아야 합니다. 로컬 CA가 있어도 AWS 없이 자격 증명을 발급받을 수는 없습니다.</span></div>
+</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="2">
+  <div class="callout callout-info"><strong class="text-info">SSM이 맞는 경우</strong><div class="on-surface-muted">사내 PKI가 없고 빨리 시작해야 할 때, 연결이 안정적이어서 단절 후 복구 지연을 감수할 수 있을 때.</div></div>
+  <div class="callout callout-success"><strong class="text-success">IAM RA가 맞는 경우</strong><div class="on-surface-muted">PKI와 인증서 수명 관리 체계가 이미 있을 때, 단절 후 빠른 복구나 긴 세션이 필요할 때.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">공통</strong><div class="on-surface-muted">한 클러스터에서는 한 방식만 쓰는 것이 권장입니다. 두 방식 모두 갱신에 AWS 연결이 필요합니다.</div></div>
+</div>
+:::
+
+
+:::notes
+{timing: 2.5min}
+[요약]
+• PKI가 없으면 SSM, 사내 PKI와 인증서 수명 관리 체계가 있으면 IAM Roles Anywhere
+• 단절 후 복구: SSM은 최대 30분 지연 가능, IAM RA는 보통 몇 초
+• 세션: SSM 1시간 고정, IAM RA 기본 1시간 최대 12시간
+• 운영: SSM은 activation과 agent, IAM RA는 인증서 발급, 갱신, 폐기
+• 한 클러스터에서는 한 방식만, 두 방식 모두 AWS 연결 필요
+
+앞 장이 두 방식의 사양이었다면, 이 장은 고객이 무엇을 기준으로 고르면 되는지입니다. 칸에 마우스를 올리면 근거가 나옵니다.
+가장 먼저 물어볼 것은 사내 PKI가 있는지입니다. 없으면 SSM이 훨씬 빨리 시작할 수 있고, 이미 인증서를 발급하고 갱신하는 체계가 있으면 IAM Roles Anywhere가 자연스럽습니다.
+{cue: pause}
+두 번째는 네트워크 단절에 얼마나 민감한지입니다. SSM 자격 증명은 1시간 고정이라 그보다 오래 끊기면 만료되고, agent가 최대 30분 간격으로 재시도하기 때문에 네트워크가 돌아와도 노드 재연결이 늦어질 수 있습니다. agent를 재시작하면 바로 갱신됩니다. IAM Roles Anywhere는 kubelet이 필요할 때 자격 증명을 받아서 보통 몇 초 안에 재연결되고, 세션도 최대 12시간까지 늘릴 수 있습니다.
+운영 부담은 종류가 다릅니다. SSM은 activation 만료와 agent 버전을 챙기면 되고, IAM Roles Anywhere는 인증서 배포와 갱신, 폐기를 챙겨야 합니다. 비용은 SSM 등록이 무료이고, hybrid 노드에 Session Manager나 Run Command를 쓰면 2026년 9월 30일부터 사용량 과금입니다. IAM Roles Anywhere는 추가 요금이 없고, AWS Private CA를 쓰면 그 요금이 붙습니다.
+마지막으로 한 클러스터에서는 한 방식만 쓰는 것이 AWS 권장이고, 어느 쪽이든 갱신에는 AWS 연결이 필요합니다.
+{cue: transition}
 이제 가장 궁금해하시는 가격을 보겠습니다.
+
+[출처]
+• https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html (PKI 유무에 따른 권장, 한 방식 사용)
+• https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html (SSM 1시간 고정, 최대 30분 백오프, IAM RA 최대 12시간과 수 초 재연결)
+• https://aws.amazon.com/systems-manager/pricing/ (Advanced tier 폐지, 2026-09-30부터 Session Manager와 Run Command 과금)
+• https://aws.amazon.com/blogs/security/planning-for-your-iam-roles-anywhere-deployment/ (AWS Private CA 비용 고려)
 :::
 
 ---
@@ -717,138 +796,5 @@ update();
 IAM에서 자주 놓치는 부분은 AmazonEKSWorkerNodeMinimalPolicy에 eks:DescribeCluster가 없다는 점입니다. 따로 추가해야 합니다. 마지막으로 이 CIDR 선언이 라우트와 방화벽 규칙을 자동으로 만들어주지는 않습니다. VPC와 온프렘 양쪽 라우팅은 직접 구성해야 합니다. 코드 조각은 문서의 예시값이며 실제 클러스터에서 실행해본 결과가 아닙니다.
 근거: D/01-prerequisites.md "Cluster Access와 생성 계획" 및 "Provider별 자격 증명", "Network, CIDR, MTU".
 {cue: transition}
-배운 내용을 퀴즈로 확인해보겠습니다.
-:::
-
----
-<!-- Slide 14: Block 1 퀴즈 1/2 -->
-@type: quiz
-
-## Block 1 퀴즈 (1/2)
-
-**Q1: SSM hybrid activation을 쓸 때 자격 증명 세션 수명은?**
-- [ ] 15분
-- [x] 1시간
-- [ ] 12시간
-
-**Q2: 지원 OS에 대한 설명으로 옳은 것은?**
-- [ ] AL2023은 베어메탈 서버에서 권장된다
-- [ ] Bottlerocket은 arm64도 지원한다
-- [x] AL2023은 온프렘 가상화 환경에서 지원된다
-
-:::notes
-{timing: 1.25min}
-[요약]
-- Q1 정답: SSM 세션은 1시간 고정입니다.
-- Q2 정답: AL2023은 온프렘 가상화 환경에서 지원됩니다 (Bottlerocket은 x86_64만, RHEL 10은 목록에 없음).
-
-문제를 풀어보겠습니다. 1번은 SSM 세션 수명으로 1시간 고정입니다. 2번은 AL2023이 온프렘 가상화 환경에서만 지원된다는 점을 묻고 있습니다. Bottlerocket은 VMware 변형에 x86_64만 지원하고 RHEL 10은 목록에 없습니다.
-{cue: pause}
-정답을 확인하고 다음 두 문제로 넘어가겠습니다.
-근거: D/README.md, D/01-prerequisites.md.
-{cue: transition}
-이어서 3번, 4번입니다.
-:::
-
----
-<!-- Slide 15: Block 1 퀴즈 2/2 -->
-@type: quiz
-
-## Block 1 퀴즈 (2/2)
-
-**Q3: Hybrid Nodes 요금 구조로 옳은 것은?**
-- [ ] 모든 사용량에 vCPU-hour당 $0.01 고정
-- [ ] Workload가 idle이면 과금이 중단된다
-- [x] 월 누적 vCPU-hours 구간별 단가이며 처음 576,000까지 $0.020
-
-**Q4: 클러스터 API endpoint 설정으로 옳은 것은?**
-- [ ] Public과 private를 모두 켜는 것이 필수다
-- [x] Public-only 또는 Private-only가 권장이며, 둘 다 켜면 join이 실패할 수 있다
-- [ ] Public endpoint를 쓰면 control plane에서 kubelet으로의 private 연결이 필요 없다
-
-:::notes
-{timing: 1.25min}
-[요약]
-- Q3 정답: 월 누적 구간제이며 처음 576,000 vCPU-hours는 $0.020입니다.
-- Q4 정답: Hybrid Nodes 클러스터는 Public-only 또는 Private-only가 권장이며, "Public and Private"는 join 실패 위험이 있습니다.
-
-3번은 구간제 요금으로, 모든 사용량에 고정 단가가 적용되지 않고 idle이어도 과금됩니다. 4번은 endpoint 모드입니다. 둘 다 켜는 구성 자체를 API가 막지는 않지만, VPC 밖 노드에서 API endpoint가 public IP로 해석되어 join이 실패할 수 있으므로 하나만 켜는 것이 권장입니다. 또 public endpoint를 써도 control plane에서 노드로의 private 연결 요구는 사라지지 않습니다.
-{cue: pause}
-근거: D/README.md, D/01-prerequisites.md, 요금표(aws.amazon.com/eks/pricing).
-{cue: transition}
-마지막으로 참고 자료와 질문 시간입니다.
-:::
-
----
-<!-- Slide 16: References + Q&A -->
-@type: content
-@title: References & Q&A
-
-## References & Q&A
-
-:::html
-<style>
-.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
-</style>
-<div class="card-grid" data-reveal="static">
-  <div class="card">
-    <strong class="text-accent">Overview</strong>
-    <div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html</div>
-  </div>
-  <div class="card">
-    <strong class="text-accent">nodeadm</strong>
-    <div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html</div>
-  </div>
-  <div class="card">
-    <strong class="text-accent">Networking</strong>
-    <div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html</div>
-  </div>
-  <div class="card">
-    <strong class="text-accent">OS, Credentials</strong>
-    <div class="on-surface-muted">hybrid-nodes-os.html, hybrid-nodes-creds.html</div>
-  </div>
-  <div class="card">
-    <strong class="text-accent">CNI, Troubleshooting</strong>
-    <div class="on-surface-muted">hybrid-nodes-cni.html, hybrid-nodes-troubleshooting.html</div>
-  </div>
-  <div class="card">
-    <strong class="text-accent">Pricing</strong>
-    <div class="on-surface-muted">aws.amazon.com/eks/pricing</div>
-  </div>
-</div>
-:::
-
-
-:::notes
-{timing: 1.5min}
-[요약]
-- 공식 문서는 hybrid-nodes-* 시리즈를 기준으로 확인합니다.
-- 요금은 EKS 요금 페이지가 기준입니다.
-- Block 2에서는 네트워킹과 Hybrid Nodes Gateway를 다룹니다.
-
-오늘 다룬 내용의 공식 출처입니다. 버전과 요금은 시점에 따라 바뀌기 때문에, 실제 도입 전에는 반드시 공식 문서로 재확인하시기 바랍니다.
-{cue: pause}
-여기까지 질문 있으신가요? 특히 책임 경계나 요금 모델, 지원 OS에 대한 질문을 환영합니다.
-{cue: transition}
-이어서 다음 블록에서는 네트워킹과 Hybrid Nodes Gateway를 다루겠습니다.
-:::
-
----
-<!-- Slide 17: Thank You -->
-@type: thankyou
-@toc: toc.html
-@next: 02-networking-gateway.html
-@next-label: 다음: 네트워킹 & Gateway
-@message: Block 1: 개요 & 아키텍처 완료
-
-:::notes
-{timing: 0.5min}
-[요약]
-- Block 1 마무리
-- 다음 블록은 네트워킹 & Hybrid Nodes Gateway
-
-Block 1을 마무리하겠습니다. 잠시 쉬었다가 Block 2에서 네트워킹 요구사항과 Gateway를 살펴보겠습니다.
-{cue: transition}
-감사합니다.
+다음은 2부, 네트워킹과 Hybrid Nodes Gateway입니다.
 :::

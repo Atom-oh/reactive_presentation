@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>라이브 데모: 직접 돌려 본 결과</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="05-live-demo.md">
+  <meta name="remarp-block" content="05-live-demo">
+  <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
+  <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
+  
+  <script>window.__remarpTheme = {"colors": {"dk1": "#000000", "lt1": "#FFFFFF", "dk2": "#161D26", "lt2": "#F3F3F7", "accent1": "#41B3FF", "accent2": "#AD5CFF", "accent3": "#00E500", "accent4": "#FF5C85", "accent5": "#FF693C", "accent6": "#FBD332", "hlink": "#41B1E8", "folHlink": "#41B1E8"}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}};</script>
+</head>
+<body>
+<div class="slide-deck theme-dark">
+<div class="slide title-slide" data-remarp-id="s0">
+    <h1>5부: 라이브 데모, 직접 돌려 본 결과</h1>
+  <p class="meta">gateway 전환, bursting, GPU 추론, Istio 공존의 실측</p>
+</div>
+
+<div class="slide" data-remarp-id="s1">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>온프렘을 시뮬레이션한 환경에서 돌렸다</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <p><!-- Slide 2: 시뮬레이션 환경 --></p>
+<style>
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.ld-arch { display: grid; grid-template-columns: 1fr auto 1fr; gap: var(--space-3); align-items: stretch; margin-bottom: var(--space-4); }
+.ld-vpc { border: 1px solid var(--border); border-radius: var(--space-2); padding: var(--space-3); background: var(--bg-card); }
+.ld-vpc h4 { margin: 0 0 var(--space-2); font-size: var(--fs-card); color: var(--accent); }
+.ld-vpc ul { margin: 0; padding-left: var(--space-4); font-size: var(--fs-card); color: var(--text-secondary); }
+.ld-tgw { display: flex; align-items: center; justify-content: center; writing-mode: vertical-rl; letter-spacing: .12em; font-weight: var(--weight-bold); color: var(--accent); }
+</style>
+<div class="ld-arch fragment fade-up" data-fragment-index="1">
+  <div class="ld-vpc"><h4>클라우드 VPC 10.0.0.0/16</h4><ul>
+    <li>EKS 1.36, system 노드 2대</li>
+    <li>gateway 노드 2대 (c6in.xlarge, 2개 AZ)</li>
+    <li>Karpenter burst 노드 (m6i, m7i)</li>
+    <li>클라우드 노드는 VPC CNI 사용</li></ul></div>
+  <div class="ld-tgw">Transit Gateway</div>
+  <div class="ld-vpc"><h4>시뮬레이션 온프렘 VPC 172.18.0.0/16</h4><ul>
+    <li>hybrid 노드 호스트 2대 (m7i.xlarge)</li>
+    <li>GPU 호스트 1대 (g6.xlarge, 데모 3 때만)</li>
+    <li>Pod CIDR 172.17.0.0/16 (Cilium)</li>
+    <li>SSH는 EC2 Instance Connect Endpoint만</li></ul></div>
+</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="2">
+  <div class="callout callout-danger"><strong class="text-danger">프로덕션 구성이 아님</strong><div class="on-surface-muted">EC2를 hybrid node로 쓰는 것은 지원되지 않고, join하면 hybrid node 요금이 부과됩니다.</div></div>
+  <div class="callout callout-info"><strong class="text-info">실제 구성과의 차이</strong><div class="on-surface-muted">온프렘 서버 + VPN/Direct Connect로 바뀌고, 달라지는 값은 노드 CIDR과 호스트뿐입니다.</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s2">
+  <div class="slide-header" data-remarp-id="s2-header"><h2>데모 1: 리더가 바뀌어도 끊김은 3~5초</h2></div>
+  <div class="slide-body" data-remarp-id="s2-body">
+    <p><!-- Slide 3: 데모 1 리더 전환 --></p>
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.flow-h { margin: 0 0 var(--space-4); }
+.flow-h .flow-box { min-width: min-content; overflow-wrap: normal; }
+.hn-flow-sub { display: block; color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: break-word; }
+.ld-table { width: 100%; border-collapse: collapse; margin-bottom: var(--space-3); font-size: var(--fs-card); }
+.ld-table th, .ld-table td { border: 1px solid var(--border); padding: var(--space-2) var(--space-3); text-align: left; }
+.ld-table th { background: var(--bg-card); }
+.ld-num { font-variant-numeric: tabular-nums; }
+</style>
+<div class="flow-h">
+  <div class="flow-box fragment fade-right" data-fragment-index="1">리더 Pod 삭제<br><span class="hn-flow-sub">T0</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="2">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="2">standby가 Lease 획득<br><span class="hn-flow-sub">3~5초</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="3">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="3">VPC 라우트 교체<br><span class="hn-flow-sub">새 리더 ENI</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="4">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="4">VTEP 갱신, 트래픽 복구<br><span class="hn-flow-sub">1초 간격 요청 1~2개 실패</span></div>
+</div>
+<table class="ld-table fragment fade-up" data-fragment-index="5">
+  <tr><th>실행</th><th>Lease 전환</th><th>실패한 요청 (1초 간격)</th><th>라우트</th></tr>
+  <tr><td>1회차</td><td class="ld-num">3초</td><td class="ld-num">60개 중 1개</td><td>새 리더 ENI로 이동</td></tr>
+  <tr><td>2회차</td><td class="ld-num">5초</td><td class="ld-num">60개 중 1개</td><td>새 리더 ENI로 이동</td></tr>
+  <tr><td>3회차 (최소 권한 IAM)</td><td class="ld-num">5초</td><td class="ld-num">45개 중 2개</td><td>새 리더 ENI로 이동</td></tr>
+</table>
+<div class="callout callout-info fragment fade-up" data-fragment-index="6"><strong class="text-info">알아 둘 점</strong> Lease HOLDER는 Pod 이름이 아니라 노드이름_uuid 형식입니다. 라우트 쓰기 권한은 gateway의 route table로만 제한해도 동작했습니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s3">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>데모 2: 같은 워크로드를 세 가지로 줄여 본다</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body">
+    <p><!-- Slide 4: 데모 2 설계 --></p>
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.flow-h { margin: 0 0 var(--space-4); }
+.flow-h .flow-box { min-width: min-content; overflow-wrap: normal; }
+.hn-flow-sub { display: block; color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: break-word; }
+</style>
+<div class="flow-h">
+  <div class="flow-box fragment fade-right" data-fragment-index="1">3개<br><span class="hn-flow-sub">모두 hybrid</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="2">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="2">15개<br><span class="hn-flow-sub">hybrid 8 + cloud 7</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="3">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="3">12개<br><span class="hn-flow-sub">warm-up</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="4">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="4">10개<br><span class="hn-flow-sub">배치 측정</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="5">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="5">3개<br><span class="hn-flow-sub">최종 배치와 정리 시간</span></div>
+</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="6">
+  <div class="callout callout-warning"><strong class="text-warning">A. 정책 없음</strong><div class="on-surface-muted">ReplicaSet 기본 규칙. Karpenter 기능도 끔.</div></div>
+  <div class="callout callout-info"><strong class="text-info">B. Kyverno</strong><div class="on-surface-muted">hybrid 노드에 뜬 Pod에만 pod-deletion-cost 1을 부여.</div></div>
+  <div class="callout callout-success"><strong class="text-success">C. Kyverno + Karpenter</strong><div class="on-surface-muted">B에 더해 Karpenter가 burst 노드 Pod의 cost를 순위로 기록.</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s4">
+  <div class="slide-header" data-remarp-id="s4-header"><h2>데모 2 결과: 온프렘 Pod를 지킨 것은 B와 C</h2></div>
+  <div class="slide-body" data-remarp-id="s4-body">
+    <p><!-- Slide 5: 데모 2 결과 --></p>
+<style>
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.ld-chart { margin-bottom: var(--space-3); }
+.ld-legend { display: flex; gap: var(--space-4); margin-bottom: var(--space-2); font-size: var(--fs-card); color: var(--text-secondary); }
+.ld-sw { display: inline-block; width: var(--space-3); height: var(--space-3); border-radius: var(--space-1); margin-right: var(--space-2); vertical-align: middle; }
+.ld-sw.hyb, .ld-seg.hyb { background: var(--success); }
+.ld-sw.cld, .ld-seg.cld { background: var(--warning); }
+.ld-row { display: grid; grid-template-columns: 1fr 2fr 2fr; gap: var(--space-3); align-items: center; margin-bottom: var(--space-2); }
+.ld-label { font-size: var(--fs-card); }
+.ld-bar { display: flex; height: var(--space-6); border-radius: var(--space-1); overflow: hidden; background: var(--bg-card); }
+.ld-seg { display: flex; align-items: center; justify-content: center; color: var(--accent-on, var(--text-primary)); font-weight: var(--weight-bold); font-size: var(--fs-card); }
+.ld-meta { font-size: var(--fs-card); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+</style>
+<div class="ld-chart fragment fade-up" data-fragment-index="1">
+  <div class="ld-legend"><span><span class="ld-sw hyb"></span>hybrid Pod</span><span><span class="ld-sw cld"></span>cloud Pod</span><span>10개로 줄였을 때의 배치</span></div>
+  <div class="ld-row"><div class="ld-label">A 정책 없음</div><div class="ld-bar"><div class="ld-seg hyb" style="width:60%">6</div><div class="ld-seg cld" style="width:40%">4</div></div><div class="ld-meta">최종 3개: hybrid 2 / cloud 1<br>EC2 3대, 정리 123초</div></div>
+  <div class="ld-row"><div class="ld-label">B Kyverno</div><div class="ld-bar"><div class="ld-seg hyb" style="width:80%">8</div><div class="ld-seg cld" style="width:20%">2</div></div><div class="ld-meta">최종 3개: hybrid 3 / cloud 0<br>EC2 4대, 정리 118초</div></div>
+  <div class="ld-row"><div class="ld-label">C Kyverno + Karpenter</div><div class="ld-bar"><div class="ld-seg hyb" style="width:80%">8</div><div class="ld-seg cld" style="width:20%">2</div></div><div class="ld-meta">최종 3개: hybrid 3 / cloud 0<br>EC2 3대, 정리 87초</div></div>
+</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="2">
+  <div class="callout callout-warning"><strong class="text-warning">A는 온프렘을 먼저 지움</strong><div class="on-surface-muted">기본 규칙은 위치를 보지 않아 hybrid Pod 2개가 먼저 사라졌습니다.</div></div>
+  <div class="callout callout-success"><strong class="text-success">C의 이득은 작다</strong><div class="on-surface-muted">EC2 4대에서 3대, 정리 118초에서 87초. 시나리오당 1회 측정이라 반복 측정이 필요합니다.</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s5">
+  <div class="slide-header" data-remarp-id="s5-header"><h2>데모가 알려 준 함정 세 가지</h2></div>
+  <div class="slide-body" data-remarp-id="s5-body">
+    <p><!-- Slide 6: 데모 2 함정 --></p>
+<style>
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="callout callout-danger"><strong class="text-danger">1. 조용히 실패하는 Kyverno</strong><div class="on-surface-muted">background controller에 nodes get 권한이 없으면 에러 없이 annotation이 붙지 않아 B가 A와 똑같이 나왔습니다. Pod/binding은 기본 필터에서 빠져 있어 다시 켜야 합니다.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">2. Karpenter는 바로 순위를 매기지 않음</strong><div class="on-surface-muted">줄일 수 있는 노드에만 순위를 쓰고 갱신에 1~5분이 걸립니다. 꽉 찬 15개에서 바로 줄이면 C가 B와 같아져서 12개 warm-up이 필요했습니다.</div></div>
+  <div class="callout callout-info"><strong class="text-info">3. Pod 요청은 init container까지</strong><div class="on-surface-muted">Pod의 유효 요청은 컨테이너 합과 가장 큰 init container 중 큰 값입니다. Cilium agent의 100m가 init에 있어 hybrid에 6개만 들어갔습니다.</div></div>
+  <div class="callout callout-info"><strong class="text-info">그 밖에</strong><div class="on-surface-muted">ClusterPolicy는 deprecated, spec.failurePolicy는 거부되고, 기능을 끄면 Karpenter가 쓴 음수 값을 직접 지워야 합니다.</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s6">
+  <div class="slide-header" data-remarp-id="s6-header"><h2>데모 3: hybrid GPU에서 추론, 클라우드에서 호출</h2></div>
+  <div class="slide-body" data-remarp-id="s6-body">
+    <p><!-- Slide 7: 데모 3 GPU --></p>
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.flow-h { margin: 0 0 var(--space-4); }
+.flow-h .flow-box { min-width: min-content; overflow-wrap: normal; }
+.hn-flow-sub { display: block; color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: break-word; }
+</style>
+<div class="flow-h">
+  <div class="flow-box fragment fade-right" data-fragment-index="1">클라우드 Job<br><span class="hn-flow-sub">system 노드</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="2">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="2">gateway 경로<br><span class="hn-flow-sub">VXLAN, VPC 라우트</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="3">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="3">vLLM Pod<br><span class="hn-flow-sub">hybrid GPU 노드, L4 23GB</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="4">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="4">응답 약 1초<br><span class="hn-flow-sub">모델 로드 후</span></div>
+</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="5">
+  <div class="callout callout-success"><strong class="text-success">확인한 것</strong><div class="on-surface-muted">allocatable nvidia.com/gpu = 1, istio-proxy 없음, hostNetwork 끔, GPU taint와 toleration 동작.</div></div>
+  <div class="callout callout-info"><strong class="text-info">설정</strong><div class="on-surface-muted">taint nvidia.com/gpu=Exists:NoSchedule, label node-role/gpu, device plugin v0.17.1, vLLM v0.19.1, Qwen2.5-0.5B.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">첫 시작은 느림</strong><div class="on-surface-muted">vLLM 이미지(약 10GB) pull이 4분 28초. 발표 전에 미리 받아 두세요. GPU 1개라 Deployment는 Recreate.</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s7">
+  <div class="slide-header" data-remarp-id="s7-header"><h2>Istio와 gateway는 함께 쓸 수 있다</h2></div>
+  <div class="slide-body" data-remarp-id="s7-body">
+    <p><!-- Slide 8: Istio 공존 --></p>
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.ld-table { width: 100%; border-collapse: collapse; margin-bottom: var(--space-3); font-size: var(--fs-card); }
+.ld-table th, .ld-table td { border: 1px solid var(--border); padding: var(--space-2) var(--space-3); text-align: left; vertical-align: top; }
+.ld-table th { background: var(--bg-card); }
+.ld-ok { color: var(--success); font-weight: var(--weight-bold); }
+</style>
+<table class="ld-table fragment fade-up" data-fragment-index="1">
+  <tr><th>검증 항목 (Istio 1.30.6, sidecar 모드)</th><th>결과</th></tr>
+  <tr><td>hybrid 노드 Pod에도 sidecar 주입</td><td><span class="ld-ok">통과</span> 4개 Pod 모두 2/2</td></tr>
+  <tr><td>클라우드와 hybrid 사이 양방향 호출</td><td><span class="ld-ok">통과</span> 둘 다 200</td></tr>
+  <tr><td>STRICT mTLS</td><td><span class="ld-ok">통과</span> 일반 Pod의 평문 호출은 거부, 메시 호출은 mutual_tls</td></tr>
+  <tr><td>Istio L7 정책 (/admin 거부)</td><td><span class="ld-ok">통과</span> /echo 200, /admin/users 403</td></tr>
+  <tr><td>이때 Cilium 설정</td><td>enable-l7-proxy=false, enable-vtep=true 그대로</td></tr>
+</table>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="2">
+  <div class="callout callout-success"><strong class="text-success">막히는 것은 Istio가 아니다</strong><div class="on-surface-muted">gateway의 l7Proxy=false로 막히는 것은 Cilium Ingress, Gateway API, L7 정책입니다. Istio의 L7은 sidecar Envoy가 처리해 영향이 없었습니다.</div></div>
+  <div class="callout callout-info"><strong class="text-info">참고</strong><div class="on-surface-muted">최신 Istio는 sidecar를 native sidecar(init container, restartPolicy Always)로 주입합니다.</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s8">
+  <div class="slide-header" data-remarp-id="s8-header"><h2>Istio 실측: 경로별 지연과 gateway 전환</h2></div>
+  <div class="slide-body" data-remarp-id="s8-body">
+    <p><!-- Slide 9: Istio 실측 --></p>
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.ld-legend { display: flex; gap: var(--space-4); margin-bottom: var(--space-2); font-size: var(--fs-card); color: var(--text-secondary); }
+.ld-sw { display: inline-block; width: var(--space-3); height: var(--space-3); border-radius: var(--space-1); margin-right: var(--space-2); vertical-align: middle; }
+.ld-sw.p50, .ld-b.p50 { background: var(--accent); }
+.ld-sw.p99, .ld-b.p99 { background: var(--warning); }
+.ld-lrow { display: grid; grid-template-columns: 1fr 3fr 1fr; gap: var(--space-3); align-items: center; margin-bottom: var(--space-2); }
+.ld-lab { font-size: var(--fs-card); }
+.ld-stack { display: flex; flex-direction: column; gap: var(--space-1); }
+.ld-b { height: var(--space-3); border-radius: var(--space-1); }
+.ld-val { font-size: var(--fs-card); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+</style>
+<div class="fragment fade-up" data-fragment-index="1">
+  <div class="ld-legend"><span><span class="ld-sw p50"></span>p50</span><span><span class="ld-sw p99"></span>p99</span><span>값은 p50 / p99, sidecar에서 sidecar까지, 순차 300회 요청</span></div>
+  <div class="ld-lrow"><div class="ld-lab">cloud → cloud</div><div class="ld-stack"><div class="ld-b p50" style="width:37.7%"></div><div class="ld-b p99" style="width:56.9%"></div></div><div class="ld-val">1.32 / 1.99 ms</div></div>
+  <div class="ld-lrow"><div class="ld-lab">cloud → hybrid</div><div class="ld-stack"><div class="ld-b p50" style="width:70.3%"></div><div class="ld-b p99" style="width:85.7%"></div></div><div class="ld-val">2.46 / 3.00 ms</div></div>
+  <div class="ld-lrow"><div class="ld-lab">hybrid → hybrid</div><div class="ld-stack"><div class="ld-b p50" style="width:17.7%"></div><div class="ld-b p99" style="width:28.6%"></div></div><div class="ld-val">0.62 / 1.00 ms</div></div>
+  <div class="ld-lrow"><div class="ld-lab">hybrid → cloud</div><div class="ld-stack"><div class="ld-b p50" style="width:60.3%"></div><div class="ld-b p99" style="width:83.4%"></div></div><div class="ld-val">2.11 / 2.92 ms</div></div>
+</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="2">
+  <div class="callout callout-success"><strong class="text-success">gateway 전환 중에도 실패 0건</strong><div class="on-surface-muted">초당 40건을 45초간 보내는 동안 리더 Pod를 삭제했고(전환 5초) 1,800건이 모두 200이었습니다.</div></div>
+  <div class="callout callout-info"><strong class="text-info">읽는 법</strong><div class="on-surface-muted">gateway를 거치는 경로가 같은 쪽 경로보다 약 1ms 느립니다. 요청 재시도는 sidecar의 기본 동작입니다.</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s9">
+  <div class="slide-header" data-remarp-id="s9-header"><h2>ALB ip 타깃: hybrid Pod IP가 바뀌어도 LBC가 따라간다</h2></div>
+  <div class="slide-body" data-remarp-id="s9-body">
+    <p><!-- Slide 10: ALB ip 타깃 --></p>
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.flow-h { margin: 0 0 var(--space-4); }
+.flow-h .flow-box { min-width: min-content; overflow-wrap: normal; }
+.hn-flow-sub { display: block; color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: break-word; }
+.ld-table { width: 100%; border-collapse: collapse; margin-bottom: var(--space-3); font-size: var(--fs-card); }
+.ld-table th, .ld-table td { border: 1px solid var(--border); padding: var(--space-2) var(--space-3); text-align: left; }
+.ld-table th { background: var(--bg-card); }
+.ld-num { font-variant-numeric: tabular-nums; }
+</style>
+<div class="flow-h">
+  <div class="flow-box fragment fade-right" data-fragment-index="1">리전 클라이언트<br><span class="hn-flow-sub">10.0.x</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="2">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="2">internal ALB<br><span class="hn-flow-sub">ip 타깃 172.17.x, AZ all</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="3">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="3">VPC 라우트 172.17.0.0/16<br><span class="hn-flow-sub">gateway 리더 ENI</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="4">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="4">VXLAN → hybrid Pod<br><span class="hn-flow-sub">온프렘 노드</span></div>
+</div>
+<table class="ld-table fragment fade-up" data-fragment-index="5">
+  <tr><th>테스트</th><th>무엇을 했나</th><th>결과</th></tr>
+  <tr><td>등록</td><td>Ingress target-type ip, hybrid Pod 2개</td><td>172.17.0.202, .48이 healthy, AZ <code>all</code></td></tr>
+  <tr><td>호출</td><td>리전 Pod에서 ALB로 20회</td><td class="ld-num">20/20</td></tr>
+  <tr><td>Pod 교체</td><td>부하 중 rollout restart</td><td class="ld-num">새 IP .230, .76로 54초에 수렴, 276건 중 실패 0</td></tr>
+  <tr><td>gateway 전환</td><td>부하 중 리더 Pod 삭제</td><td class="ld-num">인계 4초, 191건 중 실패 1 (재시도 없음)</td></tr>
+</table>
+<div class="callout callout-info fragment fade-up" data-fragment-index="6"><strong class="text-info">역할 분담</strong> 타깃 등록과 해제는 AWS Load Balancer Controller가 하고, gateway는 VPC 밖 Pod IP까지 가는 경로만 줍니다. 그래서 Pod IP가 라우팅 가능해야 합니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s10">
+  <div class="slide-header" data-remarp-id="s10-header"><h2>반대 방향: 온프렘에서 LB로 들어오면</h2></div>
+  <div class="slide-body" data-remarp-id="s10-body">
+    <p><!-- Slide 11: 역방향 --></p>
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.hn-path { font-size: var(--fs-card); color: var(--text-primary); margin-top: var(--space-2); word-break: keep-all; }
+</style>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="callout callout-success"><strong class="text-success">① internal ALB → 리전 Pod: 20/20</strong><div class="hn-path">온프렘 → DX/VPN(데모는 TGW) → ALB private IP → VPC CNI Pod</div><div class="on-surface-muted">gateway를 거치지 않습니다. 온프렘 DNS가 ALB 이름을 private IP로 풀어야 하므로 Route 53 Resolver inbound endpoint가 필요합니다.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">② internal ALB → hybrid Pod: 20/20, 그러나 hairpin</strong><div class="hn-path">온프렘 → ALB → gateway → 다시 온프렘</div><div class="on-surface-muted">동작은 하지만 DX를 두 번 지나 지연과 전송 비용이 늘어납니다. 온프렘 Pod는 온프렘 LB로 받는 편이 낫습니다.</div></div>
+  <div class="callout callout-danger"><strong class="text-danger">③ hybrid NodePort → 리전 Pod: 실패</strong><div class="hn-path">온프렘 → hybrid 노드 :30080 → 노드 IP로 SNAT → underlay → 리전 Pod</div><div class="on-surface-muted">Pod 출발 트래픽이 아니라 gateway를 타지 않습니다. 리전 노드 SG가 온프렘 노드 CIDR에서 오는 앱 포트를 허용해야 합니다(데모 SG는 443만 허용).</div></div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">AWS 권장</strong> 리전에서 오는 트래픽은 ALB, 온프렘에서 오는 트래픽은 온프렘 쪽 Ingress나 LB로 받습니다. gateway를 쓰면 Cilium L7(Ingress, Gateway API)은 꺼지므로 온프렘은 L4 LoadBalancer나 기존 LB를 씁니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s11">
+  <div class="slide-header" data-remarp-id="s11-header"><h2>정리: 무엇을 확인했고 무엇이 남았나</h2></div>
+  <div class="slide-body" data-remarp-id="s11-body">
+    <p><!-- Slide 12: 정리 --></p>
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="callout callout-success"><strong class="text-success">확인한 것</strong><div class="on-surface-muted">gateway 전환 3~5초, 온프렘 Pod 보호(B, C), GPU 추론 호출, Istio와 gateway 공존(sidecar), ALB ip 타깃 자동 갱신, 온프렘에서 internal ALB 진입.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">아직 남은 것</strong><div class="on-surface-muted">B와 C의 반복 측정, Istio ambient 모드, gateway 처리량, hostNetwork와 NodePort 경로(노드 SG), 실제 온프렘 서버에서의 재검증.</div></div>
+  <div class="callout callout-info"><strong class="text-info">직접 해 보려면</strong><div class="on-surface-muted">데모 저장소의 RUNBOOK.md 순서를 따르고, 끝나면 teardown.sh로 정리해 비용을 멈추세요.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">반드시 기억할 것</strong><div class="on-surface-muted">모든 수치는 EC2로 시뮬레이션한 환경의 값입니다. 프로덕션 지원 구성이 아닙니다.</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s12">
+  <div class="slide-header" data-remarp-id="s12-header"><h2>참고 자료 & Q&A</h2></div>
+  <div class="slide-body" data-remarp-id="s12-body">
+    <p><!-- Slide 13: 통합 참고 자료 --></p>
+<style>
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.hn-ref a { color: var(--accent); }
+</style>
+<div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
+  <button class="tab-btn active">개요와 요금</button>
+  <button class="tab-btn">네트워킹과 Gateway</button>
+  <button class="tab-btn">노드와 라이프사이클</button>
+  <button class="tab-btn">운영, GPU, 비용</button>
+  <button class="tab-btn">데모</button>
+</div>
+<div class="tc">
+  <div class="card-grid" data-reveal="static">
+    <div class="card"><strong class="text-accent">개요</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html" target="_blank" rel="noopener">Hybrid Nodes 개요</a><br><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html" target="_blank" rel="noopener">지원 OS</a></div></div>
+    <div class="card"><strong class="text-accent">자격 증명</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html" target="_blank" rel="noopener">자격 증명 준비 (SSM, IAM RA)</a></div></div>
+    <div class="card"><strong class="text-accent">요금</strong><div class="on-surface-muted hn-ref"><a href="https://aws.amazon.com/eks/pricing/" target="_blank" rel="noopener">EKS 요금</a></div></div>
+    <div class="card"><strong class="text-accent">문제 해결</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-troubleshooting.html" target="_blank" rel="noopener">Troubleshooting</a></div></div>
+  </div>
+</div>
+<div class="tc" hidden>
+  <div class="card-grid" data-reveal="static">
+    <div class="card"><strong class="text-accent">네트워킹</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html" target="_blank" rel="noopener">네트워킹 요구 사항</a><br><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html" target="_blank" rel="noopener">CNI 구성</a><br><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cilium-bgp.html" target="_blank" rel="noopener">Cilium BGP</a></div></div>
+    <div class="card"><strong class="text-accent">webhook과 혼합 모드</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html" target="_blank" rel="noopener">webhook과 혼합 모드 고려 사항</a></div></div>
+    <div class="card"><strong class="text-accent">Hybrid Nodes Gateway</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-overview.html" target="_blank" rel="noopener">개요</a><br><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html" target="_blank" rel="noopener">시작하기</a><br><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html" target="_blank" rel="noopener">운영</a><br><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html" target="_blank" rel="noopener">CNI 설정</a></div></div>
+    <div class="card"><strong class="text-accent">Gateway 소스와 블로그</strong><div class="on-surface-muted hn-ref"><a href="https://github.com/aws/eks-hybrid-nodes-gateway" target="_blank" rel="noopener">aws/eks-hybrid-nodes-gateway</a><br><a href="https://aws.amazon.com/blogs/containers/simplify-hybrid-kubernetes-networking-with-amazon-eks-hybrid-nodes-gateway/" target="_blank" rel="noopener">AWS Containers 블로그</a></div></div>
+  </div>
+</div>
+<div class="tc" hidden>
+  <div class="card-grid" data-reveal="static">
+    <div class="card"><strong class="text-accent">nodeadm</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html" target="_blank" rel="noopener">nodeadm 레퍼런스</a><br><a href="https://github.com/aws/eks-hybrid" target="_blank" rel="noopener">aws/eks-hybrid 소스</a></div></div>
+    <div class="card"><strong class="text-accent">Bottlerocket</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html" target="_blank" rel="noopener">Bottlerocket 연결</a></div></div>
+    <div class="card"><strong class="text-accent">업그레이드</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-upgrade.html" target="_blank" rel="noopener">Hybrid 노드 업그레이드</a><br><a href="https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html" target="_blank" rel="noopener">Kubernetes 버전</a></div></div>
+    <div class="card"><strong class="text-accent">애드온</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html" target="_blank" rel="noopener">애드온 구성 (Pod Identity 등)</a></div></div>
+  </div>
+</div>
+<div class="tc" hidden>
+  <div class="card-grid" data-reveal="static">
+    <div class="card"><strong class="text-accent">네트워크 단절</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-network-disconnection-best-practices.html" target="_blank" rel="noopener">단절 대비 모범 사례</a><br><a href="https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html" target="_blank" rel="noopener">단절 시 자격 증명</a></div></div>
+    <div class="card"><strong class="text-accent">GPU</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/device-management-nvidia.html" target="_blank" rel="noopener">NVIDIA GPU 장치 관리</a></div></div>
+    <div class="card"><strong class="text-accent">스케줄링</strong><div class="on-surface-muted hn-ref"><a href="https://karpenter.sh/docs/upgrading/compatibility/" target="_blank" rel="noopener">Karpenter 호환성</a><br><a href="https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/" target="_blank" rel="noopener">ReplicaSet pod-deletion-cost</a></div></div>
+  </div>
+</div>
+<div class="tc" hidden>
+  <div class="card-grid" data-reveal="static">
+    <div class="card"><strong class="text-accent">데모 가이드</strong><div class="on-surface-muted hn-ref"><a href="demo-guide.html" target="_blank" rel="noopener">구현과 실측 결과 정리</a></div></div>
+    <div class="card"><strong class="text-accent">데모 저장소</strong><div class="on-surface-muted hn-ref"><a href="https://github.com/Atom-oh/eks-hybrid-demo" target="_blank" rel="noopener">Atom-oh/eks-hybrid-demo (private)</a></div></div>
+  </div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="text-info">Q&A</strong> 예제는 검토 기준(EKS 1.36, nodeadm 1.0.20)이고, 5부 수치는 시뮬레이션 환경의 실측입니다. 적용 전에 최신 AWS 문서로 지원 조합을 확인하세요.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s13">
+  <div class="center-content" style="height:100%; gap:1.5rem;">
+    <h1 style="font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:3rem; color:var(--text-primary);">Thank You</h1>
+    <p style="color:var(--text-secondary); font-size:1.1rem;">EKS Hybrid Nodes, 감사합니다</p>
+    <p style="color:var(--text-muted); font-size:1rem; margin-top:0.5rem;">수고하셨습니다!</p>
+    <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+            <a href="toc.html" class="btn btn-primary btn-sm" style="text-decoration:none;">← 목차로 돌아가기</a>
+    </div>
+  </div>
+</div>
+</div>
+<script src="./common/animation-utils.js"></script>
+<script src="./common/slide-framework.js"></script>
+<script src="./common/quiz-component.js"></script>
+<script src="./common/presenter-view.js"></script>
+
+<script>
+  
+  const presenterNotes = {
+    1: "[0.5min] [\uc694\uc57d]\n\u2022 \uc55e\uc120 \ub124 \ud30c\ud2b8\uc758 \ub0b4\uc6a9\uc744 \uc2e4\uc81c \ud074\ub7ec\uc2a4\ud130\uc5d0\uc11c \ub3cc\ub824 \ubcf8 \uacb0\uacfc\ub97c \ubcf4\uc5ec \uc90c\n\u2022 \uc218\uce58\ub294 \ubaa8\ub450 2026-10-17 \uae30\uc900 \uc2e4\uce21\uc774\uace0 \uc2dc\ub098\ub9ac\uc624\ub2f9 1\ud68c \uce21\uc815\n\u2022 \ud658\uacbd\uc740 \uc628\ud504\ub818\uc744 \uc2dc\ubbac\ub808\uc774\uc158\ud55c \uad6c\uc131\uc774\ub77c\ub294 \uc810\uc744 \uba3c\uc800 \ubc1d\ud798\n\n\uc9c0\uae08\uae4c\uc9c0\ub294 \ubb38\uc11c\uc640 \uac1c\ub150\uc744 \ubd24\uc2b5\ub2c8\ub2e4. 5\ubd80\ub294 \uac19\uc740 \ub0b4\uc6a9\uc744 \uc2e4\uc81c \ud074\ub7ec\uc2a4\ud130\uc5d0\uc11c \ub3cc\ub824 \ubcf8 \uae30\ub85d\uc785\ub2c8\ub2e4.\n\uba3c\uc800 \uc5b4\ub5a4 \ud658\uacbd\uc5d0\uc11c \ub3cc\ub838\ub294\uc9c0\ubd80\ud130 \uc815\ud655\ud788 \ub9d0\uc500\ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.",
+    2: "[2min] [\uc694\uc57d]\n\u2022 \ub450 \ubc88\uc9f8 VPC\ub97c TGW\ub85c \uc5f0\uacb0\ud558\uace0 \uadf8 \uc548\uc758 EC2\ub97c \uc628\ud504\ub818 \ud638\uc2a4\ud2b8\ub85c \uc0ac\uc6a9\n\u2022 \ubcf4\uc548 \uae30\uc900 \uc720\uc9c0: \uac1c\ubc29 ingress \uc5c6\uc74c, \uacf5\uc778 IP \uc5c6\uc74c, \ub85c\ub4dc \ubc38\ub7f0\uc11c \uc5c6\uc74c\n\u2022 \uc2e4\uc81c \uad6c\uc131\uc5d0\uc11c\ub294 \ud638\uc2a4\ud2b8\uc640 \ub178\ub4dc CIDR\ub9cc \ubc14\uafb8\uba74 \uac19\uc740 \uc2a4\ud06c\ub9bd\ud2b8\uac00 \ub3d9\uc791\n\n\uc628\ud504\ub818 \uc11c\ubc84\uc640 VPN\uc774 \uc5c6\uc5b4\uc11c, \ub450 \ubc88\uc9f8 VPC\ub97c Transit Gateway\ub85c \uc5f0\uacb0\ud558\uace0 \uadf8 \uc548\uc758 EC2\ub97c \uc628\ud504\ub818 \ud638\uc2a4\ud2b8\ub85c \uc37c\uc2b5\ub2c8\ub2e4.\n\uc774 \uad6c\uc131\uc740 \uc9c0\uc6d0\ub418\uc9c0 \uc54a\uace0 hybrid node \uc694\uae08\uc774 \ubd80\uacfc\ub41c\ub2e4\ub294 \uc810\uc744 \uba3c\uc800 \ub9d0\uc500\ub4dc\ub9bd\ub2c8\ub2e4. \ub370\ubaa8\uc758 \ubaa9\uc801\uc740 \ub3d9\uc791 \ud655\uc778\uacfc \uc218\uce58 \ud655\ubcf4\uc785\ub2c8\ub2e4.\n\ubcf4\uc548 \uae30\uc900\uc740 \uc9c0\ucf30\uc2b5\ub2c8\ub2e4. \ubcf4\uc548 \uadf8\ub8f9\uc5d0 \uc778\ud130\ub137 \uac1c\ubc29 ingress\uac00 \uc5c6\uace0, \uc778\uc2a4\ud134\uc2a4\uc5d0 \uacf5\uc778 IP\uac00 \uc5c6\uace0, \ub85c\ub4dc \ubc38\ub7f0\uc11c\ub97c \ub9cc\ub4e4\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.\n\n\uccab \ubc88\uc9f8 \ub370\ubaa8\ub294 gateway\uc758 \ub9ac\ub354 \uc804\ud658\uc785\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html (EC2 \uc2e4\ud589\uc740 \ubbf8\uc9c0\uc6d0, hybrid fee \ubd80\uacfc)\n\u2022 \ub370\ubaa8 \uc800\uc7a5\uc18c RUNBOOK.md \ud658\uacbd \uc808 (private \uc800\uc7a5\uc18c)",
+    3: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 \ub9ac\ub354 Pod \uc0ad\uc81c \ud6c4 Lease \uc804\ud658 3\ucd08, 5\ucd08, 5\ucd08 (\uc138 \ubc88 \uce21\uc815)\n\u2022 1\ucd08 \uac04\uaca9 \uc694\uccad\uc758 \uc2e4\ud328\ub294 60\uac1c \uc911 1\uac1c, 45\uac1c \uc911 2\uac1c\n\u2022 VPC \ub77c\uc6b0\ud2b8\uac00 \uc0c8 \ub9ac\ub354 ENI\ub85c \uc774\ub3d9, \ucd5c\uc18c \uad8c\ud55c IAM\uc5d0\uc11c\ub3c4 \ub3d9\uc77c\n\n\ub9ac\ub354 Pod\ub97c \uc9c0\uc6b0\uace0 1\ucd08 \uac04\uaca9\uc73c\ub85c \uc694\uccad\uc744 \ubcf4\ub0b4 \ubd24\uc2b5\ub2c8\ub2e4. Lease\ub294 3\ucd08\uc5d0\uc11c 5\ucd08 \uc0ac\uc774\uc5d0 \ub118\uc5b4\uac14\uace0, \uc2e4\ud328\ud55c \uc694\uccad\uc740 \ub9ce\uc544\uc57c \ub450 \uac1c\uc600\uc2b5\ub2c8\ub2e4.\nAWS\uac00 \uc548\ub0b4\ud558\ub294 3~5\ucd08\uc640 \uc77c\uce58\ud569\ub2c8\ub2e4. \ub2e4\ub9cc \ubcf4\uc7a5\uac12\uc740 \uc544\ub2c8\uace0, \uc774 \ud658\uacbd\uc5d0\uc11c \uc138 \ubc88 \uce21\uc815\ud55c \uac12\uc785\ub2c8\ub2e4.\n\nLease HOLDER \uac12\uc774 Pod \uc774\ub984\uc774 \uc544\ub2c8\ub77c \ub178\ub4dc \uc774\ub984\uacfc UUID\ub77c\ub294 \uc810\uc740 \uc2dc\uc5f0\ud560 \ub54c \ud5f7\uac08\ub9ac\uae30 \uc26c\uc6cc\uc11c \ubbf8\ub9ac \ub9d0\uc500\ub4dc\ub9bd\ub2c8\ub2e4.\nIAM\uc740 \ubb38\uc11c \uc608\uc2dc\ubcf4\ub2e4 \uc881\ud600\uc11c \ub77c\uc6b0\ud2b8 \uc4f0\uae30 \uad8c\ud55c\uc744 gateway\uc758 route table\ub85c\ub9cc \uc81c\ud55c\ud588\uace0, \uadf8\ub798\ub3c4 \uc804\ud658\uc774 \ub3d9\uc791\ud588\uc2b5\ub2c8\ub2e4.\n\n\ub2e4\uc74c\uc740 \ud575\uc2ec \ub370\ubaa8\uc778 bursting\uc785\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 \ub370\ubaa8 \uc800\uc7a5\uc18c RUNBOOK.md \ub370\ubaa8 1, demo1-gateway/failover.sh (\uc138 \ubc88 \uc2e4\uce21)\n\u2022 https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-overview.html (\uc608\uc0c1 \uc804\ud658 3~5\ucd08)",
+    4: "[1.5min] [\uc694\uc57d]\n\u2022 hybrid \ub178\ub4dc 2\ub300\uc5d0 Pod 8\uac1c\uac00 \ub4e4\uc5b4\uac00\ub3c4\ub85d Pod\ub2f9 CPU \uc694\uccad\uc744 930m\ub85c \uacc4\uc0b0\n\u2022 3 \u2192 15 \u2192 12(warm-up) \u2192 10 \u2192 3 \uc21c\uc11c\ub85c \uac19\uc740 \ud750\ub984\uc744 \uc138 \ubc29\uc2dd\uc73c\ub85c \ubc18\ubcf5\n\u2022 \ube44\uad50\ub294 10\uac1c\uc77c \ub54c \ubc30\uce58\uc640 \ucd5c\uc885 3\uac1c, \ube48 \ub178\ub4dc \uc815\ub9ac \uc2dc\uac04\n\n\uac19\uc740 Deployment\ub97c \uc138 \uac00\uc9c0 \ubc29\uc2dd\uc73c\ub85c \uc904\uc5ec\uc11c \uc5b4\ub5a4 Pod\uac00 \uba3c\uc800 \uc0ac\ub77c\uc9c0\ub294\uc9c0 \uc22b\uc790\ub85c \ube44\uad50\ud569\ub2c8\ub2e4.\nhybrid\uc5d0\ub294 \uc120\ud638 \uaddc\uce59\ub9cc \uac78\uace0 selector\ub098 toleration\uc740 \uac78\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c hybrid\uac00 \uaf49 \ucc28\uba74 \ub098\uba38\uc9c0\ub294 Karpenter\uac00 burst \ub178\ub4dc\ub97c \ub9cc\ub4e4\uc5b4 \ubc1b\uc2b5\ub2c8\ub2e4.\nPod\ub2f9 CPU \uc694\uccad\uc740 \uc2a4\ud06c\ub9bd\ud2b8\uac00 \ub178\ub4dc allocatable\uc744 \uc77d\uc5b4 \uacc4\uc0b0\ud574\uc11c \uc815\ud655\ud788 8\uac1c\uac00 \ub4e4\uc5b4\uac00\uac8c \ud588\uc2b5\ub2c8\ub2e4. 12\uac1c\ub85c \uc904\uc774\ub294 warm-up \ub2e8\uacc4\uac00 \uc65c \ud544\uc694\ud55c\uc9c0\ub294 \ub450 \uc7a5 \ub4a4\uc5d0 \uc124\uba85\ud569\ub2c8\ub2e4.\n\n\uacb0\uacfc\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 \ub370\ubaa8 \uc800\uc7a5\uc18c demo2-burst/run-compare.sh, calc-requests.sh\n\u2022 https://karpenter.sh/preview/concepts/pod-deletion-cost/",
+    5: "\u23f8\ufe0f [3min] [\uc694\uc57d]\n\u2022 A: 10\uac1c\uc77c \ub54c hybrid 6, cloud 4. \ucd5c\uc885 3\uac1c\ub294 hybrid 2, cloud 1\n\u2022 B, C: 10\uac1c\uc77c \ub54c hybrid 8, cloud 2. \ucd5c\uc885 3\uac1c\ub294 \ubaa8\ub450 hybrid\n\u2022 C\ub294 B\ubcf4\ub2e4 EC2\uac00 4\ub300\uc5d0\uc11c 3\ub300, \ube48 \ub178\ub4dc \uc815\ub9ac\uac00 118\ucd08\uc5d0\uc11c 87\ucd08\n\u2022 NodeClaim\uc740 \uc2a4\ucf00\uc77c \uc544\uc6c3 \ud6c4 1~2\ucd08 \uc548\uc5d0 \uc0dd\uc131, 15\uac1c Ready\uae4c\uc9c0 \uc57d 37\ucd08\n\n\ub9c9\ub300\ub294 10\uac1c\ub85c \uc904\uc600\uc744 \ub54c\uc758 \ubc30\uce58\uc785\ub2c8\ub2e4. \ucd08\ub85d\uc774 \uc628\ud504\ub818, \uc8fc\ud669\uc774 \ud074\ub77c\uc6b0\ub4dc Pod\uc785\ub2c8\ub2e4.\n\uc815\ucc45\uc774 \uc5c6\uc73c\uba74 A\ucc98\ub7fc \uc628\ud504\ub818 Pod\uac00 \uba3c\uc800 \uc9c0\uc6cc\uc9d1\ub2c8\ub2e4. ReplicaSet \uae30\ubcf8 \uaddc\uce59\uc774 Pod \uc704\uce58\ub97c \ubcf4\uc9c0 \uc54a\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4.\n\nKyverno\ub9cc \uc368\ub3c4 B\ucc98\ub7fc \uc628\ud504\ub818 8\uac1c\ub294 \ubaa8\ub450 \uc9c0\ucf1c\uc9d1\ub2c8\ub2e4. \ub300\uc2e0 \ub0a8\uc740 \ud074\ub77c\uc6b0\ub4dc Pod 2\uac1c\uac00 EC2 \ub124 \ub300\uc5d0 \ud769\uc5b4\uc838 \uc788\uc5c8\uc2b5\ub2c8\ub2e4.\nKarpenter \uae30\ub2a5\uc744 \ucf20 C\ub294 burst \ub178\ub4dc\uc5d0 \uc74c\uc218 \uac12\uc744 \uc368\uc11c EC2\uac00 \uc138 \ub300\ub85c \uc904\uace0 \uc815\ub9ac\ub3c4 87\ucd08\ub85c \ube68\ub790\uc2b5\ub2c8\ub2e4. \ub2e4\ub9cc \ud55c \ubc88\uc529 \uc7b0 \uac12\uc774\ub77c \ucc28\uc774\ub97c \ub2e8\uc815\ud558\uc9c0 \ub9c8\uc2dc\uace0, \ubc18\ubcf5 \uce21\uc815 \ud6c4\uc5d0 \uc218\uce58\ub97c \uc778\uc6a9\ud558\uc138\uc694.\n\uc2a4\ucf00\uc77c \uc544\uc6c3\uc740 \ube60\ub985\ub2c8\ub2e4. NodeClaim\uc774 1~2\ucd08 \uc548\uc5d0 \ub9cc\ub4e4\uc5b4\uc9c0\uace0 15\uac1c\uac00 \ubaa8\ub450 Ready\uac00 \ub418\uae30\uae4c\uc9c0 \uc57d 37\ucd08\uac00 \uac78\ub838\uc2b5\ub2c8\ub2e4.\n\n\uc774 \ub370\ubaa8\uc5d0\uc11c \ub9cc\ub09c \ud568\uc815 \uc138 \uac00\uc9c0\ub97c \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 \ub370\ubaa8 \uc800\uc7a5\uc18c results/compare-20261015-1239.md, RUNBOOK.md \ub370\ubaa8 2 (2026-10-15 \uc2e4\uce21)\n\u2022 https://karpenter.sh/preview/concepts/pod-deletion-cost/",
+    6: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 Kyverno: background controller\uc758 nodes get \uad8c\ud55c\uacfc Pod/binding \ud544\ud130 \ud574\uc81c\uac00 \ud544\uc694\n\u2022 Karpenter: \uc21c\uc704\ub294 \uc904\uc77c \uc218 \uc788\ub294 \ub178\ub4dc\uc5d0\ub9cc, 1~5\ubd84 \uc9c0\uc5f0. \uadf8\ub798\uc11c warm-up\n\u2022 \uc0ac\uc774\uc9d5: \uc720\ud6a8 \uc694\uccad\uc740 init container\uae4c\uc9c0 \uacc4\uc0b0\n\n\uc138 \uac00\uc9c0 \ubaa8\ub450 \ubb38\uc11c\ub9cc \uc77d\uc5b4\uc11c\ub294 \ub193\uce58\uae30 \uc26c\uc6e0\uace0, \uc2e4\uc81c\ub85c \ub3cc\ub824 \ubcf4\uace0\uc11c\uc57c \uc54c\uc558\uc2b5\ub2c8\ub2e4.\n\uccab\uc9f8, Kyverno \uc815\ucc45\uc774 \uc5d0\ub7ec \uc5c6\uc774 \uc801\uc6a9\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \uc815\ucc45\uc740 Ready\uc600\uace0 Pod\ub3c4 \uc815\uc0c1 \uc0dd\uc131\ub410\ub294\ub370 annotation\ub9cc \uc5c6\uc5c8\uc2b5\ub2c8\ub2e4. \ubc31\uadf8\ub77c\uc6b4\ub4dc \ucee8\ud2b8\ub864\ub7ec\uac00 \ub178\ub4dc \ub77c\ubca8\uc744 \uc77d\uc744 \uad8c\ud55c\uc774 \uc5c6\uc5c8\uc2b5\ub2c8\ub2e4.\n\n\ub458\uc9f8, Karpenter\ub294 \uc904\uc77c \uc218 \uc788\ub294 \ub178\ub4dc\uc5d0\ub9cc \uc21c\uc704\ub97c \uc4f0\uace0 \uac31\uc2e0\uc774 1~5\ubd84 \uac78\ub9bd\ub2c8\ub2e4. \ub178\ub4dc\uac00 \uaf49 \ucc2c \uc0c1\ud0dc\uc5d0\uc11c \ubc14\ub85c \uc904\uc774\uba74 \uc544\uc9c1 \uc21c\uc704\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.\n\uc14b\uc9f8, Pod \ud06c\uae30 \uacc4\uc0b0\uc5d0\uc11c init container\uc758 \uc694\uccad\uc744 \ube7c\uba39\uc73c\uba74 \ub178\ub4dc\uc5d0 \ub4e4\uc5b4\uac00\ub294 \uac1c\uc218\uac00 \ub2ec\ub77c\uc9d1\ub2c8\ub2e4.\n\n\uc138 \ubc88\uc9f8 \ub370\ubaa8\ub294 GPU\uc785\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 \ub370\ubaa8 \uc800\uc7a5\uc18c KNOWN-ISSUES.md (Demo 2 findings)\n\u2022 https://karpenter.sh/preview/concepts/pod-deletion-cost/",
+    7: "[2min] [\uc694\uc57d]\n\u2022 g6.xlarge(NVIDIA L4)\ub97c hybrid \ub178\ub4dc\ub85c \ubd99\uc5ec \ud55c \ubc88 \uac80\uc99d\ud558\uace0 \uc0ad\uc81c\n\u2022 GPU taint, device plugin, \uc0ac\uc774\ub4dc\uce74 \uc5c6\ub294 \ucd94\ub860 Pod, \ud074\ub77c\uc6b0\ub4dc \ud638\ucd9c\uae4c\uc9c0 \ud655\uc778\n\u2022 \uccab \uc2dc\uc791\uc740 \uc774\ubbf8\uc9c0 pull\uacfc \ubaa8\ub378 \ub2e4\uc6b4\ub85c\ub4dc\ub85c \ub290\ub824\uc11c \ubbf8\ub9ac \uc900\ube44\n\nGPU \uc11c\ubc84\uac00 \uc5c6\uc5b4\uc11c \uc2dc\ubbac\ub808\uc774\uc158 VPC\uc5d0 GPU \uc778\uc2a4\ud134\uc2a4\ub97c hybrid \ub178\ub4dc\ub85c \ubd99\uc600\uace0, \uac80\uc99d\ud55c \ub4a4 \ubc14\ub85c \uc0ad\uc81c\ud588\uc2b5\ub2c8\ub2e4.\nGPU \ub178\ub4dc\uc5d0\ub294 taint\ub97c \uac78\uc5b4\uc11c CoreDNS \uac19\uc740 \uc77c\ubc18 Pod\uac00 \uc62c\ub77c\uc624\uc9c0 \uc54a\uac8c \ud588\uace0, device plugin\uc740 hybrid GPU \ub178\ub4dc\uc5d0\ub9cc \ubc30\ud3ec\ud588\uc2b5\ub2c8\ub2e4.\n\ucd94\ub860 Pod\uc5d0\ub294 \uc0ac\uc774\ub4dc\uce74\uac00 \uc5c6\uace0 hostNetwork\ub3c4 \uc4f0\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \ud074\ub77c\uc6b0\ub4dc \ub178\ub4dc\uc758 Job\uc774 \uc11c\ube44\uc2a4\ub97c \ud638\ucd9c\ud574\uc11c \uc57d 1\ucd08\uc5d0 \uc751\ub2f5\uc744 \ubc1b\uc558\uc2b5\ub2c8\ub2e4.\n\uc2e4\uc81c GPU \uc11c\ubc84\uc5d0\uc11c\ub294 \ub4dc\ub77c\uc774\ubc84\uc640 container toolkit\uc774 \uc774\ubbf8\uc9c0\uc5d0 \ub4e4\uc5b4 \uc788\ub2e4\uace0 \uac00\uc815\ud558\ub294 \ubd80\ubd84\uc744, \uc774\ubc88\uc5d0\ub294 \uc2a4\ud06c\ub9bd\ud2b8\ub85c \uc124\uce58\ud588\uc2b5\ub2c8\ub2e4.\n\n\ub9c8\uc9c0\ub9c9\uc73c\ub85c Istio\uc640 gateway\ub97c \uac19\uc774 \uc4f8 \uc218 \uc788\ub294\uc9c0 \ud655\uc778\ud55c \uacb0\uacfc\uc785\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 \ub370\ubaa8 \uc800\uc7a5\uc18c RUNBOOK.md \ub370\ubaa8 3, demo3-gpu/verify.sh (2026-10-15 \uc2e4\uce21)\n\u2022 https://aws.amazon.com/blogs/containers/run-genai-inference-across-environments-with-amazon-eks-hybrid-nodes/",
+    8: "\u23f8\ufe0f [2.5min] [\uc694\uc57d]\n\u2022 \uac19\uc740 \ud074\ub7ec\uc2a4\ud130\uc5d0\uc11c Istio 1.30.6 sidecar\uc640 Hybrid Nodes gateway\ub97c \ud568\uaed8 \uac80\uc99d\n\u2022 sidecar \uc8fc\uc785, \uc591\ubc29\ud5a5 \ud638\ucd9c, STRICT mTLS, Istio L7 \uc815\ucc45\uc774 \ubaa8\ub450 \ub3d9\uc791\n\u2022 Cilium\uc740 l7Proxy=false\uc640 VTEP \ucf2c\uc744 \uc720\uc9c0\ud55c \ucc44\ub85c \ud1b5\uacfc\n\n\uc774\uc804\uc5d0\ub294 gateway\uac00 l7Proxy\ub97c \uaebc\uc57c \ud574\uc11c Istio\ub3c4 \ubabb \uc4f0\ub294 \uac83\ucc98\ub7fc \ub9d0\uc500\ub4dc\ub838\ub294\ub370, \uc2e4\uc81c\ub85c \ub3cc\ub824 \ubcf4\ub2c8 \uadf8\ub807\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.\n\ub9c9\ud788\ub294 \uac83\uc740 Cilium \uc790\uccb4\uc758 L7 \uae30\ub2a5\uc785\ub2c8\ub2e4. Cilium Ingress, Gateway API, L7 \uc815\ucc45\uc774 \uadf8\ub807\uc2b5\ub2c8\ub2e4. Istio\uc758 L7\uc740 sidecar Envoy\uac00 \ucc98\ub9ac\ud558\uae30 \ub54c\ubb38\uc5d0 Cilium\uc758 l7Proxy\uc640 \ubb34\uad00\ud558\uac8c \ub3d9\uc791\ud588\uc2b5\ub2c8\ub2e4.\n\nhybrid \ub178\ub4dc\uc758 Pod\uc5d0\ub3c4 sidecar\uac00 \uc8fc\uc785\ub410\uace0, STRICT mTLS\uac00 \ucf1c\uc9c4 \uc0c1\ud0dc\uc5d0\uc11c \uba54\uc2dc \uc548\uc758 \ud638\ucd9c\uc740 \uc131\uacf5\ud558\uace0 \uba54\uc2dc \ubc16 Pod\uc758 \ud3c9\ubb38 \ud638\ucd9c\uc740 \uac70\ubd80\ub410\uc2b5\ub2c8\ub2e4.\nhybrid \ucabd \uc11c\ubc84\uc5d0 \uac78\uc5b4 \ub454 AuthorizationPolicy\uac00 /admin \uacbd\ub85c\ub97c 403\uc73c\ub85c \ub9c9\uc558\uace0, \uadf8\ub3d9\uc548 Cilium \uc124\uc815\uc740 l7Proxy false, VTEP true \uadf8\ub300\ub85c\uc600\uc2b5\ub2c8\ub2e4.\n\ud55c \uac00\uc9c0 \uc8fc\uc758\ud560 \uc810\uc740 \uc774 \uacb0\uacfc\uac00 sidecar \ubaa8\ub4dc \uae30\uc900\uc774\ub77c\ub294 \uc810\uc785\ub2c8\ub2e4. ambient \ubaa8\ub4dc\ub294 \ubcc4\ub3c4\ub85c \ud655\uc778\ud558\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.\n\n\uc131\ub2a5\uacfc gateway \uc804\ud658 \uc911 \ub3d9\uc791\ub3c4 \uc7ac \ubd24\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 \ub370\ubaa8 \uc800\uc7a5\uc18c demo-istio/run-tests.sh, results/istio-20261017-2311.json (2026-10-17 \uc2e4\uce21)\n\u2022 https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html (l7Proxy=false \ud544\uc218)",
+    9: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n\u2022 \uac19\uc740 \ucabd \ud638\ucd9c\uc774 p50 0.62~1.32ms, gateway\ub97c \uac70\uce58\uba74 p50 2.11~2.46ms\n\u2022 \ub9ac\ub354 \uc804\ud658 \uc911 \ucd08\ub2f9 40\uac74 45\ucd08 \ub3d9\uc548 1,800\uac74 \ubaa8\ub450 \uc131\uacf5\n\u2022 \uc9c0\uc5f0\uc740 \uc21c\ucc28 300\ud68c \uc694\uccad\uc758 \uac12\uc774\uace0 \ub85c\ub4dc \ud14c\uc2a4\ud2b8\uac00 \uc544\ub2d8\n\n\ub124 \uacbd\ub85c\uc758 \uc9c0\uc5f0\uc785\ub2c8\ub2e4. \uac19\uc740 \ucabd \ud638\ucd9c\uc740 p50\uc774 1ms \uc548\ud30e\uc774\uace0, gateway\ub97c \uac70\uccd0 \uac74\ub108\uac00\uba74 p50\uc774 2ms\ub300\uc785\ub2c8\ub2e4. \uc57d 1ms\uc758 \ucd94\uac00 hop\uc774 \ubcf4\uc785\ub2c8\ub2e4.\ngateway \ub9ac\ub354\ub97c \uc9c0\uc6b0\ub294 \ub3d9\uc548 \ucd08\ub2f9 40\uac74\uc744 \uacc4\uc18d \ubcf4\ub0c8\ub294\ub370 1,800\uac74\uc774 \ubaa8\ub450 \uc131\uacf5\ud588\uc2b5\ub2c8\ub2e4. \uc804\ud658\uc774 5\ucd08 \uac78\ub838\ub294\ub370\ub3c4 \uc2e4\ud328\uac00 \uc5c6\uc5c8\ub358 \uac83\uc740 sidecar\uc758 \uae30\ubcf8 \uc7ac\uc2dc\ub3c4 \ub355\ubd84\uc77c \uac00\ub2a5\uc131\uc774 \ud07d\ub2c8\ub2e4.\n\n\uc774 \uac12\uc740 \uc21c\ucc28 \uc694\uccad\uc758 \uc9c0\uc5f0\uc774\uace0 \ucc98\ub9ac\ub7c9 \ud14c\uc2a4\ud2b8\uac00 \uc544\ub2d9\ub2c8\ub2e4. \ud65c\uc131 gateway \ud55c \ub300\uac00 \ucc98\ub9ac\ub7c9\uc758 \ud55c\uacc4\ub77c\ub294 \uc810\uc740 \uadf8\ub300\ub85c\uc785\ub2c8\ub2e4.\n\n\ub2e4\uc74c\uc740 ALB\ub85c hybrid Pod\ub97c \uc9c1\uc811 \ud0c0\uae43\uc73c\ub85c \ubd99\uc600\uc744 \ub54c\uc785\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 \ub370\ubaa8 \uc800\uc7a5\uc18c results/istio-20261017-2311.json, demo-istio/run-tests.sh (2026-10-17 \uc2e4\uce21)",
+    10: "\u23f8\ufe0f [2.5min] [\uc694\uc57d]\n\u2022 hybrid Pod IP\ub97c ALB ip \ud0c0\uae43\uc73c\ub85c \ub4f1\ub85d, VPC \ubc16 IP\ub77c AZ all\n\u2022 rollout restart \uc911 LBC\uac00 \uc0c8 Pod IP\ub85c \uad50\uccb4, 54\ucd08\uc5d0 \uc218\ub834, \uc2e4\ud328 0\n\u2022 gateway \ub9ac\ub354 \uc804\ud658 \uc911 191\uac74 \uc911 1\uac74 \uc2e4\ud328\n\n\uc790\uc8fc \ubc1b\ub294 \uc9c8\ubb38\uc774 \"\uc628\ud504\ub818 Pod IP\ub294 \uacc4\uc18d \ubc14\ub00c\ub294\ub370 ALB \ud0c0\uae43\uc740 \ub204\uac00 \ubc14\uafd4 \uc8fc\ub098\"\uc785\ub2c8\ub2e4. \ub2f5\uc740 AWS Load Balancer Controller\uc785\ub2c8\ub2e4. Endpoints\ub97c \ubcf4\uace0 \ud0c0\uae43\uc744 \ub4f1\ub85d\ud558\uace0 \ud574\uc81c\ud569\ub2c8\ub2e4. gateway\uac00 \ud558\ub294 \uc77c\uc740 VPC \ubc16\uc5d0 \uc788\ub294 Pod IP\uae4c\uc9c0 \uac00\ub294 \uacbd\ub85c\ub97c \uc8fc\ub294 \uac83\ubfd0\uc785\ub2c8\ub2e4.\n\uc2e4\uc81c\ub85c internal ALB\uc5d0 hybrid Pod \ub450 \uac1c\ub97c \ubd99\uc600\uace0, VPC \ubc16 IP\ub77c\uc11c \uac00\uc6a9 \uc601\uc5ed\uc774 all\ub85c \ub4f1\ub85d\ub410\uc2b5\ub2c8\ub2e4. \ud5ec\uc2a4 \uccb4\ud06c\ub3c4 gateway \uacbd\ub85c\ub85c \ud1b5\uacfc\ud588\uc2b5\ub2c8\ub2e4.\n\n\ubd80\ud558\ub97c \uac70\ub294 \uc911\uc5d0 rollout restart\ub97c \ud588\ub354\ub2c8, \uc0c8 Pod IP\ub85c 54\ucd08 \ub9cc\uc5d0 \ud0c0\uae43\uc774 \ubc14\ub00c\uc5c8\uace0 276\uac74 \uc911 \uc2e4\ud328\ub294 \uc5c6\uc5c8\uc2b5\ub2c8\ub2e4. preStop\uacfc \uc9e7\uc740 deregistration delay\ub97c \ud568\uaed8 \uc900 \uacb0\uacfc\uc785\ub2c8\ub2e4.\ngateway \ub9ac\ub354\ub97c \uc9c0\uc6e0\uc744 \ub54c\ub294 \uc778\uacc4 4\ucd08 \ub3d9\uc548 191\uac74 \uc911 1\uac74\uc774 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4. \uc774 \ud074\ub77c\uc774\uc5b8\ud2b8\ub294 \uc7ac\uc2dc\ub3c4\ub97c \ud558\uc9c0 \uc54a\uc544\uc11c, Istio \uce21\uc815\ubcf4\ub2e4 \uc2e4\uc81c \uacf5\ubc31\uc5d0 \uac00\uae5d\uc2b5\ub2c8\ub2e4.\n\n\uadf8\ub7fc \ubc18\ub300 \ubc29\ud5a5, \uc628\ud504\ub818\uc5d0\uc11c LB\ub85c \ub4e4\uc5b4\uc624\ub294 \uacbd\uc6b0\ub294 \uc5b4\ub5a8\uae4c\uc694.\n\n[\ucd9c\ucc98]\n\u2022 \ub370\ubaa8 \uc800\uc7a5\uc18c results/lb-20261018-0211.json, demo-lb/run-tests.sh (2026-10-18 \uc2e4\uce21)\n\u2022 https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-ingress.html",
+    11: "\u23f8\ufe0f [2.5min] [\uc694\uc57d]\n\u2022 \uc628\ud504\ub818 \u2192 internal ALB \u2192 \ub9ac\uc804 Pod\ub294 \uc77c\ubc18 VPC \uacbd\ub85c, gateway \ubd88\ud544\uc694 (20/20)\n\u2022 \uac19\uc740 ALB\ub85c hybrid Pod\ub97c \ubd80\ub974\uba74 hairpin, \ub3d9\uc791\uc740 \ud558\uc9c0\ub9cc \ube44\ud6a8\uc728 (20/20)\n\u2022 hybrid NodePort\ub85c \ubc1b\uc544 \ub9ac\uc804 Pod\ub85c \ubcf4\ub0b4\uba74 underlay\ub97c \ud0c0\uc11c SG\uac00 \ud544\uc694 (\uc2e4\ud328)\n\n\uc628\ud504\ub818 \ud638\uc2a4\ud2b8\uc5d0\uc11c \uac19\uc740 internal ALB\ub97c \ud638\ucd9c\ud588\uc2b5\ub2c8\ub2e4. ALB \uc774\ub984\uc740 private IP \ub450 \uac1c\ub85c \ud480\ub838\uace0, TGW\ub97c \uc9c0\ub098 ALB\uc5d0 \ub2ff\uc740 \ub4a4 \ub9ac\uc804 Pod\ub85c \uac14\uc2b5\ub2c8\ub2e4. \uc5ec\uae30\ub294 gateway\uac00 \uc804\ud600 \uad00\uc5ec\ud558\uc9c0 \uc54a\ub294 \uc77c\ubc18 VPC \uacbd\ub85c\uc785\ub2c8\ub2e4. \uc2e4\uc81c \uc628\ud504\ub818\uc5d0\uc11c\ub294 ALB \uc774\ub984\uc744 private IP\ub85c \ud480 \uc218 \uc788\uac8c Route 53 Resolver inbound endpoint\ub97c \ub450\uc154\uc57c \ud569\ub2c8\ub2e4.\n\uac19\uc740 ALB\ub85c hybrid Pod \uacbd\ub85c\ub97c \ubd80\ub974\uba74 \uc628\ud504\ub818\uc5d0\uc11c AWS\ub85c \uac14\ub2e4\uac00 gateway\ub97c \uc9c0\ub098 \ub2e4\uc2dc \uc628\ud504\ub818\uc73c\ub85c \ub3cc\uc544\uc635\ub2c8\ub2e4. \ub3d9\uc791\uc740 \ud588\uc9c0\ub9cc DX\ub97c \ub450 \ubc88 \uc9c0\ub098\ub2c8 \uc628\ud504\ub818 Pod\ub294 \uc628\ud504\ub818 LB\ub85c \ubc1b\ub294 \uac8c \ub0ab\uc2b5\ub2c8\ub2e4.\n\nAWS \ubb38\uc11c\ub3c4 \uac19\uc740 \uae30\uc900\uc744 \uc90d\ub2c8\ub2e4. \ub9ac\uc804\uc5d0\uc11c \uc624\ub294 \ud2b8\ub798\ud53d\uc740 ALB\uc640 Load Balancer Controller, \uc628\ud504\ub818\uc5d0\uc11c \uc624\ub294 \ud2b8\ub798\ud53d\uc740 \uc628\ud504\ub818 \ucabd Ingress\ub85c \ubc1b\uc73c\ub77c\uace0 \uad8c\uc7a5\ud569\ub2c8\ub2e4. \ub2e4\ub9cc gateway\ub97c \ucf1c\uba74 Cilium\uc758 L7 proxy\ub97c \uaebc\uc57c \ud574\uc11c Cilium Ingress\uc640 Gateway API\ub294 \uac19\uc774 \uc4f8 \uc218 \uc5c6\uace0, \uc628\ud504\ub818\uc740 L4 LoadBalancer Service\ub098 \uae30\uc874 \ud558\ub4dc\uc6e8\uc5b4 LB\ub97c \uc4f0\uac8c \ub429\ub2c8\ub2e4.\n\uc138 \ubc88\uc9f8\ub294 \uc77c\ubd80\ub7ec \ubcf4\uc5ec \ub4dc\ub9ac\ub294 \uc2e4\ud328\uc785\ub2c8\ub2e4. hybrid \ub178\ub4dc\uc758 NodePort\ub85c \ubc1b\uc544\uc11c \ub9ac\uc804 Pod\ub85c \ubcf4\ub0b4\uba74, kube-proxy\uac00 \ub178\ub4dc IP\ub85c SNAT\ud558\uace0 \ucee4\ub110 \ub77c\uc6b0\ud305\uc73c\ub85c underlay\ub97c \ud0d1\ub2c8\ub2e4. Pod\uc5d0\uc11c \ucd9c\ubc1c\ud55c \ud2b8\ub798\ud53d\uc774 \uc544\ub2c8\ub77c\uc11c gateway\ub97c \uc4f0\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ub370\ubaa8 \ud074\ub7ec\uc2a4\ud130\uc758 SG\uac00 \uc628\ud504\ub818 \ub178\ub4dc \ub300\uc5ed\uc5d0 443\ub9cc \uc5f4\uc5b4 \ub46c\uc11c \ub9c9\ud614\uc2b5\ub2c8\ub2e4. \uc774 \uacbd\ub85c\ub97c \uc4f0\ub824\uba74 \ub9ac\uc804 \ub178\ub4dc SG\uc5d0 \uc628\ud504\ub818 \ub178\ub4dc CIDR\uacfc \uc571 \ud3ec\ud2b8\ub97c \uc5f4\uc5b4\uc57c \ud569\ub2c8\ub2e4.\n\n\ub9c8\uc9c0\ub9c9\uc73c\ub85c \uc804\uccb4\ub97c \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 \ub370\ubaa8 \uc800\uc7a5\uc18c results/lb-20261018-0211.json, KNOWN-ISSUES.md LB \ub370\ubaa8 \ud655\uc778 \uc0ac\ud56d (2026-10-18 \uc2e4\uce21)\n\u2022 https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-ingress.html (\ud2b8\ub798\ud53d \ucd9c\ubc1c\uc9c0\ubcc4 ALB\uc640 Cilium Ingress \uad8c\uc7a5)\n\u2022 https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html",
+    12: "[1.5min] [\uc694\uc57d]\n\u2022 \ud655\uc778: gateway \uc804\ud658, \uc628\ud504\ub818 Pod \ubcf4\ud638, GPU \ucd94\ub860, Istio \uacf5\uc874, ALB ip \ud0c0\uae43\n\u2022 \ub0a8\uc740 \uac83: \ubc18\ubcf5 \uce21\uc815, ambient, \ucc98\ub9ac\ub7c9, \uc2e4\uc81c \uc628\ud504\ub818 \uc7ac\uac80\uc99d\n\u2022 \uc218\uce58\ub294 \uc2dc\ubbac\ub808\uc774\uc158 \ud658\uacbd\uc758 \uac12\n\n\uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4. gateway \uc804\ud658\uc740 3~5\ucd08, \uc628\ud504\ub818 Pod\ub294 Kyverno\ub9cc\uc73c\ub85c\ub3c4 \uc9c0\ucf1c\uc84c\uace0, Karpenter \uae30\ub2a5\uc740 EC2 \uc218\uc640 \uc815\ub9ac \uc2dc\uac04\uc5d0\uc11c \uc791\uc740 \uc774\ub4dd\uc744 \uc92c\uc2b5\ub2c8\ub2e4.\nGPU \ucd94\ub860\uc740 hybrid \ub178\ub4dc\uc5d0\uc11c \ub3cc\uace0 \ud074\ub77c\uc6b0\ub4dc\uc5d0\uc11c \ud638\ucd9c\ub410\uace0, Istio\ub294 gateway\uc640 \ud568\uaed8 \ub3d9\uc791\ud588\uace0, ALB\ub294 \ubc14\ub00c\ub294 hybrid Pod IP\ub97c \ub530\ub77c\uac14\uc2b5\ub2c8\ub2e4.\n\ub0a8\uc740 \uac83\ub3c4 \uc194\uc9c1\ud788 \ub9d0\uc500\ub4dc\ub9bd\ub2c8\ub2e4. B\uc640 C\uc758 \ucc28\uc774\ub294 \ubc18\ubcf5 \uce21\uc815\uc774 \ud544\uc694\ud558\uace0, Istio ambient \ubaa8\ub4dc\uc640 gateway \ucc98\ub9ac\ub7c9\uc740 \ubcf4\uc9c0 \ubabb\ud588\uace0, \ubaa8\ub4e0 \uc218\uce58\ub294 \uc2dc\ubbac\ub808\uc774\uc158 \ud658\uacbd\uc758 \uac12\uc774\ub77c \uc2e4\uc81c \uc628\ud504\ub818\uc5d0\uc11c \ub2e4\uc2dc \ud655\uc778\ud574\uc57c \ud569\ub2c8\ub2e4.\n\n\ub9c8\uc9c0\ub9c9\uc73c\ub85c \ucc38\uace0 \uc790\ub8cc\ub97c \uc815\ub9ac\ud558\uace0 \uc9c8\ubb38\uc744 \ubc1b\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n\u2022 \ub370\ubaa8 \uc800\uc7a5\uc18c RUNBOOK.md, KNOWN-ISSUES.md (private \uc800\uc7a5\uc18c)",
+    13: "\u2753 \u23f8\ufe0f [1min] [\uc694\uc57d]\n\u2022 \uc8fc\uc81c\ubcc4 \ud0ed\uc73c\ub85c \uacf5\uc2dd \ubb38\uc11c\ub97c \ubaa8\uc558\uc74c: \uac1c\uc694\uc640 \uc694\uae08, \ub124\ud2b8\uc6cc\ud0b9\uacfc Gateway, \ub178\ub4dc\uc640 \ub77c\uc774\ud504\uc0ac\uc774\ud074, \uc6b4\uc601\uacfc GPU\uc640 \ube44\uc6a9, \ub370\ubaa8\n\u2022 \ub9c1\ud06c\ub294 \ubaa8\ub450 \ud074\ub9ad\ud574\uc11c \uc5f4 \uc218 \uc788\uc74c\n\u2022 \uc608\uc81c\ub294 \uac80\ud1a0 \uae30\uc900\uc774\uace0, 5\ubd80 \uc218\uce58\ub294 \uc2dc\ubbac\ub808\uc774\uc158 \ud658\uacbd\uc758 \uc2e4\uce21\n\n\uc624\ub298 \ub2e4\ub8ec \ub0b4\uc6a9\uc758 \uadfc\uac70 \ubb38\uc11c\ub97c \uc8fc\uc81c\ubcc4 \ud0ed\uc73c\ub85c \ubaa8\uc558\uc2b5\ub2c8\ub2e4. \ub9c1\ud06c\ub294 \ubc14\ub85c \uc5f4 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \ub370\ubaa8 \ud0ed\uc5d0\ub294 \uad6c\ud604\uacfc \uc2e4\uce21 \uacb0\uacfc\ub97c \uc815\ub9ac\ud55c \uac00\uc774\ub4dc \ud398\uc774\uc9c0\uac00 \uc788\uc2b5\ub2c8\ub2e4.\n\n\uc608\uc81c\uc640 \uba85\ub839\uc740 EKS 1.36, nodeadm 1.0.20\uc744 \uae30\uc900\uc73c\ub85c \uac80\ud1a0\ud588\uace0, 5\ubd80\uc758 \uc218\uce58\ub294 EC2\ub85c \uc628\ud504\ub818\uc744 \uc2dc\ubbac\ub808\uc774\uc158\ud55c \ud658\uacbd\uc5d0\uc11c \uc7b0 \uac12\uc785\ub2c8\ub2e4. \uc801\uc6a9\ud558\uc2dc\uae30 \uc804\uc5d0 \ucd5c\uc2e0 \ubb38\uc11c\ub85c \uc9c0\uc6d0 \uc870\ud569\uc744 \ud655\uc778\ud558\uc2dc\uae30 \ubc14\ub78d\ub2c8\ub2e4.\n\n\uc774\uc81c \uc9c8\ubb38 \ubc1b\uaca0\uc2b5\ub2c8\ub2e4.",
+    14: "[0.5min] [\uc694\uc57d]\n\u2022 \uc138\uc158 \ub9c8\ubb34\ub9ac\n\n\uc624\ub298 \uc138\uc158 \ub4e4\uc5b4 \uc8fc\uc154\uc11c \uac10\uc0ac\ud569\ub2c8\ub2e4. \ub370\ubaa8 \ucf54\ub4dc\uc640 \uce21\uc815 \uacb0\uacfc\ub294 \ub370\ubaa8 \uac00\uc774\ub4dc \ud398\uc774\uc9c0\uc5d0 \uc815\ub9ac\ud574 \ub450\uc5c8\uc2b5\ub2c8\ub2e4."
+  };
+  const deck = new SlideFramework({
+    logoSrc: "./common/pptx-theme/images/logo_1.png",
+    
+    footer: "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.",
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

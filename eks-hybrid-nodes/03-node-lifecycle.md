@@ -4,21 +4,21 @@ block: 03-node-lifecycle
 ---
 
 ---
-<!-- Slide 1: 블록 커버 -->
+<!-- Slide 1: 3부 구분 -->
 @type: section
 
-# Block 3: 노드 부트스트랩 & 라이프사이클
+# 3부: 노드 부트스트랩 & 라이프사이클
 
 사전 준비 → nodeadm → Cilium → 업그레이드 → 트러블슈팅 → 크리덴셜
 
 :::notes
 {timing: 0.5min}
 [요약]
-• Block 3은 "호스트 한 대를 EKS 노드로 만들고, 그 뒤 수명 주기를 관리하는 방법"입니다
+• 3부는 "호스트 한 대를 EKS 노드로 만들고, 그 뒤 수명 주기를 관리하는 방법"입니다
 • 흐름: 사전 준비 → nodeadm 설치/초기화 → Cilium → 튜닝 → 업그레이드 → 장애 대응 → 크리덴셜
 • 모든 명령과 YAML은 검토한 로컬 문서(nodeadm v1.0.20 기준)에서 가져왔습니다
 
-지금까지 Block 1, 2에서 아키텍처와 네트워크를 봤습니다. 이제 실제로 서버 한 대를 클러스터에 붙이는 과정을 순서대로 따라가 보겠습니다.
+지금까지 1부와 2부에서 아키텍처와 네트워크를 봤습니다. 이제 실제로 서버 한 대를 클러스터에 붙이는 과정을 순서대로 따라가 보겠습니다.
 {cue: pause}
 먼저 조인 전에 AWS 쪽에서 끝내야 할 준비부터 보겠습니다.
 :::
@@ -331,11 +331,70 @@ Bottlerocket은 완전히 다른 경로입니다. nodeadm이 없고, settings.to
 VM을 처음 켜기 전에 settings.toml을 base64로 인코딩해서 guestinfo로 넣습니다. 여기서 base64는 인코딩일 뿐입니다. 활성화 비밀이나 개인 키가 들어가니까 VM 구성과 provisioning 로그를 보호하셔야 합니다.
 공급자별 전체 설정은 AWS Bottlerocket 가이드를 그대로 따라 주세요. 슬라이드의 조각은 공통 부분만 보여 드린 것입니다. 이전 자료의 settings.hybrid.ssm 형태는 문서화된 계약이 아닙니다. 또 AWS 가이드의 TOML은 join에 필요한 최소 설정이라서, static IP 같은 네트워크 설정은 Bottlerocket settings 문서를 보고 직접 검증하셔야 합니다.
 {cue: transition}
-이제 nodeadm 경로로 돌아와서 containerd 규칙을 보겠습니다.
+그러면 Bottlerocket은 실제로 어떻게 조인하고 운영이 무엇이 다른지 보겠습니다.
 
 [출처]
 • D/04 "Bottlerocket은 별도 부트스트랩 계약 사용" 섹션
 • https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html
+:::
+
+---
+<!-- Slide 6b: Bottlerocket 조인과 운영 -->
+@type: content
+@title: Bottlerocket 조인과 운영의 차이
+
+## Bottlerocket 조인과 운영의 차이
+
+:::html
+<style>
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.flow-h { margin: 0 0 var(--space-4); }
+.flow-h .flow-box { min-width: min-content; overflow-wrap: normal; }
+.hn-flow-sub { display: block; color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: break-word; }
+.hn-refs { font-size: var(--fs-card); color: var(--text-secondary); margin-top: var(--space-3); }
+.hn-refs a { color: var(--accent); }
+</style>
+<div class="flow-h">
+  <div class="flow-box fragment fade-right" data-fragment-index="1">settings.toml<br><span class="hn-flow-sub">api-server, CA 직접 기입</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="2">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="2">guestinfo 전달<br><span class="hn-flow-sub">VM을 켜기 전, base64</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="3">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="3">eks-hybrid-setup<br><span class="hn-flow-sub">SSM 등록 또는 IRA 인증서</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="4">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="4">join, NotReady<br><span class="hn-flow-sub">CNI 설치 후 Ready</span></div>
+</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="5">
+  <div class="callout callout-info"><strong class="text-info">노드 이름</strong><div class="on-surface-muted">SSM은 등록 뒤 mi-* ID로 바뀝니다. IAM Roles Anywhere는 인증서 CN과 맞춰야 합니다.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">Pod Identity 조건</strong><div class="on-surface-muted">OS 1.39.0 이상, 애드온 1.3.7-eksbuild.2 이상. setup 명령의 credentials 파일 옵션과 hybrid-bottlerocket DaemonSet을 켭니다.</div></div>
+  <div class="callout callout-info"><strong class="text-info">label과 자격 증명 위치</strong><div class="on-surface-muted">label은 settings의 node-labels로 줍니다. 임시 자격 증명은 /var/eks-hybrid 아래에 생깁니다.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">nodeadm 절차는 쓰지 않음</strong><div class="on-surface-muted">설치, 업그레이드, 제거, 제한망 준비 모두 Bottlerocket 설정 경로를 따릅니다. VMware variant만 지원하고 베어메탈은 미지원입니다.</div></div>
+</div>
+<div class="hn-refs fragment fade-up" data-fragment-index="6">참고: <a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html" target="_blank" rel="noopener">Bottlerocket 연결 가이드</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html" target="_blank" rel="noopener">애드온 구성 (Pod Identity)</a>, <a href="https://bottlerocket.dev/en/os/1.51.x/api/settings/" target="_blank" rel="noopener">Bottlerocket settings (1.51.x)</a></div>
+:::
+
+
+:::notes
+{timing: 1.5min}
+[요약]
+• 흐름: settings.toml 작성 → VM을 켜기 전 guestinfo로 전달 → eks-hybrid-setup이 자격 증명을 준비하고 join
+• SSM은 노드 이름이 mi-* ID로 바뀌고, IRA는 인증서 CN과 맞춰야 함
+• Pod Identity는 OS 1.39.0과 애드온 1.3.7-eksbuild.2 이상, credentials 파일 옵션과 hybrid-bottlerocket DaemonSet 필요
+• nodeadm 기반 설치, 업그레이드, 제거, 제한망 절차는 적용되지 않음
+
+앞 장에서 Bottlerocket에는 nodeadm이 없다고 했습니다. 그러면 조인은 어떻게 할까요. settings.toml에 클러스터 정보를 적고, VM을 처음 켜기 전에 guestinfo로 넣습니다. VM이 켜지면 eks-hybrid-setup이라는 bootstrap container가 SSM에 등록하거나 IAM Roles Anywhere 인증서를 놓고 클러스터에 조인합니다. nodeadm과 달리 api-server와 CA는 자동으로 조회되지 않아서 직접 적어야 합니다.
+{cue: pause}
+운영에서 다른 점이 몇 가지 있습니다. SSM을 쓰면 등록 뒤 노드 이름이 mi로 시작하는 ID로 바뀝니다. Pod Identity를 쓰려면 Bottlerocket OS가 1.39.0 이상이어야 하고, 애드온은 1.3.7-eksbuild.2부터 Bottlerocket 전용 DaemonSet을 제공합니다. setup 명령에 --enable-credentials-file=true를 붙이고, 애드온 설정에서 daemonsets.hybrid-bottlerocket.create를 true로 켭니다. 임시 자격 증명은 /var/eks-hybrid/.aws/credentials에, label은 settings.kubernetes.node-labels에 둡니다.
+또 nodeadm 기반의 업그레이드나 제거, 제한망 준비 절차는 그대로 쓰지 않고 Bottlerocket 설정 경로를 따릅니다. 그리고 지원은 VMware variant뿐이고 베어메탈은 지원되지 않습니다.
+{cue: transition}
+이제 nodeadm 경로로 돌아와서 containerd 규칙을 보겠습니다.
+
+[출처]
+• https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html
+• https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html (Bottlerocket Pod Identity: OS 1.39.0, 애드온 1.3.7-eksbuild.2)
+• kubernetes-docs ko/eks-hybrid-nodes 04-node-bootstrap.md "Bottlerocket은 별도 부트스트랩 계약 사용", 08-operations.md, 09-bare-metal-os-setup.md
 :::
 
 ---
@@ -987,149 +1046,8 @@ IAM Roles Anywhere에서 실제로 문제가 되는 것은 인증서 만료입�
 {cue: question}
 trust anchor는 언제 바꿀까요? 같은 CA에서 leaf 인증서만 갱신한다면 바꿀 필요가 없습니다. CA rollover일 때만 update-trust-anchor를 쓰고, 의존하는 모든 노드에 영향이 가므로 카나리로 먼저 검증하세요.
 {cue: transition}
-여기까지 Block 3의 내용입니다. 퀴즈로 확인해 보겠습니다.
+여기까지 3부입니다. 다음은 4부, 운영, 워크로드, 보안과 도입 전략입니다.
 
 [출처]
 • D/07 "자격 증명 라이프사이클" 섹션, D/01 "SSM Role과 Activation", "Roles Anywhere Trust와 수명"
-:::
-
----
-<!-- Slide 17: Quiz (1/3) -->
-@type: quiz
-@title: Block 3 Quiz (1/3)
-
-## Block 3 Quiz (1/3)
-
-**Q1: nodeadm NodeConfig에서 반드시 직접 채워야 하는 최소 항목은?**
-- [ ] API 서버 엔드포인트와 클러스터 CA
-- [x] 클러스터 이름, 리전, 자격 증명 공급자 블록
-- [ ] Node 라벨과 Taint
-
-**Q2: nodeadm이 하이브리드 노드에 자동으로 붙여 주는 라벨은?**
-- [ ] workload-type=hybrid
-- [x] eks.amazonaws.com/compute-type=hybrid
-- [ ] 자동 라벨은 없다
-
-:::notes
-{timing: 0.75min}
-[요약]
-• Q1 정답: 클러스터 이름+리전+공급자 블록 (endpoint/CA는 DescribeCluster로 조회)
-• Q2 정답: eks.amazonaws.com/compute-type=hybrid, 테인트는 자동 부여되지 않음
-
-퀴즈 첫 두 문제입니다. 1번은 NodeConfig 최소 구성인데, 엔드포인트와 CA를 직접 넣지 않아도 된다는 점을 기억하시면 됩니다.
-{cue: poll}
-2번은 자동 라벨입니다. 하나뿐이고, 테인트는 없습니다.
-{cue: transition}
-이어서 3, 4번입니다.
-:::
-
----
-<!-- Slide 18: Quiz (2/3) -->
-@type: quiz
-@title: Block 3 Quiz (2/3)
-
-## Block 3 Quiz (2/3)
-
-**Q3: nodeadm upgrade가 실패했을 때 올바른 대응은?**
-- [ ] nodeadm upgrade --rollback 실행
-- [x] cordon을 유지하고 승인된 버전의 호스트로 교체
-- [ ] /var/lib/kubelet을 재귀 삭제하고 재시도
-
-**Q4: 제한망(air-gap)에서 비공개 manifest로 설치할 때 쓰는 옵션 조합은?**
-- [ ] Route 53 PHZ로 hybrid-assets를 S3에 CNAME
-- [x] --manifest-override 와 --private-mode
-- [ ] --dry-run 과 --config-source s3://
-
-:::notes
-{timing: 0.75min}
-[요약]
-• Q3 정답: cordon 유지 + 승인된 버전 호스트로 교체 (rollback/reset 명령 없음)
-• Q4 정답: --manifest-override + --private-mode
-
-3번은 롤백입니다. rollback과 reset은 존재하지 않습니다. 호스트 교체가 답입니다.
-{cue: pause}
-4번은 제한망 옵션입니다. PHZ 방식은 문서에서 기각했고, config-source로 S3를 지정하는 방식은 문서화되지 않았습니다. 정답은 manifest-override와 private-mode입니다.
-{cue: transition}
-마지막 한 문제는 1.37 변경입니다.
-:::
-
----
-<!-- Slide 18b: Quiz (3/3) -->
-@type: quiz
-@title: Block 3 Quiz (3/3)
-
-## Block 3 Quiz (3/3)
-
-**Q5: EKS 1.37 kubelet에서 `eventRecordQPS: 0`의 의미는?**
-- [ ] 이벤트 기록을 끈다
-- [x] 이벤트 기록 속도에 제한이 없다
-- [ ] 초당 5개로 제한한다
-
-:::notes
-{timing: 0.5min}
-[요약]
-• Q5 정답: 1.37부터 eventRecordQPS 0은 무제한 (이전엔 초당 5개)
-
-5번은 1.37 kubelet 변경입니다. 예전에는 0이 초당 5개 제한이었지만 이제는 무제한입니다. 이전 동작을 유지하려면 5로 바꿔야 합니다.
-{cue: transition}
-마지막으로 참고 자료를 정리하겠습니다.
-:::
-
----
-<!-- Slide 19: References + Q&A -->
-@type: content
-@title: References & Q&A
-
-## References & Q&A
-
-:::html
-<style>
-.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
-</style>
-<div class="card-grid" data-reveal="static">
-  <div class="metric-card"><strong class="text-accent">nodeadm 레퍼런스</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html</div></div>
-  <div class="metric-card"><strong class="text-accent">자격 증명</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html</div></div>
-  <div class="metric-card"><strong class="text-accent">Hybrid CNI</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html</div></div>
-  <div class="metric-card"><strong class="text-accent">Bottlerocket</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html</div></div>
-  <div class="metric-card"><strong class="text-accent">업그레이드, 릴리스 노트</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-upgrade.html<br>docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html</div></div>
-  <div class="metric-card"><strong class="text-accent">nodeadm 소스</strong><div class="on-surface-muted">github.com/aws/eks-hybrid (v1.0.20)</div></div>
-</div>
-:::
-
-
-:::notes
-{timing: 0.5min}
-[요약]
-• Block 3의 근거는 AWS hybrid-nodes 문서와 aws/eks-hybrid v1.0.20 소스
-• 문서의 예제는 실제 클러스터에서 모두 실행 검증된 것은 아님, 적용 전 환경에서 확인
-• 다음 Block 4에서는 운영, 워크로드 배치, 보안과 전략을 다룸
-
-참고 자료를 정리했습니다. nodeadm 레퍼런스와 자격 증명, CNI, Bottlerocket, 업그레이드 문서가 오늘 내용의 근거입니다. 예제들은 문서 기준이고 모든 환경에서 검증된 레시피는 아니라는 점을 한 번 더 말씀드립니다.
-{cue: pause}
-{cue: question}
-여기서 질문 받겠습니다. 부트스트랩이나 업그레이드, 크리덴셜 관리 중 궁금하신 부분 말씀해 주세요.
-{cue: transition}
-질문이 없으면 쉬는 시간을 가진 뒤 마지막 Block 4로 넘어가겠습니다.
-:::
-
----
-<!-- Slide 20: Thank You -->
-@type: thankyou
-@toc: toc.html
-@next: 04-operations-strategy.html
-@next-label: 다음: Block 4
-
-# Thank You
-
-Block 3: 노드 부트스트랩 & 라이프사이클 완료
-
-:::notes
-{timing: 0.5min}
-[요약]
-• Block 3 완료: 사전 준비, nodeadm, Cilium, 업그레이드, 트러블슈팅, 크리덴셜
-• 목차로 돌아가거나 Block 4로 이동
-
-Block 3을 마치겠습니다. 5분 쉬고 Block 4에서 운영, 워크로드 배치, 보안과 전략을 다루겠습니다.
-{cue: break}
 :::

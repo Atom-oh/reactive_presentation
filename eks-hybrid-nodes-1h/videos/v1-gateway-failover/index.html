@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>V1 Gateway 리더 전환</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --bg: #161d26;
+        --panel: #1d2632;
+        --panel-2: #222d3a;
+        --line: #3a4a5e;
+        --fg: #ffffff;
+        --fg-2: rgba(243, 243, 247, 0.78);
+        --fg-3: rgba(243, 243, 247, 0.62);
+        --accent: #41b3ff;
+        --warning: #fbd332;
+        --success: #00e500;
+        --danger: #ff5c85;
+        --sans: "Noto Sans KR", sans-serif;
+        --mono: "JetBrains Mono", "Noto Sans KR", monospace;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--bg);
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: var(--sans);
+        color: var(--fg);
+        word-break: keep-all;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+      .abs {
+        position: absolute;
+      }
+
+      /* background */
+      #bg {
+        position: absolute;
+        inset: 0;
+        background: var(--bg);
+      }
+      #bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(65, 179, 255, 0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(65, 179, 255, 0.05) 1px, transparent 1px);
+        background-size: 80px 80px;
+      }
+      #bg-glow {
+        position: absolute;
+        left: 1100px;
+        top: -300px;
+        width: 1100px;
+        height: 1100px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(65, 179, 255, 0.12) 0%, rgba(65, 179, 255, 0) 65%);
+      }
+
+      /* footer (persistent) */
+      #footer {
+        pointer-events: none;
+      }
+      .footer-label {
+        position: absolute;
+        left: 60px;
+        bottom: 26px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 36px;
+        font-weight: 500;
+        color: var(--fg-2);
+      }
+      .footer-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--warning);
+      }
+      .footer-right {
+        position: absolute;
+        right: 60px;
+        bottom: 26px;
+        font-size: 36px;
+        color: var(--fg-3);
+      }
+
+      /* opening title */
+      #s1-title {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 160px 80px;
+      }
+      .kicker {
+        font-size: 40px;
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 0.02em;
+      }
+      .big-title {
+        margin-top: 24px;
+        font-size: 104px;
+        font-weight: 900;
+        line-height: 1.15;
+      }
+      .big-msg {
+        margin-top: 40px;
+        max-width: 1500px;
+        font-size: 48px;
+        font-weight: 500;
+        line-height: 1.4;
+        color: var(--fg-2);
+      }
+      .big-msg b {
+        color: var(--success);
+        font-weight: 700;
+      }
+
+      /* scene header */
+      .hdr {
+        position: absolute;
+        left: 60px;
+        top: 56px;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+      }
+      .step {
+        display: block;
+        padding: 6px 22px;
+        border: 2px solid var(--accent);
+        border-radius: 999px;
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .hdr-title {
+        display: block;
+        font-size: 58px;
+        font-weight: 800;
+      }
+
+      /* timer badges */
+      .timer {
+        position: absolute;
+        right: 60px;
+        top: 50px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 10px 28px;
+        border-radius: 16px;
+        font-size: 40px;
+        font-weight: 800;
+      }
+      .timer.t0 {
+        border: 3px solid var(--danger);
+        color: var(--danger);
+        background: rgba(255, 92, 133, 0.1);
+      }
+      .timer.t3 {
+        border: 3px solid var(--success);
+        color: var(--success);
+        background: rgba(0, 229, 0, 0.08);
+      }
+      .timer small {
+        font-size: 36px;
+        font-weight: 600;
+        color: var(--fg);
+      }
+
+      /* diagram */
+      .zone {
+        position: absolute;
+        border: 2px dashed var(--line);
+        border-radius: 20px;
+      }
+      .zone-label {
+        position: absolute;
+        left: 24px;
+        top: 14px;
+        font-size: 36px;
+        font-weight: 700;
+      }
+      .zone-label .mono {
+        font-family: var(--mono);
+        font-weight: 500;
+        color: var(--fg-2);
+      }
+      .box {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        background: var(--panel);
+        border: 3px solid var(--line);
+        border-radius: 16px;
+        text-align: center;
+      }
+      .box-title {
+        font-size: 36px;
+        font-weight: 700;
+      }
+      .mono {
+        font-family: var(--mono);
+      }
+      .box-sub {
+        font-size: 36px;
+        color: var(--fg-2);
+      }
+      .badge-slot {
+        position: relative;
+        width: 200px;
+        height: 54px;
+      }
+      .badge {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        font-size: 36px;
+        font-weight: 700;
+      }
+      .badge.leader {
+        background: rgba(65, 179, 255, 0.18);
+        color: var(--accent);
+        border: 2px solid var(--accent);
+      }
+      .badge.standby {
+        background: rgba(243, 243, 247, 0.06);
+        color: var(--fg-2);
+        border: 2px solid var(--line);
+      }
+      .badge.dead {
+        background: rgba(255, 92, 133, 0.14);
+        color: var(--danger);
+        border: 2px solid var(--danger);
+      }
+      .badge.newleader {
+        background: rgba(0, 229, 0, 0.12);
+        color: var(--success);
+        border: 2px solid var(--success);
+      }
+      .route-row {
+        position: relative;
+        width: 300px;
+        height: 50px;
+      }
+      .route-row span {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--mono);
+        font-size: 36px;
+      }
+      .eni-old {
+        color: var(--accent);
+      }
+      .eni-new {
+        color: var(--success);
+      }
+      .gap-label {
+        position: absolute;
+        width: 140px;
+        text-align: center;
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--fg-2);
+      }
+      #wires {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1920px;
+        height: 1080px;
+      }
+      .pkt {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 30px;
+        height: 30px;
+        margin: -15px 0 0 -15px;
+        border-radius: 50%;
+        background: var(--success);
+        box-shadow: 0 0 24px rgba(0, 229, 0, 0.8);
+      }
+      .pkt.bad {
+        background: var(--danger);
+        box-shadow: 0 0 24px rgba(255, 92, 133, 0.9);
+      }
+      .fail-tag {
+        position: absolute;
+        padding: 4px 18px;
+        border-radius: 12px;
+        background: rgba(255, 92, 133, 0.16);
+        border: 2px solid var(--danger);
+        color: var(--danger);
+        font-size: 36px;
+        font-weight: 700;
+      }
+
+      /* bottom panels */
+      .panel {
+        position: absolute;
+        top: 676px;
+        height: 296px;
+        border-radius: 18px;
+        background: var(--panel);
+        border: 2px solid var(--line);
+      }
+      .term {
+        left: 60px;
+        width: 1190px;
+        padding: 22px 28px;
+        background: #0f151d;
+        font-family: var(--mono);
+        font-size: 36px;
+        line-height: 1.28;
+        color: var(--fg);
+      }
+      .term .ln {
+        display: block;
+        white-space: pre;
+      }
+      .term .p {
+        color: var(--accent);
+      }
+      .term .c {
+        color: var(--fg-3);
+        font-family: var(--sans);
+      }
+      .term .ok {
+        color: var(--success);
+      }
+      .term .w {
+        color: var(--warning);
+      }
+      .term .eg {
+        color: var(--fg-3);
+      }
+      .notes {
+        left: 60px;
+        width: 1800px;
+        padding: 30px 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 22px;
+      }
+      .note {
+        display: flex;
+        align-items: baseline;
+        gap: 20px;
+        font-size: 38px;
+        line-height: 1.3;
+      }
+      .note i {
+        font-style: normal;
+        color: var(--accent);
+        font-weight: 800;
+      }
+      .note .mono {
+        color: var(--warning);
+      }
+      #probe {
+        left: 1290px;
+        width: 570px;
+        padding: 18px 20px;
+      }
+      .probe-head {
+        position: relative;
+        height: 48px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 36px;
+        font-weight: 700;
+      }
+      .cnt-slot {
+        position: relative;
+        width: 230px;
+        height: 48px;
+      }
+      .cnt-slot span {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        font-size: 36px;
+      }
+      .cnt0 {
+        color: var(--fg-2);
+      }
+      .cnt1 {
+        color: var(--danger);
+      }
+      #grid {
+        margin-top: 8px;
+        display: grid;
+        grid-template-columns: repeat(12, 34px);
+        grid-auto-rows: 32px;
+        gap: 7px 8px;
+        justify-content: center;
+      }
+      .cell {
+        display: block;
+        width: 34px;
+        height: 32px;
+        border-radius: 6px;
+        background: rgba(243, 243, 247, 0.08);
+      }
+
+      /* results */
+      #s5 .cards {
+        position: absolute;
+        left: 60px;
+        top: 196px;
+        width: 1800px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 40px;
+      }
+      .card {
+        padding: 34px 38px;
+        border-radius: 22px;
+        background: var(--panel);
+        border: 2px solid var(--line);
+      }
+      .card.hl {
+        border-color: var(--warning);
+      }
+      .card-run {
+        font-size: 38px;
+        font-weight: 700;
+        color: var(--fg-2);
+      }
+      .card-run b {
+        color: var(--warning);
+      }
+      .card-label {
+        margin-top: 22px;
+        font-size: 36px;
+        color: var(--fg-2);
+      }
+      .card-num {
+        font-size: 120px;
+        font-weight: 900;
+        line-height: 1.05;
+        color: var(--accent);
+      }
+      .card-num small {
+        font-size: 56px;
+        font-weight: 700;
+      }
+      .card-fail {
+        margin-top: 18px;
+        font-size: 40px;
+        font-weight: 700;
+      }
+      .card-fail .d {
+        color: var(--danger);
+      }
+      .card-route {
+        margin-top: 14px;
+        font-size: 36px;
+        color: var(--success);
+      }
+      .msg {
+        position: absolute;
+        left: 60px;
+        top: 742px;
+        width: 1800px;
+        font-size: 54px;
+        font-weight: 800;
+        line-height: 1.3;
+      }
+      .msg b {
+        color: var(--success);
+      }
+      .msg-sub {
+        position: absolute;
+        left: 60px;
+        top: 900px;
+        width: 1800px;
+        font-size: 36px;
+        color: var(--fg-2);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="150"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div id="bg">
+        <div id="bg-grid"></div>
+        <div id="bg-glow"></div>
+      </div>
+
+      <!-- Scene 1a: opening title -->
+      <section id="s1-title" class="clip" data-start="0" data-duration="6" data-track-index="1">
+        <div id="t-kicker" class="kicker">EKS Hybrid Nodes 데모 1</div>
+        <div id="t-title" class="big-title">Gateway 리더 전환</div>
+        <div id="t-msg" class="big-msg">
+          Gateway 리더가 죽어도 <b>3~5초</b> 안에 스탠바이가 경로를 넘겨받습니다
+        </div>
+      </section>
+
+      <!-- Scene headers -->
+      <div id="h1" class="clip" data-start="5.5" data-duration="18.5" data-track-index="2">
+        <div id="h1-in" class="hdr">
+          <span class="step">1 / 5</span>
+          <span class="hdr-title">환경 구성: EKS VPC와 시뮬레이션 온프레미스</span>
+        </div>
+      </div>
+      <div id="h2" class="clip" data-start="24" data-duration="28" data-track-index="2">
+        <div id="h2-in" class="hdr">
+          <span class="step">2 / 5</span>
+          <span class="hdr-title">평상시 경로: 라우트는 리더 ENI로</span>
+        </div>
+      </div>
+      <div id="h3" class="clip" data-start="52" data-duration="28" data-track-index="2">
+        <div id="h3-in" class="hdr">
+          <span class="step">3 / 5</span>
+          <span class="hdr-title">리더 Pod 삭제</span>
+        </div>
+      </div>
+      <div id="h4" class="clip" data-start="80" data-duration="35" data-track-index="2">
+        <div id="h4-in" class="hdr">
+          <span class="step">4 / 5</span>
+          <span class="hdr-title">Lease와 라우트 교체</span>
+        </div>
+      </div>
+      <div id="h5" class="clip" data-start="115" data-duration="35" data-track-index="2">
+        <div id="h5-in" class="hdr">
+          <span class="step">5 / 5</span>
+          <span class="hdr-title">결과: 3회 측정</span>
+        </div>
+      </div>
+
+      <!-- Timer badges -->
+      <div id="tm0" class="clip" data-start="55" data-duration="25" data-track-index="3">
+        <div id="tm0-in" class="timer t0">T0 <small>리더 Pod 삭제</small></div>
+      </div>
+      <div id="tm3" class="clip" data-start="80" data-duration="35" data-track-index="3">
+        <div id="tm3-in" class="timer t3">T0 + 3초 <small>Lease 전환</small></div>
+      </div>
+
+      <!-- Persistent diagram, scenes 1 to 4 -->
+      <div id="diagram" class="clip" data-start="5.5" data-duration="109.5" data-track-index="4">
+        <div id="z-vpc" class="zone" style="left: 60px; top: 196px; width: 1090px; height: 456px">
+          <div class="zone-label">AWS VPC <span class="mono">10.0.0.0/16</span></div>
+        </div>
+        <div id="b-cloud" class="box" style="left: 96px; top: 300px; width: 300px; height: 180px">
+          <div class="box-title">클라우드 Pod</div>
+          <div class="box-sub mono">probe-cloud</div>
+        </div>
+        <div id="b-route" class="box" style="left: 440px; top: 282px; width: 350px; height: 300px">
+          <div class="box-title">VPC 라우트</div>
+          <div class="route-row"><span>172.17.0.0/16</span></div>
+          <div class="route-row" data-layout-allow-overlap>
+            <span id="eni-old" class="eni-old">→ eni-…a1</span>
+            <span id="eni-new" class="eni-new">→ eni-…b2</span>
+          </div>
+        </div>
+        <div id="b-gwa" class="box" style="left: 834px; top: 270px; width: 290px; height: 170px">
+          <div class="box-title">Gateway A</div>
+          <div class="badge-slot" data-layout-allow-overlap>
+            <div id="gwa-leader" class="badge leader">리더</div>
+            <div id="gwa-dead" class="badge dead">삭제됨</div>
+          </div>
+        </div>
+        <div id="b-gwb" class="box" style="left: 834px; top: 464px; width: 290px; height: 170px">
+          <div class="box-title">Gateway B</div>
+          <div class="badge-slot" data-layout-allow-overlap>
+            <div id="gwb-standby" class="badge standby">스탠바이</div>
+            <div id="gwb-leader" class="badge newleader">새 리더</div>
+          </div>
+        </div>
+
+        <div id="g-vxlan" class="gap-label" style="left: 1150px; top: 196px">VXLAN</div>
+        <div id="g-tgw" class="gap-label" style="left: 1150px; top: 596px">TGW</div>
+
+        <div id="z-onprem" class="zone" style="left: 1290px; top: 196px; width: 570px; height: 456px">
+          <div class="zone-label">온프레미스 <span class="mono">172.18.0.0/16</span></div>
+        </div>
+        <div id="b-node" class="box" style="left: 1326px; top: 282px; width: 498px; height: 340px; justify-content: flex-start; padding-top: 22px">
+          <div class="box-title">Hybrid 노드</div>
+        </div>
+        <div id="b-pod" class="box" style="left: 1376px; top: 376px; width: 398px; height: 200px; background: var(--panel-2)">
+          <div class="box-title">Hybrid Pod</div>
+          <div class="box-sub mono">172.17.0.0/16</div>
+        </div>
+
+        <svg id="wires" viewBox="0 0 1920 1080">
+          <g fill="none" stroke-width="4" stroke-linecap="round">
+            <line id="w-cr" x1="396" y1="390" x2="440" y2="390" stroke="#3a4a5e" />
+            <line id="w-ra" x1="790" y1="355" x2="834" y2="355" stroke="#41b3ff" />
+            <line id="w-rb" x1="790" y1="549" x2="834" y2="549" stroke="#3a4a5e" />
+            <line id="w-an" x1="1124" y1="355" x2="1326" y2="420" stroke="#41b3ff" stroke-dasharray="14 10" />
+            <line id="w-bn" x1="1124" y1="549" x2="1326" y2="500" stroke="#3a4a5e" stroke-dasharray="14 10" />
+          </g>
+        </svg>
+
+        <div id="pkts"></div>
+        <div id="fail-tag" class="fail-tag" style="left: 470px; top: 588px">요청 1개 실패</div>
+      </div>
+
+      <!-- Scene 1 notes -->
+      <div id="s1-notes" class="clip" data-start="6" data-duration="18" data-track-index="5">
+        <div class="panel notes">
+          <div id="n1" class="note"><i>1</i><span>Gateway Pod 2개: 리더 1개가 Lease <span class="mono">hybrid-gateway-leader</span>를 잡고 스탠바이는 대기</span></div>
+          <div id="n2" class="note"><i>2</i><span>VPC 라우트 <span class="mono">172.17.0.0/16</span>(Hybrid Pod CIDR)은 리더 노드의 ENI를 가리킴</span></div>
+          <div id="n3" class="note"><i>3</i><span>시뮬레이션: 온프레미스는 TGW로 연결한 두 번째 VPC (실환경은 DX 또는 VPN)</span></div>
+        </div>
+      </div>
+
+      <!-- Scene 2 terminal -->
+      <div id="s2-term" class="clip" data-start="24" data-duration="28" data-track-index="5">
+        <div class="panel term">
+          <span id="s2l1" class="ln"><span class="p">$</span> kubectl get pods,lease -n eks-hybrid-nodes-gateway</span>
+          <span id="s2l2" class="ln">pod/gateway-<span class="eg">…a1</span>   1/1   <span class="ok">Running</span></span>
+          <span id="s2l3" class="ln">pod/gateway-<span class="eg">…b2</span>   1/1   <span class="ok">Running</span></span>
+          <span id="s2l4" class="ln">lease/hybrid-gateway-leader   <span class="w">gw-node-a_&lt;uuid&gt;</span></span>
+          <span id="s2l5" class="ln c"># HOLDER는 Pod 이름이 아니라 노드이름_uuid, 이름과 ID는 예시 표기</span>
+        </div>
+      </div>
+
+      <!-- Scene 3 terminal -->
+      <div id="s3-term" class="clip" data-start="52" data-duration="28" data-track-index="5">
+        <div class="panel term">
+          <span id="s3l1" class="ln"><span class="p">$</span> kubectl -n eks-hybrid-nodes-gateway \</span>
+          <span id="s3l2" class="ln">    delete pod gateway-<span class="eg">…a1</span></span>
+          <span id="s3l3" class="ln">pod "gateway-<span class="eg">…a1</span>" deleted</span>
+          <span id="s3l4" class="ln c"># 리더가 사라져 Lease 갱신 중단, 라우트는 아직 <span class="mono">eni-…a1</span></span>
+          <span id="s3l5" class="ln c"># 스탠바이가 Lease를 넘겨받기 전까지 요청이 실패할 수 있음</span>
+        </div>
+      </div>
+
+      <!-- Scene 4 terminals -->
+      <div id="s4a-term" class="clip" data-start="80" data-duration="12" data-track-index="5">
+        <div class="panel term">
+          <span id="s4al1" class="ln"><span class="p">$</span> kubectl get lease -n eks-hybrid-nodes-gateway</span>
+          <span id="s4al2" class="ln">hybrid-gateway-leader   <span class="eg">gw-node-a_&lt;uuid&gt;</span>   <span class="c">T0 이전</span></span>
+          <span id="s4al3" class="ln">hybrid-gateway-leader   <span class="ok">gw-node-b_&lt;uuid&gt;</span>   <span class="c">T0 + 3초</span></span>
+          <span id="s4al4" class="ln c"># 새 리더가 VPC 라우트를 자기 노드 ENI로 교체</span>
+        </div>
+      </div>
+      <div id="s4b-term" class="clip" data-start="92" data-duration="23" data-track-index="5">
+        <div class="panel term">
+          <span id="s4bl1" class="ln"><span class="p">$</span> ./demo1-gateway/failover.sh</span>
+          <span id="s4bl2" class="ln">lease handover:   <span class="ok">3s after pod delete</span></span>
+          <span id="s4bl3" class="ln">failed probes:    <span class="w">1 / 60</span></span>
+          <span id="s4bl4" class="ln">route ENI:        eni-<span class="eg">…a1</span> -&gt; eni-<span class="eg">…b2</span></span>
+          <span id="s4bl5" class="ln">route target matches new leader ENI: <span class="ok">yes</span></span>
+        </div>
+      </div>
+
+      <!-- Probe grid, scenes 2 to 4 -->
+      <div id="probe-clip" class="clip" data-start="24" data-duration="91" data-track-index="6">
+        <div id="probe" class="panel">
+          <div class="probe-head">
+            <span>1초 간격 요청</span>
+            <div class="cnt-slot" data-layout-allow-overlap>
+              <span id="cnt0" class="cnt0">실패 0 / 60</span>
+              <span id="cnt1" class="cnt1">실패 1 / 60</span>
+            </div>
+          </div>
+          <div id="grid"></div>
+        </div>
+      </div>
+
+      <!-- Scene 5 results -->
+      <section id="s5" class="clip" data-start="115" data-duration="35" data-track-index="4">
+        <div class="cards">
+          <div id="c1" class="card">
+            <div class="card-run">1회차</div>
+            <div class="card-label">Lease 전환</div>
+            <div class="card-num">3<small>초</small></div>
+            <div class="card-fail">실패한 요청 <span class="d">60개 중 1개</span></div>
+            <div class="card-route">라우트: 새 리더 ENI로 이동</div>
+          </div>
+          <div id="c2" class="card">
+            <div class="card-run">2회차</div>
+            <div class="card-label">Lease 전환</div>
+            <div class="card-num">5<small>초</small></div>
+            <div class="card-fail">실패한 요청 <span class="d">60개 중 1개</span></div>
+            <div class="card-route">라우트: 새 리더 ENI로 이동</div>
+          </div>
+          <div id="c3" class="card hl">
+            <div class="card-run">3회차 <b>최소 권한 IAM</b></div>
+            <div class="card-label">Lease 전환</div>
+            <div class="card-num">5<small>초</small></div>
+            <div class="card-fail">실패한 요청 <span class="d">45개 중 2개</span></div>
+            <div class="card-route">라우트: 새 리더 ENI로 이동</div>
+          </div>
+        </div>
+        <div id="msg" class="msg">
+          Gateway 리더가 죽어도 <b>3~5초</b> 안에 스탠바이가 경로를 넘겨받습니다
+        </div>
+        <div id="msg-sub" class="msg-sub">
+          AWS 문서의 예상치 3~5초와 일치하지만 보장값은 아닙니다. 이 환경에서 세 번 측정한 값입니다.
+        </div>
+      </section>
+
+      <!-- Persistent label, every scene -->
+      <div id="footer" class="clip" data-start="0" data-duration="150" data-track-index="9">
+        <div class="footer-label"><span class="footer-dot"></span>실측 결과 재구성 (2026-10 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 1: Gateway 리더 전환</div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        // Build the 60-cell probe grid (DURATION=60 in failover.sh).
+        const grid = document.getElementById("grid");
+        for (let i = 0; i < 60; i++) {
+          const c = document.createElement("span");
+          c.className = "cell";
+          c.id = "cell-" + i;
+          grid.appendChild(c);
+        }
+        const pktLayer = document.getElementById("pkts");
+        let pktN = 0;
+        function mkPkt(bad) {
+          const d = document.createElement("div");
+          d.className = "pkt" + (bad ? " bad" : "");
+          d.id = "pkt-" + pktN++;
+          pktLayer.appendChild(d);
+          return d;
+        }
+
+        const tl = gsap.timeline({ paused: true });
+        const OK = "#00e500";
+        const BAD = "#ff5c85";
+
+        // Ambient background drift (finite).
+        tl.fromTo("#bg-glow", { x: 0, y: 0 }, { x: -260, y: 120, duration: 18, ease: "sine.inOut", yoyo: true, repeat: 7 }, 0);
+
+        // Path points (centers): cloud pod, route table, gateway A or B, hybrid pod.
+        const P = {
+          cloud: [246, 390],
+          route: [615, 432],
+          gwa: [979, 355],
+          gwb: [979, 549],
+          pod: [1575, 476],
+        };
+        function packet(t, via) {
+          const d = mkPkt(false);
+          const g = P[via];
+          tl.set(d, { x: P.cloud[0], y: P.cloud[1], opacity: 0 }, 0);
+          tl.to(d, { opacity: 1, duration: 0.15 }, t);
+          tl.to(d, { x: P.route[0], y: P.route[1], duration: 0.6, ease: "none" }, t);
+          tl.to(d, { x: g[0], y: g[1], duration: 0.5, ease: "none" }, t + 0.6);
+          tl.to(d, { x: P.pod[0], y: P.pod[1], duration: 0.8, ease: "none" }, t + 1.1);
+          tl.to(d, { opacity: 0, duration: 0.2 }, t + 1.85);
+        }
+        function cell(i, t, color) {
+          tl.to("#cell-" + i, { backgroundColor: color, duration: 0.2 }, t);
+        }
+        function show(sel, t, dy) {
+          tl.fromTo(sel, { opacity: 0, y: dy === undefined ? 20 : dy }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, t);
+        }
+
+        // Scene 1a: title
+        show("#t-kicker", 0.3);
+        show("#t-title", 0.6, 30);
+        show("#t-msg", 1.4);
+        tl.to(["#t-kicker", "#t-title", "#t-msg"], { opacity: 0, duration: 0.5 }, 5.3);
+
+        // Headers
+        show("#h1-in", 5.6, 0);
+        show("#h2-in", 24.05, 0);
+        show("#h3-in", 52.05, 0);
+        show("#h4-in", 80.05, 0);
+        show("#h5-in", 115.05, 0);
+        tl.fromTo("#tm0-in", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, 55);
+        tl.fromTo("#tm3-in", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, 81);
+
+        // Scene 1b: diagram build
+        const build = [
+          ["#z-vpc", 6.0], ["#b-cloud", 6.8], ["#b-route", 7.6], ["#b-gwa", 8.4], ["#b-gwb", 8.8],
+          ["#g-vxlan", 10.0], ["#g-tgw", 10.0], ["#z-onprem", 10.6], ["#b-node", 11.2], ["#b-pod", 11.6], ["#wires", 12.4],
+        ];
+        build.forEach(([s, t]) => show(s, t, 16));
+        tl.set(["#eni-new", "#gwa-dead", "#gwb-leader", "#fail-tag", "#cnt1"], { opacity: 0 }, 0);
+        show("#n1", 13.5, 16);
+        show("#n2", 15.5, 16);
+        show("#n3", 17.5, 16);
+
+        // Scene 2: normal path via leader A
+        tl.fromTo("#b-route", { borderColor: "#3a4a5e" }, { borderColor: "#fbd332", duration: 0.4 }, 24.5);
+        tl.fromTo("#b-gwa", { borderColor: "#3a4a5e" }, { borderColor: "#41b3ff", duration: 0.4 }, 24.5);
+        show("#s2l1", 25.0, 8);
+        show("#s2l2", 26.6, 8);
+        show("#s2l3", 26.9, 8);
+        show("#s2l4", 27.6, 8);
+        show("#s2l5", 30.5, 8);
+        for (let t = 26.5; t < 50.5; t += 2.4) packet(t, "gwa");
+        for (let i = 0; i < 10; i++) cell(i, 29 + i, OK); // 10 s of probes before delete (sleep 10)
+
+        // Scene 3: delete leader
+        show("#s3l1", 52.6, 8);
+        show("#s3l2", 52.9, 8);
+        show("#s3l3", 54.4, 8);
+        tl.to("#b-route", { borderColor: "#3a4a5e", duration: 0.3 }, 52.2);
+        tl.to("#b-gwa", { borderColor: "#ff5c85", opacity: 0.55, duration: 0.5 }, 55);
+        tl.to("#gwa-leader", { opacity: 0, duration: 0.3 }, 55);
+        tl.to("#gwa-dead", { opacity: 1, duration: 0.3 }, 55);
+        tl.to(["#w-ra", "#w-an"], { stroke: "#ff5c85", opacity: 0.5, duration: 0.4 }, 55);
+        // The single failed probe: packet reaches the route, then dies at the deleted leader.
+        (function () {
+          const d = mkPkt(true);
+          const t = 57;
+          tl.set(d, { x: P.cloud[0], y: P.cloud[1], opacity: 0 }, 0);
+          tl.to(d, { opacity: 1, duration: 0.15 }, t);
+          tl.to(d, { x: P.route[0], y: P.route[1], duration: 0.6, ease: "none" }, t);
+          tl.to(d, { x: P.gwa[0], y: P.gwa[1], duration: 0.5, ease: "none" }, t + 0.6);
+          tl.to(d, { scale: 2.2, opacity: 0, duration: 0.5, ease: "power2.out" }, t + 1.1);
+        })();
+        cell(10, 58.2, BAD);
+        tl.to("#cnt0", { opacity: 0, duration: 0.3 }, 58.2);
+        tl.to("#cnt1", { opacity: 1, duration: 0.3 }, 58.2);
+        tl.fromTo("#fail-tag", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4 }, 58.4);
+        tl.to("#fail-tag", { opacity: 0, duration: 0.4 }, 79.4);
+        show("#s3l4", 61.0, 8);
+        show("#s3l5", 64.0, 8);
+
+        // Scene 4: lease handover and route swap
+        show("#s4al1", 80.6, 8);
+        show("#s4al2", 81.4, 8);
+        show("#s4al3", 82.4, 8);
+        tl.to("#gwb-standby", { opacity: 0, duration: 0.3 }, 82.4);
+        tl.to("#gwb-leader", { opacity: 1, duration: 0.3 }, 82.4);
+        tl.to("#b-gwb", { borderColor: "#00e500", duration: 0.4 }, 82.4);
+        show("#s4al4", 84.5, 8);
+        tl.to("#b-route", { borderColor: "#fbd332", duration: 0.3 }, 85);
+        tl.to("#eni-old", { opacity: 0, y: -16, duration: 0.4 }, 85.6);
+        tl.fromTo("#eni-new", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4 }, 85.6);
+        tl.to(["#w-rb", "#w-bn"], { stroke: "#00e500", duration: 0.4 }, 85.6);
+        tl.to("#b-route", { borderColor: "#00e500", duration: 0.4 }, 87);
+        for (let t = 87.5; t < 113; t += 2.4) packet(t, "gwb");
+        for (let i = 11; i < 60; i++) cell(i, 88 + (i - 11) * 0.45, OK);
+        show("#s4bl1", 92.6, 8);
+        show("#s4bl2", 93.6, 8);
+        show("#s4bl3", 94.2, 8);
+        show("#s4bl4", 94.8, 8);
+        show("#s4bl5", 95.4, 8);
+
+        // Scene 5: results
+        show("#c1", 115.6, 30);
+        show("#c2", 116.4, 30);
+        show("#c3", 117.2, 30);
+        show("#msg", 120.0, 20);
+        show("#msg-sub", 122.0, 12);
+
+        window.__timelines["main"] = tl;
+      })();
+    </script>
+  </body>
+</html>

@@ -4,23 +4,23 @@ block: 04-operations-strategy
 ---
 
 ---
-<!-- Slide 1: Block 4 커버 -->
-@type: cover
-@title: 운영, 워크로드, 보안 & 전략
+<!-- Slide 1: 4부 구분 -->
+@type: section
+@title: 4부: 운영, 워크로드, 보안 & 전략
 
-# 운영, 워크로드, 보안 & 전략
+# 4부: 운영, 워크로드, 보안 & 전략
 
-## Block 4: 배치, GPU, 관측성, 망분리 검토, 비용과 도입 판단
+배치, GPU, 관측성, 망분리 검토, 비용과 도입 판단
 
 :::notes
 {timing: 0.5min}
 [요약]
-• Block 4는 "붙인 다음 어떻게 운영하고 판단할 것인가"를 다룸
+• 4부는 "붙인 다음 어떻게 운영하고 판단할 것인가"를 다룸
 • 배치 → GPU → 관측성 → 외부 트래픽 → 보안, 규제 → 비용, 도입 판단 순서
-• 마지막에 4개 블록 전체 핵심 요약과 퀴즈
+• 마지막에 1부부터 4부까지 핵심 요약
 
-앞선 세 블록에서 Hybrid Nodes를 붙이는 방법을 봤다면, 이번 블록은 붙인 뒤의 이야기입니다.
-워크로드를 어디에 놓을지, GPU는 어떻게 나눌지, 어떻게 관측하고, 보안팀에는 무엇을 설명해야 하는지, 마지막으로 비용과 도입 판단까지 30분 안에 훑어보겠습니다.
+앞선 세 파트에서 Hybrid Nodes를 붙이는 방법을 봤다면, 4부는 붙인 뒤의 이야기입니다.
+워크로드를 어디에 놓을지, GPU는 어떻게 나눌지, 어떻게 관측하고, 보안팀에는 무엇을 설명해야 하는지, 마지막으로 비용과 도입 판단까지 훑어보겠습니다.
 {cue: transition}
 먼저 워크로드 배치 원칙부터 시작합니다.
 :::
@@ -512,7 +512,7 @@ spec:
 
 `CiliumBGPClusterConfig`, `CiliumBGPPeerConfig`와 함께 구성합니다. 세션, 수락된 라우트, next hop, 반환 경로를 확인해야 완성입니다.
 
-`cilium.io/v2` BGP CRD는 Cilium 1.18 기준입니다. 1.17.x 클러스터는 Block 2 예제처럼 `v2alpha1`을 사용합니다.
+`cilium.io/v2` BGP CRD는 Cilium 1.18 기준입니다. 1.17.x 클러스터는 2부 예제처럼 `v2alpha1`을 사용합니다.
 
 ### 제약
 Cilium Ingress와 Gateway API는 L7 proxy가 필요합니다. 그러나 Hybrid Nodes Gateway의 필수 설정은 `vtep.enabled=true`, `l7Proxy=false`이므로 **같은 Cilium 설치에 함께 적용할 수 없습니다.** 기능을 켜기 전에 네트워크 설계를 먼저 선택합니다.
@@ -783,7 +783,7 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 </style>
 <div class="card-grid fragment" data-reveal="stagger" data-reveal-pace="slow" data-fragment-index="1">
   <div class="callout callout-success"><strong class="text-success">Hybrid Nodes가 맞는 신호</strong><div class="on-surface-muted">온프레미스 GPU, 대규모 로컬 데이터, edge 처리, 기존 하드웨어 활용. AWS와 안정적인 사설 양방향 연결을 유지할 수 있는 경우.</div></div>
-  <div class="callout callout-warning"><strong class="text-warning">먼저 확인할 제약</strong><div class="on-surface-muted">IPv4만 지원. 간헐적, 단절(DDIL) 환경용이 아님. 연결이 끊기면 노드는 Unknown이 되고, toleration 없는 Pod는 기본 300초 뒤 eviction. GovCloud(US)와 중국 리전 제외. OS, 아키텍처, CNI 조합 확인.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">먼저 확인할 제약</strong><div class="on-surface-muted">IPv4만 지원. 간헐적, 단절(DDIL) 환경용이 아님. 연결이 끊기면 노드는 Unknown이 되고, toleration 없는 Pod는 기본 300초 뒤 eviction. <a href="https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-network-disconnection-best-practices.html" target="_blank" rel="noopener" style="color: var(--accent);">단절 대비 모범 사례</a> GovCloud(US)와 중국 리전 제외. OS, 아키텍처, CNI 조합 확인.</div></div>
   <div class="callout callout-danger"><strong class="text-danger">맞지 않는 경우</strong><div class="on-surface-muted">완전 단절이 필요하거나 클라우드발 신규 연결이 전면 금지된 정책. AWS Region, Local Zone, Outposts, 타사 클라우드를 hybrid 인프라로 쓰는 것은 미지원.</div></div>
   <div class="callout callout-info"><strong class="text-info">운영 책임</strong><div class="on-surface-muted">Control plane은 AWS가 관리하지만 host, OS, 연결, workload 운영은 계속 사용자 책임입니다.</div></div>
 </div>
@@ -805,7 +805,7 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 반대로 IPv4만 지원하고, AWS와의 안정적인 사설 양방향 연결이 필수이며, 단절, 간헐 연결 환경용이 아닙니다. 연결이 끊기면 kubelet이 Lease를 갱신하지 못해 노드는 Ready Unknown이 되고 unreachable taint가 붙어서, toleration이 없는 Pod는 기본 300초 뒤 eviction됩니다. DaemonSet은 이 taint를 기본으로 견딥니다. 다른 호스트로 옮기기 어려운 앱은 tolerationSeconds를 늘리거나 컨트롤러로 taint를 관리할 수 있지만, 길게 잡을수록 장애 노드의 Pod 이전도 늦어집니다. AWS Region이나 Outposts 같은 AWS 인프라를 hybrid 노드로 등록하는 것도 지원 대상이 아닙니다.
 대안과의 비교는 일부러 숫자를 싣지 않았습니다. 동등한 가용성과 지원 범위로 직접 계산하시기 바랍니다.
 {cue: transition}
-이제 네 블록 전체를 정리하겠습니다.
+이제 1부부터 4부까지를 정리하겠습니다.
 
 [출처]
 • D/README "계획에 반영할 제약", "사용 사례와 데이터 경계"; D/09 TCO 고려 사항
@@ -815,9 +815,9 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 ---
 <!-- Slide 16: 핵심 요약 -->
 @type: content
-@title: 핵심 요약: 4개 블록, 6가지
+@title: 핵심 요약: 1~4부, 6가지
 
-## 핵심 요약: 4개 블록, 6가지
+## 핵심 요약: 1~4부, 6가지
 
 :::html
 <style>
@@ -845,121 +845,9 @@ RBAC 탭의 nodes/proxy는 특히 강조하고 싶습니다. 조회 권한처럼
 • 라이프사이클: nodeadm, 호스트 교체 우선
 • 배치, GPU, 관측성, 보안, 비용은 각각 "보장하지 않는 것"까지 기억
 
-네 개 블록을 여섯 가지로 압축했습니다. 첫째, Hybrid Nodes는 AWS 관리형 control plane에 사용자가 운영하는 노드를 붙이는 구조이고 연결이 끊기는 환경용이 아닙니다.
+1부부터 4부까지를 여섯 가지로 압축했습니다. 첫째, Hybrid Nodes는 AWS 관리형 control plane에 사용자가 운영하는 노드를 붙이는 구조이고 연결이 끊기는 환경용이 아닙니다.
 둘째, 네트워크에서는 세션 방향을 설명할 수 있어야 합니다. 셋째, nodeadm으로 노드를 다루되 in-place 업그레이드를 롤백 수단으로 보지 않습니다.
-넷째에서 여섯째가 이번 블록 내용입니다. 배치는 label과 affinity, 버스팅은 Pending 트리거, GPU는 할당 관리자 하나, 보안은 private endpoint가 곧 준수는 아니라는 것, 비용은 구간 과금이라는 점입니다.
+넷째에서 여섯째가 4부 내용입니다. 배치는 label과 affinity, 버스팅은 Pending 트리거, GPU는 할당 관리자 하나, 보안은 private endpoint가 곧 준수는 아니라는 것, 비용은 구간 과금이라는 점입니다.
 {cue: transition}
-간단한 퀴즈로 확인해 보겠습니다.
-:::
-
----
-<!-- Slide 17: Quiz 1/2 -->
-@type: quiz
-@title: Knowledge Check 1
-
-## Knowledge Check (1/2)
-
-**Q1: Karpenter 클라우드 버스팅의 트리거는 무엇인가요?**
-- [ ] 온프레미스 CPU 사용률이 임계값을 넘을 때
-- [x] 조건에 맞는 Pod가 Pending일 때
-- [ ] 온프레미스 용량이 돌아왔을 때
-
-**Q2: 하나의 물리 GPU에 대한 설명으로 맞는 것은?**
-- [ ] device plugin과 DRA driver를 함께 설치한다
-- [x] 할당 관리자(device plugin, DRA, GPU Operator)는 하나만 선택한다
-- [ ] time-slicing replica는 메모리를 독립적으로 보장한다
-
-:::notes
-{timing: 1.5min}
-[요약]
-• Q1 Pending Pod가 버스팅 트리거
-• Q2 GPU마다 할당 관리자는 하나
-• 오답이면 "버스팅", "GPU 할당 관리자" 슬라이드로 돌아가 확인
-
-두 문제를 먼저 풀어보겠습니다. 이번 블록에서 오해하기 쉬운 지점에서 냈습니다.
-{cue: poll}
-1번은 Pending Pod, 2번은 할당 관리자 하나입니다. 온프레미스 CPU 사용률 같은 임계값은 트리거가 아니고, time-slicing replica는 메모리 격리를 보장하지 않습니다.
-:::
-
----
-<!-- Slide 18: Quiz 2/2 -->
-@type: quiz
-@title: Knowledge Check 2
-
-## Knowledge Check (2/2)
-
-**Q3: pod-deletion-cost에 대한 설명으로 맞는 것은?**
-- [ ] 값이 큰 Pod는 절대 삭제되지 않는다
-- [x] best-effort 선호도이며 할당, 단계, Ready 여부가 먼저 비교된다
-- [ ] CREATE 시점 webhook으로 신뢰성 있게 부여할 수 있다
-
-**Q4: "private endpoint를 쓰므로 망분리를 준수한다"는 주장은?**
-- [ ] 맞다. 모든 통신이 사설 주소를 쓰기 때문이다
-- [x] 성립하지 않는다. 세션 방향, 권한, 데이터 경계의 증거가 필요하다
-- [ ] 맞다. DX가 기본 암호화를 제공하기 때문이다
-
-:::notes
-{timing: 1.5min}
-[요약]
-• Q3 deletion cost는 best-effort이고 앞선 비교 기준이 있음
-• Q4 private endpoint는 망분리 준수의 증거가 아님
-• DX는 기본 암호화가 없음
-
-3번은 deletion cost가 네 번째 비교 기준이라는 점, 4번은 private endpoint와 망분리 준수가 다른 이야기라는 점입니다. Direct Connect는 기본 암호화를 제공하지 않으므로 세 번째 보기도 틀립니다.
-{cue: pause}
-틀린 문항은 "스케일-인 순서"와 "'endpoint'는 세 가지" 슬라이드를 다시 확인하세요.
-:::
-
----
-<!-- Slide 19: References + Q&A -->
-@type: content
-@title: 참고 자료 & Q&A
-
-## 참고 자료 & Q&A
-
-:::html
-<style>
-.text-accent { color: var(--accent); font-weight: var(--weight-bold); }
-.text-info   { color: var(--info);   font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
-</style>
-<div class="card-grid" data-reveal="static">
-  <div class="metric-card"><strong class="text-accent">AWS 공식 문서</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/<br>hybrid-nodes-overview.html<br>hybrid-nodes-networking.html<br>hybrid-nodes-add-ons.html<br>hybrid-nodes-webhooks.html<br>hybrid-nodes-gateway-cni.html</div></div>
-  <div class="metric-card"><strong class="text-accent">GPU</strong><div class="on-surface-muted">docs.aws.amazon.com/eks/latest/userguide/<br>device-management-nvidia.html<br>NVIDIA GPU Operator 문서 (platform-support)</div></div>
-  <div class="metric-card"><strong class="text-accent">비용, 스케줄링</strong><div class="on-surface-muted">aws.amazon.com/eks/pricing/<br>karpenter.sh/docs/upgrading/compatibility/<br>kubernetes.io ReplicaSet pod-deletion-cost</div></div>
-</div>
-<div class="callout callout-info fragment zoom-in" data-fragment-index="1"><strong class="text-info">Q&A</strong> 이 자료의 예제는 검토 기준(EKS 1.36, nodeadm 1.0.20)이며 대부분 실제 클러스터에서 실행한 결과가 아닙니다. 적용 전 최신 AWS 문서로 지원 조합을 확인하세요.</div>
-:::
-
-
-:::notes
-{timing: 1min}
-[요약]
-• 버전, 가격, 한도는 모두 공식 문서로 재확인 필요
-• 예제는 로컬 검증 수준이며 운영 실행 결과가 아님
-• 질문은 배치, GPU, 보안 검토, 비용 순으로 받음
-
-참고 자료는 AWS 공식 문서와 NVIDIA, Karpenter, Kubernetes 문서입니다. 오늘 보여드린 버전과 가격은 2026년 9월 기준 검토 자료이므로 적용 전에 다시 확인해 주세요. 문서 스스로도 많은 예제를 실제 클러스터에서 실행하지 않았다고 밝히고 있습니다.
-{cue: question}
-질문 있으시면 말씀해 주세요. 배치, GPU, 망분리 검토, 비용 중 어디부터 이야기할까요?
-
-[출처]
-• D/README 지원 버전, 검토 범위, 각 D 문서의 "공식 참고 자료"
-:::
-
----
-<!-- Slide 20: Thank You -->
-@type: thankyou
-@toc: toc.html
-@message: 운영, 워크로드, 보안 & 전략, 감사합니다
-
-# Thank You
-
-:::notes
-{timing: 0.5min}
-[요약]
-• 4개 블록 전체 마무리
-• 목차로 돌아가 필요한 블록을 다시 확인
-
-오늘 세션 들어주셔서 감사합니다. 필요한 부분은 목차로 돌아가 다시 확인하시기 바랍니다.
+다음은 5부, 실제 클러스터에서 돌려 본 데모 결과입니다.
 :::

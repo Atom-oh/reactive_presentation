@@ -7,7 +7,7 @@ date: 2026-10-07
 lang: ko
 level: 300
 audience: "클라우드/플랫폼 엔지니어, 인프라, 네트워크, 보안 담당자"
-quiz: true
+quiz: false
 duration: 120
 
 speaker:

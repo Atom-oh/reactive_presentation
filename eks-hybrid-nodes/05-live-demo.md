@@ -4,22 +4,22 @@ block: 05-live-demo
 ---
 
 ---
-<!-- Slide 1: Block 5 커버 -->
-@type: cover
-@title: 라이브 데모: 직접 돌려 본 결과
+<!-- Slide 1: 5부 구분 -->
+@type: section
+@title: 5부: 라이브 데모, 직접 돌려 본 결과
 
-# 라이브 데모: 직접 돌려 본 결과
+# 5부: 라이브 데모, 직접 돌려 본 결과
 
-## Block 5: gateway 전환, bursting, GPU 추론, Istio 공존의 실측
+gateway 전환, bursting, GPU 추론, Istio 공존의 실측
 
 :::notes
 {timing: 0.5min}
 [요약]
-• 앞선 네 블록의 내용을 실제 클러스터에서 돌려 본 결과를 보여 줌
+• 앞선 네 파트의 내용을 실제 클러스터에서 돌려 본 결과를 보여 줌
 • 수치는 모두 2026-10-17 기준 실측이고 시나리오당 1회 측정
 • 환경은 온프렘을 시뮬레이션한 구성이라는 점을 먼저 밝힘
 
-지금까지는 문서와 개념을 봤습니다. 이번 블록은 같은 내용을 실제 클러스터에서 돌려 본 기록입니다.
+지금까지는 문서와 개념을 봤습니다. 5부는 같은 내용을 실제 클러스터에서 돌려 본 기록입니다.
 먼저 어떤 환경에서 돌렸는지부터 정확히 말씀드리겠습니다.
 {cue: transition}
 :::
@@ -489,8 +489,100 @@ gateway 리더를 지우는 동안 초당 40건을 계속 보냈는데 1,800건�
 GPU 추론은 hybrid 노드에서 돌고 클라우드에서 호출됐고, Istio는 gateway와 함께 동작했습니다.
 남은 것도 솔직히 말씀드립니다. B와 C의 차이는 반복 측정이 필요하고, Istio ambient 모드와 gateway 처리량은 보지 못했고, 모든 수치는 시뮬레이션 환경의 값이라 실제 온프렘에서 다시 확인해야 합니다.
 {cue: transition}
-질문 받겠습니다.
+마지막으로 참고 자료를 정리하고 질문을 받겠습니다.
 
 [출처]
 • 데모 저장소 RUNBOOK.md, KNOWN-ISSUES.md (private 저장소)
+:::
+
+---
+<!-- Slide 11: 통합 참고 자료 -->
+@type: content
+@title: 참고 자료 & Q&A
+
+## 참고 자료 & Q&A
+
+:::html
+<style>
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.hn-ref a { color: var(--accent); }
+</style>
+<div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
+  <button class="tab-btn active">개요와 요금</button>
+  <button class="tab-btn">네트워킹과 Gateway</button>
+  <button class="tab-btn">노드와 라이프사이클</button>
+  <button class="tab-btn">운영, GPU, 비용</button>
+  <button class="tab-btn">데모</button>
+</div>
+<div class="tc">
+  <div class="card-grid" data-reveal="static">
+    <div class="card"><strong class="text-accent">개요</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html" target="_blank" rel="noopener">Hybrid Nodes 개요</a><br><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html" target="_blank" rel="noopener">지원 OS</a></div></div>
+    <div class="card"><strong class="text-accent">자격 증명</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html" target="_blank" rel="noopener">자격 증명 준비 (SSM, IAM RA)</a></div></div>
+    <div class="card"><strong class="text-accent">요금</strong><div class="on-surface-muted hn-ref"><a href="https://aws.amazon.com/eks/pricing/" target="_blank" rel="noopener">EKS 요금</a></div></div>
+    <div class="card"><strong class="text-accent">문제 해결</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-troubleshooting.html" target="_blank" rel="noopener">Troubleshooting</a></div></div>
+  </div>
+</div>
+<div class="tc" hidden>
+  <div class="card-grid" data-reveal="static">
+    <div class="card"><strong class="text-accent">네트워킹</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html" target="_blank" rel="noopener">네트워킹 요구 사항</a><br><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html" target="_blank" rel="noopener">CNI 구성</a><br><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cilium-bgp.html" target="_blank" rel="noopener">Cilium BGP</a></div></div>
+    <div class="card"><strong class="text-accent">webhook과 혼합 모드</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html" target="_blank" rel="noopener">webhook과 혼합 모드 고려 사항</a></div></div>
+    <div class="card"><strong class="text-accent">Hybrid Nodes Gateway</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-overview.html" target="_blank" rel="noopener">개요</a><br><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html" target="_blank" rel="noopener">시작하기</a><br><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html" target="_blank" rel="noopener">운영</a><br><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html" target="_blank" rel="noopener">CNI 설정</a></div></div>
+    <div class="card"><strong class="text-accent">Gateway 소스와 블로그</strong><div class="on-surface-muted hn-ref"><a href="https://github.com/aws/eks-hybrid-nodes-gateway" target="_blank" rel="noopener">aws/eks-hybrid-nodes-gateway</a><br><a href="https://aws.amazon.com/blogs/containers/simplify-hybrid-kubernetes-networking-with-amazon-eks-hybrid-nodes-gateway/" target="_blank" rel="noopener">AWS Containers 블로그</a></div></div>
+  </div>
+</div>
+<div class="tc" hidden>
+  <div class="card-grid" data-reveal="static">
+    <div class="card"><strong class="text-accent">nodeadm</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html" target="_blank" rel="noopener">nodeadm 레퍼런스</a><br><a href="https://github.com/aws/eks-hybrid" target="_blank" rel="noopener">aws/eks-hybrid 소스</a></div></div>
+    <div class="card"><strong class="text-accent">Bottlerocket</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html" target="_blank" rel="noopener">Bottlerocket 연결</a></div></div>
+    <div class="card"><strong class="text-accent">업그레이드</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-upgrade.html" target="_blank" rel="noopener">Hybrid 노드 업그레이드</a><br><a href="https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html" target="_blank" rel="noopener">Kubernetes 버전</a></div></div>
+    <div class="card"><strong class="text-accent">애드온</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html" target="_blank" rel="noopener">애드온 구성 (Pod Identity 등)</a></div></div>
+  </div>
+</div>
+<div class="tc" hidden>
+  <div class="card-grid" data-reveal="static">
+    <div class="card"><strong class="text-accent">네트워크 단절</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-network-disconnection-best-practices.html" target="_blank" rel="noopener">단절 대비 모범 사례</a><br><a href="https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html" target="_blank" rel="noopener">단절 시 자격 증명</a></div></div>
+    <div class="card"><strong class="text-accent">GPU</strong><div class="on-surface-muted hn-ref"><a href="https://docs.aws.amazon.com/eks/latest/userguide/device-management-nvidia.html" target="_blank" rel="noopener">NVIDIA GPU 장치 관리</a></div></div>
+    <div class="card"><strong class="text-accent">스케줄링</strong><div class="on-surface-muted hn-ref"><a href="https://karpenter.sh/docs/upgrading/compatibility/" target="_blank" rel="noopener">Karpenter 호환성</a><br><a href="https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/" target="_blank" rel="noopener">ReplicaSet pod-deletion-cost</a></div></div>
+  </div>
+</div>
+<div class="tc" hidden>
+  <div class="card-grid" data-reveal="static">
+    <div class="card"><strong class="text-accent">데모 가이드</strong><div class="on-surface-muted hn-ref"><a href="demo-guide.html" target="_blank" rel="noopener">구현과 실측 결과 정리</a></div></div>
+    <div class="card"><strong class="text-accent">데모 저장소</strong><div class="on-surface-muted hn-ref"><a href="https://github.com/Atom-oh/eks-hybrid-demo" target="_blank" rel="noopener">Atom-oh/eks-hybrid-demo (private)</a></div></div>
+  </div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="text-info">Q&A</strong> 예제는 검토 기준(EKS 1.36, nodeadm 1.0.20)이고, 5부 수치는 시뮬레이션 환경의 실측입니다. 적용 전에 최신 AWS 문서로 지원 조합을 확인하세요.</div>
+:::
+
+
+:::notes
+{timing: 1min}
+[요약]
+• 주제별 탭으로 공식 문서를 모았음: 개요와 요금, 네트워킹과 Gateway, 노드와 라이프사이클, 운영과 GPU와 비용, 데모
+• 링크는 모두 클릭해서 열 수 있음
+• 예제는 검토 기준이고, 5부 수치는 시뮬레이션 환경의 실측
+
+오늘 다룬 내용의 근거 문서를 주제별 탭으로 모았습니다. 링크는 바로 열 수 있습니다. 데모 탭에는 구현과 실측 결과를 정리한 가이드 페이지가 있습니다.
+{cue: pause}
+예제와 명령은 EKS 1.36, nodeadm 1.0.20을 기준으로 검토했고, 5부의 수치는 EC2로 온프렘을 시뮬레이션한 환경에서 잰 값입니다. 적용하시기 전에 최신 문서로 지원 조합을 확인하시기 바랍니다.
+{cue: question}
+이제 질문 받겠습니다.
+:::
+
+---
+<!-- Slide 12: Thank You -->
+@type: thankyou
+@toc: toc.html
+@message: EKS Hybrid Nodes, 감사합니다
+
+# Thank You
+
+:::notes
+{timing: 0.5min}
+[요약]
+• 세션 마무리
+
+오늘 세션 들어 주셔서 감사합니다. 데모 코드와 측정 결과는 데모 가이드 페이지에 정리해 두었습니다.
 :::

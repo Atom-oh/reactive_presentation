@@ -39,7 +39,7 @@
 
 - 형식: 1920×1080 mp4, 무음. 터미널 장면, 흐름도, 수치 카드로 구성한 재구성 영상. 화면에 "실측 결과 재구성 (2026-10 시뮬레이션 환경)"을 표기한다.
 - 위치: 소스 `eks-hybrid-nodes-1h/videos/<id>/`(HyperFrames 프로젝트), 렌더 결과 `eks-hybrid-nodes-1h/media/<id>.mp4`. 슬라이드에는 `<video controls preload="metadata">`로 넣고, 포스터 이미지를 둔다.
-- 영상당 파일 크기 목표 25MB 이하(GitHub Pages 배포).
+- 영상당 파일 크기 목표 25MB 이하(GitHub Pages 배포). 화질 때문에 이를 넘기면 CloudFront → S3 정적 호스팅으로 올리고 슬라이드는 그 URL을 가리킨다. S3 버킷은 비공개(Block Public Access 켬)로 두고 CloudFront OAC로만 읽게 한다. 버킷 생성, 업로드, 배포 생성은 대상 계정과 변경 내용을 보여 주고 승인을 받은 뒤 진행하며, 정리 방법을 함께 남긴다.
 
 ## 파일
 

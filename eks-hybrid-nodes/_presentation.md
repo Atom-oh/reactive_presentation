@@ -1,7 +1,7 @@
 ---
 remarp: true
 version: 1
-title: "EKS Hybrid Nodes, 온프레미스를 EKS로 확장하는 가이드"
+title: "EKS Hybrid Nodes Deep Dive (2시간), 온프레미스를 EKS로 확장하는 가이드"
 ratio: "16:9"
 date: 2026-10-07
 lang: ko

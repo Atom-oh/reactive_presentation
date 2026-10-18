@@ -11,7 +11,7 @@ block: 01-overview
 
 온프레미스를 EKS로 확장하는 가이드
 
-개요, 네트워킹, 노드 운영, 라이브 데모
+Deep Dive (2시간): 개요, 네트워킹, 노드 운영, 라이브 데모
 
 :::notes
 {timing: 0.5min}

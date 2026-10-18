@@ -83,6 +83,7 @@ EC2를 hybrid 노드로 쓰는 것은 AWS가 지원하는 프로덕션 구성이
 ---
 <!-- Slide 3: V1 영상 -->
 @type: content
+@fit: off
 @title: V1: Gateway 리더가 죽으면
 
 ## V1: Gateway 리더가 죽으면
@@ -91,17 +92,34 @@ EC2를 hybrid 노드로 쓰는 것은 AWS가 지원하는 프로덕션 구성이
 <style>
 .hn-video { width: 100%; max-height: 100%; aspect-ratio: 16 / 9; background: var(--bg-card); border-radius: var(--space-2); }
 .hn-video-cap { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); }
-.hn5-full .hn-video { display: block; width: 54rem; max-width: 100%; margin-inline: auto; }
-.hn5-full .hn-video-cap { text-align: center; }
+.hn5-full { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.hn5-vbox { flex: 1; min-height: 0; container-type: size; }
+.hn5-full .hn-video { display: block; width: min(100cqw, calc(100cqh * 16 / 9)); height: auto; max-height: none; margin-inline: auto; }
+.hn5-full .hn-video-cap { text-align: center; margin-top: 0; font-size: var(--fs-caption); }
 </style>
 <div class="hn5-full">
+<div class="hn5-vbox">
 <video class="hn-video" src="media/v1-gateway-failover.mp4" poster="media/v1-gateway-failover.jpg" controls preload="metadata" muted playsinline tabindex="-1"></video>
+</div>
 <div class="hn-video-cap">실측 결과 재구성 (2026-10 시뮬레이션 환경), 무음</div>
 </div>
 :::
 
+:::script
+// While a video plays, Chromium's native controls keep focus and swallow arrow, PageDown and Space.
+// Hand focus back to the page after any video interaction so the deck keys keep working.
+document.querySelectorAll('video.hn-video').forEach(function (v) {
+  var release = function () { setTimeout(function () { if (document.activeElement === v) v.blur(); }, 0); };
+  ['focus', 'play', 'pause', 'seeked', 'volumechange', 'click', 'pointerup'].forEach(function (ev) { v.addEventListener(ev, release); });
+});
+// The deck updates location.hash on every slide change: pause any video left on a slide that is no longer active.
+window.addEventListener('hashchange', function () {
+  document.querySelectorAll('.slide:not(.active) video.hn-video').forEach(function (v) { if (!v.paused) v.pause(); });
+});
+:::
+
 :::notes
-{timing: 3min}
+{timing: 3.5min}
 [요약]
 - 영상 2분 58초. Gateway 리더 Pod를 지우고, standby가 Lease를 넘겨받아 VPC 라우트를 자기 ENI로 바꾸는 과정
 - 녹화 회차(2026-10-18): Lease 인계 5초, 1초 간격 요청 60개 중 2개 실패
@@ -173,6 +191,7 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 ---
 <!-- Slide 5: V2 영상 -->
 @type: content
+@fit: off
 @title: V2: 넘칠 때와 줄일 때
 
 ## V2: 넘칠 때와 줄일 때
@@ -181,17 +200,21 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 <style>
 .hn-video { width: 100%; max-height: 100%; aspect-ratio: 16 / 9; background: var(--bg-card); border-radius: var(--space-2); }
 .hn-video-cap { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); }
-.hn5-full .hn-video { display: block; width: 54rem; max-width: 100%; margin-inline: auto; }
-.hn5-full .hn-video-cap { text-align: center; }
+.hn5-full { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.hn5-vbox { flex: 1; min-height: 0; container-type: size; }
+.hn5-full .hn-video { display: block; width: min(100cqw, calc(100cqh * 16 / 9)); height: auto; max-height: none; margin-inline: auto; }
+.hn5-full .hn-video-cap { text-align: center; margin-top: 0; font-size: var(--fs-caption); }
 </style>
 <div class="hn5-full">
+<div class="hn5-vbox">
 <video class="hn-video" src="media/v2-bursting.mp4" poster="media/v2-bursting.jpg" controls preload="metadata" muted playsinline tabindex="-1"></video>
+</div>
 <div class="hn-video-cap">실측 결과 재구성 (2026-10 시뮬레이션 환경), 무음</div>
 </div>
 :::
 
 :::notes
-{timing: 3.5min}
+{timing: 4min}
 [요약]
 - 영상 3분 36초. 앞부분은 2026-10-18 녹화 회차(시나리오 B, Pod 요청 910m), 뒷부분은 2026-10-15 A, B, C 비교 실행(930m)
 - 녹화 회차: 15개로 늘리면 35초에 모두 Ready(hybrid 8, burst 7), 10개에서 hybrid 8, cloud 2, 3개에서 모두 hybrid
@@ -266,6 +289,7 @@ C는 Karpenter가 burst 노드 Pod에도 순위를 매기게 한 것인데, EC2�
 ---
 <!-- Slide 7: V3 영상 -->
 @type: content
+@fit: off
 @title: V3: ALB ip 타깃과 온프렘에서 들어오는 길
 
 ## V3: ALB ip 타깃과 온프렘에서 들어오는 길
@@ -274,11 +298,15 @@ C는 Karpenter가 burst 노드 Pod에도 순위를 매기게 한 것인데, EC2�
 <style>
 .hn-video { width: 100%; max-height: 100%; aspect-ratio: 16 / 9; background: var(--bg-card); border-radius: var(--space-2); }
 .hn-video-cap { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); }
-.hn5-full .hn-video { display: block; width: 54rem; max-width: 100%; margin-inline: auto; }
-.hn5-full .hn-video-cap { text-align: center; }
+.hn5-full { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.hn5-vbox { flex: 1; min-height: 0; container-type: size; }
+.hn5-full .hn-video { display: block; width: min(100cqw, calc(100cqh * 16 / 9)); height: auto; max-height: none; margin-inline: auto; }
+.hn5-full .hn-video-cap { text-align: center; margin-top: 0; font-size: var(--fs-caption); }
 </style>
 <div class="hn5-full">
+<div class="hn5-vbox">
 <video class="hn-video" src="media/v3-alb-reverse.mp4" poster="media/v3-alb-reverse.jpg" controls preload="metadata" muted playsinline tabindex="-1"></video>
+</div>
 <div class="hn-video-cap">실측 결과 재구성 (2026-10 시뮬레이션 환경), 무음</div>
 </div>
 :::
@@ -495,16 +523,16 @@ hybrid 노드 Pod에도 sidecar가 들어갔고, STRICT mTLS에서 메시 안 �
 {timing: 2.5min}
 [요약]
 - 여섯 가지 결정: 연결, CIDR, 라우팅 방식, 자격 증명, CNI, 운영. 앞의 셋은 네트워크 팀과, 뒤의 셋은 플랫폼 팀과 정함
-- 라우팅은 BGP가 기본, 라우터 변경이 어려우면 Gateway. Gateway를 고르면 Cilium L7 끔과 leader AZ 비용을 받아들임
+- 라우팅은 BGP 우선, 라우터 변경이 어려우면 Gateway. Gateway를 고르면 Cilium L7 끔과 leader AZ 비용을 받아들임
 - 운영은 업그레이드를 호스트 교체로, 단절은 300초와 자격 증명 만료로, 버스팅은 Pending과 축소 정책으로 준비
 
 여기부터 6부 마무리입니다. 오늘 내용을 도입 전에 정해야 할 여섯 가지로 묶었습니다. 카드 아래에 관련 파트를 적어 두었습니다.
 첫째 연결입니다. Direct Connect나 VPN으로 안정적인 사설 연결이 있고, 양쪽 방향 route가 모두 있어야 합니다. 이 서비스는 간헐 연결이나 단절 환경용이 아닙니다. 둘째 CIDR입니다. VPC, Service, remote node, remote Pod 네 대역이 겹치지 않아야 하고, 나중에 바꾸기 어려우니 네트워크 팀과 먼저 확정합니다.
 {cue: pause}
-셋째 라우팅 방식입니다. 라우터 팀이 BGP를 운영할 수 있으면 BGP가 기본이고, 라우터 변경이 어려울 때 Gateway를 씁니다. Gateway를 고르면 Cilium L7 기능이 꺼지고, 트래픽이 leader AZ로 모이는 비용과 활성 1대의 처리량 한계를 받아들여야 합니다. V1에서 본 3~5초 전환도 이 선택에 따라오는 특성입니다.
+셋째 라우팅 방식입니다. 라우터 팀이 BGP를 운영할 수 있으면 BGP를 우선하고, 라우터 변경이 어려울 때 Gateway를 씁니다. Gateway를 고르면 Cilium L7 기능이 꺼지고, 트래픽이 leader AZ로 모이는 비용과 활성 1대의 처리량 한계를 받아들여야 합니다. V1에서 본 3~5초 전환도 이 선택에 따라오는 특성입니다.
 넷째 자격 증명입니다. SSM은 자격 증명이 1시간 고정이고 단절 뒤 재연결이 늦을 수 있고, IAM Roles Anywhere는 빠르게 복구되지만 인증서를 운영해야 합니다. 다섯째 CNI입니다. hybrid 노드는 Cilium이고, 클라우드 노드가 있다면 VPC CNI와 섞는 것이 AWS 권장이며 webhook을 클라우드에 둡니다.
 {cue: question}
-여섯째 운영입니다. 업그레이드는 호스트 교체가 기본이고 롤백 명령이 없으니 골든 이미지와 여유 용량을 준비합니다. 단절되면 300초 뒤 eviction이 시작되고, 버스팅은 Pending Pod에 반응하며 줄일 때는 V2처럼 정책이 있어야 온프렘 Pod가 남습니다. 이 중 우리 조직에서 아직 답이 없는 칸이 어디인지 보시면 다음 단계가 정해집니다.
+여섯째 운영입니다. 업그레이드는 호스트 교체가 기본이고 롤백 명령이 없으니 골든 이미지와 여유 용량을 준비합니다. 단절되면 toleration이 없는 Pod는 300초 뒤 eviction되고, 버스팅은 Pending Pod에 반응하며 줄일 때는 V2처럼 정책이 있어야 온프렘 Pod가 남습니다. 이 중 우리 조직에서 아직 답이 없는 칸이 어디인지 보시면 다음 단계가 정해집니다.
 근거: 이 덱 2부 자격 증명 선택, 3부 "연결이 먼저, CIDR은 겹치지 않게", "Pod 라우팅: static, BGP, Gateway", "CNI 구성", "Gateway 비용", 4부 "노드 수명 주기", "연결이 끊기면", "버스팅", 5부 V1, V2, V3 결과
 {cue: transition}
 마지막으로 더 깊이 보실 자료를 안내하겠습니다.
@@ -551,7 +579,7 @@ hybrid 노드 Pod에도 sidecar가 들어갔고, STRICT mTLS에서 메시 안 �
 :::
 
 :::notes
-{timing: 3.5min}
+{timing: 2.5min}
 [요약]
 - 설정 값, 명령, 방화벽 표, 버전별 점검은 Deep Dive(2시간) 덱에 있음
 - 데모 스크립트와 측정 결과는 데모 저장소(private, 요청 시 공유)

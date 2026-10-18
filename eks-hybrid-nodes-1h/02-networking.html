@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>네트워킹</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="02-networking.md">
+  <meta name="remarp-block" content="02-networking">
+  <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
+  <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
+  
+  <script>window.__remarpTheme = {"colors": {"dk1": "#000000", "lt1": "#FFFFFF", "dk2": "#161D26", "lt2": "#F3F3F7", "accent1": "#41B3FF", "accent2": "#AD5CFF", "accent3": "#00E500", "accent4": "#FF5C85", "accent5": "#FF693C", "accent6": "#FBD332", "hlink": "#41B1E8", "folHlink": "#41B1E8"}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}};</script>
+</head>
+<body>
+<div class="slide-deck theme-dark">
+<div class="slide title-slide" data-remarp-id="s0">
+    <h1>3부: 네트워킹</h1>
+  <p class="meta">연결은 고객이 준비하고, Pod 경로는 세 가지 중에서 고른다</p>
+</div>
+
+<div class="slide" data-remarp-id="s1">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>연결이 먼저, CIDR은 겹치지 않게</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <p><!-- Slide 2: 필수 연결과 CIDR --></p>
+<style>
+.hn3-split { display: grid; grid-template-columns: 1.15fr 1fr; gap: var(--space-4); align-items: start; }
+.hn3-img { width: 100%; max-height: 19rem; object-fit: contain; border-radius: var(--radius-md); background: var(--surface-1); }
+.hn3-cap { font-size: var(--fs-caption); color: var(--text-secondary); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: break-word; }
+.hn3-stack { display: flex; flex-direction: column; gap: var(--space-3); }
+.hn3-cidr { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-2); }
+.hn3-chip { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: var(--space-1) var(--space-2); font-size: var(--fs-card); text-align: center; }
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="hn3-split">
+  <div>
+    <img class="hn3-img" src="diagrams/hybrid-prereq-diagram.png" alt="Hybrid Nodes 사전 조건: remote network 구성, VPC 라우팅 테이블, 사설 연결, 온프렘 라우팅 테이블">
+    <div class="hn3-cap">그림의 Gateway는 VGW, TGW 같은 사설 연결 장치입니다. 뒤에 나올 Hybrid Nodes Gateway와는 다릅니다.</div>
+  </div>
+  <div class="hn3-stack">
+    <div class="callout callout-info fragment fade-left" data-fragment-index="1">
+      <strong class="text-info">사설 연결과 양방향 route</strong>
+      <div class="on-surface-muted">Direct Connect 또는 Site-to-Site VPN. VPC에서 온프렘 node, Pod CIDR로, 온프렘에서 VPC CIDR로 가는 경로가 모두 있어야 합니다.</div>
+    </div>
+    <div class="callout callout-warning fragment fade-left" data-fragment-index="2">
+      <strong class="text-warning">서로 겹치면 안 되는 4개 CIDR</strong>
+      <div class="hn3-cidr">
+        <div class="hn3-chip">VPC CIDR</div>
+        <div class="hn3-chip">Service CIDR</div>
+        <div class="hn3-chip">Remote node CIDR</div>
+        <div class="hn3-chip">Remote Pod CIDR</div>
+      </div>
+    </div>
+    <div class="callout callout-info fragment fade-left" data-fragment-index="3">
+      <strong class="text-accent">포트는 방향으로 구분</strong>
+      <div class="on-surface-muted">노드가 여는 API 연결(443), 컨트롤 플레인이 여는 kubelet, webhook 연결, hybrid 노드 간 VXLAN</div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s2">
+  <div class="slide-header" data-remarp-id="s2-header"><h2>Pod 라우팅: static, BGP, Gateway</h2></div>
+  <div class="slide-body" data-remarp-id="s2-body">
+    <p><!-- Slide 3: Pod 라우팅 3가지 --></p>
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.hn3-table { width: 100%; font-size: var(--fs-card); word-break: keep-all; overflow-wrap: break-word; }
+.hn3-cards { margin-top: var(--space-3); }
+</style>
+<table class="data-table hn3-table">
+  <thead><tr><th>비교 항목</th><th>static route</th><th>Cilium BGP</th><th>Hybrid Nodes Gateway</th></tr></thead>
+  <tbody>
+    <tr><td>Pod CIDR 도달 방법</td><td>온프렘 라우터에 node별 prefix를 수동 등록</td><td>Cilium이 Pod CIDR을 라우터에 광고</td><td>Pod CIDR당 VPC route 1건, leader로 보내고 VXLAN</td></tr>
+    <tr><td>온프렘 라우터 변경</td><td>필요 (route 유지, drift 추적)</td><td>필요 (peering, ASN, prefix filter)</td><td>Pod CIDR route는 불필요 (node IP와 VXLAN 포트는 필요)</td></tr>
+    <tr><td>HA, 처리량</td><td>네트워크 팀 설계, 라우터와 링크 한계</td><td>네트워크 팀 설계, 라우터와 링크 한계</td><td>active, standby. 활성 Gateway 1대가 한계</td></tr>
+    <tr><td>cross-AZ 비용</td><td>Pod가 있는 AZ의 TGW, VGW로 바로 나감</td><td>Pod가 있는 AZ의 TGW, VGW로 바로 나감</td><td>모든 트래픽이 leader AZ를 지남, 다른 AZ 워크로드는 cross-AZ 요금</td></tr>
+  </tbody>
+</table>
+<div class="card-grid hn3-cards fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="callout callout-success"><strong class="text-success">BGP 우선</strong><div class="on-surface-muted">라우터 팀이 BGP를 운영할 수 있고 노드가 늘어날 환경, 트래픽이 큰 경로. AWS 가이드가 권장하는 방식</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">static은 소규모, 고정 환경</strong><div class="on-surface-muted">노드, Pod CIDR이 바뀔 때마다 수동 갱신과 장애 추적 부담</div></div>
+  <div class="callout callout-info"><strong class="text-info">Gateway는 라우터 변경이 어려울 때</strong><div class="on-surface-muted">Cilium 제약과 추가 hop을 받아들일 수 있다면</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s3">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>Gateway: VPC route 하나와 VXLAN 터널</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body">
+    <p><!-- Slide 4: Gateway 동작 --></p>
+<style>
+.hn3-ico { width: 40px; height: 40px; vertical-align: middle; margin-right: var(--space-2); }
+.hn3-flow { margin: 0 0 var(--space-3); font-size: var(--fs-card); word-break: keep-all; overflow-wrap: break-word; }
+.hn3-flow .flow-box { min-width: min-content; overflow-wrap: normal; }
+.hn3-sub { display: block; color: var(--text-secondary); font-size: var(--fs-caption); margin-top: var(--space-1); word-break: keep-all; }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="flow-h hn3-flow">
+  <div class="flow-group fragment fade-right" data-fragment-index="1">
+    <div class="flow-group-label"><img class="hn3-ico" src="./common/aws-icons/services/Arch_Amazon-Virtual-Private-Cloud_48.svg" alt="Amazon VPC">VPC</div>
+    <div class="flow-box">Cloud Pod, CP, ALB<span class="hn3-sub">목적지: 온프렘 Pod IP</span></div>
+    <div class="flow-box">route table<span class="hn3-sub">Pod CIDR당 1건, leader ENI로</span></div>
+  </div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="2">→</div>
+  <div class="flow-group fragment fade-right" data-fragment-index="2">
+    <div class="flow-group-label"><img class="hn3-ico" src="./common/aws-icons/services/Arch_Amazon-EC2_48.svg" alt="Amazon EC2">Gateway (EC2 2대)</div>
+    <div class="flow-box">leader<span class="hn3-sub">트래픽 처리, VXLAN 캡슐화</span></div>
+    <div class="flow-box">standby<span class="hn3-sub">터널 상태만 유지</span></div>
+  </div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="3"><img class="hn3-ico" src="./common/aws-icons/services/Arch_AWS-Direct-Connect_48.svg" alt="AWS Direct Connect"><br>→ DX, VPN →</div>
+  <div class="flow-group fragment fade-right" data-fragment-index="3">
+    <div class="flow-group-label">온프렘</div>
+    <div class="flow-box">Cilium (VTEP)<span class="hn3-sub">decap 후 전달</span></div>
+    <div class="flow-box">Hybrid Pod</div>
+  </div>
+</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="4">
+  <div class="callout callout-info"><strong class="text-info">장애 시 3~5초</strong><div class="on-surface-muted">standby가 leader를 이어받고 VPC route를 자기 ENI로 바꿉니다. AWS 예상치이며 보장값은 아닙니다.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">노드 선택은 자유</strong><div class="on-surface-muted">Auto Mode 또는 관리형, 자체 관리 노드 그룹. Gateway 소프트웨어 자체 요금은 없습니다.</div></div>
+  <div class="callout callout-danger"><strong class="text-danger">알고 쓸 제약</strong><div class="on-surface-muted">VXLAN은 암호화 없음, 클러스터당 1개, Cilium L7 proxy를 꺼야 함</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s4">
+  <div class="slide-header" data-remarp-id="s4-header"><h2>CNI 구성: Cilium만 쓸까, VPC CNI와 섞을까</h2></div>
+  <div class="slide-body" data-remarp-id="s4-body">
+    <p><!-- Slide 5: CNI 선택 --></p>
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.hn3-cni { width: 100%; font-size: var(--fs-card); word-break: keep-all; overflow-wrap: break-word; margin-bottom: var(--space-3); }
+.hn3-pre { margin-bottom: var(--space-3); }
+</style>
+<div class="callout callout-info hn3-pre"><strong class="text-info">전제</strong>: VPC CNI는 hybrid 노드와 호환되지 않습니다. hybrid 노드는 항상 Cilium(또는 Calico). 질문은 "클라우드 노드에 무엇을 쓸까"입니다.</div>
+<table class="data-table hn3-cni fragment fade-up" data-fragment-index="1">
+  <thead><tr><th>기준</th><th>hybrid 전용 (Cilium만)</th><th>혼합 (클라우드 VPC CNI + hybrid Cilium)</th></tr></thead>
+  <tbody>
+    <tr><td>AWS 지원</td><td>지원</td><td>지원, AWS 혼합 모드 권장안</td></tr>
+    <tr><td>webhook 위치</td><td>hybrid 노드, 온프렘 Pod CIDR 라우팅 필요</td><td>클라우드 노드에 두면 Pod CIDR 라우팅 불필요</td></tr>
+    <tr><td>버스팅, Auto Mode</td><td>불가 (클라우드 용량 없음)</td><td>가능</td></tr>
+    <tr><td>Hybrid Nodes Gateway</td><td>해당 없음</td><td>사용 가능 (Gateway, 클라우드 노드에 VPC CNI 필요)</td></tr>
+  </tbody>
+</table>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="2">
+  <div class="callout callout-success"><strong class="text-success">클라우드 노드가 있으면 혼합</strong><div class="on-surface-muted">AWS 지원 범위 안의 구성. webhook은 클라우드에, 버스팅과 Gateway도 가능</div></div>
+  <div class="callout callout-info"><strong class="text-info">온프렘만 쓰면 Cilium만</strong><div class="on-surface-muted">CNI가 하나라 단순. 대신 webhook을 위해 온프렘 Pod CIDR 라우팅</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">클라우드까지 Cilium은 신중히</strong><div class="on-surface-muted">클라우드 노드의 Cilium은 AWS 미지원, Gateway와 Auto Mode를 쓸 수 없음</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s5">
+  <div class="slide-header" data-remarp-id="s5-header"><h2>어디서 들어오느냐로 경로가 갈린다</h2></div>
+  <div class="slide-body" data-remarp-id="s5-body">
+    <p><!-- Slide 6: 트래픽 방향 --></p>
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.hn3-path { font-size: var(--fs-card); color: var(--text-primary); margin-top: var(--space-2); word-break: keep-all; }
+.hn3-dir { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-bottom: var(--space-3); }
+</style>
+<div class="hn3-dir">
+  <div class="callout callout-success fragment fade-up" data-fragment-index="1"><strong class="text-success">VPC에서 hybrid Pod로</strong><div class="hn3-path">Cloud Pod, CP, ALB → Gateway 또는 BGP, static route → 온프렘 Pod</div><div class="on-surface-muted">ALB IP 타깃 등록과 해제는 Load Balancer Controller가 하고, Gateway나 라우팅은 Pod IP까지 가는 경로만 줍니다.</div></div>
+  <div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">온프렘에서 리전 Pod로</strong><div class="hn3-path">온프렘 → DX, VPN → internal ALB → 리전 Pod</div><div class="on-surface-muted">일반 VPC 경로라 Gateway가 관여하지 않습니다. 온프렘 DNS가 ALB 이름을 private IP로 풀어야 합니다.</div></div>
+  <div class="callout callout-warning fragment fade-up" data-fragment-index="3"><strong class="text-warning">온프렘에서 hybrid Pod로: hairpin</strong><div class="hn3-path">온프렘 → ALB → Gateway → 다시 온프렘</div><div class="on-surface-muted">동작은 하지만 DX를 두 번 지나 지연과 전송 비용이 늘어납니다.</div></div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="4"><strong class="text-info">AWS 권장</strong>: 리전에서 오는 트래픽은 ALB, 온프렘에서 오는 트래픽은 온프렘 쪽 Ingress나 LB로 받습니다. Gateway를 쓰면 Cilium L7 기능이 꺼지므로 온프렘은 L4 LoadBalancer나 기존 LB를 씁니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s6">
+  <div class="slide-header" data-remarp-id="s6-header"><h2>Gateway 비용: leader AZ로 모인다</h2></div>
+  <div class="slide-body" data-remarp-id="s6-body">
+    <p><!-- Slide 7: 비용과 대용량 --></p>
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.hn3-az { display: grid; grid-template-columns: 1fr auto 1fr; gap: var(--space-3); align-items: stretch; margin-bottom: var(--space-3); }
+.hn3-azbox { border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3); font-size: var(--fs-card); word-break: keep-all; }
+.hn3-azbox .hn3-azlabel { font-weight: var(--weight-bold); color: var(--accent); margin-bottom: var(--space-2); }
+.hn3-azarrow { align-self: center; text-align: center; color: var(--warning); font-weight: var(--weight-bold); font-size: var(--fs-card); }
+</style>
+<div class="hn3-az">
+  <div class="hn3-azbox"><div class="hn3-azlabel">AZ a</div>Gateway leader<br>Cloud Pod, ALB<div class="on-surface-muted">같은 AZ라 cross-AZ hop 없음</div></div>
+  <div class="hn3-azarrow fragment fade-left" data-fragment-index="1">← cross-AZ 요금 ←<br><span class="on-surface-muted">모든 hybrid 트래픽</span></div>
+  <div class="hn3-azbox"><div class="hn3-azlabel">AZ b</div>Gateway standby (일하지 않음)<br>Cloud Pod, ALB<div class="on-surface-muted">leader AZ로 건너간 뒤 DX, VPN</div></div>
+</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="2">
+  <div class="callout callout-warning"><strong class="text-warning">replica는 처리량이 아님</strong><div class="on-surface-muted">활성 1대가 모든 트래픽을 처리. 늘리려면 인스턴스 크기를 키웁니다.</div></div>
+  <div class="callout callout-info"><strong class="text-info">비용 구성</strong><div class="on-surface-muted">Gateway 소프트웨어는 무료. EC2, 데이터 전송, Auto Mode 노드일 때만 관리 요금</div></div>
+  <div class="callout callout-success"><strong class="text-success">대용량은 BGP로 직접</strong><div class="on-surface-muted">Gateway는 webhook, 적은 양의 Pod 간 통신에. 큰 경로는 Cilium BGP</div></div>
+</div>
+  </div>
+</div>
+</div>
+<script src="./common/animation-utils.js"></script>
+<script src="./common/slide-framework.js"></script>
+<script src="./common/quiz-component.js"></script>
+<script src="./common/presenter-view.js"></script>
+
+<script>
+  
+  const presenterNotes = {
+    1: "\u23f8\ufe0f [0.5min] [\uc694\uc57d]\n- 3\ubd80\uc758 \uc9c8\ubb38: AWS \ucee8\ud2b8\ub864 \ud50c\ub808\uc778, VPC\uc640 \uc628\ud504\ub808\ubbf8\uc2a4 Pod\uac00 \uc5b4\ub5bb\uac8c \uc11c\ub85c\ub97c \ucc3e\ub294\uac00\n- \uc21c\uc11c: \ud544\uc218 \uc5f0\uacb0\uacfc CIDR, Pod \ub77c\uc6b0\ud305 3\uac00\uc9c0, Gateway, CNI \uc120\ud0dd, \ud2b8\ub798\ud53d \ubc29\ud5a5, \ube44\uc6a9\n- \uc124\uc815 \uac12\uacfc \ubc29\ud654\ubcbd \ud45c \uc804\uccb4\ub294 Deep Dive 2\ubd80\uc5d0 \uc788\uc2b5\ub2c8\ub2e4.\n\n3\ubd80\ub294 \ub124\ud2b8\uc6cc\ud0b9\uc785\ub2c8\ub2e4. Hybrid Nodes \ub3c4\uc785\uc5d0\uc11c \uc2dc\uac04\uc774 \uac00\uc7a5 \ub9ce\uc774 \ub4dc\ub294 \ubd80\ubd84\uc774 \uc5ec\uae30\uc785\ub2c8\ub2e4. \ucfe0\ubc84\ub124\ud2f0\uc2a4 \uc124\uc815\ubcf4\ub2e4 \uc5f0\uacb0\uacfc \ub77c\uc6b0\ud305 \uc124\uacc4\uac00 \uba3c\uc800 \ub05d\ub098\uc57c \ub178\ub4dc\uac00 \uc81c\ub300\ub85c \ub3d9\uc791\ud558\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4.\n\n\uba3c\uc800 \uaf2d \uc788\uc5b4\uc57c \ud558\ub294 \uc5f0\uacb0\uacfc CIDR\uc744 \ubcf4\uace0, \uc628\ud504\ub818 Pod\uae4c\uc9c0 \uac00\ub294 \uacbd\ub85c\ub97c \ub9cc\ub4dc\ub294 \uc138 \uac00\uc9c0 \ubc29\ubc95\uc744 \ube44\uad50\ud558\uaca0\uc2b5\ub2c8\ub2e4. \uadf8\ub2e4\uc74c Hybrid Nodes Gateway\uc758 \ub3d9\uc791, CNI \uc120\ud0dd, \ud2b8\ub798\ud53d \ubc29\ud5a5, \ub9c8\uc9c0\ub9c9\uc73c\ub85c \ube44\uc6a9 \uc774\uc57c\uae30\ub97c \ud569\ub2c8\ub2e4.\n\n\uac00\uc7a5 \uae30\ubcf8\uc778 \uc5f0\uacb0\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    2: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- Direct Connect \ub610\ub294 VPN \uc0ac\uc124 \uc5f0\uacb0\uc774 \uc804\uc81c\uc774\uace0, \ub77c\uc6b0\ud305\uc740 \uc591\ubc29\ud5a5\uc774\uc5b4\uc57c \ud569\ub2c8\ub2e4.\n- VPC, Service, remote node, remote Pod CIDR \ub124 \uac00\uc9c0\ub294 \uc11c\ub85c \uacb9\uce58\uba74 \uc548 \ub429\ub2c8\ub2e4.\n- \ud3ec\ud2b8\ub294 \ub204\uac00 \uc5f0\uacb0\uc744 \uc2dc\uc791\ud558\ub294\uc9c0\ub85c \ub098\ub215\ub2c8\ub2e4: \ub178\ub4dc\uac00 \uc5ec\ub294 443, \ucee8\ud2b8\ub864 \ud50c\ub808\uc778\uc774 \uc5ec\ub294 kubelet\uacfc webhook, \ub178\ub4dc \uac04 VXLAN\n\nHybrid Nodes\ub294 \uc628\ud504\ub808\ubbf8\uc2a4 \ub178\ub4dc\uac00 AWS \ucee8\ud2b8\ub864 \ud50c\ub808\uc778\uc5d0 \ubd99\ub294 \uad6c\uc870\ub77c\uc11c, \uc5f0\uacb0\uc774 \ub04a\uae30\uba74 \ub178\ub4dc\ub294 NotReady\uac00 \ub429\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc5f0\uacb0 \uc124\uacc4\uac00 \uac00\uc7a5 \uba3c\uc800\uc785\ub2c8\ub2e4. Direct Connect\ub098 Site-to-Site VPN \uac19\uc740 \uc0ac\uc124 \uacbd\ub85c\ub97c \uc4f0\uace0, AWS \uc77c\ubc18 \uad8c\uc7a5\uc740 \ub300\uc5ed\ud3ed 100 Mbps \uc774\uc0c1, RTT 200 ms \uc774\ud558\uc785\ub2c8\ub2e4. \ubcf4\uc7a5\uac12\uc774 \uc544\ub2c8\ub77c \uad8c\uc7a5\uac12\uc785\ub2c8\ub2e4.\n\ub77c\uc6b0\ud305\uc740 \uc591\ubc29\ud5a5\uc785\ub2c8\ub2e4. VPC route table\uc5d0\ub294 \uc628\ud504\ub818 node\uc640 Pod CIDR\uc774 \uc0ac\uc124 \uac8c\uc774\ud2b8\uc6e8\uc774\ub85c \ud5a5\ud574\uc57c \ud558\uace0, \uc628\ud504\ub818\uc5d0\ub294 VPC CIDR\ub85c \uac00\ub294 \uacbd\ub85c\uac00 \uc788\uc5b4\uc57c \ud569\ub2c8\ub2e4. \ud55c\ucabd\ub9cc \uc788\uc73c\uba74 \ub178\ub4dc\ub294 \ubd99\uc5b4\ub3c4 logs\ub098 exec\uac00 \ub9c9\ud799\ub2c8\ub2e4.\n\nCIDR\uc740 \ub124 \uac00\uc9c0\uac00 \uc11c\ub85c \uacb9\uce58\uba74 \uc548 \ub429\ub2c8\ub2e4. VPC CIDR, Service CIDR, \uadf8\ub9ac\uace0 \ud074\ub7ec\uc2a4\ud130\uc5d0 \ub4f1\ub85d\ud558\ub294 remote node CIDR\uacfc remote Pod CIDR\uc785\ub2c8\ub2e4. remote CIDR\uc740 IPv4\uc774\uace0 RFC1918 \ub610\ub294 CGNAT \ubc94\uc704\uc5ec\uc57c \ud569\ub2c8\ub2e4. \ub098\uc911\uc5d0 \ubc14\uafb8\uae30 \uc5b4\ub824\uc6b0\ub2c8 \uc124\uacc4 \ub2e8\uacc4\uc5d0\uc11c \ub124\ud2b8\uc6cc\ud06c \ud300\uacfc \ud655\uc815\ud558\uc138\uc694.\n\ud3ec\ud2b8\ub294 \ubc88\ud638\ubcf4\ub2e4 \ubc29\ud5a5\uc73c\ub85c \uae30\uc5b5\ud558\uc2dc\uba74 \ub429\ub2c8\ub2e4. \ub178\ub4dc\uc640 Pod\uac00 API\ub85c \uc5ec\ub294 443\uc740 \uc628\ud504\ub818\uc5d0\uc11c \ub098\uac00\ub294 \uc5f0\uacb0\uc774\uace0, \ucee8\ud2b8\ub864 \ud50c\ub808\uc778\uc774 kubelet\uacfc webhook\uc73c\ub85c \uc5ec\ub294 \uc5f0\uacb0\uc740 \uc628\ud504\ub818\uc73c\ub85c \ub4e4\uc5b4\uc624\ub294 \uc5f0\uacb0\uc785\ub2c8\ub2e4. 443 \uc751\ub2f5\uc774 \ud5c8\uc6a9\ub41c\ub2e4\uace0 \ub4e4\uc5b4\uc624\ub294 \uc2e0\uaddc \uc5f0\uacb0\uc774 \uc5f4\ub9ac\uc9c0\ub294 \uc54a\uc73c\ub2c8, \ubcf4\uc548\ud300\uc5d0 \"outbound\ub9cc \uc5f4\uba74 \ub41c\ub2e4\"\uace0 \uc124\uba85\ud558\uc2dc\uba74 \uc548 \ub429\ub2c8\ub2e4. hybrid \ub178\ub4dc\ub07c\ub9ac\ub294 Cilium VXLAN\uc744 \uc501\ub2c8\ub2e4.\nCIDR \uac1c\uc218 \uc81c\ud55c, \ud3ec\ud2b8 \ubc88\ud638 \uc804\uccb4, \ubaa8\ub4dc\ubcc4 \ubc29\ud654\ubcbd \ud45c, VPC \uc5d4\ub4dc\ud3ec\uc778\ud2b8\ub294 Deep Dive 2\ubd80\uc5d0 \uc788\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: Deep Dive 2\ubd80 \"\uc5f0\uacb0\uc774 \uba3c\uc800, \ucfe0\ubc84\ub124\ud2f0\uc2a4\ub294 \uadf8\ub2e4\uc74c\", \"CIDR \uc124\uacc4: \uacb9\uce58\uba74 \ubaa8\ub4e0 \uac8c \ub9c9\ud78c\ub2e4\", \"443\uc740 \uc548\uc5d0\uc11c \uc5f4\uace0, 10250\uc740 \ubc16\uc5d0\uc11c \uc628\ub2e4\", \"\ubc29\ud654\ubcbd \uaddc\uce59: \ubaa8\ub4dc\ubcc4\ub85c \ub2ec\ub77c\uc9c4\ub2e4\". Deep Dive\uc758 prereq \uadf8\ub9bc \uc7ac\uc0ac\uc6a9\n\n\uc5f0\uacb0\uc774 \uc900\ube44\ub418\uba74 \ub2e4\uc74c \uc9c8\ubb38\uc740 VPC\uc5d0\uc11c \uc628\ud504\ub818 Pod IP\uae4c\uc9c0 \uc5b4\ub5bb\uac8c \uac00\ub290\ub0d0\uc785\ub2c8\ub2e4.",
+    3: "\u2753 \u23f8\ufe0f [2.5min] [\uc694\uc57d]\n- static\uacfc BGP\ub294 \uc628\ud504\ub818 Pod CIDR\uc744 \uc9c1\uc811 \ub77c\uc6b0\ud305\ud558\uace0, Gateway\ub294 VXLAN \ud130\ub110\ub85c \uc6b0\ud68c\ud569\ub2c8\ub2e4.\n- \ud310\ub2e8 \uae30\uc900: \ub77c\uc6b0\ud130 \ud300\uc774 BGP\ub97c \uc6b4\uc601\ud560 \uc218 \uc788\ub294\uc9c0, Cilium \uc81c\uc57d\uacfc \ucd94\uac00 hop\uc744 \ubc1b\uc544\ub4e4\uc77c \uc218 \uc788\ub294\uc9c0\n- Gateway\ub294 leader AZ\ub85c \ud2b8\ub798\ud53d\uc774 \ubaa8\uc5ec cross-AZ \uc694\uae08\uc774 \uc0dd\uae30\ubbc0\ub85c \ub300\uc6a9\ub7c9 \uacbd\ub85c\ub294 BGP\n\n\ud074\ub77c\uc6b0\ub4dc Pod, \ucee8\ud2b8\ub864 \ud50c\ub808\uc778\uc758 webhook \ud638\ucd9c, ALB\uc758 IP \ud0c0\uae43\uc774 \uc628\ud504\ub818 Pod IP\uc5d0 \ub2ff\uc73c\ub824\uba74 VPC\uac00 \uadf8 Pod CIDR\ub85c \uac00\ub294 \uae38\uc744 \uc54c\uc544\uc57c \ud569\ub2c8\ub2e4. \ubc29\ubc95\uc740 \uc138 \uac00\uc9c0\uc785\ub2c8\ub2e4.\nstatic\uc740 \ub77c\uc6b0\ud130\uc5d0 prefix\ub97c \uc9c1\uc811 \ub123\ub294 \ubc29\uc2dd\uc774\ub77c \ub2e8\uc21c\ud558\uc9c0\ub9cc, \ub178\ub4dc\uc640 Pod CIDR\uc774 \ubc14\ub014 \ub54c\ub9c8\ub2e4 \uc0ac\ub78c\uc774 \ub530\ub77c\uac00\uc57c \ud569\ub2c8\ub2e4. BGP\ub294 Cilium\uc774 Pod CIDR\uc744 \ub77c\uc6b0\ud130\uc5d0 \uad11\uace0\ud558\ubbc0\ub85c \ub178\ub4dc\uac00 \ub298\uc5b4\ub3c4 \uc720\uc5f0\ud558\uc9c0\ub9cc, \ub77c\uc6b0\ud130 \ud300\uacfc peering, ASN, prefix filter\ub97c \ud569\uc758\ud574\uc57c \ud569\ub2c8\ub2e4.\n\nGateway\ub294 \uc628\ud504\ub818 Pod CIDR\uc744 VPC\uc5d0\uc11c \ub77c\uc6b0\ud305 \uac00\ub2a5\ud558\uac8c \ub9cc\ub4e4 \ud544\uc694\uac00 \uc5c6\ub2e4\ub294 \uac83\uc774 \ud575\uc2ec\uc785\ub2c8\ub2e4. \ub300\uc2e0 \ud65c\uc131 Gateway \ud55c \ub300\ub97c \uac70\uce58\ub294 hop\uc774 \uc0dd\uae30\uace0, \uadf8 \ud55c \ub300\uac00 \ucc98\ub9ac\ub7c9\uc758 \ud55c\uacc4\uc785\ub2c8\ub2e4. \ube44\uc6a9 \ud589\ub3c4 \ubd10 \uc8fc\uc138\uc694. \uc9c1\uc811 \ub77c\uc6b0\ud305\uc740 Pod\uac00 \uc788\ub294 AZ\uc5d0\uc11c \ubc14\ub85c TGW\ub098 VGW\ub85c \ub098\uac00\uc9c0\ub9cc, Gateway\ub294 \ubaa8\ub4e0 \ud2b8\ub798\ud53d\uc774 leader\uac00 \uc788\ub294 AZ\ub97c \uc9c0\ub0a9\ub2c8\ub2e4. \uc774 \ubd80\ubd84\uc740 3\ubd80 \ub9c8\uc9c0\ub9c9\uc5d0 \ub2e4\uc2dc \ubd05\ub2c8\ub2e4.\n\nGateway\uac00 \ud544\uc218\ub77c\uace0 \uc624\ud574\ud558\uc2dc\ub294 \uacbd\uc6b0\uac00 \ub9ce\uc2b5\ub2c8\ub2e4. Gateway \uc5c6\uc774\ub3c4 BGP\ub098 static\uc73c\ub85c Pod\ub97c \ub77c\uc6b0\ud305 \uac00\ub2a5\ud558\uac8c \uc124\uacc4\ud558\uba74 webhook\uacfc ALB IP \ud0c0\uae43\uc774 \ub429\ub2c8\ub2e4. \uc6b0\ub9ac \ud658\uacbd\uc5d0\uc11c \uac00\uc7a5 \ud070 \ubcc0\uc218\ub294 \ub77c\uc6b0\ud130 \ud300\uc758 \ud611\uc870 \uac00\ub2a5\uc131\uc785\ub2c8\ub2e4.\nBGP \uc124\uc815 \uc608\uc81c\uc640 CNI \uc81c\uc57d \ud589, \uc815\ub9ac \ubc29\ubc95 \ud589\uc774 \ub4e4\uc5b4\uac04 \uc804\uccb4 \ube44\uad50\ud45c\ub294 Deep Dive 2\ubd80\uc5d0 \uc788\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: Deep Dive 2\ubd80 \"\ub77c\uc6b0\ud305 \uc120\ud0dd: static, BGP, Gateway\"(\ube44\uad50\ud45c\uc5d0\uc11c 4\ud589 \ubc1c\ucdcc, \uc120\ud0dd \uce74\ub4dc), \"Cilium BGP v2: Pod CIDR\ub9cc \uad11\uace0\"\n\n\uadf8\ub7fc Gateway\uac00 \uc2e4\uc81c\ub85c \uc5b4\ub5bb\uac8c \ub3d9\uc791\ud558\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    4: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- VPC route table\uc5d0 Pod CIDR\ub9c8\ub2e4 route 1\uac74, \ub300\uc0c1\uc740 leader Gateway\uc758 ENI. leader\uac00 VXLAN\uc73c\ub85c \uc628\ud504\ub818 Cilium\uc5d0 \uc804\ub2ec\n- Gateway\ub294 2\ub300\uac00 active, standby\ub85c \ub3d9\uc791\ud558\uace0, \uc7a5\uc560 \uc2dc \uc778\uacc4\ub294 AWS \uc608\uc0c1 3~5\ucd08(\ubcf4\uc7a5 \uc544\ub2d8)\n- \uc81c\uc57d: \uc554\ud638\ud654 \uc5c6\uc74c, \ud074\ub7ec\uc2a4\ud130\ub2f9 1\uac1c, Cilium L7 proxy \ub054. \uc18c\ud504\ud2b8\uc6e8\uc5b4 \uc694\uae08\uc740 \uc5c6\uace0 EC2\uc640 \ub370\uc774\ud130 \uc804\uc1a1 \ube44\uc6a9\ub9cc\n\nHybrid Nodes Gateway\ub294 2026\ub144 4\uc6d4\uc5d0 GA \ub41c \uc624\ud508\uc18c\uc2a4 \uad6c\uc131\uc694\uc18c\uc774\uace0, \uc120\ud0dd \uc0ac\ud56d\uc785\ub2c8\ub2e4. VPC \uc548\uc758 EC2 \ub178\ub4dc \ub450 \ub300\uc5d0 \ub739\ub2c8\ub2e4.\n\ud750\ub984\uc740 \uc67c\ucabd\uc5d0\uc11c \uc624\ub978\ucabd\uc785\ub2c8\ub2e4. VPC route table\uc5d0 \uc628\ud504\ub818 Pod CIDR\ub9c8\ub2e4 route\uac00 \ud558\ub098 \ub4e4\uc5b4\uac00\uace0, \ub300\uc0c1\uc740 leader Gateway\uc758 ENI\uc785\ub2c8\ub2e4. \ub178\ub4dc\uac00 \ub298\uc5b4\ub3c4 \uc774 route \uc218\ub294 \uadf8\ub300\ub85c\uc774\uace0, \ub178\ub4dc\ubcc4 \ud130\ub110 \uc815\ubcf4\ub294 Gateway\uac00 \ucfe0\ubc84\ub124\ud2f0\uc2a4\ub97c \ubcf4\uace0 \uc2a4\uc2a4\ub85c \uac31\uc2e0\ud569\ub2c8\ub2e4. leader\ub294 \ud328\ud0b7\uc744 VXLAN\uc73c\ub85c \uac10\uc2f8\uc11c \uc0ac\uc124 \uc5f0\uacb0 \ub108\uba38\uc758 \uc628\ud504\ub818 Cilium\uc73c\ub85c \ubcf4\ub0b4\uace0, Cilium\uc774 \ud480\uc5b4\uc11c Pod\uc5d0 \uc804\ub2ec\ud569\ub2c8\ub2e4. \ubc18\ub300 \ubc29\ud5a5\ub3c4 Cilium\uc774 VPC\ub85c \uac00\ub294 \ud328\ud0b7\uc744 Gateway\ub85c \ubcf4\ub0b4 \uc90d\ub2c8\ub2e4.\n\n\ub450 \ub300 \uc911 \ud55c \ub300\ub9cc \uc77c\ud569\ub2c8\ub2e4. leader\uac00 \uc8fd\uc73c\uba74 standby\uac00 \uc774\uc5b4\ubc1b\uace0 VPC route\ub97c \uc790\uae30 ENI\ub85c \ubc14\uafc9\ub2c8\ub2e4. AWS\ub294 \uc774 \uc778\uacc4\ub97c 3~5\ucd08 \uc815\ub3c4\ub85c \uc548\ub0b4\ud558\ub294\ub370 \ubcf4\uc7a5\uac12\uc740 \uc544\ub2c8\uace0, \uc2e4\uc81c \uc560\ud50c\ub9ac\ucf00\uc774\uc158 \uc601\ud5a5\uc740 \uc9c1\uc811 \uc2dc\ud5d8\ud574 \ubcf4\uc154\uc57c \ud569\ub2c8\ub2e4. \uc624\ub298 5\ubd80 \uc601\uc0c1\uc5d0\uc11c \uce21\uc815 \uacb0\uacfc\ub97c \ubcf4\uc5ec \ub4dc\ub9bd\ub2c8\ub2e4.\nGateway \ub178\ub4dc\ub294 Auto Mode\ub4e0 \uad00\ub9ac\ud615\uc774\ub098 \uc790\uccb4 \uad00\ub9ac \ub178\ub4dc \uadf8\ub8f9\uc774\ub4e0 \ub429\ub2c8\ub2e4. Gateway \uc18c\ud504\ud2b8\uc6e8\uc5b4 \uc694\uae08\uc740 \uc5c6\uace0 EC2\uc640 \ub370\uc774\ud130 \uc804\uc1a1 \ube44\uc6a9\ub9cc \ub0b4\uba70, Auto Mode \ub178\ub4dc\uc5d0 \uc62c\ub838\uc744 \ub54c\ub9cc Auto Mode \uad00\ub9ac \uc694\uae08\uc774 \ubd99\uc2b5\ub2c8\ub2e4.\n\uc81c\uc57d\uc740 \uc138 \uac00\uc9c0\ub97c \uae30\uc5b5\ud558\uc138\uc694. VXLAN \uc790\uccb4\ub294 \uc554\ud638\ud654\uac00 \uc5c6\uc5b4\uc11c \ubbfc\uac10 \ud2b8\ub798\ud53d\uc740 MACsec\uc774\ub098 IPsec VPN \uac19\uc740 \ubcc4\ub3c4 \ubcf4\ud638\uac00 \ud544\uc694\ud569\ub2c8\ub2e4. \ud074\ub7ec\uc2a4\ud130\ub2f9 \ud558\ub098\uc785\ub2c8\ub2e4. \uadf8\ub9ac\uace0 Cilium\uc758 L7 proxy\ub97c \uaebc\uc57c \ud574\uc11c \uac19\uc740 Cilium\uc5d0\uc11c Ingress, Gateway API, L7 \uc815\ucc45\uc744 \uc4f8 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ub610 Helm\uc73c\ub85c \uc9c0\uc6cc\ub3c4 VPC route\ub294 \ub0a8\ub294\ub2e4\ub294 \uc810\ub3c4 \uc6b4\uc601\ud300\uc5d0 \uc54c\ub824 \uc8fc\uc138\uc694.\n\uc124\uce58 \uc21c\uc11c, IAM \uad8c\ud55c, \uba54\ud2b8\ub9ad, \uc778\uc2a4\ud134\uc2a4 \ud06c\uae30 \uac00\uc774\ub4dc\ub294 Deep Dive 2\ubd80\uc5d0 \uc788\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: Deep Dive 2\ubd80 \"Gateway\ub294 Pod CIDR \ub77c\uc6b0\ud305 \uc219\uc81c\ub97c \ub358\ub2e4\", \"Gateway \ub370\uc774\ud130 \ud50c\ub808\uc778: \ud55c \uacbd\ub85c\ub85c \uc77d\uae30\", \"Gateway HA: active/standby, scale-up\", \"Gateway \uc6b4\uc601: \uad00\uce21\uacfc \uc81c\uc57d\"\n\nGateway\ub97c \uc4f8 \uc218 \uc788\ub294\uc9c0\ub294 CNI \uad6c\uc131\uacfc\ub3c4 \uc5f0\uacb0\ub429\ub2c8\ub2e4.",
+    5: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- VPC CNI\ub294 hybrid \ub178\ub4dc\uc640 \ud638\ud658\ub418\uc9c0 \uc54a\uc73c\ubbc0\ub85c hybrid \ub178\ub4dc\ub294 \ud56d\uc0c1 Cilium(\ub610\ub294 Calico)\n- \ud074\ub77c\uc6b0\ub4dc \ub178\ub4dc\uac00 \uc788\uc73c\uba74 VPC CNI\uc640 Cilium \ud63c\ud569\uc774 AWS \uad8c\uc7a5: webhook\uc744 \ud074\ub77c\uc6b0\ub4dc\uc5d0 \ub450\uace0 \ubc84\uc2a4\ud305\uacfc Gateway \uc0ac\uc6a9\n- \ud074\ub77c\uc6b0\ub4dc \ub178\ub4dc\uae4c\uc9c0 Cilium\uc73c\ub85c \ud1b5\uc77c\ud558\uba74 AWS \ubbf8\uc9c0\uc6d0\uc774\uace0 Gateway, Auto Mode\ub97c \uc4f8 \uc218 \uc5c6\uc74c\n\n\"Cilium \ud558\ub098\ub85c \ud1b5\uc77c\ud558\ub294 \uac8c \ub0ab\uc9c0 \uc54a\ub098\"\ub294 \uc790\uc8fc \ubc1b\ub294 \uc9c8\ubb38\uc785\ub2c8\ub2e4. \uc804\uc81c\ubd80\ud130 \ub9d0\uc500\ub4dc\ub9ac\uba74 VPC CNI\ub294 hybrid \ub178\ub4dc\uc640 \ud638\ud658\ub418\uc9c0 \uc54a\uc73c\ub2c8 hybrid \ub178\ub4dc\uc5d0\ub294 \ud56d\uc0c1 Cilium\uc774 \ub4e4\uc5b4\uac11\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc2e4\uc81c \uc9c8\ubb38\uc740 \ud074\ub77c\uc6b0\ub4dc \ub178\ub4dc\uc5d0 \ubb34\uc5c7\uc744 \uc4f0\ub290\ub0d0\uc785\ub2c8\ub2e4.\n\n\ud074\ub77c\uc6b0\ub4dc \ub178\ub4dc\uac00 \uc788\ub294 \ud63c\ud569 \ud074\ub7ec\uc2a4\ud130\ub77c\uba74 \ud074\ub77c\uc6b0\ub4dc\ub294 VPC CNI, hybrid\ub294 Cilium\uc73c\ub85c \ub098\ub204\ub294 \uac83\uc774 AWS \ubb38\uc11c\uc758 \uad8c\uc7a5 \uad6c\uc131\uc785\ub2c8\ub2e4. webhook\uc744 \ud074\ub77c\uc6b0\ub4dc \ub178\ub4dc\uc5d0 \ub450\uba74 \uc628\ud504\ub818 Pod CIDR\uc744 \ub77c\uc6b0\ud305\ud558\uc9c0 \uc54a\uc544\ub3c4 \ub418\uace0, Karpenter \ubc84\uc2a4\ud305\uacfc Hybrid Nodes Gateway\ub3c4 \uc774 \uad6c\uc131\uc744 \uc804\uc81c\ub85c \ud569\ub2c8\ub2e4. Gateway\ub294 gateway \ub178\ub4dc\ub97c \ud3ec\ud568\ud55c \ud074\ub77c\uc6b0\ub4dc \ub178\ub4dc\uac00 VPC CNI\uc5ec\uc57c \ud558\uace0, Auto Mode \ub178\ub4dc\ub77c\uba74 \ub0b4\uc7a5 \ub124\ud2b8\uc6cc\ud0b9\uc774\uba74 \ub429\ub2c8\ub2e4.\n\uc628\ud504\ub818\ub9cc \uc4f0\ub294 \ud074\ub7ec\uc2a4\ud130\ub77c\uba74 Cilium \ud558\ub098\ub77c \ub2e8\uc21c\ud569\ub2c8\ub2e4. \ub300\uc2e0 webhook\uc774 hybrid \ub178\ub4dc\uc5d0\uc11c \ub3cc\uae30 \ub54c\ubb38\uc5d0 \ucee8\ud2b8\ub864 \ud50c\ub808\uc778\uc774 \ub4e4\uc5b4\uc62c \uc218 \uc788\uac8c \uc628\ud504\ub818 Pod CIDR\uc744 BGP\ub098 static\uc73c\ub85c \ub77c\uc6b0\ud305\ud574\uc57c \ud569\ub2c8\ub2e4.\n\ud074\ub77c\uc6b0\ub4dc \ub178\ub4dc\uae4c\uc9c0 Cilium\uc73c\ub85c \ub9de\ucd94\uace0 \uc2f6\ub2e4\ub294 \uc694\uccad\ub3c4 \uc788\ub294\ub370, AWS Cloud\uc758 \ub178\ub4dc\uc5d0\uc11c \uc2e4\ud589\ud558\ub294 Cilium\uc740 AWS\uac00 \uc9c0\uc6d0\ud558\uc9c0 \uc54a\uace0, Gateway\uc640 Auto Mode\ub3c4 \uc4f8 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \uc815\ucc45\uacfc \uad00\uce21 \uc77c\uad00\uc131 \ube44\uad50, \uce78\ubcc4 \uadfc\uac70\ub294 Deep Dive 2\ubd80\uc5d0 \uc788\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: Deep Dive 2\ubd80 \"CNI \uad6c\uc131: Cilium\ub9cc \uc4f8\uae4c, VPC CNI\uc640 \uc11e\uc744\uae4c\"(\u2460, \u2461 \uc5f4\uacfc \u2462 \uacbd\uace0 \uce74\ub4dc)\n\n\uc774\uc81c \ud2b8\ub798\ud53d\uc774 \uc5b4\ub290 \ubc29\ud5a5\uc5d0\uc11c \uc624\ub290\ub0d0\uc5d0 \ub530\ub77c \uacbd\ub85c\uac00 \uc5b4\ub5bb\uac8c \ub2ec\ub77c\uc9c0\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    6: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- VPC\uc5d0\uc11c hybrid Pod\ub85c: Gateway \ub610\ub294 \uc9c1\uc811 \ub77c\uc6b0\ud305\uc774 \uacbd\ub85c\ub97c \uc8fc\uace0, ALB \ud0c0\uae43 \uad00\ub9ac\ub294 Load Balancer Controller\n- \uc628\ud504\ub818\uc5d0\uc11c \ub9ac\uc804\uc73c\ub85c: internal ALB\ub97c \uc4f0\ub294 \uc77c\ubc18 VPC \uacbd\ub85c, Gateway \ubd88\ud544\uc694. \uc628\ud504\ub818 DNS\uc5d0\uc11c private IP\ub85c \ud480\ub824\uc57c \ud568\n- \uc628\ud504\ub818 \ud074\ub77c\uc774\uc5b8\ud2b8\uac00 ALB\ub85c hybrid Pod\ub97c \ubd80\ub974\uba74 hairpin. \uc628\ud504\ub818 \ud2b8\ub798\ud53d\uc740 \uc628\ud504\ub818 LB\ub85c\n\n\ubc29\ud5a5\uc744 \uc138 \uac00\uc9c0\ub85c \ub098\ub220 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \uccab\uc9f8, VPC\uc5d0\uc11c hybrid Pod\ub85c \uac00\ub294 \uacbd\uc6b0\uc785\ub2c8\ub2e4. \ud074\ub77c\uc6b0\ub4dc Pod, \ucee8\ud2b8\ub864 \ud50c\ub808\uc778\uc758 webhook, ALB\uac00 \uc5ec\uae30\uc5d0 \ud574\ub2f9\ud558\uace0, \uc55e\uc5d0\uc11c \ubcf8 Gateway\ub098 BGP, static route\uac00 \uacbd\ub85c\ub97c \uc90d\ub2c8\ub2e4. \uc790\uc8fc \ubc1b\ub294 \uc9c8\ubb38\uc774 \"\uc628\ud504\ub818 Pod IP\ub294 \uacc4\uc18d \ubc14\ub00c\ub294\ub370 ALB \ud0c0\uae43\uc740 \ub204\uac00 \ubc14\uafd4 \uc8fc\ub098\"\uc778\ub370, AWS Load Balancer Controller\uac00 \ub4f1\ub85d\uacfc \ud574\uc81c\ub97c \ud558\uace0 Gateway\ub294 \uacbd\ub85c\ub9cc \uc90d\ub2c8\ub2e4.\n\n\ub458\uc9f8, \uc628\ud504\ub818\uc5d0\uc11c \ub9ac\uc804 \uc11c\ube44\uc2a4\ub85c \ub4e4\uc5b4\uc624\ub294 \uacbd\uc6b0\uc785\ub2c8\ub2e4. \uc628\ud504\ub818 \ud638\uc2a4\ud2b8\uac00 \uc0ac\uc124 \uc5f0\uacb0\uc744 \uc9c0\ub098 internal ALB\uc5d0 \ub2ff\uace0 \ub9ac\uc804 Pod\ub85c \uac00\ub294 \ud3c9\ubc94\ud55c VPC \uacbd\ub85c\ub77c Gateway\ub294 \uad00\uc5ec\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ub2e4\ub9cc \uc628\ud504\ub818 DNS\uac00 ALB \uc774\ub984\uc744 private IP\ub85c \ud480\uc5b4\uc57c \ud558\ubbc0\ub85c Route 53 Resolver inbound endpoint \uac19\uc740 \uc900\ube44\uac00 \ud544\uc694\ud569\ub2c8\ub2e4.\n\uc14b\uc9f8, \uc628\ud504\ub818 \ud074\ub77c\uc774\uc5b8\ud2b8\uac00 \uac19\uc740 ALB\ub85c \uc628\ud504\ub818 Pod\ub97c \ubd80\ub974\uba74 AWS\ub85c \uac14\ub2e4\uac00 Gateway\ub97c \uc9c0\ub098 \ub2e4\uc2dc \uc628\ud504\ub818\uc73c\ub85c \ub3cc\uc544\uc635\ub2c8\ub2e4. \ub3d9\uc791\uc740 \ud558\uc9c0\ub9cc DX\ub97c \ub450 \ubc88 \uc9c0\ub098\ub2c8 \uc9c0\uc5f0\uacfc \ube44\uc6a9\uc774 \ub298\uc5b4\ub0a9\ub2c8\ub2e4.\n\uadf8\ub798\uc11c AWS \ubb38\uc11c\ub3c4 \ub9ac\uc804 \ud2b8\ub798\ud53d\uc740 ALB, \uc628\ud504\ub818 \ud2b8\ub798\ud53d\uc740 \uc628\ud504\ub818 \ucabd Ingress\ub85c \ubc1b\uc73c\ub77c\uace0 \uad8c\uc7a5\ud569\ub2c8\ub2e4. Gateway\ub97c \ucf1c\uba74 Cilium L7 proxy\ub97c \uaebc\uc57c \ud574\uc11c Cilium Ingress\uc640 Gateway API\ub294 \uac19\uc774 \uc4f8 \uc218 \uc5c6\uace0, \uc628\ud504\ub818\uc740 L4 LoadBalancer Service\ub098 \uae30\uc874 \ud558\ub4dc\uc6e8\uc5b4 LB\ub97c \uc4f0\uac8c \ub429\ub2c8\ub2e4. \uc2e4\uc81c \ud638\ucd9c \uacb0\uacfc\ub294 \uc624\ub298 5\ubd80 \uc601\uc0c1\uc5d0\uc11c \ubcf4\uc5ec \ub4dc\ub9bd\ub2c8\ub2e4.\n\uadfc\uac70: Deep Dive 5\ubd80 \"ALB ip \ud0c0\uae43: hybrid Pod IP\uac00 \ubc14\ub00c\uc5b4\ub3c4 LBC\uac00 \ub530\ub77c\uac04\ub2e4\", \"\ubc18\ub300 \ubc29\ud5a5: \uc628\ud504\ub818\uc5d0\uc11c LB\ub85c \ub4e4\uc5b4\uc624\uba74\", Deep Dive 2\ubd80 \"Pod \uac04 \ud1b5\uc2e0: VXLAN\uacfc Cloud\u2194Hybrid\". AWS docs hybrid-nodes-ingress (\ud2b8\ub798\ud53d \ucd9c\ubc1c\uc9c0\ubcc4 ALB\uc640 \uc628\ud504\ub818 Ingress \uad8c\uc7a5)\n\n\ub9c8\uc9c0\ub9c9\uc73c\ub85c Gateway\ub97c \uc4f8 \ub54c \ub193\uce58\uae30 \uc26c\uc6b4 \ube44\uc6a9 \uc774\uc57c\uae30\uc785\ub2c8\ub2e4.",
+    7: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- Gateway\ub97c \ub450 AZ\uc5d0 \ub098\ub220\ub3c4 \ud65c\uc131 leader\ub294 \ud558\ub098\ub77c\uc11c, \ub2e4\ub978 AZ\uc758 hybrid \ud2b8\ub798\ud53d\uc740 leader AZ\ub85c \uac74\ub108\uac00 \ud45c\uc900 cross-AZ \uc694\uae08\uc744 \ub0c5\ub2c8\ub2e4.\n- replica\ub97c \ub298\ub824\ub3c4 \ucc98\ub9ac\ub7c9\uc740 \uadf8\ub300\ub85c\uc774\uace0, \ud65c\uc131 1\ub300\uc758 \uc778\uc2a4\ud134\uc2a4 \ud06c\uae30\uac00 \ud55c\uacc4\uc785\ub2c8\ub2e4.\n- \ub300\uc6a9\ub7c9 \uacbd\ub85c\ub294 Cilium BGP\ub85c \uc9c1\uc811 \ub77c\uc6b0\ud305\ud558\uace0, Gateway\ub294 webhook\uacfc \uc801\uc740 \uc591\uc758 \ud1b5\uc2e0\uc5d0 \ub461\ub2c8\ub2e4.\n\nGateway\ub294 HA\ub97c \uc704\ud574 \ub450 AZ\uc5d0 \ub098\ub220 \ub450\ub294\ub370, \uc77c\ud558\ub294 leader\ub294 \ud558\ub098\ubfd0\uc785\ub2c8\ub2e4. \uadf8\ub798\uc11c leader\uc640 \ub2e4\ub978 AZ\uc5d0 \uc788\ub294 Pod\ub098 ALB\uc5d0\uc11c \uc628\ud504\ub818\uc73c\ub85c \uac00\ub294 \ud2b8\ub798\ud53d\uc740 \ubaa8\ub450 leader\uc758 AZ\ub85c \uba3c\uc800 \uac74\ub108\uac11\ub2c8\ub2e4. AWS Gateway \uc6b4\uc601 \ubb38\uc11c\ub3c4 \uc774 cross-AZ \ud2b8\ub798\ud53d\uc5d0 \ud45c\uc900 \uc694\uae08\uc774 \ubd99\ub294\ub2e4\uace0 \uc548\ub0b4\ud569\ub2c8\ub2e4.\n\n\ucc98\ub9ac\ub7c9\ub3c4 \uac19\uc740 \uad6c\uc870\uc785\ub2c8\ub2e4. standby\ub294 \ud130\ub110 \uc0c1\ud0dc\ub9cc \uc720\uc9c0\ud558\uace0 \ud328\ud0b7\uc744 \ub098\ub974\uc9c0 \uc54a\uc73c\ub2c8, replica\ub97c \ub298\ub9b0\ub2e4\uace0 \ucc98\ub9ac\ub7c9\uc774 \ub298\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ub298\ub9ac\ub824\uba74 \uc778\uc2a4\ud134\uc2a4 \ud06c\uae30\ub97c \ud0a4\uc6b0\ub294 scale-up\uc785\ub2c8\ub2e4.\n\ube44\uc6a9 \ud56d\ubaa9\uc744 \uc815\ub9ac\ud558\uba74 Gateway \uc18c\ud504\ud2b8\uc6e8\uc5b4 \uc790\uccb4\ub294 \uc694\uae08\uc774 \uc5c6\uace0, Gateway\uac00 \ub3c4\ub294 EC2\uc640 \ub370\uc774\ud130 \uc804\uc1a1 \ube44\uc6a9\uc744 \ub0c5\ub2c8\ub2e4. Gateway \ub178\ub4dc\ub97c Auto Mode\uc5d0 \uc62c\ub838\uc744 \ub54c\ub9cc \uadf8 \ub178\ub4dc\uc758 Auto Mode \uad00\ub9ac \uc694\uae08\uc774 \ub354\ud574\uc9c0\uace0, \uad00\ub9ac\ud615\uc774\ub098 \uc790\uccb4 \uad00\ub9ac \ub178\ub4dc \uadf8\ub8f9\uc774\uba74 \ubd99\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\uadf8\ub798\uc11c \uad8c\uc7a5 \uad6c\uc131\uc740 \uc774\ub807\uc2b5\ub2c8\ub2e4. \ud2b8\ub798\ud53d\uc774 \ud070 \uacbd\ub85c\ub294 Cilium BGP\ub85c Pod CIDR\uc744 \uc9c1\uc811 \ub77c\uc6b0\ud305\ud574\uc11c Pod\uac00 \uc788\ub294 AZ\uc5d0\uc11c \ubc14\ub85c \ub098\uac00\uac8c \ud558\uace0, Gateway\ub294 webhook\uc774\ub098 \uc801\uc740 \uc591\uc758 Pod \uac04 \ud1b5\uc2e0\ucc98\ub7fc \ub77c\uc6b0\ud130 \ubcc0\uacbd \uc5c6\uc774 \uc5f4\uc5b4\uc57c \ud558\ub294 \uacbd\ub85c\uc5d0 \ub461\ub2c8\ub2e4. \ub458\uc744 \ud568\uaed8 \uc4f8 \ub54c\ub294 \uac19\uc740 CIDR route\ub97c \ub204\uac00 \uc18c\uc720\ud558\ub294\uc9c0 \uba3c\uc800 \uc815\ud574\uc57c \ud569\ub2c8\ub2e4. Gateway \uc124\uce58\uac00 \uae30\uc874 route\ub97c \ubc14\uafc0 \uc218 \uc788\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4.\n\uc778\uc2a4\ud134\uc2a4 \ud06c\uae30 \uac00\uc774\ub4dc\uc640 HA \ubc30\uce58 \uaddc\uce59\uc740 Deep Dive 2\ubd80\uc5d0 \uc788\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: Deep Dive 2\ubd80 \"\ub77c\uc6b0\ud305 \uc120\ud0dd: static, BGP, Gateway\"(cross-AZ \ube44\uc6a9 \ud589, BGP \uce74\ub4dc, \ub178\ud2b8), \"Gateway HA: active/standby, scale-up\", \"Gateway\ub294 Pod CIDR \ub77c\uc6b0\ud305 \uc219\uc81c\ub97c \ub358\ub2e4\"(\ub178\ud2b8\uc758 \uc694\uae08 \uc124\uba85), \"Gateway \uc6b4\uc601: \uad00\uce21\uacfc \uc81c\uc57d\"(\uc124\uce58\ub294 route cutover). AWS docs hybrid-nodes-gateway-operations (cross-AZ \ud45c\uc900 \uc694\uae08)\n\n\uc5ec\uae30\uae4c\uc9c0\uac00 \ub124\ud2b8\uc6cc\ud0b9\uc774\uc5c8\uc2b5\ub2c8\ub2e4. \uc624\ub298 4\ubd80\uc5d0\uc11c\ub294 \uc774\ub807\uac8c \ubd99\uc778 \ub178\ub4dc\ub97c \uc5b4\ub5bb\uac8c \uc6b4\uc601\ud558\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4."
+  };
+  const deck = new SlideFramework({
+    logoSrc: "./common/pptx-theme/images/logo_1.png",
+    
+    footer: "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.",
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

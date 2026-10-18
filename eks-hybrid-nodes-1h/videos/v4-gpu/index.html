@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1920, height=1080" />
-    <title>V3 ALB ip 타깃과 역방향</title>
+    <title>V4 hybrid GPU 추론</title>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
     <style>
       :root {
@@ -471,57 +471,12 @@
         height: 180px;
       }
 
-      /* scene 4: result cards */
-      .res {
-        position: absolute;
-        width: 880px;
-        height: 300px;
-        padding: 30px 36px;
-        border-radius: 22px;
-        background: var(--panel);
-        border: 3px solid var(--success);
-      }
-      .res-k {
-        display: flex;
-        align-items: center;
-        gap: 18px;
-        font-size: 38px;
-        font-weight: 700;
-        color: var(--fg-2);
-        white-space: nowrap;
-      }
-      .res-k .okm {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        background: var(--success);
-        color: var(--bg);
-        font-size: 36px;
-        font-weight: 900;
-      }
-      .res-v {
-        margin-top: 28px;
-        font-size: 56px;
-        font-weight: 900;
-        line-height: 1.2;
-        white-space: nowrap;
-      }
-      .res-s {
-        margin-top: 16px;
-        font-size: 36px;
-        color: var(--fg-2);
-        white-space: nowrap;
-      }
-
       /* scene 5: preparation */
       .prep {
         position: absolute;
         top: 200px;
         width: 880px;
-        height: 380px;
+        height: 420px;
       }
       .prep .card-h {
         font-size: 46px;
@@ -606,6 +561,49 @@
         color: var(--warning);
         margin-right: 16px;
       }
+
+      /* recording */
+      #recwin {
+        position: absolute;
+        left: 60px;
+        top: 146px;
+        width: 1800px;
+        height: 850px;
+        overflow: hidden;
+        border-radius: 16px;
+        border: 2px solid var(--line);
+        background: #121314;
+      }
+      #recpan {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1800px;
+        height: 1412px;
+      }
+      .rec {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1800px;
+        height: 1412px;
+        object-fit: fill;
+      }
+      .rec-note {
+        position: absolute;
+        right: 60px;
+        top: 56px;
+        padding: 8px 24px;
+        border-radius: 14px;
+        border: 2px solid var(--warning);
+        background: rgba(251, 211, 50, 0.1);
+        color: var(--warning);
+        font-size: 36px;
+        font-weight: 700;
+      }
+      .footer-label.rec-label .footer-dot {
+        background: var(--danger);
+      }
     </style>
   </head>
   <body>
@@ -613,7 +611,7 @@
       id="root"
       data-composition-id="main"
       data-start="0"
-      data-duration="130"
+      data-duration="134"
       data-width="1920"
       data-height="1080"
     >
@@ -631,47 +629,40 @@
         </div>
       </section>
 
-      <!-- Scene headers -->
-      <div id="h1" class="clip" data-start="6" data-duration="20" data-track-index="2">
+      <!-- Scene headers (reconstruction scenes) -->
+      <div id="h1" class="clip" data-start="6" data-duration="16" data-track-index="2">
         <div id="h1-in" class="hdr">
-          <span class="step">1 / 6</span>
+          <span class="step">1 / 7</span>
           <span class="hdr-title">왜 온프렘 GPU를 붙이나</span>
         </div>
       </div>
-      <div id="h2" class="clip" data-start="26" data-duration="24" data-track-index="2">
+      <div id="h2" class="clip" data-start="22" data-duration="18" data-track-index="2">
         <div id="h2-in" class="hdr">
-          <span class="step">2 / 6</span>
+          <span class="step">2 / 7</span>
           <span class="hdr-title">구성: taint, label, device plugin</span>
         </div>
       </div>
-      <div id="h3" class="clip" data-start="50" data-duration="24" data-track-index="2">
-        <div id="h3-in" class="hdr">
-          <span class="step">3 / 6</span>
+      <div id="h4" class="clip" data-start="63.2" data-duration="15.8" data-track-index="2">
+        <div id="h4-in" class="hdr">
+          <span class="step">4 / 7</span>
           <span class="hdr-title">추론 호출 흐름</span>
         </div>
       </div>
-      <div id="h4" class="clip" data-start="74" data-duration="22" data-track-index="2">
-        <div id="h4-in" class="hdr">
-          <span class="step">4 / 6</span>
-          <span class="hdr-title">결과</span>
-        </div>
-        <div id="h4-run" class="run-badge old">실행 결과 재구성, 2026-10-15 실행</div>
-      </div>
-      <div id="h5" class="clip" data-start="96" data-duration="18" data-track-index="2">
-        <div id="h5-in" class="hdr">
-          <span class="step">5 / 6</span>
+      <div id="h6" class="clip" data-start="101.7" data-duration="16.3" data-track-index="2">
+        <div id="h6-in" class="hdr">
+          <span class="step">6 / 7</span>
           <span class="hdr-title">준비할 것</span>
         </div>
       </div>
-      <div id="h6" class="clip" data-start="114" data-duration="16" data-track-index="2">
-        <div id="h6-in" class="hdr">
-          <span class="step">6 / 6</span>
+      <div id="h7" class="clip" data-start="118" data-duration="16" data-track-index="2">
+        <div id="h7-in" class="hdr">
+          <span class="step">7 / 7</span>
           <span class="hdr-title">정리</span>
         </div>
       </div>
 
       <!-- Scene 1: why on-prem GPU -->
-      <section id="s1" class="clip" data-start="6" data-duration="20" data-track-index="4">
+      <section id="s1" class="clip" data-start="6" data-duration="16" data-track-index="4">
         <div id="s1-sub" class="sub">온프렘에 GPU 서버가 있으면, 같은 EKS 클러스터에 hybrid 노드로 붙인다</div>
         <div id="w1" class="card why" style="left: 60px; border-color: var(--accent)">
           <div class="why-ico">1</div>
@@ -690,13 +681,13 @@
         <div id="c-host" class="card">
           <div class="card-h wn">이 데모의 GPU 호스트</div>
           <div class="card-line">g6.xlarge, NVIDIA L4 23 GB, 시뮬레이션 온프렘 VPC에 두고 hybrid 노드로 조인</div>
-          <div class="card-line">2026-10-15 한 번 실행 후 제거: 녹화 없음, 이 영상은 실행 결과 재구성</div>
+          <div class="card-line">2026-10-15 실행, 2026-10-18 다시 조인해 녹화, 녹화 뒤 바로 제거</div>
           <div class="card-sub">EC2를 hybrid 노드로 쓰는 것은 프로덕션에서 지원되지 않음</div>
         </div>
       </section>
 
       <!-- Scene 2: configuration -->
-      <section id="s2" class="clip" data-start="26" data-duration="24" data-track-index="4">
+      <section id="s2" class="clip" data-start="22" data-duration="18" data-track-index="4">
         <div id="node">
           <div class="node-h ok">hybrid GPU 노드 (g6.xlarge, L4 23 GB)</div>
           <div id="n-taint" class="nchip" style="top: 92px">taint nvidia.com/gpu=Exists:NoSchedule</div>
@@ -729,8 +720,8 @@
         </div>
       </section>
 
-      <!-- Scene 3: call flow -->
-      <section id="s3" class="clip" data-start="50" data-duration="24" data-track-index="4">
+      <!-- Scene 4: call flow -->
+      <section id="s3" class="clip" data-start="63.2" data-duration="15.8" data-track-index="4">
         <div id="s3-sub" class="sub">클라우드 노드의 Job이 Service 이름으로 호출 (시뮬레이션: 온프렘은 TGW로 연결)</div>
         <div id="z-vpc" class="zone" style="left: 40px; top: 230px; width: 1390px; height: 340px">
           <div class="zone-label ac">AWS VPC (리전)</div>
@@ -740,7 +731,7 @@
         </div>
         <div id="f1" class="fbox" style="left: 60px">
           <div class="pbox-t">클라우드 Job</div>
-          <div class="pbox-s">system 노드<br />busybox wget</div>
+          <div class="pbox-s">클라우드 노드<br />busybox wget</div>
         </div>
         <div id="fa1" class="farrow" style="left: 420px; width: 100px"></div>
         <div id="f2" class="fbox" style="left: 520px">
@@ -760,8 +751,8 @@
         <div id="pkts"></div>
         <div id="url"><span class="k">호출 주소</span><span class="u">http://inference.gpu-demo.svc/v1/completions</span></div>
         <div id="resp" class="card">
-          <div class="card-h ok">응답: elapsed 약 1초</div>
-          <div class="card-sub">모델 로드가 끝난 뒤 호출</div>
+          <div class="card-h ok">응답: elapsed 1초 미만</div>
+          <div class="card-sub">2026-10-18 녹화 회차, 모델 로드 뒤 호출</div>
         </div>
         <div id="loc" class="card">
           <div class="card-h ac">호출하는 쪽은 Service 이름만 안다</div>
@@ -769,82 +760,88 @@
         </div>
       </section>
 
-      <!-- Scene 4: result cards (reconstruction of the 2026-10-15 run) -->
-      <section id="s4" class="clip" data-start="74" data-duration="22" data-track-index="4">
-        <div id="q1" class="res" style="left: 60px; top: 210px">
-          <div class="res-k"><span class="okm">✓</span>GPU 할당 가능 수량</div>
-          <div class="res-v mono ok">nvidia.com/gpu = 1</div>
-          <div class="res-s">hybrid GPU 노드의 allocatable</div>
-        </div>
-        <div id="q2" class="res" style="left: 980px; top: 210px">
-          <div class="res-k"><span class="okm">✓</span>추론 Pod 컨테이너</div>
-          <div class="res-v">1개, istio-proxy 없음</div>
-          <div class="res-s">sidecar 주입 끔</div>
-        </div>
-        <div id="q3" class="res" style="left: 60px; top: 550px">
-          <div class="res-k"><span class="okm">✓</span>hostNetwork</div>
-          <div class="res-v">꺼짐</div>
-          <div class="res-s">일반 Pod와 같은 Pod 네트워크</div>
-        </div>
-        <div id="q4" class="res" style="left: 980px; top: 550px">
-          <div class="res-k"><span class="okm">✓</span>클라우드 Pod에서 호출</div>
-          <div class="res-v">응답, 약 1초</div>
-          <div class="res-s mono">inference.gpu-demo.svc</div>
-        </div>
-        <div id="s4-note" class="sub" style="top: 886px; color: var(--fg-3)">verify.sh 확인 4개, 화면은 실행 결과를 카드로 재구성</div>
-      </section>
-
-      <!-- Scene 5: preparation -->
-      <section id="s5" class="clip" data-start="96" data-duration="18" data-track-index="4">
+      <!-- Scene 6: preparation -->
+      <section id="s5" class="clip" data-start="101.7" data-duration="16.3" data-track-index="4">
         <div id="p1" class="card prep" style="left: 60px; border-color: var(--accent)">
           <div class="card-h">드라이버와 container toolkit</div>
           <div class="prep-v ac">호스트에 직접 설치</div>
+          <div class="card-sub">2026-10-18: 재부팅 포함 2분 59초</div>
           <div class="card-sub">AWS 블로그는 이미지에 포함을 가정</div>
           <div class="card-sub">실서버: OS 이미지 또는 GPU Operator</div>
         </div>
         <div id="p2" class="card prep" style="left: 980px; border-color: var(--warning)">
           <div class="card-h">이미지 사전 다운로드</div>
-          <div class="prep-v wn">4분 28초</div>
-          <div class="card-sub">vLLM 이미지 첫 다운로드 (NAT 경로)</div>
+          <div class="prep-v wn">4분 35초</div>
+          <div class="card-sub">2026-10-18 녹화 회차, vLLM 이미지 9.6 GB</div>
+          <div class="card-sub">2026-10-15 실행: 4분 28초 (NAT 경로)</div>
           <div class="card-sub">세션 전에 받아 두기, 모델은 hostPath 캐시</div>
         </div>
-        <div id="bl1" class="blab" style="top: 652px">첫 시작: 이미지 다운로드</div>
-        <div id="b1" class="pbar" style="top: 640px; left: 520px; width: 1100px; background: var(--warning)"></div>
-        <div id="bv1" class="bval wn" style="left: 1650px; top: 644px">4분 28초</div>
-        <div id="bl2" class="blab" style="top: 782px">준비 후 추론 호출</div>
-        <div id="b2" class="pbar" style="top: 770px; left: 520px; width: 4px; background: var(--success)"></div>
-        <div id="bv2" class="bval ok" style="left: 550px; top: 774px">약 1초</div>
-        <div id="bar-note" style="left: 520px; top: 880px">막대 길이는 시간에 비례 (268초 대 1초)</div>
+        <div id="bl1" class="blab" style="top: 682px">이미지 다운로드</div>
+        <div id="b1" class="pbar" style="top: 670px; left: 520px; width: 1100px; background: var(--warning)"></div>
+        <div id="bv1" class="bval wn" style="left: 1650px; top: 674px">4분 35초</div>
+        <div id="bl2" class="blab" style="top: 802px">추론 호출</div>
+        <div id="b2" class="pbar" style="top: 790px; left: 520px; width: 4px; background: var(--success)"></div>
+        <div id="bv2" class="bval ok" style="left: 550px; top: 794px">1초 미만</div>
+        <div id="bar-note" style="left: 520px; top: 900px">막대 길이는 시간에 비례 (275초 대 1초 미만, 2026-10-18 녹화 회차)</div>
       </section>
 
-      <!-- Scene 6: message and summary -->
-      <section id="s6" class="clip" data-start="114" data-duration="16" data-track-index="4">
+      <!-- Scene 7: message and summary -->
+      <section id="s6" class="clip" data-start="118" data-duration="16" data-track-index="4">
         <div id="msg" class="msg">
           <span class="msg-l">온프렘 <b>GPU 노드</b>도 같은 클러스터의 <b>Service</b>로</span>
           <span class="msg-l">클라우드에서 호출된다</span>
         </div>
-        <div id="k1" class="card kc" style="left: 60px; top: 348px; width: 880px; height: 330px; border-color: var(--accent)">
+        <div id="k1" class="card kc" style="left: 60px; top: 340px; width: 880px; height: 380px; border-color: var(--accent)">
           <div class="card-h">구성</div>
           <div class="card-line">g6.xlarge, L4 23 GB (시뮬레이션 온프렘)</div>
           <div class="card-line">taint, label, device plugin v0.17.1</div>
           <div class="card-line">vLLM v0.19.1, Qwen2.5-0.5B-Instruct</div>
         </div>
-        <div id="k2" class="card kc" style="left: 980px; top: 348px; width: 880px; height: 330px; border-color: var(--success)">
-          <div class="card-h">결과 (2026-10-15)</div>
-          <div class="card-line">allocatable GPU 1</div>
+        <div id="k2" class="card kc" style="left: 980px; top: 340px; width: 880px; height: 380px; border-color: var(--success)">
+          <div class="card-h">결과 (2026-10-18 녹화)</div>
+          <div class="card-line">allocatable GPU 1, NVIDIA L4</div>
           <div class="card-line">컨테이너 1개, hostNetwork 끔</div>
-          <div class="card-line">inference.gpu-demo.svc 응답 약 1초</div>
+          <div class="card-line">verify.sh 확인 4개 OK</div>
+          <div class="card-line">Service 호출 응답 1초 미만</div>
         </div>
         <div id="cav" class="caveat">
-          <div id="cv1" class="cv"><i>!</i>첫 시작은 이미지 다운로드 4분 28초: 세션 전에 미리 받아 두기</div>
+          <div id="cv1" class="cv"><i>!</i>이미지 다운로드 4분 35초 (10-18), 4분 28초 (10-15): 미리 받아 두기</div>
           <div id="cv2" class="cv"><i>!</i>드라이버와 container toolkit은 호스트에 직접 설치</div>
         </div>
       </section>
 
-      <!-- Reconstruction footer (all scenes) -->
-      <div id="footer" class="clip" data-start="0" data-duration="130" data-track-index="9">
+      <!-- Reconstruction footer (hidden during recording scenes) -->
+      <div id="footer" class="clip" data-start="0" data-duration="134" data-track-index="9">
         <div class="footer-label"><span class="footer-dot"></span>실측 결과 재구성 (2026-10 시뮬레이션 환경)</div>
         <div class="footer-right">데모 4: hybrid GPU 추론</div>
+      </div>
+
+      <!-- Recording scene A: nodes, taint, Pod, nvidia-smi (media 0.5 to 17.9 s at 0.75x) -->
+      <div id="recA" class="clip" data-start="40" data-duration="23.2" data-track-index="10">
+        <div class="hdr">
+          <span class="step">3 / 7</span>
+          <span class="hdr-title">녹화: 노드와 Pod</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임, 0.75배속</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-18, 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 4: hybrid GPU 추론</div>
+      </div>
+      <!-- Recording scene B: Service, verify.sh, client log (media 17.9 to 34.925 s at 0.75x) -->
+      <div id="recB" class="clip" data-start="79" data-duration="22.7" data-track-index="10">
+        <div class="hdr">
+          <span class="step">5 / 7</span>
+          <span class="hdr-title">녹화: 호출 확인</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임, 0.75배속</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-18, 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 4: hybrid GPU 추론</div>
+      </div>
+      <!-- Recording window (untimed wrapper; shown only during recording scenes) -->
+      <div id="recwin">
+        <div id="recpan" data-layout-allow-overflow>
+          <video id="vA" class="rec" src="assets/r4-gpu.mp4" data-start="40" data-duration="23.2" data-media-start="0.5" data-playback-rate="0.75" data-track-index="11" muted playsinline></video>
+          <video id="vB" class="rec" src="assets/r4-gpu.mp4" data-start="79" data-duration="22.7" data-media-start="17.9" data-playback-rate="0.75" data-track-index="11" muted playsinline></video>
+        </div>
       </div>
     </div>
 
@@ -857,7 +854,7 @@
         }
 
         // Ambient background drift (finite).
-        tl.fromTo("#bg-glow", { x: 0, y: 0 }, { x: -260, y: 120, duration: 13, ease: "sine.inOut", yoyo: true, repeat: 9 }, 0);
+        tl.fromTo("#bg-glow", { x: 0, y: 0 }, { x: -260, y: 120, duration: 13.4, ease: "sine.inOut", yoyo: true, repeat: 9 }, 0);
 
         // Title
         show("#t-kicker", 0.3);
@@ -867,46 +864,67 @@
 
         // Headers
         show("#h1-in", 6.1, 0);
-        show("#h2-in", 26.05, 0);
-        show("#h3-in", 50.05, 0);
-        show("#h4-in", 74.05, 0);
-        show("#h4-run", 74.4, 0);
-        show("#h5-in", 96.05, 0);
-        show("#h6-in", 114.05, 0);
-        [["#h1-in", 26], ["#h2-in", 50], ["#h3-in", 74], ["#h4-in", 96], ["#h4-run", 96], ["#h5-in", 114]].forEach(([s, e]) =>
+        show("#h2-in", 22.05, 0);
+        show("#h4-in", 63.25, 0);
+        show("#h6-in", 101.75, 0);
+        show("#h7-in", 118.05, 0);
+        [["#h1-in", 22], ["#h2-in", 40], ["#h4-in", 79], ["#h6-in", 118]].forEach(([s, e]) =>
           tl.to(s, { opacity: 0, duration: 0.35 }, e - 0.4)
         );
 
-        // ---------- Scene 1 (6 to 26) ----------
+        // ---------- Scene 1 (6 to 22) ----------
         show("#s1-sub", 6.5, 10);
-        show("#w1", 7.6, 24);
-        show("#w2", 10.6, 24);
-        show("#c-host", 15.0, 24);
-        tl.to("#s1", { opacity: 0, duration: 0.4 }, 25.55);
+        show("#w1", 7.4, 24);
+        show("#w2", 9.8, 24);
+        show("#c-host", 13.0, 24);
+        tl.to("#s1", { opacity: 0, duration: 0.4 }, 21.55);
 
-        // ---------- Scene 2 (26 to 50) ----------
-        show("#node", 26.4, 20);
+        // ---------- Scene 2 (22 to 40) ----------
+        show("#node", 22.4, 20);
         const pairs = [
-          [["#n-taint", "#n-label"], "#r1", 28.0],
-          [["#n-dp"], "#r2", 34.5],
-          [["#n-pod"], "#r3", 41.0],
+          [["#n-taint", "#n-label"], "#r1", 23.6],
+          [["#n-dp"], "#r2", 28.6],
+          [["#n-pod"], "#r3", 33.6],
         ];
         pairs.forEach(([left, right, t]) => {
           left.forEach((s, i) => show(s, t + i * 0.5, 12));
           left.forEach((s) => tl.to(s, { borderColor: "#41b3ff", duration: 0.4 }, t + 1.0));
           show(right, t + 1.2, 20);
           tl.to(right, { borderColor: "#41b3ff", duration: 0.4 }, t + 1.2);
-          left.forEach((s) => tl.to(s, { borderColor: "#3a4a5e", duration: 0.4 }, t + 6.0));
-          tl.to(right, { borderColor: "#3a4a5e", duration: 0.4 }, t + 6.0);
+          left.forEach((s) => tl.to(s, { borderColor: "#3a4a5e", duration: 0.4 }, t + 4.6));
+          tl.to(right, { borderColor: "#3a4a5e", duration: 0.4 }, t + 4.6);
         });
-        tl.to("#s2", { opacity: 0, duration: 0.4 }, 49.55);
+        tl.to("#s2", { opacity: 0, duration: 0.4 }, 39.55);
 
-        // ---------- Scene 3 (50 to 74) ----------
-        show("#s3-sub", 50.5, 10);
-        show("#z-vpc", 51.0, 14);
-        show("#z-op", 51.2, 14);
-        ["#f1", "#fa1", "#f2", "#fa2", "#f3", "#fa3", "#f4"].forEach((s, i) => show(s, 51.8 + i * 0.35, 14));
-        show("#url", 55.0, 14);
+        // ---------- Recording scenes ----------
+        tl.set("#recwin", { opacity: 0 }, 0);
+        [[40, 63.2], [79, 101.7]].forEach(([a, b]) => {
+          tl.set("#recwin", { opacity: 1 }, a);
+          tl.set("#recwin", { opacity: 0 }, b);
+          tl.set("#footer", { opacity: 0 }, a);
+          tl.set("#footer", { opacity: 1 }, b);
+        });
+        // Pan so the latest output stays inside the window (recording is 1800x1412, window 850 high).
+        // Composition time = segment start + (media time - media start) / 0.75.
+        tl.set("#recpan", { y: 0 }, 0);
+        [
+          [50.0, -52],
+          [52.33, -156],
+          [55.0, -224],
+          [57.33, -292],
+          [60.0, -362],
+          [62.33, -465],
+        ].forEach(([t, y]) => tl.to("#recpan", { y: y, duration: 0.4, ease: "power2.out" }, t));
+        tl.set("#recpan", { y: -465 }, 79);
+        tl.to("#recpan", { y: -500, duration: 0.4, ease: "power2.out" }, 80.8);
+        tl.to("#recpan", { y: -562, duration: 0.4, ease: "power2.out" }, 83.13);
+
+        // ---------- Scene 4 (63.2 to 79) ----------
+        show("#s3-sub", 63.7, 10);
+        show("#z-vpc", 64.2, 14);
+        show("#z-op", 64.4, 14);
+        ["#f1", "#fa1", "#f2", "#fa2", "#f3", "#fa3", "#f4"].forEach((s, i) => show(s, 64.9 + i * 0.3, 14));
+        show("#url", 67.4, 14);
         const pk = document.getElementById("pkts");
         const fwd = [];
         const back = [];
@@ -928,47 +946,39 @@
         }
         tl.set(fwd.concat(back), { opacity: 0 }, 0);
         for (let r = 0; r < 3; r++) {
-          const t = 56.6 + r * 4.2;
+          const t = 68.4 + r * 3.4;
           tl.set(fwd[r], { x: 0, opacity: 1 }, t);
-          tl.to(fwd[r], { x: 1430, duration: 2.2, ease: "none" }, t);
-          tl.set(fwd[r], { opacity: 0 }, t + 2.2);
-          tl.set(back[r], { x: 1430, opacity: 1 }, t + 2.4);
-          tl.to(back[r], { x: 0, duration: 1.4, ease: "none" }, t + 2.4);
-          tl.set(back[r], { opacity: 0 }, t + 3.8);
+          tl.to(fwd[r], { x: 1430, duration: 1.8, ease: "none" }, t);
+          tl.set(fwd[r], { opacity: 0 }, t + 1.8);
+          tl.set(back[r], { x: 1430, opacity: 1 }, t + 2.0);
+          tl.to(back[r], { x: 0, duration: 1.2, ease: "none" }, t + 2.0);
+          tl.set(back[r], { opacity: 0 }, t + 3.2);
         }
-        tl.to("#f4", { borderColor: "#00e500", duration: 0.4 }, 58.8);
-        tl.to("#f1", { borderColor: "#41b3ff", duration: 0.4 }, 60.4);
-        show("#resp", 61.0, 20);
-        show("#loc", 64.5, 20);
-        tl.to("#s3", { opacity: 0, duration: 0.4 }, 73.55);
+        tl.to("#f4", { borderColor: "#00e500", duration: 0.4 }, 70.2);
+        tl.to("#f1", { borderColor: "#41b3ff", duration: 0.4 }, 71.6);
+        show("#resp", 71.8, 20);
+        show("#loc", 74.4, 20);
+        tl.to("#s3", { opacity: 0, duration: 0.4 }, 78.55);
 
-        // ---------- Scene 4 (74 to 96) ----------
-        ["#q1", "#q2", "#q3", "#q4"].forEach((s, i) => {
-          show(s, 75.2 + i * 3.2, 24);
-          tl.fromTo(s + " .okm", { scale: 0.4 }, { scale: 1, duration: 0.4, ease: "back.out(2.5)" }, 75.6 + i * 3.2);
-        });
-        show("#s4-note", 88.6, 10);
-        tl.to("#s4", { opacity: 0, duration: 0.4 }, 95.55);
+        // ---------- Scene 6 (101.7 to 118) ----------
+        show("#p1", 102.2, 24);
+        show("#p2", 104.6, 24);
+        show("#bl1", 107.6, 10);
+        tl.fromTo("#b1", { scaleX: 0 }, { scaleX: 1, duration: 2.2, ease: "power1.inOut" }, 107.8);
+        show("#bv1", 110.0, 10);
+        show("#bl2", 110.6, 10);
+        tl.fromTo("#b2", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 110.8);
+        show("#bv2", 111.0, 10);
+        show("#bar-note", 112.0, 10);
+        tl.to("#s5", { opacity: 0, duration: 0.4 }, 117.55);
 
-        // ---------- Scene 5 (96 to 114) ----------
-        show("#p1", 96.6, 24);
-        show("#p2", 99.6, 24);
-        show("#bl1", 103.0, 10);
-        tl.fromTo("#b1", { scaleX: 0 }, { scaleX: 1, duration: 2.4, ease: "power1.inOut" }, 103.2);
-        show("#bv1", 105.6, 10);
-        show("#bl2", 106.4, 10);
-        tl.fromTo("#b2", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 106.6);
-        show("#bv2", 106.8, 10);
-        show("#bar-note", 108.0, 10);
-        tl.to("#s5", { opacity: 0, duration: 0.4 }, 113.55);
-
-        // ---------- Scene 6 (114 to 130) ----------
-        show("#msg", 114.6, 20);
-        show("#k1", 116.4, 24);
-        show("#k2", 117.4, 24);
-        show("#cav", 119.6, 16);
-        show("#cv1", 120.1, 10);
-        show("#cv2", 121.2, 10);
+        // ---------- Scene 7 (118 to 134) ----------
+        show("#msg", 118.6, 20);
+        show("#k1", 120.2, 24);
+        show("#k2", 121.2, 24);
+        show("#cav", 123.4, 16);
+        show("#cv1", 123.9, 10);
+        show("#cv2", 125.0, 10);
 
         window.__timelines["main"] = tl;
       })();

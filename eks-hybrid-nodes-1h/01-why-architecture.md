@@ -201,7 +201,7 @@ EKS Anywhere는 컨트롤 플레인까지 고객이 운영하고, Hybrid Nodes�
 왼쪽 그림이 전체 구조입니다. AWS 쪽에는 컨트롤 플레인과 VPC가 있고, 온프레미스의 hybrid node가 VPN이나 Direct Connect 같은 private 연결로 이어집니다. 같은 클러스터 안에 일반 AWS 노드와 hybrid node를 함께 둘 수 있습니다.
 {cue: pause}
 그림에 라우터와 게이트웨이가 보이는데, 이 연결과 라우팅은 고객이 준비해야 합니다. Hybrid Nodes가 네트워크를 자동으로 만들어 주지는 않습니다. 노드는 nodeadm이라는 CLI로 구성하고, SSM이나 IAM Roles Anywhere로 받은 임시 자격 증명으로 EKS API에 인증합니다. 마지막으로 Cilium이나 Calico 같은 CNI를 설치해야 Ready가 됩니다. VPC CNI는 hybrid node를 관리하지 않습니다.
-네트워크는 3부에서, 등록 단계별 설정은 Deep Dive 1부 "Ready까지 여섯 단계"와 3부에서 자세히 다룹니다.
+네트워크는 오늘 3부에서, 등록 단계별 설정은 Deep Dive 1부 "Ready까지 여섯 단계"와 3부에서 자세히 다룹니다.
 근거: Deep Dive 1부 "컨트롤 플레인만 AWS에 맡긴다", "Ready까지 여섯 단계", Deep Dive의 high-level network 그림 재사용
 {cue: transition}
 이 구조에서 누가 무엇을 책임지는지 정리해 보겠습니다.
@@ -308,7 +308,7 @@ EKS Anywhere는 컨트롤 플레인까지 고객이 운영하고, Hybrid Nodes�
 {cue: pause}
 오른쪽 표는 노드당 32 vCPU, 월 730시간을 가정한 계산 모델입니다. 50노드면 월 1,168,000 vCPU-hours이고, 구간을 적용하면 월 19,744달러, 연환산 236,928달러입니다. 클러스터 요금 876달러를 더하면 237,804달러입니다.
 주의할 점이 두 가지 있습니다. 노드는 join된 시점부터 과금되고 workload가 놀아도 멈추지 않습니다. 그리고 hyperthreading을 켠 베어메탈은 코어 하나가 vCPU 2개로 보고될 수 있고, 머신당 32 vCPU를 넘으면 account team과 상담하라고 안내되어 있습니다. 하드웨어, 전력, OS 구독, 인력 비용은 빠진 숫자이니 조직의 TCO 모델에 넣어서 비교하시기 바랍니다. GPU 서버 규모로 직접 계산해 보는 계산기는 Deep Dive 1부에 있습니다.
-근거: Deep Dive 1부 "요금은 vCPU-hour 구간제", 4부 "비용은 vCPU-hour 구간 과금"(가정 문단과 표). https://aws.amazon.com/eks/pricing/ (Deep Dive 확인일 2026-09-16). 발표 직전에 최신 요금표 재확인 필요.
+근거: Deep Dive 1부 "요금은 vCPU-hour 구간제", 4부 "비용은 vCPU-hour 구간 과금"(가정 문단과 표). https://aws.amazon.com/eks/pricing/ (Deep Dive 확인일 2026-10-11). 발표 직전에 최신 요금표 재확인 필요.
 {cue: transition}
 다음은 어떤 서버를 노드로 쓸 수 있는지 보겠습니다.
 :::
@@ -338,9 +338,9 @@ EKS Anywhere는 컨트롤 플레인까지 고객이 운영하고, Hybrid Nodes�
   <div class="card"><strong class="text-warning">Bottlerocket</strong><div class="on-surface-muted">VMware 변형, x86_64만</div></div>
 </div>
 <div class="flow-h fragment" data-fragment-index="1">
-  <div class="flow-box fragment fade-right" data-fragment-index="1">nodeadm install<br><span class="hn-flow-sub">kubelet, containerd 등 의존성</span></div>
+  <div class="flow-box fragment fade-right" data-fragment-index="1">의존성 설치<br><span class="hn-flow-sub">nodeadm이 kubelet, containerd 등 설치</span></div>
   <div class="flow-arrow fragment fade-right" data-fragment-index="2">→</div>
-  <div class="flow-box fragment fade-right" data-fragment-index="2">nodeadm init<br><span class="hn-flow-sub">호스트 구성, EKS 조인</span></div>
+  <div class="flow-box fragment fade-right" data-fragment-index="2">호스트 구성, EKS 조인<br><span class="hn-flow-sub">nodeadm이 자격 증명으로 조인</span></div>
   <div class="flow-arrow fragment fade-right" data-fragment-index="3">→</div>
   <div class="flow-box fragment fade-right" data-fragment-index="3">CNI 설치<br><span class="hn-flow-sub">NotReady에서 Ready로</span></div>
 </div>
@@ -354,13 +354,13 @@ EKS Anywhere는 컨트롤 플레인까지 고객이 운영하고, Hybrid Nodes�
 {timing: 2min}
 [요약]
 - OS: Ubuntu, RHEL, AL2023(온프렘 가상화 한정), Bottlerocket(VMware 변형, x86_64 한정). 아키텍처는 x86_64와 arm64
-- 노드 준비: nodeadm install, init으로 조인하고 CNI를 설치하면 Ready
+- 노드 준비: nodeadm으로 의존성을 설치하고 조인한 뒤 CNI를 설치하면 Ready
 - Bottlerocket은 nodeadm 대신 자체 bootstrap 경로를 씁니다.
 
 노드로 쓸 수 있는 OS는 네 가지입니다. Ubuntu와 RHEL은 지원 목록의 버전이면 되고, Amazon Linux 2023은 온프렘 가상화 환경에서만 지원되며 베어메탈은 아닙니다. Bottlerocket은 VMware 변형에 x86_64만 지원합니다. CPU 아키텍처는 x86_64와 arm64입니다.
 {cue: pause}
 노드 준비는 단순합니다. nodeadm install로 kubelet, containerd 같은 의존성을 설치하고, nodeadm init으로 호스트를 구성해서 클러스터에 조인합니다. 이 상태에서는 NotReady이고, CNI를 설치하면 Ready가 됩니다. nodeadm은 계속 떠 있는 에이전트가 아니라 설치, 조인, 업그레이드용 CLI이고, 롤백이나 reset 명령은 없습니다. Bottlerocket은 nodeadm을 쓰지 않고 자체 설정 경로로 조인합니다.
-정확한 OS 버전, Kubernetes와 nodeadm 버전 요건, Cilium 버전은 시점에 따라 바뀝니다. 지원 매트릭스는 Deep Dive 1부, nodeadm과 Bottlerocket 조인 절차는 Deep Dive 3부에서 확인하세요. 업그레이드와 라이프사이클은 4부에서 다시 봅니다.
+정확한 OS 버전, Kubernetes와 nodeadm 버전 요건, Cilium 버전은 시점에 따라 바뀝니다. 지원 매트릭스는 Deep Dive 1부, nodeadm과 Bottlerocket 조인 절차는 Deep Dive 3부에서 확인하세요. 업그레이드와 라이프사이클은 오늘 4부에서 다시 봅니다.
 근거: Deep Dive 1부 "지원 매트릭스: OS, K8s, CNI", 3부 "nodeadm: 명령은 여섯 개뿐", "Bottlerocket 조인과 운영의 차이".
 {cue: transition}
 마지막으로 노드가 AWS에 인증하는 자격 증명 방식을 고르는 기준입니다.
@@ -398,17 +398,17 @@ EKS Anywhere는 컨트롤 플레인까지 고객이 운영하고, Hybrid Nodes�
   <div class="hn-tip" tabindex="0">PKI 불필요, activation 코드<span class="hn-pop">Activation 코드와 ID만 있으면 등록합니다. 활성화는 기본 24시간, 최대 30일 유효하고 하나로 1~1000대까지 등록합니다. 코드가 노출되면 그 기간에 누구나 등록할 수 있으니 짧게 만들고 노드별로 전달하세요.</span></div>
   <div class="hn-tip hn-right" tabindex="0">CA와 노드별 인증서<span class="hn-pop">trust anchor(CA), profile, role, 노드별 인증서와 개인 키가 필요합니다. 사내 PKI가 있으면 재사용하고, 없으면 AWS Private CA를 쓸 수 있지만 그 요금은 별도입니다.</span></div>
   <div class="hn-crit">단절 후 복구</div>
-  <div class="hn-tip" tabindex="0">최대 30분 지연 가능<span class="hn-pop">끊기면 SSM agent가 지수 백오프로 재시도합니다(agent 3.3.808.0 이상은 최대 30분 간격). 자격 증명이 만료되면 네트워크가 돌아와도 갱신될 때까지 재연결되지 않고, 노드마다 시점이 다릅니다. agent를 재시작하면 바로 갱신합니다.</span></div>
-  <div class="hn-tip hn-right" tabindex="0">보통 몇 초<span class="hn-pop">kubelet이 aws_signing_helper credential-process로 필요할 때마다 자격 증명을 받기 때문에, 네트워크가 돌아오면 보통 몇 초 안에 재연결됩니다.</span></div>
+  <div class="hn-tip" tabindex="0">최대 30분 지연 가능<span class="hn-pop">끊기면 SSM agent가 간격을 늘려 가며 재시도하고, 그 간격이 최대 30분입니다. 자격 증명이 만료되면 네트워크가 돌아와도 갱신될 때까지 재연결되지 않고, 노드마다 시점이 다릅니다. agent를 재시작하면 바로 갱신합니다.</span></div>
+  <div class="hn-tip hn-right" tabindex="0">보통 몇 초<span class="hn-pop">kubelet이 필요할 때마다 자격 증명을 받기 때문에, 네트워크가 돌아오면 보통 몇 초 안에 재연결됩니다.</span></div>
   <div class="hn-crit">세션 길이</div>
   <div class="hn-tip" tabindex="0">1시간 고정<span class="hn-pop">바꿀 수 없습니다. 만료 전에 자동으로 교체되고, 평소에는 노드와 애플리케이션에 영향이 없습니다.</span></div>
-  <div class="hn-tip hn-right" tabindex="0">기본 1시간, 최대 12시간<span class="hn-pop">profile의 durationSeconds로 늘리고, 노드 IAM role의 MaxSessionDuration이 그보다 커야 합니다. 길게 잡으면 짧은 단절은 견디지만 유출 시 노출 시간도 길어집니다.</span></div>
+  <div class="hn-tip hn-right" tabindex="0">기본 1시간, 최대 12시간<span class="hn-pop">profile 설정으로 늘릴 수 있고, 노드 IAM role의 최대 세션 길이도 함께 맞춰야 합니다. 길게 잡으면 짧은 단절은 견디지만 유출 시 노출 시간도 길어집니다.</span></div>
   <div class="hn-crit">노드 이름</div>
   <div class="hn-tip hn-up" tabindex="0">mi-* ID로 자동<span class="hn-pop">SSM이 만든 managed instance ID가 노드 이름이 됩니다. 사람이 읽기 어려우니 위치와 역할은 label로 붙이세요.</span></div>
-  <div class="hn-tip hn-right hn-up" tabindex="0">인증서 CN과 연결<span class="hn-pop">role trust policy의 RoleSessionName 조건으로 노드 이름을 인증서 CN에 묶을 수 있습니다. NodeConfig에 nodeName, 인증서 경로, 키 경로를 지정합니다.</span></div>
+  <div class="hn-tip hn-right hn-up" tabindex="0">인증서 CN과 연결<span class="hn-pop">노드 이름은 인증서 CN과 맞춰야 합니다. 설정 방법은 Deep Dive 3부에 있습니다.</span></div>
   <div class="hn-crit">운영 부담</div>
   <div class="hn-tip hn-up" tabindex="0">activation과 agent 관리<span class="hn-pop">활성화 만료와 등록 한도, SSM agent 버전, 노드 제거 시 등록 해제를 관리합니다. 등록 자체는 무료지만 hybrid 노드에 Session Manager나 Run Command를 쓰면 2026-09-30부터 사용량 과금입니다.</span></div>
-  <div class="hn-tip hn-right hn-up" tabindex="0">인증서 발급, 갱신, 폐기<span class="hn-pop">노드별 인증서 배포, 만료 전 갱신, 폐기 목록(CRL) 관리를 운영해야 합니다. 인증서가 만료되면 자격 증명을 받을 수 없으니 만료 알림을 켜 두세요. IAM Roles Anywhere 자체는 추가 요금이 없습니다.</span></div>
+  <div class="hn-tip hn-right hn-up" tabindex="0">인증서 발급, 갱신, 폐기<span class="hn-pop">노드별 인증서 배포, 만료 전 갱신, 폐기를 운영해야 합니다. 인증서가 만료되면 자격 증명을 받을 수 없으니 만료 알림을 켜 두세요. IAM Roles Anywhere 자체는 추가 요금이 없습니다.</span></div>
   <div class="hn-crit">필요한 연결</div>
   <div class="hn-tip hn-up" tabindex="0">SSM 리전 엔드포인트<span class="hn-pop">갱신하려면 SSM 엔드포인트에 닿아야 합니다. 사설 연결만 쓰면 interface VPC endpoint(PrivateLink)를 준비합니다.</span></div>
   <div class="hn-tip hn-right hn-up" tabindex="0">Roles Anywhere 엔드포인트<span class="hn-pop">갱신하려면 IAM Roles Anywhere 엔드포인트에 닿아야 합니다. 로컬 CA가 있어도 AWS 없이 자격 증명을 발급받을 수는 없습니다.</span></div>
@@ -434,7 +434,7 @@ EKS Anywhere는 컨트롤 플레인까지 고객이 운영하고, Hybrid Nodes�
 운영 부담은 종류가 다릅니다. SSM은 activation 만료와 agent 버전을, IAM Roles Anywhere는 인증서 배포와 갱신, 폐기를 챙겨야 합니다. 비용은 SSM 등록이 무료이고, hybrid 노드에 Session Manager나 Run Command를 쓰면 2026년 9월 30일부터 사용량 과금입니다. IAM Roles Anywhere는 추가 요금이 없고, AWS Private CA를 쓰면 그 요금이 붙습니다.
 마지막으로 한 클러스터에서는 한 방식만 쓰는 것이 AWS 권장이고, 어느 쪽이든 갱신에는 AWS 연결이 필요합니다. 로컬 CA가 있다고 오프라인으로 발급받을 수는 없습니다. NodeConfig 설정과 provider별 준비물은 Deep Dive 1부와 3부에 있습니다.
 {cue: transition}
-여기까지가 개념과 아키텍처였습니다. 다음 3부에서는 이 구조의 핵심인 네트워킹을 보겠습니다.
+여기까지가 개념과 아키텍처였습니다. 오늘 3부에서는 이 구조의 핵심인 네트워킹을 보겠습니다.
 
 [출처]
 - https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html (PKI 유무에 따른 권장, 한 방식 사용)

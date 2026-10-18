@@ -278,6 +278,11 @@
         font-family: var(--mono);
         font-size: 36px;
       }
+      .route-row span.eni-old,
+      .route-row span.eni-new {
+        font-family: var(--sans);
+        font-weight: 700;
+      }
       .eni-old {
         color: var(--accent);
       }
@@ -512,6 +517,96 @@
         font-size: 36px;
         color: var(--fg-2);
       }
+      /* recording scenes */
+      .rec {
+        position: absolute;
+        left: 144px;
+        top: 150px;
+        width: 1632px;
+        height: 836px;
+        object-fit: cover;
+        border-radius: 16px;
+        border: 2px solid var(--line);
+        background: #121314;
+      }
+      .rec.top {
+        object-position: 50% 0%;
+      }
+      .rec.bottom {
+        object-position: 50% 100%;
+      }
+      .rec-note {
+        position: absolute;
+        right: 60px;
+        top: 56px;
+        padding: 8px 24px;
+        border-radius: 14px;
+        border: 2px solid var(--warning);
+        background: rgba(251, 211, 50, 0.1);
+        color: var(--warning);
+        font-size: 36px;
+        font-weight: 700;
+      }
+      .footer-label.rec-label .footer-dot {
+        background: var(--danger);
+      }
+      .dnotes {
+        left: 60px;
+        width: 1190px;
+        padding: 26px 34px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 18px;
+      }
+      .dnotes .note {
+        font-size: 36px;
+      }
+      #s5 .grp {
+        position: absolute;
+        top: 186px;
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--fg-2);
+      }
+      #s5 .cards4 {
+        position: absolute;
+        left: 60px;
+        top: 244px;
+        width: 1800px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 32px;
+      }
+      .card.rec-card {
+        border: 3px solid var(--danger);
+        background: rgba(255, 92, 133, 0.06);
+      }
+      .card-iam {
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--warning);
+      }
+      .card-gap {
+        height: 49px;
+      }
+      #s5 .msg-sub {
+        top: 850px;
+      }
+      .cards4 .card-fail {
+        font-size: 36px;
+      }
+      .cards4 .card {
+        padding: 30px 34px;
+      }
+      .msg-sub2 {
+        position: absolute;
+        left: 60px;
+        top: 912px;
+        width: 1800px;
+        font-size: 36px;
+        color: var(--fg-2);
+      }
     </style>
   </head>
   <body>
@@ -519,7 +614,7 @@
       id="root"
       data-composition-id="main"
       data-start="0"
-      data-duration="150"
+      data-duration="178"
       data-width="1920"
       data-height="1080"
     >
@@ -537,48 +632,48 @@
         </div>
       </section>
 
-      <!-- Scene headers -->
+      <!-- Diagram scene headers -->
       <div id="h1" class="clip" data-start="5.5" data-duration="18.5" data-track-index="2">
         <div id="h1-in" class="hdr">
-          <span class="step">1 / 5</span>
+          <span class="step">1 / 8</span>
           <span class="hdr-title">환경 구성: EKS VPC와 시뮬레이션 온프레미스</span>
         </div>
       </div>
-      <div id="h2" class="clip" data-start="24" data-duration="28" data-track-index="2">
+      <div id="h2" class="clip" data-start="43.6" data-duration="22.4" data-track-index="2">
         <div id="h2-in" class="hdr">
-          <span class="step">2 / 5</span>
+          <span class="step">3 / 8</span>
           <span class="hdr-title">평상시 경로: 라우트는 리더 ENI로</span>
         </div>
       </div>
-      <div id="h3" class="clip" data-start="52" data-duration="28" data-track-index="2">
+      <div id="h3" class="clip" data-start="91.8" data-duration="16.2" data-track-index="2">
         <div id="h3-in" class="hdr">
-          <span class="step">3 / 5</span>
+          <span class="step">5 / 8</span>
           <span class="hdr-title">리더 Pod 삭제</span>
         </div>
       </div>
-      <div id="h4" class="clip" data-start="80" data-duration="35" data-track-index="2">
+      <div id="h4" class="clip" data-start="108" data-duration="20" data-track-index="2">
         <div id="h4-in" class="hdr">
-          <span class="step">4 / 5</span>
+          <span class="step">6 / 8</span>
           <span class="hdr-title">Lease와 라우트 교체</span>
         </div>
       </div>
-      <div id="h5" class="clip" data-start="115" data-duration="35" data-track-index="2">
+      <div id="h5" class="clip" data-start="147.5" data-duration="30.5" data-track-index="2">
         <div id="h5-in" class="hdr">
-          <span class="step">5 / 5</span>
-          <span class="hdr-title">결과: 3회 측정</span>
+          <span class="step">8 / 8</span>
+          <span class="hdr-title">결과: 4회 측정</span>
         </div>
       </div>
 
-      <!-- Timer badges -->
-      <div id="tm0" class="clip" data-start="55" data-duration="25" data-track-index="3">
+      <!-- Timer badges (recorded run) -->
+      <div id="tm0" class="clip" data-start="93" data-duration="15" data-track-index="3">
         <div id="tm0-in" class="timer t0">T0 <small>리더 Pod 삭제</small></div>
       </div>
-      <div id="tm3" class="clip" data-start="80" data-duration="35" data-track-index="3">
-        <div id="tm3-in" class="timer t3">T0 + 3초 <small>Lease 전환</small></div>
+      <div id="tm5" class="clip" data-start="108.5" data-duration="19.5" data-track-index="3">
+        <div id="tm5-in" class="timer t3">T0 + 5초 <small>Lease 전환</small></div>
       </div>
 
-      <!-- Persistent diagram, scenes 1 to 4 -->
-      <div id="diagram" class="clip" data-start="5.5" data-duration="109.5" data-track-index="4">
+      <!-- Persistent diagram (covered by recording scenes) -->
+      <div id="diagram" class="clip" data-start="5.5" data-duration="122.5" data-track-index="4">
         <div id="z-vpc" class="zone" style="left: 60px; top: 196px; width: 1090px; height: 456px">
           <div class="zone-label">AWS VPC <span class="mono">10.0.0.0/16</span></div>
         </div>
@@ -590,8 +685,8 @@
           <div class="box-title">VPC 라우트</div>
           <div class="route-row"><span>172.17.0.0/16</span></div>
           <div class="route-row" data-layout-allow-overlap>
-            <span id="eni-old" class="eni-old">→ eni-…a1</span>
-            <span id="eni-new" class="eni-new">→ eni-…b2</span>
+            <span id="eni-old" class="eni-old">→ 리더 ENI</span>
+            <span id="eni-new" class="eni-new">→ 새 리더 ENI</span>
           </div>
         </div>
         <div id="b-gwa" class="box" style="left: 834px; top: 270px; width: 290px; height: 170px">
@@ -634,7 +729,7 @@
         </svg>
 
         <div id="pkts"></div>
-        <div id="fail-tag" class="fail-tag" style="left: 470px; top: 588px">요청 1개 실패</div>
+        <div id="fail-tag" class="fail-tag" style="left: 470px; top: 588px">요청 2개 실패</div>
       </div>
 
       <!-- Scene 1 notes -->
@@ -646,104 +741,130 @@
         </div>
       </div>
 
-      <!-- Scene 2 terminal -->
-      <div id="s2-term" class="clip" data-start="24" data-duration="28" data-track-index="5">
-        <div class="panel term">
-          <span id="s2l1" class="ln"><span class="p">$</span> kubectl get pods,lease -n eks-hybrid-nodes-gateway</span>
-          <span id="s2l2" class="ln">pod/gateway-<span class="eg">…a1</span>   1/1   <span class="ok">Running</span></span>
-          <span id="s2l3" class="ln">pod/gateway-<span class="eg">…b2</span>   1/1   <span class="ok">Running</span></span>
-          <span id="s2l4" class="ln">lease/hybrid-gateway-leader   <span class="w">gw-node-a_&lt;uuid&gt;</span></span>
-          <span id="s2l5" class="ln c"># HOLDER는 Pod 이름이 아니라 노드이름_uuid, 이름과 ID는 예시 표기</span>
+      <!-- Diagram scene notes -->
+      <div id="s2-notes" class="clip" data-start="43.6" data-duration="22.4" data-track-index="5">
+        <div class="panel dnotes">
+          <div id="s2n1" class="note"><i>1</i><span>리더는 Gateway A, <span class="mono">ip-10-0-41-152</span> 노드</span></div>
+          <div id="s2n2" class="note"><i>2</i><span>Lease HOLDER는 Pod 이름이 아니라 노드이름_uuid</span></div>
+          <div id="s2n3" class="note"><i>3</i><span>VPC 라우트 <span class="mono">172.17.0.0/16</span>은 리더 노드 ENI로</span></div>
+        </div>
+      </div>
+      <div id="s3-notes" class="clip" data-start="91.8" data-duration="16.2" data-track-index="5">
+        <div class="panel dnotes">
+          <div id="s3n1" class="note"><i>1</i><span>T0 <span class="mono">06:28:09</span>, 리더 Pod 삭제</span></div>
+          <div id="s3n2" class="note"><i>2</i><span>Lease 갱신이 멈추고 라우트는 아직 옛 리더 ENI</span></div>
+          <div id="s3n3" class="note"><i>3</i><span>이 사이 1초 간격 요청 60개 중 2개 실패</span></div>
+        </div>
+      </div>
+      <div id="s4-notes" class="clip" data-start="108" data-duration="20" data-track-index="5">
+        <div class="panel dnotes">
+          <div id="s4n1" class="note"><i>1</i><span>T0 + 5초, <span class="mono">ip-10-0-57-129</span> 노드의 Pod가 새 리더</span></div>
+          <div id="s4n2" class="note"><i>2</i><span>새 리더가 VPC 라우트를 자기 노드 ENI로 교체</span></div>
+          <div id="s4n3" class="note"><i>3</i><span>첫 실패부터 마지막 실패까지 5초, 이후 요청 정상</span></div>
         </div>
       </div>
 
-      <!-- Scene 3 terminal -->
-      <div id="s3-term" class="clip" data-start="52" data-duration="28" data-track-index="5">
-        <div class="panel term">
-          <span id="s3l1" class="ln"><span class="p">$</span> kubectl -n eks-hybrid-nodes-gateway \</span>
-          <span id="s3l2" class="ln">    delete pod gateway-<span class="eg">…a1</span></span>
-          <span id="s3l3" class="ln">pod "gateway-<span class="eg">…a1</span>" deleted</span>
-          <span id="s3l4" class="ln c"># 리더가 사라져 Lease 갱신 중단, 라우트는 아직 <span class="mono">eni-…a1</span></span>
-          <span id="s3l5" class="ln c"># 스탠바이가 Lease를 넘겨받기 전까지 요청이 실패할 수 있음</span>
-        </div>
-      </div>
-
-      <!-- Scene 4 terminals -->
-      <div id="s4a-term" class="clip" data-start="80" data-duration="12" data-track-index="5">
-        <div class="panel term">
-          <span id="s4al1" class="ln"><span class="p">$</span> kubectl get lease -n eks-hybrid-nodes-gateway</span>
-          <span id="s4al2" class="ln">hybrid-gateway-leader   <span class="eg">gw-node-a_&lt;uuid&gt;</span>   <span class="c">T0 이전</span></span>
-          <span id="s4al3" class="ln">hybrid-gateway-leader   <span class="ok">gw-node-b_&lt;uuid&gt;</span>   <span class="c">T0 + 3초</span></span>
-          <span id="s4al4" class="ln c"># 새 리더가 VPC 라우트를 자기 노드 ENI로 교체</span>
-        </div>
-      </div>
-      <div id="s4b-term" class="clip" data-start="92" data-duration="23" data-track-index="5">
-        <div class="panel term">
-          <span id="s4bl1" class="ln"><span class="p">$</span> ./demo1-gateway/failover.sh</span>
-          <span id="s4bl2" class="ln">lease handover:   <span class="ok">3s after pod delete</span></span>
-          <span id="s4bl3" class="ln">failed probes:    <span class="w">1 / 60</span></span>
-          <span id="s4bl4" class="ln">route ENI:        eni-<span class="eg">…a1</span> -&gt; eni-<span class="eg">…b2</span></span>
-          <span id="s4bl5" class="ln">route target matches new leader ENI: <span class="ok">yes</span></span>
-        </div>
-      </div>
-
-      <!-- Probe grid, scenes 2 to 4 -->
-      <div id="probe-clip" class="clip" data-start="24" data-duration="91" data-track-index="6">
+      <!-- Probe grid (recorded run: 2 / 60) -->
+      <div id="probe-clip" class="clip" data-start="43.6" data-duration="84.4" data-track-index="6">
         <div id="probe" class="panel">
           <div class="probe-head">
             <span>1초 간격 요청</span>
             <div class="cnt-slot" data-layout-allow-overlap>
               <span id="cnt0" class="cnt0">실패 0 / 60</span>
               <span id="cnt1" class="cnt1">실패 1 / 60</span>
+              <span id="cnt2" class="cnt1">실패 2 / 60</span>
             </div>
           </div>
           <div id="grid"></div>
         </div>
       </div>
 
-      <!-- Scene 5 results -->
-      <section id="s5" class="clip" data-start="115" data-duration="35" data-track-index="4">
-        <div class="cards">
+      <!-- Scene 8: results -->
+      <section id="s5" class="clip" data-start="147.5" data-duration="30.5" data-track-index="4">
+        <div id="grp1" class="grp" style="left: 60px">이전 측정 3회 (2026-10-15)</div>
+        <div id="grp2" class="grp" style="left: 1434px">녹화 회차 (2026-10-18)</div>
+        <div class="cards4">
           <div id="c1" class="card">
             <div class="card-run">1회차</div>
+            <div class="card-gap"></div>
             <div class="card-label">Lease 전환</div>
             <div class="card-num">3<small>초</small></div>
-            <div class="card-fail">실패한 요청 <span class="d">60개 중 1개</span></div>
-            <div class="card-route">라우트: 새 리더 ENI로 이동</div>
+            <div class="card-fail">실패 <span class="d">60개 중 1개</span></div>
           </div>
           <div id="c2" class="card">
             <div class="card-run">2회차</div>
+            <div class="card-gap"></div>
             <div class="card-label">Lease 전환</div>
             <div class="card-num">5<small>초</small></div>
-            <div class="card-fail">실패한 요청 <span class="d">60개 중 1개</span></div>
-            <div class="card-route">라우트: 새 리더 ENI로 이동</div>
+            <div class="card-fail">실패 <span class="d">60개 중 1개</span></div>
           </div>
           <div id="c3" class="card hl">
-            <div class="card-run">3회차 <b>최소 권한 IAM</b></div>
+            <div class="card-run">3회차</div>
+            <div class="card-iam">최소 권한 IAM</div>
             <div class="card-label">Lease 전환</div>
             <div class="card-num">5<small>초</small></div>
-            <div class="card-fail">실패한 요청 <span class="d">45개 중 2개</span></div>
-            <div class="card-route">라우트: 새 리더 ENI로 이동</div>
+            <div class="card-fail">실패 <span class="d">45개 중 2개</span></div>
+          </div>
+          <div id="c4" class="card rec-card">
+            <div class="card-run">녹화 회차</div>
+            <div class="card-gap"></div>
+            <div class="card-label">Lease 전환</div>
+            <div class="card-num">5<small>초</small></div>
+            <div class="card-fail">실패 <span class="d">60개 중 2개</span></div>
           </div>
         </div>
         <div id="msg" class="msg">
           Gateway 리더가 죽어도 <b>3~5초</b> 안에 스탠바이가 경로를 넘겨받습니다
         </div>
-        <div id="msg-sub" class="msg-sub">
-          AWS 문서의 예상치 3~5초와 일치하지만 보장값은 아닙니다. 이 환경에서 세 번 측정한 값입니다.
-        </div>
+        <div id="msg-sub" class="msg-sub">모든 회차에서 VPC 라우트가 새 리더 ENI로 이동했습니다.</div>
+        <div id="msg-sub2" class="msg-sub2">AWS 문서의 예상치 3~5초와 일치하지만 보장값은 아닙니다.</div>
       </section>
 
-      <!-- Persistent label, every scene -->
-      <div id="footer" class="clip" data-start="0" data-duration="150" data-track-index="9">
+      <!-- Footer for reconstructed scenes (covered during recording scenes) -->
+      <div id="footer" class="clip" data-start="0" data-duration="178" data-track-index="9">
         <div class="footer-label"><span class="footer-dot"></span>실측 결과 재구성 (2026-10 시뮬레이션 환경)</div>
         <div class="footer-right">데모 1: Gateway 리더 전환</div>
       </div>
+
+      <!-- Recording scene A: start state -->
+      <div id="recA" class="clip" data-start="24" data-duration="19.6" data-track-index="10">
+        <div class="hdr">
+          <span class="step">2 / 8</span>
+          <span class="hdr-title">녹화: 시작 상태</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-18, 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 1: Gateway 리더 전환</div>
+      </div>
+      <video id="vA" class="rec top" src="assets/r1-failover.mp4" data-start="24" data-duration="19.6" data-media-start="0" data-playback-rate="0.5" data-track-index="11" muted playsinline></video>
+
+      <!-- Recording scene B: failover.sh -->
+      <div id="recB" class="clip" data-start="66" data-duration="25.8" data-track-index="10">
+        <div class="hdr">
+          <span class="step">4 / 8</span>
+          <span class="hdr-title">녹화: failover.sh 실행</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-18, 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 1: Gateway 리더 전환</div>
+      </div>
+      <video id="vB" class="rec bottom" src="assets/r1-failover.mp4" data-start="66" data-duration="25.8" data-media-start="9.8" data-playback-rate="0.5" data-track-index="11" muted playsinline></video>
+
+      <!-- Recording scene C: after -->
+      <div id="recC" class="clip" data-start="128" data-duration="19.5" data-track-index="10">
+        <div class="hdr">
+          <span class="step">7 / 8</span>
+          <span class="hdr-title">녹화: 전환 이후 상태</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-18, 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 1: Gateway 리더 전환</div>
+      </div>
+      <video id="vC" class="rec bottom" src="assets/r1-failover.mp4" data-start="128" data-duration="19.5" data-media-start="22.7" data-playback-rate="0.6" data-track-index="11" muted playsinline></video>
     </div>
 
     <script>
       (function () {
-        // Build the 60-cell probe grid (DURATION=60 in failover.sh).
         const grid = document.getElementById("grid");
         for (let i = 0; i < 60; i++) {
           const c = document.createElement("span");
@@ -765,17 +886,9 @@
         const OK = "#00e500";
         const BAD = "#ff5c85";
 
-        // Ambient background drift (finite).
-        tl.fromTo("#bg-glow", { x: 0, y: 0 }, { x: -260, y: 120, duration: 18, ease: "sine.inOut", yoyo: true, repeat: 7 }, 0);
+        tl.fromTo("#bg-glow", { x: 0, y: 0 }, { x: -260, y: 120, duration: 18, ease: "sine.inOut", yoyo: true, repeat: 8 }, 0);
 
-        // Path points (centers): cloud pod, route table, gateway A or B, hybrid pod.
-        const P = {
-          cloud: [246, 390],
-          route: [615, 432],
-          gwa: [979, 355],
-          gwb: [979, 549],
-          pod: [1575, 476],
-        };
+        const P = { cloud: [246, 390], route: [615, 432], gwa: [979, 355], gwb: [979, 549], pod: [1575, 476] };
         function packet(t, via) {
           const d = mkPkt(false);
           const g = P[via];
@@ -785,6 +898,14 @@
           tl.to(d, { x: g[0], y: g[1], duration: 0.5, ease: "none" }, t + 0.6);
           tl.to(d, { x: P.pod[0], y: P.pod[1], duration: 0.8, ease: "none" }, t + 1.1);
           tl.to(d, { opacity: 0, duration: 0.2 }, t + 1.85);
+        }
+        function badPacket(t) {
+          const d = mkPkt(true);
+          tl.set(d, { x: P.cloud[0], y: P.cloud[1], opacity: 0 }, 0);
+          tl.to(d, { opacity: 1, duration: 0.15 }, t);
+          tl.to(d, { x: P.route[0], y: P.route[1], duration: 0.6, ease: "none" }, t);
+          tl.to(d, { x: P.gwa[0], y: P.gwa[1], duration: 0.5, ease: "none" }, t + 0.6);
+          tl.to(d, { scale: 2.2, opacity: 0, duration: 0.5, ease: "power2.out" }, t + 1.1);
         }
         function cell(i, t, color) {
           tl.to("#cell-" + i, { backgroundColor: color, duration: 0.2 }, t);
@@ -799,14 +920,13 @@
         show("#t-msg", 1.4);
         tl.to(["#t-kicker", "#t-title", "#t-msg"], { opacity: 0, duration: 0.5 }, 5.3);
 
-        // Headers
         show("#h1-in", 5.6, 0);
-        show("#h2-in", 24.05, 0);
-        show("#h3-in", 52.05, 0);
-        show("#h4-in", 80.05, 0);
-        show("#h5-in", 115.05, 0);
-        tl.fromTo("#tm0-in", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, 55);
-        tl.fromTo("#tm3-in", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, 81);
+        show("#h2-in", 43.65, 0);
+        show("#h3-in", 91.85, 0);
+        show("#h4-in", 108.05, 0);
+        show("#h5-in", 147.55, 0);
+        tl.fromTo("#tm0-in", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, 93);
+        tl.fromTo("#tm5-in", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, 108.5);
 
         // Scene 1b: diagram build
         const build = [
@@ -814,76 +934,74 @@
           ["#g-vxlan", 10.0], ["#g-tgw", 10.0], ["#z-onprem", 10.6], ["#b-node", 11.2], ["#b-pod", 11.6], ["#wires", 12.4],
         ];
         build.forEach(([s, t]) => show(s, t, 16));
-        tl.set(["#eni-new", "#gwa-dead", "#gwb-leader", "#fail-tag", "#cnt1"], { opacity: 0 }, 0);
+        tl.set(["#eni-new", "#gwa-dead", "#gwb-leader", "#fail-tag", "#cnt1", "#cnt2"], { opacity: 0 }, 0);
         show("#n1", 13.5, 16);
         show("#n2", 15.5, 16);
         show("#n3", 17.5, 16);
 
-        // Scene 2: normal path via leader A
-        tl.fromTo("#b-route", { borderColor: "#3a4a5e" }, { borderColor: "#fbd332", duration: 0.4 }, 24.5);
-        tl.fromTo("#b-gwa", { borderColor: "#3a4a5e" }, { borderColor: "#41b3ff", duration: 0.4 }, 24.5);
-        show("#s2l1", 25.0, 8);
-        show("#s2l2", 26.6, 8);
-        show("#s2l3", 26.9, 8);
-        show("#s2l4", 27.6, 8);
-        show("#s2l5", 30.5, 8);
-        for (let t = 26.5; t < 50.5; t += 2.4) packet(t, "gwa");
-        for (let i = 0; i < 10; i++) cell(i, 29 + i, OK); // 10 s of probes before delete (sleep 10)
+        // Scene 3: normal path via leader A
+        tl.fromTo("#b-route", { borderColor: "#3a4a5e" }, { borderColor: "#fbd332", duration: 0.4 }, 44);
+        tl.fromTo("#b-gwa", { borderColor: "#3a4a5e" }, { borderColor: "#41b3ff", duration: 0.4 }, 44);
+        show("#s2n1", 44.5, 8);
+        show("#s2n2", 46.5, 8);
+        show("#s2n3", 48.5, 8);
+        for (let t = 46; t < 64.5; t += 2.4) packet(t, "gwa");
+        for (let i = 0; i < 10; i++) cell(i, 50 + i, OK); // failover.sh probes 10 s before the delete
 
-        // Scene 3: delete leader
-        show("#s3l1", 52.6, 8);
-        show("#s3l2", 52.9, 8);
-        show("#s3l3", 54.4, 8);
-        tl.to("#b-route", { borderColor: "#3a4a5e", duration: 0.3 }, 52.2);
-        tl.to("#b-gwa", { borderColor: "#ff5c85", opacity: 0.55, duration: 0.5 }, 55);
-        tl.to("#gwa-leader", { opacity: 0, duration: 0.3 }, 55);
-        tl.to("#gwa-dead", { opacity: 1, duration: 0.3 }, 55);
-        tl.to(["#w-ra", "#w-an"], { stroke: "#ff5c85", opacity: 0.5, duration: 0.4 }, 55);
-        // The single failed probe: packet reaches the route, then dies at the deleted leader.
-        (function () {
-          const d = mkPkt(true);
-          const t = 57;
-          tl.set(d, { x: P.cloud[0], y: P.cloud[1], opacity: 0 }, 0);
-          tl.to(d, { opacity: 1, duration: 0.15 }, t);
-          tl.to(d, { x: P.route[0], y: P.route[1], duration: 0.6, ease: "none" }, t);
-          tl.to(d, { x: P.gwa[0], y: P.gwa[1], duration: 0.5, ease: "none" }, t + 0.6);
-          tl.to(d, { scale: 2.2, opacity: 0, duration: 0.5, ease: "power2.out" }, t + 1.1);
-        })();
-        cell(10, 58.2, BAD);
-        tl.to("#cnt0", { opacity: 0, duration: 0.3 }, 58.2);
-        tl.to("#cnt1", { opacity: 1, duration: 0.3 }, 58.2);
-        tl.fromTo("#fail-tag", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4 }, 58.4);
-        tl.to("#fail-tag", { opacity: 0, duration: 0.4 }, 79.4);
-        show("#s3l4", 61.0, 8);
-        show("#s3l5", 64.0, 8);
+        // Scene 5: delete leader (recorded run: 2 failed probes)
+        show("#s3n1", 92.4, 8);
+        tl.to("#b-route", { borderColor: "#3a4a5e", duration: 0.3 }, 92);
+        tl.to("#b-gwa", { borderColor: "#ff5c85", opacity: 0.55, duration: 0.5 }, 93);
+        tl.to("#gwa-leader", { opacity: 0, duration: 0.3 }, 93);
+        tl.to("#gwa-dead", { opacity: 1, duration: 0.3 }, 93);
+        tl.to(["#w-ra", "#w-an"], { stroke: "#ff5c85", opacity: 0.5, duration: 0.4 }, 93);
+        show("#s3n2", 95, 8);
+        badPacket(95);
+        cell(10, 96.2, BAD);
+        tl.to("#cnt0", { opacity: 0, duration: 0.3 }, 96.2);
+        tl.to("#cnt1", { opacity: 1, duration: 0.3 }, 96.2);
+        cell(11, 97, OK);
+        cell(12, 97.8, OK);
+        cell(13, 98.6, OK);
+        badPacket(99);
+        cell(14, 100.2, BAD);
+        tl.to("#cnt1", { opacity: 0, duration: 0.3 }, 100.2);
+        tl.to("#cnt2", { opacity: 1, duration: 0.3 }, 100.2);
+        tl.fromTo("#fail-tag", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4 }, 100.4);
+        show("#s3n3", 100.6, 8);
+        tl.to("#fail-tag", { opacity: 0, duration: 0.4 }, 107.4);
 
-        // Scene 4: lease handover and route swap
-        show("#s4al1", 80.6, 8);
-        show("#s4al2", 81.4, 8);
-        show("#s4al3", 82.4, 8);
-        tl.to("#gwb-standby", { opacity: 0, duration: 0.3 }, 82.4);
-        tl.to("#gwb-leader", { opacity: 1, duration: 0.3 }, 82.4);
-        tl.to("#b-gwb", { borderColor: "#00e500", duration: 0.4 }, 82.4);
-        show("#s4al4", 84.5, 8);
-        tl.to("#b-route", { borderColor: "#fbd332", duration: 0.3 }, 85);
-        tl.to("#eni-old", { opacity: 0, y: -16, duration: 0.4 }, 85.6);
-        tl.fromTo("#eni-new", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4 }, 85.6);
-        tl.to(["#w-rb", "#w-bn"], { stroke: "#00e500", duration: 0.4 }, 85.6);
-        tl.to("#b-route", { borderColor: "#00e500", duration: 0.4 }, 87);
-        for (let t = 87.5; t < 113; t += 2.4) packet(t, "gwb");
-        for (let i = 11; i < 60; i++) cell(i, 88 + (i - 11) * 0.45, OK);
-        show("#s4bl1", 92.6, 8);
-        show("#s4bl2", 93.6, 8);
-        show("#s4bl3", 94.2, 8);
-        show("#s4bl4", 94.8, 8);
-        show("#s4bl5", 95.4, 8);
+        // Scene 6: lease handover and route swap
+        show("#s4n1", 109, 8);
+        tl.to("#gwb-standby", { opacity: 0, duration: 0.3 }, 109);
+        tl.to("#gwb-leader", { opacity: 1, duration: 0.3 }, 109);
+        tl.to("#b-gwb", { borderColor: "#00e500", duration: 0.4 }, 109);
+        tl.to("#b-route", { borderColor: "#fbd332", duration: 0.3 }, 111);
+        tl.to("#eni-old", { opacity: 0, y: -16, duration: 0.4 }, 111.6);
+        tl.fromTo("#eni-new", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4 }, 111.6);
+        tl.to(["#w-rb", "#w-bn"], { stroke: "#00e500", duration: 0.4 }, 111.6);
+        show("#s4n2", 111.6, 8);
+        tl.to("#b-route", { borderColor: "#00e500", duration: 0.4 }, 113);
+        for (let t = 113.5; t < 126; t += 2.4) packet(t, "gwb");
+        show("#s4n3", 114.5, 8);
+        for (let i = 15; i < 60; i++) cell(i, 114 + (i - 15) * 0.25, OK);
 
-        // Scene 5: results
-        show("#c1", 115.6, 30);
-        show("#c2", 116.4, 30);
-        show("#c3", 117.2, 30);
-        show("#msg", 120.0, 20);
-        show("#msg-sub", 122.0, 12);
+        // Scene 8: results
+        show("#grp1", 148, 12);
+        show("#c1", 148.2, 30);
+        show("#c2", 148.8, 30);
+        show("#c3", 149.4, 30);
+        show("#grp2", 150.6, 12);
+        show("#c4", 150.8, 30);
+        show("#msg", 153, 20);
+        show("#msg-sub", 155, 12);
+        show("#msg-sub2", 156.5, 12);
+
+        // Hide reconstructed layers while a recording scene is on screen.
+        [[24, 43.6], [66, 91.8], [128, 147.5]].forEach(([a, b]) => {
+          tl.set(["#diagram", "#footer", "#probe-clip"], { opacity: 0 }, a);
+          tl.set(["#diagram", "#footer", "#probe-clip"], { opacity: 1 }, b);
+        });
 
         window.__timelines["main"] = tl;
       })();

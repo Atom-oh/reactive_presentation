@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>운영</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="03-operations.md">
+  <meta name="remarp-block" content="03-operations">
+  <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
+  <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
+  
+  <script>window.__remarpTheme = {"colors": {"dk1": "#000000", "lt1": "#FFFFFF", "dk2": "#161D26", "lt2": "#F3F3F7", "accent1": "#41B3FF", "accent2": "#AD5CFF", "accent3": "#00E500", "accent4": "#FF5C85", "accent5": "#FF693C", "accent6": "#FBD332", "hlink": "#41B1E8", "folHlink": "#41B1E8"}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}};</script>
+</head>
+<body>
+<div class="slide-deck theme-dark">
+<div class="slide title-slide" data-remarp-id="s0">
+    <h1>4부: 운영</h1>
+  <p class="meta">붙인 뒤의 일: 수명 주기, 단절, 버스팅</p>
+</div>
+
+<div class="slide" data-remarp-id="s1">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>노드 수명 주기: 업그레이드는 교체가 기본</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <p><!-- Slide 2: 노드 라이프사이클과 업그레이드 --></p>
+<style>
+.hn4-flow { margin: 0 0 var(--space-3); font-size: var(--fs-card); word-break: keep-all; overflow-wrap: break-word; }
+.hn4-flow .flow-box { min-width: min-content; overflow-wrap: normal; }
+.hn4-sub { display: block; color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-1); word-break: keep-all; }
+.hn4-label { font-size: var(--fs-card); font-weight: var(--weight-bold); color: var(--text-secondary); margin-bottom: var(--space-1); }
+.hn4-life { margin-bottom: var(--space-2); }
+.hn4-life .flow-box { padding-block: var(--space-1); }
+.hn4-skew { border: 1px dashed var(--border); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); font-size: var(--fs-card); margin-bottom: var(--space-3); word-break: keep-all; }
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="hn4-label">조인</div>
+<div class="flow-h hn4-flow hn4-life fragment fade-right" data-fragment-index="1">
+  <div class="flow-box">의존성 설치<span class="hn4-sub">kubelet, containerd</span></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">자격 증명 설정, EKS 조인<span class="hn4-sub">nodeadm이 조인</span></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">CNI 설치<span class="hn4-sub">그 전 NotReady는 정상</span></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">Ready 검증<span class="hn4-sub">워크로드까지 확인</span></div>
+</div>
+<div class="hn4-label">업그레이드 순서</div>
+<div class="flow-h hn4-flow hn4-life fragment fade-right" data-fragment-index="2">
+  <div class="flow-box">뒤처진 노드 정리<span class="hn4-sub">컨트롤 플레인 마이너로</span></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">컨트롤 플레인<span class="hn4-sub">다음 마이너로 먼저</span></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">노드 교체<span class="hn4-sub">새 호스트 검증 후 교체</span></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">Cilium<span class="hn4-sub">한 마이너씩</span></div>
+</div>
+<div class="hn4-skew fragment fade-up" data-fragment-index="3"><strong class="text-info">버전 skew</strong>: kubelet은 API 서버보다 새로울 수 없고, 최대 3개 마이너까지 뒤처질 수 있습니다. 허용 범위일 뿐 유지하라는 권장은 아닙니다.</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="4">
+  <div class="callout callout-warning"><strong class="text-warning">롤백 명령은 없음</strong><div class="on-surface-muted">실패한 노드는 cordon을 유지하고, 승인된 버전의 호스트로 교체합니다.</div></div>
+  <div class="callout callout-info"><strong class="text-info">릴리스 노트는 직접 점검</strong><div class="on-surface-muted">EKS 최적화 AMI가 아니라 고객 OS 이미지라서 "AMI는 영향 없음" 문구가 해당되지 않습니다.</div></div>
+  <div class="callout callout-success"><strong class="text-success">Bottlerocket은 별도 경로</strong><div class="on-surface-muted">nodeadm 대신 자체 설정 경로로 조인, 업그레이드, 제거합니다.</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s2">
+  <div class="slide-header" data-remarp-id="s2-header"><h2>연결이 끊기면: 300초와 1시간</h2></div>
+  <div class="slide-body" data-remarp-id="s2-body">
+    <p><!-- Slide 3: 네트워크 단절 시 동작 --></p>
+<style>
+.hn4-time { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); margin-bottom: var(--space-3); }
+.hn4-step { border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3); font-size: var(--fs-card); word-break: keep-all; overflow-wrap: break-word; }
+.hn4-when { font-weight: var(--weight-bold); color: var(--accent); margin-bottom: var(--space-2); }
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="hn4-time">
+  <div class="hn4-step fragment fade-right" data-fragment-index="1"><div class="hn4-when">단절되면</div>Lease 갱신이 끊기고 잠시 뒤 노드는 Unknown, unreachable taint가 붙습니다.<div class="on-surface-muted">실행 중인 Pod는 바로 옮겨지지 않습니다.</div></div>
+  <div class="hn4-step fragment fade-right" data-fragment-index="2"><div class="hn4-when">300초 뒤</div>toleration이 없는 Pod는 기본값으로 eviction됩니다.<div class="on-surface-muted">DaemonSet은 이 taint를 기본으로 견딥니다.</div></div>
+  <div class="hn4-step fragment fade-right" data-fragment-index="3"><div class="hn4-when">1시간 넘게</div>SSM 자격 증명은 1시간 고정이라 만료됩니다.<div class="on-surface-muted">IAM Roles Anywhere는 기본 1시간, 최대 12시간</div></div>
+  <div class="hn4-step fragment fade-right" data-fragment-index="4"><div class="hn4-when">연결 복구</div>SSM은 재시도 간격 때문에 재연결이 최대 30분 늦을 수 있습니다.<div class="on-surface-muted">IAM Roles Anywhere는 보통 몇 초</div></div>
+</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="5">
+  <div class="callout callout-danger"><strong class="text-danger">1. 연결을 전제로 설계</strong><div class="on-surface-muted">간헐 연결, 단절 환경용이 아닙니다. 안정적인 사설 양방향 연결을 유지합니다.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">2. 옮기기 어려운 앱은 tolerationSeconds</strong><div class="on-surface-muted">늘리면 짧은 단절은 견디지만, 실제 장애 노드의 Pod 이전도 늦어집니다.</div></div>
+  <div class="callout callout-info"><strong class="text-info">3. 복구 속도로 자격 증명 선택</strong><div class="on-surface-muted">빠른 복구나 긴 세션이 필요하면 IAM Roles Anywhere. SSM이면 복구 후 agent 재시작 절차를 준비합니다.</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s3">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>버스팅: 온프렘 먼저, 넘치면 클라우드</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body">
+    <p><!-- Slide 4: 버스팅 전략 --></p>
+<style>
+.hn4-flow { margin: 0 0 var(--space-3); font-size: var(--fs-card); word-break: keep-all; overflow-wrap: break-word; }
+.hn4-flow .flow-box { min-width: min-content; overflow-wrap: normal; }
+.hn4-sub { display: block; color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-1); word-break: keep-all; }
+.hn4-handoff { margin-top: var(--space-3); }
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="flow-h hn4-flow">
+  <div class="flow-box fragment fade-right" data-fragment-index="1">온프렘 우선<span class="hn4-sub">hybrid 노드를 선호하도록 배치</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="2">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="2">자리가 없으면 Pending<span class="hn4-sub">스케줄되지 못한 Pod</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="3">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="3">Karpenter가 EC2 생성<span class="hn4-sub">burst 노드에 스케줄</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="4">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="4">줄일 때 온프렘 보호<span class="hn4-sub">pod-deletion-cost로 클라우드 Pod를 먼저</span></div>
+</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="5">
+  <div class="callout callout-info"><strong class="text-info">Pending Pod에 반응</strong><div class="on-surface-muted">온프렘 포화를 감지하는 기능이 아닙니다. 조건과 toleration이 맞는 Pending Pod에 반응합니다.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">deletion cost는 선호</strong><div class="on-surface-muted">ReplicaSet 축소 때의 best-effort 순서입니다. NotReady인 온프렘 Pod는 먼저 지워질 수 있습니다.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">자동 복귀 없음</strong><div class="on-surface-muted">온프렘 용량이 돌아와도 실행 중인 클라우드 Pod는 돌아오지 않습니다.</div></div>
+</div>
+<div class="callout callout-success hn4-handoff fragment fade-up" data-fragment-index="6"><strong class="text-success">정책 없음, Kyverno, Kyverno + Karpenter</strong>: 세 방식으로 줄였을 때 어느 Pod가 남는지는 오늘 5부 영상에서 직접 봅니다.</div>
+  </div>
+</div>
+</div>
+<script src="./common/animation-utils.js"></script>
+<script src="./common/slide-framework.js"></script>
+<script src="./common/quiz-component.js"></script>
+<script src="./common/presenter-view.js"></script>
+
+<script>
+  
+  const presenterNotes = {
+    1: "[0.5min] [\uc694\uc57d]\n- 4\ubd80\uc758 \uc9c8\ubb38: \ubd99\uc778 \ub178\ub4dc\ub97c \uc5b4\ub5bb\uac8c \ubc14\uafb8\uace0, \ub04a\uae30\uba74 \uc5b4\ub5bb\uac8c \ub418\uace0, \ubaa8\uc790\ub77c\uba74 \uc5b4\ub514\ub85c \ub118\uce58\ub294\uac00\n- \uc21c\uc11c: \ub178\ub4dc \ub77c\uc774\ud504\uc0ac\uc774\ud074\uacfc \uc5c5\uadf8\ub808\uc774\ub4dc, \ub124\ud2b8\uc6cc\ud06c \ub2e8\uc808 \uc2dc \ub3d9\uc791, \ubc84\uc2a4\ud305 \uc804\ub7b5\n- \uba85\ub839, \uc124\uc815 \uc608\uc81c, \ubc84\uc804\ubcc4 \uc810\uac80 \ud56d\ubaa9\uc740 Deep Dive 3\ubd80\uc640 4\ubd80\uc5d0 \uc788\uc2b5\ub2c8\ub2e4.\n\n4\ubd80\ub294 \uc6b4\uc601, \ub178\ub4dc\ub97c \ubd99\uc778 \ub4a4\uc758 \uc774\uc57c\uae30\uc785\ub2c8\ub2e4. \ud638\uc2a4\ud2b8, OS, \uc5f0\uacb0\uc740 \uacc4\uc18d \uace0\uac1d\uc774 \uc6b4\uc601\ud558\ub2c8 \uc6b4\uc601 \ubaa8\ub378\uc744 \ubbf8\ub9ac \uadf8\ub824 \ub450\uc154\uc57c \ud569\ub2c8\ub2e4.\n\uc218\uba85 \uc8fc\uae30\uc640 \uc5c5\uadf8\ub808\uc774\ub4dc, \ub124\ud2b8\uc6cc\ud06c \ub2e8\uc808, \ubc84\uc2a4\ud305 \uc138 \uac00\uc9c0\ub97c \ubd05\ub2c8\ub2e4.\n\n\ub178\ub4dc\uc758 \uc218\uba85 \uc8fc\uae30\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    2: "\u2753 \u23f8\ufe0f [2min] [\uc694\uc57d]\n- \uc870\uc778\uc740 \uc758\uc874\uc131 \uc124\uce58, \uc790\uaca9 \uc99d\uba85 \uc124\uc815\uacfc EKS \uc870\uc778, CNI, Ready \uac80\uc99d \uc21c\uc11c\uc774\uace0 CNI \uc804 NotReady\ub294 \uc815\uc0c1. Ready\ub294 \ud544\uc694 \uc870\uac74\uc77c \ubfd0\n- \uc5c5\uadf8\ub808\uc774\ub4dc\ub294 \uc0c8 \ud638\uc2a4\ud2b8\ub85c \uad50\uccb4\uac00 \uae30\ubcf8, \ucee8\ud2b8\ub864 \ud50c\ub808\uc778\uc774 \uba3c\uc800. kubelet\uc740 API \uc11c\ubc84\ubcf4\ub2e4 \uc0c8\ub85c\uc6b8 \uc218 \uc5c6\uace0 n-3\uae4c\uc9c0\n- \ub864\ubc31 \uba85\ub839\uc740 \uc5c6\uace0 \ub864\ubc31\uc740 \ud638\uc2a4\ud2b8 \uad50\uccb4. \ub9b4\ub9ac\uc2a4 \ub178\ud2b8\uc758 \"AMI\ub294 \uc601\ud5a5 \uc5c6\uc74c\"\uc740 hybrid \ub178\ub4dc\uc5d0 \ud574\ub2f9\ud558\uc9c0 \uc54a\uc74c\n\n\uc704 \uc904\uc740 \ub178\ub4dc \ud55c \ub300\uac00 \ub4e4\uc5b4\uc624\ub294 \uacfc\uc815\uc785\ub2c8\ub2e4. \uc758\uc874\uc131\uc744 \uc124\uce58\ud558\uace0, \uc790\uaca9 \uc99d\uba85\uc744 \uc124\uc815\ud574 EKS\uc5d0 \uc870\uc778\ud569\ub2c8\ub2e4. \uc774\ub54c NotReady\ub294 CNI\uac00 \uc544\uc9c1 \uc5c6\uc5b4\uc11c\uc774\uace0, Cilium\uc744 \uc62c\ub9ac\uba74 Ready\uac00 \ub429\ub2c8\ub2e4. Ready\ub294 \ud544\uc694 \uc870\uac74\uc77c \ubfd0\uc774\ub2c8 DNS, \uc774\ubbf8\uc9c0 \ud480, \uc2e4\uc81c \uc6cc\ud06c\ub85c\ub4dc\uae4c\uc9c0 \ud655\uc778\ud55c \ub4a4 \ud22c\uc785\ud569\ub2c8\ub2e4.\n\n\uc544\ub798 \uc904\uc740 \uc5c5\uadf8\ub808\uc774\ub4dc \uc21c\uc11c\uc785\ub2c8\ub2e4. kubelet\uc740 API \uc11c\ubc84\ubcf4\ub2e4 \uc0c8\ub85c\uc6b8 \uc218 \uc5c6\uace0 n-3\uae4c\uc9c0 \ub4a4\ucc98\uc9c8 \uc218 \uc788\uc73c\ub2c8, \ub4a4\ucc98\uc9c4 \ub178\ub4dc\ub97c \uba3c\uc800 \ub9de\ucd94\uace0 \ucee8\ud2b8\ub864 \ud50c\ub808\uc778\ubd80\ud130 \uc62c\ub9bd\ub2c8\ub2e4. \ub178\ub4dc\ub294 in-place\ub3c4 \ub418\uc9c0\ub9cc AWS\ub294 \uc5ec\uc720 \uc6a9\ub7c9\uc774 \uc788\uc73c\uba74 \uc0c8 \ud638\uc2a4\ud2b8\ub97c \uac80\uc99d\ud558\uace0 \uc774\uc804 \ud638\uc2a4\ud2b8\ub97c \ube44\uc6b0\ub294 \uad50\uccb4\ub97c \uad8c\uc7a5\ud569\ub2c8\ub2e4. Cilium\uc740 \uc0ac\uc804 \uac80\uc0ac \ub4a4 \ud55c \ub9c8\uc774\ub108\uc529 \uc62c\ub9bd\ub2c8\ub2e4.\n\n\ub418\ub3cc\ub9ac\ub294 \ubc29\ubc95\uc774 \uad81\uae08\ud558\uc2e4 \ud150\ub370, nodeadm\uc5d0\ub294 rollback \uba85\ub839\uc774 \uc5c6\uc2b5\ub2c8\ub2e4. \uc2e4\ud328\ud55c \ub178\ub4dc\ub294 cordon\uc744 \uc720\uc9c0\ud558\uace0 \uc2b9\uc778\ub41c \ubc84\uc804\uc758 \ud638\uc2a4\ud2b8\ub85c \ubc14\uafb8\ub294 \uac83\uc774 \ub864\ubc31\uc785\ub2c8\ub2e4. \uadf8\ub798\uc11c \uace8\ub4e0 \uc774\ubbf8\uc9c0\uc640 \uc5ec\uc720 \uc6a9\ub7c9\uc744 \ubbf8\ub9ac \uc900\ube44\ud558\ub294 \uac83\uc774 \uc6b4\uc601 \uc124\uacc4\uc758 \ud575\uc2ec\uc785\ub2c8\ub2e4.\n\ub9b4\ub9ac\uc2a4 \ub178\ud2b8\uc758 \"EKS \ucd5c\uc801\ud654 AMI\ub294 \uc601\ud5a5 \uc5c6\uc74c\"\uc740 \uace0\uac1d OS \uc774\ubbf8\uc9c0\uc778 hybrid \ub178\ub4dc\uc5d0 \uc801\uc6a9\ub418\uc9c0 \uc54a\uc73c\ub2c8 \ubc84\uc804\ub9c8\ub2e4 \uc9c1\uc811 \uc810\uac80\ud558\uc138\uc694.\nCilium \uc5c5\uadf8\ub808\uc774\ub4dc \uc808\ucc28, 1.37 \uc804 \uc810\uac80 \ud56d\ubaa9, Bottlerocket \uc870\uc778 \uc808\ucc28\ub294 Deep Dive 3\ubd80\uc5d0 \uc788\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: Deep Dive 3\ubd80 \"\ubd80\ud2b8\uc2a4\ud2b8\ub7a9\uc740 \ub2e4\uc12f \uac78\uc74c\", \"\uc5c5\uadf8\ub808\uc774\ub4dc\ub294 \uad50\uccb4\uac00 \uae30\ubcf8\uc774\ub2e4\"(\ub178\ub4dc, Cilium, \ub864\ubc31 \ud0ed), \"1.37 \uc5c5\uadf8\ub808\uc774\ub4dc \uc804 \ud544\uc218 \uc810\uac80\"(kubelet \ud0ed\uc758 AMI \ubb38\uad6c), \"Bottlerocket \uc870\uc778\uacfc \uc6b4\uc601\uc758 \ucc28\uc774\"\n\n\ub178\ub4dc\ub97c \ubc14\uafb8\ub294 \uac83\uc740 \uacc4\ud68d\ub41c \uc77c\uc785\ub2c8\ub2e4. \uacc4\ud68d\ub418\uc9c0 \uc54a\uc740 \uc77c, \ub124\ud2b8\uc6cc\ud06c\uac00 \ub04a\uae30\uba74 \uc5b4\ub5bb\uac8c \ub420\uae4c\uc694.",
+    3: "\u2753 \u23f8\ufe0f [3min] [\uc694\uc57d]\n- \ub04a\uae30\uba74 \ub178\ub4dc\ub294 Unknown\uacfc unreachable taint, toleration \uc5c6\ub294 Pod\ub294 \uae30\ubcf8 300\ucd08 \ub4a4 eviction. DaemonSet\uc740 \uacac\ub524\n- SSM \uc790\uaca9 \uc99d\uba85\uc740 1\uc2dc\uac04 \uace0\uc815\uc774\ub77c \uc624\ub798 \ub04a\uae30\uba74 \ub9cc\ub8cc\ub418\uace0 \ubcf5\uad6c \ud6c4 \uc7ac\uc5f0\uacb0\uc774 \ucd5c\ub300 30\ubd84 \ub2a6\uc744 \uc218 \uc788\uc74c. IAM Roles Anywhere\ub294 \ubcf4\ud1b5 \uba87 \ucd08\n- \ub300\ube44 \uc138 \uac00\uc9c0: \uc5f0\uacb0 \uc804\uc81c \uc124\uacc4, \uc62e\uae30\uae30 \uc5b4\ub824\uc6b4 \uc571\uc758 tolerationSeconds, \ubcf5\uad6c \uc18d\ub3c4\uc5d0 \ub9de\ucd98 \uc790\uaca9 \uc99d\uba85 \uc120\ud0dd\n\nHybrid Nodes\ub294 \ucee8\ud2b8\ub864 \ud50c\ub808\uc778\uc774 AWS\uc5d0 \uc788\uc73c\ub2c8, \uc628\ud504\ub818\uacfc AWS \uc0ac\uc774 \uc5f0\uacb0\uc774 \ub04a\uae30\uba74 \uc2dc\uac04 \uc21c\uc11c\ub85c \uc77c\uc774 \ubc8c\uc5b4\uc9d1\ub2c8\ub2e4.\n\uba3c\uc800 kubelet\uc774 Lease\ub97c \uac31\uc2e0\ud558\uc9c0 \ubabb\ud558\uace0, \ucee8\ud2b8\ub864\ub7ec\uc758 \uc720\uc608 \uc2dc\uac04\uc774 \uc9c0\ub098\uba74 \ub178\ub4dc \uc0c1\ud0dc\uac00 Ready Unknown\uc774 \ub418\uace0 unreachable taint\uac00 \ubd99\uc2b5\ub2c8\ub2e4. \uc774\ub54c \ub178\ub4dc\uc5d0\uc11c \ub3cc\ub358 Pod\ub97c \ubc14\ub85c \uc62e\uae30\uc9c0\ub294 \uc54a\uc2b5\ub2c8\ub2e4. toleration\uc774 \uc5c6\ub294 Pod\ub294 \uae30\ubcf8 300\ucd08\ub97c \uae30\ub2e4\ub9b0 \ub4a4 eviction\ub429\ub2c8\ub2e4. DaemonSet\uc740 \uc774 taint\ub97c \uae30\ubcf8\uc73c\ub85c \uacac\ub525\ub2c8\ub2e4.\n\n\ub2e8\uc808\uc774 1\uc2dc\uac04\uc744 \ub118\uae30\uba74 \uc790\uaca9 \uc99d\uba85\uc774 \ubb38\uc81c\uac00 \ub429\ub2c8\ub2e4. SSM\uc758 \uc138\uc158 \uc790\uaca9 \uc99d\uba85\uc740 1\uc2dc\uac04 \uace0\uc815\uc774\ub77c \uadf8\ubcf4\ub2e4 \uc624\ub798 \ub04a\uae30\uba74 \ub9cc\ub8cc\ub429\ub2c8\ub2e4. \uadf8\ub9ac\uace0 SSM agent\uac00 \uc9c0\uc218 \ubc31\uc624\ud504\ub85c \ucd5c\ub300 30\ubd84 \uac04\uaca9\uae4c\uc9c0 \uc7ac\uc2dc\ub3c4\ud558\uae30 \ub54c\ubb38\uc5d0, \ub124\ud2b8\uc6cc\ud06c\uac00 \ub3cc\uc544\uc640\ub3c4 \ub178\ub4dc\ub9c8\ub2e4 \uc7ac\uc5f0\uacb0\uc774 \ub2a6\uc5b4\uc9c8 \uc218 \uc788\uc2b5\ub2c8\ub2e4. agent\ub97c \uc7ac\uc2dc\uc791\ud558\uba74 \ubc14\ub85c \uac31\uc2e0\ub429\ub2c8\ub2e4. IAM Roles Anywhere\ub294 kubelet\uc774 \ud544\uc694\ud560 \ub54c \uc790\uaca9 \uc99d\uba85\uc744 \ubc1b\uc544\uc11c \ubcf4\ud1b5 \uba87 \ucd08 \uc548\uc5d0 \uc7ac\uc5f0\uacb0\ub418\uace0, \uc138\uc158\ub3c4 \ucd5c\ub300 12\uc2dc\uac04\uae4c\uc9c0 \ub298\ub9b4 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \ub300\uc2e0 \uae38\uac8c \uc7a1\uc744\uc218\ub85d \uc720\ucd9c \uc2dc \ub178\ucd9c \uc2dc\uac04\ub3c4 \uae38\uc5b4\uc9d1\ub2c8\ub2e4.\n\n\uadf8\ub7fc \ubb34\uc5c7\uc744 \uc900\ube44\ud560\uae4c\uc694. \uccab\uc9f8, \uc774 \uc11c\ube44\uc2a4\ub294 \uac04\ud5d0 \uc5f0\uacb0\uc774\ub098 \ub2e8\uc808 \ud658\uacbd\uc6a9\uc774 \uc544\ub2c8\ub77c\ub294 \uc804\uc81c\ub97c \ubc1b\uc544\ub4e4\uc774\uace0 \uc548\uc815\uc801\uc778 \uc0ac\uc124 \uc591\ubc29\ud5a5 \uc5f0\uacb0\uc744 \uc124\uacc4\ud569\ub2c8\ub2e4. \uc644\uc804 \ub2e8\uc808\uc774 \ud544\uc694\ud55c \uc694\uac74\uc774\ub77c\uba74 \ub9de\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ub458\uc9f8, \ub2e4\ub978 \ud638\uc2a4\ud2b8\ub85c \uc62e\uae30\uae30 \uc5b4\ub824\uc6b4 \uc571\uc740 tolerationSeconds\ub97c \ub298\ub9ac\uac70\ub098 \ucee8\ud2b8\ub864\ub7ec\ub85c taint\ub97c \uad00\ub9ac\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \ub2e4\ub9cc \uae38\uac8c \uc7a1\uc744\uc218\ub85d \uc9c4\uc9dc \uc7a5\uc560 \ub178\ub4dc\uc758 Pod \uc774\uc804\ub3c4 \ub2a6\uc5b4\uc9c0\ub2c8 \uc571\ubcc4\ub85c \uc815\ud569\ub2c8\ub2e4. \uc14b\uc9f8, \ub2e8\uc808 \ud6c4 \ubcf5\uad6c \uc18d\ub3c4\uac00 \uc911\uc694\ud558\uba74 IAM Roles Anywhere, SSM\uc744 \uc4f4\ub2e4\uba74 \ubcf5\uad6c \ud6c4 agent \uc7ac\uc2dc\uc791 \uc808\ucc28\ub97c runbook\uc5d0 \ub123\uc5b4 \ub450\uc138\uc694. \uc774 \uc120\ud0dd \uae30\uc900\uc740 2\ubd80 \uc790\uaca9 \uc99d\uba85 \ube44\uad50\uc640 \uac19\uc740 \uc774\uc57c\uae30\uc785\ub2c8\ub2e4.\n\uadfc\uac70: Deep Dive 4\ubd80 \"\ub3c4\uc785 \ud310\ub2e8\uc740 \uc81c\uc57d \ud655\uc778\ubd80\ud130\"(\ub2e8\uc808 \uc2dc Unknown, unreachable taint, 300\ucd08 eviction, DaemonSet, tolerationSeconds \ub178\ud2b8), Deep Dive 1\ubd80 \uc790\uaca9 \uc99d\uba85 \uc120\ud0dd \uc2ac\ub77c\uc774\ub4dc(SSM 1\uc2dc\uac04 \uace0\uc815, \ucd5c\ub300 30\ubd84 \ubc31\uc624\ud504, agent \uc7ac\uc2dc\uc791, IAM RA \ubcf4\ud1b5 \uba87 \ucd08\uc640 \ucd5c\ub300 12\uc2dc\uac04), Deep Dive 3\ubd80 \"\ud06c\ub9ac\ub374\uc15c \ub9cc\ub8cc\ub97c \uba3c\uc800 \uac10\uc2dc\ud558\ub77c\". AWS docs hybrid-nodes-network-disconnection-best-practices, hybrid-nodes-host-creds\n\n\ub9c8\uc9c0\ub9c9\uc740 \uc6a9\ub7c9 \uc774\uc57c\uae30\uc785\ub2c8\ub2e4. \uc628\ud504\ub818\uc774 \ubaa8\uc790\ub77c\uba74 \uc5b4\ub514\ub85c \ub118\uce58\uac8c \ud560\uae4c\uc694.",
+    4: "\u2753 \u23f8\ufe0f [2min] [\uc694\uc57d]\n- \uc628\ud504\ub818\uc744 \uc120\ud638\ud558\ub3c4\ub85d \ubc30\uce58\ud558\uace0, \uc790\ub9ac\uac00 \uc5c6\uc5b4 Pending\uc774 \ub41c Pod\uc5d0 Karpenter\uac00 EC2 burst \ub178\ub4dc\ub97c \ub9cc\ub4ed\ub2c8\ub2e4.\n- \uc904\uc77c \ub54c\ub294 pod-deletion-cost\ub85c \uc628\ud504\ub818 Pod\ub97c \uc9c0\ud0a4\uc9c0\ub9cc best-effort \uc120\ud638\uc774\uace0, \ube44\uc815\uc0c1 \uc628\ud504\ub818 Pod\ub294 \uba3c\uc800 \uc9c0\uc6cc\uc9c8 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n- \uc628\ud504\ub818 \uc6a9\ub7c9\uc774 \ub3cc\uc544\uc640\ub3c4 \ud074\ub77c\uc6b0\ub4dc Pod\ub294 \uc790\ub3d9\uc73c\ub85c \ub3cc\uc544\uc624\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uc138 \ubc29\uc2dd \ube44\uad50\ub294 \uc624\ub298 5\ubd80 \uc601\uc0c1 V2\n\n\ud750\ub984\uc740 \ub124 \ub2e8\uacc4\uc785\ub2c8\ub2e4. hybrid \ub178\ub4dc\uc5d0 \uc790\ub3d9\uc73c\ub85c \ubd99\ub294 label\ub85c \uc628\ud504\ub818\uc744 \uc120\ud638\ud558\uac8c \ud558\uace0, \uc774 \uc120\ud638\ub294 \uc810\uc218\uc774\uc9c0 \uc6a9\ub7c9 \ube44\uc728\uc774 \uc544\ub2d9\ub2c8\ub2e4. \uc790\ub9ac\uac00 \uc5c6\uc73c\uba74 Pod\ub294 Pending\uc774 \ub418\uace0, Karpenter\uac00 \ub9de\ub294 EC2 \ub178\ub4dc\ub97c \ub9cc\ub4ed\ub2c8\ub2e4.\n\nKarpenter\uac00 \uc628\ud504\ub818 \ud3ec\ud654\ub97c \uac10\uc9c0\ud558\ub294 \uac83\uc774 \uc544\ub2c8\ub77c, NodePool \uc870\uac74\uacfc toleration\uc774 \ub9de\ub294 Pending Pod\uc5d0 \ubc18\uc751\ud569\ub2c8\ub2e4. \ubc84\uc2a4\ud305\uc740 3\ubd80\uc5d0\uc11c \ubcf8 \ud63c\ud569 CNI \uad6c\uc131\uc5d0\uc11c \uac00\ub2a5\ud569\ub2c8\ub2e4.\n\uc904\uc77c \ub54c\uac00 \ub354 \uae4c\ub2e4\ub86d\uc2b5\ub2c8\ub2e4. ReplicaSet \uae30\ubcf8 \uaddc\uce59\uc740 Pod \uc704\uce58\ub97c \ubcf4\uc9c0 \uc54a\uc73c\ub2c8 pod-deletion-cost\ub85c \ud074\ub77c\uc6b0\ub4dc Pod\uac00 \uba3c\uc800 \uc9c0\uc6cc\uc9c0\ub3c4\ub85d \uc120\ud638\ub97c \uc90d\ub2c8\ub2e4. \ub2e4\ub9cc best-effort \uc120\ud638\ub77c\uc11c NotReady\uc778 \uc628\ud504\ub818 Pod\ub294 \uba3c\uc800 \uc9c0\uc6cc\uc9c8 \uc218 \uc788\uace0, \ub178\ub4dc \uc7a5\uc560\ub098 eviction\uc5d0\uc11c \uc9c0\ucf1c \uc8fc\uc9c0\ub3c4 \uc54a\uc2b5\ub2c8\ub2e4.\n\n\uc628\ud504\ub818 \uc6a9\ub7c9\uc774 \ub2e4\uc2dc \uc0dd\uaca8\ub3c4 \ud074\ub77c\uc6b0\ub4dc Pod\ub294 \uc790\ub3d9\uc73c\ub85c \ub3cc\uc544\uc624\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\uc815\ucc45 \uc5c6\uc74c, Kyverno, \uc5ec\uae30\uc5d0 Karpenter \uae30\ub2a5\uae4c\uc9c0 \ucf20 \uc138 \ubc29\uc2dd\uc73c\ub85c \uc904\uc5ec \ubcf8 \uacb0\uacfc\ub294 5\ubd80 \uc601\uc0c1\uc5d0\uc11c \ubd05\ub2c8\ub2e4. \uc124\uc815 \uc608\uc81c\ub294 Deep Dive 4\ubd80\uc5d0 \uc788\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: Deep Dive 4\ubd80 \"\ubc30\uce58\ub294 label \ud558\ub098\uc5d0\uc11c \uc2dc\uc791\ud55c\ub2e4\"(\uc790\ub3d9 label, weight\ub294 \uc810\uc218), \"\ubc84\uc2a4\ud305\uc740 Pending Pod\uac00 \ud2b8\ub9ac\uac70\"(\ud750\ub984, \uc790\ub3d9 \ubcf5\uadc0 \uc5c6\uc74c, \ud3ec\ud654 \uac10\uc9c0\uae30 \uc544\ub2d8), \"\uc2a4\ucf00\uc77c-\uc778 \uc21c\uc11c\ub294 \uc120\ud638\uc77c \ubfd0\"(best-effort, \ube44\uad50 \uc21c\uc11c, NotReady \uc628\ud504\ub818 Pod). Deep Dive 5\ubd80 \"\ub370\ubaa8 2: \uac19\uc740 \uc6cc\ud06c\ub85c\ub4dc\ub97c \uc138 \uac00\uc9c0\ub85c \uc904\uc5ec \ubcf8\ub2e4\"(A, B, C \uc774\ub984\ub9cc, \uc218\uce58\ub294 \uc624\ub298 5\ubd80). Deep Dive 2\ubd80 CNI \ud45c(\ubc84\uc2a4\ud305\uc740 \ud63c\ud569 \uad6c\uc131)\n\n\uc5ec\uae30\uae4c\uc9c0\uac00 4\ubd80 \uc6b4\uc601\uc774\uc5c8\uc2b5\ub2c8\ub2e4. \uc774\uc81c 5\ubd80\uc5d0\uc11c \uc2e4\uc81c\ub85c \ub3cc\ub824 \ubcf8 \uacb0\uacfc\ub97c \uc601\uc0c1\uc73c\ub85c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4."
+  };
+  const deck = new SlideFramework({
+    logoSrc: "./common/pptx-theme/images/logo_1.png",
+    
+    footer: "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.",
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+node_modules/
+.hyperframes/
+renders/
+output/
+out/
+*.mp4
+*.mov
+*.webm
+*.png
+*.jpg
+frames/
+.cache/
+tmp/
+snapshots/
+CLAUDE.md
+AGENTS.md
+!assets/r2-bursting.mp4

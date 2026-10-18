@@ -1,0 +1,1171 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>V2 bursting과 pod-deletion-cost</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --bg: #161d26;
+        --panel: #1d2632;
+        --panel-2: #222d3a;
+        --line: #3a4a5e;
+        --fg: #ffffff;
+        --fg-2: rgba(243, 243, 247, 0.78);
+        --fg-3: rgba(243, 243, 247, 0.62);
+        --accent: #41b3ff;
+        --warning: #fbd332;
+        --success: #00e500;
+        --danger: #ff5c85;
+        --sans: "Noto Sans KR", sans-serif;
+        --mono: "JetBrains Mono", "Noto Sans KR", monospace;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--bg);
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: var(--sans);
+        color: var(--fg);
+        word-break: keep-all;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+      .abs {
+        position: absolute;
+      }
+      .mono {
+        font-family: var(--mono);
+      }
+      .ok {
+        color: var(--success);
+      }
+      .wn {
+        color: var(--warning);
+      }
+      .bad {
+        color: var(--danger);
+      }
+      .ac {
+        color: var(--accent);
+      }
+
+      /* background */
+      #bg {
+        position: absolute;
+        inset: 0;
+        background: var(--bg);
+      }
+      #bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(65, 179, 255, 0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(65, 179, 255, 0.05) 1px, transparent 1px);
+        background-size: 80px 80px;
+      }
+      #bg-glow {
+        position: absolute;
+        left: 1100px;
+        top: -300px;
+        width: 1100px;
+        height: 1100px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(65, 179, 255, 0.12) 0%, rgba(65, 179, 255, 0) 65%);
+      }
+
+      /* footer (persistent) */
+      #footer {
+        pointer-events: none;
+      }
+      .footer-label {
+        position: absolute;
+        left: 60px;
+        bottom: 26px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 36px;
+        font-weight: 500;
+        color: var(--fg-2);
+      }
+      .footer-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--warning);
+      }
+      .footer-right {
+        position: absolute;
+        right: 60px;
+        bottom: 26px;
+        font-size: 36px;
+        color: var(--fg-3);
+      }
+
+      /* opening title */
+      #s0-title {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 160px 80px;
+      }
+      .kicker {
+        font-size: 40px;
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 0.02em;
+      }
+      .big-title {
+        margin-top: 24px;
+        font-size: 104px;
+        font-weight: 900;
+        line-height: 1.15;
+      }
+      .big-msg {
+        margin-top: 40px;
+        max-width: 1560px;
+        font-size: 48px;
+        font-weight: 500;
+        line-height: 1.4;
+        color: var(--fg-2);
+      }
+      .big-msg b {
+        color: var(--success);
+        font-weight: 700;
+      }
+
+      /* scene header */
+      .hdr {
+        position: absolute;
+        left: 60px;
+        top: 56px;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+      }
+      .step {
+        display: block;
+        padding: 6px 22px;
+        border: 2px solid var(--accent);
+        border-radius: 999px;
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .hdr-title {
+        display: block;
+        font-size: 58px;
+        font-weight: 800;
+      }
+
+      /* phase chip (scene 3) */
+      .phase-slot {
+        position: absolute;
+        right: 60px;
+        top: 50px;
+        width: 380px;
+        height: 76px;
+      }
+      .phase {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 16px;
+        font-size: 40px;
+        font-weight: 800;
+      }
+      .phase.p15 {
+        border: 3px solid var(--accent);
+        color: var(--accent);
+        background: rgba(65, 179, 255, 0.1);
+      }
+      .phase.p10,
+      .phase.p3 {
+        border: 3px solid var(--warning);
+        color: var(--warning);
+        background: rgba(251, 211, 50, 0.08);
+      }
+
+      /* generic cards */
+      .card {
+        position: absolute;
+        padding: 30px 36px;
+        border-radius: 22px;
+        background: var(--panel);
+        border: 2px solid var(--line);
+      }
+      .card-h {
+        font-size: 42px;
+        font-weight: 800;
+      }
+      .card-line {
+        margin-top: 18px;
+        font-size: 38px;
+        line-height: 1.3;
+      }
+      .card-line i {
+        font-style: normal;
+        font-weight: 800;
+        color: var(--accent);
+        margin-right: 14px;
+      }
+      .card-sub {
+        margin-top: 14px;
+        font-size: 36px;
+        line-height: 1.3;
+        color: var(--fg-2);
+      }
+
+      /* scene 2 diagram */
+      .zone {
+        position: absolute;
+        border: 2px dashed var(--line);
+        border-radius: 20px;
+      }
+      .zone-label {
+        position: absolute;
+        left: 24px;
+        top: 12px;
+        font-size: 36px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .zone-sub {
+        position: absolute;
+        left: 24px;
+        top: 62px;
+        font-size: 36px;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+      .node {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 14px;
+        background: var(--panel);
+        border: 3px solid var(--line);
+        border-radius: 16px;
+      }
+      .node-title {
+        font-size: 36px;
+        font-weight: 700;
+        line-height: 1.2;
+      }
+      .node-sub {
+        font-size: 36px;
+        line-height: 1.2;
+        color: var(--fg-2);
+      }
+      .ring {
+        position: absolute;
+        border-radius: 50%;
+        border: 3px dashed var(--line);
+      }
+      .pod {
+        position: absolute;
+        border-radius: 50%;
+        border: 4px solid transparent;
+      }
+      .pod.h {
+        background: var(--success);
+        box-shadow: 0 0 18px rgba(0, 229, 0, 0.45);
+      }
+      .pod.c {
+        background: var(--warning);
+        box-shadow: 0 0 18px rgba(251, 211, 50, 0.45);
+      }
+      .pod.n {
+        background: #8a9bb0;
+      }
+      #s2-empty {
+        position: absolute;
+        left: 940px;
+        top: 440px;
+        width: 920px;
+        text-align: center;
+        font-size: 40px;
+        font-weight: 700;
+        color: var(--fg-2);
+      }
+      #s2-eg {
+        position: absolute;
+        left: 964px;
+        top: 622px;
+        font-size: 36px;
+        color: var(--fg-3);
+      }
+      .strip {
+        position: absolute;
+        left: 60px;
+        top: 700px;
+        width: 1800px;
+        height: 96px;
+        border-radius: 18px;
+        background: var(--panel);
+        border: 2px solid var(--line);
+      }
+      .strip-slot {
+        position: absolute;
+        left: 30px;
+        top: 0;
+        width: 260px;
+        height: 92px;
+      }
+      .strip-slot span {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        font-size: 38px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      #strip-note {
+        position: absolute;
+        left: 30px;
+        top: 0;
+        height: 92px;
+        display: flex;
+        align-items: center;
+        font-size: 38px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .chips {
+        position: absolute;
+        left: 60px;
+        top: 822px;
+        width: 1800px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 40px;
+      }
+      .chip {
+        height: 150px;
+        padding: 16px 26px;
+        border-radius: 18px;
+        background: var(--panel);
+        border: 3px solid var(--accent);
+      }
+      .chip-k {
+        font-size: 36px;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+      .chip-v {
+        margin-top: 4px;
+        font-size: 48px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      /* scene 3 rows */
+      #s3-sub {
+        position: absolute;
+        left: 60px;
+        top: 158px;
+        font-size: 36px;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+      .row {
+        position: absolute;
+        left: 60px;
+        width: 1800px;
+        height: 200px;
+        border-radius: 18px;
+        background: var(--panel);
+        border: 2px solid var(--line);
+      }
+      .row-name {
+        position: absolute;
+        left: 28px;
+        top: 44px;
+        font-size: 42px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .row-desc {
+        position: absolute;
+        left: 28px;
+        top: 106px;
+        font-size: 36px;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+      .grp-slot {
+        position: absolute;
+        top: 8px;
+        height: 50px;
+        width: 520px;
+      }
+      .grp-slot span {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        font-size: 36px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .grp-n {
+        color: var(--fg-2);
+      }
+      .mini {
+        position: absolute;
+        top: 62px;
+        height: 120px;
+        background: var(--panel-2);
+        border: 3px solid var(--line);
+        border-radius: 14px;
+      }
+      .res {
+        position: absolute;
+        left: 1540px;
+        top: 18px;
+        width: 240px;
+        height: 164px;
+      }
+      .res-st {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        font-size: 38px;
+        font-weight: 800;
+        line-height: 1.3;
+        white-space: nowrap;
+      }
+      .say-slot {
+        position: absolute;
+        left: 60px;
+        top: 878px;
+        width: 1800px;
+        height: 70px;
+      }
+      .say {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        font-size: 42px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      /* scene 4 table */
+      .tbl {
+        position: absolute;
+        left: 60px;
+        top: 180px;
+        width: 1800px;
+        border-collapse: collapse;
+        font-size: 38px;
+      }
+      .tbl th,
+      .tbl td {
+        height: 78px;
+        padding: 0 24px;
+        border-bottom: 2px solid var(--line);
+        text-align: center;
+        white-space: nowrap;
+      }
+      .tbl th {
+        font-size: 40px;
+        font-weight: 800;
+        background: var(--panel-2);
+      }
+      .tbl td:first-child,
+      .tbl th:first-child {
+        text-align: left;
+        color: var(--fg-2);
+        font-weight: 600;
+        width: 520px;
+      }
+      .tbl td {
+        font-weight: 700;
+      }
+      .tbl td.hl {
+        background: rgba(65, 179, 255, 0.12);
+      }
+      .tbl td.dg {
+        background: rgba(255, 92, 133, 0.12);
+      }
+      .foot {
+        position: absolute;
+        left: 60px;
+        font-size: 36px;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+
+      /* scene 5 */
+      .msg {
+        position: absolute;
+        left: 60px;
+        top: 180px;
+        width: 1800px;
+        font-size: 56px;
+        font-weight: 800;
+        line-height: 1.32;
+      }
+      .msg b {
+        color: var(--success);
+      }
+      .caveat {
+        position: absolute;
+        left: 60px;
+        top: 704px;
+        width: 1800px;
+        height: 270px;
+        padding: 30px 40px;
+        border-radius: 22px;
+        background: rgba(251, 211, 50, 0.06);
+        border: 2px solid var(--warning);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 26px;
+      }
+      .cv {
+        font-size: 38px;
+        line-height: 1.3;
+      }
+      .cv i {
+        font-style: normal;
+        font-weight: 800;
+        color: var(--warning);
+        margin-right: 16px;
+      }
+      /* recording scenes */
+      #recwin {
+        position: absolute;
+        left: 153px;
+        top: 146px;
+        width: 1613px;
+        height: 850px;
+        overflow: hidden;
+        border-radius: 16px;
+        border: 2px solid var(--line);
+        background: #121314;
+      }
+      #recpan {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1613px;
+        height: 1079px;
+      }
+      .rec {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1613px;
+        height: 1079px;
+        object-fit: fill;
+      }
+      .rec-note {
+        position: absolute;
+        right: 60px;
+        top: 56px;
+        padding: 8px 24px;
+        border-radius: 14px;
+        border: 2px solid var(--warning);
+        background: rgba(251, 211, 50, 0.1);
+        color: var(--warning);
+        font-size: 36px;
+        font-weight: 700;
+      }
+      .footer-label.rec-label .footer-dot {
+        background: var(--danger);
+      }
+      .run-badge {
+        position: absolute;
+        right: 60px;
+        top: 56px;
+        padding: 8px 24px;
+        border-radius: 14px;
+        border: 2px solid var(--accent);
+        background: rgba(65, 179, 255, 0.1);
+        color: var(--accent);
+        font-size: 36px;
+        font-weight: 700;
+      }
+      .kc .card-line {
+        font-size: 36px;
+        margin-top: 14px;
+      }
+      .msg-l {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="216"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div id="bg">
+        <div id="bg-grid"></div>
+        <div id="bg-glow"></div>
+      </div>
+
+      <!-- Opening title -->
+      <section id="s0-title" class="clip" data-start="0" data-duration="6" data-track-index="1">
+        <div id="t-kicker" class="kicker">EKS Hybrid Nodes 데모 2</div>
+        <div id="t-title" class="big-title">bursting과 pod-deletion-cost</div>
+        <div id="t-msg" class="big-msg">
+          Kyverno만으로 <b>온프렘 Pod</b>를 지키고, Karpenter 게이트는 <b>EC2 정리</b>를 조금 더 빠르게 합니다
+        </div>
+      </section>
+
+      <!-- Scene headers -->
+      <div id="h1" class="clip" data-start="5.5" data-duration="24.5" data-track-index="2">
+        <div id="h1-in" class="hdr">
+          <span class="step">1 / 7</span>
+          <span class="hdr-title">문제: 스케일 인은 Pod 위치를 보지 않는다</span>
+        </div>
+      </div>
+      <div id="h2" class="clip" data-start="30" data-duration="26" data-track-index="2">
+        <div id="h2-in" class="hdr">
+          <span class="step">2 / 7</span>
+          <span class="hdr-title">스케일 아웃: burst 노드 생성</span>
+        </div>
+        <div id="h2-run" class="run-badge">녹화 회차 기준 (2026-10-18, 910m)</div>
+      </div>
+      <div id="h3" class="clip" data-start="128" data-duration="46" data-track-index="2">
+        <div id="h3-in" class="hdr">
+          <span class="step">5 / 7</span>
+          <span class="hdr-title">스케일 인 비교 (2026-10-15)</span>
+        </div>
+      </div>
+      <div id="h4" class="clip" data-start="174" data-duration="20" data-track-index="2">
+        <div id="h4-in" class="hdr">
+          <span class="step">6 / 7</span>
+          <span class="hdr-title">비교표: 2026-10-15, 시나리오별 1회 실행</span>
+        </div>
+      </div>
+      <div id="h5" class="clip" data-start="194" data-duration="22" data-track-index="2">
+        <div id="h5-in" class="hdr">
+          <span class="step">7 / 7</span>
+          <span class="hdr-title">정리와 주의</span>
+        </div>
+      </div>
+
+      <!-- Scene 1: problem and setup -->
+      <section id="s1" class="clip" data-start="5.5" data-duration="24.5" data-track-index="4">
+        <div id="s1-rules" class="card" style="left: 60px; top: 180px; width: 840px; height: 450px">
+          <div class="card-h ac">ReplicaSet이 줄일 Pod를 고르는 순서</div>
+          <div id="r1" class="card-line"><i>1</i>pod-deletion-cost가 낮은 Pod</div>
+          <div id="r2" class="card-line"><i>2</i>복제본이 더 많은 노드의 Pod</div>
+          <div id="r3" class="card-line"><i>3</i>가장 최근에 생성된 Pod</div>
+          <div id="r4" class="card-line bad" style="font-weight: 800">온프렘인지 클라우드인지는 보지 않음</div>
+        </div>
+        <div id="s1-env" class="card" style="left: 940px; top: 180px; width: 920px; height: 450px">
+          <div class="card-h">실험 환경</div>
+          <div id="e1" class="card-line">hybrid 호스트 2대, 각 4 vCPU: Pod <b class="ok">8개</b></div>
+          <div id="e2" class="card-line">Pod 요청 930m (10-15), 910m (10-18 녹화)</div>
+          <div id="e3" class="card-line">burst NodePool: m7i/m6i large, xlarge</div>
+          <div id="e4" class="card-line">NodePool 한도 32 vCPU</div>
+        </div>
+        <div id="sc-a" class="card" style="left: 60px; top: 666px; width: 580px; height: 290px">
+          <div class="card-h wn">A 정책 없음</div>
+          <div class="card-sub">ReplicaSet 기본 규칙만, Karpenter 게이트 끔</div>
+        </div>
+        <div id="sc-b" class="card" style="left: 670px; top: 666px; width: 580px; height: 290px">
+          <div class="card-h ac">B Kyverno</div>
+          <div class="card-sub">hybrid 노드의 Pod에 pod-deletion-cost 부여, 게이트 끔</div>
+        </div>
+        <div id="sc-c" class="card" style="left: 1280px; top: 666px; width: 580px; height: 290px">
+          <div class="card-h ok">C Kyverno + 게이트</div>
+          <div class="card-sub">B에 더해 Karpenter가 burst 노드 Pod에도 순위를 기록</div>
+        </div>
+      </section>
+
+      <!-- Scene 2: scale out -->
+      <section id="s2" class="clip" data-start="30" data-duration="26" data-track-index="4">
+        <div id="z-onprem" class="zone" style="left: 60px; top: 180px; width: 820px; height: 500px">
+          <div class="zone-label">온프레미스: hybrid 노드 2대</div>
+        </div>
+        <div id="hn1" class="node" style="left: 96px; top: 280px; width: 360px; height: 360px">
+          <div class="node-title">hybrid 노드 1</div>
+          <div class="node-sub">4 vCPU</div>
+        </div>
+        <div id="hn2" class="node" style="left: 486px; top: 280px; width: 360px; height: 360px">
+          <div class="node-title">hybrid 노드 2</div>
+          <div class="node-sub">4 vCPU</div>
+        </div>
+        <div id="z-cloud" class="zone" style="left: 940px; top: 180px; width: 920px; height: 500px">
+          <div class="zone-label">AWS: Karpenter burst NodePool</div>
+          <div class="zone-sub">m7i/m6i large, xlarge, 한도 32 vCPU</div>
+        </div>
+        <div id="s2-empty">노드 0개 (대기)</div>
+        <div id="bn0" class="node" style="left: 975px; top: 330px; width: 260px; height: 300px"><div class="node-title">m6i.large</div><div class="node-sub">burst EC2</div></div>
+        <div id="bn1" class="node" style="left: 1265px; top: 330px; width: 260px; height: 300px"><div class="node-title">m6i.xlarge</div><div class="node-sub">burst EC2</div></div>
+        <div id="bn2" class="node" style="left: 1555px; top: 330px; width: 260px; height: 300px"><div class="node-title">m6i.xlarge</div><div class="node-sub">burst EC2</div></div>
+        <div id="s2-rings"></div>
+        <div id="strip" class="strip">
+          <div class="strip-slot" data-layout-allow-overlap>
+            <span id="sl-new">새 Pod 12개</span>
+            <span id="sl-pend" class="wn">Pending 7개</span>
+          </div>
+          <div id="strip-note">hybrid에 자리가 없으면&nbsp;<span class="wn">Pending Pod</span>가 Karpenter burst NodePool을 깨운다</div>
+        </div>
+        <div id="s2-pods"></div>
+        <div class="chips">
+          <div id="ch1" class="chip"><div class="chip-k">replicas</div><div class="chip-v">3 → 15</div></div>
+          <div id="ch2" class="chip"><div class="chip-k">hybrid 가득 참</div><div class="chip-v ok">8개</div></div>
+          <div id="ch3" class="chip"><div class="chip-k">약 5초 뒤 첫 화면</div><div class="chip-v ac">NodeClaim 3개</div></div>
+          <div id="ch4" class="chip"><div class="chip-k">15개 모두 Ready</div><div class="chip-v ac">35초</div></div>
+        </div>
+      </section>
+
+      <!-- Scene 3: scale-in comparison -->
+      <div id="ph" class="clip" data-start="128" data-duration="46" data-track-index="3">
+        <div class="phase-slot" data-layout-allow-overlap>
+          <div id="ph15" class="phase p15">15개에서 시작</div>
+          <div id="ph10" class="phase p10">10개로 줄임</div>
+          <div id="ph3" class="phase p3">3개로 줄임</div>
+        </div>
+      </div>
+      <section id="s3" class="clip" data-start="128" data-duration="46" data-track-index="4">
+        <div id="s3-sub">930m, 15 → 12 (warm-up) → 10 → 3, Pod 수와 EC2 대수는 실측, 노드별 위치는 예시</div>
+        <div id="s3-rows"></div>
+      </section>
+      <div id="say" class="clip" data-start="128" data-duration="46" data-track-index="5">
+        <div class="say-slot" data-layout-allow-overlap>
+          <div id="say0" class="say">세 시나리오 모두 hybrid 8개, cloud 7개에서 출발</div>
+          <div id="sayA" class="say"><span class="wn">A</span>&nbsp;기본 규칙은 위치를 보지 않아&nbsp;<span class="bad">온프렘 hybrid Pod부터</span>&nbsp;지움</div>
+          <div id="sayB" class="say"><span class="ac">B</span>&nbsp;Kyverno가 hybrid Pod에 cost를 줘&nbsp;<span class="ok">cloud Pod부터</span>&nbsp;지움</div>
+          <div id="sayC" class="say"><span class="ok">C</span>&nbsp;Karpenter가 burst Pod 순위를 기록해 남은 EC2가 B의 4대보다 적은&nbsp;<span class="ac">3대</span></div>
+          <div id="say3" class="say">3개까지 줄이면: B, C는&nbsp;<span class="ok">모두 hybrid</span>, A는 cloud에 1개 남음</div>
+        </div>
+      </div>
+
+      <!-- Scene 4: table -->
+      <section id="s4" class="clip" data-start="174" data-duration="20" data-track-index="4">
+        <table class="tbl">
+          <thead>
+            <tr id="tr0">
+              <th>항목</th>
+              <th class="wn">A 정책 없음</th>
+              <th class="ac">B Kyverno</th>
+              <th class="ok">C Kyverno + 게이트</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr id="tr1"><td>정책</td><td>없음, 게이트 끔</td><td>Kyverno, 게이트 끔</td><td>Kyverno, 게이트 켬</td></tr>
+            <tr id="tr2"><td>10개일 때 hybrid / cloud</td><td class="dg bad">6 / 4</td><td class="ok">8 / 2</td><td class="ok">8 / 2</td></tr>
+            <tr id="tr3"><td>10개일 때 EC2 burst 노드</td><td>3대</td><td>4대</td><td class="hl ac">3대</td></tr>
+            <tr id="tr4"><td>최종 3개 hybrid / cloud</td><td class="dg bad">2 / 1</td><td class="ok">3 / 0</td><td class="ok">3 / 0</td></tr>
+            <tr id="tr5"><td>버스트 노드 정리</td><td>123초</td><td>118초</td><td class="hl ac">87초</td></tr>
+            <tr id="tr6"><td>NodeClaim 생성</td><td>1초</td><td>1초</td><td>2초</td></tr>
+            <tr id="tr7"><td>Pod 15개 모두 Ready</td><td>37초</td><td>38초</td><td>37초</td></tr>
+          </tbody>
+        </table>
+        <div id="f1" class="foot" style="top: 846px">EC2 대수는 스케일 인 20초 후에도 살아 있는 NodeClaim 기준</div>
+        <div id="f2" class="foot" style="top: 900px">시나리오별 1회 실행 결과: 작은 차이는 오차일 수 있음</div>
+      </section>
+
+      <!-- Scene 5: message and caveats -->
+      <section id="s5" class="clip" data-start="194" data-duration="22" data-track-index="4">
+        <div id="msg" class="msg">
+          <span class="msg-l">Kyverno만으로 <b>온프렘 Pod</b>를 지키고,</span>
+          <span class="msg-l">Karpenter 게이트는 EC2 정리를 <b>조금 더 빠르게</b> 한다</span>
+        </div>
+        <div id="k1" class="card kc" style="left: 60px; top: 380px; width: 573px; height: 290px">
+          <div class="card-h ok">온프렘 보호 (10-15)</div>
+          <div class="card-line">B, C: hybrid 8개 유지</div>
+          <div class="card-line" style="color: var(--fg-2)">A: hybrid 6개만 남음</div>
+        </div>
+        <div id="k2" class="card kc" style="left: 673px; top: 380px; width: 573px; height: 290px">
+          <div class="card-h ac">EC2 정리 (10-15)</div>
+          <div class="card-line">C 87초, B 118초</div>
+          <div class="card-line" style="color: var(--fg-2)">10개일 때 EC2: B 4대, C 3대</div>
+        </div>
+        <div id="k3" class="card kc" style="left: 1286px; top: 380px; width: 573px; height: 290px; border-color: var(--danger)">
+          <div class="card-h">녹화 회차 B (10-18)</div>
+          <div class="card-line">10개: hybrid 8 / cloud 2</div>
+          <div class="card-line">3개: 모두 hybrid</div>
+          <div class="card-line" style="color: var(--fg-2)">burst 정리 약 104초 (녹화 밖)</div>
+        </div>
+        <div id="cav" class="caveat">
+          <div id="cv1" class="cv"><i>!</i>pod-deletion-cost는 best-effort: 노드 장애나 축출에는 적용되지 않음</div>
+          <div id="cv2" class="cv"><i>!</i>A/B/C는 시나리오별 1회 실행: B와 C의 차이는 작으므로 반복 측정 후 인용</div>
+        </div>
+      </section>
+
+      <!-- Persistent label, every scene -->
+      <div id="footer" class="clip" data-start="0" data-duration="216" data-track-index="9">
+        <div class="footer-label"><span class="footer-dot"></span>실측 결과 재구성 (2026-10 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 2: bursting과 pod-deletion-cost</div>
+      </div>
+
+      <!-- Recording scene A: scale out (media 0.8 to 18.8 s at 0.5x) -->
+      <div id="recA" class="clip" data-start="56" data-duration="36" data-track-index="10">
+        <div class="hdr">
+          <span class="step">3 / 7</span>
+          <span class="hdr-title">녹화: 스케일 아웃</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임, 0.5배속</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-18, 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 2: bursting과 pod-deletion-cost</div>
+      </div>
+      <!-- Recording scene B: scale in (media 18.8 to 36.8 s at 0.5x) -->
+      <div id="recB" class="clip" data-start="92" data-duration="36" data-track-index="10">
+        <div class="hdr">
+          <span class="step">4 / 7</span>
+          <span class="hdr-title">녹화: 스케일 인</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임, 0.5배속</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-18, 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 2: bursting과 pod-deletion-cost</div>
+      </div>
+      <!-- Recording window (untimed wrapper; shown only during 56 to 128 s) -->
+      <div id="recwin">
+        <div id="recpan" data-layout-allow-overflow>
+          <video id="vA" class="rec" src="assets/r2-bursting.mp4" data-start="56" data-duration="36" data-media-start="0.8" data-playback-rate="0.5" data-track-index="11" muted playsinline></video>
+          <video id="vB" class="rec" src="assets/r2-bursting.mp4" data-start="92" data-duration="36" data-media-start="18.8" data-playback-rate="0.5" data-track-index="11" muted playsinline></video>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const tl = gsap.timeline({ paused: true });
+        const BAD = "#ff5c85";
+        const LINE = "#3a4a5e";
+
+        function mk(parent, cls, id, x, y, d) {
+          const e = document.createElement("div");
+          e.className = cls;
+          e.id = id;
+          e.style.left = x - d / 2 + "px";
+          e.style.top = y - d / 2 + "px";
+          e.style.width = d + "px";
+          e.style.height = d + "px";
+          parent.appendChild(e);
+          return e;
+        }
+        function show(sel, t, dy) {
+          tl.fromTo(sel, { opacity: 0, y: dy === undefined ? 20 : dy }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, t);
+        }
+        function pop(el, t) {
+          tl.fromTo(el, { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, t);
+        }
+        function removePod(el, t) {
+          tl.to(el, { backgroundColor: BAD, boxShadow: "0 0 26px rgba(255, 92, 133, 0.9)", duration: 0.25 }, t);
+          tl.to(el, { opacity: 0, scale: 0.3, duration: 0.5, ease: "power2.in" }, t + 0.9);
+        }
+        function swap(outSel, inSel, t) {
+          tl.to(outSel, { opacity: 0, duration: 0.3 }, t);
+          tl.fromTo(inSel, { opacity: 0 }, { opacity: 1, duration: 0.4 }, t + 0.15);
+        }
+
+        // Ambient background drift (finite).
+        tl.fromTo("#bg-glow", { x: 0, y: 0 }, { x: -260, y: 120, duration: 21.6, ease: "sine.inOut", yoyo: true, repeat: 9 }, 0);
+
+        // Title
+        show("#t-kicker", 0.3);
+        show("#t-title", 0.6, 30);
+        show("#t-msg", 1.4);
+        tl.to(["#t-kicker", "#t-title", "#t-msg"], { opacity: 0, duration: 0.5 }, 5.3);
+
+        // Headers
+        show("#h1-in", 5.6, 0);
+        show("#h2-in", 30.05, 0);
+        show("#h2-run", 30.4, 0);
+        show("#h3-in", 128.05, 0);
+        show("#h4-in", 174.05, 0);
+        show("#h5-in", 194.05, 0);
+        [["#h1-in", 30], ["#h2-in", 56], ["#h2-run", 56], ["#h3-in", 174], ["#h4-in", 194]].forEach(([s, e]) =>
+          tl.to(s, { opacity: 0, duration: 0.35 }, e - 0.4)
+        );
+
+        // ---------- Scene 1 (5.5 to 30) ----------
+        show("#s1-rules", 6.2, 20);
+        show("#r1", 7.4, 12);
+        show("#r2", 8.6, 12);
+        show("#r3", 9.8, 12);
+        show("#r4", 11.6, 12);
+        show("#s1-env", 14.0, 20);
+        ["#e1", "#e2", "#e3", "#e4"].forEach((s, i) => show(s, 14.8 + i * 1.0, 12));
+        show("#sc-a", 19.8, 24);
+        show("#sc-b", 20.9, 24);
+        show("#sc-c", 22.0, 24);
+        tl.to("#s1", { opacity: 0, duration: 0.4 }, 29.55);
+
+        // ---------- Scene 2 (30 to 56): recorded run layout ----------
+        const s2rings = document.getElementById("s2-rings");
+        const s2pods = document.getElementById("s2-pods");
+        const D2 = 84;
+        const hslot = [];
+        [96, 486].forEach((L) => {
+          [[125, 465], [235, 465], [125, 565], [235, 565]].forEach(([dx, y]) => hslot.push([L + dx, y]));
+        });
+        // m6i.large: 1 pod, m6i.xlarge: 3 pods, m6i.xlarge: 3 pods (recorded placement)
+        const bslot = [[1105, 485]];
+        [1265, 1555].forEach((L) => {
+          bslot.push([L + 80, 485]);
+          bslot.push([L + 180, 485]);
+          bslot.push([L + 130, 575]);
+        });
+        const hRings = hslot.map((p, i) => mk(s2rings, "ring", "hr-" + i, p[0], p[1], D2));
+
+        tl.set(["#sl-pend", "#strip-note"], { opacity: 0 }, 0);
+        show("#z-onprem", 30.4, 16);
+        show("#hn1", 30.8, 16);
+        show("#hn2", 31.0, 16);
+        tl.fromTo(hRings, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 31.3);
+        show("#z-cloud", 31.5, 16);
+        show("#s2-empty", 31.9, 10);
+
+        // Starting point: 3 pods, all on hybrid.
+        [0, 1, 4].forEach((si, k) => {
+          const p = mk(s2pods, "pod h", "p2h-" + si, hslot[si][0], hslot[si][1], D2);
+          pop(p, 32.6 + k * 0.3);
+        });
+
+        // Scale to 15: 12 new pods appear in the strip.
+        show("#strip", 34.8, 12);
+        show("#ch1", 35.2, 16);
+        const newPods = [];
+        for (let i = 0; i < 12; i++) {
+          const p = mk(s2pods, "pod n", "p2n-" + i, 400 + i * 104, 748, D2);
+          newPods.push(p);
+          pop(p, 35.6 + i * 0.08);
+        }
+        // 5 go to the free hybrid slots.
+        [2, 3, 5, 6, 7].forEach((si, k) => {
+          tl.to(newPods[k], { x: hslot[si][0] - (400 + k * 104), y: hslot[si][1] - 748, backgroundColor: "#00e500", duration: 0.9, ease: "power2.inOut" }, 37.2 + k * 0.18);
+        });
+        tl.to(["#hn1", "#hn2"], { borderColor: "#00e500", duration: 0.4 }, 38.6);
+        show("#ch2", 39.2, 16);
+        // The other 7 become Pending.
+        const pend = newPods.slice(5);
+        swap("#sl-new", "#sl-pend", 39.4);
+        tl.set(pend, { borderStyle: "dashed" }, 39.6);
+        tl.to(pend, { backgroundColor: "rgba(251, 211, 50, 0.12)", borderColor: "#fbd332", duration: 0.4 }, 39.6);
+        tl.to(pend, { scale: 1.12, duration: 0.5, yoyo: true, repeat: 3, ease: "sine.inOut" }, 40.0);
+
+        // NodeClaims: 3 burst nodes appear.
+        show("#ch3", 42.0, 16);
+        tl.to("#s2-empty", { opacity: 0, duration: 0.3 }, 42.0);
+        ["#bn0", "#bn1", "#bn2"].forEach((s, i) => {
+          tl.fromTo(s, { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.8)" }, 42.4 + i * 0.35);
+        });
+        // Pending pods bind to burst nodes (1, 3, 3).
+        pend.forEach((p, k) => {
+          const sx = 400 + (k + 5) * 104;
+          tl.to(p, { x: bslot[k][0] - sx, y: bslot[k][1] - 748, duration: 0.9, ease: "power2.inOut" }, 45.0 + k * 0.25);
+          tl.set(p, { borderStyle: "solid" }, 45.9 + k * 0.25);
+          tl.to(p, { backgroundColor: "#fbd332", borderColor: "rgba(0,0,0,0)", boxShadow: "0 0 18px rgba(251, 211, 50, 0.45)", duration: 0.3 }, 45.9 + k * 0.25);
+        });
+        tl.to(["#bn0", "#bn1", "#bn2"], { borderColor: "#fbd332", duration: 0.4 }, 48.0);
+        tl.to("#sl-pend", { opacity: 0, duration: 0.3 }, 48.0);
+        show("#strip-note", 48.6, 8);
+        show("#ch4", 50.0, 16);
+        tl.to("#s2", { opacity: 0, duration: 0.4 }, 55.55);
+
+        // ---------- Recording scenes (56 to 128) ----------
+        tl.set("#recwin", { opacity: 0 }, 0);
+        tl.set("#recwin", { opacity: 1 }, 56);
+        tl.set("#recwin", { opacity: 0 }, 128);
+        tl.set("#footer", { opacity: 0 }, 56);
+        tl.set("#footer", { opacity: 1 }, 128);
+        tl.set("#recpan", { y: 0 }, 0);
+        // media 19.2 to 23.15 s: the typed --replicas=10 line sits below the visible window.
+        tl.to("#recpan", { y: -94, duration: 0.35, ease: "power2.out" }, 92.7);
+        tl.to("#recpan", { y: 0, duration: 0.3, ease: "power2.out" }, 100.7);
+
+        // ---------- Scene 5 (128 to 174): A/B/C comparison, 2026-10-15 ----------
+        const rowsEl = document.getElementById("s3-rows");
+        const ROWS = [
+          { k: "A", name: "A 정책 없음", desc: "기본 규칙", col: "wn", top: 222 },
+          { k: "B", name: "B Kyverno", desc: "게이트 끔", col: "ac", top: 437 },
+          { k: "C", name: "C Kyverno", desc: "게이트 켬", col: "ok", top: 652 },
+        ];
+        const RES = {
+          A: { r15: ["15개", "hybrid 8", "cloud 7"], r10: ["hybrid 6", "cloud 4", "EC2 3대"], r3: ["hybrid 2", "cloud 1", "정리 123초"] },
+          B: { r15: ["15개", "hybrid 8", "cloud 7"], r10: ["hybrid 8", "cloud 2", "EC2 4대"], r3: ["hybrid 3", "cloud 0", "정리 118초"] },
+          C: { r15: ["15개", "hybrid 8", "cloud 7"], r10: ["hybrid 8", "cloud 2", "EC2 3대"], r3: ["hybrid 3", "cloud 0", "정리 87초"] },
+        };
+        function resHtml(lines) {
+          const cls = ["", "ok", "wn"];
+          return lines
+            .map((s, i) => {
+              let c = cls[i];
+              if (lines[0] !== "15개") c = i === 0 ? "ok" : i === 1 ? "wn" : "ac";
+              return '<span class="' + c + '">' + s + "</span>";
+            })
+            .join("");
+        }
+        const HX = [430, 700];
+        const BX = [990, 1120, 1250, 1380];
+        const D3 = 48;
+        const R = {};
+        ROWS.forEach((r) => {
+          const row = document.createElement("div");
+          row.className = "row";
+          row.id = "row" + r.k;
+          row.style.top = r.top + "px";
+          row.innerHTML =
+            '<div class="row-name ' + r.col + '">' + r.name + "</div>" +
+            '<div class="row-desc">' + r.desc + "</div>" +
+            '<div class="grp-slot" style="left:' + HX[0] + 'px" data-layout-allow-overlap>' +
+            '<span id="gh' + r.k + '" class="grp-n">온프렘 hybrid 노드 2대</span>' +
+            '<span id="gx' + r.k + '" class="' + (r.k === "A" ? "bad" : "ok") + '">' +
+            (r.k === "A" ? "hybrid Pod 2개가 먼저 빠짐" : "hybrid 8개 그대로") + "</span></div>" +
+            '<div class="grp-slot" style="left:' + BX[0] + 'px; width:520px"><span class="grp-n">EC2 burst 노드</span></div>' +
+            '<div class="res" data-layout-allow-overlap>' +
+            '<div id="rs15' + r.k + '" class="res-st">' + resHtml(RES[r.k].r15) + "</div>" +
+            '<div id="rs10' + r.k + '" class="res-st">' + resHtml(RES[r.k].r10) + "</div>" +
+            '<div id="rs3' + r.k + '" class="res-st">' + resHtml(RES[r.k].r3) + "</div>" +
+            "</div>";
+          rowsEl.appendChild(row);
+          const hn = HX.map((x, i) => {
+            const e = document.createElement("div");
+            e.className = "mini";
+            e.id = "m" + r.k + "h" + i;
+            e.style.left = x + "px";
+            e.style.width = "250px";
+            row.appendChild(e);
+            return e;
+          });
+          const bn = BX.map((x, i) => {
+            const e = document.createElement("div");
+            e.className = "mini";
+            e.id = "m" + r.k + "b" + i;
+            e.style.left = x + "px";
+            e.style.width = "120px";
+            row.appendChild(e);
+            return e;
+          });
+          const h = [];
+          HX.forEach((x, n) => {
+            for (let i = 0; i < 4; i++) h.push(mk(row, "pod h", "q" + r.k + "h" + (n * 4 + i), x + 38 + i * 58, 122, D3));
+          });
+          const b = [];
+          BX.forEach((x, n) => {
+            for (let i = 0; i < 2; i++) {
+              const idx = n * 2 + i;
+              if (idx === 7) {
+                b.push(null);
+                continue;
+              }
+              b.push(mk(row, "pod c", "q" + r.k + "b" + idx, x + 32 + i * 56, 122, D3));
+            }
+          });
+          R[r.k] = { row, hn, bn, h, b };
+        });
+
+        const T = 128;
+        tl.set(["#ph10", "#ph3", "#sayA", "#sayB", "#sayC", "#say3"], { opacity: 0 }, 0);
+        ["A", "B", "C"].forEach((k) => tl.set(["#gx" + k, "#rs10" + k, "#rs3" + k], { opacity: 0 }, 0));
+        show("#s3-sub", T + 0.5, 8);
+        show("#rowA", T + 1.0, 20);
+        show("#rowB", T + 1.4, 20);
+        show("#rowC", T + 1.8, 20);
+        tl.fromTo("#ph15", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T + 2.2);
+        show("#say0", T + 2.6, 10);
+
+        const dim = (els, t) => tl.to(els, { opacity: 0.35, borderStyle: "dashed", duration: 0.5 }, t);
+        const gone = (els, t) => tl.to(els, { opacity: 0, scale: 0.85, duration: 0.6 }, t);
+
+        // A: 15 -> 10. Hybrid pods go first.
+        swap("#ph15", "#ph10", T + 5.0);
+        swap("#say0", "#sayA", T + 5.0);
+        tl.to("#rowA", { borderColor: "#fbd332", duration: 0.4 }, T + 5.0);
+        swap("#ghA", "#gxA", T + 6.0);
+        removePod(R.A.h[3], T + 6.2);
+        removePod(R.A.h[7], T + 6.2);
+        tl.to(R.A.hn, { borderColor: BAD, duration: 0.3 }, T + 6.2);
+        tl.to(R.A.hn, { borderColor: LINE, duration: 0.6 }, T + 9.5);
+        [1, 3, 6].forEach((i) => removePod(R.A.b[i], T + 10.0));
+        gone(R.A.bn[3], T + 12.0);
+        swap("#rs15A", "#rs10A", T + 13.0);
+        tl.to("#rowA", { borderColor: LINE, duration: 0.4 }, T + 15.5);
+
+        // B: 15 -> 10. Cloud pods go first, hybrid stays at 8.
+        swap("#sayA", "#sayB", T + 16.0);
+        tl.to("#rowB", { borderColor: "#41b3ff", duration: 0.4 }, T + 16.0);
+        [1, 2, 3, 5, 6].forEach((i, k) => removePod(R.B.b[i], T + 17.0 + k * 0.3));
+        dim([R.B.bn[1], R.B.bn[3]], T + 19.5);
+        swap("#ghB", "#gxB", T + 20.0);
+        swap("#rs15B", "#rs10B", T + 21.0);
+        tl.to("#rowB", { borderColor: LINE, duration: 0.4 }, T + 26.0);
+
+        // C: 15 -> 10. Karpenter ranking empties burst nodes, one node goes.
+        swap("#sayB", "#sayC", T + 26.5);
+        tl.to("#rowC", { borderColor: "#00e500", duration: 0.4 }, T + 26.5);
+        [0, 1, 2, 3, 6].forEach((i, k) => removePod(R.C.b[i], T + 27.5 + k * 0.3));
+        dim([R.C.bn[0], R.C.bn[1]], T + 30.0);
+        gone(R.C.bn[3], T + 30.5);
+        swap("#ghC", "#gxC", T + 31.0);
+        swap("#rs15C", "#rs10C", T + 32.0);
+        tl.to("#rowC", { borderColor: LINE, duration: 0.4 }, T + 35.5);
+
+        // All three: 10 -> 3.
+        swap("#ph10", "#ph3", T + 36.0);
+        swap("#sayC", "#say3", T + 36.0);
+        ["A", "B", "C"].forEach((k) => swap("#gx" + k, "#gh" + k, T + 36.4));
+        [1, 2, 5, 6].forEach((i) => removePod(R.A.h[i], T + 37.5));
+        [0, 2, 4].forEach((i) => removePod(R.A.b[i], T + 37.5));
+        [2, 3, 5, 6, 7].forEach((i) => {
+          removePod(R.B.h[i], T + 37.5);
+          removePod(R.C.h[i], T + 37.5);
+        });
+        [0, 4].forEach((i) => removePod(R.B.b[i], T + 37.5));
+        [4, 5].forEach((i) => removePod(R.C.b[i], T + 37.5));
+        gone([R.A.bn[0], R.A.bn[1]], T + 40.5);
+        gone(R.B.bn, T + 40.5);
+        gone([R.C.bn[0], R.C.bn[1], R.C.bn[2]], T + 40.5);
+        ["A", "B", "C"].forEach((k, i) => swap("#rs10" + k, "#rs3" + k, T + 41.5 + i * 0.4));
+        tl.to(["#s3", "#say", "#ph"], { opacity: 0, duration: 0.4 }, 173.55);
+
+        // ---------- Scene 6 (174 to 194): table ----------
+        show("#tr0", 174.5, 10);
+        ["#tr1", "#tr2", "#tr3", "#tr4", "#tr5", "#tr6", "#tr7"].forEach((s, i) => show(s, 175.2 + i * 1.0, 10));
+        show("#f1", 182.5, 8);
+        show("#f2", 183.5, 8);
+        tl.to("#s4", { opacity: 0, duration: 0.4 }, 193.55);
+
+        // ---------- Scene 7 (194 to 216) ----------
+        show("#msg", 194.6, 20);
+        show("#k1", 196.5, 24);
+        show("#k2", 197.3, 24);
+        show("#k3", 198.1, 24);
+        show("#cav", 200.5, 16);
+        show("#cv1", 201.0, 10);
+        show("#cv2", 202.2, 10);
+
+        window.__timelines["main"] = tl;
+      })();
+    </script>
+  </body>
+</html>

@@ -450,11 +450,12 @@ CNI가 SNAT를 하면 응답이 node 주소로 돌아오고 connection tracking�
     <tr><td>온프렘 라우터 변경</td><td>필요 (route 유지, drift 추적)</td><td>필요 (peering, ASN, prefix filter)</td><td>Pod CIDR route는 불필요 (node IP, UDP 8472은 필요)</td></tr>
     <tr><td>CNI 제약</td><td>지원되는 routable Pod 설계</td><td>Cilium BGP Control Plane</td><td>AWS Cilium VTEP + <code>l7Proxy=false</code></td></tr>
     <tr><td>HA / 처리량</td><td>네트워크 팀 설계, 라우터/링크 한계</td><td>네트워크 팀 설계, 라우터/링크 한계</td><td>Lease active-standby, 활성 Gateway 1대 한계</td></tr>
+    <tr><td>cross-AZ 비용</td><td>Pod가 있는 AZ의 TGW/VGW로 바로 나감</td><td>Pod가 있는 AZ의 TGW/VGW로 바로 나감</td><td>모든 트래픽이 leader AZ를 지남, 다른 AZ 워크로드는 cross-AZ 요금</td></tr>
     <tr><td>정리(제거)</td><td>소유한 route 정리</td><td>소유한 route/peering 정리</td><td>Helm 제거해도 VPC route는 남음</td></tr>
   </tbody>
 </table>
 <div class="card-grid fragment" style="margin-top: var(--space-3);" data-reveal="stagger" data-fragment-index="1">
-  <div class="callout callout-success"><strong class="text-success">BGP 우선</strong><div class="on-surface-muted">라우터 팀이 BGP를 운영할 수 있고 노드가 늘어날 환경. AWS 가이드가 권장하는 방식</div></div>
+  <div class="callout callout-success"><strong class="text-success">BGP 우선</strong><div class="on-surface-muted">라우터 팀이 BGP를 운영할 수 있고 노드가 늘어날 환경, 트래픽이 큰 경로. leader 1대와 cross-AZ hop이 없음. AWS 가이드가 권장하는 방식</div></div>
   <div class="callout callout-warning"><strong class="text-warning">static은 소규모, 고정 환경</strong><div class="on-surface-muted">노드, Pod CIDR 변경 때마다 수동 갱신과 장애 추적 부담</div></div>
   <div class="callout callout-info"><strong class="text-info">Gateway는 라우터 변경이 어려울 때</strong><div class="on-surface-muted">VTEP/<code>l7Proxy=false</code> 제약과 추가 hop을 수용할 수 있다면</div></div>
 </div>
@@ -466,15 +467,18 @@ CNI가 SNAT를 하면 응답이 node 주소로 돌아오고 connection tracking�
 • static/BGP는 direct routing, Gateway는 VXLAN 터널로 우회
 • Gateway가 없어도 routable Pod 설계로 webhook, ALB/NLB IP target 가능
 • BGP는 네트워크 팀의 peering 운영 능력, Gateway는 CNI 제약 수용이 판단 기준
+• 대용량 경로는 BGP: Gateway는 leader AZ로 트래픽이 모여 cross-AZ 요금과 처리량 한계가 생김
 • 정답은 하나가 아니며 비용, 운영 역량, 제약으로 결정
 세 가지 방법을 나란히 놓았습니다. static은 라우터에 prefix를 직접 넣는 방식이라 단순하지만 노드와 Pod CIDR이 바뀔 때마다 사람이 따라가야 합니다. BGP는 Cilium BGP Control Plane이 Pod CIDR을 광고하므로 노드 증감에 유연하지만 라우터 팀과 ASN, prefix filter, graceful restart를 합의해야 합니다.
 Gateway는 온프렘 Pod CIDR을 VPC에서 routable하게 만들 필요가 없다는 것이 핵심입니다. 대신 AWS가 지원하는 Cilium의 VTEP을 켜고 l7Proxy를 꺼야 하며, 활성 Gateway 한 대를 거치는 추가 hop이 생깁니다.
+비용도 봐야 합니다. Gateway를 두 AZ에 나눠도 활성 leader는 하나라서, 리더와 다른 AZ에 있는 Pod나 ALB의 hybrid 트래픽은 모두 리더의 AZ로 건너가고 AWS 문서대로 cross-AZ 전송 요금이 붙습니다. BGP나 static은 Pod가 있는 AZ에서 TGW나 VGW로 바로 나가므로 이 hop이 없습니다. 그래서 트래픽이 큰 경로는 BGP로 직접 라우팅하고, Gateway는 webhook이나 적은 양의 Pod 간 통신에 두는 구성을 권합니다.
 {cue: question}
 오해하시면 안 되는 점은 Gateway가 필수가 아니라는 겁니다. Gateway 없이도 BGP나 static으로 routable Pod를 설계하면 webhook이나 ALB IP target이 가능합니다. 우리 환경은 어느 쪽이 맞을까요? 라우터 팀의 협조 가능성이 가장 큰 변수입니다.
 {cue: transition}
 먼저 BGP 최소 예제부터 보겠습니다.
 [근거]
 • 내부 문서 D/10 "비교: 게이트웨이 사용 vs 미사용" 표, D/10 FAQ Q6, D/02 "라우팅 가능한 Pod CIDR 구성". 판단 가이드(우선순위)는 발표자 의견
+• https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html (Gateway와 VPC 리소스 간 cross-AZ 트래픽은 표준 요금)
 :::
 
 ---
@@ -614,7 +618,7 @@ BGP 세션이 Established 됐다고 끝이 아닙니다. 라우터에 의도한 
 • 2026-04-21 GA, 오픈소스(Apache-2.0), Gateway 소프트웨어 추가 요금 없음, 선택 사항
 • 목적: 온프렘 Pod CIDR을 VPC에서 routable하게 만들지 않고도 CP→webhook, Cloud↔Hybrid Pod, ALB/NLB IP target 지원
 • 한계: AWS Cilium VTEP, l7Proxy=false, 암호화 없음, 클러스터당 1개, 설치만으로 완성되지 않음
-Hybrid Nodes Gateway는 2026년 4월 21일에 GA 된 오픈소스 프로젝트입니다. 가격은 Gateway 자체 요금이 없고, 쓰는 EC2와 데이터 전송, Auto Mode 관리 요금만 냅니다.
+Hybrid Nodes Gateway는 2026년 4월 21일에 GA 된 오픈소스 프로젝트입니다. 가격은 Gateway 자체 요금이 없고, Gateway가 도는 EC2와 데이터 전송 비용만 냅니다. Gateway 노드는 Auto Mode 노드든 관리형이나 자체 관리 노드 그룹이든 상관없고, Auto Mode 노드에 올렸을 때만 그 노드의 Auto Mode 관리 요금이 더해집니다.
 무엇을 해 주느냐면, 온프렘 Pod CIDR을 VPC에서 라우팅 가능하게 만드는 숙제를 없애 줍니다. 그래서 컨트롤 플레인에서 hybrid webhook으로, cloud와 hybrid Pod 사이로, 그리고 ALB나 NLB의 IP target과 AMP managed collector로 가는 흐름이 가능해집니다. AMP는 private cluster endpoint와 route, 방화벽이 맞아야 합니다.
 {cue: pause}
 그런데 한계도 정직하게 말씀드립니다. 첫째, 설치만으로 모든 조건이 충족되진 않습니다. 둘째, AWS 빌드의 Cilium VTEP이 필요하고 l7Proxy를 꺼야 하므로 같은 설치에서 Cilium Ingress나 Gateway API, L7 정책을 같이 쓸 수 없습니다. 셋째, VXLAN은 암호화를 제공하지 않으며, 클러스터당 하나만 배포하고, 활성 Gateway 한 대가 처리량의 한계입니다.

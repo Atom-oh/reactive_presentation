@@ -47,7 +47,7 @@
   <p class="lead">세션 데모 3개를 실제 클러스터에서 구축하고 검증한 기록입니다. 모든 수치는 2026-10-15에 실측한 값이고, 데모 2는 시나리오별 1회 측정입니다.</p>
   <div class="nav">
     <a href="#where">확인 위치</a><a href="#env">환경과 버전</a><a href="#build">구축 순서</a><a href="#demo1">데모 1 gateway</a>
-    <a href="#demo2">데모 2 bursting</a><a href="#demo3">데모 3 GPU</a><a href="#istio">Istio 공존</a><a href="#issues">문서와 달랐던 점</a><a href="#cost">비용과 정리</a>
+    <a href="#demo2">데모 2 bursting</a><a href="#demo3">데모 3 GPU</a><a href="#istio">Istio 공존</a><a href="#lb">ALB ip 타깃과 역방향</a><a href="#issues">문서와 달랐던 점</a><a href="#cost">비용과 정리</a>
     <a href="05-live-demo.html">데모 결과 슬라이드</a><a href="01-overview.html">세션 1블록으로</a><a href="toc.html">목차로</a>
   </div>
 
@@ -193,7 +193,25 @@
   </div>
   <p>실행은 <code>./demo-istio/install.sh plan</code>과 <code>apply</code>, 그다음 <code>./demo-istio/run-tests.sh</code>입니다. 되돌릴 때는 <code>./demo-istio/install.sh remove</code>를 쓰세요.</p>
 
-  <h2 id="issues">8. 문서와 다르게 동작한 점</h2>
+  <h2 id="lb">8. ALB ip 타깃(hybrid Pod)과 역방향 경로</h2>
+  <p>두 가지 질문을 확인했습니다. ALB <code>target-type: ip</code>로 hybrid Pod IP를 붙였을 때 Pod IP가 바뀌면 누가 타깃을 갱신하는지, 그리고 온프렘에서 LB로 들어올 때 리전 노드의 Pod까지 어떻게 가는지입니다. AWS Load Balancer Controller 차트 3.6.0(Pod Identity)을 썼고, ALB는 <strong>internal</strong>이며 inbound는 VPC CIDR과 온프렘 노드 CIDR만 열었습니다.</p>
+  <table>
+    <tr><th>검증</th><th>결과 (2026-10-18 실측)</th></tr>
+    <tr><td>등록</td><td>hybrid Pod IP <code>172.17.0.202</code>, <code>172.17.0.48</code>이 ip 타깃으로 등록되고 healthy. VPC 밖 IP라서 AZ는 <code>all</code></td></tr>
+    <tr><td>리전 클라이언트에서 ALB로 hybrid Pod 호출</td><td>20/20. 경로는 ALB, VPC 라우트 <code>172.17.0.0/16</code>(gateway 리더 ENI), VXLAN, hybrid Pod</td></tr>
+    <tr><td>부하 중 rollout restart</td><td>LBC가 새 IP(<code>.230</code>, <code>.76</code>)로 타깃을 바꿔 54초에 수렴, 276건 중 실패 0</td></tr>
+    <tr><td>부하 중 gateway 리더 삭제</td><td>인계 4초, 191건 중 실패 1건. 클라이언트(busybox wget)는 재시도하지 않습니다</td></tr>
+    <tr><td>온프렘 호스트에서 internal ALB로 리전 Pod 호출</td><td>20/20. ALB 이름이 private IP로 풀리고 TGW를 지나 VPC CNI Pod로 갑니다. gateway는 관여하지 않습니다</td></tr>
+    <tr><td>온프렘 호스트에서 internal ALB로 hybrid Pod 호출</td><td>20/20. 다만 온프렘, AWS, 다시 온프렘으로 도는 hairpin 경로입니다</td></tr>
+    <tr><td>온프렘 호스트에서 hybrid NodePort로 리전 Pod 호출</td><td><strong>실패</strong>. kube-proxy가 노드 IP로 SNAT한 뒤 underlay로 보내서 gateway를 타지 않고, 클러스터 SG가 온프렘 노드 CIDR에 443만 허용합니다</td></tr>
+  </table>
+  <div class="callout warn">
+    <strong>설명할 때의 요점</strong>
+    타깃 갱신은 LBC가 하고 gateway는 경로만 줍니다. 온프렘 클라이언트가 internal LB를 쓰려면 온프렘 DNS에서 ALB 이름을 private IP로 풀 수 있어야 합니다(Route 53 Resolver inbound endpoint). AWS는 리전에서 오는 트래픽은 ALB, 온프렘에서 오는 트래픽은 온프렘 쪽 Ingress로 받으라고 권장합니다. gateway를 쓰면 Cilium L7이 꺼지므로 온프렘은 L4 LoadBalancer나 기존 LB를 씁니다. NodePort 경로를 쓰려면 리전 노드 SG에 온프렘 노드 CIDR과 앱 포트를 열어야 합니다(이 데모에서는 열지 않았습니다).
+  </div>
+  <p>실행은 <code>./demo-lb/install.sh plan</code>, <code>apply</code>, <code>apps</code>, 그다음 <code>./demo-lb/run-tests.sh</code>입니다. 되돌릴 때는 <code>./demo-lb/install.sh remove</code>를 쓰세요(ALB 삭제를 확인한 뒤 IAM까지 정리합니다).</p>
+
+  <h2 id="issues">9. 문서와 다르게 동작한 점</h2>
   <table>
     <tr><th>상황</th><th>원인과 처리</th></tr>
     <tr><td><code>nodeadm init</code>이 403으로 실패</td><td><code>eksctl</code>이 만든 role에 <code>eks:ListAccessEntries</code>가 없습니다. 문서가 안내하는 <code>--skip cluster-access-validation</code>을 썼습니다.</td></tr>
@@ -201,11 +219,13 @@
     <tr><td>Kyverno 정책 생성이 거부됨</td><td>3.9.1에서는 <code>spec.failurePolicy</code>가 금지됩니다. <code>spec.webhookConfiguration.failurePolicy</code>를 씁니다. <code>ClusterPolicy</code> 자체는 deprecated입니다.</td></tr>
     <tr><td>8개가 들어가야 할 hybrid 노드에 6개만 배치됨</td><td>Pod의 유효 요청은 컨테이너 합과 가장 큰 init container 중 큰 값입니다. Cilium agent의 100m가 init container에 있어서 계산에서 빠졌습니다.</td></tr>
     <tr><td>vLLM이 빈 모델 이름으로 종료</td><td>env 예제의 빈 <code>MODEL_ID=</code>가 고정값을 덮어썼습니다. 빈 줄을 제거했습니다.</td></tr>
+    <tr><td>LBC 3.6.0 <code>helm install</code>이 "server is currently unable to handle the request"로 실패</td><td>차트의 <code>kind: List</code> 래퍼만 클라이언트 측 OpenAPI 검증에서 실패합니다(항목은 따로 server dry-run 통과). <code>--disable-openapi-validation</code>으로 우회했습니다.</td></tr>
+    <tr><td>ALB 타깃 그룹 생성 실패</td><td>헬스 체크 interval을 5초로 줄이면 기본 timeout 5초가 interval보다 작아야 한다는 검증에 걸립니다. timeout을 3초로 줬습니다.</td></tr>
     <tr><td>옵션 데모의 "Cilium L7 정책과 Istio L7의 충돌"은 이 클러스터에서 재현할 수 없음</td><td>gateway가 Cilium <code>l7Proxy: false</code>를 요구해서 Cilium L7 정책이 적용되지 않기 때문입니다. 충돌 재현에는 gateway 없는 별도 클러스터가 필요합니다. 반면 Istio 자체는 gateway와 함께 동작하는 것을 위 7절에서 확인했습니다.</td></tr>
   </table>
   <p>아직 측정하지 못한 항목은 consolidation이 hybrid 노드의 빈자리를 재배치 대상으로 보는지(Karpenter는 hybrid 노드를 관리하지 않으므로 보지 않아야 합니다), hostNetwork Pod의 gateway 경로, gateway 인스턴스 타입별 처리량입니다.</p>
 
-  <h2 id="cost">9. 비용과 정리</h2>
+  <h2 id="cost">10. 비용과 정리</h2>
   <p>환경이 켜져 있는 동안 EKS 컨트롤 플레인, NAT, Transit Gateway attachment, EC2, hybrid node vCPU 요금이 계속 발생합니다. 리허설이 끝나면 다음 순서로 삭제합니다.</p>
   <pre><code>./teardown.sh plan
 ./teardown.sh apply all   # demo, karpenter, gateway, hybrid, cluster, network 순서</code></pre>

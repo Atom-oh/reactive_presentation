@@ -449,14 +449,120 @@ gateway 리더를 지우는 동안 초당 40건을 계속 보냈는데 1,800건�
 {cue: pause}
 이 값은 순차 요청의 지연이고 처리량 테스트가 아닙니다. 활성 gateway 한 대가 처리량의 한계라는 점은 그대로입니다.
 {cue: transition}
-마지막으로 전체를 정리하겠습니다.
+다음은 ALB로 hybrid Pod를 직접 타깃으로 붙였을 때입니다.
 
 [출처]
 • 데모 저장소 results/istio-20261017-2311.json, demo-istio/run-tests.sh (2026-10-17 실측)
 :::
 
 ---
-<!-- Slide 10: 정리 -->
+<!-- Slide 10: ALB ip 타깃 -->
+@type: content
+@title: ALB ip 타깃: hybrid Pod IP가 바뀌어도 LBC가 따라간다
+
+## ALB ip 타깃: hybrid Pod IP가 바뀌어도 LBC가 따라간다
+
+:::html
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.flow-h { margin: 0 0 var(--space-4); }
+.flow-h .flow-box { min-width: min-content; overflow-wrap: normal; }
+.hn-flow-sub { display: block; color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: break-word; }
+.ld-table { width: 100%; border-collapse: collapse; margin-bottom: var(--space-3); font-size: var(--fs-card); }
+.ld-table th, .ld-table td { border: 1px solid var(--border); padding: var(--space-2) var(--space-3); text-align: left; }
+.ld-table th { background: var(--bg-card); }
+.ld-num { font-variant-numeric: tabular-nums; }
+</style>
+<div class="flow-h">
+  <div class="flow-box fragment fade-right" data-fragment-index="1">리전 클라이언트<br><span class="hn-flow-sub">10.0.x</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="2">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="2">internal ALB<br><span class="hn-flow-sub">ip 타깃 172.17.x, AZ all</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="3">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="3">VPC 라우트 172.17.0.0/16<br><span class="hn-flow-sub">gateway 리더 ENI</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="4">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="4">VXLAN → hybrid Pod<br><span class="hn-flow-sub">온프렘 노드</span></div>
+</div>
+<table class="ld-table fragment fade-up" data-fragment-index="5">
+  <tr><th>테스트</th><th>무엇을 했나</th><th>결과</th></tr>
+  <tr><td>등록</td><td>Ingress target-type ip, hybrid Pod 2개</td><td>172.17.0.202, .48이 healthy, AZ <code>all</code></td></tr>
+  <tr><td>호출</td><td>리전 Pod에서 ALB로 20회</td><td class="ld-num">20/20</td></tr>
+  <tr><td>Pod 교체</td><td>부하 중 rollout restart</td><td class="ld-num">새 IP .230, .76로 54초에 수렴, 276건 중 실패 0</td></tr>
+  <tr><td>gateway 전환</td><td>부하 중 리더 Pod 삭제</td><td class="ld-num">인계 4초, 191건 중 실패 1 (재시도 없음)</td></tr>
+</table>
+<div class="callout callout-info fragment fade-up" data-fragment-index="6"><strong class="text-info">역할 분담</strong> 타깃 등록과 해제는 AWS Load Balancer Controller가 하고, gateway는 VPC 밖 Pod IP까지 가는 경로만 줍니다. 그래서 Pod IP가 라우팅 가능해야 합니다.</div>
+:::
+
+
+:::notes
+{timing: 2.5min}
+[요약]
+• hybrid Pod IP를 ALB ip 타깃으로 등록, VPC 밖 IP라 AZ all
+• rollout restart 중 LBC가 새 Pod IP로 교체, 54초에 수렴, 실패 0
+• gateway 리더 전환 중 191건 중 1건 실패
+
+자주 받는 질문이 "온프렘 Pod IP는 계속 바뀌는데 ALB 타깃은 누가 바꿔 주나"입니다. 답은 AWS Load Balancer Controller입니다. Endpoints를 보고 타깃을 등록하고 해제합니다. gateway가 하는 일은 VPC 밖에 있는 Pod IP까지 가는 경로를 주는 것뿐입니다.
+실제로 internal ALB에 hybrid Pod 두 개를 붙였고, VPC 밖 IP라서 가용 영역이 all로 등록됐습니다. 헬스 체크도 gateway 경로로 통과했습니다.
+{cue: pause}
+부하를 거는 중에 rollout restart를 했더니, 새 Pod IP로 54초 만에 타깃이 바뀌었고 276건 중 실패는 없었습니다. preStop과 짧은 deregistration delay를 함께 준 결과입니다.
+gateway 리더를 지웠을 때는 인계 4초 동안 191건 중 1건이 실패했습니다. 이 클라이언트는 재시도를 하지 않아서, Istio 측정보다 실제 공백에 가깝습니다.
+{cue: transition}
+그럼 반대 방향, 온프렘에서 LB로 들어오는 경우는 어떨까요.
+
+[출처]
+• 데모 저장소 results/lb-20261018-0211.json, demo-lb/run-tests.sh (2026-10-18 실측)
+• https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-ingress.html
+:::
+
+---
+<!-- Slide 11: 역방향 -->
+@type: content
+@title: 반대 방향: 온프렘에서 LB로 들어오면
+
+## 반대 방향: 온프렘에서 LB로 들어오면
+
+:::html
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.hn-path { font-size: var(--fs-card); color: var(--text-primary); margin-top: var(--space-2); word-break: keep-all; }
+</style>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="callout callout-success"><strong class="text-success">① internal ALB → 리전 Pod: 20/20</strong><div class="hn-path">온프렘 → DX/VPN(데모는 TGW) → ALB private IP → VPC CNI Pod</div><div class="on-surface-muted">gateway를 거치지 않습니다. 온프렘 DNS가 ALB 이름을 private IP로 풀어야 하므로 Route 53 Resolver inbound endpoint가 필요합니다.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">② internal ALB → hybrid Pod: 20/20, 그러나 hairpin</strong><div class="hn-path">온프렘 → ALB → gateway → 다시 온프렘</div><div class="on-surface-muted">동작은 하지만 DX를 두 번 지나 지연과 전송 비용이 늘어납니다. 온프렘 Pod는 온프렘 LB로 받는 편이 낫습니다.</div></div>
+  <div class="callout callout-danger"><strong class="text-danger">③ hybrid NodePort → 리전 Pod: 실패</strong><div class="hn-path">온프렘 → hybrid 노드 :30080 → 노드 IP로 SNAT → underlay → 리전 Pod</div><div class="on-surface-muted">Pod 출발 트래픽이 아니라 gateway를 타지 않습니다. 리전 노드 SG가 온프렘 노드 CIDR에서 오는 앱 포트를 허용해야 합니다(데모 SG는 443만 허용).</div></div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">AWS 권장</strong> 리전에서 오는 트래픽은 ALB, 온프렘에서 오는 트래픽은 온프렘 쪽 Ingress나 LB로 받습니다. gateway를 쓰면 Cilium L7(Ingress, Gateway API)은 꺼지므로 온프렘은 L4 LoadBalancer나 기존 LB를 씁니다.</div>
+:::
+
+
+:::notes
+{timing: 2.5min}
+[요약]
+• 온프렘 → internal ALB → 리전 Pod는 일반 VPC 경로, gateway 불필요 (20/20)
+• 같은 ALB로 hybrid Pod를 부르면 hairpin, 동작은 하지만 비효율 (20/20)
+• hybrid NodePort로 받아 리전 Pod로 보내면 underlay를 타서 SG가 필요 (실패)
+
+온프렘 호스트에서 같은 internal ALB를 호출했습니다. ALB 이름은 private IP 두 개로 풀렸고, TGW를 지나 ALB에 닿은 뒤 리전 Pod로 갔습니다. 여기는 gateway가 전혀 관여하지 않는 일반 VPC 경로입니다. 실제 온프렘에서는 ALB 이름을 private IP로 풀 수 있게 Route 53 Resolver inbound endpoint를 두셔야 합니다.
+같은 ALB로 hybrid Pod 경로를 부르면 온프렘에서 AWS로 갔다가 gateway를 지나 다시 온프렘으로 돌아옵니다. 동작은 했지만 DX를 두 번 지나니 온프렘 Pod는 온프렘 LB로 받는 게 낫습니다.
+{cue: pause}
+AWS 문서도 같은 기준을 줍니다. 리전에서 오는 트래픽은 ALB와 Load Balancer Controller, 온프렘에서 오는 트래픽은 온프렘 쪽 Ingress로 받으라고 권장합니다. 다만 gateway를 켜면 Cilium의 L7 proxy를 꺼야 해서 Cilium Ingress와 Gateway API는 같이 쓸 수 없고, 온프렘은 L4 LoadBalancer Service나 기존 하드웨어 LB를 쓰게 됩니다.
+세 번째는 일부러 보여 드리는 실패입니다. hybrid 노드의 NodePort로 받아서 리전 Pod로 보내면, kube-proxy가 노드 IP로 SNAT하고 커널 라우팅으로 underlay를 탑니다. Pod에서 출발한 트래픽이 아니라서 gateway를 쓰지 않습니다. 데모 클러스터의 SG가 온프렘 노드 대역에 443만 열어 둬서 막혔습니다. 이 경로를 쓰려면 리전 노드 SG에 온프렘 노드 CIDR과 앱 포트를 열어야 합니다.
+{cue: transition}
+마지막으로 전체를 정리하겠습니다.
+
+[출처]
+• 데모 저장소 results/lb-20261018-0211.json, KNOWN-ISSUES.md LB 데모 확인 사항 (2026-10-18 실측)
+• https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-ingress.html (트래픽 출발지별 ALB와 Cilium Ingress 권장)
+• https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html
+:::
+
+---
+<!-- Slide 12: 정리 -->
 @type: content
 @title: 정리: 무엇을 확인했고 무엇이 남았나
 
@@ -470,8 +576,8 @@ gateway 리더를 지우는 동안 초당 40건을 계속 보냈는데 1,800건�
 .on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
 <div class="card-grid fragment" data-reveal="stagger" data-fragment-index="1">
-  <div class="callout callout-success"><strong class="text-success">확인한 것</strong><div class="on-surface-muted">gateway 전환 3~5초, 온프렘 Pod 보호(B, C), GPU 추론 호출, Istio와 gateway 공존(sidecar).</div></div>
-  <div class="callout callout-warning"><strong class="text-warning">아직 남은 것</strong><div class="on-surface-muted">B와 C의 반복 측정, Istio ambient 모드, gateway 처리량, hostNetwork Pod 경로, 실제 온프렘 서버에서의 재검증.</div></div>
+  <div class="callout callout-success"><strong class="text-success">확인한 것</strong><div class="on-surface-muted">gateway 전환 3~5초, 온프렘 Pod 보호(B, C), GPU 추론 호출, Istio와 gateway 공존(sidecar), ALB ip 타깃 자동 갱신, 온프렘에서 internal ALB 진입.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">아직 남은 것</strong><div class="on-surface-muted">B와 C의 반복 측정, Istio ambient 모드, gateway 처리량, hostNetwork와 NodePort 경로(노드 SG), 실제 온프렘 서버에서의 재검증.</div></div>
   <div class="callout callout-info"><strong class="text-info">직접 해 보려면</strong><div class="on-surface-muted">데모 저장소의 RUNBOOK.md 순서를 따르고, 끝나면 teardown.sh로 정리해 비용을 멈추세요.</div></div>
   <div class="callout callout-warning"><strong class="text-warning">반드시 기억할 것</strong><div class="on-surface-muted">모든 수치는 EC2로 시뮬레이션한 환경의 값입니다. 프로덕션 지원 구성이 아닙니다.</div></div>
 </div>
@@ -481,12 +587,12 @@ gateway 리더를 지우는 동안 초당 40건을 계속 보냈는데 1,800건�
 :::notes
 {timing: 1.5min}
 [요약]
-• 확인: gateway 전환, 온프렘 Pod 보호, GPU 추론, Istio 공존
+• 확인: gateway 전환, 온프렘 Pod 보호, GPU 추론, Istio 공존, ALB ip 타깃
 • 남은 것: 반복 측정, ambient, 처리량, 실제 온프렘 재검증
 • 수치는 시뮬레이션 환경의 값
 
 정리하겠습니다. gateway 전환은 3~5초, 온프렘 Pod는 Kyverno만으로도 지켜졌고, Karpenter 기능은 EC2 수와 정리 시간에서 작은 이득을 줬습니다.
-GPU 추론은 hybrid 노드에서 돌고 클라우드에서 호출됐고, Istio는 gateway와 함께 동작했습니다.
+GPU 추론은 hybrid 노드에서 돌고 클라우드에서 호출됐고, Istio는 gateway와 함께 동작했고, ALB는 바뀌는 hybrid Pod IP를 따라갔습니다.
 남은 것도 솔직히 말씀드립니다. B와 C의 차이는 반복 측정이 필요하고, Istio ambient 모드와 gateway 처리량은 보지 못했고, 모든 수치는 시뮬레이션 환경의 값이라 실제 온프렘에서 다시 확인해야 합니다.
 {cue: transition}
 마지막으로 참고 자료를 정리하고 질문을 받겠습니다.
@@ -496,7 +602,7 @@ GPU 추론은 hybrid 노드에서 돌고 클라우드에서 호출됐고, Istio�
 :::
 
 ---
-<!-- Slide 11: 통합 참고 자료 -->
+<!-- Slide 13: 통합 참고 자료 -->
 @type: content
 @title: 참고 자료 & Q&A
 
@@ -572,7 +678,7 @@ GPU 추론은 hybrid 노드에서 돌고 클라우드에서 호출됐고, Istio�
 :::
 
 ---
-<!-- Slide 12: Thank You -->
+<!-- Slide 14: Thank You -->
 @type: thankyou
 @toc: toc.html
 @message: EKS Hybrid Nodes, 감사합니다

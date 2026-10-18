@@ -1,0 +1,1151 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>V3 ALB ip 타깃과 역방향</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --bg: #161d26;
+        --panel: #1d2632;
+        --panel-2: #222d3a;
+        --line: #3a4a5e;
+        --fg: #ffffff;
+        --fg-2: rgba(243, 243, 247, 0.78);
+        --fg-3: rgba(243, 243, 247, 0.62);
+        --accent: #41b3ff;
+        --warning: #fbd332;
+        --success: #00e500;
+        --danger: #ff5c85;
+        --sans: "Noto Sans KR", sans-serif;
+        --mono: "JetBrains Mono", "Noto Sans KR", monospace;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--bg);
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: var(--sans);
+        color: var(--fg);
+        word-break: keep-all;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+      .mono {
+        font-family: var(--mono);
+      }
+      .ok {
+        color: var(--success);
+      }
+      .wn {
+        color: var(--warning);
+      }
+      .bad {
+        color: var(--danger);
+      }
+      .ac {
+        color: var(--accent);
+      }
+
+      /* background */
+      #bg {
+        position: absolute;
+        inset: 0;
+        background: var(--bg);
+      }
+      #bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(65, 179, 255, 0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(65, 179, 255, 0.05) 1px, transparent 1px);
+        background-size: 80px 80px;
+      }
+      #bg-glow {
+        position: absolute;
+        left: 1100px;
+        top: -300px;
+        width: 1100px;
+        height: 1100px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(65, 179, 255, 0.12) 0%, rgba(65, 179, 255, 0) 65%);
+      }
+
+      /* footer */
+      #footer {
+        pointer-events: none;
+      }
+      .footer-label {
+        position: absolute;
+        left: 60px;
+        bottom: 26px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 36px;
+        font-weight: 500;
+        color: var(--fg-2);
+      }
+      .footer-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--warning);
+      }
+      .footer-right {
+        position: absolute;
+        right: 60px;
+        bottom: 26px;
+        font-size: 36px;
+        color: var(--fg-3);
+      }
+
+      /* opening title */
+      #s0-title {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 160px 80px;
+      }
+      .kicker {
+        font-size: 40px;
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 0.02em;
+      }
+      .big-title {
+        margin-top: 24px;
+        font-size: 104px;
+        font-weight: 900;
+        line-height: 1.15;
+      }
+      .big-msg {
+        margin-top: 40px;
+        max-width: 1560px;
+        font-size: 48px;
+        font-weight: 500;
+        line-height: 1.4;
+        color: var(--fg-2);
+      }
+      .big-msg b {
+        color: var(--success);
+        font-weight: 700;
+      }
+
+      /* scene header */
+      .hdr {
+        position: absolute;
+        left: 60px;
+        top: 56px;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+      }
+      .step {
+        display: block;
+        padding: 6px 22px;
+        border: 2px solid var(--accent);
+        border-radius: 999px;
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .hdr-title {
+        display: block;
+        font-size: 58px;
+        font-weight: 800;
+      }
+      .run-badge {
+        position: absolute;
+        right: 60px;
+        top: 56px;
+        padding: 8px 24px;
+        border-radius: 14px;
+        border: 2px solid var(--accent);
+        background: rgba(65, 179, 255, 0.1);
+        color: var(--accent);
+        font-size: 36px;
+        font-weight: 700;
+      }
+      .run-badge.old {
+        border-color: var(--warning);
+        background: rgba(251, 211, 50, 0.08);
+        color: var(--warning);
+      }
+      .sub {
+        position: absolute;
+        left: 60px;
+        top: 160px;
+        font-size: 36px;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+
+      /* cards */
+      .card {
+        position: absolute;
+        padding: 26px 34px;
+        border-radius: 22px;
+        background: var(--panel);
+        border: 2px solid var(--line);
+      }
+      .card-h {
+        font-size: 42px;
+        font-weight: 800;
+      }
+      .card-line {
+        margin-top: 14px;
+        font-size: 36px;
+        line-height: 1.3;
+      }
+      .card-sub {
+        margin-top: 10px;
+        font-size: 36px;
+        line-height: 1.3;
+        color: var(--fg-2);
+      }
+
+      /* scene 1: path diagram */
+      .zone {
+        position: absolute;
+        border: 2px dashed var(--line);
+        border-radius: 20px;
+      }
+      .zone-label {
+        position: absolute;
+        left: 22px;
+        top: 10px;
+        font-size: 36px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .pbox {
+        position: absolute;
+        top: 330px;
+        width: 300px;
+        height: 230px;
+        padding-top: 22px;
+        text-align: center;
+        background: var(--panel);
+        border: 3px solid var(--line);
+        border-radius: 18px;
+      }
+      .pbox-t {
+        font-size: 38px;
+        font-weight: 800;
+        line-height: 1.2;
+      }
+      .pbox-s {
+        margin-top: 10px;
+        font-size: 36px;
+        line-height: 1.25;
+        color: var(--fg-2);
+      }
+      .harrow {
+        position: absolute;
+        top: 443px;
+        width: 75px;
+        height: 4px;
+        background: var(--line);
+      }
+      .harrow::after {
+        content: "";
+        position: absolute;
+        right: 6px;
+        top: -9px;
+        border-left: 16px solid var(--line);
+        border-top: 11px solid transparent;
+        border-bottom: 11px solid transparent;
+      }
+      .vlink {
+        position: absolute;
+        top: 560px;
+        width: 0;
+        height: 84px;
+        border-left: 4px dashed var(--accent);
+      }
+      .pkt {
+        position: absolute;
+        top: 431px;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--success);
+        box-shadow: 0 0 18px rgba(0, 229, 0, 0.7);
+      }
+      .answer {
+        position: absolute;
+        left: 60px;
+        top: 878px;
+        width: 1800px;
+        height: 84px;
+        display: flex;
+        align-items: center;
+        padding: 0 34px;
+        border-radius: 18px;
+        border: 3px solid var(--success);
+        background: rgba(0, 229, 0, 0.07);
+        font-size: 42px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      /* scene 4: target grid */
+      .gcol {
+        position: absolute;
+        top: 184px;
+        width: 142px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--mono);
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--fg-2);
+      }
+      .grow-l {
+        position: absolute;
+        left: 60px;
+        width: 380px;
+        height: 84px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        white-space: nowrap;
+      }
+      .grow-l .ip {
+        font-family: var(--mono);
+        font-size: 36px;
+        font-weight: 700;
+      }
+      .tag {
+        padding: 0 12px;
+        border-radius: 10px;
+        font-size: 36px;
+        font-weight: 700;
+        border: 2px solid var(--line);
+        color: var(--fg-2);
+      }
+      .tag.new {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .cell {
+        position: absolute;
+        width: 126px;
+        height: 76px;
+        border-radius: 12px;
+      }
+      .cell.H {
+        background: var(--success);
+      }
+      .cell.I {
+        background: var(--accent);
+      }
+      .cell.D {
+        background: var(--warning);
+      }
+      .cell.N {
+        border: 3px dashed var(--line);
+      }
+      #gfinal {
+        position: absolute;
+        left: 1712px;
+        top: 176px;
+        width: 150px;
+        height: 488px;
+        border: 4px solid var(--success);
+        border-radius: 16px;
+      }
+      .legend {
+        position: absolute;
+        left: 60px;
+        top: 690px;
+        display: flex;
+        gap: 44px;
+        font-size: 36px;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+      .legend span {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .legend i {
+        display: block;
+        width: 50px;
+        height: 34px;
+        border-radius: 8px;
+      }
+      .chips {
+        position: absolute;
+        left: 60px;
+        top: 790px;
+        width: 1800px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 40px;
+      }
+      .chip {
+        height: 160px;
+        padding: 18px 28px;
+        border-radius: 18px;
+        background: var(--panel);
+        border: 3px solid var(--accent);
+      }
+      .chip-k {
+        font-size: 36px;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+      .chip-v {
+        margin-top: 6px;
+        font-size: 48px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      /* scene 6: request bar */
+      #bar {
+        position: absolute;
+        left: 60px;
+        top: 330px;
+        width: 1800px;
+        height: 130px;
+      }
+      .rq {
+        position: absolute;
+        top: 0;
+        width: 6px;
+        height: 130px;
+        border-radius: 2px;
+        background: var(--success);
+      }
+      #t0line {
+        position: absolute;
+        left: 1003px;
+        top: 300px;
+        width: 4px;
+        height: 190px;
+        background: var(--accent);
+      }
+      #t0lab {
+        position: absolute;
+        left: 1023px;
+        top: 236px;
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--accent);
+        white-space: nowrap;
+      }
+      #faillab {
+        position: absolute;
+        left: 1023px;
+        top: 490px;
+        font-size: 36px;
+        font-weight: 800;
+        color: var(--danger);
+        white-space: nowrap;
+      }
+      #bar-eg {
+        position: absolute;
+        left: 60px;
+        top: 490px;
+        font-size: 36px;
+        color: var(--fg-3);
+        white-space: nowrap;
+      }
+      .chips6 {
+        top: 600px;
+      }
+      #s6-note {
+        position: absolute;
+        left: 60px;
+        top: 806px;
+        width: 1800px;
+        height: 130px;
+        padding: 0 34px;
+        display: flex;
+        align-items: center;
+        border-radius: 18px;
+        border: 2px solid var(--warning);
+        background: rgba(251, 211, 50, 0.06);
+        font-size: 38px;
+        white-space: nowrap;
+      }
+
+      /* scene 7: reverse paths */
+      .rrow {
+        position: absolute;
+        left: 60px;
+        width: 1800px;
+        height: 244px;
+        border-radius: 20px;
+        background: var(--panel);
+        border: 2px solid var(--line);
+      }
+      .rr-t {
+        position: absolute;
+        left: 30px;
+        top: 16px;
+        font-size: 42px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .rr-res {
+        position: absolute;
+        right: 30px;
+        top: 12px;
+        padding: 2px 22px;
+        border-radius: 12px;
+        font-size: 44px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+      .rr-chain {
+        position: absolute;
+        left: 30px;
+        top: 98px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        white-space: nowrap;
+      }
+      .cb {
+        height: 66px;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        border-radius: 12px;
+        background: var(--panel-2);
+        border: 3px solid var(--line);
+        font-size: 36px;
+        font-weight: 600;
+      }
+      .ca {
+        font-size: 40px;
+        font-weight: 800;
+        color: var(--fg-3);
+      }
+      .rr-n {
+        position: absolute;
+        left: 30px;
+        top: 182px;
+        font-size: 36px;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+
+      /* recording */
+      #recwin {
+        position: absolute;
+        left: 153px;
+        top: 146px;
+        width: 1613px;
+        height: 850px;
+        overflow: hidden;
+        border-radius: 16px;
+        border: 2px solid var(--line);
+        background: #121314;
+      }
+      #recpan {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1613px;
+        height: 1079px;
+      }
+      .rec {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1613px;
+        height: 1079px;
+        object-fit: fill;
+      }
+      .rec-note {
+        position: absolute;
+        right: 60px;
+        top: 56px;
+        padding: 8px 24px;
+        border-radius: 14px;
+        border: 2px solid var(--warning);
+        background: rgba(251, 211, 50, 0.1);
+        color: var(--warning);
+        font-size: 36px;
+        font-weight: 700;
+      }
+      .footer-label.rec-label .footer-dot {
+        background: var(--danger);
+      }
+      #c-box {
+        position: absolute;
+        left: 1104px;
+        top: 160px;
+        width: 650px;
+        height: 172px;
+        padding: 12px 22px;
+        border-radius: 14px;
+        border: 3px solid var(--warning);
+        background: rgba(22, 29, 38, 0.94);
+      }
+      #d-box {
+        position: absolute;
+        left: 1210px;
+        top: 236px;
+        width: 544px;
+        height: 64px;
+        padding: 4px 22px;
+        border-radius: 14px;
+        border: 3px solid var(--warning);
+        background: rgba(22, 29, 38, 0.94);
+      }
+      .cbl {
+        font-size: 36px;
+        line-height: 1.32;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      /* scene 9 */
+      .msg {
+        position: absolute;
+        left: 60px;
+        top: 168px;
+        width: 1800px;
+        font-size: 54px;
+        font-weight: 800;
+        line-height: 1.32;
+      }
+      .msg b {
+        color: var(--success);
+      }
+      .msg-l {
+        display: block;
+      }
+      .kc .card-line {
+        margin-top: 12px;
+      }
+      .caveat {
+        position: absolute;
+        left: 60px;
+        top: 790px;
+        width: 1800px;
+        height: 180px;
+        padding: 20px 36px;
+        border-radius: 22px;
+        background: rgba(251, 211, 50, 0.06);
+        border: 2px solid var(--warning);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 18px;
+      }
+      .cv {
+        font-size: 38px;
+        line-height: 1.3;
+        white-space: nowrap;
+      }
+      .cv i {
+        font-style: normal;
+        font-weight: 800;
+        color: var(--warning);
+        margin-right: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="192"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div id="bg">
+        <div id="bg-grid"></div>
+        <div id="bg-glow"></div>
+      </div>
+
+      <!-- Opening title -->
+      <section id="s0-title" class="clip" data-start="0" data-duration="6" data-track-index="1">
+        <div id="t-kicker" class="kicker">EKS Hybrid Nodes 데모 3</div>
+        <div id="t-title" class="big-title">ALB ip 타깃과 역방향 경로</div>
+        <div id="t-msg" class="big-msg">
+          타깃은 <b>Load Balancer Controller</b>가 따라가고, 온프렘에서 들어올 때는 <b>internal LB</b>가 기본 경로입니다
+        </div>
+      </section>
+
+      <!-- Scene headers (non-recording scenes) -->
+      <div id="h1" class="clip" data-start="6" data-duration="22" data-track-index="2">
+        <div id="h1-in" class="hdr">
+          <span class="step">1 / 9</span>
+          <span class="hdr-title">질문: Pod IP가 바뀌면 누가 타깃을 바꾸나</span>
+        </div>
+      </div>
+      <div id="h4" class="clip" data-start="80" data-duration="18" data-track-index="2">
+        <div id="h4-in" class="hdr">
+          <span class="step">4 / 9</span>
+          <span class="hdr-title">타깃 교체 타임라인</span>
+        </div>
+        <div id="h4-run" class="run-badge">녹화 회차 (06:36), 약 6초 간격 폴링</div>
+      </div>
+      <div id="h6" class="clip" data-start="116.5" data-duration="15" data-track-index="2">
+        <div id="h6-in" class="hdr">
+          <span class="step">6 / 9</span>
+          <span class="hdr-title">Gateway 리더 전환 중 요청</span>
+        </div>
+        <div id="h6-run" class="run-badge old">02:11 측정, 녹화에 없음</div>
+      </div>
+      <div id="h7" class="clip" data-start="131.5" data-duration="24" data-track-index="2">
+        <div id="h7-in" class="hdr">
+          <span class="step">7 / 9</span>
+          <span class="hdr-title">역방향: 온프렘에서 들어올 때</span>
+        </div>
+        <div id="h7-run" class="run-badge old">결과: 02:11 측정</div>
+      </div>
+      <div id="h9" class="clip" data-start="174" data-duration="18" data-track-index="2">
+        <div id="h9-in" class="hdr">
+          <span class="step">9 / 9</span>
+          <span class="hdr-title">정리</span>
+        </div>
+      </div>
+
+      <!-- Scene 1: question and forward path -->
+      <section id="s1" class="clip" data-start="6" data-duration="22" data-track-index="4">
+        <div id="s1-sub" class="sub">internal ALB에 hybrid Pod를 ip 타깃으로 등록 (시뮬레이션: 온프렘은 TGW로 연결, 실환경은 DX/VPN)</div>
+        <div id="z-vpc" class="zone" style="left: 40px; top: 230px; width: 1470px; height: 360px">
+          <div class="zone-label ac">AWS VPC 10.0.0.0/16</div>
+        </div>
+        <div id="z-op" class="zone" style="left: 1540px; top: 230px; width: 340px; height: 360px">
+          <div class="zone-label ok">온프레미스</div>
+        </div>
+        <div id="pb1" class="pbox" style="left: 60px">
+          <div class="pbox-t">리전 클라이언트</div>
+          <div class="pbox-s">클라우드 Pod<br />10.0.x</div>
+        </div>
+        <div id="pa1" class="harrow" style="left: 360px"></div>
+        <div id="pb2" class="pbox" style="left: 435px">
+          <div class="pbox-t">internal ALB</div>
+          <div class="pbox-s">ip 타깃 172.17.x<br />AZ all</div>
+        </div>
+        <div id="pa2" class="harrow" style="left: 735px"></div>
+        <div id="pb3" class="pbox" style="left: 810px">
+          <div class="pbox-t">VPC 라우트</div>
+          <div class="pbox-s">172.17.0.0/16<br />→ 리더 ENI</div>
+        </div>
+        <div id="pa3" class="harrow" style="left: 1110px"></div>
+        <div id="pb4" class="pbox" style="left: 1185px">
+          <div class="pbox-t">Gateway 리더</div>
+          <div class="pbox-s">VXLAN<br />캡슐화</div>
+        </div>
+        <div id="pa4" class="harrow" style="left: 1485px"></div>
+        <div id="pb5" class="pbox" style="left: 1560px">
+          <div class="pbox-t ok">hybrid Pod</div>
+          <div class="pbox-s">172.17.x<br />온프렘 노드</div>
+        </div>
+        <div id="pkts"></div>
+        <div id="vl1" class="vlink" style="left: 583px"></div>
+        <div id="vl2" class="vlink" style="left: 1333px; border-left-color: var(--fg-3)"></div>
+        <div id="c-lbc" class="card" style="left: 60px; top: 644px; width: 870px; height: 210px; border-color: var(--accent)">
+          <div class="card-h ac">AWS Load Balancer Controller</div>
+          <div class="card-line">Endpoints를 보고 ALB 타깃을 등록, 해제</div>
+          <div class="card-sub">VPC 밖 Pod IP는 AZ all로 등록</div>
+        </div>
+        <div id="c-gw" class="card" style="left: 990px; top: 644px; width: 870px; height: 210px">
+          <div class="card-h">Gateway</div>
+          <div class="card-line">VPC 밖 Pod IP까지 가는 경로만 제공</div>
+          <div class="card-sub">타깃 관리는 하지 않음</div>
+        </div>
+        <div id="ans" class="answer">답: 타깃은&nbsp;<span class="ac">LBC</span>가 바꾸고, Gateway는&nbsp;<span class="ok">경로</span>만 준다</div>
+      </section>
+
+      <!-- Scene 4: target timeline (recorded run) -->
+      <section id="s4" class="clip" data-start="80" data-duration="18" data-track-index="4">
+        <div id="grid"></div>
+        <div id="gfinal"></div>
+        <div id="legend" class="legend">
+          <span><i style="background: var(--success)"></i>healthy</span>
+          <span><i style="background: var(--accent)"></i>initial</span>
+          <span><i style="background: var(--warning)"></i>draining</span>
+          <span><i style="border: 3px dashed var(--line)"></i>타깃 아님</span>
+          <span>칸 = 폴링 시점, +Ns = rollout restart 후</span>
+        </div>
+        <div class="chips">
+          <div id="g-ch1" class="chip" style="border-color: var(--success)"><div class="chip-k">새 IP만 healthy</div><div class="chip-v ok">50초</div></div>
+          <div id="g-ch2" class="chip"><div class="chip-k">부하 (0.5초 간격, 90초)</div><div class="chip-v ac">174건, ERR 0</div></div>
+          <div id="g-ch3" class="chip" style="border-color: var(--warning)"><div class="chip-k">옛 타깃 .132, .26</div><div class="chip-v wn">draining 후 해제</div></div>
+        </div>
+      </section>
+
+      <!-- Scene 6: gateway leader change (02:11 run) -->
+      <section id="s6" class="clip" data-start="116.5" data-duration="15" data-track-index="4">
+        <div id="s6-sub" class="sub">부하 중 Gateway 리더 Pod 삭제, 막대 1칸 = 요청 1건 (리전 Pod → ALB → hybrid Pod)</div>
+        <div id="t0lab">리더 Pod 삭제</div>
+        <div id="bar"></div>
+        <div id="t0line"></div>
+        <div id="faillab">실패 1건 (약 1초)</div>
+        <div id="bar-eg">실패 칸 위치는 예시, 건수는 실측</div>
+        <div class="chips chips6">
+          <div id="l-ch1" class="chip"><div class="chip-k">리더 인계</div><div class="chip-v ac">4초</div></div>
+          <div id="l-ch2" class="chip" style="border-color: var(--danger)"><div class="chip-k">요청</div><div class="chip-v">191건 중 <span class="bad">실패 1</span></div></div>
+          <div id="l-ch3" class="chip" style="border-color: var(--success)"><div class="chip-k">ALB 타깃 (.230, .76)</div><div class="chip-v ok">healthy 유지</div></div>
+        </div>
+        <div id="s6-note"><span class="wn" style="font-weight: 800">!</span>&nbsp;&nbsp;클라이언트 busybox wget은 재시도하지 않음: 실제 공백에 가까운 값</div>
+      </section>
+
+      <!-- Scene 7: reverse paths (02:11 run results) -->
+      <section id="s7" class="clip" data-start="131.5" data-duration="24" data-track-index="4">
+        <div id="rr1" class="rrow" style="top: 168px">
+          <div class="rr-t ok">① 온프렘 → internal ALB → 클라우드 Pod</div>
+          <div class="rr-res ok" style="border: 3px solid var(--success)">20/20</div>
+          <div class="rr-chain">
+            <div class="cb">온프렘 호스트</div><div class="ca">→</div>
+            <div class="cb">TGW (실환경 DX/VPN)</div><div class="ca">→</div>
+            <div class="cb">ALB private IP</div><div class="ca">→</div>
+            <div class="cb">VPC CNI Pod</div>
+          </div>
+          <div class="rr-n">Gateway를 거치지 않음, 실환경은 Route 53 Resolver inbound endpoint로 ALB 이름을 private IP로 해석</div>
+        </div>
+        <div id="rr2" class="rrow" style="top: 440px">
+          <div class="rr-t wn">② 온프렘 → internal ALB → hybrid Pod</div>
+          <div class="rr-res wn" style="border: 3px solid var(--warning)">20/20, hairpin</div>
+          <div class="rr-chain">
+            <div class="cb">온프렘 호스트</div><div class="ca">→</div>
+            <div class="cb">internal ALB</div><div class="ca">→</div>
+            <div class="cb">Gateway, VXLAN</div><div class="ca">→</div>
+            <div class="cb">hybrid Pod (다시 온프렘)</div>
+          </div>
+          <div class="rr-n">동작하지만 DX를 두 번 지나 지연과 전송 비용이 늘어남: 온프렘 Pod는 온프렘 LB로</div>
+        </div>
+        <div id="rr3" class="rrow" style="top: 712px">
+          <div class="rr-t bad">③ 온프렘 → hybrid NodePort → 클라우드 Pod</div>
+          <div class="rr-res bad" style="border: 3px solid var(--danger)">실패</div>
+          <div class="rr-chain">
+            <div class="cb">온프렘 호스트</div><div class="ca">→</div>
+            <div class="cb">hybrid 노드 :30080</div><div class="ca">→</div>
+            <div class="cb">SNAT 후 underlay</div><div class="ca">→</div>
+            <div class="cb">클라우드 SG에서 차단</div>
+          </div>
+          <div class="rr-n">Pod 출발이 아니라 Gateway를 타지 않음, 데모 SG는 172.18.0.0/16에서 443만 허용</div>
+        </div>
+      </section>
+
+      <!-- Scene 9: message and summary -->
+      <section id="s9" class="clip" data-start="174" data-duration="18" data-track-index="4">
+        <div id="msg" class="msg">
+          <span class="msg-l">타깃은 <b>Load Balancer Controller</b>가 따라가고,</span>
+          <span class="msg-l">온프렘에서 들어올 때는 <b>internal LB</b>가 기본 경로다</span>
+        </div>
+        <div id="k1" class="card kc" style="left: 60px; top: 348px; width: 880px; height: 420px; border-color: var(--danger)">
+          <div class="card-h">녹화 회차 (06:36)</div>
+          <div class="card-line">새 IP .101, .171만 healthy: 50초</div>
+          <div class="card-line">부하 174건, ERR 0</div>
+          <div class="card-line">온프렘 → ALB: /cloud 3/3, /hybrid 3/3</div>
+          <div class="card-line">NodePort: FAIL 3회</div>
+        </div>
+        <div id="k2" class="card kc" style="left: 980px; top: 348px; width: 880px; height: 420px; border-color: var(--warning)">
+          <div class="card-h">02:11 측정</div>
+          <div class="card-line">.202, .48 → .230, .76: 54초</div>
+          <div class="card-line">부하 276건 중 실패 0</div>
+          <div class="card-line">리더 전환: 인계 4초, 191건 중 실패 1</div>
+          <div class="card-line">온프렘 → ALB 20/20, hairpin 20/20</div>
+          <div class="card-line">NodePort 실패: SG가 443만 허용</div>
+        </div>
+        <div id="cav" class="caveat">
+          <div id="cv1" class="cv"><i>!</i>온프렘 Pod는 온프렘 LB로 받기: hairpin은 DX를 두 번 지남</div>
+          <div id="cv2" class="cv"><i>!</i>NodePort 경로를 쓰려면 클라우드 노드 SG에 원격 노드 CIDR과 앱 포트 허용</div>
+        </div>
+      </section>
+
+      <!-- Reconstruction footer (hidden during recording scenes) -->
+      <div id="footer" class="clip" data-start="0" data-duration="192" data-track-index="9">
+        <div class="footer-label"><span class="footer-dot"></span>실측 결과 재구성 (2026-10 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 3: ALB ip 타깃과 역방향</div>
+      </div>
+
+      <!-- Recording scene A: start state (media 0.4 to 12.4 s at 0.6x) -->
+      <div id="recA" class="clip" data-start="28" data-duration="20" data-track-index="10">
+        <div class="hdr">
+          <span class="step">2 / 9</span>
+          <span class="hdr-title">녹화: 시작 상태</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임, 0.6배속</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-18, 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 3: ALB ip 타깃과 역방향</div>
+      </div>
+      <!-- Recording scene B: rollout restart and target polling (media 12.4 to 36.4 s at 0.75x) -->
+      <div id="recB" class="clip" data-start="48" data-duration="32" data-track-index="10">
+        <div class="hdr">
+          <span class="step">3 / 9</span>
+          <span class="hdr-title">녹화: 타깃 교체</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임, 0.75배속</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-18, 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 3: ALB ip 타깃과 역방향</div>
+      </div>
+      <!-- Recording scene C: after convergence (media 36.4 to 47.5 s at 0.6x) -->
+      <div id="recC" class="clip" data-start="98" data-duration="18.5" data-track-index="10">
+        <div class="hdr">
+          <span class="step">5 / 9</span>
+          <span class="hdr-title">녹화: 수렴 직후</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임, 0.6배속</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-18, 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 3: ALB ip 타깃과 역방향</div>
+      </div>
+      <!-- Recording scene D: on-prem curl (media 47.5 to 61.375 s at 0.75x) -->
+      <div id="recD" class="clip" data-start="155.5" data-duration="18.5" data-track-index="10">
+        <div class="hdr">
+          <span class="step">8 / 9</span>
+          <span class="hdr-title">녹화: 온프렘에서 호출</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임, 0.75배속</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-18, 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 3: ALB ip 타깃과 역방향</div>
+      </div>
+      <!-- Recording window (untimed wrapper; shown only during recording scenes) -->
+      <div id="recwin">
+        <div id="recpan" data-layout-allow-overflow>
+          <video id="vA" class="rec" src="assets/r3-alb.mp4" data-start="28" data-duration="20" data-media-start="0.4" data-playback-rate="0.6" data-track-index="11" muted playsinline></video>
+          <video id="vB" class="rec" src="assets/r3-alb.mp4" data-start="48" data-duration="32" data-media-start="12.4" data-playback-rate="0.75" data-track-index="11" muted playsinline></video>
+          <video id="vC" class="rec" src="assets/r3-alb.mp4" data-start="98" data-duration="18.5" data-media-start="36.4" data-playback-rate="0.6" data-track-index="11" muted playsinline></video>
+          <video id="vD" class="rec" src="assets/r3-alb.mp4" data-start="155.5" data-duration="18.5" data-media-start="47.5" data-playback-rate="0.75" data-track-index="11" muted playsinline></video>
+        </div>
+      </div>
+      <!-- Note over the empty top-right area of recording C (media 42.3 s on) -->
+      <div id="cnote" class="clip" data-start="107.8" data-duration="8.7" data-track-index="12">
+        <div id="c-box" data-layout-allow-overlap>
+          <div class="cbl bad">Failed 행 (.26): 이전 Pod 종료 중</div>
+          <div class="cbl" style="color: var(--fg-2)">몇 초 뒤 사라짐, 최종 2개 Running</div>
+          <div id="cb3" class="cbl ok">부하 174건, ERR 0</div>
+        </div>
+      </div>
+      <!-- Note over the empty top-right area of recording D (media 47.9 s on) -->
+      <div id="dnote" class="clip" data-start="156" data-duration="18" data-track-index="12">
+        <div id="d-box" data-layout-allow-overlap>
+          <div class="cbl bad">Failed 행: 이전 Pod 종료 중</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const tl = gsap.timeline({ paused: true });
+
+        function show(sel, t, dy) {
+          tl.fromTo(sel, { opacity: 0, y: dy === undefined ? 20 : dy }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, t);
+        }
+
+        // Ambient background drift (finite).
+        tl.fromTo("#bg-glow", { x: 0, y: 0 }, { x: -260, y: 120, duration: 19.2, ease: "sine.inOut", yoyo: true, repeat: 9 }, 0);
+
+        // Title
+        show("#t-kicker", 0.3);
+        show("#t-title", 0.6, 30);
+        show("#t-msg", 1.4);
+        tl.to(["#t-kicker", "#t-title", "#t-msg"], { opacity: 0, duration: 0.5 }, 5.4);
+
+        // Headers
+        show("#h1-in", 6.1, 0);
+        show("#h4-in", 80.05, 0);
+        show("#h4-run", 80.4, 0);
+        show("#h6-in", 116.55, 0);
+        show("#h6-run", 116.9, 0);
+        show("#h7-in", 131.55, 0);
+        show("#h7-run", 131.9, 0);
+        show("#h9-in", 174.05, 0);
+        [["#h1-in", 28], ["#h4-in", 98], ["#h4-run", 98], ["#h6-in", 131.5], ["#h6-run", 131.5], ["#h7-in", 155.5], ["#h7-run", 155.5]].forEach(([s, e]) =>
+          tl.to(s, { opacity: 0, duration: 0.35 }, e - 0.4)
+        );
+
+        // ---------- Scene 1 (6 to 28) ----------
+        show("#s1-sub", 6.5, 10);
+        show("#z-vpc", 7.2, 14);
+        show("#z-op", 7.4, 14);
+        ["#pb1", "#pa1", "#pb2", "#pa2", "#pb3", "#pa3", "#pb4", "#pa4", "#pb5"].forEach((s, i) => show(s, 8.0 + i * 0.35, 14));
+        // packets along the forward path
+        const pk = document.getElementById("pkts");
+        const pkts = [];
+        for (let i = 0; i < 3; i++) {
+          const d = document.createElement("div");
+          d.className = "pkt";
+          d.id = "pk" + i;
+          d.style.left = "196px";
+          pk.appendChild(d);
+          pkts.push(d);
+        }
+        tl.set(pkts, { opacity: 0 }, 0);
+        pkts.forEach((p, i) => {
+          for (let r = 0; r < 3; r++) {
+            const t = 11.8 + r * 3.2 + i * 1.0;
+            tl.set(p, { x: 0, opacity: 1 }, t);
+            tl.to(p, { x: 1500, duration: 2.6, ease: "none" }, t);
+            tl.set(p, { opacity: 0 }, t + 2.6);
+          }
+        });
+        tl.to("#pb2", { borderColor: "#41b3ff", duration: 0.4 }, 15.2);
+        show("#vl1", 15.2, 0);
+        show("#c-lbc", 15.4, 20);
+        tl.to("#pb4", { borderColor: "#8a9bb0", duration: 0.4 }, 18.4);
+        show("#vl2", 18.4, 0);
+        show("#c-gw", 18.6, 20);
+        show("#ans", 21.6, 16);
+        tl.to("#s1", { opacity: 0, duration: 0.4 }, 27.55);
+
+        // ---------- Recording scenes ----------
+        tl.set("#recwin", { opacity: 0 }, 0);
+        [[28, 80], [98, 116.5], [155.5, 174]].forEach(([a, b]) => {
+          tl.set("#recwin", { opacity: 1 }, a);
+          tl.set("#recwin", { opacity: 0 }, b);
+          tl.set("#footer", { opacity: 0 }, a);
+          tl.set("#footer", { opacity: 1 }, b);
+        });
+        // Recording A: screen not yet full, show the top. From B on: show the bottom (latest output).
+        tl.set("#recpan", { y: 0 }, 0);
+        tl.set("#recpan", { y: -229 }, 48);
+        // Recording C note: Failed row at media 42.3 s, load summary at media 45.8 s.
+        tl.set("#cb3", { opacity: 0 }, 0);
+        show("#c-box", 107.85, 10);
+        show("#cb3", 113.7, 8);
+        show("#d-box", 156.1, 10);
+
+        // ---------- Scene 4 (80 to 98): target grid from the recorded polls ----------
+        const COLS = ["시작", "+1s", "+7s", "+13s", "+20s", "+26s", "+32s", "+38s", "+44s", "+50s"];
+        const ROWS = [
+          { ip: "172.17.0.132", tag: "옛", st: "HHHHHHHDDN" },
+          { ip: "172.17.0.26", tag: "옛", st: "HHHHDDNNNN" },
+          { ip: "172.17.0.101", tag: "새", st: "NIHHHHHHHH" },
+          { ip: "172.17.0.171", tag: "새", st: "NNNNIHHHHH" },
+        ];
+        const grid = document.getElementById("grid");
+        const X0 = 440;
+        const CW = 142;
+        const colEls = COLS.map((c, j) => {
+          const e = document.createElement("div");
+          e.className = "gcol";
+          e.id = "gc" + j;
+          e.style.left = X0 + j * CW + "px";
+          e.textContent = c;
+          grid.appendChild(e);
+          return e;
+        });
+        const rowEls = [];
+        const cells = COLS.map(() => []);
+        ROWS.forEach((r, i) => {
+          const top = 262 + i * 100;
+          const l = document.createElement("div");
+          l.className = "grow-l";
+          l.id = "gl" + i;
+          l.style.top = top + "px";
+          l.innerHTML = '<span class="ip">' + r.ip + '</span><span class="tag' + (r.tag === "새" ? " new" : "") + '">' + r.tag + "</span>";
+          grid.appendChild(l);
+          rowEls.push(l);
+          r.st.split("").forEach((s, j) => {
+            const c = document.createElement("div");
+            c.className = "cell " + s;
+            c.id = "g" + i + "_" + j;
+            c.style.left = X0 + j * CW + 8 + "px";
+            c.style.top = top + 4 + "px";
+            grid.appendChild(c);
+            cells[j].push(c);
+          });
+        });
+        show(colEls, 80.4, 8);
+        show(rowEls, 80.8, 8);
+        cells.forEach((col, j) => {
+          tl.fromTo(col, { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 81.6 + j * 0.85);
+        });
+        show("#legend", 82.0, 10);
+        tl.fromTo("#gfinal", { opacity: 0, scale: 1.08 }, { opacity: 1, scale: 1, duration: 0.4 }, 90.2);
+        show("#g-ch1", 90.6, 16);
+        show("#g-ch2", 91.6, 16);
+        show("#g-ch3", 92.6, 16);
+        tl.to("#s4", { opacity: 0, duration: 0.4 }, 97.55);
+
+        // ---------- Scene 6 (116.5 to 131.5): 191 requests, 1 failed (02:11 run) ----------
+        const bar = document.getElementById("bar");
+        const N = 191;
+        const FAIL = 101;
+        const PITCH = 1800 / N;
+        const rq = [];
+        for (let i = 0; i < N; i++) {
+          const e = document.createElement("div");
+          e.className = "rq";
+          e.id = "rq" + i;
+          e.style.left = (i * PITCH).toFixed(2) + "px";
+          if (i === FAIL) e.style.background = "#ff5c85";
+          bar.appendChild(e);
+          rq.push(e);
+        }
+        show("#s6-sub", 117.0, 8);
+        const T6 = 117.6;
+        tl.fromTo(rq, { opacity: 0 }, { opacity: 1, duration: 0.15, stagger: 0.026 }, T6);
+        const tFail = T6 + FAIL * 0.026;
+        tl.fromTo("#t0line", { opacity: 0 }, { opacity: 1, duration: 0.2 }, tFail - 0.12);
+        show("#t0lab", tFail - 0.12, 8);
+        tl.fromTo(rq[FAIL], { scaleY: 1 }, { scaleY: 1.25, duration: 0.3, yoyo: true, repeat: 3 }, tFail + 0.1);
+        show("#faillab", tFail + 0.1, 8);
+        show("#bar-eg", T6 + N * 0.026 + 0.3, 8);
+        show("#l-ch1", 123.4, 16);
+        show("#l-ch2", 124.2, 16);
+        show("#l-ch3", 125.0, 16);
+        show("#s6-note", 126.4, 12);
+        tl.to("#s6", { opacity: 0, duration: 0.4 }, 131.05);
+
+        // ---------- Scene 7 (131.5 to 155.5): three reverse paths ----------
+        const RR = [
+          { id: "rr1", t: 132.2, col: "#00e500", fail: false },
+          { id: "rr2", t: 139.4, col: "#fbd332", fail: false },
+          { id: "rr3", t: 146.6, col: "#ff5c85", fail: true },
+        ];
+        RR.forEach((r) => {
+          const row = document.getElementById(r.id);
+          const boxes = Array.from(row.querySelectorAll(".cb"));
+          const res = row.querySelector(".rr-res");
+          const note = row.querySelector(".rr-n");
+          show(row, r.t, 20);
+          tl.set(res, { opacity: 0 }, 0);
+          tl.set(note, { opacity: 0 }, 0);
+          boxes.forEach((b, i) => {
+            const last = i === boxes.length - 1;
+            const c = r.fail && last ? "#ff5c85" : r.col;
+            tl.to(b, { borderColor: c, duration: 0.3 }, r.t + 0.9 + i * 0.7);
+            if (r.fail && last) tl.to(b, { backgroundColor: "rgba(255, 92, 133, 0.18)", duration: 0.3 }, r.t + 0.9 + i * 0.7);
+          });
+          tl.fromTo(res, { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, r.t + 3.9);
+          tl.fromTo(note, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5 }, r.t + 4.4);
+        });
+        tl.to("#s7", { opacity: 0, duration: 0.4 }, 155.05);
+
+        // ---------- Scene 9 (174 to 192) ----------
+        show("#msg", 174.6, 20);
+        show("#k1", 176.6, 24);
+        show("#k2", 177.6, 24);
+        show("#cav", 180.0, 16);
+        show("#cv1", 180.5, 10);
+        show("#cv2", 181.6, 10);
+
+        window.__timelines["main"] = tl;
+      })();
+    </script>
+  </body>
+</html>

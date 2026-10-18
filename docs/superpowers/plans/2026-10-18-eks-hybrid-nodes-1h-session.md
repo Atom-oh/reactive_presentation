@@ -60,7 +60,7 @@
 - Create: `eks-hybrid-nodes-1h/_presentation.md`, `eks-hybrid-nodes-1h/common/`(복사), `~/eks-hybrid-demo/.work/check_1h.py`, `~/eks-hybrid-demo/.work/postbuild_1h.py`
 
 **Interfaces:**
-- Produces: `python3 ~/eks-hybrid-demo/.work/check_1h.py [--html-only]` 종료 코드 0이면 통과. 검사 항목: md 금지 문자, 본문 YAML/명령, 블록 HTML 존재, 영상 src와 poster 파일 존재, 헤드리스 1280×720 슬라이드별 넘침, 총 슬라이드 수 28~34
+- Produces: `python3 ~/eks-hybrid-demo/.work/check_1h.py [--md-only]` 종료 코드 0이면 통과. 검사 항목: md 금지 문자, 본문 YAML/명령, 블록 HTML 존재, 영상 src와 poster 파일 존재, 헤드리스 1280×720 슬라이드별 넘침, 총 슬라이드 수 28~34
 - Produces: `python3 ~/eks-hybrid-demo/.work/postbuild_1h.py` 생성된 HTML에 표지, GA, Thank you 수정 적용(멱등)
 
 - [ ] **Step 1: 폴더와 common 복사**

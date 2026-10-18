@@ -224,7 +224,7 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 - 일시정지 지점은 한 곳: 2:08 A, B, C 비교 장면
 
 두 실행이 섞여 나오니, 장면마다 어느 회차인지 짚어 주세요.
-0:00 제목과 메시지입니다.
+0:00 제목과 메시지입니다. C가 조금 빨랐다는 부분은 1회 측정 결과입니다.
 0:06 먼저 ReplicaSet이 줄일 때 어떤 Pod를 먼저 지우는지 보여 줍니다. cost가 낮은 Pod, 복제본이 많은 노드의 Pod, 최근에 생긴 Pod 순서이고, Pod가 온프렘에 있는지 클라우드에 있는지는 보지 않습니다. 이어서 실험 환경(hybrid 호스트 2대, 각 4 vCPU, Pod 8개에서 포화, burst NodePool 한도 32 vCPU)과 시나리오 A, B, C를 소개합니다.
 0:30 녹화 회차 기준 그림입니다. 3개에서 15개로 늘리면 hybrid에 8개가 들어가고 7개가 Pending, Karpenter가 NodeClaim 3개를 만들어 burst Pod 7개를 받습니다. 15개가 Ready가 되기까지 35초였습니다.
 0:56 실제 터미널 녹화, 0.5배속입니다. 3개 모두 hybrid에서 시작해, 15개로 늘리자 Pending과 NodeClaim이 보이고 곧 15개가 Running이 됩니다.
@@ -411,15 +411,15 @@ NodePort 실패는 영상에서 본 대로 노드 IP로 SNAT된 뒤 클라우드
 </style>
 <div class="hn5-v4">
   <div>
-    <video class="hn-video" src="media/v4-gpu.mp4" poster="media/v4-gpu.jpg" aria-label="V4 영상: hybrid GPU 추론, 무음, 2분 10초" title="V4 영상: hybrid GPU 추론, 무음, 2분 10초" controls preload="metadata" muted playsinline tabindex="-1"></video>
-    <div class="hn-video-cap">실측 결과 재구성 (2026-10 시뮬레이션 환경), 무음</div>
+    <video class="hn-video" src="media/v4-gpu.mp4" poster="media/v4-gpu.jpg" aria-label="V4 영상: hybrid GPU 추론, 실제 터미널 녹화 포함, 무음, 2분 14초" title="V4 영상: hybrid GPU 추론, 실제 터미널 녹화 포함, 무음, 2분 14초" controls preload="metadata" muted playsinline tabindex="-1"></video>
+    <div class="hn-video-cap">실측 결과 재구성 (2026-10 시뮬레이션 환경), 실제 터미널 녹화 포함, 무음</div>
   </div>
   <div class="hn5-res fragment fade-up" data-fragment-index="1">
-    <div class="hn5-runlabel">2026-10-15 실행 1회, 녹화 없음</div>
+    <div class="hn5-runlabel">영상: 2026-10-18 녹화 회차, 이전 실행 2026-10-15</div>
     <div class="callout callout-info"><strong class="text-info">GPU 노드</strong><div class="on-surface-muted">g6.xlarge, NVIDIA L4 23 GB. GPU taint, device plugin, allocatable GPU 1</div></div>
     <div class="callout callout-info"><strong class="text-info">추론 Pod</strong><div class="on-surface-muted">vLLM, Qwen2.5-0.5B-Instruct. 컨테이너 1개, hostNetwork 끔</div></div>
-    <div class="callout callout-success"><strong class="text-success">클라우드에서 호출</strong><div class="on-surface-muted">클라우드 Job이 Service 이름으로 호출, Gateway 경로, 응답 약 1초 (모델 로드 후)</div></div>
-    <div class="callout callout-warning"><strong class="text-warning">첫 시작은 느림</strong><div class="on-surface-muted">이미지 다운로드 4분 28초. 드라이버와 toolkit은 호스트에 미리</div></div>
+    <div class="callout callout-success"><strong class="text-success">클라우드에서 호출</strong><div class="on-surface-muted">Service 이름으로 호출, 응답 1초 미만 (10-18 녹화), 약 1초 (10-15)</div></div>
+    <div class="callout callout-warning"><strong class="text-warning">첫 시작은 느림</strong><div class="on-surface-muted">이미지 다운로드 4분 35초 (10-18), 4분 28초 (10-15). 드라이버와 toolkit은 호스트에 미리</div></div>
   </div>
 </div>
 :::
@@ -427,21 +427,23 @@ NodePort 실패는 영상에서 본 대로 노드 IP로 SNAT된 뒤 클라우드
 :::notes
 {timing: 2.5min}
 [요약]
-- 영상 2분 10초. 2026-10-15 한 번 실행한 결과를 재구성(녹화 없음, GPU 호스트는 그 뒤 제거)
-- g6.xlarge(NVIDIA L4 23 GB)를 hybrid 노드로 붙이고, 클라우드 Job이 Service 이름으로 vLLM을 호출해 약 1초에 응답
-- 준비할 것: 드라이버와 container toolkit은 호스트에, 이미지는 미리 받기(첫 다운로드 4분 28초)
+- 영상 2분 14초. 녹화 장면 두 개는 2026-10-18 녹화 회차(GPU 호스트를 다시 조인해 녹화하고 바로 제거), 나머지 장면은 재구성
+- g6.xlarge(NVIDIA L4 23 GB)를 hybrid 노드로 붙이고, 클라우드 Job이 Service 이름으로 vLLM을 호출. 응답은 녹화 회차 1초 미만, 2026-10-15 실행 약 1초
+- 준비할 것: 드라이버와 container toolkit은 호스트에, 이미지는 미리 받기(다운로드 녹화 회차 4분 35초, 2026-10-15 4분 28초)
+- 일시정지 지점은 한 곳: 1:34 verify.sh 결과
 
-이 영상은 녹화가 없어서 전체가 10월 15일 한 번의 실행 결과를 재구성한 것입니다. GPU 호스트는 검증 뒤 바로 지웠습니다.
+GPU 실행은 두 번입니다. 10월 15일에 처음 검증했고, 10월 18일에 GPU 호스트를 다시 붙여 녹화한 뒤 바로 지웠습니다. 영상의 녹화 장면과 응답 시간은 18일 값입니다.
 0:00 제목과 메시지입니다.
 0:06 왜 온프렘 GPU인지입니다. 데이터가 온프렘에 있거나 이미 GPU 서버를 갖고 있는 경우이고, 이 데모에서는 g6.xlarge의 NVIDIA L4를 시뮬레이션 온프렘에 두었습니다.
-0:26 구성입니다. GPU 노드에 taint와 label을 걸어 일반 Pod가 올라오지 않게 하고, NVIDIA device plugin을 hybrid GPU 노드에만 배포해 allocatable GPU 1을 확인했습니다. 추론 Pod는 vLLM과 Qwen2.5-0.5B-Instruct, 컨테이너 1개이고 hostNetwork를 쓰지 않습니다.
-0:50 호출 흐름입니다. 클라우드 노드의 Job이 Service 이름으로 호출하면 Gateway 경로를 지나 hybrid GPU 노드의 vLLM Pod에 닿고, 모델 로드 뒤 약 1초에 응답합니다. 클라우드 쪽 앱은 상대가 온프렘인지 신경 쓰지 않는다는 점이 메시지입니다.
+0:22 구성입니다. GPU 노드에 taint와 label을 걸어 일반 Pod가 올라오지 않게 하고, NVIDIA device plugin을 hybrid GPU 노드에만 배포해 allocatable GPU 1을 확인했습니다. 추론 Pod는 vLLM과 Qwen2.5-0.5B-Instruct, 컨테이너 1개이고 hostNetwork를 쓰지 않습니다.
+0:40 실제 터미널 녹화, 0.75배속입니다. GPU 노드 한 대만 GPU 1이고, taint와 allocatable, Running인 추론 Pod, 컨테이너 하나와 hostNetwork false, nvidia-smi의 L4를 차례로 봅니다.
+1:03 호출 흐름입니다. 클라우드 노드의 Job이 Service 이름으로 호출하면 Gateway 경로를 지나 hybrid GPU 노드의 vLLM Pod에 닿습니다. 클라우드 쪽 앱은 상대가 온프렘인지 신경 쓰지 않는다는 점이 메시지입니다.
 {cue: pause}
-1:14 결과 카드 네 장입니다. 오른쪽 카드와 같은 내용이라 여기서 멈추고 오른쪽을 가리키며 설명해도 됩니다.
-1:36 준비할 것입니다. 드라이버와 container toolkit을 호스트에 직접 설치했고, AWS 블로그는 이것이 이미지에 들어 있다고 가정합니다. vLLM 이미지 첫 다운로드가 4분 28초 걸려서, 약 1초 응답과 길이를 비교한 막대가 나옵니다. 운영에서는 이미지를 미리 받아 두세요.
-1:54 메시지와 요약 카드입니다.
+1:19 다시 녹화입니다. Service와 EndpointSlice가 GPU 노드의 Pod IP를 가리킵니다. 1:34쯤 verify.sh의 OK 네 줄이 나오면 잠시 멈추고 읽어 주세요. elapsed_seconds=0은 초 단위로 재서 1초 미만이라는 뜻입니다. 마지막 줄들은 클라이언트가 받은 응답입니다.
+1:42 준비할 것입니다. 드라이버와 container toolkit은 호스트에 직접 설치했고, AWS 블로그는 이것이 이미지에 들어 있다고 가정합니다. vLLM 이미지 다운로드는 녹화 회차 4분 35초, 10월 15일 4분 28초였고, 막대는 녹화 회차 값끼리 비교합니다. 운영에서는 이미지를 미리 받아 두세요.
+1:58 메시지와 요약 카드입니다.
 GPU 노드에서 EC2를 쓴 것도 앞의 환경과 같이 프로덕션 지원 구성이 아닙니다.
-근거: V4 영상 프로젝트 FACTS.md와 STORYBOARD.md, Deep Dive 5부 "데모 3: hybrid GPU에서 추론, 클라우드에서 호출", 데모 저장소 RUNBOOK.md 3절
+근거: V4 영상 프로젝트 FACTS.md(두 회차를 나눈 표)와 STORYBOARD.md, RECORDINGS.md R4(녹화 회차 값), Deep Dive 5부 "데모 3: hybrid GPU에서 추론, 클라우드에서 호출", 데모 저장소 RUNBOOK.md 3절(2026-10-15 값)
 {cue: transition}
 영상은 여기까지이고, 영상으로 만들지 않은 결과 하나를 더 보겠습니다. Istio입니다.
 :::

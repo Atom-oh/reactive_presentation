@@ -2,7 +2,7 @@
 workflow: general-video
 flow: automation
 storyboard: no
-message: "Kyverno만으로 온프렘 Pod를 지키고, Karpenter 게이트는 EC2 정리를 조금 더 빠르게 한다"
+message: "Kyverno만으로 온프렘 Pod를 지켰고, Karpenter 기능을 켠 C는 1회 측정에서 EC2 정리가 조금 빨랐다"
 destination: presentation-embed
 aspect: 1920x1080
 language: ko
@@ -34,3 +34,7 @@ angle: 실측 결과 재구성
 - 장면 7개로 바꿨습니다: (1) 문제와 환경, (2) 스케일 아웃 그림(녹화 회차 배치: burst 노드 3대, 1/3/3), (3) 녹화: 스케일 아웃, (4) 녹화: 스케일 인, (5) A/B/C 스케일 인 비교(2026-10-15), (6) 비교표, (7) 정리와 주의.
 - 터미널 장면은 실제 녹화 `../rec/r2-bursting.mp4`(시나리오 B, 910m)를 0.5배속으로 씁니다. 녹화 장면에는 "실제 터미널 녹화, 대기 구간 줄임, 0.5배속" 표시와 하단 "실측 터미널 녹화 (2026-10-18, 시뮬레이션 환경)"을 둡니다. 다른 장면은 "실측 결과 재구성 (2026-10 시뮬레이션 환경)".
 - 두 실행(2026-10-15 A/B/C 비교, 2026-10-18 녹화 B)의 숫자를 섞지 않습니다. 정리 장면에서 녹화 회차는 별도 카드로 둡니다.
+
+## Title hedge (task 13)
+
+제목 장면과 정리 장면의 메시지를 1회 측정 결과로 낮춰 썼습니다: "Kyverno만으로 온프렘 Pod를 지켰고, Karpenter 기능을 켠 C는 1회 측정에서 EC2 정리가 조금 빨랐다". 화면의 "Karpenter 게이트"는 덱 용어에 맞춰 "Karpenter 기능", 시나리오 C 이름은 "C Kyverno + Karpenter"로 바꿨습니다. 장면 시간은 그대로입니다.

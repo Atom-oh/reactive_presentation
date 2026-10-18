@@ -501,7 +501,7 @@
         text-align: left;
         color: var(--fg-2);
         font-weight: 600;
-        width: 520px;
+        width: 440px;
       }
       .tbl td {
         font-weight: 700;
@@ -640,7 +640,7 @@
         <div id="t-kicker" class="kicker">EKS Hybrid Nodes 데모 2</div>
         <div id="t-title" class="big-title">bursting과 pod-deletion-cost</div>
         <div id="t-msg" class="big-msg">
-          Kyverno만으로 <b>온프렘 Pod</b>를 지키고, Karpenter 게이트는 <b>EC2 정리</b>를 조금 더 빠르게 합니다
+          Kyverno만으로 <b>온프렘 Pod</b>를 지켰고,<br />Karpenter 기능을 켠 C는 1회 측정에서 <b>EC2 정리</b>가 조금 빨랐습니다
         </div>
       </section>
 
@@ -695,15 +695,15 @@
         </div>
         <div id="sc-a" class="card" style="left: 60px; top: 666px; width: 580px; height: 290px">
           <div class="card-h wn">A 정책 없음</div>
-          <div class="card-sub">ReplicaSet 기본 규칙만, Karpenter 게이트 끔</div>
+          <div class="card-sub">ReplicaSet 기본 규칙만<br />Karpenter 기능 끔</div>
         </div>
         <div id="sc-b" class="card" style="left: 670px; top: 666px; width: 580px; height: 290px">
           <div class="card-h ac">B Kyverno</div>
-          <div class="card-sub">hybrid 노드의 Pod에 pod-deletion-cost 부여, 게이트 끔</div>
+          <div class="card-sub">hybrid 노드 Pod에<br />pod-deletion-cost 부여<br />Karpenter 기능 끔</div>
         </div>
         <div id="sc-c" class="card" style="left: 1280px; top: 666px; width: 580px; height: 290px">
-          <div class="card-h ok">C Kyverno + 게이트</div>
-          <div class="card-sub">B에 더해 Karpenter가 burst 노드 Pod에도 순위를 기록</div>
+          <div class="card-h ok">C Kyverno + Karpenter</div>
+          <div class="card-sub">B에 더해 Karpenter 기능이 burst 노드 Pod에도 순위를 기록</div>
         </div>
       </section>
 
@@ -775,11 +775,11 @@
               <th>항목</th>
               <th class="wn">A 정책 없음</th>
               <th class="ac">B Kyverno</th>
-              <th class="ok">C Kyverno + 게이트</th>
+              <th class="ok">C Kyverno + Karpenter</th>
             </tr>
           </thead>
           <tbody>
-            <tr id="tr1"><td>정책</td><td>없음, 게이트 끔</td><td>Kyverno, 게이트 끔</td><td>Kyverno, 게이트 켬</td></tr>
+            <tr id="tr1"><td>Karpenter 기능</td><td>끔</td><td>끔</td><td>켬</td></tr>
             <tr id="tr2"><td>10개일 때 hybrid / cloud</td><td class="dg bad">6 / 4</td><td class="ok">8 / 2</td><td class="ok">8 / 2</td></tr>
             <tr id="tr3"><td>10개일 때 EC2 burst 노드</td><td>3대</td><td>4대</td><td class="hl ac">3대</td></tr>
             <tr id="tr4"><td>최종 3개 hybrid / cloud</td><td class="dg bad">2 / 1</td><td class="ok">3 / 0</td><td class="ok">3 / 0</td></tr>
@@ -795,8 +795,8 @@
       <!-- Scene 5: message and caveats -->
       <section id="s5" class="clip" data-start="194" data-duration="22" data-track-index="4">
         <div id="msg" class="msg">
-          <span class="msg-l">Kyverno만으로 <b>온프렘 Pod</b>를 지키고,</span>
-          <span class="msg-l">Karpenter 게이트는 EC2 정리를 <b>조금 더 빠르게</b> 한다</span>
+          <span class="msg-l">Kyverno만으로 <b>온프렘 Pod</b>를 지켰고,</span>
+          <span class="msg-l">Karpenter 기능을 켠 C는 1회 측정에서 EC2 정리가 <b>조금 빨랐다</b></span>
         </div>
         <div id="k1" class="card kc" style="left: 60px; top: 380px; width: 573px; height: 290px">
           <div class="card-h ok">온프렘 보호 (10-15)</div>
@@ -1007,8 +1007,8 @@
         const rowsEl = document.getElementById("s3-rows");
         const ROWS = [
           { k: "A", name: "A 정책 없음", desc: "기본 규칙", col: "wn", top: 222 },
-          { k: "B", name: "B Kyverno", desc: "게이트 끔", col: "ac", top: 437 },
-          { k: "C", name: "C Kyverno", desc: "게이트 켬", col: "ok", top: 652 },
+          { k: "B", name: "B Kyverno", desc: "Karpenter 기능 끔", col: "ac", top: 437 },
+          { k: "C", name: "C Kyverno", desc: "Karpenter 기능 켬", col: "ok", top: 652 },
         ];
         const RES = {
           A: { r15: ["15개", "hybrid 8", "cloud 7"], r10: ["hybrid 6", "cloud 4", "EC2 3대"], r3: ["hybrid 2", "cloud 1", "정리 123초"] },

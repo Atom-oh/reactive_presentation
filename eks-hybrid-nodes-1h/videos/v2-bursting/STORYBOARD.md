@@ -1,6 +1,6 @@
 ---
 mode: autonomous
-message: "Kyverno만으로 온프렘 Pod를 지키고, Karpenter 게이트는 EC2 정리를 조금 더 빠르게 한다"
+message: "Kyverno만으로 온프렘 Pod를 지켰고, Karpenter 기능을 켠 C는 1회 측정에서 EC2 정리가 조금 빨랐다"
 audience: 아키텍트와 의사결정자
 duration: 216
 canvas: 1920x1080

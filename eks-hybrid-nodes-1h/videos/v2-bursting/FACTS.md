@@ -12,7 +12,7 @@
 | hybrid 호스트 2대, 각 4 vCPU | 1/7 실험 환경, 2/7 노드 상자 | RUNBOOK.md 2절 "비교 결과" 첫 문단 |
 | burst NodePool m7i/m6i large, xlarge, 한도 32 vCPU | 1/7, 2/7 클라우드 영역 | 같은 곳 |
 | ReplicaSet 스케일 인 순서: cost 낮은 Pod, 복제본이 더 많은 노드의 Pod, 최근 생성 Pod. 배치 위치는 보지 않음 | 1/7 | RUNBOOK.md 2절 "설명할 내용" |
-| 시나리오: A 정책 없음, 게이트 끔 / B Kyverno, 게이트 끔 / C Kyverno, 게이트 켬 | 1/7, 5/7, 6/7 | compare-20261015-1239.md "정책" 열 |
+| 시나리오: A 정책 없음, Karpenter 기능 끔 / B Kyverno, Karpenter 기능 끔 / C Kyverno + Karpenter, Karpenter 기능 켬 | 1/7, 5/7, 6/7 | compare-20261015-1239.md "정책" 열 |
 | B: Kyverno가 hybrid 노드 Pod에 pod-deletion-cost 부여 / C: Karpenter가 burst 노드 Pod에도 순위(cost) 기록 | 1/7 시나리오 카드 | RUNBOOK.md 2절 설명, 측정 결과 C |
 | pod-deletion-cost는 best-effort, 노드 장애나 축출에는 적용 안 됨 | 7/7 | RUNBOOK.md 2절 "설명할 내용" |
 
@@ -29,7 +29,7 @@
 | 10개: hybrid 8 / cloud 2 (ip-10-0-54-55, ip-10-0-36-192), 6초 안에 반영 | 4/7 녹화, 7/7 녹화 카드 | RECORDINGS.md R2; r2-timing.txt "10 reached at +6s" |
 | 3개: 모두 hybrid(mi-*), COST 1 | 4/7 녹화, 7/7 녹화 카드 | RECORDINGS.md R2 |
 | burst NodeClaim은 3개로 줄인 뒤 약 104초에 모두 사라짐 (녹화 밖에서 확인) | 7/7 녹화 카드 | RECORDINGS.md R2 마지막 항목 |
-| burst Pod의 COST는 `<none>` (게이트 끔) | 4/7 머리글 | plain.txt |
+| burst Pod의 COST는 `<none>` (Karpenter 기능 끔) | 4/7 머리글 | plain.txt |
 
 ## 출처 1: 비교 실행 (2026-10-15, A/B/C 각 1회, 930m)
 

@@ -18,9 +18,8 @@ block: 04-demo-close
 - 영상 4개: V1 Gateway 리더 전환, V2 버스팅과 축소, V3 ALB ip 타깃과 역방향, V4 hybrid GPU 추론. 끝에 Istio 공존 결과 한 장
 - 영상은 무음이고 실측 결과를 재구성한 것입니다. 측정 회차마다 날짜를 붙여 숫자를 구분합니다.
 
-5부는 데모 영상입니다. 지금까지 설명한 동작을 실제 클러스터에서 돌려 보고, 그 결과를 영상으로 재구성했습니다. 라이브 데모 대신 영상을 쓰는 이유는 시간을 아끼고, 네트워크 상황과 상관없이 같은 결과를 보여 드리기 위해서입니다.
-{cue: pause}
-영상은 네 개입니다. Gateway 리더 전환, 버스팅과 축소, ALB ip 타깃과 온프렘에서 들어오는 역방향, 그리고 hybrid GPU 추론입니다. 영상마다 결과를 한 장으로 정리했고, 측정 회차가 여러 번인 경우에는 날짜를 붙여서 숫자를 섞지 않았습니다.
+5부는 데모 영상입니다. 실제 클러스터에서 돌린 결과를 영상으로 재구성했고, 네트워크 상황과 상관없이 같은 결과를 보여 드리려고 라이브 대신 영상을 씁니다.
+영상은 네 개이고, 측정 회차가 여러 번이면 날짜를 붙여 숫자를 섞지 않았습니다.
 {cue: transition}
 먼저 어떤 환경에서 돌렸는지부터 말씀드리겠습니다.
 :::
@@ -38,21 +37,24 @@ block: 04-demo-close
 .hn5-vpc { border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3); background: var(--bg-card); }
 .hn5-vpc h4 { margin: 0 0 var(--space-2); font-size: var(--fs-card); color: var(--accent); }
 .hn5-vpc ul { margin: 0; padding-left: var(--space-4); font-size: var(--fs-card); color: var(--text-secondary); word-break: keep-all; }
-.hn5-tgw { display: flex; align-items: center; justify-content: center; writing-mode: vertical-rl; letter-spacing: .12em; font-weight: var(--weight-bold); color: var(--accent); }
+.hn5-tgw { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); font-weight: var(--weight-bold); color: var(--accent); }
+.hn5-tgw span { writing-mode: vertical-rl; letter-spacing: .12em; }
+.hn5-ico { width: 40px; height: 40px; vertical-align: middle; margin-right: var(--space-2); }
+.hn5-lico { width: 32px; height: 32px; vertical-align: middle; margin-right: var(--space-1); }
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
 .text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
 .on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
 <div class="hn5-arch fragment fade-up" data-fragment-index="1">
-  <div class="hn5-vpc"><h4>클라우드 VPC 10.0.0.0/16</h4><ul>
-    <li>EKS 1.36, system 노드</li>
-    <li>Gateway 노드 2대 (2개 AZ)</li>
+  <div class="hn5-vpc"><h4><img class="hn5-ico" src="./common/aws-icons/services/Arch_Amazon-Virtual-Private-Cloud_48.svg" alt="Amazon VPC">클라우드 VPC 10.0.0.0/16</h4><ul>
+    <li><img class="hn5-lico" src="./common/aws-icons/services/Arch_Amazon-Elastic-Kubernetes-Service_48.svg" alt="Amazon EKS">EKS 1.36, system 노드</li>
+    <li><img class="hn5-lico" src="./common/aws-icons/services/Arch_Amazon-EC2_48.svg" alt="Amazon EC2">Gateway 노드 2대 (2개 AZ)</li>
     <li>Karpenter burst 노드 (m6i, m7i)</li>
     <li>클라우드 노드는 VPC CNI</li></ul></div>
-  <div class="hn5-tgw">Transit Gateway</div>
-  <div class="hn5-vpc"><h4>시뮬레이션 온프렘 VPC 172.18.0.0/16</h4><ul>
-    <li>hybrid 노드 호스트 2대 (EC2, 각 4 vCPU)</li>
+  <div class="hn5-tgw"><img class="hn5-ico" src="./common/aws-icons/services/Arch_AWS-Transit-Gateway_48.svg" alt="AWS Transit Gateway" style="margin-right:0"><span>Transit Gateway</span></div>
+  <div class="hn5-vpc"><h4><img class="hn5-ico" src="./common/aws-icons/services/Arch_Amazon-Virtual-Private-Cloud_48.svg" alt="Amazon VPC">시뮬레이션 온프렘 VPC 172.18.0.0/16</h4><ul>
+    <li><img class="hn5-lico" src="./common/aws-icons/services/Arch_Amazon-EC2_48.svg" alt="Amazon EC2">hybrid 노드 호스트 2대 (EC2, 각 4 vCPU)</li>
     <li>GPU 호스트 1대 (g6.xlarge, V4 때만)</li>
     <li>Pod CIDR 172.17.0.0/16 (Cilium)</li>
     <li>실제 구성에서는 DX 또는 VPN 자리</li></ul></div>
@@ -95,13 +97,13 @@ EC2를 hybrid 노드로 쓰는 것은 AWS가 지원하는 프로덕션 구성이
 .hn5-full { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-1); }
 .hn5-vbox { flex: 1; min-height: 0; container-type: size; }
 .hn5-full .hn-video { display: block; width: min(100cqw, calc(100cqh * 16 / 9)); height: auto; max-height: none; margin-inline: auto; }
-.hn5-full .hn-video-cap { text-align: center; margin-top: 0; font-size: var(--fs-caption); }
+.hn5-full .hn-video-cap { text-align: center; margin-top: 0; font-size: var(--fs-card); }
 </style>
 <div class="hn5-full">
 <div class="hn5-vbox">
-<video class="hn-video" src="media/v1-gateway-failover.mp4" poster="media/v1-gateway-failover.jpg" controls preload="metadata" muted playsinline tabindex="-1"></video>
+<video class="hn-video" src="media/v1-gateway-failover.mp4" poster="media/v1-gateway-failover.jpg" aria-label="V1 영상: Gateway 리더 전환, 실제 터미널 녹화 포함, 무음, 2분 58초" title="V1 영상: Gateway 리더 전환, 실제 터미널 녹화 포함, 무음, 2분 58초" controls preload="metadata" muted playsinline tabindex="-1"></video>
 </div>
-<div class="hn-video-cap">실측 결과 재구성 (2026-10 시뮬레이션 환경), 무음</div>
+<div class="hn-video-cap">실측 결과 재구성 (2026-10 시뮬레이션 환경), 실제 터미널 녹화 포함, 무음</div>
 </div>
 :::
 
@@ -123,7 +125,7 @@ window.addEventListener('hashchange', function () {
 [요약]
 - 영상 2분 58초. Gateway 리더 Pod를 지우고, standby가 Lease를 넘겨받아 VPC 라우트를 자기 ENI로 바꾸는 과정
 - 녹화 회차(2026-10-18): Lease 인계 5초, 1초 간격 요청 60개 중 2개 실패
-- 일시정지 지점: 1:31 녹화의 결과 블록, 2:28 결과 카드
+- 일시정지 지점은 한 곳: 1:31 녹화의 결과 블록
 
 Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다.
 0:00 제목과 환경 구성도입니다. 클라우드 VPC에 Gateway 2대가 있고, Transit Gateway 건너편이 시뮬레이션 온프렘, 그 안에 hybrid Pod CIDR이 있습니다.
@@ -134,7 +136,7 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 1:32 구성도로 돌아와 리더가 사라진 순간을 봅니다. 그사이 요청 2개가 실패합니다. 격자에서 실패 칸의 위치는 실측 위치가 아니라, 개수와 간격(첫 실패부터 마지막 실패까지 5초)에 맞춘 배치입니다.
 1:48 T0에서 5초 뒤 Gateway B가 Lease를 넘겨받고, VPC 라우트가 B의 ENI로 바뀌면서 요청이 다시 성공합니다. 이 라우트 교체를 사람이 하지 않는다는 점이 핵심입니다.
 2:08 녹화로 확인합니다. Lease HOLDER가 새 노드로 바뀌었고, Deployment가 Pod 하나를 다시 띄워 2개가 Running입니다. HOLDER 값은 Pod 이름이 아니라 노드이름_uuid 형식입니다.
-2:28 결과 카드입니다. 여기서 멈추고 다음 슬라이드로 넘어가 숫자를 정리합니다.
+2:28 결과 카드입니다. 멈추지 말고 끝까지 둔 뒤 다음 슬라이드에서 숫자를 정리합니다.
 근거: V1 영상 프로젝트 FACTS.md와 STORYBOARD.md(장면 시간), RECORDINGS.md R1(녹화 회차 값)
 {cue: transition}
 숫자를 회차별로 정리하겠습니다.
@@ -152,6 +154,7 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 .hn5-table { width: 100%; font-size: var(--fs-card); word-break: keep-all; }
 .hn5-table td.hn5-num { font-variant-numeric: tabular-nums; font-weight: var(--weight-bold); }
 .hn5-rec td { color: var(--accent); }
+.data-table th { text-transform: none; letter-spacing: normal; font-size: var(--fs-card); }
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
 .text-success { color: var(--success); font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
@@ -174,15 +177,15 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 :::
 
 :::notes
-{timing: 0.5min}
+{timing: 1min}
 [요약]
 - 2026-10-15 세 번: Lease 인계 3초, 5초, 5초. 실패 60개 중 1개, 60개 중 1개, 45개 중 2개(3회차는 최소 권한 IAM)
 - 2026-10-18 녹화 회차: 5초, 60개 중 2개. 네 번 모두 라우트가 새 리더 ENI로 이동
 - AWS 문서의 예상 전환 3~5초와 맞지만 보장값은 아님
 
-위 세 줄은 10월 15일에 세 번 잰 값이고, 마지막 줄이 방금 영상에 나온 10월 18일 녹화 회차입니다. 인계는 3초에서 5초 사이, 실패한 요청은 많아야 2개였습니다. AWS 문서가 안내하는 예상 전환 3~5초와 일치하지만 보장값은 아니고, 이 환경에서 네 번 잰 결과입니다.
+마지막 줄은 방금 영상의 녹화 회차이니, 영상에 없던 위 세 줄만 보겠습니다. 10월 15일에 세 번 잰 값으로 인계 3초에서 5초, 실패는 많아야 2개였습니다. AWS 문서의 예상 전환 3~5초와 맞지만 보장값은 아닙니다.
 {cue: pause}
-3회차는 Gateway의 IAM 권한을 Gateway route table에만 쓰도록 좁혔는데도 전환이 동작했습니다. 그리고 1초 간격 요청에서 1~2건이 실패했다는 것은, 재시도하지 않는 클라이언트라면 짧은 공백을 본다는 뜻입니다. 이 경로를 쓰는 앱의 재시도 설정을 확인해 두세요.
+3회차는 Gateway의 IAM 권한을 Gateway route table로 좁혔는데도 전환이 동작했습니다. 재시도하지 않는 클라이언트는 짧은 공백을 보니, 이 경로를 쓰는 앱의 재시도 설정을 확인해 두세요.
 근거: V1 영상 프로젝트 FACTS.md(이전 3회와 녹화 회차를 구분한 표), Deep Dive 5부 "데모 1: 리더가 바뀌어도 끊김은 3~5초", AWS docs hybrid-nodes-gateway-overview (예상 전환 3~5초)
 {cue: transition}
 두 번째 영상은 버스팅입니다. 4부에서 예고한 세 방식의 비교 결과가 여기 나옵니다.
@@ -203,13 +206,13 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 .hn5-full { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-1); }
 .hn5-vbox { flex: 1; min-height: 0; container-type: size; }
 .hn5-full .hn-video { display: block; width: min(100cqw, calc(100cqh * 16 / 9)); height: auto; max-height: none; margin-inline: auto; }
-.hn5-full .hn-video-cap { text-align: center; margin-top: 0; font-size: var(--fs-caption); }
+.hn5-full .hn-video-cap { text-align: center; margin-top: 0; font-size: var(--fs-card); }
 </style>
 <div class="hn5-full">
 <div class="hn5-vbox">
-<video class="hn-video" src="media/v2-bursting.mp4" poster="media/v2-bursting.jpg" controls preload="metadata" muted playsinline tabindex="-1"></video>
+<video class="hn-video" src="media/v2-bursting.mp4" poster="media/v2-bursting.jpg" aria-label="V2 영상: 버스팅과 축소, 실제 터미널 녹화 포함, 무음, 3분 36초" title="V2 영상: 버스팅과 축소, 실제 터미널 녹화 포함, 무음, 3분 36초" controls preload="metadata" muted playsinline tabindex="-1"></video>
 </div>
-<div class="hn-video-cap">실측 결과 재구성 (2026-10 시뮬레이션 환경), 무음</div>
+<div class="hn-video-cap">실측 결과 재구성 (2026-10 시뮬레이션 환경), 실제 터미널 녹화 포함, 무음</div>
 </div>
 :::
 
@@ -218,7 +221,7 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 [요약]
 - 영상 3분 36초. 앞부분은 2026-10-18 녹화 회차(시나리오 B, Pod 요청 910m), 뒷부분은 2026-10-15 A, B, C 비교 실행(930m)
 - 녹화 회차: 15개로 늘리면 35초에 모두 Ready(hybrid 8, burst 7), 10개에서 hybrid 8, cloud 2, 3개에서 모두 hybrid
-- 일시정지 지점: 2:08 A, B, C 비교 장면, 2:54 비교표
+- 일시정지 지점은 한 곳: 2:08 A, B, C 비교 장면
 
 두 실행이 섞여 나오니, 장면마다 어느 회차인지 짚어 주세요.
 0:00 제목과 메시지입니다.
@@ -228,7 +231,7 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 1:32 이어지는 녹화입니다. 10개로 줄이면 hybrid 8개는 그대로이고 클라우드에 2개가 남습니다. 3개로 줄이면 남은 3개가 모두 hybrid 노드입니다. Kyverno가 붙인 cost 덕분입니다.
 {cue: pause}
 2:08 여기서 10월 15일 비교 실행으로 넘어갑니다. 잠시 멈추고 말씀하세요. 정책이 없는 A는 10개로 줄일 때 hybrid Pod 2개가 먼저 빠집니다. B와 C는 hybrid 8개를 지킵니다. 이 장면에서 노드별 Pod 위치는 예시이고, Pod 수와 EC2 대수만 실측입니다.
-2:54 비교표입니다. 다음 슬라이드에서 같은 표를 다시 보니 여기서는 짧게 넘어가도 됩니다.
+2:54 비교표입니다. 다음 슬라이드에서 같은 표를 다시 보니 멈추지 않습니다.
 3:14 메시지 카드입니다. pod-deletion-cost는 best-effort이고, 시나리오마다 한 번씩 잰 값이라는 주의가 함께 나옵니다.
 근거: V2 영상 프로젝트 FACTS.md(출처 1 비교 실행, 출처 2 녹화 회차를 분리한 표), STORYBOARD.md(장면 시간)
 {cue: transition}
@@ -246,7 +249,8 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 <style>
 .hn5-table { width: 100%; font-size: var(--fs-card); word-break: keep-all; }
 .hn5-table td.hn5-num { font-variant-numeric: tabular-nums; font-weight: var(--weight-bold); }
-.hn5-runlabel { font-size: var(--fs-caption); color: var(--text-secondary); margin-bottom: var(--space-1); }
+.hn5-runlabel { font-size: var(--fs-card); color: var(--text-secondary); margin-bottom: var(--space-1); }
+.data-table th { text-transform: none; letter-spacing: normal; font-size: var(--fs-card); }
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
 .text-success { color: var(--success); font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
@@ -271,16 +275,15 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 :::
 
 :::notes
-{timing: 0.5min}
+{timing: 1min}
 [요약]
 - 2026-10-15 비교(시나리오별 1회, 930m): A는 10개에서 6 / 4, 최종 2 / 1. B와 C는 10개에서 8 / 2, 최종 3 / 0
 - C는 B보다 EC2 4대에서 3대, burst 정리 118초에서 87초. 차이가 작고 1회 측정이라 단정하지 않음
 - 영상의 녹화 회차(2026-10-18, B, 910m)는 별도 실행. 같은 경향(온프렘 8개 유지, 최종 모두 hybrid)
 
-표는 10월 15일에 세 시나리오를 한 번씩 돌린 결과입니다. 정책이 없는 A는 온프렘 Pod부터 지워서 최종 3개 중 하나가 클라우드에 남았고, Kyverno로 hybrid Pod에 cost를 준 B와 C는 온프렘 Pod를 모두 지켰습니다.
+표는 영상의 비교표와 같습니다. 영상에서 짧게 넘긴 차이만 짚겠습니다. C는 B보다 EC2가 한 대 적고 정리가 30초 정도 빨랐지만, 한 번씩 잰 값이라 이 차이로 결정하지는 마세요. 핵심은 Kyverno 정책 하나로도 온프렘 Pod를 지켰다는 것이고, 이것은 best-effort 선호입니다.
 {cue: pause}
-C는 Karpenter가 burst 노드 Pod에도 순위를 매기게 한 것인데, EC2가 한 대 적고 정리가 30초 정도 빨랐습니다. 다만 한 번씩 잰 값이라 이 차이를 근거로 결정하지는 마세요. 핵심 메시지는 Kyverno 같은 정책 하나로도 온프렘 Pod를 지킬 수 있다는 것이고, 4부에서 말씀드린 대로 이것은 best-effort 선호라는 점입니다.
-오른쪽 아래 카드는 영상 앞부분의 녹화 회차입니다. 날짜와 Pod 요청 값이 다른 별도 실행이라 표에 섞지 않았습니다. 녹화 회차에서 burst 노드가 모두 사라진 시점(3개로 줄인 뒤 약 104초)은 녹화 밖에서 확인한 값이고 기준이 달라 표의 정리 시간과 비교하지 않습니다.
+오른쪽 아래 카드는 영상 앞부분의 녹화 회차입니다. 날짜와 Pod 요청 값이 다른 별도 실행이라 표에 섞지 않았고, 녹화 회차의 burst 노드 소멸 시점(약 104초)은 기준이 달라 표와 비교하지 않습니다.
 근거: V2 영상 프로젝트 FACTS.md(출처 1: results/compare-20261015-1239.md, 출처 2: RECORDINGS.md R2), Deep Dive 5부 "데모 2 결과: 온프렘 Pod를 지킨 것은 B와 C"
 {cue: transition}
 세 번째 영상은 ALB가 hybrid Pod를 직접 타깃으로 잡는 경우와, 반대로 온프렘에서 들어오는 경우입니다.
@@ -301,13 +304,13 @@ C는 Karpenter가 burst 노드 Pod에도 순위를 매기게 한 것인데, EC2�
 .hn5-full { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-1); }
 .hn5-vbox { flex: 1; min-height: 0; container-type: size; }
 .hn5-full .hn-video { display: block; width: min(100cqw, calc(100cqh * 16 / 9)); height: auto; max-height: none; margin-inline: auto; }
-.hn5-full .hn-video-cap { text-align: center; margin-top: 0; font-size: var(--fs-caption); }
+.hn5-full .hn-video-cap { text-align: center; margin-top: 0; font-size: var(--fs-card); }
 </style>
 <div class="hn5-full">
 <div class="hn5-vbox">
-<video class="hn-video" src="media/v3-alb-reverse.mp4" poster="media/v3-alb-reverse.jpg" controls preload="metadata" muted playsinline tabindex="-1"></video>
+<video class="hn-video" src="media/v3-alb-reverse.mp4" poster="media/v3-alb-reverse.jpg" aria-label="V3 영상: ALB ip 타깃과 온프렘에서 들어오는 역방향, 실제 터미널 녹화 포함, 무음, 3분 12초" title="V3 영상: ALB ip 타깃과 온프렘에서 들어오는 역방향, 실제 터미널 녹화 포함, 무음, 3분 12초" controls preload="metadata" muted playsinline tabindex="-1"></video>
 </div>
-<div class="hn-video-cap">실측 결과 재구성 (2026-10 시뮬레이션 환경), 무음</div>
+<div class="hn-video-cap">실측 결과 재구성 (2026-10 시뮬레이션 환경), 실제 터미널 녹화 포함, 무음</div>
 </div>
 :::
 
@@ -316,21 +319,21 @@ C는 Karpenter가 burst 노드 Pod에도 순위를 매기게 한 것인데, EC2�
 [요약]
 - 영상 3분 12초. 정방향: hybrid Pod를 다시 띄워 IP가 바뀌어도 Load Balancer Controller가 타깃을 따라감. 역방향: 온프렘에서 internal ALB로 들어오는 세 가지 경로
 - 녹화 회차(2026-10-18 06:36 UTC 시작): 재시작 50초 뒤 새 IP만 healthy, 부하 174건 ERR 0, 온프렘 NodePort는 FAIL
-- 일시정지 지점: 1:20 폴링 격자, 2:11 역방향 세 경로
+- 일시정지 지점은 한 곳: 1:20 폴링 격자
 
-이 영상에도 두 회차가 나옵니다. 화면에 "녹화 회차"와 "02:11 측정"이 표시되니 그 표시를 읽어 주세요.
+이 영상에도 두 회차가 나옵니다. 화면의 "녹화 회차"와 "02:11 측정"(UTC) 표시를 읽어 주세요.
 0:00 제목과 메시지입니다.
-0:06 정방향 경로도입니다. ALB가 hybrid Pod IP를 타깃으로 잡고, 패킷은 Gateway 경로로 온프렘 Pod에 갑니다. 타깃 등록과 해제는 Load Balancer Controller가 하고, Gateway는 경로만 준다는 점을 짚어 주세요.
+0:06 정방향 경로도입니다. ALB가 hybrid Pod IP를 타깃으로 잡고, 타깃 등록과 해제는 LBC가, 경로는 Gateway가 줍니다.
 0:28 녹화입니다. ALB 이름, Pod 2개 Running, 두 타깃 healthy를 확인하고 클라우드 Pod에서 ALB로 0.5초 간격 부하를 시작합니다.
 0:48 rollout restart로 Pod를 새로 띄웁니다. 약 6초 간격 폴링에서 새 IP가 initial, healthy가 되고 옛 IP가 draining, 해제되는 과정이 보입니다. 50초 시점에 새 IP 두 개만 healthy로 남습니다.
 {cue: pause}
 1:20 같은 폴링 결과를 격자로 정리한 장면입니다. 여기서 멈추고, 등록과 해제가 사람 손 없이 일어났고 그동안 부하 174건 중 오류가 0건이었다고 말씀하세요.
-1:38 녹화로 rollout 완료와 Pod 표를 봅니다. 옛 Pod 한 줄이 Failed로 보이는데 종료 중인 상태이고 몇 초 뒤 사라집니다. 화면 설명 상자도 같은 내용입니다.
-1:56 02:11 측정 회차입니다. Gateway 리더를 지웠을 때 인계 4초, 191건 중 1건 실패였고, 실패 칸의 위치는 예시입니다. 이 클라이언트는 재시도하지 않으므로 실제 공백에 가까운 값입니다.
-2:11 역방향 세 경로입니다. 온프렘에서 internal ALB로 클라우드 Pod에 가는 길, 같은 ALB로 hybrid Pod에 가는 hairpin, 온프렘에서 hybrid 노드의 NodePort로 클라우드 Pod에 가는 길이고, 마지막만 실패했습니다. 여기서 멈추고 다음 슬라이드에서 이유를 설명합니다.
+1:38 녹화로 rollout 완료를 봅니다. 옛 Pod 한 줄의 Failed는 종료 중인 상태이고 몇 초 뒤 사라집니다.
+1:56 02:11 UTC 측정 회차입니다. Gateway 리더를 지웠을 때 인계 4초, 191건 중 1건 실패였고, 실패 칸의 위치는 예시입니다.
+2:11 역방향 세 경로입니다. internal ALB로 클라우드 Pod, 같은 ALB로 hybrid Pod(hairpin), hybrid 노드의 NodePort로 클라우드 Pod이고, 마지막만 실패했습니다. 이유는 다음 슬라이드에서 설명합니다.
 2:35 녹화로 온프렘 호스트에서 직접 호출합니다. /cloud 3번, /hybrid 3번 성공, NodePort는 3번 모두 FAIL입니다.
 2:54 메시지와 회차별 결과 카드입니다.
-근거: V3 영상 프로젝트 FACTS.md(실행 1: 02:11 측정, 실행 2: 녹화 회차), STORYBOARD.md(장면 시간)
+근거: V3 영상 프로젝트 FACTS.md(실행 1: 02:11 UTC 측정, 실행 2: 녹화 회차), STORYBOARD.md(장면 시간)
 {cue: transition}
 두 회차의 결과를 방향별로 나눠 보겠습니다.
 :::
@@ -346,22 +349,21 @@ C는 Karpenter가 burst 노드 Pod에도 순위를 매기게 한 것인데, EC2�
 <style>
 .hn5-table { width: 100%; font-size: var(--fs-card); word-break: keep-all; }
 .hn5-table td.hn5-num { font-variant-numeric: tabular-nums; font-weight: var(--weight-bold); }
-.hn5-grp td { color: var(--accent); font-weight: var(--weight-bold); font-size: var(--fs-caption); }
+.hn5-table td.hn5-dir { color: var(--accent); font-weight: var(--weight-bold); vertical-align: middle; border-right: 1px solid var(--border); }
+.data-table th { text-transform: none; letter-spacing: normal; font-size: var(--fs-card); }
 .hn5-fail { color: var(--danger); }
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
 .on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
 <table class="data-table hn5-table fragment fade-up" data-fragment-index="1">
-  <thead><tr><th>항목</th><th>2026-10-18 02:11 측정</th><th>2026-10-18 녹화 회차 (영상)</th></tr></thead>
+  <thead><tr><th>방향</th><th>항목</th><th>2026-10-18 02:11 UTC 측정</th><th>2026-10-18 녹화 회차 (영상)</th></tr></thead>
   <tbody>
-    <tr class="hn5-grp"><td colspan="3">정방향: VPC에서 hybrid Pod로</td></tr>
-    <tr><td>rollout restart 후 새 IP만 healthy</td><td class="hn5-num">54초, 276건 중 실패 0</td><td class="hn5-num">50초, 174건 중 ERR 0</td></tr>
+    <tr><td class="hn5-dir" rowspan="2">정방향<br>VPC에서</td><td>rollout restart 후 새 IP만 healthy</td><td class="hn5-num">54초, 276건 중 실패 0</td><td class="hn5-num">50초, 174건 중 실패 0</td></tr>
     <tr><td>Gateway 리더 전환 중</td><td class="hn5-num">인계 4초, 191건 중 실패 1</td><td>측정 안 함</td></tr>
-    <tr class="hn5-grp"><td colspan="3">역방향: 온프렘에서 들어올 때</td></tr>
-    <tr><td>internal ALB → 클라우드 Pod</td><td class="hn5-num">20 / 20</td><td class="hn5-num">3 / 3</td></tr>
+    <tr><td class="hn5-dir" rowspan="3">역방향<br>온프렘에서</td><td>internal ALB → 클라우드 Pod</td><td class="hn5-num">20 / 20</td><td class="hn5-num">3 / 3</td></tr>
     <tr><td>internal ALB → hybrid Pod (hairpin)</td><td class="hn5-num">20 / 20</td><td class="hn5-num">3 / 3</td></tr>
-    <tr><td>hybrid NodePort → 클라우드 Pod</td><td class="hn5-num hn5-fail">실패</td><td class="hn5-num hn5-fail">3회 모두 FAIL</td></tr>
+    <tr><td>hybrid NodePort → 클라우드 Pod</td><td class="hn5-num hn5-fail">실패</td><td class="hn5-num hn5-fail">3회 모두 실패</td></tr>
   </tbody>
 </table>
 <div class="card-grid fragment" data-reveal="stagger" data-fragment-index="2">
@@ -372,16 +374,16 @@ C는 Karpenter가 burst 노드 Pod에도 순위를 매기게 한 것인데, EC2�
 :::
 
 :::notes
-{timing: 0.5min}
+{timing: 1min}
 [요약]
-- 정방향: 새 IP만 healthy까지 02:11 측정 54초(276건 실패 0), 녹화 회차 50초(174건 ERR 0). 리더 전환은 02:11 측정에서 인계 4초, 191건 중 1건 실패
-- 역방향: internal ALB로 클라우드 Pod와 hybrid Pod 모두 성공(02:11 측정 20 / 20, 녹화 3 / 3). hybrid Pod 쪽은 DX를 두 번 지나는 hairpin
+- 정방향: 새 IP만 healthy까지 02:11 UTC 측정 54초(276건 실패 0), 녹화 회차 50초(174건 실패 0). 리더 전환은 02:11 UTC 측정에서 인계 4초, 191건 중 1건 실패
+- 역방향: internal ALB로 클라우드 Pod와 hybrid Pod 모두 성공(02:11 UTC 측정 20 / 20, 녹화 3 / 3). hybrid Pod 쪽은 DX를 두 번 지나는 hairpin
 - NodePort 경로 실패는 이 환경의 SG 설정(온프렘 대역에 443만 허용) 때문. 온프렘 진입은 internal LB가 기본
 
-열 두 개가 같은 날의 다른 회차입니다. 위 두 줄이 정방향인데, Pod를 다시 띄워 IP가 바뀌어도 Load Balancer Controller가 새 IP를 등록하고 옛 IP를 해제했고, 그동안 요청 실패는 없었습니다. Gateway 리더 전환 중에는 191건 중 1건, 약 1초 공백이 있었습니다.
+오른쪽 두 열은 같은 날의 다른 회차이고, 정방향 54초와 실패 0은 02:11 UTC 측정, 50초는 녹화 회차입니다. 숫자는 대부분 영상에서 보셨으니 해석과 권장만 말씀드리겠습니다.
 {cue: pause}
-아래 세 줄이 역방향입니다. 온프렘에서 internal ALB로 들어오는 것은 Gateway를 거치지 않는 평범한 VPC 경로라 그대로 됩니다. 같은 ALB로 hybrid Pod를 부르는 것도 되지만, 3부에서 말씀드린 hairpin이라 DX를 두 번 지납니다. hybrid 노드의 NodePort로 클라우드 Pod를 부르는 것은 실패했습니다. 노드 IP로 SNAT된 뒤 underlay로 클라우드 노드에 가는데, 이 환경의 클라우드 노드 SG가 온프렘 대역에 443만 열어 두었기 때문입니다. 제품 한계라기보다 SG 설계 문제이고, 권장은 온프렘 진입을 internal LB로 받는 것입니다. 실환경에서는 온프렘 DNS가 internal ALB 이름을 풀 수 있도록 Route 53 Resolver inbound endpoint가 필요합니다.
-근거: V3 영상 프로젝트 FACTS.md(실행 1 results/lb-20261018-0211.json, 실행 2 RECORDINGS.md R3), Deep Dive 5부 "ALB ip 타깃", "반대 방향: 온프렘에서 LB로 들어오면", 데모 저장소 RUNBOOK.md 5절
+NodePort 실패는 영상에서 본 대로 노드 IP로 SNAT된 뒤 클라우드 노드 SG가 온프렘 대역에 443만 허용했기 때문입니다. 제품 한계라기보다 SG 설계 문제이고, 권장은 온프렘 진입을 internal LB로 받는 것입니다. hairpin은 동작하지만 DX를 두 번 지납니다. 실환경에서는 온프렘 DNS가 internal ALB 이름을 풀도록 Route 53 Resolver inbound endpoint가 필요합니다.
+근거: V3 영상 프로젝트 FACTS.md(실행 1 results/lb-20261018-0211.json, 02:11 UTC, 실행 2 RECORDINGS.md R3), Deep Dive 5부 "ALB ip 타깃", "반대 방향: 온프렘에서 LB로 들어오면", 데모 저장소 RUNBOOK.md 5절
 {cue: transition}
 마지막 영상은 온프렘 GPU입니다.
 :::
@@ -400,15 +402,16 @@ C는 Karpenter가 burst 노드 Pod에도 순위를 매기게 한 것인데, EC2�
 .hn5-v4 { display: grid; grid-template-columns: 43rem minmax(0, 1fr); gap: var(--space-4); align-items: start; }
 .hn5-res { display: flex; flex-direction: column; gap: var(--space-2); }
 .hn5-res .callout { padding: var(--space-2) var(--space-3); }
-.hn5-runlabel { font-size: var(--fs-caption); color: var(--text-secondary); }
+.hn5-runlabel { font-size: var(--fs-card); color: var(--text-secondary); }
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
 .text-success { color: var(--success); font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
-.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-caption); margin-top: var(--space-1); word-break: keep-all; overflow-wrap: anywhere; }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-1); word-break: keep-all; overflow-wrap: anywhere; }
+.hn5-v4 .hn-video-cap { font-size: var(--fs-card); }
 </style>
 <div class="hn5-v4">
   <div>
-    <video class="hn-video" src="media/v4-gpu.mp4" poster="media/v4-gpu.jpg" controls preload="metadata" muted playsinline tabindex="-1"></video>
+    <video class="hn-video" src="media/v4-gpu.mp4" poster="media/v4-gpu.jpg" aria-label="V4 영상: hybrid GPU 추론, 무음, 2분 10초" title="V4 영상: hybrid GPU 추론, 무음, 2분 10초" controls preload="metadata" muted playsinline tabindex="-1"></video>
     <div class="hn-video-cap">실측 결과 재구성 (2026-10 시뮬레이션 환경), 무음</div>
   </div>
   <div class="hn5-res fragment fade-up" data-fragment-index="1">
@@ -454,7 +457,8 @@ GPU 노드에서 EC2를 쓴 것도 앞의 환경과 같이 프로덕션 지원 �
 <style>
 .hn5-table { width: 100%; font-size: var(--fs-card); word-break: keep-all; }
 .hn5-ok { color: var(--success); font-weight: var(--weight-bold); }
-.hn5-runlabel { font-size: var(--fs-caption); color: var(--text-secondary); margin-bottom: var(--space-1); }
+.hn5-runlabel { font-size: var(--fs-card); color: var(--text-secondary); margin-bottom: var(--space-1); }
+.data-table th { text-transform: none; letter-spacing: normal; font-size: var(--fs-card); }
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
 .text-success { color: var(--success); font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
@@ -485,20 +489,20 @@ GPU 노드에서 EC2를 쓴 것도 앞의 환경과 같이 프로덕션 지원 �
 - Gateway 때문에 Cilium L7 proxy는 꺼져 있어야 하고, 실제로 끈 상태에서 통과. Istio L7은 sidecar Envoy가 처리
 - Gateway 리더 전환 중 초당 40건 45초, 1,800건 모두 성공. ambient 모드는 미확인
 
-3부에서 Gateway를 쓰면 Cilium L7 기능이 꺼진다고 말씀드렸습니다. 그럼 Istio도 못 쓰느냐는 질문을 자주 받는데, sidecar 모드로 돌려 보니 함께 동작했습니다. 꺼지는 것은 Cilium Ingress, Gateway API, Cilium L7 정책 같은 Cilium 자체의 L7이고, Istio의 L7은 sidecar Envoy가 처리하기 때문입니다.
+Gateway를 쓰면 Cilium L7이 꺼지는데, 그럼 Istio도 못 쓰느냐는 질문을 자주 받습니다. sidecar 모드로 돌려 보니 함께 동작했습니다. Istio의 L7은 sidecar Envoy가 처리하기 때문입니다.
 {cue: pause}
-hybrid 노드 Pod에도 sidecar가 들어갔고, STRICT mTLS에서 메시 안 호출은 성공하고 메시 밖 평문 호출은 거부됐고, /admin 경로를 막는 정책도 403으로 동작했습니다. Gateway 리더를 지우는 동안 초당 40건을 45초 보냈는데 1,800건이 모두 성공했습니다. 전환은 5초 걸렸으니 sidecar의 기본 재시도 덕분일 가능성이 큽니다. 지연은 p50 기준 같은 쪽 호출이 0.62~1.32 ms, Gateway를 건너면 2.11~2.46 ms였는데, 순차 300회 요청의 값이지 처리량 테스트가 아닙니다. ambient 모드는 확인하지 않았습니다.
+표의 네 항목이 모두 통과했고, 리더 전환 5초 동안 1,800건이 모두 성공한 것은 sidecar의 기본 재시도 덕분일 가능성이 큽니다. 지연은 p50 기준 같은 쪽 0.62~1.32 ms, Gateway를 건너면 2.11~2.46 ms였고 순차 300회 요청의 값입니다. ambient 모드는 확인하지 않았습니다.
 근거: Deep Dive 5부 "Istio와 gateway는 함께 쓸 수 있다", "Istio 실측: 경로별 지연과 gateway 전환"(데모 저장소 results/istio-20261017-2311.json), AWS docs hybrid-nodes-gateway-cni (l7Proxy=false 필수)
 {cue: transition}
-여기까지가 5부였습니다. 6부에서 오늘 내용을 도입 판단 기준으로 정리하겠습니다.
+여기까지가 5부였습니다. 이제 마지막 6부, 도입 판단 기준으로 정리하겠습니다.
 :::
 
 ---
 <!-- Slide 11: 도입 판단 체크리스트 -->
 @type: content
-@title: 6부 마무리: 도입 전에 정할 여섯 가지
+@title: 6부: 도입 전에 정할 여섯 가지
 
-## 6부 마무리: 도입 전에 정할 여섯 가지
+## 6부: 도입 전에 정할 여섯 가지
 
 :::html
 <style>
@@ -507,7 +511,7 @@ hybrid 노드 Pod에도 sidecar가 들어갔고, STRICT mTLS에서 메시 안 �
 .hn5-item h4 { margin: 0 0 var(--space-1); font-size: var(--fs-card); color: var(--accent); }
 .hn5-q { font-weight: var(--weight-bold); }
 .hn5-part { display: block; color: var(--text-muted); font-size: var(--fs-caption); margin-top: var(--space-1); }
-.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-caption); margin-top: var(--space-1); word-break: keep-all; overflow-wrap: anywhere; }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-1); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
 <div class="hn5-check">
   <div class="hn5-item fragment fade-up" data-fragment-index="1"><h4>1. 연결</h4><div class="hn5-q">안정적인 사설 양방향 연결이 있는가</div><div class="on-surface-muted">DX 또는 VPN, 양방향 route. 간헐 연결, 단절 환경용이 아님</div><span class="hn5-part">3부, 4부</span></div>
@@ -526,7 +530,7 @@ hybrid 노드 Pod에도 sidecar가 들어갔고, STRICT mTLS에서 메시 안 �
 - 라우팅은 BGP 우선, 라우터 변경이 어려우면 Gateway. Gateway를 고르면 Cilium L7 끔과 leader AZ 비용을 받아들임
 - 운영은 업그레이드를 호스트 교체로, 단절은 300초와 자격 증명 만료로, 버스팅은 Pending과 축소 정책으로 준비
 
-여기부터 6부 마무리입니다. 오늘 내용을 도입 전에 정해야 할 여섯 가지로 묶었습니다. 카드 아래에 관련 파트를 적어 두었습니다.
+여기부터 6부, 마무리입니다. 오늘 내용을 도입 전에 정해야 할 여섯 가지로 묶었습니다. 카드 아래에 관련 파트를 적어 두었습니다.
 첫째 연결입니다. Direct Connect나 VPN으로 안정적인 사설 연결이 있고, 양쪽 방향 route가 모두 있어야 합니다. 이 서비스는 간헐 연결이나 단절 환경용이 아닙니다. 둘째 CIDR입니다. VPC, Service, remote node, remote Pod 네 대역이 겹치지 않아야 하고, 나중에 바꾸기 어려우니 네트워크 팀과 먼저 확정합니다.
 {cue: pause}
 셋째 라우팅 방식입니다. 라우터 팀이 BGP를 운영할 수 있으면 BGP를 우선하고, 라우터 변경이 어려울 때 Gateway를 씁니다. Gateway를 고르면 Cilium L7 기능이 꺼지고, 트래픽이 leader AZ로 모이는 비용과 활성 1대의 처리량 한계를 받아들여야 합니다. V1에서 본 3~5초 전환도 이 선택에 따라오는 특성입니다.
@@ -560,7 +564,7 @@ hybrid 노드 Pod에도 sidecar가 들어갔고, STRICT mTLS에서 메시 안 �
   <div class="hn5-col">
     <div class="hn5-label">다음 단계</div>
     <div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="text-info">설정과 명령까지 보려면</strong><div class="on-surface-muted"><a href="../eks-hybrid-nodes/index.html" target="_blank" rel="noopener">EKS Hybrid Nodes Deep Dive (2시간)</a>: 네트워킹, 노드 라이프사이클, 운영 전략, 라이브 데모</div></div>
-    <div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">직접 돌려 보려면</strong><div class="on-surface-muted"><a href="https://github.com/Atom-oh/eks-hybrid-demo" target="_blank" rel="noopener">Atom-oh/eks-hybrid-demo (private)</a>: 오늘 영상의 데모 스크립트와 측정 결과</div></div>
+    <div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">직접 돌려 보려면</strong><div class="on-surface-muted"><a href="https://github.com/Atom-oh/eks-hybrid-demo" target="_blank" rel="noopener">Atom-oh/eks-hybrid-demo</a>: 오늘 영상의 데모 스크립트와 측정 결과. private 저장소, 요청 시 공유</div></div>
     <div class="callout callout-info fragment fade-up" data-fragment-index="3"><strong class="text-accent">Q&A</strong><div class="on-surface-muted">5부 수치는 시뮬레이션 환경의 실측입니다. 적용 전에 최신 AWS 문서로 지원 조합을 확인하세요.</div></div>
   </div>
   <div class="hn5-col">
@@ -579,8 +583,9 @@ hybrid 노드 Pod에도 sidecar가 들어갔고, STRICT mTLS에서 메시 안 �
 :::
 
 :::notes
-{timing: 2.5min}
+{timing: 4min}
 [요약]
+- 안내 1분, 이어서 Q&A 3분 (슬라이드 2에서 약속한 질문 시간)
 - 설정 값, 명령, 방화벽 표, 버전별 점검은 Deep Dive(2시간) 덱에 있음
 - 데모 스크립트와 측정 결과는 데모 저장소(private, 요청 시 공유)
 - AWS 문서 7개: 개요, 네트워킹, 자격 증명, CNI, Gateway, 단절 대비 모범 사례, 요금. 이후 질문 받기
@@ -591,7 +596,7 @@ hybrid 노드 Pod에도 sidecar가 들어갔고, STRICT mTLS에서 메시 안 �
 {cue: pause}
 수치는 모두 EC2로 온프렘을 시뮬레이션한 환경에서 잰 값이고, 적용하시기 전에 최신 문서로 지원 조합을 확인하시기 바랍니다.
 {cue: question}
-이제 질문 받겠습니다.
+이제 질문 받겠습니다. 질문 시간은 3분 정도이고, 남은 질문은 세션 뒤에 따로 받겠습니다.
 근거: Deep Dive 5부 "참고 자료 & Q&A"(링크 주소는 그 슬라이드에서 그대로 가져옴), "정리: 무엇을 확인했고 무엇이 남았나"(teardown 안내)
 :::
 

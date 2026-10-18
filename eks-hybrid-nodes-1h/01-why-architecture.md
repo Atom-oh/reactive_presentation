@@ -121,6 +121,7 @@ block: 01-why-architecture
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
 .on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 .hn-def { margin-bottom: var(--space-3); }
+.data-table th { text-transform: none; letter-spacing: normal; font-size: var(--fs-card); }
 </style>
 <div class="callout callout-info hn-def">
   <strong class="text-info">EKS Hybrid Nodes</strong>: 고객이 소유한 온프레미스, 엣지 서버를 AWS가 관리하는 EKS 컨트롤 플레인에 노드로 연결하는 기능
@@ -150,19 +151,20 @@ block: 01-why-architecture
 EKS Anywhere는 컨트롤 플레인까지 고객이 운영하고, Hybrid Nodes는 하드웨어는 고객 것이지만 컨트롤 플레인은 AWS가 맡습니다. 그래서 클라우드와 온프렘을 같은 EKS API, 같은 도구로 다룰 수 있습니다. 다만 Local Zone이나 Outposts처럼 AWS 인프라는 hybrid node로 등록할 수 없고, EC2에 올려 테스트하는 것도 미지원인데 이때도 hybrid node 요금은 부과됩니다. Outposts 등 다른 옵션의 상세 비교는 Deep Dive 1부에 있습니다.
 근거: Deep Dive 1부 "Edge 옵션, 책임 경계가 다르다", "컨트롤 플레인만 AWS에 맡긴다".
 {cue: transition}
-그럼 전체 구조를 그림으로 보겠습니다.
+여기까지가 1부였습니다. 2부 개념과 아키텍처로 넘어가, 전체 구조를 그림으로 보겠습니다.
 :::
 
 ---
 <!-- Slide 5: 전체 아키텍처 -->
 @type: content
-@title: 전체 아키텍처: private 연결 위의 한 클러스터
+@title: 2부: 전체 아키텍처, private 연결 위의 한 클러스터
 
-## 전체 아키텍처: private 연결 위의 한 클러스터
+## 2부: 전체 아키텍처, private 연결 위의 한 클러스터
 
 :::html
 <style>
-.hn-split-img { display: grid; grid-template-columns: 1.15fr 1fr; gap: var(--space-4); align-items: center; }
+.hn-split-img { display: grid; grid-template-columns: 1.7fr 1fr; gap: var(--space-4); align-items: center; }
+.hn-cap { font-size: var(--fs-card); color: var(--text-secondary); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: break-word; }
 .hn-stack { display: flex; flex-direction: column; gap: var(--space-3); }
 .hn-split-img img { width: 100%; height: auto; }
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
@@ -173,6 +175,7 @@ EKS Anywhere는 컨트롤 플레인까지 고객이 운영하고, Hybrid Nodes�
 <div class="hn-split-img">
   <div>
     <img src="diagrams/hybrid-nodes-highlevel-network.png" alt="AWS 컨트롤 플레인 ENI와 온프레미스 하이브리드 노드를 연결하는 네트워크 개요">
+    <div class="hn-cap">그림의 Gateway는 VGW, TGW 같은 사설 연결 장치입니다.</div>
   </div>
   <div class="hn-stack fragment" data-reveal="stagger" data-reveal-anim="left" data-fragment-index="1">
     <div class="callout callout-warning">
@@ -192,7 +195,7 @@ EKS Anywhere는 컨트롤 플레인까지 고객이 운영하고, Hybrid Nodes�
 :::
 
 :::notes
-{timing: 2.5min}
+{timing: 2min}
 [요약]
 - AWS 쪽에는 EKS 컨트롤 플레인과 VPC, 온프렘 쪽에는 hybrid node가 있고 private 연결로 이어집니다.
 - 노드는 nodeadm으로 구성하고 SSM 또는 IAM Roles Anywhere 자격 증명으로 인증합니다.
@@ -200,7 +203,7 @@ EKS Anywhere는 컨트롤 플레인까지 고객이 운영하고, Hybrid Nodes�
 
 왼쪽 그림이 전체 구조입니다. AWS 쪽에는 컨트롤 플레인과 VPC가 있고, 온프레미스의 hybrid node가 VPN이나 Direct Connect 같은 private 연결로 이어집니다. 같은 클러스터 안에 일반 AWS 노드와 hybrid node를 함께 둘 수 있습니다.
 {cue: pause}
-그림에 라우터와 게이트웨이가 보이는데, 이 연결과 라우팅은 고객이 준비해야 합니다. Hybrid Nodes가 네트워크를 자동으로 만들어 주지는 않습니다. 노드는 nodeadm이라는 CLI로 구성하고, SSM이나 IAM Roles Anywhere로 받은 임시 자격 증명으로 EKS API에 인증합니다. 마지막으로 Cilium이나 Calico 같은 CNI를 설치해야 Ready가 됩니다. VPC CNI는 hybrid node를 관리하지 않습니다.
+그림에 라우터와 게이트웨이가 보이는데, 여기서 Gateway는 VGW나 TGW 같은 사설 연결 장치이고 3부에서 다룰 Hybrid Nodes Gateway와는 다릅니다. 이 연결과 라우팅은 고객이 준비해야 합니다. Hybrid Nodes가 네트워크를 자동으로 만들어 주지는 않습니다. 노드는 nodeadm이라는 CLI로 구성하고, SSM이나 IAM Roles Anywhere로 받은 임시 자격 증명으로 EKS API에 인증합니다. 마지막으로 Cilium이나 Calico 같은 CNI를 설치해야 Ready가 됩니다. VPC CNI는 hybrid node를 관리하지 않습니다.
 네트워크는 오늘 3부에서, 등록 단계별 설정은 Deep Dive 1부 "Ready까지 여섯 단계"와 3부에서 자세히 다룹니다.
 근거: Deep Dive 1부 "컨트롤 플레인만 AWS에 맡긴다", "Ready까지 여섯 단계", Deep Dive의 high-level network 그림 재사용
 {cue: transition}
@@ -246,7 +249,7 @@ EKS Anywhere는 컨트롤 플레인까지 고객이 운영하고, Hybrid Nodes�
 :::
 
 :::notes
-{timing: 2min}
+{timing: 1.5min}
 [요약]
 - 컨트롤 플레인은 AWS, 노드 이하는 고객 책임입니다.
 - 자격 증명 서비스는 AWS가 운영하지만 인증서, activation 준비는 고객 몫입니다.
@@ -271,6 +274,7 @@ EKS Anywhere는 컨트롤 플레인까지 고객이 운영하고, Hybrid Nodes�
 :::html
 <style>
 .hn-price-two { display: grid; grid-template-columns: 1fr 1.2fr; gap: var(--space-4); margin-bottom: var(--space-3); }
+.data-table th { text-transform: none; letter-spacing: normal; font-size: var(--fs-card); }
 .hn-assume { font-size: var(--fs-card); color: var(--text-secondary); margin-bottom: var(--space-3); word-break: keep-all; }
 </style>
 <div class="hn-price-two">
@@ -421,20 +425,20 @@ EKS Anywhere는 컨트롤 플레인까지 고객이 운영하고, Hybrid Nodes�
 :::
 
 :::notes
-{timing: 3min}
+{timing: 2.5min}
 [요약]
 - PKI가 없으면 SSM, 사내 PKI와 인증서 수명 관리 체계가 있으면 IAM Roles Anywhere
 - 단절 후 복구: SSM은 최대 30분 지연 가능, IAM RA는 보통 몇 초. 세션은 SSM 1시간 고정, IAM RA 기본 1시간 최대 12시간
 - 한 클러스터에서는 한 방식만, 두 방식 모두 갱신에 AWS 연결 필요
 
-노드가 EKS API에 인증하려면 AWS 임시 자격 증명이 필요하고, 받는 방법이 두 가지입니다. SSM hybrid activation과 IAM Roles Anywhere입니다. 칸에 마우스를 올리면 근거가 나옵니다.
+노드가 EKS API에 인증하려면 AWS 임시 자격 증명이 필요하고, 받는 방법이 두 가지입니다. SSM hybrid activation과 IAM Roles Anywhere입니다. 칸별 근거는 마우스를 올리면 나오니 질문이 나올 때 열어 보세요.
 가장 먼저 물어볼 것은 사내 PKI가 있는지입니다. 없으면 SSM이 훨씬 빨리 시작할 수 있고, 이미 인증서를 발급하고 갱신하는 체계가 있으면 IAM Roles Anywhere가 자연스럽습니다.
 {cue: pause}
-두 번째는 네트워크 단절에 얼마나 민감한지입니다. SSM 자격 증명은 1시간 고정이라 그보다 오래 끊기면 만료되고, agent가 최대 30분 간격으로 재시도하기 때문에 네트워크가 돌아와도 재연결이 늦어질 수 있습니다. agent를 재시작하면 바로 갱신됩니다. IAM Roles Anywhere는 kubelet이 필요할 때 자격 증명을 받아서 보통 몇 초 안에 재연결되고, 세션도 최대 12시간까지 늘릴 수 있습니다.
-운영 부담은 종류가 다릅니다. SSM은 activation 만료와 agent 버전을, IAM Roles Anywhere는 인증서 배포와 갱신, 폐기를 챙겨야 합니다. 비용은 SSM 등록이 무료이고, hybrid 노드에 Session Manager나 Run Command를 쓰면 2026년 9월 30일부터 사용량 과금입니다. IAM Roles Anywhere는 추가 요금이 없고, AWS Private CA를 쓰면 그 요금이 붙습니다.
-마지막으로 한 클러스터에서는 한 방식만 쓰는 것이 AWS 권장이고, 어느 쪽이든 갱신에는 AWS 연결이 필요합니다. 로컬 CA가 있다고 오프라인으로 발급받을 수는 없습니다. NodeConfig 설정과 provider별 준비물은 Deep Dive 1부와 3부에 있습니다.
+두 번째는 네트워크 단절에 얼마나 민감한지입니다. SSM 자격 증명은 1시간 고정이고, 오래 끊기면 agent가 최대 30분 간격으로 재시도해서 재연결이 늦어질 수 있습니다. IAM Roles Anywhere는 보통 몇 초 안에 재연결되고 세션도 최대 12시간까지 늘릴 수 있습니다. 단절 동작은 4부에서 다시 봅니다.
+운영 부담은 종류가 다릅니다. SSM은 activation 만료와 agent 버전을, IAM Roles Anywhere는 인증서 배포와 갱신, 폐기를 챙겨야 합니다. 요금 차이는 해당 칸의 설명에 있습니다.
+마지막으로 한 클러스터에서는 한 방식만 쓰는 것이 AWS 권장이고, 어느 쪽이든 갱신에는 AWS 연결이 필요합니다. NodeConfig 설정과 provider별 준비물은 Deep Dive 1부와 3부에 있습니다.
 {cue: transition}
-여기까지가 개념과 아키텍처였습니다. 오늘 3부에서는 이 구조의 핵심인 네트워킹을 보겠습니다.
+여기까지가 2부 개념과 아키텍처였습니다. 3부에서는 이 구조의 핵심인 네트워킹을 보겠습니다.
 
 [출처]
 - https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html (PKI 유무에 따른 권장, 한 방식 사용)

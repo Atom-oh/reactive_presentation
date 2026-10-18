@@ -413,7 +413,7 @@ Expected: 영상 4개가 두 파일에 각각 나타남
 
 Task 5~8에서 25MB를 넘긴 영상이 있을 때만 진행한다.
 
-- [ ] **Step 1: 대상 계정 확인과 승인 요청.** 계정(기본 `<기본 계정>` 또는 `samples-atomoh` 프로필의 `<samples 계정>`), 버킷 이름 `reactive-presentation-media-<account>`, 비공개 버킷(Block Public Access 4개 모두 켬), CloudFront 배포와 OAC, 버킷 정책은 그 배포의 OAC만 허용. 이 변경 목록을 사용자에게 보여 주고 승인받는다
+- [ ] **Step 1: 대상 계정 확인과 승인 요청.** 계정(`<기본 계정>` 또는 `samples-atomoh` 프로필의 `<samples 계정>`), 버킷 이름 `reactive-presentation-media-<account>`, 비공개 버킷(Block Public Access 4개 모두 켬), CloudFront 배포와 OAC, 버킷 정책은 그 배포의 OAC만 허용. 이 변경 목록을 사용자에게 보여 주고 승인받는다
 - [ ] **Step 2: 승인 후 생성, 업로드, 확인.** `curl -I https://<dist>.cloudfront.net/eks-hybrid-nodes-1h/<id>.mp4`가 200이고, 버킷 직접 URL은 403이어야 함
 - [ ] **Step 3: md의 src를 CloudFront URL로 바꾸고 Task 10 Step 1 재실행.** 검사 스크립트의 파일 존재 확인은 `https://` src를 건너뛴다(필요하면 정규식을 `media/`로 한정한 현재 형태 유지)
 - [ ] **Step 4: 정리 방법 기록.** 배포 비활성화 후 삭제, 객체와 버킷 삭제 명령을 PR 본문에 남긴다

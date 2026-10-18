@@ -33,8 +33,8 @@ block: 02-networking
 
 :::html
 <style>
-.hn3-split { display: grid; grid-template-columns: 1.15fr 1fr; gap: var(--space-4); align-items: start; }
-.hn3-img { width: 100%; max-height: 19rem; object-fit: contain; border-radius: var(--radius-md); background: var(--surface-1); }
+.hn3-split { display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-3); align-items: start; }
+.hn3-img { width: 100%; object-fit: contain; border-radius: var(--radius-md); background: var(--surface-1); }
 .hn3-cap { font-size: var(--fs-card); color: var(--text-secondary); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: break-word; }
 .hn3-stack { display: flex; flex-direction: column; gap: var(--space-3); }
 .hn3-cidr { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-2); }

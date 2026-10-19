@@ -1,0 +1,960 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>V5 연결 검증: SNAT 없음과 PrivateLink</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --bg: #161d26;
+        --panel: #1d2632;
+        --panel-2: #222d3a;
+        --line: #3a4a5e;
+        --fg: #ffffff;
+        --fg-2: rgba(243, 243, 247, 0.78);
+        --fg-3: rgba(243, 243, 247, 0.62);
+        --accent: #41b3ff;
+        --warning: #fbd332;
+        --success: #00e500;
+        --danger: #ff5c85;
+        --sans: "Noto Sans KR", sans-serif;
+        --mono: "JetBrains Mono", "Noto Sans KR", monospace;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--bg);
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: var(--sans);
+        color: var(--fg);
+        word-break: keep-all;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+      .mono {
+        font-family: var(--mono);
+      }
+      .ok {
+        color: var(--success);
+      }
+      .wn {
+        color: var(--warning);
+      }
+      .bad {
+        color: var(--danger);
+      }
+      .ac {
+        color: var(--accent);
+      }
+
+      /* background */
+      #bg {
+        position: absolute;
+        inset: 0;
+        background: var(--bg);
+      }
+      #bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(65, 179, 255, 0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(65, 179, 255, 0.05) 1px, transparent 1px);
+        background-size: 80px 80px;
+      }
+      #bg-glow {
+        position: absolute;
+        left: 1100px;
+        top: -300px;
+        width: 1100px;
+        height: 1100px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(65, 179, 255, 0.12) 0%, rgba(65, 179, 255, 0) 65%);
+      }
+
+      /* footer */
+      #footer {
+        pointer-events: none;
+      }
+      .footer-label {
+        position: absolute;
+        left: 60px;
+        bottom: 26px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 36px;
+        font-weight: 500;
+        color: var(--fg-2);
+      }
+      .footer-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--warning);
+      }
+      .footer-right {
+        position: absolute;
+        right: 60px;
+        bottom: 26px;
+        font-size: 36px;
+        color: var(--fg-3);
+      }
+
+      /* opening title */
+      #s0-title {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 160px 80px;
+      }
+      .kicker {
+        font-size: 40px;
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 0.02em;
+      }
+      .big-title {
+        margin-top: 24px;
+        font-size: 104px;
+        font-weight: 900;
+        line-height: 1.15;
+      }
+      .big-msg {
+        margin-top: 40px;
+        max-width: 1560px;
+        font-size: 48px;
+        font-weight: 500;
+        line-height: 1.4;
+        color: var(--fg-2);
+      }
+      .big-msg b {
+        color: var(--success);
+        font-weight: 700;
+      }
+
+      /* scene header */
+      .hdr {
+        position: absolute;
+        left: 60px;
+        top: 56px;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+      }
+      .step {
+        display: block;
+        padding: 6px 22px;
+        border: 2px solid var(--accent);
+        border-radius: 999px;
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .hdr-title {
+        display: block;
+        font-size: 58px;
+        font-weight: 800;
+      }
+      .run-badge {
+        position: absolute;
+        right: 60px;
+        top: 56px;
+        padding: 8px 24px;
+        border-radius: 14px;
+        border: 2px solid var(--accent);
+        background: rgba(65, 179, 255, 0.1);
+        color: var(--accent);
+        font-size: 36px;
+        font-weight: 700;
+      }
+      .run-badge.old {
+        border-color: var(--warning);
+        background: rgba(251, 211, 50, 0.08);
+        color: var(--warning);
+      }
+      .sub {
+        position: absolute;
+        left: 60px;
+        top: 160px;
+        font-size: 36px;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+
+      /* cards */
+      .card {
+        position: absolute;
+        padding: 26px 34px;
+        border-radius: 22px;
+        background: var(--panel);
+        border: 2px solid var(--line);
+      }
+      .card-h {
+        font-size: 42px;
+        font-weight: 800;
+      }
+      .card-line {
+        margin-top: 14px;
+        font-size: 36px;
+        line-height: 1.3;
+        white-space: nowrap;
+      }
+
+      /* scene 1: diagram */
+      .zone {
+        position: absolute;
+        top: 214px;
+        height: 388px;
+        border: 2px dashed var(--line);
+        border-radius: 20px;
+      }
+      .zone-label {
+        position: absolute;
+        left: 22px;
+        top: 8px;
+        font-size: 36px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .nbox {
+        position: absolute;
+        padding-top: 14px;
+        text-align: center;
+        background: var(--panel);
+        border: 3px solid var(--line);
+        border-radius: 18px;
+      }
+      .nbox-t {
+        font-size: 38px;
+        font-weight: 800;
+        line-height: 1.2;
+        white-space: nowrap;
+      }
+      .nbox-s {
+        margin-top: 6px;
+        font-size: 36px;
+        line-height: 1.25;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+      .pill {
+        position: absolute;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        border: 3px solid var(--success);
+        background: rgba(0, 229, 0, 0.08);
+        font-size: 36px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .link {
+        position: absolute;
+        top: 406px;
+        height: 4px;
+        background: var(--line);
+      }
+      .pkt {
+        position: absolute;
+        top: 422px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--success);
+        box-shadow: 0 0 18px rgba(0, 229, 0, 0.7);
+      }
+      .bar {
+        position: absolute;
+        left: 60px;
+        width: 1800px;
+        display: flex;
+        align-items: center;
+        padding: 0 34px;
+        border-radius: 18px;
+        white-space: nowrap;
+      }
+      #ans {
+        top: 620px;
+        height: 80px;
+        border: 3px solid var(--success);
+        background: rgba(0, 229, 0, 0.07);
+        font-size: 42px;
+        font-weight: 800;
+      }
+      #warn1 {
+        top: 716px;
+        height: 80px;
+        border: 3px solid var(--danger);
+        background: rgba(255, 92, 133, 0.08);
+        font-size: 38px;
+        font-weight: 700;
+      }
+      #concept {
+        top: 812px;
+        height: 150px;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 8px;
+        border: 2px dashed var(--fg-3);
+        background: rgba(255, 255, 255, 0.03);
+        font-size: 36px;
+        color: var(--fg-2);
+      }
+      .bang {
+        font-weight: 900;
+        margin-right: 18px;
+      }
+
+      /* scene 7: matrix */
+      .mrow {
+        position: absolute;
+        left: 60px;
+        width: 1800px;
+        height: 56px;
+        border-radius: 12px;
+        background: var(--panel);
+        border: 2px solid var(--line);
+        white-space: nowrap;
+      }
+      .m-name {
+        position: absolute;
+        left: 22px;
+        top: 0;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        font-size: 36px;
+        font-weight: 700;
+      }
+      .m-n {
+        position: absolute;
+        left: 690px;
+        top: 6px;
+        width: 92px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: rgba(65, 179, 255, 0.14);
+        color: var(--accent);
+        font-size: 36px;
+        font-weight: 800;
+      }
+      .m-k {
+        position: absolute;
+        left: 812px;
+        top: 0;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        font-size: 36px;
+        color: var(--fg-2);
+      }
+      .m-p {
+        position: absolute;
+        right: 22px;
+        top: 0;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        font-size: 36px;
+        font-weight: 900;
+        color: var(--success);
+      }
+      #mtotal {
+        position: absolute;
+        left: 60px;
+        top: 890px;
+        width: 1800px;
+        height: 84px;
+        display: flex;
+        align-items: center;
+        padding: 0 30px;
+        border-radius: 16px;
+        border: 3px solid var(--success);
+        background: rgba(0, 229, 0, 0.07);
+        font-size: 42px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      /* recording */
+      #recwin {
+        position: absolute;
+        left: 58px;
+        top: 144px;
+        width: 1804px;
+        height: 854px;
+        overflow: hidden;
+        border-radius: 16px;
+        border: 2px solid var(--line);
+        background: #121314;
+      }
+      #recpan {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1800px;
+        height: 1324px;
+      }
+      .rec {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1800px;
+        height: 1324px;
+        object-fit: fill;
+      }
+      .rec-note {
+        position: absolute;
+        right: 60px;
+        top: 56px;
+        padding: 8px 24px;
+        border-radius: 14px;
+        border: 2px solid var(--warning);
+        background: rgba(251, 211, 50, 0.1);
+        color: var(--warning);
+        font-size: 36px;
+        font-weight: 700;
+      }
+      .footer-label.rec-label .footer-dot {
+        background: var(--danger);
+      }
+      .lbl {
+        position: absolute;
+        height: 50px;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        border-radius: 12px;
+        border: 3px solid var(--success);
+        background: rgba(22, 29, 38, 0.95);
+        font-size: 36px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .lbl.two {
+        height: 108px;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+      }
+      .lbl.ac {
+        border-color: var(--accent);
+      }
+      .lbl.wn {
+        border-color: var(--warning);
+      }
+      .lbl.bad {
+        border-color: var(--danger);
+      }
+      #abox {
+        position: absolute;
+        left: 1180px;
+        top: 378px;
+        width: 660px;
+        height: 232px;
+        padding: 14px 26px;
+        border-radius: 14px;
+        border: 3px solid var(--warning);
+        background: rgba(22, 29, 38, 0.95);
+      }
+      .abl {
+        font-size: 36px;
+        line-height: 1.42;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      #enote {
+        position: absolute;
+        left: 84px;
+        top: 164px;
+        width: 1752px;
+        height: 200px;
+        padding: 0 30px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 8px;
+        border-radius: 16px;
+        border: 3px solid var(--warning);
+        background: #161d26;
+        white-space: nowrap;
+      }
+      .en1 {
+        font-size: 36px;
+        font-weight: 800;
+      }
+      .en2 {
+        font-size: 36px;
+        color: var(--fg-2);
+      }
+
+      /* scene 8 */
+      .msg {
+        position: absolute;
+        left: 60px;
+        top: 160px;
+        width: 1800px;
+        font-size: 54px;
+        font-weight: 800;
+        line-height: 1.32;
+      }
+      .msg b {
+        color: var(--success);
+      }
+      .msg-l {
+        display: block;
+      }
+      .caveat {
+        position: absolute;
+        left: 60px;
+        top: 668px;
+        width: 1800px;
+        height: 290px;
+        padding: 20px 36px;
+        border-radius: 22px;
+        background: rgba(251, 211, 50, 0.06);
+        border: 2px solid var(--warning);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 14px;
+      }
+      .cv-h {
+        font-size: 40px;
+        font-weight: 800;
+        color: var(--warning);
+      }
+      .cv {
+        font-size: 36px;
+        line-height: 1.3;
+        white-space: nowrap;
+      }
+      .cv i {
+        font-style: normal;
+        font-weight: 800;
+        color: var(--warning);
+        margin-right: 16px;
+      }
+      .cv i.r {
+        color: var(--danger);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="152"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div id="bg">
+        <div id="bg-grid"></div>
+        <div id="bg-glow"></div>
+      </div>
+
+      <!-- Opening title -->
+      <section id="s0-title" class="clip" data-start="0" data-duration="6" data-track-index="1">
+        <div id="t-kicker" class="kicker">EKS Hybrid Nodes 데모 5</div>
+        <div id="t-title" class="big-title">연결 검증<br />SNAT 없음과 PrivateLink</div>
+        <div id="t-msg" class="big-msg">
+          overlay와 SNAT 없이 <b>Pod IP</b>가 그대로 보이고, 온프렘 Pod도 <b>PrivateLink</b>로 AWS API를 씁니다
+        </div>
+      </section>
+
+      <!-- Scene headers (reconstruction scenes) -->
+      <div id="h1" class="clip" data-start="6" data-duration="24" data-track-index="2">
+        <div id="h1-in" class="hdr">
+          <span class="step">1 / 8</span>
+          <span class="hdr-title">질문: 방화벽이 온프렘 Pod를 Pod IP로 구분할 수 있나?</span>
+        </div>
+      </div>
+      <div id="h7" class="clip" data-start="108.8" data-duration="22" data-track-index="2">
+        <div id="h7-in" class="hdr">
+          <span class="step">7 / 8</span>
+          <span class="hdr-title">전체 매트릭스: 11개 절, 38개 항목</span>
+        </div>
+        <div id="h7-run" class="run-badge old">10:50 측정, 녹화 아님</div>
+      </div>
+      <div id="h8" class="clip" data-start="130.8" data-duration="21.2" data-track-index="2">
+        <div id="h8-in" class="hdr">
+          <span class="step">8 / 8</span>
+          <span class="hdr-title">정리</span>
+        </div>
+      </div>
+
+      <!-- Scene 1: question and topology -->
+      <section id="s1" class="clip" data-start="6" data-duration="24" data-track-index="4">
+        <div id="s1-sub" class="sub">Cilium native routing: VXLAN 없음, masquerade 끔 (SNAT 없음), 온프렘은 TGW로 연결 (실환경 DX, VPN)</div>
+        <div id="z-cloud" class="zone" style="left: 40px; width: 800px">
+          <div class="zone-label ac">클라우드 VPC 10.0.0.0/16</div>
+        </div>
+        <div id="z-op" class="zone" style="left: 1080px; width: 800px">
+          <div class="zone-label ok">온프렘 172.18.0.0/16, Pod 172.17.0.0/16</div>
+        </div>
+        <div id="nb-pod" class="nbox" style="left: 70px; top: 284px; width: 350px; height: 130px">
+          <div class="nbox-t ac">VPC CNI Pod</div>
+          <div class="nbox-s">10.0.x</div>
+        </div>
+        <div id="nb-nat" class="nbox" style="left: 460px; top: 284px; width: 350px; height: 130px">
+          <div class="nbox-t">NAT gateway</div>
+          <div class="nbox-s">인터넷 출구</div>
+        </div>
+        <div id="nb-ep" class="nbox" style="left: 70px; top: 456px; width: 740px; height: 130px">
+          <div class="nbox-t">STS, S3 interface endpoint</div>
+          <div class="nbox-s">PrivateLink ENI (10.0.x)</div>
+        </div>
+        <div id="lk1" class="link" style="left: 840px; width: 20px"></div>
+        <div id="nb-tgw" class="nbox" style="left: 860px; top: 322px; width: 200px; height: 176px">
+          <div class="nbox-t">TGW</div>
+          <div class="nbox-s">실환경<br />DX, VPN</div>
+        </div>
+        <div id="lk2" class="link" style="left: 1060px; width: 20px"></div>
+        <div id="nb-rt" class="nbox" style="left: 1110px; top: 284px; width: 410px; height: 130px">
+          <div class="nbox-t">온프렘 라우터</div>
+          <div class="nbox-s">route table (시뮬레이션)</div>
+        </div>
+        <div id="nb-rtn" class="nbox" style="left: 1110px; top: 456px; width: 410px; height: 130px; border-style: dashed">
+          <div class="nbox-t" style="font-size: 36px">노드별 Pod 블록</div>
+          <div class="nbox-s">→ 해당 hybrid 노드</div>
+        </div>
+        <div id="nb-node" class="nbox" style="left: 1550px; top: 284px; width: 300px; height: 302px">
+          <div class="nbox-t ok">hybrid 노드</div>
+          <div class="nbox-s">172.18.x</div>
+        </div>
+        <div id="pod-pill" class="pill" style="left: 1574px; top: 486px; width: 252px">Pod 172.17.x</div>
+        <div id="pkts"></div>
+        <div id="ans" class="bar">답: 서버와 방화벽에 Pod IP(172.17.x)가 그대로 보인다: 녹화로 확인</div>
+        <div id="warn1" class="bar"><span class="bang bad">!</span>AWS 지원 범위 밖 구성: 지원 모드는 VXLAN뿐, gateway와 함께 쓸 수 없음</div>
+        <div id="concept" class="bar">
+          <div><span class="wn" style="font-weight: 800">개념 비교 (측정 아님):</span> VXLAN 유지 + masquerade 끔이면 클라우드와 온프렘 방향은 Pod IP,</div>
+          <div>hybrid 노드 사이 구간은 VXLAN 바깥 헤더의 노드 IP(172.18.x)만 보임</div>
+        </div>
+      </section>
+
+      <!-- Scene 7: 38-item matrix (10:50 run) -->
+      <section id="s7" class="clip" data-start="108.8" data-duration="22" data-track-index="4">
+        <div id="mrows"></div>
+        <div id="mtotal">
+          <span class="ok">38 PASS, 0 FAIL, 0 SKIP</span>&nbsp;&nbsp;<span style="color: var(--fg-2); font-weight: 600">7+3+4+2+3+2+3+3+2+1+8, 9절은 info 4개 별도</span>
+        </div>
+      </section>
+
+      <!-- Scene 8: message and summary -->
+      <section id="s8" class="clip" data-start="130.8" data-duration="21.2" data-track-index="4">
+        <div id="msg" class="msg">
+          <span class="msg-l">overlay와 SNAT 없이 <b>Pod IP</b>가 그대로 보이고,</span>
+          <span class="msg-l">온프렘 Pod도 <b>PrivateLink</b>로 AWS API를 쓴다</span>
+        </div>
+        <div id="fix" class="card" style="left: 60px; top: 336px; width: 1800px; height: 310px; border-color: var(--accent)">
+          <div class="card-h ac">첫 실행 FAIL에서 고친 세 가지</div>
+          <div id="fx1" class="card-line">① hostNetwork Pod DNS: 클러스터 SG에 172.18.0.0/16에서 CoreDNS 53 (UDP, TCP) 허용</div>
+          <div id="fx2" class="card-line">② 클라우드 Pod → 온프렘 서버가 노드 IP로 SNAT됨: VPC CNI 제외 목록에 172.18.0.0/16 추가</div>
+          <div id="fx3" class="card-line">③ /version 401: EKS 1.36은 익명 접근을 health endpoint만 허용 → /livez로 확인</div>
+        </div>
+        <div id="cav" class="caveat">
+          <div class="cv-h">주의</div>
+          <div id="cv1" class="cv"><i class="r">!</i>AWS 지원 범위 밖 구성: 지원 모드는 VXLAN뿐, gateway와 함께 쓸 수 없음</div>
+          <div id="cv2" class="cv"><i>!</i>CoreDNS가 클라우드 노드에만 있음: 링크가 끊기면 hybrid Pod 이름 해석 불가 (다음 데모)</div>
+          <div id="cv3" class="cv"><i>!</i>S3 interface endpoint만 쓸 때 DnsOptions <span class="mono">AllResolvers</span> 필요 (첫 시도 실패 원인)</div>
+        </div>
+      </section>
+
+      <!-- Reconstruction footer (hidden during recording scenes) -->
+      <div id="footer" class="clip" data-start="0" data-duration="152" data-track-index="9">
+        <div class="footer-label"><span class="footer-dot"></span>실측 결과 재구성 (2026-10 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 5: 연결 검증, SNAT 없음과 PrivateLink</div>
+      </div>
+
+      <!-- Recording scene A: pods and variables (media 0 to 9.375 s at 0.75x) -->
+      <div id="recA" class="clip" data-start="30" data-duration="12.5" data-track-index="10">
+        <div class="hdr">
+          <span class="step">2 / 8</span>
+          <span class="hdr-title">녹화: Pod 표와 변수</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임, 0.75배속</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-19, 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 5: 연결 검증, SNAT 없음과 PrivateLink</div>
+      </div>
+      <!-- Recording scene B: pod to pod, server log source (media 9.4 to 22.9 s at 0.75x) -->
+      <div id="recB" class="clip" data-start="42.5" data-duration="18" data-track-index="10">
+        <div class="hdr">
+          <span class="step">3 / 8</span>
+          <span class="hdr-title">녹화: 서버 로그의 출발지</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임, 0.75배속</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-19, 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 5: 연결 검증, SNAT 없음과 PrivateLink</div>
+      </div>
+      <!-- Recording scene C: on-prem server and internet (media 22.9 to 29.8 s at 0.6x) -->
+      <div id="recC" class="clip" data-start="60.5" data-duration="11.5" data-track-index="10">
+        <div class="hdr">
+          <span class="step">4 / 8</span>
+          <span class="hdr-title">녹화: 온프렘 서버와 인터넷</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임, 0.6배속</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-19, 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 5: 연결 검증, SNAT 없음과 PrivateLink</div>
+      </div>
+      <!-- Recording scene D: DNS to endpoint ENIs, IRSA (media 29.8 to 43.6 s at 0.75x) -->
+      <div id="recD" class="clip" data-start="72" data-duration="18.4" data-track-index="10">
+        <div class="hdr">
+          <span class="step">5 / 8</span>
+          <span class="hdr-title">녹화: PrivateLink와 IRSA</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임, 0.75배속</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-19, 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 5: 연결 검증, SNAT 없음과 PrivateLink</div>
+      </div>
+      <!-- Recording scene E: endpoint SG allows Pod IP only (media 43.7 to 57.5 s at 0.75x) -->
+      <div id="recE" class="clip" data-start="90.4" data-duration="18.4" data-track-index="10">
+        <div class="hdr">
+          <span class="step">6 / 8</span>
+          <span class="hdr-title">녹화: endpoint SG 검증</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임, 0.75배속</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-19, 시뮬레이션 환경)</div>
+        <div class="footer-right">데모 5: 연결 검증, SNAT 없음과 PrivateLink</div>
+      </div>
+      <!-- Recording window (untimed wrapper; shown only during recording scenes) -->
+      <div id="recwin">
+        <div id="recpan" data-layout-allow-overflow>
+          <video id="vA" class="rec" src="assets/r5-conn.mp4" data-start="30" data-duration="12.5" data-media-start="0" data-playback-rate="0.75" data-track-index="11" muted playsinline></video>
+          <video id="vB" class="rec" src="assets/r5-conn.mp4" data-start="42.5" data-duration="18" data-media-start="9.4" data-playback-rate="0.75" data-track-index="11" muted playsinline></video>
+          <video id="vC" class="rec" src="assets/r5-conn.mp4" data-start="60.5" data-duration="11.5" data-media-start="22.9" data-playback-rate="0.6" data-track-index="11" muted playsinline></video>
+          <video id="vD" class="rec" src="assets/r5-conn.mp4" data-start="72" data-duration="18.4" data-media-start="29.8" data-playback-rate="0.75" data-track-index="11" muted playsinline></video>
+          <video id="vE" class="rec" src="assets/r5-conn.mp4" data-start="90.4" data-duration="18.4" data-media-start="43.7" data-playback-rate="0.75" data-track-index="11" muted playsinline></video>
+        </div>
+      </div>
+      <!-- Notes over empty areas of the recording (untimed; driven by the timeline, positions follow terminal scroll) -->
+      <div id="recnotes">
+        <div id="abox" data-layout-allow-overlap>
+          <div class="abl ac">10.0.x: 클라우드 Pod</div>
+          <div class="abl ok">172.17.x: hybrid Pod</div>
+          <div class="abl wn">172.18.x: 노드 IP</div>
+          <div class="abl" style="color: var(--fg-2); font-weight: 500">hostnet-h1, onprem-srv</div>
+        </div>
+        <div id="lb1" class="lbl" data-layout-allow-overlap>출발지 = h1a Pod IP, SNAT 없음</div>
+        <div id="lb2" class="lbl" data-layout-allow-overlap>출발지 = c1 Pod IP, VPC CNI도 SNAT 안 함</div>
+        <div id="lc1" class="lbl" data-layout-allow-overlap>쿠버네티스 밖 온프렘 서버도 h1a Pod IP를 봄</div>
+        <div id="lc2" class="lbl wn" data-layout-allow-overlap>인터넷만 클라우드 NAT gateway에서 변환</div>
+        <div id="ld1" class="lbl two ac" data-layout-allow-overlap>
+          <div>sts, s3 이름 → 클라우드 VPC의 endpoint ENI</div>
+          <div class="ok">온프렘 Pod도 PrivateLink로 AWS API 호출</div>
+        </div>
+        <div id="ld2" class="lbl" data-layout-allow-overlap>irsa-h1이 쓰고 irsa-c1이 읽음: STS, S3 모두 endpoint 경유</div>
+        <div id="le1" class="lbl" data-layout-allow-overlap>h1a, Pod IP 172.17.0.244: 허용</div>
+        <div id="le2" class="lbl bad" data-layout-allow-overlap>hostnet-h1, 노드 IP 172.18.38.77: 차단</div>
+        <div id="le3" class="lbl wn" data-layout-allow-overlap>10:50 측정 회차의 결과 파일 (다음 장면)</div>
+        <div id="enote" data-layout-allow-overlap>
+          <div class="en1">같은 노드에서 나가도 출발지가 Pod IP(172.17)면 허용, 노드 IP(172.18)면 차단: <span class="ok">SNAT이 없다는 증거</span></div>
+          <div class="en2">endpoint SG는 443을 10.0.0.0/16, 172.17.0.0/16에서만 허용 (노드 CIDR 172.18.0.0/16은 없음)</div>
+          <div class="en2">타임아웃(exit 28): 실제 약 5초 대기가 대기 구간 줄임으로 짧게 보임</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const tl = gsap.timeline({ paused: true });
+
+        function show(sel, t, dy) {
+          tl.fromTo(sel, { opacity: 0, y: dy === undefined ? 20 : dy }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, t);
+        }
+
+        // Ambient background drift (finite).
+        tl.fromTo("#bg-glow", { x: 0, y: 0 }, { x: -260, y: 120, duration: 15.2, ease: "sine.inOut", yoyo: true, repeat: 9 }, 0);
+
+        // Title
+        show("#t-kicker", 0.3);
+        show("#t-title", 0.6, 30);
+        show("#t-msg", 1.4);
+        tl.to(["#t-kicker", "#t-title", "#t-msg"], { opacity: 0, duration: 0.5 }, 5.4);
+
+        // Headers
+        show("#h1-in", 6.1, 0);
+        show("#h7-in", 108.85, 0);
+        show("#h7-run", 109.2, 0);
+        show("#h8-in", 130.85, 0);
+        [["#h1-in", 30], ["#h7-in", 130.8], ["#h7-run", 130.8]].forEach(([s, e]) => tl.to(s, { opacity: 0, duration: 0.35 }, e - 0.4));
+
+        // ---------- Scene 1 (6 to 30) ----------
+        show("#s1-sub", 6.5, 10);
+        show("#z-cloud", 7.2, 14);
+        show("#z-op", 7.4, 14);
+        ["#nb-pod", "#nb-nat", "#nb-ep", "#lk1", "#nb-tgw", "#lk2", "#nb-rt", "#nb-rtn", "#nb-node", "#pod-pill"].forEach((s, i) => show(s, 8.0 + i * 0.3, 14));
+        // Packets: hybrid Pod (172.17.x) to cloud Pod, source address unchanged.
+        const pk = document.getElementById("pkts");
+        const pkts = [];
+        for (let i = 0; i < 3; i++) {
+          const d = document.createElement("div");
+          d.className = "pkt";
+          d.id = "pk" + i;
+          d.style.left = "1687px";
+          pk.appendChild(d);
+          pkts.push(d);
+        }
+        tl.set(pkts, { opacity: 0 }, 0);
+        pkts.forEach((p, i) => {
+          for (let r = 0; r < 3; r++) {
+            const t = 11.6 + r * 2.4 + i * 0.8;
+            tl.set(p, { x: 0, opacity: 1 }, t);
+            tl.to(p, { x: -1455, duration: 2.0, ease: "none" }, t);
+            tl.set(p, { opacity: 0 }, t + 2.0);
+          }
+        });
+        tl.to("#nb-rtn", { borderColor: "#00e500", duration: 0.4 }, 12.0);
+        tl.to("#nb-pod", { borderColor: "#00e500", duration: 0.4 }, 13.6);
+        show("#ans", 17.4, 16);
+        show("#warn1", 20.2, 16);
+        show("#concept", 23.0, 16);
+        tl.to("#s1", { opacity: 0, duration: 0.4 }, 29.55);
+
+        // ---------- Recording scenes (30 to 108.8, contiguous) ----------
+        tl.set("#recwin", { opacity: 0 }, 0);
+        tl.set("#recwin", { opacity: 1 }, 30);
+        tl.set("#recwin", { opacity: 0 }, 108.8);
+        tl.set("#footer", { opacity: 0 }, 30);
+        tl.set("#footer", { opacity: 1 }, 108.8);
+        // Recording is 1920x1412 shown at 0.9375 (1800x1324). Scene A: top. From B on: bottom (latest output).
+        const S = 0.9375;
+        const PAN = 1324 - 850;
+        tl.set("#recpan", { y: 0 }, 0);
+        tl.set("#recpan", { y: -PAN }, 42.5);
+
+        // Clip mapping: composition time = start + (media - mediaStart) / rate.
+        const CLIPS = [
+          { a: 30, ms: 0, me: 9.375, r: 0.75 },
+          { a: 42.5, ms: 9.4, me: 22.9, r: 0.75 },
+          { a: 60.5, ms: 22.9, me: 29.8, r: 0.6 },
+          { a: 72, ms: 29.8, me: 43.6, r: 0.75 },
+          { a: 90.4, ms: 43.7, me: 57.5, r: 0.75 },
+        ];
+        function comp(m) {
+          for (const c of CLIPS) if (m >= c.ms && m < c.me + 1e-6) return c.a + (m - c.ms) / c.r;
+          for (const c of CLIPS) if (m < c.ms) return c.a;
+          return 108.8;
+        }
+        // Terminal scroll (source px) measured from the recording: [media time, cumulative].
+        const SCROLL = [
+          [26.4, 34], [28.4, 103], [30.0, 172], [31.6, 344], [33.2, 413], [35.2, 447], [35.6, 481],
+          [36.8, 515], [38.8, 549], [40.0, 583], [42.0, 617], [42.4, 651], [44.0, 720], [45.2, 789],
+          [46.4, 823], [48.4, 892], [49.6, 926], [51.6, 995], [53.2, 1064], [54.4, 1133],
+        ];
+        function scrollAt(m) {
+          let s = 0;
+          for (const [t, v] of SCROLL) if (t <= m + 1e-6) s = v;
+          return s;
+        }
+        // Labels: doc = top of the label in unscrolled terminal px (just under the previous row).
+        const LABELS = [
+          { id: "#lb1", doc: 879, x: 690, m0: 14.8, m1: 22.9 },
+          { id: "#lb2", doc: 1120, x: 690, m0: 21.5, m1: 24.8 },
+          { id: "#lc1", doc: 1256, x: 290, m0: 24.8, m1: 29.8 },
+          { id: "#lc2", doc: 1394, x: 290, m0: 28.4, m1: 31.6 },
+          { id: "#ld1", doc: 1540, x: 290, m0: 31.6, m1: 43.7 },
+          { id: "#ld2", doc: 1942, x: 370, m0: 42.4, m1: 46.4 },
+          { id: "#le1", doc: 2184, x: 190, m0: 48.4, m1: 57.5 },
+          { id: "#le2", doc: 2286, x: 630, m0: 51.8, m1: 57.5 },
+          { id: "#le3", doc: 2424, x: 450, m0: 54.5, m1: 57.5 },
+        ];
+        LABELS.forEach((L) => {
+          const el = document.querySelector(L.id);
+          const s0 = scrollAt(L.m0);
+          el.style.left = L.x + "px";
+          el.style.top = (146 + (L.doc - s0) * S - PAN).toFixed(1) + "px";
+          const t0 = comp(L.m0);
+          const t1 = L.m1 >= 57.5 ? 108.8 : comp(L.m1);
+          tl.set(el, { opacity: 0, y: 0 }, 0);
+          tl.fromTo(el, { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" }, t0);
+          SCROLL.forEach(([t, v]) => {
+            if (t > L.m0 + 1e-6 && t < L.m1 - 1e-6) tl.set(el, { y: -(v - s0) * S }, comp(t));
+          });
+          tl.set(el, { opacity: 0 }, t1);
+        });
+        // Scene A legend box (pods table at media 3.2 s).
+        tl.set("#abox", { opacity: 0 }, 0);
+        show("#abox", comp(5.4), 12);
+        tl.set("#abox", { opacity: 0 }, 42.5);
+        // Scene E explanation after exit code 28 (media 51.8 s).
+        tl.set("#enote", { opacity: 0 }, 0);
+        show("#enote", comp(51.8) + 0.4, -12);
+        tl.set("#enote", { opacity: 0 }, 108.8);
+
+        // ---------- Scene 7 (108.8 to 130.8): 38-item matrix, 10:50 run ----------
+        const ROWS = [
+          ["1. Pod 간 직접 통신", 7, "서버가 클라이언트 Pod IP를 그대로 기록"],
+          ["2. ClusterIP Service", 3, "출발지 = 클라이언트 Pod IP, 목적지만 바뀜"],
+          ["3. DNS", 4, "svc-c1 → 172.16.47.167, 공용 이름 해석"],
+          ["4. hybrid Pod → Kubernetes API", 2, "/livez 200, SA 토큰 403 (인증됨)"],
+          ["5. control plane → hybrid", 3, "출발지 10.0.36.52 (EKS 관리 ENI)"],
+          ["6. 일반 온프렘 서버", 2, "172.17.0.244, 10.0.63.165를 그대로 봄"],
+          ["7. 인터넷", 3, "모두 43.200.92.63 (클라우드 NAT)"],
+          ["8. Cilium 정책", 3, "fromCIDR 10.0.0.0/16: h1a 차단, c1 허용"],
+          ["9. MTU, 대용량", 2, "32 MiB sha256 일치, MTU 9001"],
+          ["10. ALB ip 타깃", 1, "172.17.0.101, 172.17.0.171 healthy"],
+          ["11. PrivateLink", 8, "ENI 해석, IRSA, SG: Pod IP만 허용"],
+        ];
+        const mr = document.getElementById("mrows");
+        const rowEls = [];
+        const passEls = [];
+        ROWS.forEach((r, i) => {
+          const d = document.createElement("div");
+          d.className = "mrow";
+          d.id = "mr" + i;
+          d.style.top = 172 + i * 64 + "px";
+          d.innerHTML =
+            '<div class="m-name">' + r[0] + '</div><div class="m-n">' + r[1] + '</div><div class="m-k">' + r[2] + '</div><div class="m-p" id="mp' + i + '">PASS</div>';
+          mr.appendChild(d);
+          rowEls.push(d);
+          passEls.push(d.querySelector(".m-p"));
+        });
+        tl.set(passEls, { opacity: 0 }, 0);
+        rowEls.forEach((e, i) => {
+          show(e, 109.4 + i * 0.75, 12);
+          tl.fromTo(passEls[i], { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 110.0 + i * 0.75);
+          tl.to(e, { borderColor: "#2f7a3a", duration: 0.3 }, 110.0 + i * 0.75);
+        });
+        show("#mtotal", 118.6, 16);
+        tl.to("#s7", { opacity: 0, duration: 0.4 }, 130.35);
+
+        // ---------- Scene 8 (130.8 to 152) ----------
+        show("#msg", 131.4, 20);
+        show("#fix", 133.6, 24);
+        tl.set(["#fx1", "#fx2", "#fx3"], { opacity: 0 }, 0);
+        show("#fx1", 134.2, 8);
+        show("#fx2", 135.4, 8);
+        show("#fx3", 136.6, 8);
+        show("#cav", 139.0, 16);
+        tl.set(["#cv1", "#cv2", "#cv3"], { opacity: 0 }, 0);
+        show("#cv1", 139.6, 8);
+        show("#cv2", 141.0, 8);
+        show("#cv3", 142.4, 8);
+
+        window.__timelines["main"] = tl;
+      })();
+    </script>
+  </body>
+</html>

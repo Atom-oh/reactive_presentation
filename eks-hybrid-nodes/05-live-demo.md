@@ -10,7 +10,7 @@ block: 05-live-demo
 
 # 5부: 라이브 데모, 직접 돌려 본 결과
 
-gateway 전환, bursting, GPU 추론, Istio 공존의 실측
+gateway 전환, bursting, GPU 추론, Istio 공존, SNAT 없는 연결의 실측
 
 :::notes
 {timing: 0.5min}
@@ -744,7 +744,214 @@ AWS 문서도 같은 기준을 줍니다. 리전에서 오는 트래픽은 ALB�
 :::
 
 ---
-<!-- Slide 16: 정리 -->
+<!-- Slide 16: 데모 5 녹화 영상: 연결 검증 -->
+@type: content
+@fit: off
+@title: 데모 5 녹화 영상: SNAT 없는 연결과 PrivateLink
+
+## 데모 5 녹화 영상: SNAT 없는 연결과 PrivateLink
+
+:::html
+<style>
+.hn-video { width: 100%; max-height: 100%; aspect-ratio: 16 / 9; background: var(--bg-card); border-radius: var(--space-2); }
+.hn-video-cap { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); }
+.hn5-full { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.hn5-vbox { flex: 1; min-height: 0; container-type: size; }
+.hn5-full .hn-video { display: block; width: min(100cqw, calc(100cqh * 16 / 9)); height: auto; max-height: none; margin-inline: auto; }
+.hn5-full .hn-video-cap { text-align: center; margin-top: 0; font-size: var(--fs-card); }
+</style>
+<div class="hn5-full">
+<div class="hn5-vbox">
+<video class="hn-video" src="../eks-hybrid-nodes-1h/media/v5-connectivity.mp4" poster="../eks-hybrid-nodes-1h/media/v5-connectivity.jpg" aria-label="데모 5 녹화 영상: native routing에서 SNAT 없는 연결과 PrivateLink, 실제 터미널 녹화 포함, 무음, 2분 32초" title="데모 5 녹화 영상: native routing에서 SNAT 없는 연결과 PrivateLink, 실제 터미널 녹화 포함, 무음, 2분 32초" controls preload="metadata" muted playsinline tabindex="-1"></video>
+</div>
+<div class="hn-video-cap">실측 결과 재구성 (2026-10 시뮬레이션 환경), 실제 터미널 녹화 포함, 무음</div>
+</div>
+:::
+
+:::notes
+{timing: 1min}
+[요약]
+• 영상 2분 32초. 라이브 시연을 했다면 건너뜁니다.
+• 녹화 회차(2026-10-19 13:18 UTC 시작): 서버 로그의 출발지가 상대 Pod IP, endpoint SG는 Pod IP만 통과
+• 10:50 UTC 측정 회차: 연결 매트릭스 38개 모두 PASS
+• 이 데모는 gateway를 걷어 낸 native routing 모드에서 돌렸습니다(AWS 지원 범위 밖)
+
+앞의 데모들은 VXLAN과 gateway 위에서 돌렸고, 이 데모는 같은 클러스터를 native routing으로 바꾼 뒤 돌렸습니다. 요구사항은 하나였습니다. 방화벽이 온프렘 Pod를 Pod IP로 구분할 수 있어야 한다는 것입니다.
+{cue: pause}
+화면에서 "server saw" 줄을 짚어 주세요. 온프렘 Pod가 클라우드 Pod를 부르면 서버는 172.17 Pod IP를 보고, 반대 방향은 10.0 Pod IP를 봅니다. 마지막 장면에서 같은 노드인데 Pod IP는 302를 받고 노드 IP는 타임아웃이 나는 부분이 SNAT이 없다는 가장 확실한 증거입니다.
+{cue: transition}
+측정 회차의 전체 결과를 보겠습니다.
+
+[출처]
+• 1시간 세션 V5 영상, eks-hybrid-nodes-1h/videos/rec/RECORDINGS.md R5
+:::
+
+---
+<!-- Slide 17: 연결 매트릭스 -->
+@type: content
+@title: native routing: 서버가 보는 출발지는 Pod IP
+
+## native routing: 서버가 보는 출발지는 Pod IP
+
+:::html
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.ld-table { width: 100%; border-collapse: collapse; margin-bottom: var(--space-3); font-size: var(--fs-card); }
+.ld-table th, .ld-table td { border: 1px solid var(--border); padding: var(--space-1) var(--space-3); text-align: left; }
+.ld-table th { background: var(--bg-card); }
+.ld-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ld-cols { display: grid; grid-template-columns: 3fr 2fr; gap: var(--space-4); align-items: start; }
+</style>
+<div class="ld-cols">
+<table class="ld-table fragment fade-up" data-fragment-index="1">
+  <tr><th>구간</th><th>확인한 것</th><th>결과</th></tr>
+  <tr><td>Pod 간 직접</td><td>같은 hybrid 노드, hybrid 노드 사이, hybrid와 클라우드 양방향, 클라우드 기준선</td><td class="ld-num text-success">7/7</td></tr>
+  <tr><td>ClusterIP</td><td>Service는 목적지만 바꾸고 출발지 Pod IP 유지</td><td class="ld-num text-success">3/3</td></tr>
+  <tr><td>DNS, API</td><td>CoreDNS(클라우드), hostNetwork 포함, <code>/livez</code>, SA 토큰</td><td class="ld-num text-success">6/6</td></tr>
+  <tr><td>control plane</td><td>webhook 경로, exec와 logs, metrics-server</td><td class="ld-num text-success">3/3</td></tr>
+  <tr><td>온프렘 서버</td><td>쿠버네티스 밖 socat 서버가 본 주소: Pod IP</td><td class="ld-num text-success">2/2</td></tr>
+  <tr><td>인터넷</td><td>모든 Pod가 클라우드 NAT 하나로 나감</td><td class="ld-num text-success">3/3</td></tr>
+  <tr><td>정책, MTU, ALB</td><td><code>fromCIDR</code> 정책, 32 MiB 양방향, ip 타깃 healthy</td><td class="ld-num text-success">6/6</td></tr>
+  <tr><td>PrivateLink</td><td>STS, S3 interface endpoint, IRSA, SG, 버킷 정책</td><td class="ld-num text-success">8/8</td></tr>
+</table>
+<div>
+  <div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">구성</strong><div class="on-surface-muted">Cilium <code>routingMode: native</code>, masquerade 끔. 온프렘 라우터(데모는 route table)가 노드별 Pod 블록을 노드로 보냅니다. VPC CNI도 172.17, 172.18 대역은 SNAT하지 않습니다.</div></div>
+  <div class="callout callout-warning fragment fade-up" data-fragment-index="3"><strong class="text-warning">처음 돌렸을 때 실패한 것</strong><div class="on-surface-muted">hostNetwork Pod의 DNS(클러스터 SG에 노드 대역 53 없음), 클라우드 Pod가 온프렘 서버로 갈 때 SNAT(VPC CNI 제외 대역 누락), 익명 <code>/version</code> 401(1.36은 health endpoint만 허용).</div></div>
+  <div class="callout callout-warning fragment fade-up" data-fragment-index="4"><strong class="text-warning">AWS 지원 범위 밖</strong><div class="on-surface-muted">지원 Networking Mode는 VXLAN뿐이고 gateway도 VXLAN이 필요합니다. 지원 범위 안의 대안은 VXLAN 유지, masquerade 끔, Cilium BGP로 Pod CIDR 광고입니다(개념, 이번에 측정하지 않음).</div></div>
+</div>
+</div>
+:::
+
+:::notes
+{timing: 2.5min}
+[요약]
+• 10:50 UTC 측정: 38개 모두 PASS, Pod에서 출발한 요청은 서버 로그의 출발지가 상대 Pod IP
+• 첫 실행의 실패 세 가지는 SG 53, VPC CNI SNAT 제외 대역, /livez로 해결
+• native routing은 AWS 지원 범위 밖, 지원 경로는 VXLAN + masquerade 끔 + BGP
+
+연결 매트릭스를 스크립트 하나로 돌렸습니다. Pod 간 통신, Service, DNS, API 서버, control plane에서 들어오는 경로, 쿠버네티스 밖의 온프렘 서버, 인터넷, 정책, 대용량 전송, ALB, PrivateLink까지 38개입니다. Pod에서 출발한 요청은 서버가 기록한 출발지를 확인했고, 모두 상대 Pod IP였습니다. control plane에서 오는 요청은 EKS 관리 ENI가, 인터넷은 NAT 주소가 출발지입니다.
+{cue: pause}
+처음 돌렸을 때는 세 개가 실패했습니다. hostNetwork Pod는 노드 IP로 CoreDNS를 부르는데 클러스터 SG에 노드 대역 53번이 없었습니다. 클라우드 Pod가 온프렘 서버로 갈 때는 VPC CNI가 노드 IP로 SNAT했는데, 제외 대역에 온프렘 노드 대역이 빠져 있었습니다. 그리고 1.36에서는 익명 요청이 health endpoint만 허용돼 /version이 401이었습니다.
+꼭 말씀드릴 점이 있습니다. AWS 문서가 지원하는 Cilium 네트워킹 모드는 VXLAN뿐입니다. 지원 범위 안의 대안은 VXLAN을 유지한 채 masquerade를 끄고 BGP로 Pod CIDR을 광고하는 구성입니다. 이론상 클라우드와 온프렘 사이에서는 Pod IP가 보이고 hybrid 노드 사이 구간은 VXLAN 바깥 헤더의 노드 IP로 보이지만, 이 구성은 이번에 측정하지 않았습니다.
+{cue: transition}
+다음은 온프렘 Pod가 AWS API를 사설 경로로 쓰는 부분입니다.
+
+[출처]
+• 데모 저장소 results/connectivity-20261019-1050.md, demo-connectivity/run-tests.sh, RUNBOOK.md 0.1절 (2026-10-19 실측)
+• https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html (Networking Mode: VXLAN encapsulation, masquerade를 끄면 Pod CIDR이 온프렘에서 라우팅 가능해야 함, BGP 권장)
+:::
+
+---
+<!-- Slide 18: PrivateLink -->
+@type: content
+@title: 온프렘 Pod에서 PrivateLink로 AWS API 호출
+
+## 온프렘 Pod에서 PrivateLink로 AWS API 호출
+
+:::html
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: break-word; }
+.flow-h { margin: 0 0 var(--space-4); }
+.flow-h .flow-box { min-width: min-content; overflow-wrap: normal; }
+.hn-flow-sub { display: block; color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: break-word; }
+</style>
+<div class="flow-h">
+  <div class="flow-box fragment fade-right" data-fragment-index="1">hybrid Pod<br><span class="hn-flow-sub">172.17.x, IRSA 토큰</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="2">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="2">CoreDNS, VPC resolver<br><span class="hn-flow-sub">sts, s3 이름을 endpoint ENI로</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="3">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="3">TGW (실환경 DX/VPN)<br><span class="hn-flow-sub">출발지 Pod IP 유지</span></div>
+  <div class="flow-arrow fragment fade-right" data-fragment-index="4">→</div>
+  <div class="flow-box fragment fade-right" data-fragment-index="4">interface endpoint<br><span class="hn-flow-sub">STS, S3 (10.0.x)</span></div>
+</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="5">
+  <div class="callout callout-success"><strong class="text-success">IRSA: 토큰 교환부터 사설 경로</strong><div class="on-surface-muted">hybrid Pod가 STS endpoint로 IRSA 토큰을 교환하고 S3 endpoint로 PutObject, 클라우드 Pod가 같은 객체를 읽었습니다.</div></div>
+  <div class="callout callout-success"><strong class="text-success">SG가 Pod IP로 구분</strong><div class="on-surface-muted">endpoint SG의 443은 클라우드 VPC와 hybrid Pod 대역 172.17.0.0/16에만, 노드 대역은 제외. 같은 노드에서 Pod는 302, hostNetwork(노드 IP)는 타임아웃.</div></div>
+  <div class="callout callout-info"><strong class="text-info">버킷 정책</strong><div class="on-surface-muted"><code>aws:SourceVpce</code> 조건으로 테스트 역할은 endpoint를 거칠 때만 허용. 같은 역할로 밖에서 부르면 거부됐습니다.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">S3는 interface endpoint</strong><div class="on-surface-muted">gateway endpoint는 온프렘에서 쓸 수 없습니다. 데모처럼 gateway endpoint 없이 만들 때는 <code>DnsOptions</code>를 <code>AllResolvers</code>로 줘야 생성됐습니다.</div></div>
+</div>
+:::
+
+:::notes
+{timing: 2.5min}
+[요약]
+• hybrid Pod의 sts, s3 이름이 클라우드 VPC의 interface endpoint ENI로 풀림
+• IRSA 토큰 교환과 S3 쓰기가 모두 endpoint 경유, 버킷 정책으로 강제
+• endpoint SG에서 온프렘 쪽은 Pod CIDR만 열고 노드 대역은 빼서 Pod 단위 통제 확인
+
+온프렘 Pod가 AWS API를 쓸 때 인터넷으로 나가지 않게 하려면 PrivateLink가 답입니다. 클라우드 VPC에 STS와 S3 interface endpoint를 만들고 private DNS를 켰습니다. hybrid Pod는 CoreDNS를 거쳐 VPC resolver로 이름을 풀기 때문에, sts와 s3 이름이 endpoint ENI의 10.0 주소로 풀렸습니다. 실제 온프렘 서버가 직접 부를 때는 Route 53 Resolver inbound endpoint를 두셔야 합니다.
+{cue: pause}
+IRSA는 Pod가 직접 STS를 불러 토큰을 바꾸므로 그 호출부터 endpoint로 갑니다. 이어서 S3에 쓰고, 클라우드 Pod가 같은 객체를 읽었습니다. 버킷 정책에 SourceVpce 조건을 걸어서, 같은 역할로 endpoint 밖에서 부르면 거부되는 것도 확인했습니다.
+endpoint SG를 온프렘 쪽은 Pod 대역에만 열고 노드 대역은 뺐더니, 같은 노드에서 Pod는 통과하고 hostNetwork는 막혔습니다. SNAT이 없으니 AWS 쪽 SG로도 온프렘 Pod를 구분할 수 있다는 뜻입니다.
+S3는 주의할 점이 두 가지입니다. gateway endpoint는 온프렘 트래픽을 받지 않으니 interface endpoint가 필요하고, gateway endpoint 없이 만들 때는 DnsOptions를 AllResolvers로 줘야 생성됐습니다. 처음 시도는 이것 때문에 실패했습니다.
+{cue: transition}
+마지막으로 전체를 정리하겠습니다.
+
+[출처]
+• 데모 저장소 demo-connectivity/privatelink.yaml, results/connectivity-20261019-1050.md 11절 (2026-10-19 실측)
+• https://docs.aws.amazon.com/vpc/latest/privatelink/privatelink-access-aws-services.html
+• https://docs.aws.amazon.com/AmazonS3/latest/userguide/privatelink-interface-endpoints.html
+:::
+
+---
+<!-- Slide 19: 링크 단절과 CoreDNS -->
+@type: content
+@title: 링크가 끊기면 hybrid Pod의 DNS는
+
+## 링크가 끊기면 hybrid Pod의 DNS는
+
+:::html
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.ld-table { width: 100%; border-collapse: collapse; margin-bottom: var(--space-3); font-size: var(--fs-card); }
+.ld-table th, .ld-table td { border: 1px solid var(--border); padding: var(--space-2) var(--space-3); text-align: left; }
+.ld-table th { background: var(--bg-card); }
+.ld-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+</style>
+<table class="ld-table fragment fade-up" data-fragment-index="1">
+  <tr><th>CoreDNS 구성</th><th>단절 약 95초 동안 hybrid Pod 이름 해석</th><th>원인</th></tr>
+  <tr><td>기본: 2개 모두 클라우드 노드</td><td class="ld-num text-danger">경로 반영 뒤 모두 실패 (43~44개 중 26개)</td><td>ClusterIP 호출은 200, 이름만 못 풂</td></tr>
+  <tr><td>zone label, 3개, <code>PreferSameZone</code> (문서와 다른 값)</td><td class="ld-num text-warning">절반가량 실패 (76~80개 중 38~44개)</td><td>Cilium이 이 값을 무시하고 끊긴 클라우드 CoreDNS로도 분산</td></tr>
+  <tr><td>4개, <code>PreferClose</code>, zone 분산 강제, Cilium 재시작</td><td class="ld-num text-success">실패 0 (96~97개 중)</td><td>hybrid Pod는 온프렘 CoreDNS만 사용</td></tr>
+</table>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="2">
+  <div class="callout callout-warning"><strong class="text-warning">문서대로 PreferClose</strong><div class="on-surface-muted">hybrid 노드의 ClusterIP는 Cilium BPF가 분산합니다. Kubernetes 1.35의 새 이름 <code>PreferSameZone</code>은 Cilium 1.18이 무시했습니다.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">zone label은 조인할 때</strong><div class="on-surface-muted">나중에 붙여서 Cilium을 재시작했습니다. nodeadm의 kubelet <code>--node-labels</code>로 조인할 때 붙이세요.</div></div>
+  <div class="callout callout-danger"><strong class="text-danger">PrivateLink 우회</strong><div class="on-surface-muted">온프렘 CoreDNS는 온프렘 DNS로 넘겨 STS, S3가 공인 IP로 풀렸습니다. Resolver inbound endpoint로 <code>amazonaws.com</code>을 넘겨 해결.</div></div>
+</div>
+:::
+
+:::notes
+{timing: 2.5min}
+[요약]
+• 기본 구성에서는 링크가 끊기면 hybrid Pod의 모든 이름 해석이 실패
+• 권장 구성도 Cilium 1.18에서는 PreferClose, 조인 시 zone label, zone마다 CoreDNS가 있어야 실패 0
+• 온프렘에 CoreDNS를 두면 PrivateLink 이름이 공인 IP로 풀리므로 amazonaws.com 전달이 필요
+
+TGW에 blackhole 라우트를 넣어 DX 단절을 약 95초 동안 재현했습니다. 기본 구성은 CoreDNS 두 개가 모두 클라우드 노드에 있어서, 단절 중 hybrid Pod는 온프렘 Service 이름조차 풀지 못했습니다. 같은 Service를 ClusterIP로 부르면 계속 200이었으니, 온프렘 안의 통신은 살아 있는데 이름 때문에 서비스가 멈춘 셈입니다.
+{cue: pause}
+AWS 문서는 hybrid 노드에 zone label을 주고 kube-dns에 trafficDistribution PreferClose를 넣으라고 안내합니다. 저는 Kubernetes 1.35에서 deprecated된 이름이라 새 이름 PreferSameZone으로 바꿔 넣었는데, 그랬더니 절반가량 실패했습니다. hybrid 노드에서 ClusterIP를 분산하는 Cilium 1.18이 새 이름을 무시했기 때문입니다. 재시작 뒤에도 새 이름일 때는 백엔드가 그대로였고 PreferClose로 되돌리자 곧바로 온프렘 백엔드만 남았습니다. 그 회차에서 Cilium 재시작과 클라우드 AZ마다 하나씩 CoreDNS 강제 분산도 함께 적용했고, 실패가 0이 됐습니다.
+그런데 온프렘 CoreDNS를 두자 새 문제가 생겼습니다. 온프렘 DNS로 넘기니 STS와 S3가 공인 IP로 풀려 PrivateLink를 우회했고, 버킷 정책에 막혔습니다. Route 53 Resolver inbound endpoint로 amazonaws.com만 넘겨 해결했습니다. 실제 환경에서는 온프렘 DNS의 조건부 전달이 같은 역할입니다.
+{cue: transition}
+마지막으로 전체를 정리하겠습니다.
+
+[출처]
+• 데모 저장소 results/dns-baseline-20261019-1335.md, dns-ha-20261019-1342.md, dns-final-20261019-1405.md, demo-connectivity/dns-failover.sh (2026-10-19 실측)
+• https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html (mixed mode CoreDNS 권장 구성)
+:::
+
+---
+<!-- Slide 20: 정리 -->
 @type: content
 @title: 정리: 무엇을 확인했고 무엇이 남았나
 
@@ -756,12 +963,13 @@ AWS 문서도 같은 기준을 줍니다. 리전에서 오는 트래픽은 ALB�
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
 .on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.ld-list { margin: var(--space-2) 0 0; padding-left: var(--space-4); color: var(--text-secondary); font-size: var(--fs-card); }
 </style>
 <div class="card-grid fragment" data-reveal="stagger" data-fragment-index="1">
-  <div class="callout callout-success"><strong class="text-success">확인한 것</strong><div class="on-surface-muted">gateway 전환 3~5초, 온프렘 Pod 보호(B, C), GPU 추론 호출, Istio와 gateway 공존(sidecar), ALB ip 타깃 자동 갱신, 온프렘에서 internal ALB 진입.</div></div>
+  <div class="callout callout-success"><strong class="text-success">확인한 것</strong><ul class="ld-list"><li>gateway 전환 3~5초, 그동안 요청 실패 있음</li><li>온프렘 Pod 보호(B, C), GPU 추론, Istio sidecar 공존</li><li>ALB ip 타깃 자동 갱신, 온프렘에서 internal ALB</li><li>SNAT 없는 연결 38개, PrivateLink, 단절 중 DNS 실패 0</li></ul></div>
   <div class="callout callout-warning"><strong class="text-warning">아직 남은 것</strong><div class="on-surface-muted">B와 C의 반복 측정, Istio ambient 모드, gateway 처리량, hostNetwork와 NodePort 경로(노드 SG), 실제 온프렘 서버에서의 재검증.</div></div>
   <div class="callout callout-info"><strong class="text-info">직접 해 보려면</strong><div class="on-surface-muted">데모 저장소의 RUNBOOK.md 순서를 따르고, 끝나면 teardown.sh로 정리해 비용을 멈추세요.</div></div>
-  <div class="callout callout-warning"><strong class="text-warning">반드시 기억할 것</strong><div class="on-surface-muted">모든 수치는 EC2로 시뮬레이션한 환경의 값입니다. 프로덕션 지원 구성이 아닙니다.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">반드시 기억할 것</strong><div class="on-surface-muted">모든 수치는 EC2로 시뮬레이션한 환경의 값입니다. native routing은 AWS 지원 범위 밖입니다.</div></div>
 </div>
 :::
 
@@ -769,12 +977,12 @@ AWS 문서도 같은 기준을 줍니다. 리전에서 오는 트래픽은 ALB�
 :::notes
 {timing: 1.5min}
 [요약]
-• 확인: gateway 전환, 온프렘 Pod 보호, GPU 추론, Istio 공존, ALB ip 타깃
+• 확인: gateway 전환, 온프렘 Pod 보호, GPU 추론, Istio 공존, ALB ip 타깃, SNAT 없는 연결과 PrivateLink, 링크 단절 중 DNS
 • 남은 것: 반복 측정, ambient, 처리량, 실제 온프렘 재검증
 • 수치는 시뮬레이션 환경의 값
 
 정리하겠습니다. gateway 전환은 3~5초, 온프렘 Pod는 Kyverno만으로도 지켜졌고, Karpenter 기능은 EC2 수와 정리 시간에서 작은 이득을 줬습니다.
-GPU 추론은 hybrid 노드에서 돌고 클라우드에서 호출됐고, Istio는 gateway와 함께 동작했고, ALB는 바뀌는 hybrid Pod IP를 따라갔습니다.
+GPU 추론은 hybrid 노드에서 돌고 클라우드에서 호출됐고, Istio는 gateway와 함께 동작했고, ALB는 바뀌는 hybrid Pod IP를 따라갔습니다. native routing으로 바꾼 뒤에는 38개 연결 항목이 모두 통과했고 Pod에서 출발한 요청은 서버에 Pod IP로 보였으며, 온프렘 Pod도 PrivateLink로 STS와 S3를 썼습니다. 링크를 끊었을 때 hybrid Pod의 이름 해석은 CoreDNS 구성을 고친 뒤 실패가 0이었습니다. native routing은 AWS 지원 범위 밖이라는 점도 다시 말씀드립니다.
 남은 것도 솔직히 말씀드립니다. B와 C의 차이는 반복 측정이 필요하고, Istio ambient 모드와 gateway 처리량은 보지 못했고, 모든 수치는 시뮬레이션 환경의 값이라 실제 온프렘에서 다시 확인해야 합니다.
 {cue: transition}
 마지막으로 참고 자료를 정리하고 질문을 받겠습니다.
@@ -784,7 +992,7 @@ GPU 추론은 hybrid 노드에서 돌고 클라우드에서 호출됐고, Istio�
 :::
 
 ---
-<!-- Slide 17: 통합 참고 자료 -->
+<!-- Slide 21: 통합 참고 자료 -->
 @type: content
 @title: 참고 자료 & Q&A
 
@@ -860,7 +1068,7 @@ GPU 추론은 hybrid 노드에서 돌고 클라우드에서 호출됐고, Istio�
 :::
 
 ---
-<!-- Slide 18: Thank You -->
+<!-- Slide 22: Thank You -->
 @type: thankyou
 @toc: toc.html
 @message: EKS Hybrid Nodes, 감사합니다

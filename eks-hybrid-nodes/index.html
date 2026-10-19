@@ -9,6 +9,9 @@
   <meta name="remarp-source" content="index">
   <meta name="remarp-block" content="merged">
   <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/deck-overlay.css">
+  <link rel="stylesheet" href="./common/deck-detail.css">
+  <link rel="stylesheet" href="./common/deck-nav.css">
   <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
   <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
   
@@ -18,7 +21,7 @@
 </head>
 <body>
 <div class="slide-deck theme-dark">
-<div class="slide theme-dark" data-remarp-id="s0" style="background:linear-gradient(135deg, #16212f 0%, #0f1b2a 55%, #14243a 100%); padding:0; overflow:hidden;">
+<div class="slide theme-dark" data-remarp-id="s0" data-block="01-overview" data-block-title="EKS Hybrid Nodes" style="background:linear-gradient(135deg, #16212f 0%, #0f1b2a 55%, #14243a 100%); padding:0; overflow:hidden;">
   <div style="position:absolute; top:0; right:0; width:50%; height:60%; background:radial-gradient(ellipse, rgba(255,153,0,0.10) 0%, transparent 70%); pointer-events:none;"></div>
   <div style="position:absolute; left:5%; top:42%; width:80px; height:3px; background:linear-gradient(90deg, var(--accent, #ff9900), rgba(255,153,0,0.25)); border-radius:2px;"></div>
   <h1 style="position:absolute; left:5%; top:45%; font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:60%; margin:0;">EKS Hybrid Nodes</h1>
@@ -30,7 +33,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s1">
+<div class="slide" data-remarp-id="s1" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s1-header"><h2>오늘 세션 구성</h2></div>
   <div class="slide-body" data-remarp-id="s1-body">
     <div class="agenda-timeline">
@@ -107,7 +110,7 @@
 })();</script>
 </div>
 
-<div class="slide" data-remarp-id="s2">
+<div class="slide" data-remarp-id="s2" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s2-header"><h2>온프렘 K8s, 왜 아직도 힘든가</h2></div>
   <div class="slide-body" data-remarp-id="s2-body">
     <p><!-- Slide 3: 온프렘 K8s 운영의 현실 --></p>
@@ -144,7 +147,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s3">
+<div class="slide" data-remarp-id="s3" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s3-header"><h2>Edge 옵션, 책임 경계가 다르다</h2></div>
   <div class="slide-body" data-remarp-id="s3-body">
     <p><!-- Slide 4: Hybrid/Edge 포트폴리오 비교 --></p>
@@ -155,7 +158,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s4">
+<div class="slide" data-remarp-id="s4" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s4-header"><h2>컨트롤 플레인만 AWS에 맡긴다</h2></div>
   <div class="slide-body" data-remarp-id="s4-body">
     <p><!-- Slide 5: EKS Hybrid Nodes란 --></p>
@@ -190,7 +193,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s5">
+<div class="slide" data-remarp-id="s5" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s5-header"><h2>Ready까지 여섯 단계</h2></div>
   <div class="slide-body" data-remarp-id="s5-body">
     <p><!-- Slide 6: 노드 등록 흐름 --></p>
@@ -230,7 +233,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s6">
+<div class="slide" data-remarp-id="s6" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s6-header"><h2>책임은 나뉘고, 데이터는 AWS에</h2></div>
   <div class="slide-body" data-remarp-id="s6-body">
     <p><!-- Slide 7: 책임 공유 모델 --></p>
@@ -265,7 +268,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s7">
+<div class="slide" data-remarp-id="s7" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s7-header"><h2>도입 전 꼭 확인할 6가지 제약</h2></div>
   <div class="slide-body" data-remarp-id="s7-body">
     <p><!-- Slide 8: 주요 제약 --></p>
@@ -303,7 +306,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s8">
+<div class="slide" data-remarp-id="s8" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s8-header"><h2>지원 매트릭스: OS, K8s, CNI</h2></div>
   <div class="slide-body" data-remarp-id="s8-body">
     <div class="tab-bar">
@@ -324,7 +327,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s9">
+<div class="slide" data-remarp-id="s9" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s9-header"><h2>자격 증명: SSM vs IAM RA</h2></div>
   <div class="slide-body" data-remarp-id="s9-body">
     <p><!-- Slide 10: 크리덴셜 프로바이더 --></p>
@@ -368,7 +371,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s10">
+<div class="slide" data-remarp-id="s10" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s10-header"><h2>어떤 자격 증명 방식을 고를까</h2></div>
   <div class="slide-body" data-remarp-id="s10-body">
     <p><!-- Slide 10b: 자격 증명 선택 가이드 --></p>
@@ -419,7 +422,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s11">
+<div class="slide" data-remarp-id="s11" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s11-header"><h2>요금은 vCPU-hour 구간제</h2></div>
   <div class="slide-body" data-remarp-id="s11-body">
     <p><!-- Slide 11: 가격 모델 --></p>
@@ -435,7 +438,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s12">
+<div class="slide" data-remarp-id="s12" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s12-header"><h2>내 환경 비용 직접 계산해보기</h2></div>
   <div class="slide-body" data-remarp-id="s12-body">
     <p><!-- Slide 12: 비용 계산기 --></p>
@@ -499,7 +502,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s13">
+<div class="slide" data-remarp-id="s13" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s13-header"><h2>Join 전 사전 준비 체크리스트</h2></div>
   <div class="slide-body" data-remarp-id="s13-body">
     <ul class="checklist">
@@ -523,12 +526,12 @@
   </div>
 </div>
 
-<div class="slide title-slide" data-remarp-id="s14">
+<div class="slide title-slide" data-remarp-id="s14" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
     <h1>2부: 네트워킹 & Hybrid Nodes Gateway</h1>
   <p class="meta">누가 세션을 열고, Pod CIDR은 어떻게 도달하며, Gateway는 언제 쓰는가</p>
 </div>
 
-<div class="slide" data-remarp-id="s15">
+<div class="slide" data-remarp-id="s15" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s15-header"><h2>연결이 먼저, 쿠버네티스는 그다음</h2></div>
   <div class="slide-body" data-remarp-id="s15-body">
     <p><!-- Slide 2: 네트워크 전제 조건 --></p>
@@ -564,7 +567,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s16">
+<div class="slide" data-remarp-id="s16" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s16-header"><h2>CIDR 설계: 겹치면 모든 게 막힌다</h2></div>
   <div class="slide-body" data-remarp-id="s16-body">
     <ul class="checklist">
@@ -582,7 +585,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s17">
+<div class="slide" data-remarp-id="s17" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s17-header"><h2>443은 안에서 열고, 10250은 밖에서 온다</h2></div>
   <div class="slide-body" data-remarp-id="s17-body">
     <p><!-- Slide 4: 세션은 누가 여는가 --></p>
@@ -600,7 +603,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s18">
+<div class="slide" data-remarp-id="s18" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s18-header"><h2>kubelet과 CP, 세션 방향이 다르다</h2></div>
   <div class="slide-body" data-remarp-id="s18-body">
     <p><!-- Slide 5: 패턴 1, 2 kubelet ↔ CP --></p>
@@ -620,7 +623,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s19">
+<div class="slide" data-remarp-id="s19" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s19-header"><h2>Pod→API: Service 변환과 SNAT</h2></div>
   <div class="slide-body" data-remarp-id="s19-body">
     <p><!-- Slide 6: 패턴 3 Pod → CP --></p>
@@ -638,7 +641,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s20">
+<div class="slide" data-remarp-id="s20" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s20-header"><h2>웹훅: CP가 Pod IP로 직접 들어온다</h2></div>
   <div class="slide-body" data-remarp-id="s20-body">
     <p><!-- Slide 7: 패턴 4 CP → Pod (웹훅) --></p>
@@ -675,7 +678,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s21">
+<div class="slide" data-remarp-id="s21" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s21-header"><h2>Pod 간 통신: VXLAN과 Cloud↔Hybrid</h2></div>
   <div class="slide-body" data-remarp-id="s21-body">
     <p><!-- Slide 8: 패턴 5, 6 Pod ↔ Pod --></p>
@@ -718,7 +721,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s22">
+<div class="slide" data-remarp-id="s22" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s22-header"><h2>CNI 구성: Cilium만 쓸까, VPC CNI와 섞을까</h2></div>
   <div class="slide-body" data-remarp-id="s22-body">
     <p><!-- Slide 6b: CNI 구성 선택 --></p>
@@ -771,7 +774,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s23">
+<div class="slide" data-remarp-id="s23" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s23-header"><h2>라우팅 선택: static, BGP, Gateway</h2></div>
   <div class="slide-body" data-remarp-id="s23-body">
     <p><!-- Slide 9: 라우팅 선택지 비교 --></p>
@@ -794,7 +797,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s24">
+<div class="slide" data-remarp-id="s24" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s24-header"><h2>Cilium BGP v2: Pod CIDR만 광고</h2></div>
   <div class="slide-body" data-remarp-id="s24-body">
     <div class="tab-bar">
@@ -867,7 +870,7 @@ cilium bgp routes</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s25">
+<div class="slide" data-remarp-id="s25" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s25-header"><h2>Gateway는 Pod CIDR 라우팅 숙제를 던다</h2></div>
   <div class="slide-body" data-remarp-id="s25-body">
     <p><!-- Slide 11: Gateway ① 무엇이고 왜 --></p>
@@ -900,7 +903,7 @@ cilium bgp routes</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s26">
+<div class="slide" data-remarp-id="s26" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s26-header"><h2>Gateway 데이터 플레인: 한 경로로 읽기</h2></div>
   <div class="slide-body" data-remarp-id="s26-body">
     <p><!-- Slide 12: Gateway ② 데이터 플레인 --></p>
@@ -939,7 +942,7 @@ cilium bgp routes</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s27">
+<div class="slide" data-remarp-id="s27" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s27-header"><h2>Gateway HA: active/standby, scale-up</h2></div>
   <div class="slide-body" data-remarp-id="s27-body">
     <p><!-- Slide 13: Gateway ③ HA --></p>
@@ -960,7 +963,7 @@ cilium bgp routes</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s28">
+<div class="slide" data-remarp-id="s28" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s28-header"><h2>Gateway 설치: 노드→IAM→VTEP→Helm</h2></div>
   <div class="slide-body" data-remarp-id="s28-body">
     <div class="tab-bar">
@@ -1016,7 +1019,7 @@ kubectl -n kube-system get configmap cilium-config \
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s29">
+<div class="slide" data-remarp-id="s29" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s29-header"><h2>Gateway 운영: 관측과 제약</h2></div>
   <div class="slide-body" data-remarp-id="s29-body">
     <p><!-- Slide 15: Gateway ⑤ 운영, 제약 --></p>
@@ -1058,7 +1061,7 @@ kubectl get ciliumvtepconfig hybrid-gateway -o yaml</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s30">
+<div class="slide" data-remarp-id="s30" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s30-header"><h2>방화벽 규칙: 모드별로 달라진다</h2></div>
   <div class="slide-body" data-remarp-id="s30-body">
     <p><!-- Slide 16: 방화벽 규칙 표 --></p>
@@ -1108,7 +1111,7 @@ kubectl get ciliumvtepconfig hybrid-gateway -o yaml</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s31">
+<div class="slide" data-remarp-id="s31" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s31-header"><h2>VPC 엔드포인트: 쓰는 만큼만</h2></div>
   <div class="slide-body" data-remarp-id="s31-body">
     <p><!-- Slide 17: VPC 엔드포인트 표 --></p>
@@ -1143,12 +1146,12 @@ kubectl get ciliumvtepconfig hybrid-gateway -o yaml</div>
   </div>
 </div>
 
-<div class="slide title-slide" data-remarp-id="s32">
+<div class="slide title-slide" data-remarp-id="s32" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
     <h1>3부: 노드 부트스트랩 & 라이프사이클</h1>
   <p class="meta">사전 준비 → nodeadm → Cilium → 업그레이드 → 트러블슈팅 → 크리덴셜</p>
 </div>
 
-<div class="slide" data-remarp-id="s33">
+<div class="slide" data-remarp-id="s33" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s33-header"><h2>조인 전에 끝낼 AWS 사전 준비</h2></div>
   <div class="slide-body" data-remarp-id="s33-body">
     <div class="tab-bar">
@@ -1193,7 +1196,7 @@ kubectl get ciliumvtepconfig hybrid-gateway -o yaml</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s34">
+<div class="slide" data-remarp-id="s34" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s34-header"><h2>nodeadm: 명령은 여섯 개뿐</h2></div>
   <div class="slide-body" data-remarp-id="s34-body">
     <p><!-- Slide 3: nodeadm 개요 --></p>
@@ -1219,7 +1222,7 @@ sudo install -m 0755 <span class="string">"$STAGING_DIR/nodeadm"</span> /usr/loc
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s35">
+<div class="slide" data-remarp-id="s35" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s35-header"><h2>부트스트랩은 다섯 걸음</h2></div>
   <div class="slide-body" data-remarp-id="s35-body">
     <p><!-- Slide 4: 부트스트랩 워크플로우 --></p>
@@ -1242,7 +1245,7 @@ sudo install -m 0755 <span class="string">"$STAGING_DIR/nodeadm"</span> /usr/loc
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s36">
+<div class="slide" data-remarp-id="s36" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s36-header"><h2>NodeConfig는 공급자 하나로 충분</h2></div>
   <div class="slide-body" data-remarp-id="s36-body">
     <div class="tab-bar">
@@ -1290,7 +1293,7 @@ sudo install -m 0755 <span class="string">"$STAGING_DIR/nodeadm"</span> /usr/loc
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s37">
+<div class="slide" data-remarp-id="s37" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s37-header"><h2>Bottlerocket은 nodeadm이 없다</h2></div>
   <div class="slide-body" data-remarp-id="s37-body">
     <div class="columns">
@@ -1325,7 +1328,7 @@ user-data = <span class="string">"REPLACE_WITH_BASE64_PROVIDER_BOOTSTRAP_INPUT"<
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s38">
+<div class="slide" data-remarp-id="s38" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s38-header"><h2>Bottlerocket 조인과 운영의 차이</h2></div>
   <div class="slide-body" data-remarp-id="s38-body">
     <p><!-- Slide 6b: Bottlerocket 조인과 운영 --></p>
@@ -1359,7 +1362,7 @@ user-data = <span class="string">"REPLACE_WITH_BASE64_PROVIDER_BOOTSTRAP_INPUT"<
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s39">
+<div class="slide" data-remarp-id="s39" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s39-header"><h2>containerd 소스는 OS가 정한다</h2></div>
   <div class="slide-body" data-remarp-id="s39-body">
     <p><!-- Slide 7: containerd 소스 --></p>
@@ -1382,7 +1385,7 @@ user-data = <span class="string">"REPLACE_WITH_BASE64_PROVIDER_BOOTSTRAP_INPUT"<
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s40">
+<div class="slide" data-remarp-id="s40" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s40-header"><h2>베어메탈은 이미지로 찍어낸다</h2></div>
   <div class="slide-body" data-remarp-id="s40-body">
     <p><!-- Slide 8: 베어메탈 이미지 --></p>
@@ -1404,7 +1407,7 @@ packer validate -syntax-only hybrid-nodes-template.pkr.hcl</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s41">
+<div class="slide" data-remarp-id="s41" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s41-header"><h2>Cilium: 하이브리드 노드에만 설치</h2></div>
   <div class="slide-body" data-remarp-id="s41-body">
     <div class="tab-bar">
@@ -1452,7 +1455,7 @@ packer validate -syntax-only hybrid-nodes-template.pkr.hcl</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s42">
+<div class="slide" data-remarp-id="s42" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s42-header"><h2>마스크가 노드당 Pod 수를 정한다</h2></div>
   <div class="slide-body" data-remarp-id="s42-body">
     <p><!-- Slide 10: Pod CIDR / maxPods --></p>
@@ -1478,7 +1481,7 @@ packer validate -syntax-only hybrid-nodes-template.pkr.hcl</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s43">
+<div class="slide" data-remarp-id="s43" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s43-header"><h2>라벨은 하나, 테인트는 없다</h2></div>
   <div class="slide-body" data-remarp-id="s43-body">
     <p><!-- Slide 11: 노드 등록 확인 + 라벨/테인트 --></p>
@@ -1501,7 +1504,7 @@ kubectl -n kube-system get pods -o wide | grep cilium</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s44">
+<div class="slide" data-remarp-id="s44" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s44-header"><h2>kubelet 튜닝: 예약, 축출, maxPods</h2></div>
   <div class="slide-body" data-remarp-id="s44-body">
     <div class="tab-bar">
@@ -1550,7 +1553,7 @@ kubectl -n kube-system get pods -o wide | grep cilium</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s45">
+<div class="slide" data-remarp-id="s45" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s45-header"><h2>업그레이드는 교체가 기본이다</h2></div>
   <div class="slide-body" data-remarp-id="s45-body">
     <div class="tab-bar">
@@ -1573,7 +1576,7 @@ kubectl -n kube-system get pods -o wide | grep cilium</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s46">
+<div class="slide" data-remarp-id="s46" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s46-header"><h2>1.37 업그레이드 전 필수 점검</h2></div>
   <div class="slide-body" data-remarp-id="s46-body">
     <div class="tab-bar">
@@ -1597,7 +1600,7 @@ kubectl -n kube-system get pods -o wide | grep cilium</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s47">
+<div class="slide" data-remarp-id="s47" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s47-header"><h2>제한망 ≠ 단절: AWS 연결은 필수</h2></div>
   <div class="slide-body" data-remarp-id="s47-body">
     <div class="tab-bar">
@@ -1625,7 +1628,7 @@ sudo nodeadm init --config-source file:<span class="comment">///etc/eks/nodeconf
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s48">
+<div class="slide" data-remarp-id="s48" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s48-header"><h2>장애는 증상별로 좁혀 간다</h2></div>
   <div class="slide-body" data-remarp-id="s48-body">
     <div class="tab-bar">
@@ -1656,7 +1659,7 @@ sudo nodeadm debug --config-source file:<span class="comment">///etc/eks/nodecon
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s49">
+<div class="slide" data-remarp-id="s49" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s49-header"><h2>크리덴셜 만료를 먼저 감시하라</h2></div>
   <div class="slide-body" data-remarp-id="s49-body">
     <div class="tab-bar">
@@ -1688,12 +1691,12 @@ aws rolesanywhere update-trust-anchor --trust-anchor-id <span class="string">"$T
   </div>
 </div>
 
-<div class="slide title-slide" data-remarp-id="s50">
+<div class="slide title-slide" data-remarp-id="s50" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
     <h1>4부: 운영, 워크로드, 보안 & 전략</h1>
   <p class="meta">배치, GPU, 관측성, 망분리 검토, 비용과 도입 판단</p>
 </div>
 
-<div class="slide" data-remarp-id="s51">
+<div class="slide" data-remarp-id="s51" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s51-header"><h2>배치는 label 하나에서 시작한다</h2></div>
   <div class="slide-body" data-remarp-id="s51-body">
     <div class="tab-bar">
@@ -1749,7 +1752,7 @@ aws rolesanywhere update-trust-anchor --trust-anchor-id <span class="string">"$T
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s52">
+<div class="slide" data-remarp-id="s52" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s52-header"><h2>버스팅은 Pending Pod가 트리거</h2></div>
   <div class="slide-body" data-remarp-id="s52-body">
     <p><!-- Slide 3: 클라우드 버스팅 --></p>
@@ -1782,7 +1785,7 @@ aws rolesanywhere update-trust-anchor --trust-anchor-id <span class="string">"$T
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s53">
+<div class="slide" data-remarp-id="s53" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s53-header"><h2>스케일-인 순서는 선호일 뿐</h2></div>
   <div class="slide-body" data-remarp-id="s53-body">
     <p><!-- Slide 4: 스케일-인 순서 --></p>
@@ -1805,7 +1808,7 @@ aws rolesanywhere update-trust-anchor --trust-anchor-id <span class="string">"$T
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s54">
+<div class="slide" data-remarp-id="s54" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s54-header"><h2>GPU마다 할당 관리자는 하나</h2></div>
   <div class="slide-body" data-remarp-id="s54-body">
     <p><!-- Slide 5: GPU 할당 방식 --></p>
@@ -1825,7 +1828,7 @@ aws rolesanywhere update-trust-anchor --trust-anchor-id <span class="string">"$T
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s55">
+<div class="slide" data-remarp-id="s55" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s55-header"><h2>MIG는 격리, time-slicing은 공유</h2></div>
   <div class="slide-body" data-remarp-id="s55-body">
     <div class="tab-bar">
@@ -1857,7 +1860,7 @@ aws rolesanywhere update-trust-anchor --trust-anchor-id <span class="string">"$T
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s56">
+<div class="slide" data-remarp-id="s56" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s56-header"><h2>hybrid 지표는 relabel로 구분</h2></div>
   <div class="slide-body" data-remarp-id="s56-body">
     <div class="tab-bar">
@@ -1907,7 +1910,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s57">
+<div class="slide" data-remarp-id="s57" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s57-header"><h2>CoreDNS는 양쪽에 최소 1개</h2></div>
   <div class="slide-body" data-remarp-id="s57-body">
     <div class="tab-bar">
@@ -1939,7 +1942,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s58">
+<div class="slide" data-remarp-id="s58" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s58-header"><h2>외부 노출은 IP target과 BGP로</h2></div>
   <div class="slide-body" data-remarp-id="s58-body">
     <div class="tab-bar">
@@ -1991,7 +1994,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s59">
+<div class="slide" data-remarp-id="s59" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s59-header"><h2>Pod Identity는 6단계 체크</h2></div>
   <div class="slide-body" data-remarp-id="s59-body">
     <ul class="checklist">
@@ -2009,7 +2012,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s60">
+<div class="slide" data-remarp-id="s60" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s60-header"><h2>'endpoint'는 세 가지를 뜻한다</h2></div>
   <div class="slide-body" data-remarp-id="s60-body">
     <p><!-- Slide 11: 망분리 1, endpoint 세 가지 --></p>
@@ -2033,7 +2036,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s61">
+<div class="slide" data-remarp-id="s61" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s61-header"><h2>망분리는 요건별로 따진다</h2></div>
   <div class="slide-body" data-remarp-id="s61-body">
     <div class="tab-bar">
@@ -2060,7 +2063,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s62">
+<div class="slide" data-remarp-id="s62" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s62-header"><h2>규제 대응은 증거로 말한다</h2></div>
   <div class="slide-body" data-remarp-id="s62-body">
     <p><!-- Slide 13: 규제 대응 --></p>
@@ -2080,7 +2083,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s63">
+<div class="slide" data-remarp-id="s63" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s63-header"><h2>비용은 vCPU-hour 구간 과금</h2></div>
   <div class="slide-body" data-remarp-id="s63-body">
     <div class="columns">
@@ -2098,7 +2101,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s64">
+<div class="slide" data-remarp-id="s64" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s64-header"><h2>도입 판단은 제약 확인부터</h2></div>
   <div class="slide-body" data-remarp-id="s64-body">
     <p><!-- Slide 15: 도입 판단 --></p>
@@ -2119,7 +2122,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s65">
+<div class="slide" data-remarp-id="s65" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s65-header"><h2>핵심 요약: 1~4부, 6가지</h2></div>
   <div class="slide-body" data-remarp-id="s65-body">
     <p><!-- Slide 16: 핵심 요약 --></p>
@@ -2140,12 +2143,12 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide title-slide" data-remarp-id="s66">
+<div class="slide title-slide" data-remarp-id="s66" data-block="05-live-demo" data-block-title="5부: 라이브 데모, 직접 돌려 본 결과">
     <h1>5부: 라이브 데모, 직접 돌려 본 결과</h1>
   <p class="meta">gateway 전환, bursting, GPU 추론, Istio 공존의 실측</p>
 </div>
 
-<div class="slide" data-remarp-id="s67">
+<div class="slide" data-remarp-id="s67" data-block="05-live-demo" data-block-title="5부: 라이브 데모, 직접 돌려 본 결과">
   <div class="slide-header" data-remarp-id="s67-header"><h2>온프렘을 시뮬레이션한 환경에서 돌렸다</h2></div>
   <div class="slide-body" data-remarp-id="s67-body">
     <p><!-- Slide 2: 시뮬레이션 환경 --></p>
@@ -2179,7 +2182,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s68" data-fit="off">
+<div class="slide" data-remarp-id="s68" data-fit="off" data-block="05-live-demo" data-block-title="5부: 라이브 데모, 직접 돌려 본 결과">
   <div class="slide-header" data-remarp-id="s68-header"><h2>데모 1 녹화 영상: Gateway 리더 전환</h2></div>
   <div class="slide-body" data-remarp-id="s68-body">
     <p><!-- Slide 3: 데모 1 녹화 영상: Gateway 리더 전환 --></p>
@@ -2200,7 +2203,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s69">
+<div class="slide" data-remarp-id="s69" data-block="05-live-demo" data-block-title="5부: 라이브 데모, 직접 돌려 본 결과">
   <div class="slide-header" data-remarp-id="s69-header"><h2>데모 1: 리더가 바뀌어도 끊김은 3~5초</h2></div>
   <div class="slide-body" data-remarp-id="s69-body">
     <p><!-- Slide 4: 데모 1 리더 전환 --></p>
@@ -2235,7 +2238,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s70">
+<div class="slide" data-remarp-id="s70" data-block="05-live-demo" data-block-title="5부: 라이브 데모, 직접 돌려 본 결과">
   <div class="slide-header" data-remarp-id="s70-header"><h2>데모 2: 같은 워크로드를 세 가지로 줄여 본다</h2></div>
   <div class="slide-body" data-remarp-id="s70-body">
     <p><!-- Slide 5: 데모 2 설계 --></p>
@@ -2267,7 +2270,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s71" data-fit="off">
+<div class="slide" data-remarp-id="s71" data-fit="off" data-block="05-live-demo" data-block-title="5부: 라이브 데모, 직접 돌려 본 결과">
   <div class="slide-header" data-remarp-id="s71-header"><h2>데모 2 녹화 영상: 넘칠 때와 줄일 때</h2></div>
   <div class="slide-body" data-remarp-id="s71-body">
     <p><!-- Slide 6: 데모 2 녹화 영상: 넘칠 때와 줄일 때 --></p>
@@ -2288,7 +2291,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s72">
+<div class="slide" data-remarp-id="s72" data-block="05-live-demo" data-block-title="5부: 라이브 데모, 직접 돌려 본 결과">
   <div class="slide-header" data-remarp-id="s72-header"><h2>데모 2 결과: 온프렘 Pod를 지킨 것은 B와 C</h2></div>
   <div class="slide-body" data-remarp-id="s72-body">
     <p><!-- Slide 7: 데모 2 결과 --></p>
@@ -2320,7 +2323,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s73">
+<div class="slide" data-remarp-id="s73" data-block="05-live-demo" data-block-title="5부: 라이브 데모, 직접 돌려 본 결과">
   <div class="slide-header" data-remarp-id="s73-header"><h2>데모가 알려 준 함정 세 가지</h2></div>
   <div class="slide-body" data-remarp-id="s73-body">
     <p><!-- Slide 8: 데모 2 함정 --></p>
@@ -2339,7 +2342,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s74" data-fit="off">
+<div class="slide" data-remarp-id="s74" data-fit="off" data-block="05-live-demo" data-block-title="5부: 라이브 데모, 직접 돌려 본 결과">
   <div class="slide-header" data-remarp-id="s74-header"><h2>데모 3 녹화 영상: 온프렘 GPU 추론</h2></div>
   <div class="slide-body" data-remarp-id="s74-body">
     <p><!-- Slide 9: 데모 3 녹화 영상: 온프렘 GPU 추론 --></p>
@@ -2360,7 +2363,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s75">
+<div class="slide" data-remarp-id="s75" data-block="05-live-demo" data-block-title="5부: 라이브 데모, 직접 돌려 본 결과">
   <div class="slide-header" data-remarp-id="s75-header"><h2>데모 3: hybrid GPU에서 추론, 클라우드에서 호출</h2></div>
   <div class="slide-body" data-remarp-id="s75-body">
     <p><!-- Slide 10: 데모 3 GPU --></p>
@@ -2390,7 +2393,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s76">
+<div class="slide" data-remarp-id="s76" data-block="05-live-demo" data-block-title="5부: 라이브 데모, 직접 돌려 본 결과">
   <div class="slide-header" data-remarp-id="s76-header"><h2>Istio와 gateway는 함께 쓸 수 있다</h2></div>
   <div class="slide-body" data-remarp-id="s76-body">
     <p><!-- Slide 11: Istio 공존 --></p>
@@ -2419,7 +2422,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s77">
+<div class="slide" data-remarp-id="s77" data-block="05-live-demo" data-block-title="5부: 라이브 데모, 직접 돌려 본 결과">
   <div class="slide-header" data-remarp-id="s77-header"><h2>Istio 실측: 경로별 지연과 gateway 전환</h2></div>
   <div class="slide-body" data-remarp-id="s77-body">
     <p><!-- Slide 12: Istio 실측 --></p>
@@ -2451,7 +2454,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s78" data-fit="off">
+<div class="slide" data-remarp-id="s78" data-fit="off" data-block="05-live-demo" data-block-title="5부: 라이브 데모, 직접 돌려 본 결과">
   <div class="slide-header" data-remarp-id="s78-header"><h2>ALB 데모 녹화 영상: ip 타깃과 역방향</h2></div>
   <div class="slide-body" data-remarp-id="s78-body">
     <p><!-- Slide 13: ALB 데모 녹화 영상: ip 타깃과 역방향 --></p>
@@ -2472,7 +2475,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s79">
+<div class="slide" data-remarp-id="s79" data-block="05-live-demo" data-block-title="5부: 라이브 데모, 직접 돌려 본 결과">
   <div class="slide-header" data-remarp-id="s79-header"><h2>ALB ip 타깃: hybrid Pod IP가 바뀌어도 LBC가 따라간다</h2></div>
   <div class="slide-body" data-remarp-id="s79-body">
     <p><!-- Slide 14: ALB ip 타깃 --></p>
@@ -2508,7 +2511,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s80">
+<div class="slide" data-remarp-id="s80" data-block="05-live-demo" data-block-title="5부: 라이브 데모, 직접 돌려 본 결과">
   <div class="slide-header" data-remarp-id="s80-header"><h2>반대 방향: 온프렘에서 LB로 들어오면</h2></div>
   <div class="slide-body" data-remarp-id="s80-body">
     <p><!-- Slide 15: 역방향 --></p>
@@ -2529,7 +2532,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s81">
+<div class="slide" data-remarp-id="s81" data-block="05-live-demo" data-block-title="5부: 라이브 데모, 직접 돌려 본 결과">
   <div class="slide-header" data-remarp-id="s81-header"><h2>정리: 무엇을 확인했고 무엇이 남았나</h2></div>
   <div class="slide-body" data-remarp-id="s81-body">
     <p><!-- Slide 16: 정리 --></p>
@@ -2548,7 +2551,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s82">
+<div class="slide" data-remarp-id="s82" data-block="05-live-demo" data-block-title="5부: 라이브 데모, 직접 돌려 본 결과">
   <div class="slide-header" data-remarp-id="s82-header"><h2>참고 자료 & Q&A</h2></div>
   <div class="slide-body" data-remarp-id="s82-body">
     <p><!-- Slide 17: 통합 참고 자료 --></p>
@@ -2606,7 +2609,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s83">
+<div class="slide" data-remarp-id="s83" data-block="05-live-demo" data-block-title="5부: 라이브 데모, 직접 돌려 본 결과">
   <div class="center-content" style="height:100%; gap:1.5rem;">
     <h1 style="font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:calc(var(--fs-title) * 1.5); color:var(--text-primary);">Thank You</h1>
     <p style="color:var(--text-secondary); font-size:1.1rem;">EKS Hybrid Nodes, 감사합니다</p>
@@ -2618,6 +2621,9 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
 </div>
 </div>
 <script src="./common/animation-utils.js"></script>
+<script src="./common/deck-overlay.js"></script>
+<script src="./common/deck-detail.js"></script>
+<script src="./common/deck-nav.js"></script>
 <script src="./common/slide-framework.js"></script>
 <script src="./common/quiz-component.js"></script>
 <script src="./common/presenter-view.js"></script>

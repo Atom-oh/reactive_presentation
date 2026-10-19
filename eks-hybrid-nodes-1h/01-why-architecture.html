@@ -9,6 +9,9 @@
   <meta name="remarp-source" content="01-why-architecture.md">
   <meta name="remarp-block" content="01-why-architecture">
   <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/deck-overlay.css">
+  <link rel="stylesheet" href="./common/deck-detail.css">
+  <link rel="stylesheet" href="./common/deck-nav.css">
   <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
   <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
   
@@ -16,7 +19,7 @@
 </head>
 <body>
 <div class="slide-deck theme-dark">
-<div class="slide theme-dark" data-remarp-id="s0" style="background:linear-gradient(135deg, #16212f 0%, #0f1b2a 55%, #14243a 100%); padding:0; overflow:hidden;">
+<div class="slide theme-dark" data-remarp-id="s0" data-block="01-why-architecture" data-block-title="EKS Hybrid Nodes" style="background:linear-gradient(135deg, #16212f 0%, #0f1b2a 55%, #14243a 100%); padding:0; overflow:hidden;">
   <div style="position:absolute; top:0; right:0; width:50%; height:60%; background:radial-gradient(ellipse, rgba(255,153,0,0.10) 0%, transparent 70%); pointer-events:none;"></div>
   <div style="position:absolute; left:5%; top:42%; width:80px; height:3px; background:linear-gradient(90deg, var(--accent, #ff9900), rgba(255,153,0,0.25)); border-radius:2px;"></div>
   <h1 style="position:absolute; left:5%; top:45%; font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:60%; margin:0;">EKS Hybrid Nodes</h1>
@@ -28,7 +31,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s1">
+<div class="slide" data-remarp-id="s1" data-block="01-why-architecture" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s1-header"><h2>오늘 세션 구성</h2></div>
   <div class="slide-body" data-remarp-id="s1-body">
     <div class="agenda-timeline">
@@ -113,7 +116,7 @@
 })();</script>
 </div>
 
-<div class="slide" data-remarp-id="s2">
+<div class="slide" data-remarp-id="s2" data-block="01-why-architecture" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s2-header"><h2>온프렘을 버릴 수 없는 네 가지 이유</h2></div>
   <div class="slide-body" data-remarp-id="s2-body">
     <p><!-- Slide 3: 고객 시나리오 --></p>
@@ -147,7 +150,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s3">
+<div class="slide" data-remarp-id="s3" data-block="01-why-architecture" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s3-header"><h2>컨트롤 플레인만 AWS에 맡긴다</h2></div>
   <div class="slide-body" data-remarp-id="s3-body">
     <p><!-- Slide 4: 한 줄 정의 --></p>
@@ -175,7 +178,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s4">
+<div class="slide" data-remarp-id="s4" data-block="01-why-architecture" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s4-header"><h2>2부: 전체 아키텍처, private 연결 위의 한 클러스터</h2></div>
   <div class="slide-body" data-remarp-id="s4-body">
     <p><!-- Slide 5: 전체 아키텍처 --></p>
@@ -212,7 +215,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s5">
+<div class="slide" data-remarp-id="s5" data-block="01-why-architecture" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s5-header"><h2>책임은 나뉘고, 데이터는 AWS에</h2></div>
   <div class="slide-body" data-remarp-id="s5-body">
     <p><!-- Slide 6: 책임 분담 --></p>
@@ -247,7 +250,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s6">
+<div class="slide" data-remarp-id="s6" data-block="01-why-architecture" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s6-header"><h2>요금은 vCPU-hour 구간제</h2></div>
   <div class="slide-body" data-remarp-id="s6-body">
     <p><!-- Slide 7: 요금 모델 --></p>
@@ -281,7 +284,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s7">
+<div class="slide" data-remarp-id="s7" data-block="01-why-architecture" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s7-header"><h2>내 환경 비용 직접 계산해보기</h2></div>
   <div class="slide-body" data-remarp-id="s7-body">
     <p><!-- Slide 8: 비용 계산기 --></p>
@@ -345,7 +348,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s8">
+<div class="slide" data-remarp-id="s8" data-block="01-why-architecture" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s8-header"><h2>지원 OS와 노드 준비</h2></div>
   <div class="slide-body" data-remarp-id="s8-body">
     <p><!-- Slide 9: 지원 OS와 노드 준비 --></p>
@@ -379,7 +382,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s9">
+<div class="slide" data-remarp-id="s9" data-block="01-why-architecture" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s9-header"><h2>어떤 자격 증명 방식을 고를까</h2></div>
   <div class="slide-body" data-remarp-id="s9-body">
     <p><!-- Slide 10: 자격 증명 선택 --></p>
@@ -431,6 +434,9 @@
 </div>
 </div>
 <script src="./common/animation-utils.js"></script>
+<script src="./common/deck-overlay.js"></script>
+<script src="./common/deck-detail.js"></script>
+<script src="./common/deck-nav.js"></script>
 <script src="./common/slide-framework.js"></script>
 <script src="./common/quiz-component.js"></script>
 <script src="./common/presenter-view.js"></script>

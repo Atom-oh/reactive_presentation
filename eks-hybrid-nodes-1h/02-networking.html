@@ -9,6 +9,9 @@
   <meta name="remarp-source" content="02-networking.md">
   <meta name="remarp-block" content="02-networking">
   <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/deck-overlay.css">
+  <link rel="stylesheet" href="./common/deck-detail.css">
+  <link rel="stylesheet" href="./common/deck-nav.css">
   <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
   <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
   
@@ -16,12 +19,12 @@
 </head>
 <body>
 <div class="slide-deck theme-dark">
-<div class="slide title-slide" data-remarp-id="s0">
+<div class="slide title-slide" data-remarp-id="s0" data-block="02-networking" data-block-title="3부: 네트워킹">
     <h1>3부: 네트워킹</h1>
   <p class="meta">연결은 고객이 준비하고, Pod 경로는 세 가지 중에서 고른다</p>
 </div>
 
-<div class="slide" data-remarp-id="s1">
+<div class="slide" data-remarp-id="s1" data-block="02-networking" data-block-title="3부: 네트워킹">
   <div class="slide-header" data-remarp-id="s1-header"><h2>연결이 먼저, CIDR은 겹치지 않게</h2></div>
   <div class="slide-body" data-remarp-id="s1-body">
     <p><!-- Slide 2: 필수 연결과 CIDR --></p>
@@ -65,7 +68,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s2">
+<div class="slide" data-remarp-id="s2" data-block="02-networking" data-block-title="3부: 네트워킹">
   <div class="slide-header" data-remarp-id="s2-header"><h2>Pod 라우팅: static, BGP, Gateway</h2></div>
   <div class="slide-body" data-remarp-id="s2-body">
     <p><!-- Slide 3: Pod 라우팅 3가지 --></p>
@@ -95,7 +98,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s3">
+<div class="slide" data-remarp-id="s3" data-block="02-networking" data-block-title="3부: 네트워킹">
   <div class="slide-header" data-remarp-id="s3-header"><h2>Gateway: VPC route 하나와 VXLAN 터널</h2></div>
   <div class="slide-body" data-remarp-id="s3-body">
     <p><!-- Slide 4: Gateway 동작 --></p>
@@ -137,7 +140,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s4">
+<div class="slide" data-remarp-id="s4" data-block="02-networking" data-block-title="3부: 네트워킹">
   <div class="slide-header" data-remarp-id="s4-header"><h2>CNI 구성: Cilium만 쓸까, VPC CNI와 섞을까</h2></div>
   <div class="slide-body" data-remarp-id="s4-body">
     <p><!-- Slide 5: CNI 선택 --></p>
@@ -168,7 +171,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s5">
+<div class="slide" data-remarp-id="s5" data-block="02-networking" data-block-title="3부: 네트워킹">
   <div class="slide-header" data-remarp-id="s5-header"><h2>어디서 들어오느냐로 경로가 갈린다</h2></div>
   <div class="slide-body" data-remarp-id="s5-body">
     <p><!-- Slide 6: 트래픽 방향 --></p>
@@ -190,7 +193,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s6">
+<div class="slide" data-remarp-id="s6" data-block="02-networking" data-block-title="3부: 네트워킹">
   <div class="slide-header" data-remarp-id="s6-header"><h2>Gateway 비용: leader AZ로 모인다</h2></div>
   <div class="slide-body" data-remarp-id="s6-body">
     <p><!-- Slide 7: 비용과 대용량 --></p>
@@ -220,6 +223,9 @@
 </div>
 </div>
 <script src="./common/animation-utils.js"></script>
+<script src="./common/deck-overlay.js"></script>
+<script src="./common/deck-detail.js"></script>
+<script src="./common/deck-nav.js"></script>
 <script src="./common/slide-framework.js"></script>
 <script src="./common/quiz-component.js"></script>
 <script src="./common/presenter-view.js"></script>

@@ -9,6 +9,9 @@
   <meta name="remarp-source" content="02-networking-gateway.md">
   <meta name="remarp-block" content="02-networking-gateway">
   <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/deck-overlay.css">
+  <link rel="stylesheet" href="./common/deck-detail.css">
+  <link rel="stylesheet" href="./common/deck-nav.css">
   <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
   <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
   
@@ -16,12 +19,12 @@
 </head>
 <body>
 <div class="slide-deck theme-dark">
-<div class="slide title-slide" data-remarp-id="s0">
+<div class="slide title-slide" data-remarp-id="s0" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
     <h1>2부: 네트워킹 & Hybrid Nodes Gateway</h1>
   <p class="meta">누가 세션을 열고, Pod CIDR은 어떻게 도달하며, Gateway는 언제 쓰는가</p>
 </div>
 
-<div class="slide" data-remarp-id="s1">
+<div class="slide" data-remarp-id="s1" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s1-header"><h2>연결이 먼저, 쿠버네티스는 그다음</h2></div>
   <div class="slide-body" data-remarp-id="s1-body">
     <p><!-- Slide 2: 네트워크 전제 조건 --></p>
@@ -57,7 +60,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s2">
+<div class="slide" data-remarp-id="s2" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s2-header"><h2>CIDR 설계: 겹치면 모든 게 막힌다</h2></div>
   <div class="slide-body" data-remarp-id="s2-body">
     <ul class="checklist">
@@ -75,7 +78,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s3">
+<div class="slide" data-remarp-id="s3" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s3-header"><h2>443은 안에서 열고, 10250은 밖에서 온다</h2></div>
   <div class="slide-body" data-remarp-id="s3-body">
     <p><!-- Slide 4: 세션은 누가 여는가 --></p>
@@ -93,7 +96,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s4">
+<div class="slide" data-remarp-id="s4" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s4-header"><h2>kubelet과 CP, 세션 방향이 다르다</h2></div>
   <div class="slide-body" data-remarp-id="s4-body">
     <p><!-- Slide 5: 패턴 1, 2 kubelet ↔ CP --></p>
@@ -113,7 +116,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s5">
+<div class="slide" data-remarp-id="s5" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s5-header"><h2>Pod→API: Service 변환과 SNAT</h2></div>
   <div class="slide-body" data-remarp-id="s5-body">
     <p><!-- Slide 6: 패턴 3 Pod → CP --></p>
@@ -131,7 +134,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s6">
+<div class="slide" data-remarp-id="s6" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s6-header"><h2>웹훅: CP가 Pod IP로 직접 들어온다</h2></div>
   <div class="slide-body" data-remarp-id="s6-body">
     <p><!-- Slide 7: 패턴 4 CP → Pod (웹훅) --></p>
@@ -168,7 +171,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s7">
+<div class="slide" data-remarp-id="s7" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s7-header"><h2>Pod 간 통신: VXLAN과 Cloud↔Hybrid</h2></div>
   <div class="slide-body" data-remarp-id="s7-body">
     <p><!-- Slide 8: 패턴 5, 6 Pod ↔ Pod --></p>
@@ -211,7 +214,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s8">
+<div class="slide" data-remarp-id="s8" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s8-header"><h2>CNI 구성: Cilium만 쓸까, VPC CNI와 섞을까</h2></div>
   <div class="slide-body" data-remarp-id="s8-body">
     <p><!-- Slide 6b: CNI 구성 선택 --></p>
@@ -264,7 +267,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s9">
+<div class="slide" data-remarp-id="s9" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s9-header"><h2>라우팅 선택: static, BGP, Gateway</h2></div>
   <div class="slide-body" data-remarp-id="s9-body">
     <p><!-- Slide 9: 라우팅 선택지 비교 --></p>
@@ -287,7 +290,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s10">
+<div class="slide" data-remarp-id="s10" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s10-header"><h2>Cilium BGP v2: Pod CIDR만 광고</h2></div>
   <div class="slide-body" data-remarp-id="s10-body">
     <div class="tab-bar">
@@ -360,7 +363,7 @@ cilium bgp routes</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s11">
+<div class="slide" data-remarp-id="s11" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s11-header"><h2>Gateway는 Pod CIDR 라우팅 숙제를 던다</h2></div>
   <div class="slide-body" data-remarp-id="s11-body">
     <p><!-- Slide 11: Gateway ① 무엇이고 왜 --></p>
@@ -393,7 +396,7 @@ cilium bgp routes</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s12">
+<div class="slide" data-remarp-id="s12" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s12-header"><h2>Gateway 데이터 플레인: 한 경로로 읽기</h2></div>
   <div class="slide-body" data-remarp-id="s12-body">
     <p><!-- Slide 12: Gateway ② 데이터 플레인 --></p>
@@ -432,7 +435,7 @@ cilium bgp routes</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s13">
+<div class="slide" data-remarp-id="s13" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s13-header"><h2>Gateway HA: active/standby, scale-up</h2></div>
   <div class="slide-body" data-remarp-id="s13-body">
     <p><!-- Slide 13: Gateway ③ HA --></p>
@@ -453,7 +456,7 @@ cilium bgp routes</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s14">
+<div class="slide" data-remarp-id="s14" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s14-header"><h2>Gateway 설치: 노드→IAM→VTEP→Helm</h2></div>
   <div class="slide-body" data-remarp-id="s14-body">
     <div class="tab-bar">
@@ -509,7 +512,7 @@ kubectl -n kube-system get configmap cilium-config \
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s15">
+<div class="slide" data-remarp-id="s15" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s15-header"><h2>Gateway 운영: 관측과 제약</h2></div>
   <div class="slide-body" data-remarp-id="s15-body">
     <p><!-- Slide 15: Gateway ⑤ 운영, 제약 --></p>
@@ -551,7 +554,7 @@ kubectl get ciliumvtepconfig hybrid-gateway -o yaml</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s16">
+<div class="slide" data-remarp-id="s16" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s16-header"><h2>방화벽 규칙: 모드별로 달라진다</h2></div>
   <div class="slide-body" data-remarp-id="s16-body">
     <p><!-- Slide 16: 방화벽 규칙 표 --></p>
@@ -601,7 +604,7 @@ kubectl get ciliumvtepconfig hybrid-gateway -o yaml</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s17">
+<div class="slide" data-remarp-id="s17" data-block="02-networking-gateway" data-block-title="2부: 네트워킹 &amp; Hybrid Nodes Gateway">
   <div class="slide-header" data-remarp-id="s17-header"><h2>VPC 엔드포인트: 쓰는 만큼만</h2></div>
   <div class="slide-body" data-remarp-id="s17-body">
     <p><!-- Slide 17: VPC 엔드포인트 표 --></p>
@@ -637,6 +640,9 @@ kubectl get ciliumvtepconfig hybrid-gateway -o yaml</div>
 </div>
 </div>
 <script src="./common/animation-utils.js"></script>
+<script src="./common/deck-overlay.js"></script>
+<script src="./common/deck-detail.js"></script>
+<script src="./common/deck-nav.js"></script>
 <script src="./common/slide-framework.js"></script>
 <script src="./common/quiz-component.js"></script>
 <script src="./common/presenter-view.js"></script>

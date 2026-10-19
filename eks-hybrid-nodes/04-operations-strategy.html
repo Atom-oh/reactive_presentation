@@ -9,6 +9,9 @@
   <meta name="remarp-source" content="04-operations-strategy.md">
   <meta name="remarp-block" content="04-operations-strategy">
   <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/deck-overlay.css">
+  <link rel="stylesheet" href="./common/deck-detail.css">
+  <link rel="stylesheet" href="./common/deck-nav.css">
   <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
   <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
   
@@ -16,12 +19,12 @@
 </head>
 <body>
 <div class="slide-deck theme-dark">
-<div class="slide title-slide" data-remarp-id="s0">
+<div class="slide title-slide" data-remarp-id="s0" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
     <h1>4부: 운영, 워크로드, 보안 & 전략</h1>
   <p class="meta">배치, GPU, 관측성, 망분리 검토, 비용과 도입 판단</p>
 </div>
 
-<div class="slide" data-remarp-id="s1">
+<div class="slide" data-remarp-id="s1" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s1-header"><h2>배치는 label 하나에서 시작한다</h2></div>
   <div class="slide-body" data-remarp-id="s1-body">
     <div class="tab-bar">
@@ -77,7 +80,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s2">
+<div class="slide" data-remarp-id="s2" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s2-header"><h2>버스팅은 Pending Pod가 트리거</h2></div>
   <div class="slide-body" data-remarp-id="s2-body">
     <p><!-- Slide 3: 클라우드 버스팅 --></p>
@@ -110,7 +113,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s3">
+<div class="slide" data-remarp-id="s3" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s3-header"><h2>스케일-인 순서는 선호일 뿐</h2></div>
   <div class="slide-body" data-remarp-id="s3-body">
     <p><!-- Slide 4: 스케일-인 순서 --></p>
@@ -133,7 +136,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s4">
+<div class="slide" data-remarp-id="s4" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s4-header"><h2>GPU마다 할당 관리자는 하나</h2></div>
   <div class="slide-body" data-remarp-id="s4-body">
     <p><!-- Slide 5: GPU 할당 방식 --></p>
@@ -153,7 +156,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s5">
+<div class="slide" data-remarp-id="s5" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s5-header"><h2>MIG는 격리, time-slicing은 공유</h2></div>
   <div class="slide-body" data-remarp-id="s5-body">
     <div class="tab-bar">
@@ -185,7 +188,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s6">
+<div class="slide" data-remarp-id="s6" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s6-header"><h2>hybrid 지표는 relabel로 구분</h2></div>
   <div class="slide-body" data-remarp-id="s6-body">
     <div class="tab-bar">
@@ -235,7 +238,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s7">
+<div class="slide" data-remarp-id="s7" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s7-header"><h2>CoreDNS는 양쪽에 최소 1개</h2></div>
   <div class="slide-body" data-remarp-id="s7-body">
     <div class="tab-bar">
@@ -267,7 +270,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s8">
+<div class="slide" data-remarp-id="s8" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s8-header"><h2>외부 노출은 IP target과 BGP로</h2></div>
   <div class="slide-body" data-remarp-id="s8-body">
     <div class="tab-bar">
@@ -319,7 +322,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s9">
+<div class="slide" data-remarp-id="s9" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s9-header"><h2>Pod Identity는 6단계 체크</h2></div>
   <div class="slide-body" data-remarp-id="s9-body">
     <ul class="checklist">
@@ -337,7 +340,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s10">
+<div class="slide" data-remarp-id="s10" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s10-header"><h2>'endpoint'는 세 가지를 뜻한다</h2></div>
   <div class="slide-body" data-remarp-id="s10-body">
     <p><!-- Slide 11: 망분리 1, endpoint 세 가지 --></p>
@@ -361,7 +364,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s11">
+<div class="slide" data-remarp-id="s11" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s11-header"><h2>망분리는 요건별로 따진다</h2></div>
   <div class="slide-body" data-remarp-id="s11-body">
     <div class="tab-bar">
@@ -388,7 +391,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s12">
+<div class="slide" data-remarp-id="s12" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s12-header"><h2>규제 대응은 증거로 말한다</h2></div>
   <div class="slide-body" data-remarp-id="s12-body">
     <p><!-- Slide 13: 규제 대응 --></p>
@@ -408,7 +411,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s13">
+<div class="slide" data-remarp-id="s13" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s13-header"><h2>비용은 vCPU-hour 구간 과금</h2></div>
   <div class="slide-body" data-remarp-id="s13-body">
     <div class="columns">
@@ -426,7 +429,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s14">
+<div class="slide" data-remarp-id="s14" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s14-header"><h2>도입 판단은 제약 확인부터</h2></div>
   <div class="slide-body" data-remarp-id="s14-body">
     <p><!-- Slide 15: 도입 판단 --></p>
@@ -447,7 +450,7 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s15">
+<div class="slide" data-remarp-id="s15" data-block="04-operations-strategy" data-block-title="4부: 운영, 워크로드, 보안 &amp; 전략">
   <div class="slide-header" data-remarp-id="s15-header"><h2>핵심 요약: 1~4부, 6가지</h2></div>
   <div class="slide-body" data-remarp-id="s15-body">
     <p><!-- Slide 16: 핵심 요약 --></p>
@@ -469,6 +472,9 @@ DCGM_FI_DEV_GPU_UTIL{compute_type=<span class="string">"hybrid"</span>}
 </div>
 </div>
 <script src="./common/animation-utils.js"></script>
+<script src="./common/deck-overlay.js"></script>
+<script src="./common/deck-detail.js"></script>
+<script src="./common/deck-nav.js"></script>
 <script src="./common/slide-framework.js"></script>
 <script src="./common/quiz-component.js"></script>
 <script src="./common/presenter-view.js"></script>

@@ -17,6 +17,7 @@
 | `r2-bursting.mp4` | 2026-10-18 06:30:57 | 77.5초 | 37.3초 | 1.7 MB | 1920x1284 |
 | `r3-alb.mp4` | 2026-10-18 06:36:29 | 125.0초 | 61.5초 | 4.3 MB | 1920x1284 |
 | `r4-gpu.mp4` | 2026-10-18 11:21:29 | 52.7초 | 35.0초 | 2.2 MB | 1920x1506 |
+| `r5-conn.mp4` | 2026-10-19 13:18:37 | 61.5초 | 57.6초 | 4.9 MB | 1920x1412 |
 
 ## R1: gateway 리더 전환 (V1)
 
@@ -135,3 +136,39 @@ kubectl -n gpu-demo logs job/inference-client
 R1~R3와 다른 점: 출력이 머무는 시간을 늘리려고 driver에서 `run()`의 대기를 1.5초에서 4.5초로 바꿨지만, 2초 넘는 대기는 idle limit로 2초가 되므로 영상 길이는 늘지 않습니다. 대신 `nvidia-smi`와 Service/EndpointSlice 화면을 넣었습니다. 시도 4번 중 4번째를 사용했습니다(1번째: `eval`이 custom-columns의 `\.`를 지워 TYPE/GPU가 `<none>`, 2번째: 앞 시도의 client Pod가 표에 남음, 3번째: 27초로 짧음). 이 때문에 `verify.sh`(client Job 생성과 추론 호출)는 4번 실행됐습니다.
 
 정리(녹화 뒤): inference, Service, namespace `gpu-demo`, device plugin 삭제, GPU 노드 drain 후 Node 삭제, `mi-01c761bc7d91d2da3` SSM 등록 해제, 이번에 만든 activation 삭제, `ENABLE_GPU_HOST=false`로 change set(변경은 `Remove GpuHost` 하나뿐) 적용, 11:31:52에 인스턴스 `terminated`, 스택 `UPDATE_COMPLETE`. 기존 hybrid 노드 2대(`mi-01c0d4f2de39dab64`, `mi-067a83f4fd29491d9`)는 그대로 둡니다.
+
+## R5: 연결 검증, native routing과 PrivateLink (V5)
+
+2026-10-19 13:18:37 UTC에 녹화했습니다(원본 cast 61.5초, 대기 구간을 줄여 변환한 영상은 57.6초). 이 회차는 Cilium을 native routing(VXLAN 없음, masquerade 끔)으로 바꾼 뒤의 클러스터입니다. Hybrid Nodes gateway는 없습니다. native routing은 AWS 지원 범위 밖입니다(지원 Networking Mode는 VXLAN뿐).
+
+R1~R4와 다른 점: 터미널 너비를 128열로 늘렸고(`--cols 128 --rows 40`), 명령을 짧게 보이도록 `k() { kubectl -n conn-test "$@"; }`와 변수(`C1`, `H2`, `SRV`, `STS_IP`, `BUCKET`, `KEY`)를 화면에 먼저 출력합니다. 같은 driver로 녹화 전 리허설을 4번 했습니다(nginx 로그 줄 중복, `sh -c` 안 변수 따옴표, 줄 길이 수정). 리허설에서 쓴 S3 객체도 driver 끝에서 지웠습니다.
+
+명령
+
+```bash
+k get pods -o custom-columns=NAME:.metadata.name,IP:.status.podIP,NODE:.spec.nodeName
+k exec h1a -c client -- curl -s -o /dev/null -w '%{http_code}\n' http://$C1/?id=a<T>
+k logs c1 -c web --tail=50 | grep a<T> | awk '{print "server saw", $1, $7}'
+k exec c1 -c client -- curl ... http://$H2/?id=b<T>;  k logs h2 ...
+k exec h1a -c client -- curl -s -m 5 http://$SRV:18080/
+k exec h1a -c client -- curl -s -m 8 https://checkip.amazonaws.com
+k exec h1a -c client -- dig +short sts.ap-northeast-2.amazonaws.com s3.ap-northeast-2.amazonaws.com
+k exec irsa-h1 -- aws sts get-caller-identity --query Arn --output text
+k exec irsa-h1 -- sh -c "echo hello-from-irsa-h1 | aws s3 cp - s3://$BUCKET/$KEY"
+k exec irsa-c1 -- aws s3 cp s3://$BUCKET/$KEY -
+k exec h1a -c client -- curl -sm5 -o /dev/null -w %{http_code} --resolve $H:443:$STS_IP https://$H/
+k exec hostnet-h1 -- curl -sm5 -o /dev/null --resolve $H:443:$STS_IP https://$H/
+tail -1 results/connectivity-20261019-1050.md
+```
+
+관찰 결과
+
+- h1a(172.17.0.244, mi-01c0d4f2de39dab64) → c1(10.0.63.165): 200, c1 nginx 로그 `server saw 172.17.0.244`
+- c1 → h2(172.17.0.50, mi-067a83f4fd29491d9): 200, h2 로그 `server saw 10.0.63.165`
+- 온프렘 socat 서버 172.18.51.209:18080 응답 `172.17.0.244`, 인터넷 출구 `43.200.92.63`(클라우드 NAT)
+- sts, s3 이름 → 10.0.58.187, 10.0.45.43, 10.0.61.174, 10.0.36.16 (interface endpoint ENI)
+- irsa-h1 assumed-role ARN 반환, PutObject 후 irsa-c1이 `hello-from-irsa-h1`을 읽음
+- STS ENI 10.0.58.187:443: Pod IP에서 `302`, hostNetwork(노드 IP 172.18.38.77)에서 `command terminated with exit code 28`(타임아웃, 실제 약 5초가 영상에서는 2초)
+- 마지막 줄 `38 PASS, 0 FAIL, 0 SKIP`은 10:50 측정 회차의 결과 파일입니다(녹화 중에 다시 돌리지 않음)
+
+가린 값: 계정 ID 1곳(`get-caller-identity` 출력 ARN)을 `************`로 바꿨습니다. 가린 `.cast`에서 계정 ID, `AKIA`, `ActivationCode`, `activation`, `secret`, `SessionToken`은 0건입니다. 버킷 이름, 역할 이름, Pod 이름, private IP, NAT 공인 IP는 그대로 두었습니다. 녹화에서 쓴 S3 객체는 driver 끝에서 지웠습니다.

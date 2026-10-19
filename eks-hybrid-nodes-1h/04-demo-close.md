@@ -583,7 +583,7 @@ Gateway를 쓰면 Cilium L7이 꺼지는데, 그럼 Istio도 못 쓰느냐는 �
 :::
 
 :::notes
-{timing: 4min}
+{timing: 3min}
 [요약]
 - 안내 1분, 이어서 Q&A 3분 (슬라이드 2에서 약속한 질문 시간)
 - 설정 값, 명령, 방화벽 표, 버전별 점검은 Deep Dive(2시간) 덱에 있음

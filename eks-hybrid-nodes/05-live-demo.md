@@ -81,7 +81,62 @@ gateway 전환, bursting, GPU 추론, Istio 공존의 실측
 :::
 
 ---
-<!-- Slide 3: 데모 1 리더 전환 -->
+<!-- Slide 3: 데모 1 녹화 영상: Gateway 리더 전환 -->
+@type: content
+@fit: off
+@title: 데모 1 녹화 영상: Gateway 리더 전환
+
+## 데모 1 녹화 영상: Gateway 리더 전환
+
+:::html
+<style>
+.hn-video { width: 100%; max-height: 100%; aspect-ratio: 16 / 9; background: var(--bg-card); border-radius: var(--space-2); }
+.hn-video-cap { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); }
+.hn5-full { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.hn5-vbox { flex: 1; min-height: 0; container-type: size; }
+.hn5-full .hn-video { display: block; width: min(100cqw, calc(100cqh * 16 / 9)); height: auto; max-height: none; margin-inline: auto; }
+.hn5-full .hn-video-cap { text-align: center; margin-top: 0; font-size: var(--fs-card); }
+</style>
+<div class="hn5-full">
+<div class="hn5-vbox">
+<video class="hn-video" src="../eks-hybrid-nodes-1h/media/v1-gateway-failover.mp4" poster="../eks-hybrid-nodes-1h/media/v1-gateway-failover.jpg" aria-label="데모 1 녹화 영상: Gateway 리더 전환, 실제 터미널 녹화 포함, 무음, 2분 58초" title="데모 1 녹화 영상: Gateway 리더 전환, 실제 터미널 녹화 포함, 무음, 2분 58초" controls preload="metadata" muted playsinline tabindex="-1"></video>
+</div>
+<div class="hn-video-cap">실측 결과 재구성 (2026-10 시뮬레이션 환경), 실제 터미널 녹화 포함, 무음</div>
+</div>
+:::
+
+:::script
+// While a video plays, Chromium's native controls keep focus and swallow arrow, PageDown and Space.
+// Hand focus back to the page after any video interaction so the deck keys keep working.
+document.querySelectorAll('video.hn-video').forEach(function (v) {
+  var release = function () { setTimeout(function () { if (document.activeElement === v) v.blur(); }, 0); };
+  ['focus', 'play', 'pause', 'seeked', 'volumechange', 'click', 'pointerup'].forEach(function (ev) { v.addEventListener(ev, release); });
+});
+// The deck updates location.hash on every slide change: pause any video left on a slide that is no longer active.
+window.addEventListener('hashchange', function () {
+  document.querySelectorAll('.slide:not(.active) video.hn-video').forEach(function (v) { if (!v.paused) v.pause(); });
+});
+:::
+
+:::notes
+{timing: 1min}
+[요약]
+• 영상 2분 58초. 라이브 시연을 했다면 건너뛰고, 시간이나 환경 문제로 라이브가 어려우면 이 영상을 재생합니다.
+• 녹화 회차(2026-10-18): Lease 인계 5초, 1초 간격 요청 60개 중 2개 실패
+• 일시정지 지점: 1:31 녹화의 결과 블록
+
+리더 Gateway Pod를 지우고, standby가 Lease를 넘겨받아 VPC 라우트를 자기 ENI로 바꾸는 과정입니다. 터미널 장면은 0.5배속이고 출력 없는 대기는 줄였습니다.
+{cue: pause}
+1:31쯤 결과 블록에서 멈추고 인계 5초, 실패 2개, 라우트 ENI 교체를 읽어 주세요. 1:32 이후 격자에서 실패 칸의 위치는 실측 위치가 아니라 개수와 간격에 맞춘 배치입니다.
+{cue: transition}
+세 번 측정한 값을 정리하겠습니다.
+
+[출처]
+• 1시간 세션 V1 영상, eks-hybrid-nodes-1h/videos/rec/RECORDINGS.md R1
+:::
+
+---
+<!-- Slide 4: 데모 1 리더 전환 -->
 @type: content
 @title: 데모 1: 리더가 바뀌어도 끊김은 3~5초
 
@@ -140,7 +195,7 @@ IAM은 문서 예시보다 좁혀서 라우트 쓰기 권한을 gateway의 route
 :::
 
 ---
-<!-- Slide 4: 데모 2 설계 -->
+<!-- Slide 5: 데모 2 설계 -->
 @type: content
 @title: 데모 2: 같은 워크로드를 세 가지로 줄여 본다
 
@@ -186,7 +241,7 @@ IAM은 문서 예시보다 좁혀서 라우트 쓰기 권한을 gateway의 route
 hybrid에는 선호 규칙만 걸고 selector나 toleration은 걸지 않았습니다. 그래서 hybrid가 꽉 차면 나머지는 Karpenter가 burst 노드를 만들어 받습니다.
 Pod당 CPU 요청은 스크립트가 노드 allocatable을 읽어 계산해서 정확히 8개가 들어가게 했습니다. 12개로 줄이는 warm-up 단계가 왜 필요한지는 두 장 뒤에 설명합니다.
 {cue: transition}
-결과부터 보겠습니다.
+실행 장면부터 보겠습니다.
 
 [출처]
 • 데모 저장소 demo2-burst/run-compare.sh, calc-requests.sh
@@ -194,7 +249,49 @@ Pod당 CPU 요청은 스크립트가 노드 allocatable을 읽어 계산해서 �
 :::
 
 ---
-<!-- Slide 5: 데모 2 결과 -->
+<!-- Slide 6: 데모 2 녹화 영상: 넘칠 때와 줄일 때 -->
+@type: content
+@fit: off
+@title: 데모 2 녹화 영상: 넘칠 때와 줄일 때
+
+## 데모 2 녹화 영상: 넘칠 때와 줄일 때
+
+:::html
+<style>
+.hn-video { width: 100%; max-height: 100%; aspect-ratio: 16 / 9; background: var(--bg-card); border-radius: var(--space-2); }
+.hn-video-cap { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); }
+.hn5-full { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.hn5-vbox { flex: 1; min-height: 0; container-type: size; }
+.hn5-full .hn-video { display: block; width: min(100cqw, calc(100cqh * 16 / 9)); height: auto; max-height: none; margin-inline: auto; }
+.hn5-full .hn-video-cap { text-align: center; margin-top: 0; font-size: var(--fs-card); }
+</style>
+<div class="hn5-full">
+<div class="hn5-vbox">
+<video class="hn-video" src="../eks-hybrid-nodes-1h/media/v2-bursting.mp4" poster="../eks-hybrid-nodes-1h/media/v2-bursting.jpg" aria-label="데모 2 녹화 영상: 버스팅과 축소, 실제 터미널 녹화 포함, 무음, 3분 36초" title="데모 2 녹화 영상: 버스팅과 축소, 실제 터미널 녹화 포함, 무음, 3분 36초" controls preload="metadata" muted playsinline tabindex="-1"></video>
+</div>
+<div class="hn-video-cap">실측 결과 재구성 (2026-10 시뮬레이션 환경), 실제 터미널 녹화 포함, 무음</div>
+</div>
+:::
+
+:::notes
+{timing: 1min}
+[요약]
+• 영상 3분 36초. 라이브 시연을 했다면 건너뜁니다.
+• 앞부분은 2026-10-18 녹화 회차(시나리오 B, Pod 요청 910m), 뒷부분은 2026-10-15 A, B, C 비교 실행(930m)
+• 일시정지 지점: 2:08 A, B, C 비교 장면
+
+녹화 회차에서는 15개로 늘리자 35초에 모두 Ready(hybrid 8, burst 7)였고, 10개로 줄이면 hybrid 8, cloud 2, 3개로 줄이면 모두 hybrid였습니다. 두 실행이 섞여 나오니 장면마다 회차를 짚어 주세요.
+{cue: pause}
+2:08 비교 장면에서 멈추고, 정책이 없는 A만 hybrid Pod 2개가 먼저 빠졌다고 말씀하세요. 노드별 Pod 위치는 예시이고 Pod 수와 EC2 대수만 실측입니다.
+{cue: transition}
+비교 실행의 숫자를 표로 보겠습니다.
+
+[출처]
+• 1시간 세션 V2 영상, results/compare-20261015-1239.md, RECORDINGS.md R2
+:::
+
+---
+<!-- Slide 7: 데모 2 결과 -->
 @type: content
 @title: 데모 2 결과: 온프렘 Pod를 지킨 것은 B와 C
 
@@ -252,7 +349,7 @@ Karpenter 기능을 켠 C는 burst 노드에 음수 값을 써서 EC2가 세 대
 :::
 
 ---
-<!-- Slide 6: 데모 2 함정 -->
+<!-- Slide 8: 데모 2 함정 -->
 @type: content
 @title: 데모가 알려 준 함정 세 가지
 
@@ -295,7 +392,49 @@ Karpenter 기능을 켠 C는 burst 노드에 음수 값을 써서 EC2가 세 대
 :::
 
 ---
-<!-- Slide 7: 데모 3 GPU -->
+<!-- Slide 9: 데모 3 녹화 영상: 온프렘 GPU 추론 -->
+@type: content
+@fit: off
+@title: 데모 3 녹화 영상: 온프렘 GPU 추론
+
+## 데모 3 녹화 영상: 온프렘 GPU 추론
+
+:::html
+<style>
+.hn-video { width: 100%; max-height: 100%; aspect-ratio: 16 / 9; background: var(--bg-card); border-radius: var(--space-2); }
+.hn-video-cap { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); }
+.hn5-full { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.hn5-vbox { flex: 1; min-height: 0; container-type: size; }
+.hn5-full .hn-video { display: block; width: min(100cqw, calc(100cqh * 16 / 9)); height: auto; max-height: none; margin-inline: auto; }
+.hn5-full .hn-video-cap { text-align: center; margin-top: 0; font-size: var(--fs-card); }
+</style>
+<div class="hn5-full">
+<div class="hn5-vbox">
+<video class="hn-video" src="../eks-hybrid-nodes-1h/media/v4-gpu.mp4" poster="../eks-hybrid-nodes-1h/media/v4-gpu.jpg" aria-label="데모 3 녹화 영상: hybrid GPU 추론, 실제 터미널 녹화 포함, 무음, 2분 14초" title="데모 3 녹화 영상: hybrid GPU 추론, 실제 터미널 녹화 포함, 무음, 2분 14초" controls preload="metadata" muted playsinline tabindex="-1"></video>
+</div>
+<div class="hn-video-cap">실측 결과 재구성 (2026-10 시뮬레이션 환경), 실제 터미널 녹화 포함, 무음</div>
+</div>
+:::
+
+:::notes
+{timing: 1min}
+[요약]
+• 영상 2분 14초. 2026-10-18에 GPU 호스트를 다시 조인해 녹화하고 바로 제거한 회차입니다. 라이브 시연을 했다면 건너뜁니다.
+• g6.xlarge(NVIDIA L4)를 hybrid 노드로 붙이고, 클라우드 Job이 Service 이름으로 vLLM을 호출. 응답은 녹화 회차 1초 미만
+• 일시정지 지점: 1:34 verify.sh 결과
+
+영상 제목의 "데모 4"는 1시간 세션의 순서입니다. 녹화 첫 줄의 Demo 3은 데모 저장소 폴더 이름(demo3-gpu)이고, 이 덱에서도 데모 3입니다.
+{cue: pause}
+1:34쯤 verify.sh의 OK 네 줄에서 멈추고 읽어 주세요. elapsed_seconds=0은 1초 미만이라는 뜻입니다. 이미지 다운로드는 녹화 회차 4분 35초였습니다.
+{cue: transition}
+10월 15일 실행 결과와 함께 정리하겠습니다.
+
+[출처]
+• 1시간 세션 V4 영상, RECORDINGS.md R4, 데모 저장소 RUNBOOK.md 3절
+:::
+
+---
+<!-- Slide 10: 데모 3 GPU -->
 @type: content
 @title: 데모 3: hybrid GPU에서 추론, 클라우드에서 호출
 
@@ -348,7 +487,7 @@ GPU 노드에는 taint를 걸어서 CoreDNS 같은 일반 Pod가 올라오지 �
 :::
 
 ---
-<!-- Slide 8: Istio 공존 -->
+<!-- Slide 11: Istio 공존 -->
 @type: content
 @title: Istio와 gateway는 함께 쓸 수 있다
 
@@ -402,7 +541,7 @@ hybrid 쪽 서버에 걸어 둔 AuthorizationPolicy가 /admin 경로를 403으�
 :::
 
 ---
-<!-- Slide 9: Istio 실측 -->
+<!-- Slide 12: Istio 실측 -->
 @type: content
 @title: Istio 실측: 경로별 지연과 gateway 전환
 
@@ -456,7 +595,50 @@ gateway 리더를 지우는 동안 초당 40건을 계속 보냈는데 1,800건�
 :::
 
 ---
-<!-- Slide 10: ALB ip 타깃 -->
+<!-- Slide 13: ALB 데모 녹화 영상: ip 타깃과 역방향 -->
+@type: content
+@fit: off
+@title: ALB 데모 녹화 영상: ip 타깃과 역방향
+
+## ALB 데모 녹화 영상: ip 타깃과 역방향
+
+:::html
+<style>
+.hn-video { width: 100%; max-height: 100%; aspect-ratio: 16 / 9; background: var(--bg-card); border-radius: var(--space-2); }
+.hn-video-cap { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); }
+.hn5-full { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.hn5-vbox { flex: 1; min-height: 0; container-type: size; }
+.hn5-full .hn-video { display: block; width: min(100cqw, calc(100cqh * 16 / 9)); height: auto; max-height: none; margin-inline: auto; }
+.hn5-full .hn-video-cap { text-align: center; margin-top: 0; font-size: var(--fs-card); }
+</style>
+<div class="hn5-full">
+<div class="hn5-vbox">
+<video class="hn-video" src="../eks-hybrid-nodes-1h/media/v3-alb-reverse.mp4" poster="../eks-hybrid-nodes-1h/media/v3-alb-reverse.jpg" aria-label="ALB 데모 녹화 영상: ALB ip 타깃과 온프렘에서 들어오는 역방향, 실제 터미널 녹화 포함, 무음, 3분 12초" title="ALB 데모 녹화 영상: ALB ip 타깃과 온프렘에서 들어오는 역방향, 실제 터미널 녹화 포함, 무음, 3분 12초" controls preload="metadata" muted playsinline tabindex="-1"></video>
+</div>
+<div class="hn-video-cap">실측 결과 재구성 (2026-10 시뮬레이션 환경), 실제 터미널 녹화 포함, 무음</div>
+</div>
+:::
+
+:::notes
+{timing: 1min}
+[요약]
+• 영상 3분 12초. 라이브 시연을 했다면 건너뜁니다.
+• 녹화 회차(2026-10-18 06:36 UTC 시작): 재시작 50초 뒤 새 IP만 healthy, 부하 174건 ERR 0, 온프렘 NodePort는 FAIL
+• 02:11 UTC 측정 회차: Gateway 리더 인계 4초, 191건 중 1건 실패
+• 일시정지 지점: 1:20 폴링 격자
+
+정방향은 hybrid Pod를 다시 띄워 IP가 바뀌어도 LBC가 타깃을 따라가는 장면, 역방향은 온프렘 호스트에서 internal ALB로 들어오는 세 경로입니다. 화면의 "녹화 회차"와 "02:11 측정" 표시로 회차를 구분해 주세요. 영상 제목의 "데모 3"은 1시간 세션의 순서이고, 이 덱에서는 데모 3이 GPU입니다.
+{cue: pause}
+1:20 격자에서 멈추고, 타깃 등록과 해제가 사람 손 없이 일어났고 부하 오류가 0건이었다고 말씀하세요. 2:35 녹화에서 NodePort 세 번이 모두 FAIL인 이유는 뒤 슬라이드에서 설명합니다.
+{cue: transition}
+측정 회차의 결과를 정리하겠습니다.
+
+[출처]
+• 1시간 세션 V3 영상, results/lb-20261018-0211.json, RECORDINGS.md R3
+:::
+
+---
+<!-- Slide 14: ALB ip 타깃 -->
 @type: content
 @title: ALB ip 타깃: hybrid Pod IP가 바뀌어도 LBC가 따라간다
 
@@ -516,7 +698,7 @@ gateway 리더를 지웠을 때는 인계 4초 동안 191건 중 1건이 실패�
 :::
 
 ---
-<!-- Slide 11: 역방향 -->
+<!-- Slide 15: 역방향 -->
 @type: content
 @title: 반대 방향: 온프렘에서 LB로 들어오면
 
@@ -562,7 +744,7 @@ AWS 문서도 같은 기준을 줍니다. 리전에서 오는 트래픽은 ALB�
 :::
 
 ---
-<!-- Slide 12: 정리 -->
+<!-- Slide 16: 정리 -->
 @type: content
 @title: 정리: 무엇을 확인했고 무엇이 남았나
 
@@ -602,7 +784,7 @@ GPU 추론은 hybrid 노드에서 돌고 클라우드에서 호출됐고, Istio�
 :::
 
 ---
-<!-- Slide 13: 통합 참고 자료 -->
+<!-- Slide 17: 통합 참고 자료 -->
 @type: content
 @title: 참고 자료 & Q&A
 
@@ -678,7 +860,7 @@ GPU 추론은 hybrid 노드에서 돌고 클라우드에서 호출됐고, Istio�
 :::
 
 ---
-<!-- Slide 14: Thank You -->
+<!-- Slide 18: Thank You -->
 @type: thankyou
 @toc: toc.html
 @message: EKS Hybrid Nodes, 감사합니다

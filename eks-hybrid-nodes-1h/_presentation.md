@@ -24,7 +24,7 @@ theme:
 blocks:
   - name: 01-why-architecture
     title: "왜 하이브리드인가, 개념과 아키텍처"
-    duration: 14.5
+    duration: 15.5
   - name: 02-networking
     title: "네트워킹"
     duration: 12
@@ -33,5 +33,5 @@ blocks:
     duration: 7.5
   - name: 04-demo-close
     title: "데모 영상과 마무리"
-    duration: 26
+    duration: 25
 ---

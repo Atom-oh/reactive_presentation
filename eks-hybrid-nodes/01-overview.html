@@ -9,6 +9,9 @@
   <meta name="remarp-source" content="01-overview.md">
   <meta name="remarp-block" content="01-overview">
   <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/deck-overlay.css">
+  <link rel="stylesheet" href="./common/deck-detail.css">
+  <link rel="stylesheet" href="./common/deck-nav.css">
   <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
   <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
   
@@ -16,7 +19,7 @@
 </head>
 <body>
 <div class="slide-deck theme-dark">
-<div class="slide theme-dark" data-remarp-id="s0" style="background:linear-gradient(135deg, #16212f 0%, #0f1b2a 55%, #14243a 100%); padding:0; overflow:hidden;">
+<div class="slide theme-dark" data-remarp-id="s0" data-block="01-overview" data-block-title="EKS Hybrid Nodes" style="background:linear-gradient(135deg, #16212f 0%, #0f1b2a 55%, #14243a 100%); padding:0; overflow:hidden;">
   <div style="position:absolute; top:0; right:0; width:50%; height:60%; background:radial-gradient(ellipse, rgba(255,153,0,0.10) 0%, transparent 70%); pointer-events:none;"></div>
   <div style="position:absolute; left:5%; top:42%; width:80px; height:3px; background:linear-gradient(90deg, var(--accent, #ff9900), rgba(255,153,0,0.25)); border-radius:2px;"></div>
   <h1 style="position:absolute; left:5%; top:45%; font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:60%; margin:0;">EKS Hybrid Nodes</h1>
@@ -28,7 +31,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s1">
+<div class="slide" data-remarp-id="s1" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s1-header"><h2>오늘 세션 구성</h2></div>
   <div class="slide-body" data-remarp-id="s1-body">
     <div class="agenda-timeline">
@@ -105,7 +108,7 @@
 })();</script>
 </div>
 
-<div class="slide" data-remarp-id="s2">
+<div class="slide" data-remarp-id="s2" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s2-header"><h2>온프렘 K8s, 왜 아직도 힘든가</h2></div>
   <div class="slide-body" data-remarp-id="s2-body">
     <p><!-- Slide 3: 온프렘 K8s 운영의 현실 --></p>
@@ -142,7 +145,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s3">
+<div class="slide" data-remarp-id="s3" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s3-header"><h2>Edge 옵션, 책임 경계가 다르다</h2></div>
   <div class="slide-body" data-remarp-id="s3-body">
     <p><!-- Slide 4: Hybrid/Edge 포트폴리오 비교 --></p>
@@ -153,7 +156,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s4">
+<div class="slide" data-remarp-id="s4" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s4-header"><h2>컨트롤 플레인만 AWS에 맡긴다</h2></div>
   <div class="slide-body" data-remarp-id="s4-body">
     <p><!-- Slide 5: EKS Hybrid Nodes란 --></p>
@@ -188,7 +191,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s5">
+<div class="slide" data-remarp-id="s5" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s5-header"><h2>Ready까지 여섯 단계</h2></div>
   <div class="slide-body" data-remarp-id="s5-body">
     <p><!-- Slide 6: 노드 등록 흐름 --></p>
@@ -228,7 +231,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s6">
+<div class="slide" data-remarp-id="s6" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s6-header"><h2>책임은 나뉘고, 데이터는 AWS에</h2></div>
   <div class="slide-body" data-remarp-id="s6-body">
     <p><!-- Slide 7: 책임 공유 모델 --></p>
@@ -263,7 +266,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s7">
+<div class="slide" data-remarp-id="s7" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s7-header"><h2>도입 전 꼭 확인할 6가지 제약</h2></div>
   <div class="slide-body" data-remarp-id="s7-body">
     <p><!-- Slide 8: 주요 제약 --></p>
@@ -301,7 +304,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s8">
+<div class="slide" data-remarp-id="s8" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s8-header"><h2>지원 매트릭스: OS, K8s, CNI</h2></div>
   <div class="slide-body" data-remarp-id="s8-body">
     <div class="tab-bar">
@@ -322,7 +325,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s9">
+<div class="slide" data-remarp-id="s9" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s9-header"><h2>자격 증명: SSM vs IAM RA</h2></div>
   <div class="slide-body" data-remarp-id="s9-body">
     <p><!-- Slide 10: 크리덴셜 프로바이더 --></p>
@@ -366,7 +369,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s10">
+<div class="slide" data-remarp-id="s10" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s10-header"><h2>어떤 자격 증명 방식을 고를까</h2></div>
   <div class="slide-body" data-remarp-id="s10-body">
     <p><!-- Slide 10b: 자격 증명 선택 가이드 --></p>
@@ -417,7 +420,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s11">
+<div class="slide" data-remarp-id="s11" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s11-header"><h2>요금은 vCPU-hour 구간제</h2></div>
   <div class="slide-body" data-remarp-id="s11-body">
     <p><!-- Slide 11: 가격 모델 --></p>
@@ -433,7 +436,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s12">
+<div class="slide" data-remarp-id="s12" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s12-header"><h2>내 환경 비용 직접 계산해보기</h2></div>
   <div class="slide-body" data-remarp-id="s12-body">
     <p><!-- Slide 12: 비용 계산기 --></p>
@@ -497,7 +500,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s13">
+<div class="slide" data-remarp-id="s13" data-block="01-overview" data-block-title="EKS Hybrid Nodes">
   <div class="slide-header" data-remarp-id="s13-header"><h2>Join 전 사전 준비 체크리스트</h2></div>
   <div class="slide-body" data-remarp-id="s13-body">
     <ul class="checklist">
@@ -522,6 +525,9 @@
 </div>
 </div>
 <script src="./common/animation-utils.js"></script>
+<script src="./common/deck-overlay.js"></script>
+<script src="./common/deck-detail.js"></script>
+<script src="./common/deck-nav.js"></script>
 <script src="./common/slide-framework.js"></script>
 <script src="./common/quiz-component.js"></script>
 <script src="./common/presenter-view.js"></script>

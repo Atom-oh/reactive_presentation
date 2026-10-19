@@ -9,6 +9,9 @@
   <meta name="remarp-source" content="03-operations.md">
   <meta name="remarp-block" content="03-operations">
   <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/deck-overlay.css">
+  <link rel="stylesheet" href="./common/deck-detail.css">
+  <link rel="stylesheet" href="./common/deck-nav.css">
   <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
   <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
   
@@ -16,12 +19,12 @@
 </head>
 <body>
 <div class="slide-deck theme-dark">
-<div class="slide title-slide" data-remarp-id="s0">
+<div class="slide title-slide" data-remarp-id="s0" data-block="03-operations" data-block-title="4부: 운영">
     <h1>4부: 운영</h1>
   <p class="meta">붙인 뒤의 일: 수명 주기, 단절, 버스팅</p>
 </div>
 
-<div class="slide" data-remarp-id="s1">
+<div class="slide" data-remarp-id="s1" data-block="03-operations" data-block-title="4부: 운영">
   <div class="slide-header" data-remarp-id="s1-header"><h2>노드 수명 주기: 업그레이드는 교체가 기본</h2></div>
   <div class="slide-body" data-remarp-id="s1-body">
     <p><!-- Slide 2: 노드 라이프사이클과 업그레이드 --></p>
@@ -68,7 +71,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s2">
+<div class="slide" data-remarp-id="s2" data-block="03-operations" data-block-title="4부: 운영">
   <div class="slide-header" data-remarp-id="s2-header"><h2>연결이 끊기면: 300초와 1시간</h2></div>
   <div class="slide-body" data-remarp-id="s2-body">
     <p><!-- Slide 3: 네트워크 단절 시 동작 --></p>
@@ -97,7 +100,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s3">
+<div class="slide" data-remarp-id="s3" data-block="03-operations" data-block-title="4부: 운영">
   <div class="slide-header" data-remarp-id="s3-header"><h2>버스팅: 온프렘 먼저, 넘치면 클라우드</h2></div>
   <div class="slide-body" data-remarp-id="s3-body">
     <p><!-- Slide 4: 버스팅 전략 --></p>
@@ -131,6 +134,9 @@
 </div>
 </div>
 <script src="./common/animation-utils.js"></script>
+<script src="./common/deck-overlay.js"></script>
+<script src="./common/deck-detail.js"></script>
+<script src="./common/deck-nav.js"></script>
 <script src="./common/slide-framework.js"></script>
 <script src="./common/quiz-component.js"></script>
 <script src="./common/presenter-view.js"></script>

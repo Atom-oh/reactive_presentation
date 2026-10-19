@@ -9,6 +9,9 @@
   <meta name="remarp-source" content="03-node-lifecycle.md">
   <meta name="remarp-block" content="03-node-lifecycle">
   <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/deck-overlay.css">
+  <link rel="stylesheet" href="./common/deck-detail.css">
+  <link rel="stylesheet" href="./common/deck-nav.css">
   <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
   <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
   
@@ -16,12 +19,12 @@
 </head>
 <body>
 <div class="slide-deck theme-dark">
-<div class="slide title-slide" data-remarp-id="s0">
+<div class="slide title-slide" data-remarp-id="s0" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
     <h1>3부: 노드 부트스트랩 & 라이프사이클</h1>
   <p class="meta">사전 준비 → nodeadm → Cilium → 업그레이드 → 트러블슈팅 → 크리덴셜</p>
 </div>
 
-<div class="slide" data-remarp-id="s1">
+<div class="slide" data-remarp-id="s1" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s1-header"><h2>조인 전에 끝낼 AWS 사전 준비</h2></div>
   <div class="slide-body" data-remarp-id="s1-body">
     <div class="tab-bar">
@@ -66,7 +69,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s2">
+<div class="slide" data-remarp-id="s2" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s2-header"><h2>nodeadm: 명령은 여섯 개뿐</h2></div>
   <div class="slide-body" data-remarp-id="s2-body">
     <p><!-- Slide 3: nodeadm 개요 --></p>
@@ -92,7 +95,7 @@ sudo install -m 0755 <span class="string">"$STAGING_DIR/nodeadm"</span> /usr/loc
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s3">
+<div class="slide" data-remarp-id="s3" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s3-header"><h2>부트스트랩은 다섯 걸음</h2></div>
   <div class="slide-body" data-remarp-id="s3-body">
     <p><!-- Slide 4: 부트스트랩 워크플로우 --></p>
@@ -115,7 +118,7 @@ sudo install -m 0755 <span class="string">"$STAGING_DIR/nodeadm"</span> /usr/loc
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s4">
+<div class="slide" data-remarp-id="s4" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s4-header"><h2>NodeConfig는 공급자 하나로 충분</h2></div>
   <div class="slide-body" data-remarp-id="s4-body">
     <div class="tab-bar">
@@ -163,7 +166,7 @@ sudo install -m 0755 <span class="string">"$STAGING_DIR/nodeadm"</span> /usr/loc
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s5">
+<div class="slide" data-remarp-id="s5" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s5-header"><h2>Bottlerocket은 nodeadm이 없다</h2></div>
   <div class="slide-body" data-remarp-id="s5-body">
     <div class="columns">
@@ -198,7 +201,7 @@ user-data = <span class="string">"REPLACE_WITH_BASE64_PROVIDER_BOOTSTRAP_INPUT"<
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s6">
+<div class="slide" data-remarp-id="s6" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s6-header"><h2>Bottlerocket 조인과 운영의 차이</h2></div>
   <div class="slide-body" data-remarp-id="s6-body">
     <p><!-- Slide 6b: Bottlerocket 조인과 운영 --></p>
@@ -232,7 +235,7 @@ user-data = <span class="string">"REPLACE_WITH_BASE64_PROVIDER_BOOTSTRAP_INPUT"<
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s7">
+<div class="slide" data-remarp-id="s7" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s7-header"><h2>containerd 소스는 OS가 정한다</h2></div>
   <div class="slide-body" data-remarp-id="s7-body">
     <p><!-- Slide 7: containerd 소스 --></p>
@@ -255,7 +258,7 @@ user-data = <span class="string">"REPLACE_WITH_BASE64_PROVIDER_BOOTSTRAP_INPUT"<
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s8">
+<div class="slide" data-remarp-id="s8" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s8-header"><h2>베어메탈은 이미지로 찍어낸다</h2></div>
   <div class="slide-body" data-remarp-id="s8-body">
     <p><!-- Slide 8: 베어메탈 이미지 --></p>
@@ -277,7 +280,7 @@ packer validate -syntax-only hybrid-nodes-template.pkr.hcl</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s9">
+<div class="slide" data-remarp-id="s9" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s9-header"><h2>Cilium: 하이브리드 노드에만 설치</h2></div>
   <div class="slide-body" data-remarp-id="s9-body">
     <div class="tab-bar">
@@ -325,7 +328,7 @@ packer validate -syntax-only hybrid-nodes-template.pkr.hcl</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s10">
+<div class="slide" data-remarp-id="s10" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s10-header"><h2>마스크가 노드당 Pod 수를 정한다</h2></div>
   <div class="slide-body" data-remarp-id="s10-body">
     <p><!-- Slide 10: Pod CIDR / maxPods --></p>
@@ -351,7 +354,7 @@ packer validate -syntax-only hybrid-nodes-template.pkr.hcl</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s11">
+<div class="slide" data-remarp-id="s11" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s11-header"><h2>라벨은 하나, 테인트는 없다</h2></div>
   <div class="slide-body" data-remarp-id="s11-body">
     <p><!-- Slide 11: 노드 등록 확인 + 라벨/테인트 --></p>
@@ -374,7 +377,7 @@ kubectl -n kube-system get pods -o wide | grep cilium</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s12">
+<div class="slide" data-remarp-id="s12" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s12-header"><h2>kubelet 튜닝: 예약, 축출, maxPods</h2></div>
   <div class="slide-body" data-remarp-id="s12-body">
     <div class="tab-bar">
@@ -423,7 +426,7 @@ kubectl -n kube-system get pods -o wide | grep cilium</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s13">
+<div class="slide" data-remarp-id="s13" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s13-header"><h2>업그레이드는 교체가 기본이다</h2></div>
   <div class="slide-body" data-remarp-id="s13-body">
     <div class="tab-bar">
@@ -446,7 +449,7 @@ kubectl -n kube-system get pods -o wide | grep cilium</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s14">
+<div class="slide" data-remarp-id="s14" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s14-header"><h2>1.37 업그레이드 전 필수 점검</h2></div>
   <div class="slide-body" data-remarp-id="s14-body">
     <div class="tab-bar">
@@ -470,7 +473,7 @@ kubectl -n kube-system get pods -o wide | grep cilium</div>
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s15">
+<div class="slide" data-remarp-id="s15" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s15-header"><h2>제한망 ≠ 단절: AWS 연결은 필수</h2></div>
   <div class="slide-body" data-remarp-id="s15-body">
     <div class="tab-bar">
@@ -498,7 +501,7 @@ sudo nodeadm init --config-source file:<span class="comment">///etc/eks/nodeconf
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s16">
+<div class="slide" data-remarp-id="s16" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s16-header"><h2>장애는 증상별로 좁혀 간다</h2></div>
   <div class="slide-body" data-remarp-id="s16-body">
     <div class="tab-bar">
@@ -529,7 +532,7 @@ sudo nodeadm debug --config-source file:<span class="comment">///etc/eks/nodecon
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s17">
+<div class="slide" data-remarp-id="s17" data-block="03-node-lifecycle" data-block-title="3부: 노드 부트스트랩 &amp; 라이프사이클">
   <div class="slide-header" data-remarp-id="s17-header"><h2>크리덴셜 만료를 먼저 감시하라</h2></div>
   <div class="slide-body" data-remarp-id="s17-body">
     <div class="tab-bar">
@@ -562,6 +565,9 @@ aws rolesanywhere update-trust-anchor --trust-anchor-id <span class="string">"$T
 </div>
 </div>
 <script src="./common/animation-utils.js"></script>
+<script src="./common/deck-overlay.js"></script>
+<script src="./common/deck-detail.js"></script>
+<script src="./common/deck-nav.js"></script>
 <script src="./common/slide-framework.js"></script>
 <script src="./common/quiz-component.js"></script>
 <script src="./common/presenter-view.js"></script>

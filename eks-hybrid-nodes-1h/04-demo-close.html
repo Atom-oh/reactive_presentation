@@ -9,6 +9,9 @@
   <meta name="remarp-source" content="04-demo-close.md">
   <meta name="remarp-block" content="04-demo-close">
   <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/deck-overlay.css">
+  <link rel="stylesheet" href="./common/deck-detail.css">
+  <link rel="stylesheet" href="./common/deck-nav.css">
   <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
   <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
   
@@ -16,12 +19,12 @@
 </head>
 <body>
 <div class="slide-deck theme-dark">
-<div class="slide title-slide" data-remarp-id="s0">
+<div class="slide title-slide" data-remarp-id="s0" data-block="04-demo-close" data-block-title="5부: 데모 영상">
     <h1>5부: 데모 영상</h1>
   <p class="meta">실제로 돌려 본 결과: Gateway 전환, 버스팅, ALB, GPU</p>
 </div>
 
-<div class="slide" data-remarp-id="s1">
+<div class="slide" data-remarp-id="s1" data-block="04-demo-close" data-block-title="5부: 데모 영상">
   <div class="slide-header" data-remarp-id="s1-header"><h2>온프렘은 시뮬레이션: EC2 호스트와 TGW</h2></div>
   <div class="slide-body" data-remarp-id="s1-body">
     <p><!-- Slide 2: 시뮬레이션 환경 --></p>
@@ -60,7 +63,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s2" data-fit="off">
+<div class="slide" data-remarp-id="s2" data-fit="off" data-block="04-demo-close" data-block-title="5부: 데모 영상">
   <div class="slide-header" data-remarp-id="s2-header"><h2>V1: Gateway 리더가 죽으면</h2></div>
   <div class="slide-body" data-remarp-id="s2-body">
     <p><!-- Slide 3: V1 영상 --></p>
@@ -81,7 +84,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s3">
+<div class="slide" data-remarp-id="s3" data-block="04-demo-close" data-block-title="5부: 데모 영상">
   <div class="slide-header" data-remarp-id="s3-header"><h2>V1 결과: 전환은 3~5초, 실패는 1~2건</h2></div>
   <div class="slide-body" data-remarp-id="s3-body">
     <p><!-- Slide 4: V1 결과 --></p>
@@ -112,7 +115,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s4" data-fit="off">
+<div class="slide" data-remarp-id="s4" data-fit="off" data-block="04-demo-close" data-block-title="5부: 데모 영상">
   <div class="slide-header" data-remarp-id="s4-header"><h2>V2: 넘칠 때와 줄일 때</h2></div>
   <div class="slide-body" data-remarp-id="s4-body">
     <p><!-- Slide 5: V2 영상 --></p>
@@ -133,7 +136,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s5">
+<div class="slide" data-remarp-id="s5" data-block="04-demo-close" data-block-title="5부: 데모 영상">
   <div class="slide-header" data-remarp-id="s5-header"><h2>V2 결과: 온프렘 Pod를 지킨 것은 B와 C</h2></div>
   <div class="slide-body" data-remarp-id="s5-body">
     <p><!-- Slide 6: V2 결과 --></p>
@@ -166,7 +169,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s6" data-fit="off">
+<div class="slide" data-remarp-id="s6" data-fit="off" data-block="04-demo-close" data-block-title="5부: 데모 영상">
   <div class="slide-header" data-remarp-id="s6-header"><h2>V3: ALB ip 타깃과 온프렘에서 들어오는 길</h2></div>
   <div class="slide-body" data-remarp-id="s6-body">
     <p><!-- Slide 7: V3 영상 --></p>
@@ -187,7 +190,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s7">
+<div class="slide" data-remarp-id="s7" data-block="04-demo-close" data-block-title="5부: 데모 영상">
   <div class="slide-header" data-remarp-id="s7-header"><h2>V3 결과: 타깃은 LBC가, 온프렘 진입은 internal LB로</h2></div>
   <div class="slide-body" data-remarp-id="s7-body">
     <p><!-- Slide 8: V3 결과 --></p>
@@ -219,7 +222,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s8">
+<div class="slide" data-remarp-id="s8" data-block="04-demo-close" data-block-title="5부: 데모 영상">
   <div class="slide-header" data-remarp-id="s8-header"><h2>V4: 온프렘 GPU 추론을 클라우드에서 호출</h2></div>
   <div class="slide-body" data-remarp-id="s8-body">
     <p><!-- Slide 9: V4 영상과 결과 --></p>
@@ -252,7 +255,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s9">
+<div class="slide" data-remarp-id="s9" data-block="04-demo-close" data-block-title="5부: 데모 영상">
   <div class="slide-header" data-remarp-id="s9-header"><h2>Istio sidecar는 Gateway와 함께 동작했다</h2></div>
   <div class="slide-body" data-remarp-id="s9-body">
     <p><!-- Slide 10: Istio 공존 --></p>
@@ -285,7 +288,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s10">
+<div class="slide" data-remarp-id="s10" data-block="04-demo-close" data-block-title="5부: 데모 영상">
   <div class="slide-header" data-remarp-id="s10-header"><h2>6부: 도입 전에 정할 여섯 가지</h2></div>
   <div class="slide-body" data-remarp-id="s10-body">
     <p><!-- Slide 11: 도입 판단 체크리스트 --></p>
@@ -308,7 +311,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s11">
+<div class="slide" data-remarp-id="s11" data-block="04-demo-close" data-block-title="5부: 데모 영상">
   <div class="slide-header" data-remarp-id="s11-header"><h2>다음 단계와 참고 자료</h2></div>
   <div class="slide-body" data-remarp-id="s11-body">
     <p><!-- Slide 12: 다음 단계와 참고 자료 --></p>
@@ -345,7 +348,7 @@
   </div>
 </div>
 
-<div class="slide" data-remarp-id="s12">
+<div class="slide" data-remarp-id="s12" data-block="04-demo-close" data-block-title="5부: 데모 영상">
   <div class="center-content" style="height:100%; gap:1.5rem;">
     <h1 style="font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:calc(var(--fs-title) * 1.5); color:var(--text-primary);">Thank You</h1>
     <p style="color:var(--text-secondary); font-size:1.1rem;">EKS Hybrid Nodes, 감사합니다</p>
@@ -357,6 +360,9 @@
 </div>
 </div>
 <script src="./common/animation-utils.js"></script>
+<script src="./common/deck-overlay.js"></script>
+<script src="./common/deck-detail.js"></script>
+<script src="./common/deck-nav.js"></script>
 <script src="./common/slide-framework.js"></script>
 <script src="./common/quiz-component.js"></script>
 <script src="./common/presenter-view.js"></script>

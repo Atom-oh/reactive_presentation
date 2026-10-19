@@ -40,8 +40,6 @@ block: 01-why-architecture
 5. 데모 영상
 6. 마무리
 
-> 질문은 마지막에 한 번에 받겠습니다.
-
 :::notes
 {timing: 0.5min}
 [요약]
@@ -50,8 +48,6 @@ block: 01-why-architecture
 - 5, 6부: 데모 영상과 도입 판단 체크리스트
 
 여섯 파트로 진행합니다. 먼저 왜 하이브리드가 필요한지 보고, 개념과 아키텍처, 네트워킹, 운영 순서로 갑니다. 그다음 실제 클러스터에서 측정한 결과를 영상으로 보여 드리고, 도입 판단 기준으로 마무리합니다.
-{cue: pause}
-질문은 마지막에 한 번에 받겠습니다.
 {cue: transition}
 먼저 고객들이 왜 하이브리드를 찾는지부터 보겠습니다.
 :::
@@ -302,7 +298,7 @@ EKS Anywhere는 컨트롤 플레인까지 고객이 운영하고, Hybrid Nodes�
 :::
 
 :::notes
-{timing: 2.5min}
+{timing: 1.5min}
 [요약]
 - 노드가 보고한 vCPU-hours를 월 단위로 누적한 구간 요금: $0.020에서 $0.006까지
 - Join부터 제거까지 과금되며 idle이어도 계속됩니다.
@@ -311,14 +307,142 @@ EKS Anywhere는 컨트롤 플레인까지 고객이 운영하고, Hybrid Nodes�
 요금은 노드가 보고하는 vCPU-hours를 월 단위로 누적해서 구간별로 계산합니다. 처음 57만 6천 vCPU-hours까지는 0.020달러이고, 사용량이 늘수록 단가가 내려가서 1,152만 초과분은 0.006달러입니다. 모든 사용량에 0.01달러가 고정으로 붙는 구조가 아닙니다.
 {cue: pause}
 오른쪽 표는 노드당 32 vCPU, 월 730시간을 가정한 계산 모델입니다. 50노드면 월 1,168,000 vCPU-hours이고, 구간을 적용하면 월 19,744달러, 연환산 236,928달러입니다. 클러스터 요금 876달러를 더하면 237,804달러입니다.
-주의할 점이 두 가지 있습니다. 노드는 join된 시점부터 과금되고 workload가 놀아도 멈추지 않습니다. 그리고 hyperthreading을 켠 베어메탈은 코어 하나가 vCPU 2개로 보고될 수 있고, 머신당 32 vCPU를 넘으면 account team과 상담하라고 안내되어 있습니다. 하드웨어, 전력, OS 구독, 인력 비용은 빠진 숫자이니 조직의 TCO 모델에 넣어서 비교하시기 바랍니다. GPU 서버 규모로 직접 계산해 보는 계산기는 Deep Dive 1부에 있습니다.
+주의할 점이 두 가지 있습니다. 노드는 join된 시점부터 과금되고 workload가 놀아도 멈추지 않습니다. 그리고 hyperthreading을 켠 베어메탈은 코어 하나가 vCPU 2개로 보고될 수 있고, 머신당 32 vCPU를 넘으면 account team과 상담하라고 안내되어 있습니다. 하드웨어, 전력, OS 구독, 인력 비용은 빠진 숫자이니 조직의 TCO 모델에 넣어서 비교하시기 바랍니다.
 근거: Deep Dive 1부 "요금은 vCPU-hour 구간제", 4부 "비용은 vCPU-hour 구간 과금"(가정 문단과 표). https://aws.amazon.com/eks/pricing/ (Deep Dive 확인일 2026-10-11). 발표 직전에 최신 요금표 재확인 필요.
+{cue: transition}
+32 vCPU는 작은 서버 기준입니다. GPU 서버 규모로 직접 숫자를 넣어 보겠습니다.
+:::
+
+---
+<!-- Slide 8: 비용 계산기 -->
+@type: content
+@title: 내 환경 비용 직접 계산해보기
+
+## 내 환경 비용 직접 계산해보기
+
+:::html
+<style>
+.hn-calc { display: flex; flex-direction: column; gap: var(--space-3); }
+.hn-controls { display: flex; flex-direction: column; gap: var(--space-2); }
+.hn-row { display: grid; grid-template-columns: 8rem 1fr; align-items: center; gap: var(--space-3); }
+.hn-row label { color: var(--text-secondary); }
+.hn-presets { display: flex; gap: var(--space-2); }
+.hn-presets .btn { color: var(--on-surface); }
+.hn-smt { display: flex; align-items: center; gap: var(--space-3); }
+.hn-smt label { display: inline-flex; align-items: center; gap: var(--space-2); }
+.hn-smt input { accent-color: var(--accent); }
+.hn-calc .slider-value { min-width: 6rem; }
+.hn-calc .metric-value { font-size: var(--fs-subtitle); white-space: nowrap; }
+.hn-calc .callout-warning { color: var(--on-surface); background: color-mix(in srgb, var(--warning) 12%, var(--surface-1)); }
+.hn-break { color: var(--text-secondary); font-size: var(--fs-caption); }
+</style>
+<div class="hn-calc">
+  <div class="hn-controls">
+    <div class="hn-row">
+      <label for="hn-nodes">노드 수</label>
+      <div class="slider-container">
+        <input type="range" id="hn-nodes" min="1" max="200" step="1" value="10">
+        <span class="slider-value" id="hn-nodes-v">10</span>
+      </div>
+    </div>
+    <div class="hn-row">
+      <label for="hn-cores">CPU 코어/노드</label>
+      <div class="slider-container">
+        <input type="range" id="hn-cores" min="32" max="216" step="8" value="128" aria-describedby="hn-core-guide">
+        <span class="slider-value" id="hn-cores-v">128코어</span>
+      </div>
+    </div>
+    <div class="hn-row">
+      <label for="hn-smt">SMT / HT</label>
+      <div class="hn-smt">
+        <label><input type="checkbox" id="hn-smt" checked> 코어당 2 vCPU</label>
+        <span class="hn-break" id="hn-vcpu-v" aria-live="polite">과금 기준: 256 vCPU/노드</span>
+      </div>
+    </div>
+    <div class="hn-break" id="hn-core-guide">GPU 서버 가정: 물리 CPU 32~216코어, 기본 128코어, SMT 해제 시 코어당 1 vCPU</div>
+    <div class="hn-presets">
+      <button class="btn btn-sm" id="hn-p10">10 GPU 노드</button>
+      <button class="btn btn-sm" id="hn-p50">50 GPU 노드</button>
+      <button class="btn btn-sm" id="hn-p100">100 GPU 노드</button>
+    </div>
+  </div>
+  <div class="card-grid">
+    <div class="metric-card"><div class="metric-value" id="hn-hours">-</div><div class="metric-label">월 vCPU-hours</div></div>
+    <div class="metric-card"><div class="metric-value" id="hn-month">-</div><div class="metric-label">월 노드 요금</div></div>
+    <div class="metric-card"><div class="metric-value" id="hn-year">-</div><div class="metric-label">연환산 노드 요금</div></div>
+    <div class="metric-card"><div class="metric-value" id="hn-year-cl">-</div><div class="metric-label">연환산 + 클러스터 1개</div></div>
+  </div>
+  <div class="hn-break" id="hn-break"></div>
+  <div class="hn-break">공개 요율 기반 계산, 32 vCPU/머신 초과는 account team에 요금 확인, 실제 노드가 보고한 CPU 수 기준</div>
+  <div class="callout callout-warning fragment fade-up" data-fragment-index="1">
+    <strong>추정치입니다.</strong> 월 730시간, 동일 리전, 계정 합산, 같은 월을 12번 반복한 연환산입니다. 마지막 카드는 표준 지원 클러스터 1개($876/년)를 더합니다. GPU 구매, 전력, 네트워크, 로그, 스토리지, EC2, OS, 인력 비용은 제외입니다.
+  </div>
+</div>
+:::
+
+:::script
+var NODES = document.getElementById('hn-nodes');
+var CORES = document.getElementById('hn-cores');
+var SMT = document.getElementById('hn-smt');
+var TIERS = [[576000, 0.020], [576000, 0.014], [4608000, 0.010], [5760000, 0.008], [Infinity, 0.006]];
+var HOURS = 730;
+var CLUSTER_YEAR = 0.10 * HOURS * 12;
+function fmtInt(n) { return Math.round(n).toLocaleString('en-US'); }
+function fmtUsd(n) { return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function calc(vcpuHours) {
+  var left = vcpuHours, total = 0, parts = [];
+  for (var i = 0; i < TIERS.length && left > 0; i++) {
+    var used = Math.min(left, TIERS[i][0]);
+    total += used * TIERS[i][1];
+    parts.push(fmtInt(used) + ' × $' + TIERS[i][1].toFixed(3));
+    left -= used;
+  }
+  return { total: total, parts: parts };
+}
+function update() {
+  var n = parseInt(NODES.value, 10);
+  var cores = parseInt(CORES.value, 10);
+  var v = cores * (SMT.checked ? 2 : 1);
+  var hours = n * v * HOURS;
+  var r = calc(hours);
+  document.getElementById('hn-nodes-v').textContent = n;
+  document.getElementById('hn-cores-v').textContent = cores + '코어';
+  document.getElementById('hn-vcpu-v').textContent = '과금 기준: ' + v + ' vCPU/노드';
+  document.getElementById('hn-hours').textContent = fmtInt(hours);
+  document.getElementById('hn-month').textContent = fmtUsd(r.total);
+  document.getElementById('hn-year').textContent = fmtUsd(r.total * 12);
+  document.getElementById('hn-year-cl').textContent = fmtUsd(r.total * 12 + CLUSTER_YEAR);
+  document.getElementById('hn-break').textContent = '구간 계산: ' + r.parts.join(' + ');
+}
+function preset(n) { NODES.value = n; update(); }
+NODES.addEventListener('input', update);
+CORES.addEventListener('input', update);
+SMT.addEventListener('change', update);
+document.getElementById('hn-p10').addEventListener('click', function () { preset(10); });
+document.getElementById('hn-p50').addEventListener('click', function () { preset(50); });
+document.getElementById('hn-p100').addEventListener('click', function () { preset(100); });
+update();
+:::
+
+:::notes
+{timing: 2min}
+[요약]
+- 노드 수, 노드당 물리 CPU 코어(32~216), SMT 사용 여부를 넣으면 월 vCPU-hours와 월, 연 요금이 바로 계산됩니다.
+- 기본값(128코어, SMT 사용, 730시간)에서 10/50/100노드 연 요금은 $321,024 / $1,132,032 / $1,857,024, 클러스터 1개를 더하면 $321,900 / $1,132,908 / $1,857,900입니다.
+- 머신당 32 vCPU를 넘으면 account team에 요금을 확인해야 하는 추정치입니다.
+
+앞 슬라이드의 32 vCPU는 작은 서버 기준이었습니다. GPU 서버는 물리 CPU가 128코어 정도이고 SMT를 켜면 Kubernetes가 노드당 256 vCPU를 보고합니다. GPU 연산 코어가 아니라 호스트 CPU 기준이라는 점을 짚어 주세요.
+{cue: demo}
+10 GPU 노드 프리셋을 누르면 월 1,868,800 vCPU-hours, 월 26,752달러, 연 321,024달러입니다. 50, 100노드 프리셋도 눌러 보고, 코어 슬라이더와 SMT 체크를 바꿔 노드당 과금 vCPU가 어떻게 달라지는지 보여 주세요. 아래 "구간 계산" 줄에 각 요율에 들어간 사용량이 나옵니다.
+{cue: pause}
+공개 구간 요율을 그대로 늘려 적용한 추정치입니다. AWS는 머신당 32 vCPU를 넘으면 account team에 추가 요금 정보를 확인하도록 안내합니다. 최종 견적은 실제 노드가 보고하는 CPU 수와 계약 조건으로 확인하고, GPU 구매비, 전력, OS 구독, 네트워크, 인력 비용은 따로 더해야 합니다.
+근거: Deep Dive 1부 "내 환경 비용 직접 계산해보기"와 같은 계산기. https://aws.amazon.com/eks/pricing/ 「Amazon EKS Hybrid Nodes pricing」(Deep Dive 확인일 2026-10-11). 직접 재계산: 10노드 월 576,000×0.020+576,000×0.014+716,800×0.010=$26,752.
 {cue: transition}
 다음은 어떤 서버를 노드로 쓸 수 있는지 보겠습니다.
 :::
 
 ---
-<!-- Slide 8: 지원 OS와 노드 준비 -->
+<!-- Slide 9: 지원 OS와 노드 준비 -->
 @type: content
 @title: 지원 OS와 노드 준비
 
@@ -371,7 +495,7 @@ EKS Anywhere는 컨트롤 플레인까지 고객이 운영하고, Hybrid Nodes�
 :::
 
 ---
-<!-- Slide 9: 자격 증명 선택 -->
+<!-- Slide 10: 자격 증명 선택 -->
 @type: content
 @title: 어떤 자격 증명 방식을 고를까
 

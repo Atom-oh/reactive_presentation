@@ -2,6 +2,7 @@
 title: "EKS Hybrid Nodes를 직접 돌려 봤습니다: gateway를 아껴 써야 하는 이유부터 SNAT 없는 연결, PrivateLink, 링크 단절까지"
 date: 2026-10-19
 description: "온프렘을 시뮬레이션한 클러스터에서 Hybrid Nodes gateway, bursting, GPU 추론, ALB, Pod IP 가시성, PrivateLink, CoreDNS 단절을 실측한 기록"
+canonical: "https://blog.atomai.click/eks-hybrid-nodes-demos/"
 ---
 
 # EKS Hybrid Nodes를 직접 돌려 봤습니다: gateway를 아껴 써야 하는 이유부터 SNAT 없는 연결, PrivateLink, 링크 단절까지

@@ -1,0 +1,7 @@
+{"ts": "2026-10-19T14:01:12+0000", "user": "dev01", "group": "it-dev", "model": "anthropic.claude-sonnet-5", "op": "invoke-with-response-stream", "decision": "ALLOW", "reason": "bedrock:200", "latency_ms": 1780, "input_tokens": 28950, "output_tokens": 87}
+{"ts": "2026-10-19T14:01:18+0000", "user": "dev01", "group": "it-dev", "model": "anthropic.claude-sonnet-5", "op": "invoke-with-response-stream", "decision": "BLOCK", "reason": "dlp:주민등록번호", "sample": "9001**********"}
+{"ts": "2026-10-19T14:01:18+0000", "user": "dev01", "group": "it-dev", "model": "anthropic.claude-sonnet-5", "op": "invoke-with-response-stream", "decision": "BLOCK", "reason": "dlp:주민등록번호", "sample": "9001**********"}
+{"ts": "2026-10-19T14:01:25+0000", "user": "dev01", "group": "it-dev", "model": "global.anthropic.claude-opus-5-5", "op": "invoke-with-response-stream", "decision": "BLOCK", "reason": "model_not_allowed"}
+{"ts": "2026-10-19T14:01:25+0000", "user": "dev01", "group": "it-dev", "model": "global.anthropic.claude-opus-5-5", "op": "invoke-with-response-stream", "decision": "BLOCK", "reason": "model_not_allowed"}
+{"ts": "2026-10-19T14:01:30+0000", "user": "(unknown)", "model": "anthropic.claude-sonnet-5", "op": "invoke-with-response-stream", "decision": "BLOCK", "reason": "auth"}
+{"ts": "2026-10-19T14:01:30+0000", "user": "(unknown)", "model": "anthropic.claude-sonnet-5", "op": "invoke-with-response-stream", "decision": "BLOCK", "reason": "auth"}

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>규제: 세 개의 문과 선행 사례</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="01-regulation.md">
+  <meta name="remarp-block" content="01-regulation">
+  <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/deck-overlay.css">
+  <link rel="stylesheet" href="./common/deck-detail.css">
+  <link rel="stylesheet" href="./common/deck-nav.css">
+  
+  <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
+  
+  <script>window.__remarpTheme = {"colors": {}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}};</script>
+</head>
+<body>
+<div class="slide-deck">
+<div class="slide theme-dark" data-remarp-id="s0" data-block="01-regulation" data-block-title="Claude Code for FSI" style="background:linear-gradient(135deg, #16212f 0%, #0f1b2a 55%, #14243a 100%); padding:0; overflow:hidden;">
+  <div style="position:absolute; top:-20%; right:-10%; width:60%; height:80%; background:radial-gradient(ellipse, rgba(255,153,0,0.10) 0%, transparent 70%); pointer-events:none;"></div>
+  <div style="position:absolute; left:5%; top:42%; width:80px; height:3px; background:linear-gradient(90deg, var(--accent, #ff9900), rgba(255,153,0,0.25)); border-radius:2px;"></div>
+  <h1 style="position:absolute; left:5%; top:45%; font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:60%; margin:0;">Claude Code for FSI</h1>
+  <p style="position:absolute; left:5%; top:60%; font-size:1.3rem; color:rgba(255,255,255,0.7); width:60%; margin:0;">5호망 단말에서 AI 코딩 에이전트를 안전하게 도입하는 방법</p>
+  <div style="position:absolute; left:5%; top:75%;">
+    <p style="font-size:1.05rem; color:#fff; font-weight:600; margin:0;">하나증권, Claude Code on Amazon Bedrock</p>
+    <p style="font-size:0.9rem; color:rgba(255,255,255,0.6); margin:6px 0 0 0;"></p>
+    <p style="font-size:0.9rem; color:rgba(255,255,255,0.6); margin:2px 0 0 0;"></p>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s1" data-block="01-regulation" data-block-title="Claude Code for FSI">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>오늘 세션 구성</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <div class="agenda-timeline">
+            <div class="agenda-step active">
+          <div class="agenda-dot">1</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>규제: 세 개의 문</strong>
+            <span>21분</span>
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">2</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>타사 사례와 랜딩존, 네트워크</strong>
+            <span>22분</span>
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">3</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>MCP Hub와 LLM Gateway, 데모 영상 2편</strong>
+            <span>25분</span>
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">4</div>
+          
+          <div class="agenda-label">
+            <strong>구축 방안, 하네스 데모, 도입 경로</strong>
+            <span>22분</span>
+          </div>
+        </div>
+    </div>
+    
+  </div>
+  
+<script>(function() {
+  const slide = document.currentScript.closest('.slide');
+  if (!slide) return;
+  const steps = slide.querySelectorAll('.agenda-step:not(.break)');
+  const connectors = slide.querySelectorAll('.agenda-connector');
+  let current = 0;
+  function update() {
+    steps.forEach((s, i) => {
+      s.classList.remove('active', 'done');
+      if (i < current) s.classList.add('done');
+      else if (i === current) s.classList.add('active');
+    });
+    connectors.forEach((c, i) => {
+      c.classList.toggle('done', i < current);
+    });
+  }
+  update();
+  slide.__canvasStep = function(dir) {
+    if (dir === 'next' && current < steps.length - 1) current++;
+    else if (dir === 'prev' && current > 0) current--;
+    else return false;
+    update();
+    return current;
+  };
+  slide.dataset.slideAction = 'canvas-step';
+  slide.dataset.canvasMaxStep = String(steps.length - 1);
+})();</script>
+</div>
+
+<div class="slide" data-remarp-id="s2" data-block="01-regulation" data-block-title="Claude Code for FSI">
+  <div class="slide-header" data-remarp-id="s2-header"><h2>같은 증권업에서 이미 문을 통과했다</h2></div>
+  <div class="slide-body" data-remarp-id="s2-body">
+    <p><!-- Slide 3: 선행 사례 --></p>
+<style>
+.cf-muted { color: var(--on-surface-muted); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.cf-src { color: var(--on-surface-muted); font-size: var(--fs-caption); margin-top: var(--space-2); word-break: keep-all; }
+.cf-accent  { color: color-mix(in srgb, var(--accent) 72%, var(--on-surface));  font-weight: var(--weight-bold); }
+.cf-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.cf-success { color: var(--success); font-weight: var(--weight-bold); }
+.cf-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.cf-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.cf-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.cf-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+.cf-big { font-size: var(--text-4xl); font-weight: var(--weight-bold); line-height: 1.1; }
+.cf-stack { display: flex; flex-direction: column; gap: var(--space-3); }
+.cf-pill { display: inline-block; padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); background: var(--surface-2); font-size: var(--fs-card); margin: var(--space-1); }
+.cf-btns { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3); }
+.cf-btn { border: 1px solid color-mix(in srgb, var(--on-surface) 20%, transparent); background: var(--surface-1); color: var(--on-surface); padding: var(--space-2) var(--space-4); border-radius: var(--radius-pill); font-size: var(--fs-card); cursor: pointer; }
+.cf-btn.on { background: var(--accent); color: var(--accent-on); border-color: var(--accent); }
+.cf-panel { background: var(--surface-2); border-radius: var(--radius-md); padding: var(--space-4); }
+.data-table th { text-transform: none; letter-spacing: normal; }
+.data-table td, .data-table th { word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="cf-grid-2">
+  <div class="metric-card fragment zoom-in" data-fragment-index="1">
+    <div class="cf-big cf-success">적합</div>
+    <div class="cf-muted">금융보안원 「생성형 AI 연계 이용 보안대책 평가」에서 국내 금융권 최초 적합 판정 (2026.06). 5호 단말에서 Claude Code를 쓰는 구성</div>
+    <div class="cf-src">출처: AWS Financial Services Forum Seoul 2026, KB증권 발표</div>
+  </div>
+  <div class="metric-card fragment zoom-in" data-fragment-index="2">
+    <div class="cf-big cf-accent">28%</div>
+    <div class="cf-muted">베타테스터 1명이 1.2만 줄 레거시 코드를 한 달 만에 리팩토링. 코드량 28% 감소, 취약점 제거</div>
+    <div class="cf-src">출처: 동일 발표, 디지털데일리 2026.08.27</div>
+  </div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="3">
+  <strong class="cf-info">오늘의 관점</strong>: 하나증권은 처음 가는 길이 아니라, 검증된 길을 재현하고 더 빨리 통과하는 문제입니다.
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s3" data-block="01-regulation" data-block-title="Claude Code for FSI">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>금융 클라우드 규제는 10년간 열려왔다</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body">
+    <p><!-- Slide 4: 규제 흐름 --></p>
+<style>
+.cf-tl { display: grid; grid-template-columns: repeat(9, 1fr); gap: var(--space-2); margin-bottom: var(--space-4); }
+.cf-tl-item { border: 0; background: var(--surface-2); color: var(--on-surface); border-radius: var(--radius-md); padding: var(--space-3) var(--space-2); cursor: pointer; text-align: center; font-size: var(--fs-card); border-top: 4px solid color-mix(in srgb, var(--on-surface) 25%, transparent); }
+.cf-tl-item.new { border-top-color: var(--accent); }
+.cf-tl-item.on { background: var(--accent-subtle); outline: 2px solid var(--accent); }
+.cf-tl-item b { display: block; font-size: var(--fs-body); }
+.cf-tl-detail { min-height: 7em; }
+.cf-tl-detail h4 { margin: 0 0 var(--space-2); font-size: var(--fs-subtitle); }
+</style>
+<div class="cf-tl" id="cfTl">
+  <button class="cf-tl-item" data-i="0"><b>2016.10</b>비중요</button>
+  <button class="cf-tl-item" data-i="1"><b>2019.01</b>중요업무</button>
+  <button class="cf-tl-item" data-i="2"><b>2022.11</b>연구개발망</button>
+  <button class="cf-tl-item" data-i="3"><b>2023.09</b>SaaS</button>
+  <button class="cf-tl-item" data-i="4"><b>2024.08</b>생성형 AI</button>
+  <button class="cf-tl-item" data-i="5"><b>2025.02</b>원칙 중심</button>
+  <button class="cf-tl-item" data-i="6"><b>2025.04</b>해설서</button>
+  <button class="cf-tl-item new" data-i="7"><b>2026.04</b>모델 변경</button>
+  <button class="cf-tl-item new" data-i="8"><b>2026.05~07</b>전면 해제 검토</button>
+</div>
+<div class="cf-panel cf-tl-detail" id="cfTlDetail"><h4>시점을 눌러 보세요</h4><div class="cf-muted">주황 표시는 올해 바뀐 두 가지입니다.</div></div>
+<div class="callout callout-warning fragment fade-up" data-fragment-index="1">
+  <strong class="cf-warning">기다리지 않는 이유</strong>: 방향은 전면 해제로 정해졌지만 일정은 불확실합니다. 지금 갖추는 통제가 향후 선별 대상이 되는 근거가 됩니다.
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s4" data-block="01-regulation" data-block-title="Claude Code for FSI">
+  <div class="slide-header" data-remarp-id="s4-header"><h2>어느 단말에서 출발하느냐가 근거를 정한다</h2></div>
+  <div class="slide-body" data-remarp-id="s4-body">
+    <p><!-- Slide 5: 세 환경의 위치 --></p>
+<style>
+.cf-map { display: grid; grid-template-columns: 1.15fr 0.35fr 1fr; gap: var(--space-3); align-items: stretch; }
+.cf-zone { border: 2px dashed color-mix(in srgb, var(--on-surface) 25%, transparent); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); transition: opacity var(--duration-normal), border-color var(--duration-normal); }
+.cf-zone h5 { margin: 0; font-size: var(--fs-card); color: var(--on-surface-muted); }
+.cf-node { background: var(--surface-2); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); font-size: var(--fs-card); display: flex; align-items: center; gap: var(--space-2); }
+.cf-node img { width: 32px; height: 32px; }
+.cf-links { display: flex; flex-direction: column; justify-content: space-around; gap: var(--space-2); }
+.cf-link { text-align: center; font-size: var(--fs-card); padding: var(--space-2); border-radius: var(--radius-sm); background: var(--surface-2); transition: opacity var(--duration-normal); }
+.cf-map[data-path] .cf-p { opacity: 0.25; }
+.cf-map[data-path="1"] .p1, .cf-map[data-path="2"] .p2, .cf-map[data-path="3"] .p3 { opacity: 1; border-color: var(--accent); }
+.cf-map[data-path="1"] .cf-link.p1, .cf-map[data-path="2"] .cf-link.p2, .cf-map[data-path="3"] .cf-link.p3 { background: var(--accent); color: var(--accent-on); }
+.cf-x { color: var(--danger); font-weight: var(--weight-bold); }
+.cf-path-msg { margin-top: var(--space-3); min-height: 3.2em; }
+</style>
+<div class="cf-btns" onclick="(function(e){var b=e.target.closest('.cf-btn');if(!b)return;var m=document.getElementById('cfMap');b.parentNode.querySelectorAll('.cf-btn').forEach(function(x){x.classList.toggle('on',x===b)});m.setAttribute('data-path',b.dataset.p);var msg={1:'① Playground: 인터넷망 PC에서 출발. 사내망과는 선이 아예 없고, 승인 모델만 씁니다.',2:'② 연구개발망: 별도 망. 전산실로는 망연계 솔루션을 통해 한 방향으로만 보낼 수 있습니다.',3:'③ 5호망: 단말은 Bedrock을 직접 부르지 않습니다. 전산실 Gateway를 거쳐 전용회선(DX)으로만 나갑니다.'};document.getElementById('cfPathMsg').innerHTML='<strong class=&quot;cf-accent&quot;>'+msg[b.dataset.p]+'</strong>'})(event)">
+  <button class="cf-btn" data-p="1">① AI Playground</button>
+  <button class="cf-btn" data-p="2">② 연구개발망</button>
+  <button class="cf-btn" data-p="3">③ 5호망 + 혁신금융</button>
+</div>
+<div class="cf-map" id="cfMap" data-reveal="static">
+  <div class="cf-stack">
+    <div class="cf-zone cf-p p3"><h5>온프렘 전산실 (5호망)</h5>
+      <div class="cf-node">5호 단말: Claude Code</div>
+      <div class="cf-node">LLM Gateway, MCP 중계, 망연계 솔루션 (수신)</div>
+    </div>
+    <div class="cf-zone cf-p p2"><h5>연구개발망</h5>
+      <div class="cf-node">연구개발 단말(NAC, DLP, DRM), 망연계 솔루션 (송신), VPN</div>
+    </div>
+    <div class="cf-zone cf-p p1"><h5>인터넷망</h5>
+      <div class="cf-node">인터넷 PC <span class="cf-x">✕ 사내망 미연결</span></div>
+    </div>
+  </div>
+  <div class="cf-links">
+    <div class="cf-link cf-p p3">③ DX</div>
+    <div class="cf-link cf-p p2">② VPN<br>망연계 단방향</div>
+    <div class="cf-link cf-p p1">① 인터넷</div>
+  </div>
+  <div class="cf-stack">
+    <div class="cf-zone cf-p p3"><h5>AWS 서울 리전: Workloads OU, AI Platform</h5>
+      <div class="cf-node"><img src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt="">Bedrock, AgentCore (PrivateLink only)</div>
+    </div>
+    <div class="cf-zone cf-p p2"><h5>R&amp;D OU: 연구개발망</h5>
+      <div class="cf-node">개발 VPC, SWG/CASB 경유 인터넷</div>
+    </div>
+    <div class="cf-zone cf-p p1"><h5>Sandbox OU: Playground</h5>
+      <div class="cf-node">승인 모델만, 사내망 미연결</div>
+    </div>
+  </div>
+</div>
+<div class="cf-panel cf-path-msg" id="cfPathMsg"><span class="cf-muted">위 버튼으로 경로를 하나씩 켜 보세요. 공통 원칙: 단말에서 Bedrock 직접 호출은 불가, 인터넷망과 연구개발망은 차단</span></div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s5" data-block="01-regulation" data-block-title="Claude Code for FSI">
+  <div class="slide-header" data-remarp-id="s5-header"><h2>파일이 오가는 지점을 하나로 좁힌다</h2></div>
+  <div class="slide-body" data-remarp-id="s5-body">
+    <p><!-- Slide 6: 망 연결과 파일 흐름 --></p>
+<style>
+.cf-env-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
+.cf-env-grid .card { padding: var(--space-3); }
+.cf-env-grid strong { display: block; margin-bottom: var(--space-1); }
+</style>
+<div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
+  <button class="tab-btn active">① AI Playground</button>
+  <button class="tab-btn">② 연구개발망</button>
+  <button class="tab-btn">③ 5호망 + 혁신금융</button>
+</div>
+<div class="tc">
+  <div class="cf-env-grid" data-reveal="stagger">
+    <div class="card"><strong class="cf-accent">출발 단말, 사내망</strong><div class="cf-muted">인터넷망 PC. 업무망, 운영망 단말은 직접 접속 불가. 운영계, 고객계 미연계</div></div>
+    <div class="card"><strong class="cf-accent">AWS 연결 경로</strong><div class="cf-muted">인터넷 → 중앙 Gateway → 승인 모델. 외부 SaaS는 승인 Endpoint만</div></div>
+    <div class="card"><strong class="cf-warning">파일 업로드, 반입, 반출</strong><div class="cf-muted">MVP 단계는 업로드 비활성화 권장. 필요 시 PDF/TXT 등 확장자와 용량만. 사내 반입, 반출 모두 불가</div></div>
+    <div class="card"><strong class="cf-success">핵심 통제</strong><div class="cf-muted">입력 패턴 탐지, 사용량 한도</div></div>
+  </div>
+</div>
+<div class="tc" hidden>
+  <div class="cf-env-grid">
+    <div class="card"><strong class="cf-accent">출발 단말, 사내망</strong><div class="cf-muted">연구개발 전용 단말(NAC 인증만). 내부업무망과 논리적 분리, 전산실과는 단방향 망간전송만. 무선 차단(§15⑥)</div></div>
+    <div class="card"><strong class="cf-accent">AWS 연결 경로</strong><div class="cf-muted">데이터센터 ↔ AWS 연구개발망 VPN. 재택은 IDP 인증 + Client VPN. 외부는 SWG/Proxy, CASB 화이트리스트</div></div>
+    <div class="card"><strong class="cf-warning">파일 반입, 반출</strong><div class="cf-muted">전산실 → 연구개발망은 원칙적 불가(CISO 승인 + 정보보호위원회 의결 후 산출물만). 반대 방향은 망연계 단방향만</div></div>
+    <div class="card"><strong class="cf-success">핵심 통제</strong><div class="cf-muted">방화벽, NGFW/IPS, SSE, DLP/DRM, NAC, EDR. 반출 주체는 인가된 형상관리 서버만, 한시적 연결</div></div>
+  </div>
+</div>
+<div class="tc" hidden>
+  <div class="cf-env-grid">
+    <div class="card"><strong class="cf-accent">출발 단말, 사내망</strong><div class="cf-muted">기존 5호 단말. 전산실 내부, 운영계 연계는 지정 범위 안에서만. 기존 5호망 통제 유지</div></div>
+    <div class="card"><strong class="cf-accent">AWS 연결 경로</strong><div class="cf-muted">DX → TGW → PrivateLink. 단말 직접 호출 불가, 전산실 Gateway 경유. 인터넷 경로 없음</div></div>
+    <div class="card"><strong class="cf-warning">파일 반입, 반출</strong><div class="cf-muted">코드가 이미 전산실 안에 있어 반입, 반출 개념 없음. 밖으로 나가는 것은 Gateway DLP를 통과한 프롬프트뿐</div></div>
+    <div class="card"><strong class="cf-success">핵심 통제</strong><div class="cf-muted">기존 5호망 통제 + LLM Gateway(DLP, 로깅). 3부 데모에서 실제로 보여 드립니다</div></div>
+  </div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="cf-info">연구개발망의 트레이드오프</strong>: "개발은 클라우드에서, 반영은 망연계로". 통제와 감사는 쉬워지지만, 개발 속도는 망연계 절차가 결정합니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s6" data-block="01-regulation" data-block-title="Claude Code for FSI">
+  <div class="slide-header" data-remarp-id="s6-header"><h2>망연계는 6단계, 병목은 승인 대기</h2></div>
+  <div class="slide-body" data-remarp-id="s6-body">
+    <p><!-- Slide 7: 망연계 6단계 --></p>
+<style>
+.cf-steps { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--space-2); margin-bottom: var(--space-3); }
+.cf-step { background: var(--surface-2); border-radius: var(--radius-md); padding: var(--space-3); font-size: var(--fs-card); position: relative; }
+.cf-step b { display: block; color: color-mix(in srgb, var(--accent) 72%, var(--on-surface)); font-size: var(--fs-body); }
+.cf-step .z { display: block; color: var(--on-surface-muted); font-size: var(--fs-caption); margin-bottom: var(--space-1); }
+.cf-step.wait { outline: 2px solid var(--warning); }
+</style>
+<div class="cf-steps" data-reveal="stagger" data-reveal-anim="right">
+  <div class="cf-step"><span class="z">AWS 연구개발망</span><b>1 전송 신청</b>Code Repository에서 Git 소스 전송 신청</div>
+  <div class="cf-step wait"><span class="z">AWS 연구개발망</span><b>2 전송 승인</b>승인권자 승인</div>
+  <div class="cf-step"><span class="z">데이터센터 연구개발망</span><b>3 망연계로 전송</b>Git → 망연계 솔루션</div>
+  <div class="cf-step"><span class="z">데이터센터 연구개발망</span><b>4 목록 조회</b>전송 대상 확인, 선택</div>
+  <div class="cf-step wait"><span class="z">전산실</span><b>5 망연계 승인</b>망연계 단계 승인, 신청</div>
+  <div class="cf-step"><span class="z">전산실</span><b>6 반영, 기록</b>전산실 GitLab 수신, 전송 이력 기록</div>
+</div>
+<table class="data-table fragment fade-up" data-fragment-index="1">
+  <thead><tr><th>통제</th><th>내용</th></tr></thead>
+  <tbody>
+    <tr><td>전송 방향</td><td>연구개발망 → 전산실 단방향, 한시적 연결</td></tr>
+    <tr><td>사전 점검, 수신 검증</td><td>시큐어코딩 점검, 악성코드 검사. 수신 서버에서 무결성(해시), 바이너리 검증</td></tr>
+    <tr><td>파일 통제</td><td>유형, 용량 제한, 암호 걸린 파일 금지, 중요정보, 개인신용정보 포함 여부 검토 후 반출</td></tr>
+    <tr><td>통신, 기록</td><td>IPS, 보안 모니터링. 망간 파일 이동 내역 기록, 보관, 주기 점검</td></tr>
+  </tbody>
+</table>
+<div class="callout callout-warning fragment fade-up" data-fragment-index="2"><strong class="cf-warning">리스크</strong>: 노란 테두리(2, 5단계) 승인 대기가 길어지면 연구개발망의 장점이 줄어듭니다. 승인 SLA와 자동 검증(SAST, 악성코드 검사)을 함께 설계해야 합니다.</div>
+<div class="cf-src">출처: 메가존클라우드 「연구개발망 구축시 고려사항」 p26, p29</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s7" data-block="01-regulation" data-block-title="Claude Code for FSI">
+  <div class="slide-header" data-remarp-id="s7-header"><h2>운영계와 실제 코드에 닿는 길은 하나</h2></div>
+  <div class="slide-body" data-remarp-id="s7-body">
+    <p><!-- Slide 8: 3자 비교 --></p>
+<div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
+  <button class="tab-btn active">성격과 근거</button>
+  <button class="tab-btn">단말과 인프라</button>
+  <button class="tab-btn">결과: 기간과 활용</button>
+</div>
+<div class="tc">
+  <table class="data-table">
+    <thead><tr><th>비교축</th><th>AI Playground</th><th>연구개발망</th><th>5호망 + 혁신금융</th></tr></thead>
+    <tbody>
+      <tr><td>성격</td><td>프롬프트, 모델 체험용 테스트 콘솔</td><td>독립된 정식 R&amp;D 인프라</td><td>기존 IT 개발, 운영 단말에 AI 연계</td></tr>
+      <tr><td>법적 근거</td><td>비조치의견서 / 사내 정책 (확인 필요)</td><td>전자금융감독규정 §15 연구개발망 예외 (조항 확인 필요)</td><td>혁신금융서비스 지정 (망분리 특례)</td></tr>
+      <tr><td>승인 주체</td><td>CISO, 정보보호 조직</td><td>내부 정보보호위원회</td><td>금융위 지정 + 금보원 이행점검</td></tr>
+      <tr><td>허용 데이터</td><td>공개, 샘플 (고객정보 입력 금지)</td><td>가명, 더미 (실데이터 금지)</td><td>지정 범위 업무 데이터, 개인정보 필터링 전제</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="tc" hidden>
+  <table class="data-table">
+    <thead><tr><th>비교축</th><th>AI Playground</th><th>연구개발망</th><th>5호망 + 혁신금융</th></tr></thead>
+    <tbody>
+      <tr><td>단말</td><td>인터넷망 PC</td><td>연구개발 전용 단말</td><td>기존 5호 단말 + AI 이용 통제</td></tr>
+      <tr><td>네트워크</td><td>인터넷 → 중앙 Gateway</td><td>독립 VPC, SSE로 인터넷 통제</td><td>전산실 Gateway → DX → PrivateLink</td></tr>
+      <tr><td>소스코드</td><td>반입 불가</td><td>망연계 단방향 + 반출 승인</td><td>사내 코드 직접 활용, 입력 필터링, 로깅</td></tr>
+      <tr><td>운영계 연계</td><td>불가</td><td>불가</td><td><strong class="cf-success">지정 범위 내 가능</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="tc" hidden>
+  <table class="data-table">
+    <thead><tr><th>비교축</th><th>AI Playground</th><th>연구개발망</th><th>5호망 + 혁신금융</th></tr></thead>
+    <tbody>
+      <tr><td>체감 기간</td><td>수주</td><td>수개월 (내부 의결 + 망 구축)</td><td>약 1년 (KB증권 사례)</td></tr>
+      <tr><td>Coding Agent 활용</td><td>학습, 실험</td><td>실데이터 없는 코드베이스 전면 활용</td><td><strong class="cf-success">실제 업무 코드베이스 + 운영 도구 연계</strong></td></tr>
+    </tbody>
+  </table>
+  <div class="callout callout-success" data-reveal="stagger"><strong class="cf-success">결정적인 두 줄</strong>: 운영계와 실제 업무 코드에 닿을 수 있는 건 5호망 경로뿐이고, 대신 약 1년이 걸립니다.</div>
+</div>
+<div class="callout callout-warning fragment fade-up" data-fragment-index="1"><strong class="cf-warning">리스크</strong>: 연구개발망 조항 번호는 자료마다 표기가 다릅니다(제15조 제5호 가목 vs §15①3 가목). 규정 원문으로 확정한 뒤 반영합니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s8" data-block="01-regulation" data-block-title="Claude Code for FSI">
+  <div class="slide-header" data-remarp-id="s8-header"><h2>연구개발망과 5호망, 통제는 거의 같다</h2></div>
+  <div class="slide-body" data-remarp-id="s8-body">
+    <p><!-- Slide 9: 통제 매트릭스 --></p>
+<style>
+.cf-mx td:nth-child(2), .cf-mx td:nth-child(3), .cf-mx td:nth-child(4), .cf-mx th:nth-child(2), .cf-mx th:nth-child(3), .cf-mx th:nth-child(4) { text-align: center; transition: background var(--duration-normal); }
+.cf-mx[data-col="2"] td:nth-child(2), .cf-mx[data-col="3"] td:nth-child(3), .cf-mx[data-col="4"] td:nth-child(4) { background: var(--accent-subtle); font-weight: var(--weight-bold); }
+.cf-mx[data-col="diff"] tr.diff td { background: var(--warning-subtle); }
+.cf-mx td { padding-top: var(--space-1); padding-bottom: var(--space-1); }
+</style>
+<div class="cf-btns" onclick="(function(e){var b=e.target.closest('.cf-btn');if(!b)return;b.parentNode.querySelectorAll('.cf-btn').forEach(function(x){x.classList.toggle('on',x===b)});document.getElementById('cfMx').setAttribute('data-col',b.dataset.c)})(event)">
+  <button class="cf-btn" data-c="2">Playground</button>
+  <button class="cf-btn" data-c="3">연구개발망</button>
+  <button class="cf-btn" data-c="4">5호망</button>
+  <button class="cf-btn" data-c="diff">연구개발망과 5호망이 다른 행</button>
+</div>
+<table class="data-table cf-mx" id="cfMx">
+  <thead><tr><th>통제 영역</th><th>Playground</th><th>연구개발망</th><th>5호망</th><th>AWS 구현 수단</th></tr></thead>
+  <tbody>
+    <tr><td>범위 (목적 한정)</td><td>●</td><td>●</td><td>●</td><td>이용 고지, 정보보호위원회 의결</td></tr>
+    <tr><td>독립 네트워크, 접속 경로</td><td>◐</td><td>●</td><td>●</td><td>전용 VPC, TGW RT 분리, DX / Client VPN / PrivateLink</td></tr>
+    <tr><td>접속 단말, 인증, 권한</td><td>◐</td><td>●</td><td>●</td><td>NAC, EDR, MDM + IAM Identity Center + IdP, MFA</td></tr>
+    <tr><td>인터넷, SaaS</td><td>●</td><td>●</td><td>●</td><td>SSE(SWG/CASB), Network Firewall (5호망은 경로 없음)</td></tr>
+    <tr class="diff"><td>망간 전송</td><td>○</td><td>●</td><td>○</td><td>망연계 솔루션 (연구개발망 → 전산실)</td></tr>
+    <tr><td>계정 분리</td><td>◐</td><td>●</td><td>●</td><td>Control Tower, OU</td></tr>
+    <tr><td>리전, 데이터 위치</td><td>●</td><td>●</td><td>●</td><td>SCP 리전 제한 (Bedrock은 승인 CRIS 프로파일만 예외)</td></tr>
+    <tr><td>가명, 민감정보, 로그</td><td>●</td><td>●</td><td>●</td><td>Gateway DLP, Macie, CloudTrail → Log Archive, Invocation Logging</td></tr>
+    <tr class="diff"><td>비용, 사용량</td><td>●</td><td>◐</td><td>●</td><td>Gateway Quota, AWS Budgets</td></tr>
+  </tbody>
+</table>
+<div class="cf-src">● 필수 ◐ 권장 ○ 해당 없음. 메가존 가이드의 통제 영역 기준 권장안이며, 최종 등급은 하나증권 정보보호 정책으로 확정합니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s9" data-block="01-regulation" data-block-title="Claude Code for FSI">
+  <div class="slide-header" data-remarp-id="s9-header"><h2>문은 두 개, 권장은 PATH B</h2></div>
+  <div class="slide-body" data-remarp-id="s9-body">
+    <p><!-- Slide 10: 두 개의 문 --></p>
+<div class="cf-muted">세 환경 중 Playground는 체험용이라, 실업무 코드로 들어가는 문은 두 개입니다.</div>
+<div class="compare-toggle">
+  <button class="compare-btn active" data-compare="a">PATH A: 연구개발망</button>
+  <button class="compare-btn" data-compare="b">PATH B: 5호망 + 혁신금융</button>
+</div>
+<div class="compare-content active" data-compare="a">
+  <div class="cf-grid-2">
+    <div class="card"><strong class="cf-accent">근거와 승인</strong><div class="cf-muted">제15조 연구개발망 예외(조항 확인 필요). 내부 정보보호위원회. 혁신금융 지정 불필요</div></div>
+    <div class="card"><strong class="cf-accent">기간</strong><div class="cf-muted">내부 절차 중심이라 상대적으로 짧음</div></div>
+    <div class="card"><strong class="cf-warning">데이터와 업무</strong><div class="cf-muted">개인정보 기본적으로 처리 불가. 연구개발 용도에 한정</div></div>
+    <div class="card"><strong class="cf-danger">인프라</strong><div class="cf-muted">완전한 망분리 전제. Network, Security, Gateway, 로그를 5호망과 공유하지 못하고 독립적으로 신규 구축</div></div>
+  </div>
+</div>
+<div class="compare-content" data-compare="b">
+  <div class="cf-grid-2">
+    <div class="card"><strong class="cf-accent">근거와 승인</strong><div class="cf-muted">혁신금융서비스 지정(망분리 특례). 금융위원회 + 금융보안원 이행점검. 연구개발망 구축 불필요</div></div>
+    <div class="card"><strong class="cf-accent">기간</strong><div class="cf-muted">선행 사례 기준 약 1년</div></div>
+    <div class="card"><strong class="cf-success">데이터와 업무</strong><div class="cf-muted">개인정보는 필터링 필수. 필터링 전제로 실업무까지 확장 가능</div></div>
+    <div class="card"><strong class="cf-success">인프라</strong><div class="cf-muted">5호망 랜딩존, Gateway, Security를 그대로 활용. 상용 AI 프로젝트도 같은 통제면에 합류</div></div>
+  </div>
+</div>
+<div class="callout callout-success fragment zoom-in" data-fragment-index="1"><strong class="cf-success">권장: PATH B</strong>. 연구개발망은 같은 구성을 한 벌 더 만들어야 하고, 그래도 실업무 코드와 운영계에는 닿지 못합니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s10" data-block="01-regulation" data-block-title="Claude Code for FSI">
+  <div class="slide-header" data-remarp-id="s10-header"><h2>지정이 끝이 아니다, 이행점검까지</h2></div>
+  <div class="slide-body" data-remarp-id="s10-body">
+    <p><!-- Slide 11: PATH B 절차와 일정 --></p>
+<style>
+.cf-pb { display: grid; grid-template-columns: 1.25fr 1fr; gap: var(--space-4); }
+.cf-proc { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.cf-proc div { background: var(--surface-2); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); font-size: var(--fs-card); border-left: 4px solid color-mix(in srgb, var(--on-surface) 20%, transparent); }
+.cf-proc div.us { border-left-color: var(--accent); }
+.cf-proc div.gov { border-left-color: var(--info); }
+.cf-proc b { display: block; }
+.cf-kb li { margin-bottom: var(--space-2); font-size: var(--fs-card); }
+.cf-kb b { color: color-mix(in srgb, var(--accent) 72%, var(--on-surface)); margin-right: var(--space-2); }
+.cf-legend { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-2); }
+</style>
+<div class="cf-pb">
+  <div>
+    <div class="cf-proc" data-reveal="stagger">
+      <div class="us"><b>① 보안대책 수립</b>리스크 기반, 부가조건 대비</div>
+      <div class="gov"><b>② 보안대책 컨설팅</b>금감원, 금보원: 적절성, 취약점</div>
+      <div class="us"><b>③ 지정 신청</b>회차별 접수 기간에 제출</div>
+      <div class="gov"><b>④ 심사 및 지정</b>혁신금융심사위원회 → 금융위 의결</div>
+      <div class="us"><b>⑤ 보안대책 이행</b>수립한 대책 구현</div>
+      <div class="gov"><b>⑥ 개시 전 이행점검</b>금보원: 보안조치 구비 여부</div>
+      <div class="us"><b>⑦ 결과 제출</b>부가조건 이행 결과 (금융위, 금감원)</div>
+      <div class="us"><b>⑧ 서비스 개시</b>생성형 AI 업무 이용 시작</div>
+    </div>
+    <div class="cf-legend">주황 막대: 자사 주관, 파란 막대: 당국 주관</div>
+  </div>
+  <div class="cf-panel fragment fade-left" data-fragment-index="1">
+    <strong class="cf-accent">KB증권 공개 경과</strong>
+    <ul class="cf-kb">
+      <li><b>2025.07</b>사내 MCP 생태계 설계, 연동 PoC</li>
+      <li><b>2025.09</b>3분기 혁신금융서비스 지정 신청</li>
+      <li><b>2025.10</b>핀테크지원센터 접수 → 금감원 검토 (N차 보완)</li>
+      <li><b>2026.01</b>혁신금융서비스 지정</li>
+      <li><b>2026.06</b>금보원 이행평가 '적합'</li>
+    </ul>
+    <div class="cf-muted">신청 → 지정 약 4개월, 지정 → 적합 약 5개월</div>
+  </div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="cf-info">기간을 줄이는 곳</strong>: ③ 회차별 접수입니다. ①②를 먼저 끝내고 회차에 맞춰 넣어야 전체 기간이 줄어듭니다. 2026.04.15 간소화로 지정 후 모델 버전 교체 부담은 줄었습니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s11" data-block="01-regulation" data-block-title="Claude Code for FSI">
+  <div class="slide-header" data-remarp-id="s11-header"><h2>1부 정리: 문은 5호망으로 연다</h2></div>
+  <div class="slide-body" data-remarp-id="s11-body">
+    <p><!-- Slide 12: 1부 Key Takeaways --></p>
+<div class="cf-grid-3" data-reveal="stagger">
+  <div class="card"><strong class="cf-accent">출발 단말이 근거를 정한다</strong><div class="cf-muted">같은 Bedrock이어도 인터넷 PC, 연구개발 단말, 5호 단말에 따라 법적 근거와 승인 주체가 다릅니다.</div></div>
+  <div class="card"><strong class="cf-accent">통제는 거의 같다</strong><div class="cf-muted">연구개발망과 5호망의 통제 요구는 망간 전송, 비용 두 줄만 다릅니다.</div></div>
+  <div class="card"><strong class="cf-success">권장은 PATH B</strong><div class="cf-muted">실업무 코드와 운영계에 닿는 유일한 길. 약 1년, 회차와 서류 준비가 기간을 결정합니다.</div></div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="cf-info">다음 2부</strong>: KB증권이 실제로 만든 구조, 그리고 랜딩존과 네트워크를 어떻게 깔아야 하는지 봅니다.</div>
+  </div>
+</div>
+</div>
+<script src="./common/animation-utils.js"></script>
+<script src="./common/deck-overlay.js"></script>
+<script src="./common/deck-detail.js"></script>
+<script src="./common/deck-nav.js"></script>
+<script src="./common/slide-framework.js"></script>
+<script src="./common/quiz-component.js"></script>
+<script src="./common/presenter-view.js"></script>
+<script>
+(function(){
+(function () {
+  var data = [
+    ['2016.10', '비중요 정보처리시스템에 대한 퍼블릭 클라우드 활용 허용'],
+    ['2019.01', '전자금융감독규정 개정으로 클라우드 이용 확대 (중요업무 포함)'],
+    ['2022.11', '연구개발 목적 망분리 완화 조치 시행'],
+    ['2023.09', '혁신금융서비스 제도를 통한 SaaS 제한적 허용'],
+    ['2024.08', '망분리 개선 로드맵: 혁신금융서비스로 SaaS 확대, 생성형 AI 활용 허용'],
+    ['2025.02', '원칙 중심 전자금융감독규정 개정, 자율보안체제 유도'],
+    ['2025.04', '금융보안원 「연구개발 목적 망분리 예외 적용 보안 해설서」'],
+    ['2026.04', '생성형 AI 모델 변경 절차 간소화: 경미, 보통, 상당 3단계. 지정 후 모델 버전 교체 부담이 줄어듦'],
+    ['2026.05~07', '선별 금융사 대상 망분리 전면 해제 검토 공식화. 시점은 미정']
+  ];
+  var bar = document.getElementById('cfTl'), out = document.getElementById('cfTlDetail');
+  if (!bar) return;
+  bar.addEventListener('click', function (e) {
+    var b = e.target.closest('.cf-tl-item'); if (!b) return;
+    bar.querySelectorAll('.cf-tl-item').forEach(function (x) { x.classList.remove('on'); });
+    b.classList.add('on');
+    var d = data[+b.dataset.i];
+    out.innerHTML = '<h4>' + d[0] + '</h4><div class="cf-muted">' + d[1] + '</div>';
+  });
+})();
+})();
+</script>
+<script>
+  
+  const presenterNotes = {
+    1: "\u2753 [0.5min] [\uc694\uc57d]\n- 90\ubd84 \uc138\uc158, 4\ubd80 \uad6c\uc131. \uaddc\uc81c \uacbd\ub85c, \ud0c0\uc0ac \uc0ac\ub840\uc640 \ub79c\ub529\uc874, Gateway\uc640 Hub, \uad6c\ucd95 \ubc29\uc548\uacfc \ud558\ub124\uc2a4\n- 3\ubd80\uc640 4\ubd80\uc5d0 \uc2e4\uc81c \ub179\ud654 \ub370\ubaa8 \uc601\uc0c1 3\ud3b8(\uad00\ub9ac \uc124\uc815, LLM Gateway, \ud558\ub124\uc2a4)\n- \uc8fc\uc778\uacf5\uc740 Claude Code, Codex\ub294 \uac19\uc740 Gateway \ub4a4\uc5d0 \ud568\uaed8 \ubd99\ub294 \ubcf4\uc870 \ud074\ub77c\uc774\uc5b8\ud2b8\ub85c \ub2e4\ub8f8\n\n\uc548\ub155\ud558\uc138\uc694. \uc624\ub298\uc740 \ud558\ub098\uc99d\uad8c 5\ud638\ub9dd \ub2e8\ub9d0\uc5d0\uc11c Claude Code \uac19\uc740 AI \ucf54\ub529 \uc5d0\uc774\uc804\ud2b8\ub97c \uc5b4\ub5bb\uac8c \uc548\uc804\ud558\uac8c \uc4f8 \uc218 \uc788\ub294\uc9c0, \uaddc\uc81c \uacbd\ub85c\ubd80\ud130 \ub79c\ub529\uc874, \uc544\ud0a4\ud14d\ucc98, \uadf8\ub9ac\uace0 \uc2e4\uc81c\ub85c \ub3cc\ub824 \ubcf8 \ub370\ubaa8\uae4c\uc9c0 \ud55c \ubc88\uc5d0 \uc815\ub9ac\ud574 \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uc9c0\uae08 \uc0ac\ub0b4\uc5d0\uc11c \ucf54\ub529 \uc5b4\uc2dc\uc2a4\ud134\ud2b8\ub97c \uac1c\uc778\uc801\uc73c\ub85c\ub77c\ub3c4 \uc368 \ubcf4\uc2e0 \ubd84\uc774 \uc5bc\ub9c8\ub098 \ub418\uc2dc\ub294\uc9c0 \uba3c\uc800 \uc5ec\ucb64\ubd10\ub3c4 \ub420\uae4c\uc694?\n\n\uc21c\uc11c\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    2: "[1min] [\uc694\uc57d]\n- 1\ubd80: \uc5b4\ub5a4 \uaddc\uc81c \uacbd\ub85c\ub85c \ub4e4\uc5b4\uac08 \uc218 \uc788\ub294\uac00 (Playground, \uc5f0\uad6c\uac1c\ubc1c\ub9dd, 5\ud638\ub9dd \ud601\uc2e0\uae08\uc735)\n- 2\ubd80: KB\uc99d\uad8c\uc774 \uc9c0\ub098\uac04 \uae38, \ub79c\ub529\uc874 OU, SCP, 5\ud638 \ub2e8\ub9d0\uc5d0\uc11c Bedrock\uae4c\uc9c0\uc758 \ub124\ud2b8\uc6cc\ud06c\n- 3\ubd80: MCP Hub\uc640 LLM Gateway \uad6c\uc870, \uad00\ub9ac \uc124\uc815\uacfc Gateway \ub370\ubaa8\n- 4\ubd80: \uc628\ud504\ub818\uacfc \ube44\uad50, \ub2e8\uc77c \ud1b5\uc81c\uba74, \ud558\ub124\uc2a4 \ub370\ubaa8, \uad8c\uc7a5 \ub3c4\uc785 \uacbd\ub85c\uc640 \ud655\uc778 \ud544\uc694 \uc0ac\ud56d\n\n\ub124 \ud30c\ud2b8\ub85c \uc9c4\ud589\ud569\ub2c8\ub2e4. 1\ubd80\ub294 \uaddc\uc81c \uacbd\ub85c, 2\ubd80\ub294 \ud0c0\uc0ac \uc0ac\ub840\uc640 \ub79c\ub529\uc874, \ub124\ud2b8\uc6cc\ud06c\uc785\ub2c8\ub2e4. 3\ubd80\uc5d0\uc11c MCP Hub\uc640 LLM Gateway\ub97c \ubcf4\uace0, \uc2e4\uc81c \ub179\ud654\ud55c \ub370\ubaa8 \ub450 \ud3b8\uc744 \ubcf4\uc5ec \ub4dc\ub9bd\ub2c8\ub2e4. 4\ubd80\uc5d0\uc11c\ub294 \uad6c\ucd95 \ubc29\uc548\uc744 \ube44\uad50\ud558\uace0, \ud558\ub124\uc2a4 \ub370\ubaa8\uc640 \ud568\uaed8 \uad8c\uc7a5 \ub3c4\uc785 \uacbd\ub85c\ub85c \ub9c8\ubb34\ub9ac\ud569\ub2c8\ub2e4.\n\n\ubcf8\ub860 \uc804\uc5d0, \uc65c \uc774 \uc774\uc57c\uae30\uac00 \uc774\ubbf8 \ud604\uc2e4\uc801\uc778\uc9c0\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    3: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- KB\uc99d\uad8c\uc774 5\ud638 \ub2e8\ub9d0\uc5d0\uc11c Claude Code\ub97c \uc4f0\ub294 \uad6c\uc131\uc73c\ub85c \uae08\ubcf4\uc6d0 \ubcf4\uc548\ub300\ucc45 \ud3c9\uac00 '\uc801\ud569'\uc744 \ubc1b\uc74c (\uad6d\ub0b4 \uae08\uc735\uad8c \ucd5c\ucd08, 2026.06)\n- \uacf5\uac1c\ub41c \uc131\uacfc: \ubca0\ud0c0\ud14c\uc2a4\ud130 1\uba85, \ud55c \ub2ec, 1.2\ub9cc \uc904 \ub808\uac70\uc2dc, \ucf54\ub4dc\ub7c9 28% \uac10\uc18c\n- \ud558\ub098\uc99d\uad8c\uc5d0\ub294 \"\uc7ac\ud604\uacfc \ub2e8\ucd95\"\uc758 \ubb38\uc81c\n\n\ucd9c\ubc1c\uc810\uc785\ub2c8\ub2e4. KB\uc99d\uad8c\uc774 5\ud638 \ub2e8\ub9d0\uc5d0\uc11c Claude Code\ub97c \uc4f0\ub294 \uad6c\uc131\uc73c\ub85c \uae08\uc735\ubcf4\uc548\uc6d0 \uc801\ud569 \ud310\uc815\uc744 \ubc1b\uc558\uc2b5\ub2c8\ub2e4. \uad6d\ub0b4 \uae08\uc735\uad8c\uc5d0\uc11c\ub294 \ucc98\uc74c\uc785\ub2c8\ub2e4.\n\n\uacf5\uac1c\ub41c \uc131\uacfc\ub3c4 \uc788\uc2b5\ub2c8\ub2e4. \ubca0\ud0c0\ud14c\uc2a4\ud130 \ud55c \ubd84\uc774 \ud55c \ub2ec \ub3d9\uc548 1\ub9cc 2\ucc9c \uc904\uc9dc\ub9ac \ub808\uac70\uc2dc\ub97c \ub9ac\ud329\ud1a0\ub9c1\ud574\uc11c \ucf54\ub4dc\ub7c9\uc744 28% \uc904\uc774\uace0 \ucde8\uc57d\uc810\uc744 \uac77\uc5b4\ub0c8\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc624\ub298\uc740 \"\ud560 \uc218 \uc788\ub290\ub0d0\"\ubcf4\ub2e4 \"\uac19\uc740 \uae38\uc744 \uc5bc\ub9c8\ub098 \ube68\ub9ac, \ub35c \ud5e4\ub9e4\uace0 \uac08 \uc218 \uc788\ub290\ub0d0\"\ub85c \ubcf4\uc2dc\uba74 \ub429\ub2c8\ub2e4.\n\uadfc\uac70: AWS Financial Services Forum Seoul 2026 KB\uc99d\uad8c \ubc1c\ud45c, \ub514\uc9c0\ud138\ub370\uc77c\ub9ac 2026.08.27 \ubcf4\ub3c4\n\n\uadf8 \uae38\uc774 \uc5b4\ub5bb\uac8c \uc5f4\ub838\ub294\uc9c0, \uaddc\uc81c \ud750\ub984\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    4: "\u23f8\ufe0f \ud83c\udfac [2min] [\uc694\uc57d]\n- 2016\ub144 \ube44\uc911\uc694 \uc2dc\uc2a4\ud15c\ubd80\ud130 2025\ub144 \uc6d0\uce59 \uc911\uc2ec \uaddc\uc815\uae4c\uc9c0 \ub2e8\uacc4\uc801\uc73c\ub85c \uc644\ud654\n- \uc62c\ud574 \ubc14\ub010 \ub450 \uac00\uc9c0: 2026.04 \ubaa8\ub378 \ubcc0\uacbd \uc808\ucc28 \uac04\uc18c\ud654(\uacbd\ubbf8, \ubcf4\ud1b5, \uc0c1\ub2f9), 2026.05~7 \uc804\uba74 \ud574\uc81c \uac80\ud1a0 \uacf5\uc2dd\ud654\n- \uc804\uba74 \ud574\uc81c \uc2dc\uc810\uc740 \ubbf8\uc815. \uae30\ub2e4\ub9ac\ub294 \uc804\ub7b5\uc740 \uad8c\ud558\uc9c0 \uc54a\uc74c\n\n\uaddc\uc81c \ud750\ub984\uc785\ub2c8\ub2e4. \uc2dc\uc810\uc744 \ud558\ub098\uc529 \ub20c\ub7ec \ubcf4\uba74\uc11c \ub9d0\uc500\ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4. 2016\ub144\uc5d0 \ube44\uc911\uc694 \uc2dc\uc2a4\ud15c\ubd80\ud130 \uc2dc\uc791\ud574\uc11c, 2019\ub144 \uc911\uc694\uc5c5\ubb34, 2022\ub144 \uc5f0\uad6c\uac1c\ubc1c\ub9dd \uc644\ud654, 2024\ub144\uc5d0\ub294 \uc0dd\uc131\ud615 AI \ud65c\uc6a9\uae4c\uc9c0 \uc5f4\ub838\uc2b5\ub2c8\ub2e4.\n\n\uc8fc\ud669\uc0c9\uc73c\ub85c \ud45c\uc2dc\ud55c 2026\ub144 \ub450 \uce78\uc744 \ub20c\ub7ec \uc8fc\uc138\uc694. 4\uc6d4\uc5d0 \ubaa8\ub378\uc744 \ubc14\uafc0 \ub54c \uc808\ucc28\uac00 \uc138 \ub2e8\uacc4\ub85c \uac04\uc18c\ud654\ub410\uace0, 5\uc6d4\ubd80\ud130 7\uc6d4 \uc0ac\uc774\uc5d0 \uc804\uba74 \ud574\uc81c \uac80\ud1a0\uac00 \uacf5\uc2dd\ud654\ub410\uc2b5\ub2c8\ub2e4.\n\n\ub2e4\ub9cc \uc804\uba74 \ud574\uc81c\uac00 \uc5b8\uc81c \ub418\ub294\uc9c0\ub294 \uc815\ud574\uc9c0\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c \uae30\ub2e4\ub9ac\uae30\ubcf4\ub2e4, \uc9c0\uae08 \ud1b5\uc81c\ub97c \uac16\ucdb0 \ub450\ub294 \ucabd\uc774 \ub098\uc911\uc5d0 \uc120\ubcc4 \ub300\uc0c1\uc774 \ub420 \ub54c\ub3c4 \uadfc\uac70\uac00 \ub429\ub2c8\ub2e4.\n\n\uadf8\ub7fc \uc9c0\uae08 \ub4e4\uc5b4\uac08 \uc218 \uc788\ub294 \ubb38\uc774 \uba87 \uac1c\uc778\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    5: "\u23f8\ufe0f \ud83c\udfac [2.5min] [\uc694\uc57d]\n- \uac19\uc740 Bedrock\uc744 \uc368\ub3c4 \ucd9c\ubc1c \ub2e8\ub9d0\uc774 \ubc95\uc801 \uadfc\uac70\ub97c \uc815\ud568\n- \u2460 Playground: \uc778\ud130\ub137\ub9dd PC, \uc0ac\ub0b4\ub9dd\uacfc \uc120 \uc5c6\uc74c\n- \u2461 \uc5f0\uad6c\uac1c\ubc1c\ub9dd: \ubcc4\ub3c4 \ub9dd, \uc804\uc0b0\uc2e4\ub85c\ub294 \ub9dd\uc5f0\uacc4 \ub2e8\ubc29\ud5a5\ub9cc\n- \u2462 5\ud638\ub9dd: \ub2e8\ub9d0\uc740 Bedrock \uc9c1\uc811 \ud638\ucd9c \ubd88\uac00, \uc804\uc0b0\uc2e4 Gateway \uacbd\uc720 \ud6c4 DX\ub85c\ub9cc\n\n\ud55c \uc7a5\uc73c\ub85c \uc138 \ud658\uacbd\uc758 \uc704\uce58\ub97c \ubcf4\uc5ec \ub4dc\ub9bd\ub2c8\ub2e4. \uc704 \ubc84\ud2bc\uc744 \ud558\ub098\uc529 \ub20c\ub7ec \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n1\ubc88 Playground\ub294 \uc778\ud130\ub137\ub9dd PC\uc5d0\uc11c \ucd9c\ubc1c\ud558\uace0 \uc0ac\ub0b4\ub9dd\uacfc\ub294 \uc544\uc608 \uc5f0\uacb0\uc774 \uc5c6\uc2b5\ub2c8\ub2e4. 2\ubc88 \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \ubcc4\ub3c4 \ub9dd\uc774\uace0, \uc804\uc0b0\uc2e4\ub85c\ub294 \ub9dd\uc5f0\uacc4 \uc194\ub8e8\uc158\uc744 \ud1b5\ud574 \ud55c \ubc29\ud5a5\uc73c\ub85c\ub9cc \ubcf4\ub0bc \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\n3\ubc88\uc774 \uc624\ub298\uc758 \ud575\uc2ec\uc778 5\ud638\ub9dd \uacbd\ub85c\uc785\ub2c8\ub2e4. \ub2e8\ub9d0\uc774 Bedrock\uc744 \uc9c1\uc811 \ubd80\ub974\uc9c0 \uc54a\uace0, \uc804\uc0b0\uc2e4\uc758 Gateway\ub97c \uac70\uccd0 \uc804\uc6a9\ud68c\uc120\uc73c\ub85c \ub098\uac11\ub2c8\ub2e4. \uc624\ub978\ucabd AWS \ucabd\ub3c4 \ud658\uacbd\ub9c8\ub2e4 OU\uac00 \ub2e4\ub985\ub2c8\ub2e4. \uc774 OU \uc774\uc57c\uae30\ub294 2\ubd80\uc5d0\uc11c \uc790\uc138\ud788 \ud558\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uc138 \ud658\uacbd\uc774 \uc2e4\uc81c\ub85c \uc5b4\ub5bb\uac8c \ub2e4\ub978\uc9c0, \ub9dd \uc5f0\uacb0\uacfc \ud30c\uc77c \ud750\ub984\uc73c\ub85c \ube44\uad50\ud574 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    6: "\u23f8\ufe0f \ud83c\udfac [2.5min] [\uc694\uc57d]\n- \uc6d0\ubcf8 \ub450 \ud45c(\ub124\ud2b8\uc6cc\ud06c \uc5f0\ub3d9, \ud30c\uc77c\uacfc \uc18c\uc2a4\ucf54\ub4dc)\ub97c \ud658\uacbd\ubcc4 \ud0ed\uc73c\ub85c \uc7ac\uad6c\uc131\n- Playground: \ub4e4\uc5b4\uac00\ub294 \uac83\ub3c4 \ub098\uc624\ub294 \uac83\ub3c4 \ub9c9\uc74c\n- \uc5f0\uad6c\uac1c\ubc1c\ub9dd: \uc804\uc0b0\uc2e4\ub85c \uac00\ub294 \ud55c \ubc29\ud5a5\ub9cc \ub9dd\uc5f0\uacc4\ub85c \uc5f4\uace0, \ubc18\ub300\ub294 CISO \uc2b9\uc778 + \uc815\ubcf4\ubcf4\ud638\uc704\uc6d0\ud68c \uc758\uacb0\n- 5\ud638\ub9dd: \ucf54\ub4dc\ub294 \uc774\ubbf8 \uc548\uc5d0 \uc788\uace0, \ub098\uac00\ub294 \uac83\uc740 \ud30c\uc77c\uc774 \uc544\ub2c8\ub77c Gateway\uac00 \uac80\uc0ac\ud55c \ud504\ub86c\ud504\ud2b8\n- \ucd9c\ucc98: \uba54\uac00\uc874\ud074\ub77c\uc6b0\ub4dc \u300c\uc5f0\uad6c\uac1c\ubc1c\ub9dd \uad6c\ucd95\uc2dc \uace0\ub824\uc0ac\ud56d\u300d\n\n\uc55e \uc7a5\uc758 \uadf8\ub9bc\uc744 \ud658\uacbd\ubcc4\ub85c \ud480\uc5c8\uc2b5\ub2c8\ub2e4. \ud0ed\uc744 \ud558\ub098\uc529 \ub118\uae30\uaca0\uc2b5\ub2c8\ub2e4.\n\nPlayground\ub294 \uc778\ud130\ub137\ub9dd PC\uc5d0\uc11c\ub9cc \uc4f0\uace0, \ud30c\uc77c\uc740 \ub4e4\uc5b4\uac00\ub294 \uac83\ub3c4 \ub098\uc624\ub294 \uac83\ub3c4 \ub9c9\uc2b5\ub2c8\ub2e4. \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \uc804\uc0b0\uc2e4\ub85c \ubcf4\ub0b4\ub294 \ud55c \ubc29\ud5a5\ub9cc \ub9dd\uc5f0\uacc4 \uc194\ub8e8\uc158\uc73c\ub85c \uc5f4\uace0, \ubc18\ub300 \ubc29\ud5a5\uc740 CISO \uc2b9\uc778\uacfc \uc815\ubcf4\ubcf4\ud638\uc704\uc6d0\ud68c \uc758\uacb0\uc774 \uc788\uc5b4\uc57c \ud569\ub2c8\ub2e4.\n\n5\ud638\ub9dd\uc740 \ucf54\ub4dc\uac00 \uc774\ubbf8 \uc804\uc0b0\uc2e4 \uc548\uc5d0 \uc788\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c \ubc18\uc785, \ubc18\ucd9c\uc774\ub77c\ub294 \uac1c\ub150\uc774 \uc5c6\uace0, \ubc16\uc73c\ub85c \ub098\uac00\ub294 \uac74 \ud30c\uc77c\uc774 \uc544\ub2c8\ub77c \ud504\ub86c\ud504\ud2b8\uc785\ub2c8\ub2e4. \uadf8 \ud504\ub86c\ud504\ud2b8\ub97c Gateway\uac00 \uac80\uc0ac\ud569\ub2c8\ub2e4. \uc774 \uc7a5\uba74\uc740 3\ubd80 \ub370\ubaa8\uc5d0\uc11c \uc2e4\uc81c\ub85c \ubcf4\uc5ec \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: \uba54\uac00\uc874\ud074\ub77c\uc6b0\ub4dc \u300c\uc5f0\uad6c\uac1c\ubc1c\ub9dd \uad6c\ucd95\uc2dc \uace0\ub824\uc0ac\ud56d\u300d(\uc6d0\ubcf8 \uc81c\uc548\uc11c 7, 8\uc7a5 \ud45c)\n\n\uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc744 \uace0\ub974\uba74 \ub9dd\uc5f0\uacc4 \uc808\ucc28\uac00 \uc18d\ub3c4\ub97c \uc88c\uc6b0\ud55c\ub2e4\uace0 \ud588\ub294\ub370, \uadf8 \uc808\ucc28\ub97c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    7: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- \uc2e0\uccad, \uc2b9\uc778, \uc804\uc1a1, \uc120\ud0dd, \ub2e4\uc2dc \uc2b9\uc778, \ubc18\uc601\uacfc \uae30\ub85d\uc758 6\ub2e8\uacc4\n- \uc0ac\ub78c\uc774 \uc2b9\uc778\ud558\ub294 \ub2e8\uacc4\uac00 \ub450 \ubc88(2, 5\ub2e8\uacc4): \ubcd1\ubaa9 \uc9c0\uc810\n- \uac01 \uad6c\uac04\uc5d0 \uc545\uc131\ucf54\ub4dc \uac80\uc0ac, \ubb34\uacb0\uc131 \uac80\uc99d\n- \uad8c\uace0: \uc2b9\uc778 SLA + SAST, \uc545\uc131\ucf54\ub4dc \uc790\ub3d9 \uac80\uc99d\uc744 \ud568\uaed8 \uc124\uacc4\n\n\uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc5d0\uc11c \ub9cc\ub4e0 \ucf54\ub4dc\ub97c \uc804\uc0b0\uc2e4\ub85c \ubc18\uc601\ud558\ub294 \uc808\ucc28\uc785\ub2c8\ub2e4. \uc2e0\uccad, \uc2b9\uc778, \uc804\uc1a1, \uc120\ud0dd, \ub2e4\uc2dc \uc2b9\uc778, \ubc18\uc601\uacfc \uae30\ub85d\uae4c\uc9c0 \uc5ec\uc12f \ub2e8\uacc4\uc785\ub2c8\ub2e4.\n\n\ub178\ub780 \ud14c\ub450\ub9ac \ub450 \uacf3\uc774 \uc0ac\ub78c\uc774 \uc2b9\uc778\ud558\ub294 \ub2e8\uacc4\uc785\ub2c8\ub2e4. \ucf54\ub529 \uc5d0\uc774\uc804\ud2b8\ub85c \ud558\ub8e8\uc5d0 \uc5ec\ub7ec \ubc88 \ucee4\ubc0b\ud558\ub294\ub370 \ubc18\uc601\uc774 \uc2b9\uc778 \ub300\uae30\uc5d0 \ubb36\uc774\uba74, \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc744 \uc4f0\ub294 \uc758\ubbf8\uac00 \uc904\uc5b4\ub4ed\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc2b9\uc778 SLA\uc640 \uc790\ub3d9 \uac80\uc99d\uc744 \uac19\uc774 \uc124\uacc4\ud558\uc2dc\uae38 \uad8c\ud569\ub2c8\ub2e4.\n\uadfc\uac70: \uba54\uac00\uc874\ud074\ub77c\uc6b0\ub4dc \u300c\uc5f0\uad6c\uac1c\ubc1c\ub9dd \uad6c\ucd95\uc2dc \uace0\ub824\uc0ac\ud56d\u300d p26, p29\n\n\uc138 \ud658\uacbd\uc744 \ud55c \ud45c\ub85c \ub193\uace0 \ube44\uad50\ud574 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    8: "\u23f8\ufe0f \ud83c\udfac [2min] [\uc694\uc57d]\n- \uace0\uac1d \uc694\uccad 3\uc790 \ube44\uad50\ub97c \uc131\uaca9\uacfc \uadfc\uac70, \ub2e8\ub9d0\uacfc \uc778\ud504\ub77c, \uacb0\uacfc 3\uac1c \ud0ed\uc73c\ub85c \ub098\ub214\n- \uacb0\uc815\uc801\uc778 \ub450 \uc904: \uc6b4\uc601\uacc4 \uc5f0\uacc4\uc640 Coding Agent \ud65c\uc6a9 \ubc94\uc704\n- 5\ud638\ub9dd\ub9cc \uc2e4\uc5c5\ubb34 \ucf54\ub4dc\uc640 \uc6b4\uc601\uacc4\uc5d0 \ub2ff\uc74c, \ub300\uc2e0 \uc57d 1\ub144\n- \uc5f0\uad6c\uac1c\ubc1c\ub9dd \uc870\ud56d \ubc88\ud638\ub294 \uc6d0\ubb38 \ub300\uc870 \ud6c4 \ud655\uc815\n\n\ud558\ub098\uc99d\uad8c\uc5d0\uc11c \uc694\uccad\ud558\uc2e0 3\uc790 \ube44\uad50\uc785\ub2c8\ub2e4. \ud0ed \uc138 \uac1c\ub85c \ub098\ub234\uc2b5\ub2c8\ub2e4. \uccab \ud0ed\uc740 \uc131\uaca9, \uadfc\uac70, \uc2b9\uc778 \uc8fc\uccb4, \ub370\uc774\ud130\uc785\ub2c8\ub2e4.\n\n\ub450 \ubc88\uc9f8 \ud0ed\uc5d0\uc11c \uc6b4\uc601\uacc4 \uc5f0\uacc4 \uc904\uc744 \ubd10 \uc8fc\uc138\uc694. Playground\uc640 \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \ub458 \ub2e4 \ubd88\uac00\uc785\ub2c8\ub2e4. \uc138 \ubc88\uc9f8 \ud0ed\uc774 \uacb0\ub860\uc785\ub2c8\ub2e4. \uc6b4\uc601\uacc4\uc640 \uc2e4\uc81c \uc5c5\ubb34 \ucf54\ub4dc\ubca0\uc774\uc2a4\uc5d0 \ub2ff\uc744 \uc218 \uc788\ub294 \uac74 5\ud638\ub9dd \uacbd\ub85c\ubfd0\uc774\uace0, \ub300\uc2e0 1\ub144 \uc815\ub3c4 \uac78\ub9bd\ub2c8\ub2e4.\n\n\uc870\ud56d \ubc88\ud638\ub294 \uc790\ub8cc\ub9c8\ub2e4 \ud45c\uae30\uac00 \ub2ec\ub77c\uc11c, \uc6d0\ubb38\uc73c\ub85c \ud655\uc778\ud55c \ub4a4 \ud655\uc815\ud558\uaca0\uc2b5\ub2c8\ub2e4.\n\n\ud1b5\uc81c \ud56d\ubaa9\uc73c\ub85c \ubcf4\uba74 \uc5b4\ub5a4 \ucc28\uc774\uac00 \uc788\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    9: "\u23f8\ufe0f \ud83c\udfac [2min] [\uc694\uc57d]\n- \ud1b5\uc81c \uc601\uc5ed\ubcc4 \ud544\uc218, \uad8c\uc7a5, \ud574\ub2f9 \uc5c6\uc74c (\uc6d0\ubcf8 12\ud589\uc744 \uc5f0\uad00 \ud589\ub07c\ub9ac \ubb36\uc5b4 9\ud589)\n- \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uacfc 5\ud638\ub9dd \uc5f4\uc740 \ub450 \ud589(\ub9dd\uac04 \uc804\uc1a1, \ube44\uc6a9)\ub9cc \ub2e4\ub984\n- \uc758\ubbf8: \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc744 \uba3c\uc800 \uac16\ucdb0\ub3c4 5\ud638\ub9dd\uc73c\ub85c \ub118\uc5b4\uac08 \ub54c \ucd94\uac00\ub85c \ud560 \uc77c\uc774 \uc801\uc74c. \ubc18\ub300\ub85c 5\ud638\ub9dd\uc744 \ubc14\ub85c \uac00\ub3c4 \ube60\uc9c0\ub294 \ud1b5\uc81c\uac00 \uac70\uc758 \uc5c6\uc74c\n- \ub4f1\uae09\uc740 \uad8c\uc7a5\uc548, \ucd5c\uc885\uc740 \ud558\ub098\uc99d\uad8c \uc815\ucc45\n\n\ud1b5\uc81c \ud56d\ubaa9\uc744 \ud658\uacbd\ubcc4\ub85c \ud544\uc218, \uad8c\uc7a5, \ud574\ub2f9 \uc5c6\uc74c\uc73c\ub85c \ub098\ub234\uc2b5\ub2c8\ub2e4. \ubc84\ud2bc\uc73c\ub85c \uc5f4\uc744 \ud558\ub098\uc529 \ucf1c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\ub9c8\uc9c0\ub9c9 \ubc84\ud2bc, \"\uc5f0\uad6c\uac1c\ubc1c\ub9dd\uacfc 5\ud638\ub9dd\uc774 \ub2e4\ub978 \ud589\"\uc744 \ub204\ub974\uba74 \ub450 \uc904\ub9cc \ub178\ub797\uac8c \ud45c\uc2dc\ub429\ub2c8\ub2e4. \ub9dd\uac04 \uc804\uc1a1\uacfc \ube44\uc6a9\uc785\ub2c8\ub2e4. \ub098\uba38\uc9c0\ub294 \uac19\uc2b5\ub2c8\ub2e4.\n\n\uc989 \ud1b5\uc81c \uad00\uc810\uc5d0\uc11c\ub294 \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uacfc 5\ud638\ub9dd\uc774 \uac70\uc758 \uac19\uc740 \uc218\uc900\uc744 \uc694\uad6c\ud569\ub2c8\ub2e4. \uadf8\ub807\ub2e4\uba74 \uac19\uc740 \ub178\ub825\uc73c\ub85c \uc2e4\uc5c5\ubb34 \ucf54\ub4dc\uc5d0 \ub2ff\uc744 \uc218 \uc788\ub294 \ucabd\uc744 \uace0\ub974\ub294 \uac8c \ud569\ub9ac\uc801\uc774\ub77c\ub294 \uc774\uc57c\uae30\ub85c \uc774\uc5b4\uc9d1\ub2c8\ub2e4. \ucd5c\uc885 \ub4f1\uae09\uc740 \ud558\ub098\uc99d\uad8c \uc815\ubcf4\ubcf4\ud638 \uc815\ucc45\uc73c\ub85c \ud655\uc815\ud569\ub2c8\ub2e4.\n\n\uadf8 \uc120\ud0dd\uc744 \ub450 \uac1c\uc758 \ubb38\uc73c\ub85c \uc815\ub9ac\ud574 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    10: "\u23f8\ufe0f \ud83c\udfac [2min] [\uc694\uc57d]\n- PATH A \uc5f0\uad6c\uac1c\ubc1c\ub9dd: \ub0b4\ubd80 \uc758\uacb0, \ube44\uad50\uc801 \uc9e7\uc74c, \uc2e4\ub370\uc774\ud130 \uae08\uc9c0, \uc778\ud504\ub77c \uc2e0\uaddc \uad6c\ucd95\n- PATH B 5\ud638\ub9dd + \ud601\uc2e0\uae08\uc735: \uae08\uc735\uc704 \uc9c0\uc815 + \uae08\ubcf4\uc6d0 \uc810\uac80, \uc57d 1\ub144, \ud544\ud130\ub9c1 \uc804\uc81c\ub85c \uc2e4\uc5c5\ubb34 \ud655\uc7a5\n- \uacb0\uc815\uc801 \ucc28\uc774\ub294 \uc778\ud504\ub77c \uacf5\uc720 \uc5ec\ubd80\n- \uad8c\uc7a5\uc740 PATH B\n\n\uc138 \ud658\uacbd \uc911 Playground\ub294 \uccb4\ud5d8\uc6a9\uc774\ub77c, \uc2e4\uc5c5\ubb34 \ucf54\ub4dc\ub85c \ub4e4\uc5b4\uac00\ub294 \ubb38\uc740 \uacb0\uad6d \ub450 \uac1c\uc785\ub2c8\ub2e4. \ub450 \uacbd\ub85c\ub97c \ub098\ub780\ud788 \ub193\uc73c\uba74 \uc774\ub807\uc2b5\ub2c8\ub2e4. \ud1a0\uae00\ub85c \uc67c\ucabd, \uc624\ub978\ucabd\uc744 \ubc14\uafd4 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\nPATH A\ub294 \ub0b4\ubd80 \uc808\ucc28\ub77c \ube60\ub974\uc9c0\ub9cc, \ube68\uac04\uc0c9\uc73c\ub85c \ud45c\uc2dc\ud55c \uc778\ud504\ub77c \uce78\uc774 \uc911\uc694\ud569\ub2c8\ub2e4. \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \uc644\uc804\ud55c \ub9dd\ubd84\ub9ac\uac00 \uc804\uc81c\ub77c\uc11c, 5\ud638\ub9dd\uc5d0 \ub9cc\ub4e0 Gateway\ub098 \ubcf4\uc548 \uc7a5\ube44\ub97c \uac19\uc774 \uc4f8 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ub124\ud2b8\uc6cc\ud06c\ubd80\ud130 \ubcf4\uc548, Gateway, \ub85c\uadf8\uae4c\uc9c0 \ud55c \ubc8c\uc744 \uc0c8\ub85c \ub9cc\ub4e4\uc5b4\uc57c \ud569\ub2c8\ub2e4.\n\nPATH B\ub294 1\ub144 \uc815\ub3c4 \uac78\ub9ac\uc9c0\ub9cc, 5\ud638\ub9dd \ub79c\ub529\uc874\uacfc Gateway\ub97c \uadf8\ub300\ub85c \uc4f0\uace0 \uc2e4\uc5c5\ubb34\uae4c\uc9c0 \ud655\uc7a5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc800\ud76c \uad8c\uace0\ub294 5\ud638\ub9dd\uc5d0 \uad6c\ucd95\ud558\ub294 \uac83\uc785\ub2c8\ub2e4.\n\nPATH B\ub97c \ud0dd\ud558\uba74 \uc5b4\ub5a4 \uc808\ucc28\ub97c \uac70\uce58\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    11: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- 8\ub2e8\uacc4: \uc218\ub9bd, \ucee8\uc124\ud305, \uc2e0\uccad, \uc9c0\uc815, \uc774\ud589, \uc774\ud589\uc810\uac80, \uacb0\uacfc \uc81c\ucd9c, \uac1c\uc2dc\n- KB\uc99d\uad8c: PoC 2025.07 \u2192 \uc2e0\uccad 2025.09 \u2192 \uc9c0\uc815 2026.01 \u2192 \uc801\ud569 2026.06\n- \uc2e0\uccad\ubd80\ud130 \uc801\ud569\uae4c\uc9c0 \uc57d 9\uac1c\uc6d4, PoC\ubd80\ud130 \uc57d 1\ub144\n- N\ucc28 \ubcf4\uc644: \uc2e0\uccad \uc11c\ub958\ub97c \ubbf8\ub9ac \uc644\uc131\ud574 \ub450\ub294 \uac83\uc774 \uac00\uc7a5 \ud655\uc2e4\ud55c \ub2e8\ucd95 \ubc29\ubc95\n- \uc6a9\uc5b4: \ubd80\uac00\uc870\uac74(\uc9c0\uc815\uacfc \ud568\uaed8 \ubd80\uacfc\ub418\ub294 \uc774\ud589 \uc758\ubb34), \uc774\ud589\uc810\uac80(\ub300\ucc45\uc774 \uc2e4\uc81c \uc801\uc6a9\ub410\ub294\uc9c0 \ud655\uc778)\n\n\uc67c\ucabd\uc774 \uc5ec\ub35f \ub2e8\uacc4 \uc808\ucc28, \uc624\ub978\ucabd\uc774 KB\uc99d\uad8c\uc758 \uc2e4\uc81c \uc77c\uc815\uc785\ub2c8\ub2e4. \uc9c0\uc815\uc744 \ubc1b\ub294 \uac8c \ub05d\uc774 \uc544\ub2c8\ub77c, \uac1c\uc2dc \uc804\uc5d0 \uae08\ubcf4\uc6d0 \uc774\ud589\uc810\uac80\uae4c\uc9c0 \ud1b5\uacfc\ud574\uc57c \uc11c\ube44\uc2a4\ub97c \uc2dc\uc791\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\nKB\uc99d\uad8c\uc740 \uc2e0\uccad\ubd80\ud130 \uc801\ud569\uae4c\uc9c0 \ub300\ub7b5 9\uac1c\uc6d4, PoC\ubd80\ud130 \ubcf4\uba74 1\ub144\uc774 \uac78\ub838\uc2b5\ub2c8\ub2e4. \uc911\uac04\uc5d0 \ubcf4\uc644 \uc694\uccad\uc774 \uc5ec\ub7ec \ubc88 \uc788\uc5c8\uc73c\ub2c8, \uc2e0\uccad \uc11c\ub958\ub97c \ubbf8\ub9ac \uc644\uc131\ud574 \ub450\uace0 \ud68c\ucc28\uc5d0 \ub9de\ucdb0 \ub123\ub294 \uac8c \uae30\uac04\uc744 \uc904\uc774\ub294 \uac00\uc7a5 \ud655\uc2e4\ud55c \ubc29\ubc95\uc785\ub2c8\ub2e4.\n\n1\ubd80\ub97c \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.",
+    12: "[1min] [\uc694\uc57d]\n- \ucd9c\ubc1c \ub2e8\ub9d0\uc774 \ubc95\uc801 \uadfc\uac70\ub97c \uc815\ud568\n- \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uacfc 5\ud638\ub9dd\uc758 \ud1b5\uc81c \ucc28\uc774\ub294 \ub450 \uc904\ubfd0\n- \uad8c\uc7a5 PATH B, \uae30\uac04\uc740 \ud68c\ucc28\uc640 \uc11c\ub958 \uc900\ube44\uac00 \uc88c\uc6b0\n\n1\ubd80\ub97c \uc138 \uc904\ub85c \uc815\ub9ac\ud558\uba74, \ucd9c\ubc1c \ub2e8\ub9d0\uc774 \uadfc\uac70\ub97c \uc815\ud558\uace0, \ud1b5\uc81c \uc694\uad6c\ub294 \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc774\ub4e0 5\ud638\ub9dd\uc774\ub4e0 \uac70\uc758 \uac19\uc73c\uba70, \uadf8\ub798\uc11c \uc2e4\uc5c5\ubb34\uc5d0 \ub2ff\ub294 5\ud638\ub9dd \uacbd\ub85c\ub97c \uad8c\ud55c\ub2e4\ub294 \uac83\uc785\ub2c8\ub2e4.\n\n2\ubd80\uc5d0\uc11c\ub294 KB\uc99d\uad8c\uc774 \uc2e4\uc81c\ub85c \ub9cc\ub4e0 \uad6c\uc870\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4."
+  };
+  const deck = new SlideFramework({
+    logoSrc: "./common/pptx-theme/images/logo_dark.png",
+    
+    footer: "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.",
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

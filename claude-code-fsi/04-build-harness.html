@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>구축 방안, 하네스, 도입 경로</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="04-build-harness.md">
+  <meta name="remarp-block" content="04-build-harness">
+  <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/deck-overlay.css">
+  <link rel="stylesheet" href="./common/deck-detail.css">
+  <link rel="stylesheet" href="./common/deck-nav.css">
+  
+  <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
+  
+  <script>window.__remarpTheme = {"colors": {}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}};</script>
+</head>
+<body>
+<div class="slide-deck">
+<div class="slide title-slide" data-remarp-id="s0" data-block="04-build-harness" data-block-title="4부: 구축 방안, 하네스, 도입 경로">
+    <h1>4부: 구축 방안, 하네스, 도입 경로</h1>
+  <p class="meta">온프렘과 비교하고, Claude Code가 사내 표준대로 일하게 만든다</p>
+</div>
+
+<div class="slide" data-remarp-id="s1" data-block="04-build-harness" data-block-title="4부: 구축 방안, 하네스, 도입 경로">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>코딩 에이전트는 모델 성능이 곧 생산성</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <p><!-- Slide 2: 구축 방안 비교 --></p>
+<style>
+.cf-muted { color: var(--on-surface-muted); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.cf-src { color: var(--on-surface-muted); font-size: var(--fs-caption); margin-top: var(--space-2); word-break: keep-all; }
+.cf-accent  { color: color-mix(in srgb, var(--accent) 72%, var(--on-surface));  font-weight: var(--weight-bold); }
+.cf-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.cf-success { color: var(--success); font-weight: var(--weight-bold); }
+.cf-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.cf-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.cf-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.cf-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+.cf-stack { display: flex; flex-direction: column; gap: var(--space-3); }
+.cf-btns { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3); }
+.cf-btn { border: 1px solid color-mix(in srgb, var(--on-surface) 20%, transparent); background: var(--surface-1); color: var(--on-surface); padding: var(--space-2) var(--space-4); border-radius: var(--radius-pill); font-size: var(--fs-card); cursor: pointer; }
+.cf-btn.on { background: var(--accent); color: var(--accent-on); border-color: var(--accent); }
+.cf-panel { background: var(--surface-2); border-radius: var(--radius-md); padding: var(--space-4); }
+.data-table th { text-transform: none; letter-spacing: normal; }
+.data-table td, .data-table th { word-break: keep-all; overflow-wrap: anywhere; }
+.cf-box { background: var(--surface-2); border-radius: var(--radius-md); padding: var(--space-3); font-size: var(--fs-card); text-align: center; outline: 2px solid transparent; }
+.cf-box img { width: 48px; height: 48px; object-fit: contain; display: block; margin: 0 auto var(--space-1); }
+.cf-box b { display: block; }
+.cf-zone { border: 2px dashed color-mix(in srgb, var(--on-surface) 25%, transparent); border-radius: var(--radius-md); padding: var(--space-2); display: flex; flex-direction: column; gap: var(--space-2); }
+.cf-zone h5 { margin: 0; font-size: var(--fs-card); color: var(--on-surface-muted); }
+.cf-video { display: block; width: 100%; max-height: 100%; background: var(--surface-3); border-radius: var(--radius-md); }
+.cf-vwrap { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.cf-vbox { flex: 1; min-height: 0; container-type: size; }
+.cf-vbox .cf-video { width: min(100cqw, calc(100cqh * 1920 / 1506)); height: auto; margin-inline: auto; }
+.cf-vcap { text-align: center; color: var(--on-surface-muted); font-size: var(--fs-card); }
+.cf-cmp td:nth-child(2), .cf-cmp td:nth-child(3), .cf-cmp td:nth-child(4) { transition: background var(--duration-normal); }
+.cf-cmp[data-c="2"] td:nth-child(2), .cf-cmp[data-c="3"] td:nth-child(3), .cf-cmp[data-c="4"] td:nth-child(4) { background: var(--accent-subtle); }
+</style>
+<div class="cf-btns" onclick="(function(e){var b=e.target.closest('.cf-btn');if(!b)return;b.parentNode.querySelectorAll('.cf-btn').forEach(function(x){x.classList.toggle('on',x===b)});document.getElementById('cfCmp').setAttribute('data-c',b.dataset.c)})(event)">
+  <button class="cf-btn" data-c="2">온프렘 (GPU + 오픈모델)</button>
+  <button class="cf-btn" data-c="3">5호망 혁신금융 + Bedrock</button>
+  <button class="cf-btn" data-c="4">연구개발망 + Bedrock</button>
+</div>
+<table class="data-table cf-cmp" id="cfCmp">
+  <thead><tr><th>항목</th><th>온프렘 (GPU + 오픈모델)</th><th>5호망 혁신금융 + Bedrock</th><th>연구개발망 + Bedrock</th></tr></thead>
+  <tbody>
+    <tr><td>규제 절차</td><td>가장 단순 (내부망)</td><td>지정 + 이행점검 (약 1년)</td><td>내부 의결 (수개월)</td></tr>
+    <tr><td>코딩 품질</td><td>오픈모델 한계</td><td>Claude 최신 모델</td><td>동일</td></tr>
+    <tr><td>데이터, 운영계</td><td>제약 적음, 연계 가능</td><td>필터링 전제, 지정 범위 내</td><td>실데이터 금지, 연계 불가</td></tr>
+    <tr><td>비용 구조</td><td>GPU CAPEX + 전력 + 전문인력</td><td>사용량 OPEX</td><td>사용량 OPEX</td></tr>
+    <tr><td>최신성</td><td>직접 교체</td><td>모델 변경 간소화 절차</td><td>자율</td></tr>
+    <tr><td>권장 역할</td><td>고민감 소형 업무, 백업 경로</td><td><strong class="cf-success">본 트랙</strong></td><td>대안: 독립 인프라 신규 구축 필요</td></tr>
+  </tbody>
+</table>
+<div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="cf-info">온프렘 단독은 권하지 않습니다</strong>: 온프렘 모델은 Gateway 뒤 백업 경로로 두면 같은 통제면에서 함께 운영할 수 있습니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s2" data-block="04-build-harness" data-block-title="4부: 구축 방안, 하네스, 도입 경로">
+  <div class="slide-header" data-remarp-id="s2-header"><h2>벤더 종속은 통제면에서 생긴다</h2></div>
+  <div class="slide-body" data-remarp-id="s2-body">
+    <p><!-- Slide 3: 교체 가능한 설계 --></p>
+<style>
+.cf-layers { display: flex; flex-direction: column; gap: var(--space-2); }
+.cf-layer { border: 0; display: grid; grid-template-columns: 9em 1fr 7em; align-items: center; gap: var(--space-3); background: var(--surface-2); color: var(--on-surface); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-size: var(--fs-card); cursor: pointer; text-align: left; outline: 2px solid transparent; }
+.cf-layer.fix { background: var(--accent-subtle); }
+.cf-layer.on { outline-color: var(--accent); }
+.cf-layer b { font-size: var(--fs-body); }
+.cf-tag { justify-self: end; padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); background: var(--surface-3); font-size: var(--fs-caption); }
+.cf-layer.fix .cf-tag { background: var(--accent); color: var(--accent-on); }
+.cf-ly-detail { margin-top: var(--space-3); min-height: 4em; }
+</style>
+<div class="cf-layers" id="cfLy" data-reveal="stagger">
+  <button class="cf-layer" data-k="c"><b>클라이언트</b><span>Claude Code, Codex, IDE</span><span class="cf-tag">교체 가능</span></button>
+  <button class="cf-layer" data-k="p"><b>프로토콜</b><span>MCP, Anthropic / OpenAI API</span><span class="cf-tag">표준</span></button>
+  <button class="cf-layer fix" data-k="g"><b>통제면</b><span>Gateway, Hub, Identity, 로그</span><span class="cf-tag">고정</span></button>
+  <button class="cf-layer" data-k="m"><b>모델, 런타임</b><span>Bedrock, AgentCore Runtime, 온프렘</span><span class="cf-tag">교체 가능</span></button>
+</div>
+<div class="cf-panel cf-ly-detail" id="cfLyDetail"><span class="cf-muted">층을 눌러 무엇이 바뀌고 어떤 절차가 필요한지 보세요.</span></div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s3" data-block="04-build-harness" data-block-title="4부: 구축 방안, 하네스, 도입 경로">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>망이 여러 개여도 정책은 한 곳에서</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body">
+    <p><!-- Slide 4: 단일 컨트롤 센터 --></p>
+<style>
+.cf-cp { display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--space-4); }
+.cf-cp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+.cf-dp { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-2); margin-top: var(--space-2); }
+.cf-dp .cf-box.future { opacity: 0.6; border: 2px dashed color-mix(in srgb, var(--on-surface) 25%, transparent); }
+</style>
+<div class="cf-cp">
+  <div>
+    <div class="cf-zone"><h5>통제면 (Control Plane), AI Platform 계정</h5>
+      <div class="cf-cp-grid" data-reveal="stagger">
+        <div class="cf-box"><img src="common/aws-icons/services/Arch_AWS-IAM-Identity-Center_48.svg" alt=""><b>IdP 연동</b></div>
+        <div class="cf-box"><b>Gateway 정책</b>DLP, 라우팅</div>
+        <div class="cf-box"><img src="images/Gateway.png" alt=""><b>MCP Hub 등록</b></div>
+        <div class="cf-box"><img src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt=""><b>모델 allowlist</b></div>
+        <div class="cf-box"><img src="common/aws-icons/services/Arch_AWS-Budgets_48.svg" alt=""><b>Quota, 예산</b></div>
+        <div class="cf-box"><img src="common/aws-icons/services/Arch_Amazon-CloudWatch_48.svg" alt=""><b>로그, 대시보드</b></div>
+      </div>
+    </div>
+    <div class="cf-zone fragment fade-up" data-fragment-index="1"><h5>실행면 (Data Plane)</h5>
+      <div class="cf-dp">
+        <div class="cf-box"><b>5호망 AI</b>코딩 에이전트</div>
+        <div class="cf-box"><b>상용 AI 프로젝트</b>AI Project 계정</div>
+        <div class="cf-box"><b>컨텍스트 계층</b>Vector, Graph</div>
+        <div class="cf-box future"><b>(향후) 그룹 계열사</b>그룹 결정 사항</div>
+      </div>
+    </div>
+  </div>
+  <div class="cf-stack">
+    <table class="data-table fragment fade-left" data-fragment-index="2">
+      <thead><tr><th>통제</th><th>위치</th><th>구현</th></tr></thead>
+      <tbody>
+        <tr><td>누가</td><td>IdP + AgentCore Identity</td><td>AD 그룹 → 역할</td></tr>
+        <tr><td>무엇을 (모델)</td><td>LLM Gateway + SCP</td><td>allowlist</td></tr>
+        <tr><td>무엇을 (도구)</td><td>AgentCore Gateway + Policy</td><td>등록, 인가</td></tr>
+        <tr><td>얼마나</td><td>Gateway Quota + Budgets</td><td>3겹 비용 통제</td></tr>
+        <tr><td>기록</td><td>Log Archive + SIEM</td><td>감사 추적</td></tr>
+      </tbody>
+    </table>
+    <div class="callout callout-warning fragment fade-up" data-fragment-index="3"><strong class="cf-warning">예외</strong>: 연구개발망은 완전한 망분리 대상이라 이 통제면에 붙일 수 없고, 별도 통제면이 필요합니다.</div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s4" data-block="04-build-harness" data-block-title="4부: 구축 방안, 하네스, 도입 경로">
+  <div class="slide-header" data-remarp-id="s4-header"><h2>점검 질문마다 답할 로그가 정해져 있다</h2></div>
+  <div class="slide-body" data-remarp-id="s4-body">
+    <p><!-- Slide 5: 감사 추적 --></p>
+<style>
+.cf-audit { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.cf-aq { border: 0; width: 100%; text-align: left; background: var(--surface-2); color: var(--on-surface); border-radius: var(--radius-sm); padding: var(--space-3); font-size: var(--fs-card); cursor: pointer; outline: 2px solid transparent; margin-bottom: var(--space-2); }
+.cf-aq.on { outline-color: var(--accent); }
+.cf-src-box { transition: outline-color var(--duration-normal), background var(--duration-normal); }
+.cf-src-box.hit { outline-color: var(--accent); background: var(--accent-subtle); }
+.cf-srcs { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+</style>
+<div class="cf-audit">
+  <div id="cfAq">
+    <strong class="cf-accent">금보원 점검 질문을 눌러 보세요</strong>
+    <button class="cf-aq" data-s="gw,inv">누가 언제 어떤 모델에 무엇을 보냈나</button>
+    <button class="cf-aq" data-s="obs">어떤 도구를 호출했나</button>
+    <button class="cf-aq" data-s="gw">DLP가 무엇을 차단했나</button>
+    <button class="cf-aq" data-s="ct">권한, 설정 변경은 누가 했나</button>
+  </div>
+  <div>
+    <div class="cf-srcs">
+      <div class="cf-box cf-src-box" data-id="gw"><b>Gateway 애플리케이션 로그</b>V2 데모의 감사 로그</div>
+      <div class="cf-box cf-src-box" data-id="inv"><img src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt=""><b>Bedrock Invocation Logging</b></div>
+      <div class="cf-box cf-src-box" data-id="obs"><img src="images/Observability.png" alt=""><b>AgentCore Observability</b></div>
+      <div class="cf-box cf-src-box" data-id="ct"><img src="common/aws-icons/services/Arch_AWS-CloudTrail_48.svg" alt=""><b>CloudTrail + Config</b></div>
+    </div>
+    <div class="cf-box"><img src="common/aws-icons/services/Arch_Amazon-Simple-Storage-Service_48.svg" alt=""><b>Log Archive: S3 Object Lock, KMS → 사내 SIEM / Security Lake</b></div>
+  </div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="cf-info">보관 기간</strong>: 1년 이상을 기본으로 설계합니다(인터넷 접속 기록 1년 이상 기준 준용). 지정 부가조건의 보관 기간은 확인 필요입니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s5" data-block="04-build-harness" data-block-title="4부: 구축 방안, 하네스, 도입 경로">
+  <div class="slide-header" data-remarp-id="s5-header"><h2>비용은 세 겹으로, 먼저 토큰부터 잰다</h2></div>
+  <div class="slide-body" data-remarp-id="s5-body">
+    <p><!-- Slide 6: 비용 세 겹 --></p>
+<style>
+.cf-cost { display: grid; grid-template-columns: 1fr 1.2fr; gap: var(--space-4); }
+.cf-layer3 div { background: var(--surface-2); border-radius: var(--radius-md); padding: var(--space-3); font-size: var(--fs-card); margin-bottom: var(--space-2); border-left: 4px solid var(--accent); }
+.cf-layer3 b { display: block; font-size: var(--fs-body); }
+.cf-sl { display: grid; grid-template-columns: 10em 1fr 6em; gap: var(--space-2); align-items: center; font-size: var(--fs-card); margin-bottom: var(--space-2); }
+.cf-sl input { width: 100%; accent-color: var(--accent); }
+.cf-sl output { text-align: right; font-weight: var(--weight-bold); }
+.cf-out { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-3); }
+.cf-out .metric-card b { display: block; font-size: var(--text-2xl); color: color-mix(in srgb, var(--accent) 72%, var(--on-surface)); }
+</style>
+<div class="cf-cost">
+  <div class="cf-layer3" data-reveal="stagger">
+    <div><b>1 사용자 한도</b>개인별 토큰, 요청 한도. TPM / RPM 제어 (Gateway)</div>
+    <div><b>2 팀 예산</b>본부, 팀 단위 월 예산, 소진율 알림 (Gateway 집계)</div>
+    <div><b>3 계정 예산</b>AWS Budgets로 계정 레벨 최종 안전망</div>
+  </div>
+  <div class="cf-panel">
+    <strong class="cf-accent">파일럿 토큰 규모 추정기</strong>
+    <div class="cf-sl"><span>파일럿 인원</span><input type="range" id="cfU" min="5" max="200" step="5" value="20"><output id="cfUo"></output></div>
+    <div class="cf-sl"><span>1인 하루 모델 호출</span><input type="range" id="cfR" min="20" max="600" step="10" value="150"><output id="cfRo"></output></div>
+    <div class="cf-sl"><span>호출당 입력 토큰</span><input type="range" id="cfT" min="5000" max="80000" step="1000" value="30000"><output id="cfTo"></output></div>
+    <div class="cf-sl"><span>근무일 / 월</span><input type="range" id="cfD" min="10" max="23" step="1" value="21"><output id="cfDo"></output></div>
+    <div class="cf-out">
+      <div class="metric-card"><b id="cfM"></b>월 입력 토큰 (전체)</div>
+      <div class="metric-card"><b id="cfP"></b>1인 하루 입력 토큰 (Quota 기준)</div>
+    </div>
+    <div class="cf-src">기본값 30,000은 V2 데모에서 잰 호출당 입력 토큰(28,950)에 가깝게 둔 값입니다. 대부분 프롬프트 캐시 읽기라 단가가 다르므로, 금액은 Bedrock 요금표로 따로 계산합니다.</div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s6" data-block="04-build-harness" data-block-title="4부: 구축 방안, 하네스, 도입 경로">
+  <div class="slide-header" data-remarp-id="s6-header"><h2>도구만 깔면 세 가지 실패가 반복된다</h2></div>
+  <div class="slide-body" data-remarp-id="s6-body">
+    <p><!-- Slide 7: 하네스 --></p>
+<style>
+.cf-h { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+.cf-h .fail { background: var(--danger-subtle); border-radius: var(--radius-md); padding: var(--space-3); font-size: var(--fs-card); }
+.cf-h .fix { background: var(--success-subtle); border-radius: var(--radius-md); padding: var(--space-3); font-size: var(--fs-card); margin-top: var(--space-2); }
+.cf-h b { display: block; font-size: var(--fs-body); }
+.cf-h .arrow { text-align: center; color: var(--on-surface-muted); }
+</style>
+<div class="cf-h">
+  <div>
+    <div class="fail fragment fade-up" data-fragment-index="1"><b>팀 컨벤션 위반</b>사내 코딩 표준을 모르는 코드가 계속 올라옴</div>
+    <div class="arrow fragment fade-up" data-fragment-index="4">▼</div>
+    <div class="fix fragment fade-up" data-fragment-index="4"><b>01 GUIDES</b>CLAUDE.md / AGENTS.md에 규칙, Skills에 작업 절차. 위반을 미리 막음</div>
+  </div>
+  <div>
+    <div class="fail fragment fade-up" data-fragment-index="2"><b>스스로 검증하지 않음</b>동작 확인 없이 완료했다고 보고</div>
+    <div class="arrow fragment fade-up" data-fragment-index="5">▼</div>
+    <div class="fix fragment fade-up" data-fragment-index="5"><b>02 SENSORS</b>hooks로 테스트 자동 실행, 리뷰 서브에이전트. 스스로 검증하게 만듦</div>
+  </div>
+  <div>
+    <div class="fail fragment fade-up" data-fragment-index="3"><b>같은 실수 반복</b>지적해도 다음 세션에서 똑같은 실수</div>
+    <div class="arrow fragment fade-up" data-fragment-index="6">▼</div>
+    <div class="fix fragment fade-up" data-fragment-index="6"><b>03 STEERING LOOP</b>반복 실수를 관찰해 규칙 자체를 수정. 같은 실수가 줄어듦</div>
+  </div>
+</div>
+<table class="data-table fragment fade-up" data-fragment-index="7">
+  <thead><tr><th></th><th>Code-based: 결정론적, 빠름, 저렴</th><th>LLM-based: 확률적, 느림, 비쌈</th></tr></thead>
+  <tbody>
+    <tr><td>사전 안내 GUIDES</td><td>신규 서비스 세팅 스크립트, 사내 CLI, 프로젝트 템플릿</td><td>CLAUDE.md / AGENTS.md, Skills, 참조 문서 연결 (MCP)</td></tr>
+    <tr><td>사후 피드백 SENSORS</td><td>Linter, 타입 체커, 유닛, 통합 테스트</td><td>AI 코드 리뷰 에이전트, LLM 기반 품질 판정</td></tr>
+  </tbody>
+</table>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s7" data-fit="off" data-block="04-build-harness" data-block-title="4부: 구축 방안, 하네스, 도입 경로">
+  <div class="slide-header" data-remarp-id="s7-header"><h2>데모 V3: 표준대로 고치고 스스로 검증</h2></div>
+  <div class="slide-body" data-remarp-id="s7-body">
+    <p><!-- Slide 8: 데모 V3 --></p>
+<div class="cf-vwrap" data-reveal="static">
+  <div class="cf-vbox">
+    <video class="cf-video" poster="media/r3-harness.jpg" aria-label="데모 V3 영상: CLAUDE.md와 hooks로 레거시 수수료 모듈 리팩토링, 실제 Claude Code 화면 녹화, 무음, 1분 15초" title="데모 V3 영상: 하네스, 실제 Claude Code 화면 녹화, 무음, 1분 15초" controls preload="metadata" muted playsinline tabindex="-1"><source src="media/r3-harness.mp4" type='video/mp4; codecs="avc1.640034"'><source src="media/r3-harness.webm" type='video/webm; codecs="vp9"'></video>
+  </div>
+  <div class="cf-vcap">실제 Claude Code 대화형 화면 녹화 (2026.10.19 14:52 UTC), Sonnet 5 서울 리전, LLM Gateway 경유. 대기 구간 2초로 줄임, 무음</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s8" data-block="04-build-harness" data-block-title="4부: 구축 방안, 하네스, 도입 경로">
+  <div class="slide-header" data-remarp-id="s8-header"><h2>V3에서 하네스가 한 일</h2></div>
+  <div class="slide-body" data-remarp-id="s8-body">
+    <p><!-- Slide 9: V3 정리 --></p>
+<style>
+.cf-v3 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.cf-v3 .code-block { font-size: var(--fs-caption); margin: 0; }
+</style>
+<div class="cf-v3">
+<pre class="code-block" data-reveal="static"><span class="comment"># .claude/settings.json (프로젝트 하네스)</span>
+{ <span class="key">"hooks"</span>: { <span class="key">"PostToolUse"</span>: [ {
+    <span class="key">"matcher"</span>: <span class="string">"Edit|Write|MultiEdit"</span>,
+    <span class="key">"hooks"</span>: [ { <span class="key">"type"</span>: <span class="string">"command"</span>,
+      <span class="key">"command"</span>: <span class="string">".claude/hooks/run-tests.sh"</span> } ] } ] } }
+
+<span class="comment"># run-tests.sh: 실패 → exit 2, stderr가 Claude에게 전달</span>
+out=$(python3 -m pytest -q 2>&1) || { echo <span class="string">"$out"</span> >&2; <span class="keyword">exit</span> 2; }
+printf <span class="string">'{"systemMessage": "[SENSORS] pytest 통과"}'</span></pre>
+  <div class="cf-stack" data-reveal="stagger">
+    <div class="card"><strong class="cf-accent">GUIDES 결과</strong><div class="cf-muted">float → Decimal, round → ROUND_DOWN(항목별), 1/2 → Side Enum(하위 호환), 요율 상수화, 타입 힌트와 한국어 docstring. CLAUDE.md의 코드 규칙이 diff에 그대로</div></div>
+    <div class="card"><strong class="cf-success">SENSORS 결과</strong><div class="cf-muted">수정 직후 hook이 pytest 실행: 1 failed → 3 passed. 실패했다면 exit 2로 실패 내용이 Claude에게 되돌아가 다시 고침</div></div>
+    <div class="card"><strong class="cf-info">통제면도 함께</strong><div class="cf-muted">세션 시작 시 Claude Code가 다른 모델 11개(apac 프로파일)를 확인하려 했고, Gateway가 모두 model_not_allowed로 거부. 작업 호출 6건은 Sonnet 5로만 ALLOW</div></div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s9" data-block="04-build-harness" data-block-title="4부: 구축 방안, 하네스, 도입 경로">
+  <div class="slide-header" data-remarp-id="s9-header"><h2>권장 도입 경로: 5호망 혁신금융</h2></div>
+  <div class="slide-body" data-remarp-id="s9-body">
+    <p><!-- Slide 10: 권장 도입 경로 --></p>
+<style>
+.cf-road { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-2); margin-bottom: var(--space-3); }
+.cf-ms { border: 0; text-align: left; background: var(--surface-2); color: var(--on-surface); border-radius: var(--radius-md); padding: var(--space-3); font-size: var(--fs-card); cursor: pointer; border-top: 4px solid var(--accent); outline: 2px solid transparent; }
+.cf-ms.on { outline-color: var(--accent); }
+.cf-ms b { display: block; color: color-mix(in srgb, var(--accent) 72%, var(--on-surface)); font-size: var(--fs-body); }
+.cf-road-detail { min-height: 4.4em; margin-bottom: var(--space-3); }
+</style>
+<div class="cf-road" id="cfRoad" data-reveal="stagger" data-reveal-anim="right">
+  <button class="cf-ms" data-i="0"><b>M0~2</b>보안대책 수립, 금감원, 금보원 컨설팅</button>
+  <button class="cf-ms" data-i="1"><b>M1~3</b>랜딩존, AI Platform, Gateway, Hub (PoC)</button>
+  <button class="cf-ms" data-i="2"><b>회차</b>지정 신청: 파일럿, 확산 범위 명시</button>
+  <button class="cf-ms" data-i="3"><b>+4개월</b>지정, 보안대책 이행</button>
+  <button class="cf-ms" data-i="4"><b>+5개월</b>이행점검 → 개시</button>
+</div>
+<div class="cf-panel cf-road-detail" id="cfRoadDetail"><span class="cf-muted">단계를 눌러 오늘 본 내용 중 무엇이 들어가는지 보세요. 날짜 대신 착수 시점(M0) 기준 상대 기간으로 표기합니다.</span></div>
+<div class="cf-grid-2 fragment fade-up" data-fragment-index="1">
+  <div class="callout callout-success"><strong class="cf-success">함께 합류: 상용 AI 프로젝트</strong>: Workloads OU에 AI Project 계정을 추가해 같은 Gateway, Hub, 로그를 씁니다.</div>
+  <div class="callout callout-warning"><strong class="cf-warning">대안: 연구개발망</strong>: 완전한 망분리 때문에 Network, Security, Gateway, 로그를 5호망과 별도로 처음부터 구축합니다.</div>
+</div>
+<div class="cf-src">일정은 KB증권 사례 기준 참고치이며 회차별 접수 일정에 따라 달라집니다. PoC 구간은 실데이터 없이 구성을 검증합니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s10" data-block="04-build-harness" data-block-title="4부: 구축 방안, 하네스, 도입 경로">
+  <div class="slide-header" data-remarp-id="s10-header"><h2>확정 전에 확인할 여덟 가지</h2></div>
+  <div class="slide-body" data-remarp-id="s10-body">
+    <p><!-- Slide 11: 리스크와 확인 필요 --></p>
+<style>
+.cf-chk li { font-size: var(--fs-card); }
+.cf-chk { columns: 2; column-gap: var(--space-4); }
+.cf-chk li { break-inside: avoid; margin-bottom: var(--space-2); }
+</style>
+<ul class="checklist cf-chk" data-reveal="static">
+  <li><strong>1 CRIS 국외 처리 고지와 DLP 범위</strong><br>국외이전 논리, SCP 예외 조건 → 신청서, 정보보호위원회에 명시</li>
+  <li><strong>2 연구개발망 조항 번호 표기 불일치</strong><br>규정 원문 대조</li>
+  <li><strong>3 OpenAI 모델 서울 in-region 없음</strong><br>Codex는 CRIS 전제, Global / US 국외 처리 고지</li>
+  <li><strong>4 AgentCore Policy 정책 엔진 처리 리전</strong><br>문서 확인 (Gateway, Policy 자체는 서울 가용)</li>
+  <li><strong>5 AWS Context 서울 지원</strong><br>확인 필요. Managed Knowledge Base, KB GraphRAG는 서울 미지원이라 대체안으로 설계</li>
+  <li><strong>6 LLM Gateway 배치 위치 (전산실 vs AWS)</strong><br>금보원 컨설팅</li>
+  <li><strong>7 망분리 전면 해제 일정</strong><br>모니터링</li>
+  <li><strong>8 KB증권 지정 부가조건 원문 미확인</strong><br>보도 기반임을 명시</li>
+</ul>
+<div class="callout callout-warning fragment fade-up" data-fragment-index="1"><strong class="cf-warning">면책</strong>: 규제 해석은 공개 자료 기반의 기술적 해석이며 법률 자문을 대체하지 않습니다. 하나증권 컴플라이언스, 법률 검토를 거쳐 확정합니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s11" data-block="04-build-harness" data-block-title="4부: 구축 방안, 하네스, 도입 경로">
+  <div class="slide-header" data-remarp-id="s11-header"><h2>[부록] 랜딩존은 구축하고 비중요로 검증</h2></div>
+  <div class="slide-body" data-remarp-id="s11-body">
+    <p><!-- Slide 12: 부록 랜딩존 접근 --></p>
+<div class="cf-grid-3" data-reveal="stagger">
+  <div class="card"><strong class="cf-warning">유형 ①</strong><div class="cf-muted">랜딩존 없이 테스트, 비중요 서비스를 먼저 올려 봄</div><div class="cf-muted"><b>평가</b>: 빠르지만 나중에 재구축 부담</div></div>
+  <div class="card"><strong class="cf-success">유형 ② (권장)</strong><div class="cf-muted">랜딩존을 구축하고 테스트, 비중요 서비스로 검증</div><div class="cf-muted"><b>평가</b>: AI PoC에 적합</div></div>
+  <div class="card"><strong class="cf-info">유형 ③</strong><div class="cf-muted">랜딩존을 선제 구축하고 중요 서비스로 검증</div><div class="cf-muted"><b>평가</b>: 안전하지만 초기 기간이 길어짐</div></div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="cf-info">권장 이유</strong>: 랜딩존을 먼저 깔아야 2부의 OU, SCP, 로그 체계 위에서 PoC 결과가 그대로 운영으로 이어집니다. 유형 ①은 PoC 뒤 재구축이 필요합니다.</div>
+<div class="cf-src">분류 출처: 원본 제안서 부록(국내 은행 공개 구축 사례). 원 출처 확인 전이라 기간 수치는 인용하지 않았습니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s12" data-block="04-build-harness" data-block-title="4부: 구축 방안, 하네스, 도입 경로">
+  <div class="slide-header" data-remarp-id="s12-header"><h2>오늘의 결론, 네 줄</h2></div>
+  <div class="slide-body" data-remarp-id="s12-body">
+    <p><!-- Slide 13: 최종 정리 --></p>
+<div class="cf-grid-2" data-reveal="stagger">
+  <div class="card"><strong class="cf-accent">1 문은 5호망으로</strong><div class="cf-muted">실업무 코드와 운영계에 닿는 유일한 경로. KB증권이 검증했고, 약 1년, 회차와 서류가 기간을 정합니다.</div></div>
+  <div class="card"><strong class="cf-accent">2 길에 우회로가 없게</strong><div class="cf-muted">Workloads OU, SCP, DX, TGW 5호망 RT, PrivateLink. 단말에는 AWS 자격증명이 없습니다.</div></div>
+  <div class="card"><strong class="cf-success">3 관문은 둘, 겹은 여럿</strong><div class="cf-muted">관리 설정(V1), LLM Gateway DLP와 감사 로그(V2), AgentCore Gateway. 통제면은 하나로 고정합니다.</div></div>
+  <div class="card"><strong class="cf-success">4 하네스가 생산성을 만든다</strong><div class="cf-muted">CLAUDE.md, hooks, 테스트(V3). 도구 도입과 별개로 조직이 만들어야 하는 장치입니다.</div></div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="cf-info">다음 단계 제안</strong>: 보안대책 초안 작성과 PoC 범위 합의. 오늘 데모의 Gateway, 관리 설정, 하네스 소스는 그대로 PoC 출발점으로 드립니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s13" data-block="04-build-harness" data-block-title="4부: 구축 방안, 하네스, 도입 경로">
+  <div class="center-content" style="height:100%; gap:1.5rem;">
+    <h1 style="font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:3rem; color:var(--text-primary);">Thank You</h1>
+    <p style="color:var(--text-secondary); font-size:1.1rem;">Claude Code for FSI, 감사합니다</p>
+    <p style="color:var(--text-muted); font-size:1rem; margin-top:0.5rem;">수고하셨습니다!</p>
+    <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+            <a href="toc.html" class="btn btn-primary btn-sm" style="text-decoration:none;">← 목차로 돌아가기</a>
+    </div>
+  </div>
+</div>
+</div>
+<script src="./common/animation-utils.js"></script>
+<script src="./common/deck-overlay.js"></script>
+<script src="./common/deck-detail.js"></script>
+<script src="./common/deck-nav.js"></script>
+<script src="./common/slide-framework.js"></script>
+<script src="./common/quiz-component.js"></script>
+<script src="./common/presenter-view.js"></script>
+<script>
+(function(){
+(function () {
+  var info = {
+    c: '코딩 도구(Claude Code ↔ Codex): 클라이언트 관리 설정만 다시 배포. 규제 절차는 지정서 기재 방식에 따라 확인 필요',
+    p: '프로토콜: MCP와 Anthropic, OpenAI 호환 API는 표준이라 클라이언트와 모델을 바꿔도 그대로 둡니다',
+    g: '통제면: 인증, DLP, 로그, Quota, MCP 등록과 인가. 이 층만 고정하면 위아래를 갈아끼울 수 있습니다. 보안대책 평가의 대상도 이 층입니다',
+    m: '모델 버전: Gateway 라우팅 변경, 2026.04.15 간소화 절차(경미, 보통, 상당). 에이전트 프레임워크(Strands, LangGraph, Claude Agent SDK): AgentCore Runtime이 프레임워크 무관하게 실행, 내부 변경관리. MCP 서버 추가: Hub 등록 심사(관문 ①)'
+  };
+  var root = document.getElementById('cfLy'), out = document.getElementById('cfLyDetail');
+  if (!root) return;
+  root.addEventListener('click', function (e) {
+    var b = e.target.closest('.cf-layer'); if (!b) return;
+    root.querySelectorAll('.cf-layer').forEach(function (x) { x.classList.toggle('on', x === b); });
+    out.innerHTML = '<strong class="cf-accent">' + b.querySelector('b').textContent + '</strong><div class="cf-muted">' + info[b.dataset.k] + '</div>';
+  });
+})();
+})();
+</script>
+<script>
+(function(){
+(function () {
+  var qs = document.querySelectorAll('#cfAq .cf-aq');
+  qs.forEach(function (q) {
+    q.addEventListener('click', function () {
+      var ids = q.dataset.s.split(',');
+      qs.forEach(function (x) { x.classList.toggle('on', x === q); });
+      document.querySelectorAll('.cf-src-box').forEach(function (b) { b.classList.toggle('hit', ids.indexOf(b.dataset.id) >= 0); });
+    });
+  });
+})();
+})();
+</script>
+<script>
+(function(){
+(function () {
+  function fmt(n) { return n >= 1e9 ? (n / 1e9).toFixed(2) + 'B' : n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n).toLocaleString('ko-KR'); }
+  function calc() {
+    var u = +document.getElementById('cfU').value, r = +document.getElementById('cfR').value, t = +document.getElementById('cfT').value, d = +document.getElementById('cfD').value;
+    document.getElementById('cfUo').textContent = u + '명';
+    document.getElementById('cfRo').textContent = r + '회';
+    document.getElementById('cfTo').textContent = (t / 1000) + 'K';
+    document.getElementById('cfDo').textContent = d + '일';
+    document.getElementById('cfM').textContent = fmt(u * r * t * d);
+    document.getElementById('cfP').textContent = fmt(r * t);
+  }
+  ['cfU', 'cfR', 'cfT', 'cfD'].forEach(function (id) { var el = document.getElementById(id); if (el) el.addEventListener('input', calc); });
+  if (document.getElementById('cfU')) calc();
+})();
+})();
+</script>
+<script>
+(function(){
+document.querySelectorAll('video.cf-video').forEach(function (v) {
+  var release = function () { setTimeout(function () { if (document.activeElement === v) v.blur(); }, 0); };
+  ['focus', 'play', 'pause', 'seeked', 'volumechange', 'click', 'pointerup'].forEach(function (ev) { v.addEventListener(ev, release); });
+});
+window.addEventListener('hashchange', function () {
+  document.querySelectorAll('.slide:not(.active) video.cf-video').forEach(function (v) { if (!v.paused) v.pause(); });
+});
+})();
+</script>
+<script>
+(function(){
+(function () {
+  var d = [
+    '1부 PATH B 절차 ①②. 보안대책서에 오늘의 통제(관리 설정, Gateway DLP, 모델 allowlist, 감사 로그, CRIS 국외 처리 고지)를 담습니다',
+    '2, 3부 구성을 PoC로: OU와 SCP(Policy Staging 먼저), DX, TGW 5호망 RT, PrivateLink, LLM Gateway, AgentCore Gateway. 오늘 데모 V1, V2를 실데이터 없이 재현',
+    '1부 ③ 회차별 접수. 2부 전제조건: 사용자 범위(파일럿, 확산)를 신청서에 함께 명시',
+    '4부 하네스(CLAUDE.md, hooks, 테스트)와 운영 체계(Quota, 예산, 로그 보관 1년 이상)를 이행',
+    '금보원 이행점검: 4부 감사 추적의 "질문별 로그 소스"로 답변. 개시 후 베타테스터 → 팀 단위 확산'
+  ];
+  var root = document.getElementById('cfRoad'), out = document.getElementById('cfRoadDetail');
+  if (!root) return;
+  root.addEventListener('click', function (e) {
+    var b = e.target.closest('.cf-ms'); if (!b) return;
+    root.querySelectorAll('.cf-ms').forEach(function (x) { x.classList.toggle('on', x === b); });
+    out.innerHTML = '<strong class="cf-accent">' + b.querySelector('b').textContent + '</strong><div class="cf-muted">' + d[+b.dataset.i] + '</div>';
+  });
+})();
+})();
+</script>
+<script>
+  
+  const presenterNotes = {
+    1: "[0.5min] [\uc694\uc57d]\n- 4\ubd80: \uace0\uac1d \uc9c8\ubb38 2-1(\uc628\ud504\ub818 \ube44\uad50), 2-2(\ub2e8\uc77c \ucee8\ud2b8\ub864 \uc13c\ud130), 2-3(\uad50\uccb4 \uac00\ub2a5\uc131)\n- \uc774\uc5b4\uc11c \uac10\uc0ac \ucd94\uc801, \ube44\uc6a9, \ud558\ub124\uc2a4\uc640 \ub370\ubaa8 V3, \uad8c\uc7a5 \ub3c4\uc785 \uacbd\ub85c, \ud655\uc778 \ud544\uc694 \uc0ac\ud56d\n\n\ub9c8\uc9c0\ub9c9 4\ubd80\uc785\ub2c8\ub2e4. \uc628\ud504\ub818\uacfc \ube44\uad50\ud558\uace0, \ud1b5\uc81c\uba74\uc744 \uc5b4\ub5bb\uac8c \ud558\ub098\ub85c \ub458\uc9c0, \uadf8\ub9ac\uace0 Claude Code\uac00 \uc0ac\ub0b4 \ud45c\uc900\ub300\ub85c \uc77c\ud558\uac8c \ub9cc\ub4dc\ub294 \ud558\ub124\uc2a4\ub97c \ub370\ubaa8\uc640 \ud568\uaed8 \ubcf4\uace0, \uad8c\uc7a5 \ub3c4\uc785 \uacbd\ub85c\ub85c \ub9c8\ubb34\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uba3c\uc800 \uc138 \uac00\uc9c0 \uad6c\ucd95 \ubc29\uc548\uc785\ub2c8\ub2e4.",
+    2: "\u23f8\ufe0f \ud83c\udfac [2min] [\uc694\uc57d]\n- \uace0\uac1d \uc9c8\ubb38 2-1: \uc628\ud504\ub818 vs 5\ud638\ub9dd \ud601\uc2e0\uae08\uc735 vs \uc5f0\uad6c\uac1c\ubc1c\ub9dd\n- \uc628\ud504\ub818: \uaddc\uc81c\ub294 \uc27d\uc9c0\ub9cc \ucf54\ub529 \ud488\uc9c8(\uc624\ud508\ubaa8\ub378)\uacfc GPU, \uc778\ub825 \ubd80\ub2f4\n- 5\ud638\ub9dd \ud601\uc2e0\uae08\uc735: \ubcf8 \ud2b8\ub799. \ucd5c\uc2e0 \ubaa8\ub378, \uc0ac\uc6a9\ub7c9 \uacfc\uae08, \uc9c0\uc815 \ubc94\uc704 \ub0b4 \uc6b4\uc601\uacc4 \uc5f0\uacc4\n- \uc5f0\uad6c\uac1c\ubc1c\ub9dd: \ub300\uc548\uc774\uc9c0\ub9cc \uc778\ud504\ub77c \ubcc4\ub3c4 \uad6c\ucd95\n- \uc628\ud504\ub818 \ubaa8\ub378\uc740 Gateway \ub4a4 \ubc31\uc5c5 \uacbd\ub85c\ub85c\n\n\uc138 \uac00\uc9c0 \uad6c\ucd95 \ubc29\uc548\uc785\ub2c8\ub2e4. \ubc84\ud2bc\uc73c\ub85c \uc5f4\uc744 \ud558\ub098\uc529 \ube44\uad50\ud574 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uc628\ud504\ub818\uc740 \uaddc\uc81c\ub294 \uac00\uc7a5 \uc27d\uc9c0\ub9cc, \ucf54\ub529 \uc5d0\uc774\uc804\ud2b8\ub294 \ubaa8\ub378 \uc131\ub2a5\uc774 \uace7 \uc0dd\uc0b0\uc131\uc774\ub77c \uc624\ud508\ubaa8\ub378\uc758 \ud55c\uacc4\uac00 \uadf8\ub300\ub85c \uc0dd\uc0b0\uc131 \ud55c\uacc4\uac00 \ub429\ub2c8\ub2e4. GPU\uc640 \uc804\ub825, \uc6b4\uc601 \uc778\ub825\ub3c4 \ub4e4\uc5b4\uac11\ub2c8\ub2e4. \uc800\ud76c \uad8c\uace0\ub294 5\ud638\ub9dd \ud601\uc2e0\uae08\uc735\uc785\ub2c8\ub2e4. \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \ub300\uc548\uc774\uc9c0\ub9cc \uc778\ud504\ub77c\ub97c \uacf5\uc720\ud560 \uc218 \uc5c6\uc5b4 \ud55c \ubc8c\uc744 \uc0c8\ub85c \ub9cc\ub4e4\uc5b4\uc57c \ud569\ub2c8\ub2e4.\n\n\uc628\ud504\ub818 \ubaa8\ub378\uc744 \ubc84\ub9ac\ub77c\ub294 \ub73b\uc740 \uc544\ub2d9\ub2c8\ub2e4. Gateway \ub4a4\uc5d0 \ubc31\uc5c5 \uacbd\ub85c\ub85c \ubd99\uc774\uba74, \uac19\uc740 \ud1b5\uc81c\uba74 \uc548\uc5d0\uc11c \ud568\uaed8 \uc6b4\uc601\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\n\uadf8 \"\uac19\uc740 \ud1b5\uc81c\uba74\"\uc774 \uc65c \uc911\uc694\ud55c\uc9c0, \uad50\uccb4 \uac00\ub2a5\uc131 \uad00\uc810\uc5d0\uc11c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    3: "\u23f8\ufe0f \ud83c\udfac [1.5min] [\uc694\uc57d]\n- \uace0\uac1d \uc9c8\ubb38 2-3: Agent\uc640 Framework\uac00 \ubc14\ub00c\uc5b4\ub3c4 \ubc84\ud2f0\ub294 \uc124\uacc4\n- \ub124 \uce35: \ud074\ub77c\uc774\uc5b8\ud2b8(\uad50\uccb4), \ud504\ub85c\ud1a0\ucf5c(\ud45c\uc900), \ud1b5\uc81c\uba74(\uace0\uc815), \ubaa8\ub378\uacfc \ub7f0\ud0c0\uc784(\uad50\uccb4)\n- \ubaa8\ub378 \uad50\uccb4\ub294 2026.04 \uac04\uc18c\ud654 \uc808\ucc28, \ud504\ub808\uc784\uc6cc\ud06c\ub294 AgentCore Runtime\uc774 \ubb34\uad00\ud558\uac8c \uc2e4\ud589\n- \ubcf4\uc548\ub300\ucc45 \ud3c9\uac00\uc758 \ub300\uc0c1\uc740 \ud1b5\uc81c\uba74 \u2192 \ud1b5\uc81c\uba74\uc744 \uace0\uc815\ud558\uba74 \ub3c4\uad6c \uad50\uccb4 \ub54c \uc7ac\ud3c9\uac00 \ubd80\ub2f4\uc774 \uc904\uc5b4\ub4e6\n\n\ub3c4\uad6c\ub098 \ud504\ub808\uc784\uc6cc\ud06c\uac00 \ubc14\ub00c\ub294 \uac74 \uc2dc\uac04\ubb38\uc81c\uc785\ub2c8\ub2e4. \uadf8\ub798\uc11c \ub124 \uce35\uc73c\ub85c \ub098\ub234\uc2b5\ub2c8\ub2e4. \uce35\uc744 \ub20c\ub7ec \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uc704\uc758 \ud074\ub77c\uc774\uc5b8\ud2b8\uc640 \uc544\ub798\uc758 \ubaa8\ub378\uc740 \ubc14\ub00c\uc5b4\ub3c4 \ub418\uace0, \uac00\uc6b4\ub370 \uac15\uc870\ud55c \ud1b5\uc81c\uba74\ub9cc \uace0\uc815\ud569\ub2c8\ub2e4. \ubaa8\ub378 \uad50\uccb4\ub294 \uc62c\ud574 \uac04\uc18c\ud654\ub41c \uc808\ucc28\ub85c \ucc98\ub9ac\ud560 \uc218 \uc788\uace0, \ud504\ub808\uc784\uc6cc\ud06c\ub294 AgentCore Runtime\uc774 \uac00\ub9ac\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\n\ubca4\ub354 \uc885\uc18d\uc740 \ubaa8\ub378\uc774 \uc544\ub2c8\ub77c \ud1b5\uc81c\uba74\uc5d0\uc11c \uc0dd\uae41\ub2c8\ub2e4. \ud1b5\uc81c\uba74\uc744 \ud2b9\uc815 \ud074\ub77c\uc774\uc5b8\ud2b8\uc5d0 \ubb36\uc9c0 \uc54a\uace0 \ud45c\uc900 \uc704\uc5d0 \ub450\uba74, \ub0b4\uc77c \ub2e4\ub978 \ucf54\ub529 \ub3c4\uad6c\uac00 \ub098\uc640\ub3c4 \uad00\ub9ac \uc124\uc815\ub9cc \ub2e4\uc2dc \ubc30\ud3ec\ud558\uba74 \ub429\ub2c8\ub2e4.\n\n\uadf8 \ud1b5\uc81c\uba74\uc744 \ud55c \uacf3\uc5d0\uc11c \uad00\ub9ac\ud558\ub294 \ub2e8\uc77c \ucee8\ud2b8\ub864 \uc13c\ud130\ub97c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    4: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- \uace0\uac1d \uc9c8\ubb38 2-2: \ub2e8\uc77c \ucee8\ud2b8\ub864 \uc13c\ud130\n- \ud1b5\uc81c\uba74\uc740 AI Platform \uacc4\uc815 \ud558\ub098: IdP, Gateway \uc815\ucc45, Hub \ub4f1\ub85d, \ubaa8\ub378 allowlist, Quota, \ub85c\uadf8\n- \uc2e4\ud589\uba74: 5\ud638\ub9dd \ucf54\ub529 \uc5d0\uc774\uc804\ud2b8, \uc0c1\uc6a9 AI \ud504\ub85c\uc81d\ud2b8, \ucee8\ud14d\uc2a4\ud2b8 \uacc4\uce35, (\ud5a5\ud6c4) \uacc4\uc5f4\uc0ac\n- \ub124 \uc9c8\ubb38(\ub204\uac00, \ubb34\uc5c7\uc744, \uc5bc\ub9c8\ub098, \uae30\ub85d)\uc744 \ud55c \uacf3\uc5d0\uc11c. \uc815\ubcf4\ubcf4\ud638\uc704\uc6d0\ud68c \ubcf4\uace0 \uc790\ub8cc\ub3c4 \ud55c \uacf3\uc5d0\uc11c \ub098\uc634\n- \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \ubd99\uc77c \uc218 \uc5c6\uc74c\n\n\ub2e8\uc77c \ucee8\ud2b8\ub864 \uc13c\ud130 \uc9c8\ubb38\uc5d0 \ub300\ud55c \ub2f5\uc785\ub2c8\ub2e4. \ud1b5\uc81c\uba74\uc740 AI Platform \uacc4\uc815 \ud558\ub098\uc5d0 \ub450\uace0, 5\ud638\ub9dd \ucf54\ub529 \uc5d0\uc774\uc804\ud2b8\uc640 \uc0c1\uc6a9 \ud504\ub85c\uc81d\ud2b8, \ucee8\ud14d\uc2a4\ud2b8 \uacc4\uce35\uc774 \uc2e4\ud589\uba74\uc73c\ub85c \ubd99\uc2b5\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd \ud45c\ucc98\ub7fc \ub204\uac00, \ubb34\uc5c7\uc744, \uc5bc\ub9c8\ub098, \uae30\ub85d, \ub124 \uac00\uc9c0\ub97c \ud55c \uacf3\uc5d0\uc11c \ubd05\ub2c8\ub2e4. \uc815\ubcf4\ubcf4\ud638\uc704\uc6d0\ud68c \ubcf4\uace0 \uc790\ub8cc\ub3c4 \uc5ec\uae30\uc11c \ub098\uc635\ub2c8\ub2e4. \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \ub9dd\ubd84\ub9ac \ub54c\ubb38\uc5d0 \uc5ec\uae30\uc5d0 \ubd99\uc77c \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \uadf8\ub8f9 \uacc4\uc5f4\uc0ac\uae4c\uc9c0 \ub113\ud790\uc9c0\ub294 \uadf8\ub8f9\uc5d0\uc11c \uc815\ud558\uc2e4 \ubd80\ubd84\uc774\ub77c \ud655\uc7a5 \uac00\ub2a5\ud558\ub2e4\ub294 \uc815\ub3c4\ub85c \ub9d0\uc500\ub4dc\ub9bd\ub2c8\ub2e4.\n\n\"\uae30\ub85d\"\uc744 \uc870\uae08 \ub354 \uad6c\uccb4\uc801\uc73c\ub85c, \uae08\ubcf4\uc6d0 \uc810\uac80 \uc9c8\ubb38 \uae30\uc900\uc73c\ub85c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    5: "\u23f8\ufe0f \ud83c\udfac [1.5min] [\uc694\uc57d]\n- \ub85c\uadf8 \uc18c\uc2a4 \ub124 \uac1c: Gateway \ub85c\uadf8, Bedrock Invocation Logging, AgentCore Observability, CloudTrail + Config\n- \ubaa8\ub450 Log Archive(S3 Object Lock, KMS)\uc5d0 \ubcc0\uacbd \ubd88\uac00 \uc0c1\ud0dc\ub85c \ubaa8\uc774\uace0 SIEM, Security Lake\ub85c \uc5f0\ub3d9\n- \uc9c8\ubb38\ubcc4 \ub85c\uadf8 \uc18c\uc2a4\ub97c \ubbf8\ub9ac \uc815\ud574 \ub450\ub294 \uac83\uc774 \uc774\ud589\uc810\uac80 \uc900\ube44\uc758 \ud575\uc2ec\n- \ubcf4\uad00 1\ub144 \uc774\uc0c1 \uae30\ubcf8, \ubd80\uac00\uc870\uac74 \ubcf4\uad00 \uae30\uac04\uc740 \ud655\uc778 \ud544\uc694\n\n\uac10\uc0ac \ucd94\uc801\uc785\ub2c8\ub2e4. \uc67c\ucabd\uc758 \uae08\ubcf4\uc6d0 \uc810\uac80 \uc9c8\ubb38\uc744 \ud558\ub098\uc529 \ub20c\ub7ec \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\"\ub204\uac00 \uc5b4\ub5a4 \ubaa8\ub378\uc5d0 \ubb34\uc5c7\uc744 \ubcf4\ub0c8\ub098\"\ub97c \ub204\ub974\uba74 Gateway \ub85c\uadf8\uc640 Invocation Logging\uc774 \ucf1c\uc9d1\ub2c8\ub2e4. \uc55e\uc5d0\uc11c V2 \ub370\ubaa8\ub85c \ubcf8 \uadf8 \ub85c\uadf8\uc785\ub2c8\ub2e4. \ub3c4\uad6c \ud638\ucd9c\uc740 AgentCore Observability, DLP \ucc28\ub2e8\uc740 Gateway \ub85c\uadf8, \uad8c\ud55c \ubcc0\uacbd\uc740 CloudTrail\uacfc Config\uc785\ub2c8\ub2e4.\n\n\ub124 \uac00\uc9c0 \uc18c\uc2a4\uac00 \ubaa8\ub450 Log Archive\uc5d0 \ubcc0\uacbd \ubd88\uac00 \uc0c1\ud0dc\ub85c \ubaa8\uc774\uace0, \uc0ac\ub0b4 SIEM\uc73c\ub85c \uc5f0\ub3d9\ub429\ub2c8\ub2e4. \uc9c8\ubb38\ub9c8\ub2e4 \uc5b4\ub290 \ub85c\uadf8\ub97c \ubcf4\uc5ec \ub4dc\ub9ac\uba74 \ub418\ub294\uc9c0 \ubbf8\ub9ac \uc815\ud574 \ub450\ub294 \uac8c \uc774\ud589\uc810\uac80 \uc900\ube44\uc758 \ud575\uc2ec\uc785\ub2c8\ub2e4.\n\n\"\uc5bc\ub9c8\ub098\"\uc5d0 \ud574\ub2f9\ud558\ub294 \ube44\uc6a9 \ud1b5\uc81c\ub97c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    6: "\u23f8\ufe0f \ud83c\udfac [2min] [\uc694\uc57d]\n- \ube44\uc6a9 \uc138 \uacb9: \uc0ac\uc6a9\uc790 \ud55c\ub3c4(TPM, RPM), \ud300 \uc608\uc0b0(\uc18c\uc9c4\uc728 \uc54c\ub9bc), \uacc4\uc815 \uc608\uc0b0(AWS Budgets)\n- \ucd94\uc815\uae30: \uc778\uc6d0 x \ud558\ub8e8 \ud638\ucd9c x \ud638\ucd9c\ub2f9 \uc785\ub825 \ud1a0\ud070 x \uadfc\ubb34\uc77c. \uae08\uc561\uc774 \uc544\ub2c8\ub77c \ud1a0\ud070 \uaddc\ubaa8\ub97c \uba3c\uc800 \uc7bc\n- \ud638\ucd9c\ub2f9 \uc785\ub825 \ud1a0\ud070 \uae30\ubcf8\uac12 30K\ub294 V2 \ub370\ubaa8 \uc2e4\uce21(28,950)\uc5d0 \uadfc\uac70. Claude Code\ub294 \uc2dc\uc2a4\ud15c \ud504\ub86c\ud504\ud2b8, \ub3c4\uad6c \uc815\uc758\ub97c \ub9e4\ubc88 \ubcf4\ub0b4\uba70 \ub300\ubd80\ubd84 \uce90\uc2dc \uc77d\uae30\n- \uae08\uc561\uc740 Bedrock \uc694\uae08\ud45c(\uce90\uc2dc \uc77d\uae30, \uc785\ub825, \ucd9c\ub825 \ub2e8\uac00)\ub85c \ubcc4\ub3c4 \uacc4\uc0b0\n- \ud558\ub8e8 \ud638\ucd9c \uc218\ub294 \uac00\uc815\uac12. \ud30c\uc77c\ub7ff\uc5d0\uc11c Gateway \ub85c\uadf8\ub85c \uc2e4\uce21\ud574 Quota\ub97c \uc815\ud568\n\n\ube44\uc6a9\uc740 \uc0ac\uc6a9\uc790, \ud300, \uacc4\uc815 \uc138 \uacb9\uc73c\ub85c \ub9c9\uc2b5\ub2c8\ub2e4. \uadf8\ub7f0\ub370 \ud55c\ub3c4\ub97c \uc815\ud558\ub824\uba74 \uba3c\uc800 \ud1a0\ud070 \uaddc\ubaa8\ub97c \uc54c\uc544\uc57c \ud569\ub2c8\ub2e4. \uc624\ub978\ucabd \ucd94\uc815\uae30\ub85c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\ud30c\uc77c\ub7ff 20\uba85\uc774 \ud558\ub8e8 150\ubc88\uc529 \ubaa8\ub378\uc744 \ubd80\ub974\uace0, \ud55c \ubc88\uc5d0 3\ub9cc \ud1a0\ud070\uc744 \ubcf4\ub0b8\ub2e4\uace0 \ud558\uba74 \uc6d4 \uc785\ub825 \ud1a0\ud070\uc774 \uc774 \uc815\ub3c4 \ub098\uc635\ub2c8\ub2e4. 3\ub9cc\uc774\ub77c\ub294 \uac12\uc740 \uc55e\uc758 V2 \ub370\ubaa8\uc5d0\uc11c \uc2e4\uc81c\ub85c \uc7b0 2\ub9cc 9\ucc9c \ud1a0\ud070\uc5d0\uc11c \uc654\uc2b5\ub2c8\ub2e4. Claude Code\ub294 \uc2dc\uc2a4\ud15c \ud504\ub86c\ud504\ud2b8\uc640 \ub3c4\uad6c \uc815\uc758\ub97c \ub9e4\ubc88 \uac19\uc774 \ubcf4\ub0b4\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4.\n\n\ub2e4\ub9cc \uadf8 \ub300\ubd80\ubd84\uc740 \ud504\ub86c\ud504\ud2b8 \uce90\uc2dc\uc5d0\uc11c \uc77d\ud788\uace0, \uce90\uc2dc \uc77d\uae30\ub294 \ub2e8\uac00\uac00 \ub2e4\ub985\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc5ec\uae30\uc11c\ub294 \uae08\uc561\uc774 \uc544\ub2c8\ub77c \ud1a0\ud070 \uaddc\ubaa8\ub9cc \ubcf4\uc5ec \ub4dc\ub9ac\uace0, \uae08\uc561\uc740 \uc694\uae08\ud45c\ub85c \ub530\ub85c \uacc4\uc0b0\ud558\uc2dc\uae38 \uad8c\ud569\ub2c8\ub2e4. \ud558\ub8e8 \ud638\ucd9c \uc218\ub294 \uac00\uc815\uc774\ub2c8, \ud30c\uc77c\ub7ff\uc5d0\uc11c Gateway \ub85c\uadf8\ub85c \uc2e4\uce21\ud574\uc11c 1\uc778 Quota\ub97c \uc815\ud558\ub294 \uac8c \uc815\ud655\ud569\ub2c8\ub2e4.\n\n\uc774\uc81c \ube44\uc6a9\ubcf4\ub2e4 \ub354 \uc911\uc694\ud55c \ubb38\uc81c, \ub3c4\uad6c\ub97c \uae54\uc544\ub3c4 \uc798 \uc548 \uc4f0\uc774\ub294 \uc774\uc720\ub97c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    7: "\u23f8\ufe0f \u23f8\ufe0f [2.5min] [\uc694\uc57d]\n- \ub3c4\uad6c\ub9cc \uae54\uba74 \ubc18\ubcf5\ub418\ub294 \uc2e4\ud328 \uc14b: \ucee8\ubca4\uc158 \uc704\ubc18, \uc790\uae30 \uac80\uc99d \uc5c6\uc74c, \uac19\uc740 \uc2e4\uc218 \ubc18\ubcf5\n- \ud558\ub124\uc2a4(\uc870\uc9c1\uc774 \uc9c1\uc811 \ub9cc\ub4dc\ub294 \uc6b4\uc601 \uc7a5\uce58): GUIDES(CLAUDE.md, Skills), SENSORS(hooks\ub85c \ud14c\uc2a4\ud2b8, \ub9ac\ubdf0), STEERING LOOP(\uaddc\uce59 \uac1c\uc120)\n- \uacb0\uc815\ub860\uc801\uc778 \uac83\uc740 \ucf54\ub4dc(\uc2a4\ud06c\ub9bd\ud2b8, \ud14c\uc2a4\ud2b8)\ub85c, \uc758\ubbf8 \ud310\ub2e8\ub9cc \ubaa8\ub378\uc5d0\n- \ubaa8\ub378\uc744 \uc62c\ub9b4 \ub54c\ub9c8\ub2e4 \ud558\ub124\uc2a4\ub97c \ub2e4\uc2dc \uc870\uc728\ud574\uc57c \ud568 \u2192 Gateway\uc5d0\uc11c \ubaa8\ub378 \ubc84\uc804\uc744 \uace0\uc815\ud558\uba74 \uacc4\ud68d\ub41c \uc2dc\uc810\uc73c\ub85c \ubaa8\uc744 \uc218 \uc788\uc74c\n- Codex\ub294 AGENTS.md\uac00 \uac19\uc740 \uc5ed\ud560\n\n\ub3c4\uad6c\ub9cc \uae54\uba74 \uc774 \uc138 \uac00\uc9c0 \uc2e4\ud328\uac00 \ubc18\ubcf5\ub429\ub2c8\ub2e4. \ud558\ub098\uc529 \uc62c\ub9ac\uaca0\uc2b5\ub2c8\ub2e4. \uc0ac\ub0b4 \ud45c\uc900\uc744 \ubaa8\ub974\ub294 \ucf54\ub4dc, \ud655\uc778 \uc5c6\uc774 \"\uc644\ub8cc\ud588\uc2b5\ub2c8\ub2e4\", \uadf8\ub9ac\uace0 \uc9c0\uc801\ud574\ub3c4 \ub2e4\uc74c \uc138\uc158\uc5d0\uc11c \uac19\uc740 \uc2e4\uc218\uc785\ub2c8\ub2e4.\n\n\uadf8\ub798\uc11c \uc870\uc9c1\uc774 \uc9c1\uc811 \ub9cc\ub4e4\uc5b4\uc57c \ud558\ub294 \uc6b4\uc601 \uc7a5\uce58, \ud558\ub124\uc2a4\uac00 \ud544\uc694\ud569\ub2c8\ub2e4. \uaddc\uce59\uc744 \ubbf8\ub9ac \uc54c\ub824 \uc8fc\ub294 GUIDES, \uacb0\uacfc\ub97c \uc790\ub3d9\uc73c\ub85c \uac80\uc99d\ud558\ub294 SENSORS, \ubc18\ubcf5 \uc2e4\uc218\ub97c \ubcf4\uace0 \uaddc\uce59 \uc790\uccb4\ub97c \uace0\uce58\ub294 STEERING LOOP\uc785\ub2c8\ub2e4. \uc544\ub798 \ud45c\ucc98\ub7fc \uacb0\uc815\ub860\uc801\uc73c\ub85c \ud560 \uc218 \uc788\ub294 \uac74 \uc2a4\ud06c\ub9bd\ud2b8\uc640 \ud14c\uc2a4\ud2b8\ub85c, \uc758\ubbf8 \ud310\ub2e8\ub9cc \ubaa8\ub378\uc5d0 \ub9e1\uae41\ub2c8\ub2e4.\n\n\ud55c \uac00\uc9c0 \ub354, \ubaa8\ub378\uc744 \uc62c\ub9b4 \ub54c\ub9c8\ub2e4 \ud558\ub124\uc2a4\ub97c \ub2e4\uc2dc \uc870\uc728\ud574\uc57c \ud569\ub2c8\ub2e4. Gateway\uc5d0\uc11c \ubaa8\ub378 \ubc84\uc804\uc744 \uace0\uc815\ud574 \ub450\uba74 \uadf8 \ubd80\ub2f4\uc744 \uacc4\ud68d\ub41c \uc2dc\uc810\uc73c\ub85c \ubaa8\uc744 \uc218 \uc788\uc2b5\ub2c8\ub2e4. Codex\uc5d0\uc11c\ub294 AGENTS.md\uac00 CLAUDE.md\uc640 \uac19\uc740 \uc5ed\ud560\uc744 \ud569\ub2c8\ub2e4.\n\n\uc774 \ud558\ub124\uc2a4\ub97c \uc2e4\uc81c \ub808\uac70\uc2dc \ucf54\ub4dc\uc5d0 \uc801\uc6a9\ud574 \ubcf8 \uc138 \ubc88\uc9f8 \ub370\ubaa8\uc785\ub2c8\ub2e4.",
+    8: "\u23f8\ufe0f [3min] [\uc694\uc57d]\n- \uc601\uc0c1 1\ubd84 15\ucd08, Claude Code \ub300\ud654\ud615 \ud654\uba74 \uc2e4\uc81c \ub179\ud654\n- \ub300\uc0c1: 2014\ub144 \uc791\uc131 \uc704\ud0c1\uc218\uc218\ub8cc \uacc4\uc0b0 \ubaa8\ub4c8(float, round, \ub9e4\uc9c1\ub118\ubc84). \ud14c\uc2a4\ud2b8 3\uac1c \uc911 1\uac1c \uc2e4\ud328\n- GUIDES: CLAUDE.md(Decimal, \ud56d\ubaa9\ubcc4 \uc6d0 \ubbf8\ub9cc \uc808\uc0ac, Side Enum, \uc694\uc728 \uc0c1\uc218, \uc2dc\uadf8\ub2c8\ucc98 \uc720\uc9c0, \uace0\uac1d \ub370\uc774\ud130 \uae08\uc9c0)\n- SENSORS: PostToolUse hook\uc774 \uc218\uc815 \uc9c1\ud6c4 pytest \uc2e4\ud589 \u2192 \"[SENSORS] pytest \ud1b5\uacfc: 3 passed\"\n- \uacb0\uacfc: 32\ucd08 \uc791\uc5c5, 3 passed. Claude\uc758 \uc6d0\uc778 \uc124\uba85(float \ucc98\ub9ac)\uc740 \ubd80\uc815\ud655\ud588\uace0 \uc2e4\uc81c \uc2e4\ud328 \uc6d0\uc778\uc740 round \ubc18\uc62c\ub9bc. \uadf8\ub798\ub3c4 \uc218\uc815\uc740 \uc808\uc0ac \uaddc\uce59\ub300\ub85c\ub77c \ud14c\uc2a4\ud2b8\ub85c \ud310\uc815\ub428\n- \uad00\ub9ac \uc124\uc815\uc758 accept edits \ubaa8\ub4dc: \ud30c\uc77c \ud3b8\uc9d1\uc740 \uc790\ub3d9 \ud5c8\uc6a9, pytest\ub294 \uad00\ub9ac \uc124\uc815 allow \ubaa9\ub85d\n\nPlay\ub97c \ub204\ub974\uace0 \ub530\ub77c\uac00\uaca0\uc2b5\ub2c8\ub2e4.\n0:04 \uba3c\uc800 \uc774 \ud504\ub85c\uc81d\ud2b8\uc758 CLAUDE.md, \uc0ac\ub0b4 \ucf54\ub529 \ud45c\uc900\uc785\ub2c8\ub2e4. \uae08\uc561\uc740 Decimal, \uc6d0 \ubbf8\ub9cc\uc740 \uc218\uc218\ub8cc\uc640 \uc138\uae08\uc744 \ub530\ub85c \uc808\uc0ac, \ub9e4\uc218 \ub9e4\ub3c4\ub294 Enum, \uae30\uc874 \ud638\ucd9c\ubd80 \uc2dc\uadf8\ub2c8\ucc98 \uc720\uc9c0, \uace0\uac1d \ub370\uc774\ud130 \ud3f4\ub354\ub294 \uc77d\uc9c0 \uc54a\uae30\uc785\ub2c8\ub2e4.\n0:11 \ub808\uac70\uc2dc \ucf54\ub4dc\uc5d0 \ud14c\uc2a4\ud2b8\ub97c \ub3cc\ub9ac\uba74 3\uac1c \uc911 1\uac1c\uac00 \uc2e4\ud328\ud569\ub2c8\ub2e4. 3,333\uc8fc\uc5d0 33,333\uc6d0\uc744 \ub9e4\uc218\ud560 \ub54c \uc218\uc218\ub8cc\uac00 16,664.83\uc6d0\uc778\ub370, \ub808\uac70\uc2dc\ub294 \ubc18\uc62c\ub9bc\ud574\uc11c 16,665\uc6d0\uc744 \ub0c5\ub2c8\ub2e4. \uc0ac\ub0b4 \uaddc\uce59\uc740 \uc808\uc0ac\ub77c 16,664\uc6d0\uc774 \ub9de\uc2b5\ub2c8\ub2e4.\n\n0:22 Claude Code\ub97c \uc5f4\uace0 \"\uc0ac\ub0b4 \ud45c\uc900\uc5d0 \ub9de\uac8c \ub9ac\ud329\ud1a0\ub9c1\ud558\uace0 \uc2e4\ud328 \uc6d0\uc778\ub3c4 \ucc3e\uc544\uc11c \uace0\uccd0 \ub2ec\ub77c\"\uace0\ub9cc \ud569\ub2c8\ub2e4. \ud30c\uc77c\uacfc \uc904 \ubc88\ud638\ub294 \uc54c\ub824 \uc8fc\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n0:48 Claude\uac00 \ud30c\uc77c\uc744 \uace0\uce58\uc790\ub9c8\uc790 hook\uc774 \ud14c\uc2a4\ud2b8\ub97c \ub3cc\ub9ac\uace0 \"[SENSORS] pytest \ud1b5\uacfc, 3 passed\"\ub97c \ub744\uc6c1\ub2c8\ub2e4. \uc0ac\ub78c\uc774 \uc2dc\ud0a8 \uac8c \uc544\ub2c8\ub77c \ud558\ub124\uc2a4\uac00 \uc790\ub3d9\uc73c\ub85c \uac80\uc99d\ud55c \uac81\ub2c8\ub2e4.\n0:56 Claude\uc758 \ubcf4\uace0\uc785\ub2c8\ub2e4. Claude\ub294 \uc6d0\uc778\uc744 float \ucc98\ub9ac\ub85c \uc124\uba85\ud588\ub294\ub370, \uc2e4\uc81c\ub85c \ud14c\uc2a4\ud2b8\ub97c \uae68\ub728\ub9b0 \uac74 16,664.83\uc6d0\uc744 round\ub85c \ubc18\uc62c\ub9bc\ud55c \ubd80\ubd84\uc785\ub2c8\ub2e4. \uadf8\ub798\ub3c4 \uace0\uce5c \ucf54\ub4dc\ub294 CLAUDE.md\uc758 \ud56d\ubaa9\ubcc4 \uc808\uc0ac \uaddc\uce59\ub300\ub85c\ub77c \ud14c\uc2a4\ud2b8\uac00 \ud1b5\uacfc\ud569\ub2c8\ub2e4. \ubaa8\ub378\uc758 \uc124\uba85\uc740 \ud2c0\ub9b4 \uc218 \uc788\uace0, \uadf8\ub798\uc11c \uc0ac\ub78c\uc774 \uc544\ub2c8\ub77c \ud14c\uc2a4\ud2b8\uac00 \ud310\uc815\ud558\uac8c \ub9cc\ub4e0 \uac83\uc774 SENSORS\uc785\ub2c8\ub2e4. 32\ucd08 \uac78\ub838\uc2b5\ub2c8\ub2e4.\n1:06 Claude\ub97c \ub044\uace0 git diff\uc640 pytest\ub85c \ub2e4\uc2dc \ud655\uc778\ud569\ub2c8\ub2e4. 3 passed\uc774\uace0, 1:09\uc5d0 grep\uc73c\ub85c Decimal\uacfc ROUND_DOWN, Side Enum, \uc0c1\uc218\uac00 \ucf54\ub4dc\uc5d0 \ub4e4\uc5b4\uac04 \uac83\uc744 \ubcf4\uc5ec \uc90d\ub2c8\ub2e4.\n\uadfc\uac70: \ub179\ud654 \uc6d0\ubcf8 r3-harness.cast, \ud504\ub85c\uc81d\ud2b8 demo/scenarios/fee-calc, \uac10\uc0ac \ub85c\uadf8 r3-audit.jsonl\n\n\uc601\uc0c1\uc5d0 \ub2e4 \ub098\uc624\uc9c0 \uc54a\uc740 \ub4b7\uc774\uc57c\uae30\uae4c\uc9c0 \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.",
+    9: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- \ud558\ub124\uc2a4 \uc124\uc815: \ud504\ub85c\uc81d\ud2b8 .claude/settings.json \uc758 PostToolUse hook(Edit, Write \ub9e4\ucc98) \u2192 run-tests.sh\n- hook \uc758\ubbf8(\uacf5\uc2dd hooks \ubb38\uc11c): exit 2\ub294 blocking, stderr\uac00 Claude\uc5d0\uac8c \uc804\ub2ec. \uc131\uacf5 \uc2dc systemMessage\ub85c \uac1c\ubc1c\uc790\uc5d0\uac8c \ud45c\uc2dc\n- GUIDES \uacb0\uacfc: CLAUDE.md \ud56d\ubaa9\uc774 diff\uc5d0 \uc77c\ub300\uc77c\ub85c \ubc18\uc601\n- SENSORS \uacb0\uacfc: 1 failed \u2192 3 passed\n- \uac10\uc0ac \ub85c\uadf8 \ub4b7\uc774\uc57c\uae30: \uc138\uc158 \uc2dc\uc791 \ub54c apac \ud504\ub85c\ud30c\uc77c 11\uac1c \ud655\uc778 \ud638\ucd9c\uc744 Gateway\uac00 \uc804\ubd80 \uac70\ubd80, \uc791\uc5c5 \ud638\ucd9c 6\uac74\ub9cc Sonnet 5\ub85c \ud5c8\uc6a9\n\n\uc67c\ucabd\uc774 \ud558\ub124\uc2a4 \uc124\uc815\uc758 \uc804\ubd80\uc785\ub2c8\ub2e4. \ud30c\uc77c\uc744 \uace0\uce60 \ub54c\ub9c8\ub2e4 \ud14c\uc2a4\ud2b8 \uc2a4\ud06c\ub9bd\ud2b8\ub97c \ub3cc\ub9ac\ub294 hook \ud558\ub098\uc785\ub2c8\ub2e4. \uc2e4\ud328\ud558\uba74 exit 2\ub85c \ub05d\ub098\uace0, \uadf8\ub7ec\uba74 \uc2e4\ud328 \ub0b4\uc6a9\uc774 Claude\uc5d0\uac8c \ub418\ub3cc\uc544\uac00\uc11c \ub2e4\uc2dc \uace0\uce58\uac8c \ub429\ub2c8\ub2e4. \uc131\uacf5\ud558\uba74 \uac1c\ubc1c\uc790 \ud654\uba74\uc5d0 \ud1b5\uacfc \uba54\uc2dc\uc9c0\uac00 \ub739\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd \uc138 \ubc88\uc9f8 \uce74\ub4dc\ub294 \uc601\uc0c1\uc5d0 \uc548 \ub098\uc628 \uc774\uc57c\uae30\uc785\ub2c8\ub2e4. Gateway \ub85c\uadf8\ub97c \ubcf4\ub2c8, Claude Code\uac00 \uc138\uc158\uc744 \uc2dc\uc791\ud560 \ub54c \ub2e4\ub978 \ubaa8\ub378 11\uac1c\ub97c \ud655\uc778\ud558\ub824\uace0 \ud638\ucd9c\ud588\uace0 Gateway\uac00 \uc804\ubd80 \uac70\ubd80\ud588\uc2b5\ub2c8\ub2e4. \uc2e4\uc81c \uc791\uc5c5 \ud638\ucd9c 6\uac74\uc740 \uc2b9\uc778\ub41c \uc11c\uc6b8 \ub9ac\uc804 Sonnet 5\ub85c\ub9cc \ub098\uac14\uc2b5\ub2c8\ub2e4. \ud558\ub124\uc2a4\ub294 \ud488\uc9c8\uc744, \ud1b5\uc81c\uba74\uc740 \uacbd\uacc4\ub97c \ub3d9\uc2dc\uc5d0 \uc9c0\ud0a4\ub294 \uc148\uc785\ub2c8\ub2e4.\n\uadfc\uac70: code.claude.com hooks \ubb38\uc11c(exit code 2), r3-audit.jsonl(BLOCK 11\uac74, ALLOW 6\uac74)\n\n\uadf8\ub7fc \uc774 \ubaa8\ub4e0 \uac78 \uc5b8\uc81c, \uc5b4\ub5a4 \uc21c\uc11c\ub85c \ud558\uba74 \ub418\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    10: "\u23f8\ufe0f \ud83c\udfac [1.5min] [\uc694\uc57d]\n- M0~2 \ubcf4\uc548\ub300\ucc45, \ucee8\uc124\ud305 / M1~3 \ub79c\ub529\uc874\uacfc Gateway, Hub PoC / \ud68c\ucc28 \uc2e0\uccad / +4\uac1c\uc6d4 \uc9c0\uc815, \uc774\ud589 / +5\uac1c\uc6d4 \uc774\ud589\uc810\uac80, \uac1c\uc2dc\n- \ub2e8\uacc4\ubcc4\ub85c \uc624\ub298 1~4\ubd80 \ub0b4\uc6a9\uc774 \uc5b4\ub514\uc5d0 \ub4e4\uc5b4\uac00\ub294\uc9c0 \ud074\ub9ad\uc73c\ub85c \uc5f0\uacb0\n- \uc0c1\uc6a9 AI \ud504\ub85c\uc81d\ud2b8\ub294 \uac19\uc740 \ud1b5\uc81c\uba74\uc5d0 \ud569\ub958, \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \ub300\uc548\uc774\uc9c0\ub9cc \ubcc4\ub3c4 \uad6c\ucd95\n- \uc77c\uc815\uc740 KB\uc99d\uad8c \uc0ac\ub840 \uae30\uc900 \ucc38\uace0\uce58\n\n\uad8c\uc7a5 \uacbd\ub85c\ub294 5\ud638\ub9dd \ud558\ub098\uc785\ub2c8\ub2e4. \ub2e8\uacc4\ub97c \ud558\ub098\uc529 \ub20c\ub7ec \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\ubcf4\uc548\ub300\ucc45\uacfc \ucee8\uc124\ud305\uc744 \uba3c\uc800 \ud558\uace0, \uadf8 \uc0ac\uc774\uc5d0 \ub79c\ub529\uc874\uacfc Gateway, Hub\ub97c PoC\ub85c \ub9cc\ub4e4\uc5b4 \ub461\ub2c8\ub2e4. \uc624\ub298 \ubcf4\uc2e0 \ub370\ubaa8 V1, V2\uac00 \ubc14\ub85c \uadf8 PoC\uc758 \ucd95\uc18c\ud310\uc785\ub2c8\ub2e4. \uc811\uc218 \ud68c\ucc28\uc5d0 \ub9de\ucdb0 \uc0ac\uc6a9\uc790 \ubc94\uc704\ub97c \ub2f4\uc544 \uc2e0\uccad\ud558\uace0, \uc9c0\uc815\uacfc \uc774\ud589\uc810\uac80\uc744 \uac70\uccd0 \uac1c\uc2dc\ud569\ub2c8\ub2e4.\n\n\uc0c1\uc6a9 AI \ud504\ub85c\uc81d\ud2b8\ub3c4 \uac19\uc740 \ud1b5\uc81c\uba74\uc5d0 \ud569\ub958\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \ub300\uc548\uc774\uc9c0\ub9cc \ub9dd\uc744 \uc644\uc804\ud788 \ubd84\ub9ac\ud574\uc57c \ud574\uc11c \uc774 \uad6c\uc131\uc744 \uacf5\uc720\ud558\uc9c0 \ubabb\ud558\uace0 \ucc98\uc74c\ubd80\ud130 \ub2e4\uc2dc \ub9cc\ub4e4\uc5b4\uc57c \ud569\ub2c8\ub2e4.\n\n\ud655\uc815 \uc804\uc5d0 \ud655\uc778\ud560 \ud56d\ubaa9\ub4e4\uc744 \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.",
+    11: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- 8\uac1c \ud655\uc778 \ud56d\ubaa9. \ud074\ub9ad\ud558\uba74 \uccb4\ud06c \ud45c\uc2dc(\ud68c\uc758 \uc911 \uc9c4\ud589 \uc0c1\ud669 \ud45c\uc2dc\uc6a9)\n- \uac00\uc7a5 \uc911\uc694\ud55c \uac83\uc740 1\ubc88: \ucd5c\uc2e0 \ubaa8\ub378\uc744 \uc704\ud574 CRIS\ub97c \ud5c8\uc6a9\ud588\uc73c\ubbc0\ub85c \uad6d\uc678 \ucc98\ub9ac \uace0\uc9c0\uc640 DLP \ubc94\uc704\ub97c \uba3c\uc800 \ud655\uc815\n- 3\ubc88 OpenAI \ubaa8\ub378 in-region \uc5c6\uc74c\uc740 2026.10.19 \uc11c\uc6b8 \ub9ac\uc804 \uc870\ud68c\ub85c \uc7ac\ud655\uc778\n- \uaddc\uc81c \ud574\uc11d\uc740 \ubc95\ub960 \uc790\ubb38\uc744 \ub300\uccb4\ud558\uc9c0 \uc54a\uc74c\n\n\ub9c8\uc9c0\ub9c9\uc73c\ub85c \ud655\uc778\uc774 \ud544\uc694\ud55c \ud56d\ubaa9\ub4e4\uc785\ub2c8\ub2e4. \ud68c\uc758 \uc911\uc5d0 \ud56d\ubaa9\uc744 \ub204\ub974\uba74 \uccb4\ud06c \ud45c\uc2dc\uac00 \ub429\ub2c8\ub2e4.\n\n\uac00\uc7a5 \uc911\uc694\ud55c \uac74 1\ubc88\uc785\ub2c8\ub2e4. \ucd5c\uc2e0 \ubaa8\ub378\uc744 \uc4f0\ub824\uace0 CRIS\ub97c \ud5c8\uc6a9\ud588\uae30 \ub54c\ubb38\uc5d0, \ud574\uc678 \ub9ac\uc804 \ucc98\ub9ac \uc0ac\uc2e4\uc744 \uc2e0\uccad\uc11c\uc5d0 \uc5b4\ub5bb\uac8c \uc801\uace0 DLP\ub97c \uc5b4\ub514\uae4c\uc9c0 \uac78\uc9c0 \uba3c\uc800 \uc815\ud574\uc57c \ud569\ub2c8\ub2e4. 3\ubc88 OpenAI \ubaa8\ub378\uc774 \uc11c\uc6b8 in-region\uc5d0 \uc5c6\ub2e4\ub294 \uc810\uc740 \uc624\ub298 \ub2e4\uc2dc \ud655\uc778\ud588\uc2b5\ub2c8\ub2e4. \ub098\uba38\uc9c0\ub3c4 \ub2e4\uc74c \ubbf8\ud305 \uc804\uae4c\uc9c0 \ud655\uc778\ud574\uc11c \uacf5\uc720\ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.\n\n\ubd80\ub85d \ud558\ub098\ub9cc \uc9e7\uac8c \ubcf4\uace0 \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.",
+    12: "[0.5min] [\uc694\uc57d]\n- \uad6d\ub0b4 \uc740\ud589 \uacf5\uac1c \uc0ac\ub840\uc758 \ub79c\ub529\uc874 \uc811\uadfc \uc138 \uc720\ud615\n- AI PoC\uc5d0\ub294 \uc720\ud615 \u2461(\ub79c\ub529\uc874 \uad6c\ucd95 + \ube44\uc911\uc694 \uc11c\ube44\uc2a4\ub85c \uac80\uc99d) \uad8c\uc7a5\n- \uc6d0 \ucd9c\ucc98 \ubbf8\ud655\uc778\uc774\ub77c \uae30\uac04 \uc218\uce58(\uc6d0\ubcf8 \uc81c\uc548\uc11c\uc758 \"\uc57d 7\uac1c\uc6d4\")\ub294 \uc778\uc6a9\ud558\uc9c0 \uc54a\uc74c\n\n\ubd80\ub85d\uc785\ub2c8\ub2e4. \uad6d\ub0b4 \uc740\ud589 \uc0ac\ub840\uc5d0\uc11c \uc815\ub9ac\ub41c \ub79c\ub529\uc874 \uc811\uadfc\uc740 \uc138 \uac00\uc9c0\uc774\uace0, AI PoC\uc5d0\ub294 \ub450 \ubc88\uc9f8, \ub79c\ub529\uc874\uc744 \uba3c\uc800 \uad6c\ucd95\ud558\uace0 \ube44\uc911\uc694 \uc11c\ube44\uc2a4\ub85c \uac80\uc99d\ud558\ub294 \ubc29\uc2dd\uc744 \uad8c\ud569\ub2c8\ub2e4.\n\n\uc624\ub298 \ub0b4\uc6a9\uc744 \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.",
+    13: "\u2753 \u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- \uacb0\ub860 \ub124 \uc904: 5\ud638\ub9dd \uacbd\ub85c, \uc6b0\ud68c\ub85c \uc5c6\ub294 \uae38, \ub450 \uad00\ubb38\uacfc \uc5ec\ub7ec \uacb9, \ud558\ub124\uc2a4\n- \ub2e4\uc74c \ub2e8\uacc4: \ubcf4\uc548\ub300\ucc45 \ucd08\uc548, PoC \ubc94\uc704 \ud569\uc758\n- \ub370\ubaa8 \uc18c\uc2a4(Gateway, managed-settings, fee-calc \ud558\ub124\uc2a4, \ub179\ud654 \ub4dc\ub77c\uc774\ubc84)\ub294 \ub371 \ud3f4\ub354 demo/\uc5d0 \ud3ec\ud568\n- \uc774\ud6c4 Q&A\n\n\uc624\ub298 \ub0b4\uc6a9\uc744 \ub124 \uc904\ub85c \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4. \ubb38\uc740 5\ud638\ub9dd\uc73c\ub85c \uc5f4\uace0, \uadf8 \uae38\uc5d0\ub294 \uc6b0\ud68c\ub85c\uac00 \uc5c6\uac8c \ub9cc\ub4e4\uace0, \ub05d\uc5d0\ub294 \ub450 \uad00\ubb38\uacfc \uc5ec\ub7ec \uacb9\uc758 \ud1b5\uc81c\ub97c \ub450\uace0, \uc2e4\uc81c \uc0dd\uc0b0\uc131\uc740 \ud558\ub124\uc2a4\uac00 \ub9cc\ub4ed\ub2c8\ub2e4.\n\n\ub2e4\uc74c \ub2e8\uacc4\ub85c\ub294 \ubcf4\uc548\ub300\ucc45 \ucd08\uc548\uacfc PoC \ubc94\uc704 \ud569\uc758\ub97c \uc81c\uc548\ub4dc\ub9bd\ub2c8\ub2e4. \uc624\ub298 \ubcf4\uc5ec \ub4dc\ub9b0 \ub370\ubaa8\uc758 Gateway, \uad00\ub9ac \uc124\uc815, \ud558\ub124\uc2a4 \uc18c\uc2a4\ub294 \uadf8\ub300\ub85c PoC \ucd9c\ubc1c\uc810\uc73c\ub85c \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uc9c8\ubb38 \ubc1b\uaca0\uc2b5\ub2c8\ub2e4.",
+    14: "[0.5min] [\uc694\uc57d]\n- \uc138\uc158 \ub9c8\ubb34\ub9ac, Q&A\n\n\uc624\ub298 \uc138\uc158 \ub4e4\uc5b4 \uc8fc\uc154\uc11c \uac10\uc0ac\ud569\ub2c8\ub2e4. \ub0a8\uc740 \uc9c8\ubb38\uc740 \uc138\uc158 \ub4a4\uc5d0 \ub530\ub85c \ubc1b\uaca0\uc2b5\ub2c8\ub2e4."
+  };
+  const deck = new SlideFramework({
+    logoSrc: "./common/pptx-theme/images/logo_dark.png",
+    
+    footer: "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.",
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

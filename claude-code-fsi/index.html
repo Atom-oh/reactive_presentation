@@ -282,7 +282,30 @@
 .cf-step b { display: block; color: color-mix(in srgb, var(--accent) 72%, var(--on-surface)); font-size: var(--fs-body); }
 .cf-step .z { display: block; color: var(--on-surface-muted); font-size: var(--fs-caption); margin-bottom: var(--space-1); }
 .cf-step.wait { outline: 2px solid var(--warning); }
+.cf-lk { position: relative; }
+.cf-lk .cf-steps { margin-bottom: 0; }
+.cf-lk-track { position: relative; height: 40px; }
+.cf-lk-wire, .cf-lk-fill { position: absolute; left: 0; top: 16px; height: 4px; border-radius: 2px; }
+.cf-lk-wire { right: 0; background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--on-surface) 25%, transparent) 0 8px, transparent 8px 16px); }
+.cf-lk-fill { width: 0; background: var(--accent); transition: width 0.6s ease-in-out; }
+.cf-lk-pk { position: absolute; left: 0; top: 6px; width: 24px; height: 24px; margin-left: -12px; border-radius: 50%; background: var(--accent); opacity: 0; transition: transform 0.6s ease-in-out, opacity var(--duration-normal); }
+.cf-lk-pk.on { opacity: 1; }
+.cf-lk-pk.wait { background: var(--warning); animation: cfLkPulse 0.8s ease-in-out infinite; }
+.cf-lk-pk.end { background: var(--success); }
+.cf-lk-pk.end b { left: auto; right: 32px; }
+.cf-lk-pk b { font-style: normal; position: absolute; left: 32px; top: -2px; white-space: nowrap; font-size: var(--fs-caption); color: var(--on-surface); background: var(--surface-1); padding: 0 var(--space-2); border-radius: var(--radius-sm); }
+@keyframes cfLkPulse { 50% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--warning) 25%, transparent); } }
+.cf-lk-ctl { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; font-size: var(--fs-card); margin-bottom: var(--space-2); }
+.cf-lk-ctl input[type=range] { width: 260px; accent-color: var(--accent); }
+.cf-lk-out { color: var(--on-surface-muted); }
+@media (prefers-reduced-motion: reduce) { .cf-lk-fill, .cf-lk-pk { transition: none; animation: none; } }
 </style>
+<div class="cf-lk-ctl">
+  <button class="cf-btn" onclick="cfLk.play()">커밋 1건 보내기 ▶</button>
+  <label for="cfLkH">승인 1회 대기 (가정)</label><input type="range" id="cfLkH" min="0.5" max="24" step="0.5" value="4" oninput="cfLk.calc()">
+  <span class="cf-lk-out" id="cfLkOut"></span>
+</div>
+<div class="cf-lk" id="cfLk">
 <div class="cf-steps" data-reveal="stagger" data-reveal-anim="right">
   <div class="cf-step"><span class="z">AWS 연구개발망</span><b>1 전송 신청</b>Code Repository에서 Git 소스 전송 신청</div>
   <div class="cf-step wait"><span class="z">AWS 연구개발망</span><b>2 전송 승인</b>승인권자 승인</div>
@@ -290,6 +313,8 @@
   <div class="cf-step"><span class="z">데이터센터 연구개발망</span><b>4 목록 조회</b>전송 대상 확인, 선택</div>
   <div class="cf-step wait"><span class="z">전산실</span><b>5 망연계 승인</b>망연계 단계 승인, 신청</div>
   <div class="cf-step"><span class="z">전산실</span><b>6 반영, 기록</b>전산실 GitLab 수신, 전송 이력 기록</div>
+</div>
+<div class="cf-lk-track"><i class="cf-lk-wire"></i><i class="cf-lk-fill" id="cfLkFill"></i><i class="cf-lk-pk" id="cfLkPk"><b id="cfLkLb"></b></i></div>
 </div>
 <table class="data-table fragment fade-up" data-fragment-index="1">
   <thead><tr><th>통제</th><th>내용</th></tr></thead>
@@ -507,28 +532,42 @@
 .cf-arch[data-route] .rt { opacity: 0.25; }
 .cf-arch[data-route="tool"] .tool, .cf-arch[data-route="model"] .model { opacity: 1; outline-color: var(--accent); }
 .cf-arch .both { opacity: 1; }
+.cf-arch[data-route=""] .rt { opacity: 1; }
+.cf-flow-host { position: relative; }
+.cf-flow-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 2; }
+.cf-edge { fill: none; stroke: color-mix(in srgb, var(--on-surface) 22%, transparent); stroke-width: 2; stroke-dasharray: 6 6; transition: stroke var(--duration-normal), stroke-width var(--duration-normal); }
+.cf-edge.ghost { stroke: transparent; }
+.cf-edge.on { stroke: var(--accent); stroke-dasharray: none; stroke-width: 3; }
+.cf-edge.on.ok { stroke: var(--success); } .cf-edge.on.bad { stroke: var(--danger); } .cf-edge.on.info { stroke: var(--info); }
+.cf-pkt circle { fill: var(--accent); stroke: var(--surface-1); stroke-width: 3; }
+.cf-pkt.ok circle { fill: var(--success); } .cf-pkt.bad circle { fill: var(--danger); } .cf-pkt.info circle { fill: var(--info); }
+.cf-pkt text { font-style: normal; fill: var(--on-surface); font-size: var(--fs-caption); font-weight: var(--weight-bold); paint-order: stroke; stroke: var(--surface-1); stroke-width: 8px; stroke-linejoin: round; }
+.cf-hit { outline: 2px solid var(--accent) !important; box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 30%, transparent); transition: box-shadow var(--duration-normal); }
+.cf-flow-msg { min-height: 2.8em; margin-top: var(--space-2); font-size: var(--fs-card); }
+
 </style>
-<div class="cf-btns" onclick="(function(e){var b=e.target.closest('.cf-btn');if(!b)return;b.parentNode.querySelectorAll('.cf-btn').forEach(function(x){x.classList.toggle('on',x===b)});document.getElementById('cfKb').setAttribute('data-route',b.dataset.r)})(event)">
+<div class="cf-btns" id="cfKbBtns">
+  <button class="cf-btn on" data-r="">두 경로 모두</button>
   <button class="cf-btn" data-r="tool">도구 호출 경로</button>
   <button class="cf-btn" data-r="model">모델 호출 경로</button>
 </div>
-<div class="cf-arch" id="cfKb" data-reveal="static">
+<div class="cf-arch" id="cfKb" data-route="" data-reveal="static">
   <div class="cf-stack">
-    <div class="cf-box both"><b>5호 단말</b>전산실, Claude Code</div>
-    <div class="cf-box both"><b>보안영역</b>운영망, 개발망과 분리</div>
+    <div class="cf-box both" data-n="pc"><b>5호 단말</b>전산실, Claude Code</div>
+    <div class="cf-box both" data-n="sec"><b>보안영역</b>운영망, 개발망과 분리</div>
   </div>
-  <div class="cf-arrow">→</div>
+  <div class="cf-arrow"></div>
   <div class="cf-stack">
-    <div class="cf-box both"><img src="common/aws-icons/services/Arch_AWS-Direct-Connect_48.svg" alt=""><b>DXG</b>전용회선</div>
-    <div class="cf-box both"><img src="common/aws-icons/services/Arch_AWS-Transit-Gateway_48.svg" alt=""><b>TGW</b></div>
+    <div class="cf-box both" data-n="dx"><img src="common/aws-icons/services/Arch_AWS-Direct-Connect_48.svg" alt=""><b>DXG</b>전용회선</div>
+    <div class="cf-box both" data-n="tgw"><img src="common/aws-icons/services/Arch_AWS-Transit-Gateway_48.svg" alt=""><b>TGW</b></div>
   </div>
-  <div class="cf-arrow">→</div>
+  <div class="cf-arrow"></div>
   <div class="cf-stack">
     <div class="cf-vpc"><h5>Data Center VPC (서울 리전)</h5>
-      <div class="cf-box rt tool"><img src="images/Gateway.png" alt=""><b>AgentCore Gateway</b>→ Lambda, ECS 컨테이너(MCP Hub)</div>
+      <div class="cf-box rt tool" data-n="agw"><img src="images/Gateway.png" alt=""><b>AgentCore Gateway</b>→ Lambda, ECS 컨테이너(MCP Hub)</div>
     </div>
     <div class="cf-vpc"><h5>Shared VPC</h5>
-      <div class="cf-box rt model"><img src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt=""><b>LLM Gateway → VPC Endpoint → Bedrock</b>Foundation Models</div>
+      <div class="cf-box rt model" data-n="llm"><img src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt=""><b>LLM Gateway → VPC Endpoint → Bedrock</b>Foundation Models</div>
     </div>
   </div>
 </div>
@@ -795,14 +834,26 @@
 .cf-hop.cur { opacity: 1; outline-color: var(--accent); }
 .cf-hop.skip { display: none; }
 .cf-net-msg { margin-top: var(--space-3); min-height: 4.2em; }
+.cf-net { position: relative; padding-bottom: 84px; }
+.cf-net-wire, .cf-net-fill { position: absolute; left: 0; bottom: 56px; height: 4px; border-radius: 2px; }
+.cf-net-wire { right: 0; background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--on-surface) 25%, transparent) 0 8px, transparent 8px 16px); }
+.cf-net-fill { width: 0; background: var(--accent); transition: width 0.7s ease-in-out; }
+.cf-net-pk { position: absolute; left: 0; bottom: 48px; width: 24px; height: 24px; margin-left: -12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 30%, transparent); opacity: 0; transition: transform 0.7s ease-in-out, opacity var(--duration-normal); }
+.cf-net-pk.on { opacity: 1; }
+.cf-net-pk::after { font-style: normal; content: '프롬프트'; position: absolute; left: 50%; top: 32px; transform: translateX(-50%); white-space: nowrap; font-size: var(--fs-caption); font-weight: var(--weight-bold); color: var(--accent-on); background: var(--accent); padding: 0 var(--space-2); border-radius: var(--radius-pill); }
+.cf-net-pk.end::after { content: 'Bedrock 도착'; background: var(--success); }
+.cf-net-pk.end { background: var(--success); }
+@media (prefers-reduced-motion: reduce) { .cf-net-fill, .cf-net-pk { transition: none; } }
 </style>
 <div class="cf-btns">
   <button class="cf-btn on" id="cfNetA" onclick="cfNet.setPlan('A')">(안 A) Gateway 전산실 배치</button>
   <button class="cf-btn" id="cfNetB" onclick="cfNet.setPlan('B')">(안 B) Gateway AI Platform 계정 배치</button>
   <button class="cf-btn" onclick="cfNet.step()">다음 홉 ▶</button>
+  <button class="cf-btn" id="cfNetAuto" onclick="cfNet.auto()">자동 재생 ▶▶</button>
   <button class="cf-btn" onclick="cfNet.reset()">처음으로</button>
 </div>
 <div class="cf-net" id="cfNetRow" data-reveal="static">
+  <i class="cf-net-wire"></i><i class="cf-net-fill" id="cfNetFill"></i><i class="cf-net-pk" id="cfNetPk"></i>
   <div class="cf-hop" data-h="0"><b>5호 단말</b>온프렘, Claude Code</div>
   <div class="cf-hop" data-h="1"><b>사내 방화벽</b>기존 5호망 통제</div>
   <div class="cf-hop pa" data-h="2"><b>LLM Gateway</b>(안 A) 전산실</div>
@@ -812,7 +863,7 @@
   <div class="cf-hop pb" data-h="6"><img src="common/aws-icons/services/Arch_Elastic-Load-Balancing_48.svg" alt=""><b>내부 NLB, Gateway</b>(안 B) ECS / EKS</div>
   <div class="cf-hop" data-h="7"><img src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt=""><b>VPC Endpoint, Bedrock</b>bedrock-runtime</div>
 </div>
-<div class="cf-panel cf-net-msg" id="cfNetMsg"><span class="cf-muted">"다음 홉"을 눌러 요청 한 건을 따라가 보세요.</span></div>
+<div class="cf-panel cf-net-msg" id="cfNetMsg"><span class="cf-muted">"다음 홉" 또는 "자동 재생"으로 요청 한 건을 따라가 보세요.</span></div>
 <div class="callout callout-warning fragment fade-up" data-fragment-index="1"><strong class="cf-warning">리스크</strong>: Gateway 배치는 두 안을 함께 제시합니다. KB증권의 배치는 공개되지 않았고 금보원 해석에 따라 달라지므로 컨설팅 단계에서 확정합니다.</div>
   </div>
 </div>
@@ -908,31 +959,45 @@
 .cf-vbox { flex: 1; min-height: 0; container-type: size; }
 .cf-vbox .cf-video { width: min(100cqw, calc(100cqh * 1920 / 1506)); height: auto; margin-inline: auto; }
 .cf-vcap { text-align: center; color: var(--on-surface-muted); font-size: var(--fs-card); }
-.cf-all { display: grid; grid-template-columns: 0.8fr 1.4fr 1.2fr; gap: var(--space-3); align-items: stretch; }
+.cf-all { display: grid; grid-template-columns: 0.8fr 1.4fr 1.2fr; gap: var(--space-3) 80px; align-items: stretch; }
 .cf-all[data-p] .r { opacity: 0.25; }
 .cf-all[data-p="m"] .m, .cf-all[data-p="t"] .t { opacity: 1; outline-color: var(--accent); }
+.cf-flow-host { position: relative; }
+.cf-flow-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 2; }
+.cf-edge { fill: none; stroke: color-mix(in srgb, var(--on-surface) 22%, transparent); stroke-width: 2; stroke-dasharray: 6 6; transition: stroke var(--duration-normal), stroke-width var(--duration-normal); }
+.cf-edge.ghost { stroke: transparent; }
+.cf-edge.on { stroke: var(--accent); stroke-dasharray: none; stroke-width: 3; }
+.cf-edge.on.ok { stroke: var(--success); } .cf-edge.on.bad { stroke: var(--danger); } .cf-edge.on.info { stroke: var(--info); }
+.cf-pkt circle { fill: var(--accent); stroke: var(--surface-1); stroke-width: 3; }
+.cf-pkt.ok circle { fill: var(--success); } .cf-pkt.bad circle { fill: var(--danger); } .cf-pkt.info circle { fill: var(--info); }
+.cf-pkt text { font-style: normal; fill: var(--on-surface); font-size: var(--fs-caption); font-weight: var(--weight-bold); paint-order: stroke; stroke: var(--surface-1); stroke-width: 8px; stroke-linejoin: round; }
+.cf-hit { outline: 2px solid var(--accent) !important; box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 30%, transparent); transition: box-shadow var(--duration-normal); }
+.cf-flow-msg { min-height: 2.8em; margin-top: var(--space-2); font-size: var(--fs-card); }
+.cf-all[data-p=""] .r { opacity: 1; }
 </style>
-<div class="cf-btns" onclick="(function(e){var b=e.target.closest('.cf-btn');if(!b)return;b.parentNode.querySelectorAll('.cf-btn').forEach(function(x){x.classList.toggle('on',x===b)});document.getElementById('cfAll').setAttribute('data-p',b.dataset.p)})(event)">
+<div class="cf-btns" id="cfAllBtns">
+  <button class="cf-btn on" data-p="">전체 흐름</button>
   <button class="cf-btn" data-p="m">① 모델 호출</button>
   <button class="cf-btn" data-p="t">② 도구, 컨텍스트 호출</button>
 </div>
 <div class="cf-all" id="cfAll" data-reveal="static">
   <div class="cf-zone"><h5>전산실 (5호망): 개발자 단말</h5>
-    <div class="cf-box"><b>Claude Code</b>터미널, IDE 플러그인</div>
-    <div class="cf-box"><b>Codex</b>같은 Gateway 뒤 보조 클라이언트</div>
-    <div class="cf-box r t"><b>사내 MCP 서버, 지식 원본</b>형상관리, 일정, 모니터링, 규정집, 코딩 표준</div>
+    <div class="cf-box" data-n="cc"><b>Claude Code</b>터미널, IDE 플러그인</div>
+    <div class="cf-box" data-n="cx"><b>Codex</b>같은 Gateway 뒤 보조 클라이언트</div>
+    <div class="cf-box r t" data-n="op"><b>사내 MCP 서버, 지식 원본</b>형상관리, 일정, 모니터링, 규정집, 코딩 표준</div>
   </div>
   <div class="cf-zone"><h5>AI Platform 계정 (Workloads / Prod), DX 경유</h5>
-    <div class="cf-box r m"><img src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt=""><b>LLM Gateway → VPC Endpoint → Bedrock + Guardrails</b>Anthropic / OpenAI 호환 API</div>
-    <div class="cf-box r t"><img src="images/Gateway.png" alt=""><b>MCP Hub = AgentCore Gateway</b>AgentCore Identity(AD)로 사내 시스템 호출, VPC egress → 온프렘</div>
-    <div class="cf-box"><img src="common/aws-icons/services/Arch_AWS-CloudTrail_48.svg" alt=""><b>감사 로그 → Log Archive</b></div>
+    <div class="cf-box r m" data-n="gw"><img src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt=""><b>LLM Gateway → VPC Endpoint → Bedrock + Guardrails</b>Anthropic / OpenAI 호환 API</div>
+    <div class="cf-box r t" data-n="hub"><img src="images/Gateway.png" alt=""><b>MCP Hub = AgentCore Gateway</b>AgentCore Identity(AD)로 사내 시스템 호출, VPC egress → 온프렘</div>
+    <div class="cf-box" data-n="log"><img src="common/aws-icons/services/Arch_AWS-CloudTrail_48.svg" alt=""><b>감사 로그 → Log Archive</b></div>
   </div>
   <div class="cf-zone"><h5>AI Project 계정 (컨텍스트 계층)</h5>
-    <div class="cf-box r t"><b>Vector: Bedrock Knowledge Bases</b>OpenSearch Serverless, 규정, 가이드 문서 의미 검색</div>
-    <div class="cf-box r t"><img src="common/aws-icons/services/Arch_Amazon-Neptune_48.svg" alt=""><b>Graph: Neptune Analytics (+ AWS Context 검토)</b>온톨로지, 관계 검색</div>
-    <div class="cf-box r t"><img src="common/aws-icons/services/Arch_AWS-Glue_48.svg" alt=""><b>ETL: Glue, Step Functions</b>파싱, 정제, 가명화, 청킹. 원본은 온프렘에 유지</div>
+    <div class="cf-box r t" data-n="kb"><b>Vector: Bedrock Knowledge Bases</b>OpenSearch Serverless, 규정, 가이드 문서 의미 검색</div>
+    <div class="cf-box r t" data-n="gr"><img src="common/aws-icons/services/Arch_Amazon-Neptune_48.svg" alt=""><b>Graph: Neptune Analytics (+ AWS Context 검토)</b>온톨로지, 관계 검색</div>
+    <div class="cf-box r t" data-n="etl"><img src="common/aws-icons/services/Arch_AWS-Glue_48.svg" alt=""><b>ETL: Glue, Step Functions</b>파싱, 정제, 가명화, 청킹. 원본은 온프렘에 유지</div>
   </div>
 </div>
+<div class="cf-panel cf-flow-msg" id="cfAllMsg"></div>
 <div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="cf-info">왜 컨텍스트 계층까지</strong>: Claude Code가 사내 규칙을 알고 코드를 쓰려면 컨텍스트가 필요합니다. 원본은 온프렘에 두고, ETL을 거친 Vector와 Graph만 MCP Hub를 통해 검색합니다.</div>
   </div>
 </div>
@@ -1054,27 +1119,56 @@
   <div class="slide-body" data-remarp-id="s31-body">
     <p><!-- Slide 8: 요청 한 건의 흐름 --></p>
 <style>
-.cf-seq { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--space-2); margin-bottom: var(--space-3); }
-.cf-actor { text-align: center; font-size: var(--fs-card); font-weight: var(--weight-bold); background: var(--surface-3); border-radius: var(--radius-sm); padding: var(--space-2); }
-.cf-msgs { display: flex; flex-direction: column; gap: var(--space-2); }
-.cf-msg { display: grid; grid-template-columns: repeat(7, 1fr); align-items: center; font-size: var(--fs-card); }
-.cf-msg span { grid-row: 1; background: var(--accent-subtle); border-left: 4px solid var(--accent); border-radius: var(--radius-sm); padding: var(--space-1) var(--space-2); }
-.cf-msg.log span { background: var(--info-subtle); border-left-color: var(--info); }
-.c12 { grid-column: 1 / 3; } .c25 { grid-column: 2 / 6; } .c23 { grid-column: 2 / 4; } .c34 { grid-column: 3 / 5; } .c45 { grid-column: 4 / 6; } .c37 { grid-column: 3 / 8; } .c56 { grid-column: 5 / 7; } .c46 { grid-column: 4 / 7; } .c67 { grid-column: 6 / 8; }
+.cf-accent  { color: color-mix(in srgb, var(--accent) 72%, var(--on-surface));  font-weight: var(--weight-bold); }
+.cf-success { color: var(--success); font-weight: var(--weight-bold); }
+.cf-sq { position: relative; margin-bottom: var(--space-3); }
+.cf-sq-head { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--space-2); position: relative; z-index: 1; }
+.cf-actor { text-align: center; font-size: var(--fs-card); font-weight: var(--weight-bold); background: var(--surface-3); border-radius: var(--radius-sm); padding: var(--space-2); word-break: keep-all; }
+.cf-sq-life { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--space-2); pointer-events: none; }
+.cf-sq-life i { justify-self: center; width: 0; border-left: 2px dashed color-mix(in srgb, var(--on-surface) 22%, transparent); }
+.cf-sq-rows { display: flex; flex-direction: column; }
+.cf-m { position: relative; height: 64px; --c: var(--accent); }
+.cf-m.log { --c: var(--info); }
+.cf-m.ok { --c: var(--success); }
+.l0 { --l: 0; } .l1 { --l: 1; } .l2 { --l: 2; } .l4 { --l: 4; }
+.r1 { --r: 1; } .r2 { --r: 2; } .r3 { --r: 3; } .r4 { --r: 4; } .r5 { --r: 5; } .r6 { --r: 6; }
+.cf-m .ar { position: absolute; left: calc((var(--l) + 0.5) / 7 * 100%); width: calc((var(--r) - var(--l)) / 7 * 100%); bottom: 16px; height: 4px; background: var(--c); transform: scaleX(0); transform-origin: left center; }
+.cf-m.back .ar { transform-origin: right center; }
+.cf-m.log .ar { background: repeating-linear-gradient(90deg, var(--c) 0 8px, transparent 8px 16px); }
+.cf-m .ar::after { content: ''; position: absolute; right: -2px; top: -8px; border: 8px solid transparent; border-left: 12px solid var(--c); border-right: 0; }
+.cf-m.back .ar::after { right: auto; left: -2px; border-left: 0; border-right: 12px solid var(--c); }
+.cf-m .pk { position: absolute; top: -8px; left: 0; width: 16px; height: 16px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 30%, transparent); opacity: 0; }
+.cf-m.back .pk { left: auto; right: 0; }
+.cf-m .lb { position: absolute; left: calc((var(--l) + 0.5) / 7 * 100%); width: calc((var(--r) - var(--l)) / 7 * 100%); bottom: 24px; display: flex; justify-content: center; opacity: 0; }
+.cf-m .lb span { white-space: nowrap; font-size: var(--fs-card); background: var(--surface-1); padding: 0 var(--space-2); border-radius: var(--radius-sm); }
+.cf-m .lb b { color: var(--c); margin-right: var(--space-1); }
+.cf-m.visible .ar { animation: cfSqDraw 0.6s ease-out forwards; }
+.cf-m.visible .lb { animation: cfSqFade 0.4s ease-out 0.3s forwards; }
+.cf-m.visible .pk { animation: cfSqRun 0.9s ease-in-out 0.55s; }
+.cf-m.visible.back .pk { animation-name: cfSqRunBack; }
+@keyframes cfSqDraw { to { transform: scaleX(1); } }
+@keyframes cfSqFade { to { opacity: 1; } }
+@keyframes cfSqRun { 0% { left: 0; opacity: 1; } 90% { opacity: 1; } 100% { left: calc(100% - 16px); opacity: 0; } }
+@keyframes cfSqRunBack { 0% { right: 0; opacity: 1; } 90% { opacity: 1; } 100% { right: calc(100% - 16px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .cf-m.visible .ar { animation-duration: 0.01s; } .cf-m.visible .lb { animation-delay: 0s; } .cf-m.visible .pk { animation: none; } }
 </style>
-<div class="cf-seq">
-  <div class="cf-actor">개발자, IdP(AD)</div><div class="cf-actor">Claude Code</div><div class="cf-actor">LLM Gateway</div><div class="cf-actor">Bedrock</div><div class="cf-actor">AgentCore Gateway</div><div class="cf-actor">사내 시스템</div><div class="cf-actor">Log Archive</div>
+<div class="cf-sq">
+  <div class="cf-sq-life"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="cf-sq-head">
+    <div class="cf-actor">IdP (AD)</div><div class="cf-actor">개발자, Claude Code</div><div class="cf-actor">LLM Gateway</div><div class="cf-actor">Bedrock</div><div class="cf-actor">AgentCore Gateway</div><div class="cf-actor">사내 시스템</div><div class="cf-actor">Log Archive</div>
+  </div>
+  <div class="cf-sq-rows">
+    <div class="cf-m back l0 r1 fragment" data-fragment-index="1"><div class="lb"><span><b>①</b>AD 로그인 (MFA)</span></div><div class="ar"><i class="pk"></i></div></div>
+    <div class="cf-m ok l0 r1 fragment" data-fragment-index="2"><div class="lb"><span><b>②</b>단기 토큰</span></div><div class="ar"><i class="pk"></i></div></div>
+    <div class="cf-m l1 r2 fragment" data-fragment-index="3"><div class="lb"><span><b>③</b>모델 호출 + 토큰</span></div><div class="ar"><i class="pk"></i></div></div>
+    <div class="cf-m l2 r3 fragment" data-fragment-index="4"><div class="lb"><span><b>④</b>DLP, allowlist 통과 → PrivateLink</span></div><div class="ar"><i class="pk"></i></div></div>
+    <div class="cf-m log l2 r6 fragment" data-fragment-index="5"><div class="lb"><span><b>⑤</b>모델 호출 로그 (user, model, 판정, 토큰)</span></div><div class="ar"><i class="pk"></i></div></div>
+    <div class="cf-m l1 r4 fragment" data-fragment-index="6"><div class="lb"><span><b>⑥</b>도구 호출 + 같은 토큰</span></div><div class="ar"><i class="pk"></i></div></div>
+    <div class="cf-m l4 r5 fragment" data-fragment-index="7"><div class="lb"><span><b>⑦</b>Policy 허용 → Identity 자격증명으로 호출</span></div><div class="ar"><i class="pk"></i></div></div>
+    <div class="cf-m log l4 r6 fragment" data-fragment-index="8"><div class="lb"><span><b>⑧</b>도구 호출 로그</span></div><div class="ar"><i class="pk"></i></div></div>
+  </div>
 </div>
-<div class="cf-msgs">
-  <div class="cf-msg fragment fade-right" data-fragment-index="1"><span class="c12">① AD 계정 로그인 (MFA) → ② 단기 토큰 발급</span></div>
-  <div class="cf-msg fragment fade-right" data-fragment-index="2"><span class="c23">③ 모델 호출 + 토큰</span></div>
-  <div class="cf-msg fragment fade-right" data-fragment-index="3"><span class="c34">④ DLP, 모델 allowlist 통과 후 PrivateLink 호출</span></div>
-  <div class="cf-msg log fragment fade-right" data-fragment-index="4"><span class="c37">⑤ 프롬프트, 응답 메타데이터 로그 (user, model, 판정, 토큰)</span></div>
-  <div class="cf-msg fragment fade-right" data-fragment-index="5"><span class="c25">⑥ 도구 호출 + 토큰 → AgentCore Gateway</span></div>
-  <div class="cf-msg fragment fade-right" data-fragment-index="6"><span class="c56">⑦ Policy 허용 시 Identity 자격증명으로 호출</span></div>
-  <div class="cf-msg log fragment fade-right" data-fragment-index="7"><span class="c67">⑧ 도구 호출 로그</span></div>
-</div>
-<div class="callout callout-success fragment zoom-in" data-fragment-index="8"><strong class="cf-success">한 줄로 이어지는 감사</strong>: AI가 주장하는 신원이 아니라 토큰으로 확인합니다. 모델 호출과 도구 호출이 같은 신원으로 기록되어 "누가 무엇을 했는지"가 이어집니다.</div>
+<div class="callout callout-success fragment zoom-in" data-fragment-index="9"><strong class="cf-success">한 줄로 이어지는 감사</strong>: AI가 주장하는 신원이 아니라 토큰으로 확인합니다. 모델 호출과 도구 호출이 같은 신원으로 기록되어 "누가 무엇을 했는지"가 이어집니다.</div>
   </div>
 </div>
 
@@ -1317,25 +1411,42 @@
 .cf-cp { display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--space-4); }
 .cf-cp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
 .cf-dp { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-2); margin-top: var(--space-2); }
+.cf-flow-host { position: relative; }
+.cf-flow-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 2; }
+.cf-edge { fill: none; stroke: color-mix(in srgb, var(--on-surface) 22%, transparent); stroke-width: 2; stroke-dasharray: 6 6; transition: stroke var(--duration-normal), stroke-width var(--duration-normal); }
+.cf-edge.ghost { stroke: transparent; }
+.cf-edge.on { stroke: var(--accent); stroke-dasharray: none; stroke-width: 3; }
+.cf-edge.on.ok { stroke: var(--success); } .cf-edge.on.bad { stroke: var(--danger); } .cf-edge.on.info { stroke: var(--info); }
+.cf-pkt circle { fill: var(--accent); stroke: var(--surface-1); stroke-width: 3; }
+.cf-pkt.ok circle { fill: var(--success); } .cf-pkt.bad circle { fill: var(--danger); } .cf-pkt.info circle { fill: var(--info); }
+.cf-pkt text { font-style: normal; fill: var(--on-surface); font-size: var(--fs-caption); font-weight: var(--weight-bold); paint-order: stroke; stroke: var(--surface-1); stroke-width: 8px; stroke-linejoin: round; }
+.cf-hit { outline: 2px solid var(--accent) !important; box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 30%, transparent); transition: box-shadow var(--duration-normal); }
+.cf-flow-msg { min-height: 2.8em; margin-top: var(--space-2); font-size: var(--fs-card); }
+.cf-edge.ghost.on { stroke: transparent; }
+.cf-cp-ctl { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2); font-size: var(--fs-card); }
+.cf-cp-ctl .cf-btn { white-space: nowrap; flex: none; }
+.cf-cp-ctl .cf-muted { margin: 0; font-size: var(--fs-card); min-height: 2.8em; display: flex; align-items: center; }
+.cf-dp .cf-box .v { display: block; font-size: var(--fs-caption); color: var(--success); font-weight: var(--weight-bold); min-height: 1.3em; }
 .cf-dp .cf-box.future { opacity: 0.6; border: 2px dashed color-mix(in srgb, var(--on-surface) 25%, transparent); }
 </style>
 <div class="cf-cp">
-  <div>
+  <div id="cfCp">
+    <div class="cf-cp-ctl"><button class="cf-btn" id="cfCpBtn">정책 한 번 바꾸기 ▶</button><span class="cf-muted" id="cfCpMsg">통제면에서 바꾼 정책이 모든 실행면에 같이 적용됩니다.</span></div>
     <div class="cf-zone"><h5>통제면 (Control Plane), AI Platform 계정</h5>
       <div class="cf-cp-grid" data-reveal="stagger">
         <div class="cf-box"><img src="common/aws-icons/services/Arch_AWS-IAM-Identity-Center_48.svg" alt=""><b>IdP 연동</b></div>
-        <div class="cf-box"><b>Gateway 정책</b>DLP, 라우팅</div>
+        <div class="cf-box" data-n="pol"><b>Gateway 정책</b>DLP, 라우팅</div>
         <div class="cf-box"><img src="images/Gateway.png" alt=""><b>MCP Hub 등록</b></div>
         <div class="cf-box"><img src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt=""><b>모델 allowlist</b></div>
         <div class="cf-box"><img src="common/aws-icons/services/Arch_AWS-Budgets_48.svg" alt=""><b>Quota, 예산</b></div>
-        <div class="cf-box"><img src="common/aws-icons/services/Arch_Amazon-CloudWatch_48.svg" alt=""><b>로그, 대시보드</b></div>
+        <div class="cf-box" data-n="logs"><img src="common/aws-icons/services/Arch_Amazon-CloudWatch_48.svg" alt=""><b>로그, 대시보드</b></div>
       </div>
     </div>
     <div class="cf-zone fragment fade-up" data-fragment-index="1"><h5>실행면 (Data Plane)</h5>
       <div class="cf-dp">
-        <div class="cf-box"><b>5호망 AI</b>코딩 에이전트</div>
-        <div class="cf-box"><b>상용 AI 프로젝트</b>AI Project 계정</div>
-        <div class="cf-box"><b>컨텍스트 계층</b>Vector, Graph</div>
+        <div class="cf-box" data-n="d1"><b>5호망 AI</b>코딩 에이전트<span class="v"></span></div>
+        <div class="cf-box" data-n="d2"><b>상용 AI 프로젝트</b>AI Project 계정<span class="v"></span></div>
+        <div class="cf-box" data-n="d3"><b>컨텍스트 계층</b>Vector, Graph<span class="v"></span></div>
         <div class="cf-box future"><b>(향후) 그룹 계열사</b>그룹 결정 사항</div>
       </div>
     </div>
@@ -1629,6 +1740,162 @@ printf <span class="string">'{"systemMessage": "[SENSORS] pytest 통과"}'</span
 </script>
 <script>
 (function(){
+window.cfLk = (function () {
+  var gen = 0;
+  function steps() { return Array.prototype.slice.call(document.querySelectorAll('#cfLk .cf-step')); }
+  function hours() { var el = document.getElementById('cfLkH'); return el ? +el.value : 4; }
+  function calc() {
+    var h = hours(), w = 2 * h, out = document.getElementById('cfLkOut'); if (!out) return;
+    var per = w <= 8 ? Math.floor(8 / w) + '회' : '1회 미만 (다음 영업일 이후 반영)';
+    out.innerHTML = '커밋 1건당 승인 대기 <strong class="cf-warning">' + w + '시간</strong>, 하루 8시간 근무 기준 반영 가능 <strong class="cf-accent">' + per + '</strong>';
+  }
+  function at(i, cls, label) {
+    var s = steps()[i], pk = document.getElementById('cfLkPk'), fill = document.getElementById('cfLkFill'), lb = document.getElementById('cfLkLb');
+    if (!s || !pk) return;
+    var x = s.offsetLeft + s.offsetWidth / 2;
+    pk.className = 'cf-lk-pk on' + (cls ? ' ' + cls : ''); pk.style.transform = 'translateX(' + x + 'px)'; fill.style.width = x + 'px'; lb.textContent = label || '';
+  }
+  function wait(ms, my) { return new Promise(function (r) { setTimeout(function () { r(my === gen); }, ms); }); }
+  function play() {
+    var my = ++gen, h = hours(), seq = Promise.resolve(true);
+    steps().forEach(function (s, i) {
+      seq = seq.then(function (ok) {
+        if (!ok) return false;
+        var isWait = s.classList.contains('wait');
+        at(i, isWait ? 'wait' : '', isWait ? '승인 대기 ' + h + '시간' : '');
+        return wait(isWait ? Math.min(4000, 1600 + h * 150) : 800, my);
+      });
+    });
+    seq.then(function (ok) { if (ok) at(steps().length - 1, 'end', '반영 완료, 이력 기록'); });
+  }
+  function reset() { gen++; var pk = document.getElementById('cfLkPk'), fill = document.getElementById('cfLkFill'); if (pk) { pk.className = 'cf-lk-pk'; pk.style.transform = ''; } if (fill) fill.style.width = '0'; }
+  document.addEventListener('rp:slidechange', reset);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', calc); else calc();
+  return { play: play, calc: calc };
+})();
+})();
+</script>
+<script>
+(function(){
+// cfFlow: SVG connectors between DOM boxes + packets moving along them.
+// Layout is measured when the slide becomes active (slides are display:none otherwise).
+window.cfFlow = window.cfFlow || (function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function rect(root, el) {
+    var R = root.getBoundingClientRect(), r = el.getBoundingClientRect(), k = root.offsetWidth / (R.width || 1);
+    return { x: (r.left - R.left) * k, y: (r.top - R.top) * k, w: r.width * k, h: r.height * k };
+  }
+  function route(a, b, e) {
+    var ax = a.x + a.w / 2, ay = a.y + a.h / 2 + (e.dy || 0), bx = b.x + b.w / 2, by = b.y + b.h / 2 + (e.dy || 0), dx = bx - ax, dy = by - ay, o = e.off || 0;
+    if (e.via === 's') return 'M' + ax + ',' + ay + ' L' + bx + ',' + by;
+    if (e.via === 'r' || e.via === 'l') {
+      var rt = e.via === 'r', s0 = rt ? a.x + a.w : a.x, e0 = rt ? b.x + b.w : b.x, X = rt ? Math.max(s0, e0) + (o || 18) : Math.min(s0, e0) - (o || 18);
+      return 'M' + s0 + ',' + ay + ' H' + X + ' V' + by + ' H' + e0;
+    }
+    if (e.via === 'v' || (e.via !== 'h' && Math.abs(dx) <= (a.w + b.w) / 2)) {
+      var sy = dy > 0 ? a.y + a.h : a.y, ey = dy > 0 ? b.y : b.y + b.h, my = (sy + ey) / 2 + o;
+      return 'M' + (ax + o) + ',' + sy + ' V' + my + ' H' + (bx + o) + ' V' + ey;
+    }
+    var sx = dx > 0 ? a.x + a.w : a.x, ex = dx > 0 ? b.x : b.x + b.w, mx = (sx + ex) / 2 + o;
+    return 'M' + sx + ',' + ay + ' H' + mx + ' V' + by + ' H' + ex;
+  }
+  function mount(root, edges) {
+    var svg = document.createElementNS(NS, 'svg'), paths = {}, gen = 0, onEnter = null, onLeave = null, active = false;
+    svg.setAttribute('class', 'cf-flow-svg'); svg.setAttribute('aria-hidden', 'true');
+    root.classList.add('cf-flow-host'); root.appendChild(svg);
+    edges.forEach(function (e) {
+      var p = document.createElementNS(NS, 'path');
+      p.setAttribute('class', 'cf-edge' + (e.cls ? ' ' + e.cls : '')); svg.appendChild(p); paths[e.id] = { el: p, e: e };
+    });
+    function node(id) { return root.querySelector('[data-n="' + id + '"]'); }
+    function layout() {
+      svg.setAttribute('viewBox', '0 0 ' + root.offsetWidth + ' ' + root.offsetHeight);
+      Object.keys(paths).forEach(function (k) {
+        var e = paths[k].e, a = node(e.from), b = node(e.to);
+        if (!a || !b || !a.offsetParent || !b.offsetParent) { paths[k].el.setAttribute('d', ''); return; }
+        paths[k].el.setAttribute('d', route(rect(root, a), rect(root, b), e));
+      });
+    }
+    function packet(id, opt) {
+      var my = gen, P = paths[id]; if (!P) return Promise.resolve();
+      var path = P.el, len = path.getTotalLength ? path.getTotalLength() : 0;
+      var g = document.createElementNS(NS, 'g'), c = document.createElementNS(NS, 'circle');
+      g.setAttribute('class', 'cf-pkt' + (opt.cls ? ' ' + opt.cls : '')); c.setAttribute('r', '10'); g.appendChild(c);
+      if (opt.label) { var t = document.createElementNS(NS, 'text'); t.setAttribute('x', '16'); t.setAttribute('y', '-14'); t.textContent = opt.label; g.appendChild(t); }
+      svg.appendChild(g); path.classList.add('on'); if (opt.cls) path.classList.add(opt.cls);
+      var dur = reduce ? 1 : (opt.dur || 1100), t0 = null;
+      return new Promise(function (done) {
+        function frame(ts) {
+          if (my !== gen) { g.remove(); return done(); }
+          if (t0 === null) t0 = ts;
+          var f = Math.min(1, (ts - t0) / dur), q = f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+          var pt = len ? path.getPointAtLength(q * len) : { x: 0, y: 0 };
+          g.setAttribute('transform', 'translate(' + pt.x + ',' + pt.y + ')');
+          if (f < 1) return requestAnimationFrame(frame);
+          var to = node(P.e.to); if (to) { to.classList.add('cf-hit'); setTimeout(function () { to.classList.remove('cf-hit'); }, 900); }
+          setTimeout(function () { g.remove(); done(); }, opt.hold || 250);
+        }
+        requestAnimationFrame(frame);
+      });
+    }
+    function clear() { gen++; svg.querySelectorAll('.cf-pkt').forEach(function (g) { g.remove(); }); Object.keys(paths).forEach(function (k) { paths[k].el.setAttribute('class', 'cf-edge' + (paths[k].e.cls ? ' ' + paths[k].e.cls : '')); }); }
+    // steps: [{e:[edgeIds], label, cls, dur, msg}] played in order; edges in one step run in parallel.
+    function play(steps, opt) {
+      clear(); var my = gen; opt = opt || {};
+      return steps.reduce(function (pr, s, i) {
+        return pr.then(function () {
+          if (my !== gen) return;
+          if (opt.onStep) opt.onStep(i, s);
+          return Promise.all(s.e.map(function (id, j) { return packet(id, j ? { cls: s.cls, dur: s.dur } : s); }));
+        });
+      }, Promise.resolve()).then(function () {
+        if (my !== gen) return;
+        var left = opt.loop === true ? 3 : (opt.loop || 0);
+        if (left > 1 && active && !reduce) return new Promise(function (r) { setTimeout(r, 900); }).then(function () { if (my === gen && active) return play(steps, Object.assign({}, opt, { loop: left - 1 })); });
+        if (opt.onDone) opt.onDone();
+      });
+    }
+    function sync() {
+      var s = root.closest('.slide'), now = !!(s && s.classList.contains('active') && !document.querySelector('.overview-mode'));
+      if (now && !active) { active = true; requestAnimationFrame(function () { layout(); if (onEnter) onEnter(); }); }
+      else if (!now && active) { active = false; clear(); if (onLeave) onLeave(); }
+    }
+    var sl = root.closest('.slide');
+    if (sl && window.MutationObserver) new MutationObserver(sync).observe(sl, { attributes: true, attributeFilter: ['class'] });
+    document.addEventListener('rp:slidechange', function () { setTimeout(sync, 60); });
+    if (window.ResizeObserver) new ResizeObserver(function () { if (active) layout(); }).observe(root);
+    setTimeout(sync, 300);
+    return {
+      layout: layout, play: play, clear: clear, packet: packet,
+      enter: function (f) { onEnter = f; }, leave: function (f) { onLeave = f; },
+      isActive: function () { return active; }
+    };
+  }
+  return { mount: mount };
+})();
+
+(function () {
+  var root = document.getElementById('cfKb'); if (!root) return;
+  var f = cfFlow.mount(root, [
+    { id: 'pc-sec', from: 'pc', to: 'sec' }, { id: 'sec-dx', from: 'sec', to: 'dx' }, { id: 'dx-tgw', from: 'dx', to: 'tgw' },
+    { id: 'tgw-agw', from: 'tgw', to: 'agw' }, { id: 'tgw-llm', from: 'tgw', to: 'llm' }
+  ]);
+  var T = [{ e: ['pc-sec'], label: '도구 호출' }, { e: ['sec-dx'] }, { e: ['dx-tgw'] }, { e: ['tgw-agw'], label: 'MCP Hub' }];
+  var M = [{ e: ['pc-sec'], label: '모델 호출', cls: 'ok' }, { e: ['sec-dx'], cls: 'ok' }, { e: ['dx-tgw'], cls: 'ok' }, { e: ['tgw-llm'], label: 'LLM Gateway', cls: 'ok' }];
+  var btns = document.getElementById('cfKbBtns'), mode = '';
+  function run() { root.setAttribute('data-route', mode); f.play(mode === 'tool' ? T : mode === 'model' ? M : T.concat(M), { loop: true }); }
+  btns.addEventListener('click', function (ev) {
+    var b = ev.target.closest('.cf-btn'); if (!b) return;
+    btns.querySelectorAll('.cf-btn').forEach(function (x) { x.classList.toggle('on', x === b); });
+    mode = b.dataset.r; if (f.isActive()) run();
+  });
+  f.enter(run);
+})();
+})();
+</script>
+<script>
+(function(){
 (function () {
   var info = {
     log: 'Log Archive: CloudTrail, Bedrock Invocation Logging, Gateway 로그가 모이는 곳. S3 Object Lock, KMS. 정책 변경 금지 SCP',
@@ -1668,6 +1935,16 @@ window.cfNet = (function () {
   ];
   function hidden(h) { return (plan === 'A' && h.classList.contains('pb')) || (plan === 'B' && h.classList.contains('pa')); }
   function hops() { return Array.prototype.slice.call(document.querySelectorAll('#cfNetRow .cf-hop')); }
+  var timer = null;
+  function move() {
+    var pk = document.getElementById('cfNetPk'), fill = document.getElementById('cfNetFill');
+    var h = hops().filter(function (x) { return +x.dataset.h === cur; })[0];
+    if (!pk) return;
+    if (!h || !h.offsetParent) { pk.classList.remove('on', 'end'); pk.style.transform = ''; fill.style.width = '0'; return; }
+    var x = h.offsetLeft + h.offsetWidth / 2;
+    pk.classList.add('on'); pk.classList.toggle('end', cur === 7);
+    pk.style.transform = 'translateX(' + x + 'px)'; fill.style.width = x + 'px';
+  }
   function render() {
     hops().forEach(function (h) {
       var i = +h.dataset.h;
@@ -1677,17 +1954,164 @@ window.cfNet = (function () {
     document.getElementById('cfNetA').classList.toggle('on', plan === 'A');
     document.getElementById('cfNetB').classList.toggle('on', plan === 'B');
     var out = document.getElementById('cfNetMsg');
-    out.innerHTML = cur < 0 ? '<span class="cf-muted">"다음 홉"을 눌러 요청 한 건을 따라가 보세요.</span>' : '<strong class="cf-accent">' + msg[cur] + '</strong>';
+    move();
+    out.innerHTML = cur < 0 ? '<span class="cf-muted">"다음 홉" 또는 "자동 재생"으로 요청 한 건을 따라가 보세요.</span>' : '<strong class="cf-accent">' + msg[cur] + '</strong>';
   }
   function step() {
     var v = hops().filter(function (h) { return !hidden(h); }).map(function (h) { return +h.dataset.h; });
     var nxt = v.filter(function (i) { return i > cur; })[0];
     cur = nxt === undefined ? v[v.length - 1] : nxt; render();
   }
-  function setPlan(p) { plan = p; cur = -1; render(); }
-  function reset() { cur = -1; render(); }
+  function stop() { if (timer) { clearInterval(timer); timer = null; } var b = document.getElementById('cfNetAuto'); if (b) b.classList.remove('on'); }
+  function auto() {
+    stop(); cur = -1; render();
+    var b = document.getElementById('cfNetAuto'); if (b) b.classList.add('on');
+    timer = setInterval(function () { if (cur === 7) return stop(); step(); }, 1500);
+    step();
+  }
+  function setPlan(p) { stop(); plan = p; cur = -1; render(); }
+  function reset() { stop(); cur = -1; render(); }
+  document.addEventListener('rp:slidechange', function () { stop(); });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render); else render();
-  return { step: step, setPlan: setPlan, reset: reset };
+  return { step: step, setPlan: setPlan, reset: reset, auto: auto };
+})();
+})();
+</script>
+<script>
+(function(){
+// cfFlow: SVG connectors between DOM boxes + packets moving along them.
+// Layout is measured when the slide becomes active (slides are display:none otherwise).
+window.cfFlow = window.cfFlow || (function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function rect(root, el) {
+    var R = root.getBoundingClientRect(), r = el.getBoundingClientRect(), k = root.offsetWidth / (R.width || 1);
+    return { x: (r.left - R.left) * k, y: (r.top - R.top) * k, w: r.width * k, h: r.height * k };
+  }
+  function route(a, b, e) {
+    var ax = a.x + a.w / 2, ay = a.y + a.h / 2 + (e.dy || 0), bx = b.x + b.w / 2, by = b.y + b.h / 2 + (e.dy || 0), dx = bx - ax, dy = by - ay, o = e.off || 0;
+    if (e.via === 's') return 'M' + ax + ',' + ay + ' L' + bx + ',' + by;
+    if (e.via === 'r' || e.via === 'l') {
+      var rt = e.via === 'r', s0 = rt ? a.x + a.w : a.x, e0 = rt ? b.x + b.w : b.x, X = rt ? Math.max(s0, e0) + (o || 18) : Math.min(s0, e0) - (o || 18);
+      return 'M' + s0 + ',' + ay + ' H' + X + ' V' + by + ' H' + e0;
+    }
+    if (e.via === 'v' || (e.via !== 'h' && Math.abs(dx) <= (a.w + b.w) / 2)) {
+      var sy = dy > 0 ? a.y + a.h : a.y, ey = dy > 0 ? b.y : b.y + b.h, my = (sy + ey) / 2 + o;
+      return 'M' + (ax + o) + ',' + sy + ' V' + my + ' H' + (bx + o) + ' V' + ey;
+    }
+    var sx = dx > 0 ? a.x + a.w : a.x, ex = dx > 0 ? b.x : b.x + b.w, mx = (sx + ex) / 2 + o;
+    return 'M' + sx + ',' + ay + ' H' + mx + ' V' + by + ' H' + ex;
+  }
+  function mount(root, edges) {
+    var svg = document.createElementNS(NS, 'svg'), paths = {}, gen = 0, onEnter = null, onLeave = null, active = false;
+    svg.setAttribute('class', 'cf-flow-svg'); svg.setAttribute('aria-hidden', 'true');
+    root.classList.add('cf-flow-host'); root.appendChild(svg);
+    edges.forEach(function (e) {
+      var p = document.createElementNS(NS, 'path');
+      p.setAttribute('class', 'cf-edge' + (e.cls ? ' ' + e.cls : '')); svg.appendChild(p); paths[e.id] = { el: p, e: e };
+    });
+    function node(id) { return root.querySelector('[data-n="' + id + '"]'); }
+    function layout() {
+      svg.setAttribute('viewBox', '0 0 ' + root.offsetWidth + ' ' + root.offsetHeight);
+      Object.keys(paths).forEach(function (k) {
+        var e = paths[k].e, a = node(e.from), b = node(e.to);
+        if (!a || !b || !a.offsetParent || !b.offsetParent) { paths[k].el.setAttribute('d', ''); return; }
+        paths[k].el.setAttribute('d', route(rect(root, a), rect(root, b), e));
+      });
+    }
+    function packet(id, opt) {
+      var my = gen, P = paths[id]; if (!P) return Promise.resolve();
+      var path = P.el, len = path.getTotalLength ? path.getTotalLength() : 0;
+      var g = document.createElementNS(NS, 'g'), c = document.createElementNS(NS, 'circle');
+      g.setAttribute('class', 'cf-pkt' + (opt.cls ? ' ' + opt.cls : '')); c.setAttribute('r', '10'); g.appendChild(c);
+      if (opt.label) { var t = document.createElementNS(NS, 'text'); t.setAttribute('x', '16'); t.setAttribute('y', '-14'); t.textContent = opt.label; g.appendChild(t); }
+      svg.appendChild(g); path.classList.add('on'); if (opt.cls) path.classList.add(opt.cls);
+      var dur = reduce ? 1 : (opt.dur || 1100), t0 = null;
+      return new Promise(function (done) {
+        function frame(ts) {
+          if (my !== gen) { g.remove(); return done(); }
+          if (t0 === null) t0 = ts;
+          var f = Math.min(1, (ts - t0) / dur), q = f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+          var pt = len ? path.getPointAtLength(q * len) : { x: 0, y: 0 };
+          g.setAttribute('transform', 'translate(' + pt.x + ',' + pt.y + ')');
+          if (f < 1) return requestAnimationFrame(frame);
+          var to = node(P.e.to); if (to) { to.classList.add('cf-hit'); setTimeout(function () { to.classList.remove('cf-hit'); }, 900); }
+          setTimeout(function () { g.remove(); done(); }, opt.hold || 250);
+        }
+        requestAnimationFrame(frame);
+      });
+    }
+    function clear() { gen++; svg.querySelectorAll('.cf-pkt').forEach(function (g) { g.remove(); }); Object.keys(paths).forEach(function (k) { paths[k].el.setAttribute('class', 'cf-edge' + (paths[k].e.cls ? ' ' + paths[k].e.cls : '')); }); }
+    // steps: [{e:[edgeIds], label, cls, dur, msg}] played in order; edges in one step run in parallel.
+    function play(steps, opt) {
+      clear(); var my = gen; opt = opt || {};
+      return steps.reduce(function (pr, s, i) {
+        return pr.then(function () {
+          if (my !== gen) return;
+          if (opt.onStep) opt.onStep(i, s);
+          return Promise.all(s.e.map(function (id, j) { return packet(id, j ? { cls: s.cls, dur: s.dur } : s); }));
+        });
+      }, Promise.resolve()).then(function () {
+        if (my !== gen) return;
+        var left = opt.loop === true ? 3 : (opt.loop || 0);
+        if (left > 1 && active && !reduce) return new Promise(function (r) { setTimeout(r, 900); }).then(function () { if (my === gen && active) return play(steps, Object.assign({}, opt, { loop: left - 1 })); });
+        if (opt.onDone) opt.onDone();
+      });
+    }
+    function sync() {
+      var s = root.closest('.slide'), now = !!(s && s.classList.contains('active') && !document.querySelector('.overview-mode'));
+      if (now && !active) { active = true; requestAnimationFrame(function () { layout(); if (onEnter) onEnter(); }); }
+      else if (!now && active) { active = false; clear(); if (onLeave) onLeave(); }
+    }
+    var sl = root.closest('.slide');
+    if (sl && window.MutationObserver) new MutationObserver(sync).observe(sl, { attributes: true, attributeFilter: ['class'] });
+    document.addEventListener('rp:slidechange', function () { setTimeout(sync, 60); });
+    if (window.ResizeObserver) new ResizeObserver(function () { if (active) layout(); }).observe(root);
+    setTimeout(sync, 300);
+    return {
+      layout: layout, play: play, clear: clear, packet: packet,
+      enter: function (f) { onEnter = f; }, leave: function (f) { onLeave = f; },
+      isActive: function () { return active; }
+    };
+  }
+  return { mount: mount };
+})();
+
+(function () {
+  var root = document.getElementById('cfAll'); if (!root) return;
+  var f = cfFlow.mount(root, [
+    { id: 'cc-gw', from: 'cc', to: 'gw', dy: -12 }, { id: 'gw-cc', from: 'gw', to: 'cc', dy: 12 },
+    { id: 'cx-gw', from: 'cx', to: 'gw' }, { id: 'gw-log', from: 'gw', to: 'log', via: 'r', off: 30 },
+    { id: 'cc-hub', from: 'cc', to: 'hub', dy: -12 }, { id: 'hub-cc', from: 'hub', to: 'cc', dy: 12 },
+    { id: 'hub-kb', from: 'hub', to: 'kb' }, { id: 'hub-gr', from: 'hub', to: 'gr' },
+    { id: 'hub-op', from: 'hub', to: 'op' }, { id: 'hub-log', from: 'hub', to: 'log' },
+    { id: 'etl-kb', from: 'etl', to: 'kb', via: 'r', off: 30 }, { id: 'etl-gr', from: 'etl', to: 'gr' }
+  ]);
+  var M = [
+    { e: ['cc-gw', 'cx-gw'], msg: '① Claude Code와 Codex 모두 같은 LLM Gateway로 모델을 부릅니다. 단말에는 AWS 자격증명이 없습니다.' },
+    { e: ['gw-log'], cls: 'info', msg: 'Gateway가 인증, DLP, 모델 allowlist를 통과시킨 뒤 PrivateLink로 Bedrock을 부르고, 사용자와 판정을 로그로 남깁니다.' },
+    { e: ['gw-cc'], cls: 'ok', msg: '응답은 같은 경로로 스트리밍됩니다.' }
+  ];
+  var T = [
+    { e: ['cc-hub'], msg: '② 도구와 컨텍스트는 MCP Hub(AgentCore Gateway) 한 곳으로만 갑니다.' },
+    { e: ['hub-kb', 'hub-gr'], msg: '규정, 코딩 표준은 AI Project 계정의 Vector와 Graph에서 검색합니다.' },
+    { e: ['hub-op'], msg: '사내 시스템은 AgentCore Identity가 보관한 자격증명으로 호출합니다. 개발자 단말은 자격증명을 들지 않습니다.' },
+    { e: ['hub-log'], cls: 'info', msg: '도구 호출도 같은 신원으로 감사 로그에 남습니다.' },
+    { e: ['hub-cc'], cls: 'ok', msg: '결과만 Claude Code로 돌아옵니다.' }
+  ];
+  var C = [{ e: ['etl-kb', 'etl-gr'], cls: 'info', msg: '원본은 온프렘에 두고, 승인된 배치로 ETL(가명화, 청킹)을 거친 결과만 Vector와 Graph에 들어갑니다.' }];
+  var msg = document.getElementById('cfAllMsg'), btns = document.getElementById('cfAllBtns'), mode = '';
+  function run() {
+    root.setAttribute('data-p', mode);
+    var steps = mode === 'm' ? M : mode === 't' ? T : M.concat(T, C);
+    f.play(steps, { loop: true, onStep: function (i, s) { msg.innerHTML = '<strong class="cf-accent">' + s.msg + '</strong>'; } });
+  }
+  btns.addEventListener('click', function (ev) {
+    var b = ev.target.closest('.cf-btn'); if (!b) return;
+    btns.querySelectorAll('.cf-btn').forEach(function (x) { x.classList.toggle('on', x === b); });
+    mode = b.dataset.p; if (f.isActive()) run();
+  });
+  f.enter(run);
 })();
 })();
 </script>
@@ -1733,6 +2157,131 @@ window.addEventListener('hashchange', function () {
     root.querySelectorAll('.cf-layer').forEach(function (x) { x.classList.toggle('on', x === b); });
     out.innerHTML = '<strong class="cf-accent">' + b.querySelector('b').textContent + '</strong><div class="cf-muted">' + info[b.dataset.k] + '</div>';
   });
+})();
+})();
+</script>
+<script>
+(function(){
+// cfFlow: SVG connectors between DOM boxes + packets moving along them.
+// Layout is measured when the slide becomes active (slides are display:none otherwise).
+window.cfFlow = window.cfFlow || (function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function rect(root, el) {
+    var R = root.getBoundingClientRect(), r = el.getBoundingClientRect(), k = root.offsetWidth / (R.width || 1);
+    return { x: (r.left - R.left) * k, y: (r.top - R.top) * k, w: r.width * k, h: r.height * k };
+  }
+  function route(a, b, e) {
+    var ax = a.x + a.w / 2, ay = a.y + a.h / 2 + (e.dy || 0), bx = b.x + b.w / 2, by = b.y + b.h / 2 + (e.dy || 0), dx = bx - ax, dy = by - ay, o = e.off || 0;
+    if (e.via === 's') return 'M' + ax + ',' + ay + ' L' + bx + ',' + by;
+    if (e.via === 'r' || e.via === 'l') {
+      var rt = e.via === 'r', s0 = rt ? a.x + a.w : a.x, e0 = rt ? b.x + b.w : b.x, X = rt ? Math.max(s0, e0) + (o || 18) : Math.min(s0, e0) - (o || 18);
+      return 'M' + s0 + ',' + ay + ' H' + X + ' V' + by + ' H' + e0;
+    }
+    if (e.via === 'v' || (e.via !== 'h' && Math.abs(dx) <= (a.w + b.w) / 2)) {
+      var sy = dy > 0 ? a.y + a.h : a.y, ey = dy > 0 ? b.y : b.y + b.h, my = (sy + ey) / 2 + o;
+      return 'M' + (ax + o) + ',' + sy + ' V' + my + ' H' + (bx + o) + ' V' + ey;
+    }
+    var sx = dx > 0 ? a.x + a.w : a.x, ex = dx > 0 ? b.x : b.x + b.w, mx = (sx + ex) / 2 + o;
+    return 'M' + sx + ',' + ay + ' H' + mx + ' V' + by + ' H' + ex;
+  }
+  function mount(root, edges) {
+    var svg = document.createElementNS(NS, 'svg'), paths = {}, gen = 0, onEnter = null, onLeave = null, active = false;
+    svg.setAttribute('class', 'cf-flow-svg'); svg.setAttribute('aria-hidden', 'true');
+    root.classList.add('cf-flow-host'); root.appendChild(svg);
+    edges.forEach(function (e) {
+      var p = document.createElementNS(NS, 'path');
+      p.setAttribute('class', 'cf-edge' + (e.cls ? ' ' + e.cls : '')); svg.appendChild(p); paths[e.id] = { el: p, e: e };
+    });
+    function node(id) { return root.querySelector('[data-n="' + id + '"]'); }
+    function layout() {
+      svg.setAttribute('viewBox', '0 0 ' + root.offsetWidth + ' ' + root.offsetHeight);
+      Object.keys(paths).forEach(function (k) {
+        var e = paths[k].e, a = node(e.from), b = node(e.to);
+        if (!a || !b || !a.offsetParent || !b.offsetParent) { paths[k].el.setAttribute('d', ''); return; }
+        paths[k].el.setAttribute('d', route(rect(root, a), rect(root, b), e));
+      });
+    }
+    function packet(id, opt) {
+      var my = gen, P = paths[id]; if (!P) return Promise.resolve();
+      var path = P.el, len = path.getTotalLength ? path.getTotalLength() : 0;
+      var g = document.createElementNS(NS, 'g'), c = document.createElementNS(NS, 'circle');
+      g.setAttribute('class', 'cf-pkt' + (opt.cls ? ' ' + opt.cls : '')); c.setAttribute('r', '10'); g.appendChild(c);
+      if (opt.label) { var t = document.createElementNS(NS, 'text'); t.setAttribute('x', '16'); t.setAttribute('y', '-14'); t.textContent = opt.label; g.appendChild(t); }
+      svg.appendChild(g); path.classList.add('on'); if (opt.cls) path.classList.add(opt.cls);
+      var dur = reduce ? 1 : (opt.dur || 1100), t0 = null;
+      return new Promise(function (done) {
+        function frame(ts) {
+          if (my !== gen) { g.remove(); return done(); }
+          if (t0 === null) t0 = ts;
+          var f = Math.min(1, (ts - t0) / dur), q = f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+          var pt = len ? path.getPointAtLength(q * len) : { x: 0, y: 0 };
+          g.setAttribute('transform', 'translate(' + pt.x + ',' + pt.y + ')');
+          if (f < 1) return requestAnimationFrame(frame);
+          var to = node(P.e.to); if (to) { to.classList.add('cf-hit'); setTimeout(function () { to.classList.remove('cf-hit'); }, 900); }
+          setTimeout(function () { g.remove(); done(); }, opt.hold || 250);
+        }
+        requestAnimationFrame(frame);
+      });
+    }
+    function clear() { gen++; svg.querySelectorAll('.cf-pkt').forEach(function (g) { g.remove(); }); Object.keys(paths).forEach(function (k) { paths[k].el.setAttribute('class', 'cf-edge' + (paths[k].e.cls ? ' ' + paths[k].e.cls : '')); }); }
+    // steps: [{e:[edgeIds], label, cls, dur, msg}] played in order; edges in one step run in parallel.
+    function play(steps, opt) {
+      clear(); var my = gen; opt = opt || {};
+      return steps.reduce(function (pr, s, i) {
+        return pr.then(function () {
+          if (my !== gen) return;
+          if (opt.onStep) opt.onStep(i, s);
+          return Promise.all(s.e.map(function (id, j) { return packet(id, j ? { cls: s.cls, dur: s.dur } : s); }));
+        });
+      }, Promise.resolve()).then(function () {
+        if (my !== gen) return;
+        var left = opt.loop === true ? 3 : (opt.loop || 0);
+        if (left > 1 && active && !reduce) return new Promise(function (r) { setTimeout(r, 900); }).then(function () { if (my === gen && active) return play(steps, Object.assign({}, opt, { loop: left - 1 })); });
+        if (opt.onDone) opt.onDone();
+      });
+    }
+    function sync() {
+      var s = root.closest('.slide'), now = !!(s && s.classList.contains('active') && !document.querySelector('.overview-mode'));
+      if (now && !active) { active = true; requestAnimationFrame(function () { layout(); if (onEnter) onEnter(); }); }
+      else if (!now && active) { active = false; clear(); if (onLeave) onLeave(); }
+    }
+    var sl = root.closest('.slide');
+    if (sl && window.MutationObserver) new MutationObserver(sync).observe(sl, { attributes: true, attributeFilter: ['class'] });
+    document.addEventListener('rp:slidechange', function () { setTimeout(sync, 60); });
+    if (window.ResizeObserver) new ResizeObserver(function () { if (active) layout(); }).observe(root);
+    setTimeout(sync, 300);
+    return {
+      layout: layout, play: play, clear: clear, packet: packet,
+      enter: function (f) { onEnter = f; }, leave: function (f) { onLeave = f; },
+      isActive: function () { return active; }
+    };
+  }
+  return { mount: mount };
+})();
+
+(function () {
+  var root = document.getElementById('cfCp'); if (!root) return;
+  var f = cfFlow.mount(root, [
+    { id: 'p1', from: 'pol', to: 'd1', via: 's', cls: 'ghost' }, { id: 'p2', from: 'pol', to: 'd2', via: 's', cls: 'ghost' }, { id: 'p3', from: 'pol', to: 'd3', via: 's', cls: 'ghost' },
+    { id: 'l1', from: 'd1', to: 'logs', via: 's', cls: 'ghost' }, { id: 'l2', from: 'd2', to: 'logs', via: 's', cls: 'ghost' }, { id: 'l3', from: 'd3', to: 'logs', via: 's', cls: 'ghost' }
+  ]);
+  var ver = 1, msg = document.getElementById('cfCpMsg');
+  function run() {
+    ver++;
+    root.querySelectorAll('.cf-dp .v').forEach(function (v) { v.textContent = ''; });
+    f.play([
+      { e: ['p1', 'p2', 'p3'], dur: 1300, msg: 'Gateway 정책 v' + ver + '을 한 곳에서 배포합니다.' },
+      { e: ['l1', 'l2', 'l3'], cls: 'info', dur: 1100, msg: '각 실행면의 적용 결과와 호출 로그가 같은 대시보드로 모입니다.' }
+    ], {
+      onStep: function (i, s) {
+        msg.textContent = s.msg;
+        if (i === 1) root.querySelectorAll('.cf-dp .v').forEach(function (v) { v.textContent = '정책 v' + ver + ' 적용'; });
+      },
+      onDone: function () { msg.textContent = '정책 v' + ver + ': 실행면 3곳 적용, 로그 수집 완료. 망별로 따로 바꾸지 않습니다.'; }
+    });
+  }
+  document.getElementById('cfCpBtn').addEventListener('click', function () { if (f.isActive()) { f.layout(); run(); } });
 })();
 })();
 </script>
@@ -1808,14 +2357,14 @@ window.addEventListener('hashchange', function () {
     4: "\u23f8\ufe0f \ud83c\udfac [2min] [\uc694\uc57d]\n- 2016\ub144 \ube44\uc911\uc694 \uc2dc\uc2a4\ud15c\ubd80\ud130 2025\ub144 \uc6d0\uce59 \uc911\uc2ec \uaddc\uc815\uae4c\uc9c0 \ub2e8\uacc4\uc801\uc73c\ub85c \uc644\ud654\n- \uc62c\ud574 \ubc14\ub010 \ub450 \uac00\uc9c0: 2026.04 \ubaa8\ub378 \ubcc0\uacbd \uc808\ucc28 \uac04\uc18c\ud654(\uacbd\ubbf8, \ubcf4\ud1b5, \uc0c1\ub2f9), 2026.05~7 \uc804\uba74 \ud574\uc81c \uac80\ud1a0 \uacf5\uc2dd\ud654\n- \uc804\uba74 \ud574\uc81c \uc2dc\uc810\uc740 \ubbf8\uc815. \uae30\ub2e4\ub9ac\ub294 \uc804\ub7b5\uc740 \uad8c\ud558\uc9c0 \uc54a\uc74c\n\n\uaddc\uc81c \ud750\ub984\uc785\ub2c8\ub2e4. \uc2dc\uc810\uc744 \ud558\ub098\uc529 \ub20c\ub7ec \ubcf4\uba74\uc11c \ub9d0\uc500\ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4. 2016\ub144\uc5d0 \ube44\uc911\uc694 \uc2dc\uc2a4\ud15c\ubd80\ud130 \uc2dc\uc791\ud574\uc11c, 2019\ub144 \uc911\uc694\uc5c5\ubb34, 2022\ub144 \uc5f0\uad6c\uac1c\ubc1c\ub9dd \uc644\ud654, 2024\ub144\uc5d0\ub294 \uc0dd\uc131\ud615 AI \ud65c\uc6a9\uae4c\uc9c0 \uc5f4\ub838\uc2b5\ub2c8\ub2e4.\n\n\uc8fc\ud669\uc0c9\uc73c\ub85c \ud45c\uc2dc\ud55c 2026\ub144 \ub450 \uce78\uc744 \ub20c\ub7ec \uc8fc\uc138\uc694. 4\uc6d4\uc5d0 \ubaa8\ub378\uc744 \ubc14\uafc0 \ub54c \uc808\ucc28\uac00 \uc138 \ub2e8\uacc4\ub85c \uac04\uc18c\ud654\ub410\uace0, 5\uc6d4\ubd80\ud130 7\uc6d4 \uc0ac\uc774\uc5d0 \uc804\uba74 \ud574\uc81c \uac80\ud1a0\uac00 \uacf5\uc2dd\ud654\ub410\uc2b5\ub2c8\ub2e4.\n\n\ub2e4\ub9cc \uc804\uba74 \ud574\uc81c\uac00 \uc5b8\uc81c \ub418\ub294\uc9c0\ub294 \uc815\ud574\uc9c0\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c \uae30\ub2e4\ub9ac\uae30\ubcf4\ub2e4, \uc9c0\uae08 \ud1b5\uc81c\ub97c \uac16\ucdb0 \ub450\ub294 \ucabd\uc774 \ub098\uc911\uc5d0 \uc120\ubcc4 \ub300\uc0c1\uc774 \ub420 \ub54c\ub3c4 \uadfc\uac70\uac00 \ub429\ub2c8\ub2e4.\n\n\uadf8\ub7fc \uc9c0\uae08 \ub4e4\uc5b4\uac08 \uc218 \uc788\ub294 \ubb38\uc774 \uba87 \uac1c\uc778\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     5: "\u23f8\ufe0f \ud83c\udfac [2.5min] [\uc694\uc57d]\n- \uac19\uc740 Bedrock\uc744 \uc368\ub3c4 \ucd9c\ubc1c \ub2e8\ub9d0\uc774 \ubc95\uc801 \uadfc\uac70\ub97c \uc815\ud568\n- \u2460 Playground: \uc778\ud130\ub137\ub9dd PC, \uc0ac\ub0b4\ub9dd\uacfc \uc120 \uc5c6\uc74c\n- \u2461 \uc5f0\uad6c\uac1c\ubc1c\ub9dd: \ubcc4\ub3c4 \ub9dd, \uc804\uc0b0\uc2e4\ub85c\ub294 \ub9dd\uc5f0\uacc4 \ub2e8\ubc29\ud5a5\ub9cc\n- \u2462 5\ud638\ub9dd: \ub2e8\ub9d0\uc740 Bedrock \uc9c1\uc811 \ud638\ucd9c \ubd88\uac00, \uc804\uc0b0\uc2e4 Gateway \uacbd\uc720 \ud6c4 DX\ub85c\ub9cc\n\n\ud55c \uc7a5\uc73c\ub85c \uc138 \ud658\uacbd\uc758 \uc704\uce58\ub97c \ubcf4\uc5ec \ub4dc\ub9bd\ub2c8\ub2e4. \uc704 \ubc84\ud2bc\uc744 \ud558\ub098\uc529 \ub20c\ub7ec \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n1\ubc88 Playground\ub294 \uc778\ud130\ub137\ub9dd PC\uc5d0\uc11c \ucd9c\ubc1c\ud558\uace0 \uc0ac\ub0b4\ub9dd\uacfc\ub294 \uc544\uc608 \uc5f0\uacb0\uc774 \uc5c6\uc2b5\ub2c8\ub2e4. 2\ubc88 \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \ubcc4\ub3c4 \ub9dd\uc774\uace0, \uc804\uc0b0\uc2e4\ub85c\ub294 \ub9dd\uc5f0\uacc4 \uc194\ub8e8\uc158\uc744 \ud1b5\ud574 \ud55c \ubc29\ud5a5\uc73c\ub85c\ub9cc \ubcf4\ub0bc \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\n3\ubc88\uc774 \uc624\ub298\uc758 \ud575\uc2ec\uc778 5\ud638\ub9dd \uacbd\ub85c\uc785\ub2c8\ub2e4. \ub2e8\ub9d0\uc774 Bedrock\uc744 \uc9c1\uc811 \ubd80\ub974\uc9c0 \uc54a\uace0, \uc804\uc0b0\uc2e4\uc758 Gateway\ub97c \uac70\uccd0 \uc804\uc6a9\ud68c\uc120\uc73c\ub85c \ub098\uac11\ub2c8\ub2e4. \uc624\ub978\ucabd AWS \ucabd\ub3c4 \ud658\uacbd\ub9c8\ub2e4 OU\uac00 \ub2e4\ub985\ub2c8\ub2e4. \uc774 OU \uc774\uc57c\uae30\ub294 2\ubd80\uc5d0\uc11c \uc790\uc138\ud788 \ud558\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uc138 \ud658\uacbd\uc774 \uc2e4\uc81c\ub85c \uc5b4\ub5bb\uac8c \ub2e4\ub978\uc9c0, \ub9dd \uc5f0\uacb0\uacfc \ud30c\uc77c \ud750\ub984\uc73c\ub85c \ube44\uad50\ud574 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     6: "\u23f8\ufe0f \ud83c\udfac [2.5min] [\uc694\uc57d]\n- \uc6d0\ubcf8 \ub450 \ud45c(\ub124\ud2b8\uc6cc\ud06c \uc5f0\ub3d9, \ud30c\uc77c\uacfc \uc18c\uc2a4\ucf54\ub4dc)\ub97c \ud658\uacbd\ubcc4 \ud0ed\uc73c\ub85c \uc7ac\uad6c\uc131\n- Playground: \ub4e4\uc5b4\uac00\ub294 \uac83\ub3c4 \ub098\uc624\ub294 \uac83\ub3c4 \ub9c9\uc74c\n- \uc5f0\uad6c\uac1c\ubc1c\ub9dd: \uc804\uc0b0\uc2e4\ub85c \uac00\ub294 \ud55c \ubc29\ud5a5\ub9cc \ub9dd\uc5f0\uacc4\ub85c \uc5f4\uace0, \ubc18\ub300\ub294 CISO \uc2b9\uc778 + \uc815\ubcf4\ubcf4\ud638\uc704\uc6d0\ud68c \uc758\uacb0\n- 5\ud638\ub9dd: \ucf54\ub4dc\ub294 \uc774\ubbf8 \uc548\uc5d0 \uc788\uace0, \ub098\uac00\ub294 \uac83\uc740 \ud30c\uc77c\uc774 \uc544\ub2c8\ub77c Gateway\uac00 \uac80\uc0ac\ud55c \ud504\ub86c\ud504\ud2b8\n- \ucd9c\ucc98: \uba54\uac00\uc874\ud074\ub77c\uc6b0\ub4dc \u300c\uc5f0\uad6c\uac1c\ubc1c\ub9dd \uad6c\ucd95\uc2dc \uace0\ub824\uc0ac\ud56d\u300d\n\n\uc55e \uc7a5\uc758 \uadf8\ub9bc\uc744 \ud658\uacbd\ubcc4\ub85c \ud480\uc5c8\uc2b5\ub2c8\ub2e4. \ud0ed\uc744 \ud558\ub098\uc529 \ub118\uae30\uaca0\uc2b5\ub2c8\ub2e4.\n\nPlayground\ub294 \uc778\ud130\ub137\ub9dd PC\uc5d0\uc11c\ub9cc \uc4f0\uace0, \ud30c\uc77c\uc740 \ub4e4\uc5b4\uac00\ub294 \uac83\ub3c4 \ub098\uc624\ub294 \uac83\ub3c4 \ub9c9\uc2b5\ub2c8\ub2e4. \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \uc804\uc0b0\uc2e4\ub85c \ubcf4\ub0b4\ub294 \ud55c \ubc29\ud5a5\ub9cc \ub9dd\uc5f0\uacc4 \uc194\ub8e8\uc158\uc73c\ub85c \uc5f4\uace0, \ubc18\ub300 \ubc29\ud5a5\uc740 CISO \uc2b9\uc778\uacfc \uc815\ubcf4\ubcf4\ud638\uc704\uc6d0\ud68c \uc758\uacb0\uc774 \uc788\uc5b4\uc57c \ud569\ub2c8\ub2e4.\n\n5\ud638\ub9dd\uc740 \ucf54\ub4dc\uac00 \uc774\ubbf8 \uc804\uc0b0\uc2e4 \uc548\uc5d0 \uc788\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c \ubc18\uc785, \ubc18\ucd9c\uc774\ub77c\ub294 \uac1c\ub150\uc774 \uc5c6\uace0, \ubc16\uc73c\ub85c \ub098\uac00\ub294 \uac74 \ud30c\uc77c\uc774 \uc544\ub2c8\ub77c \ud504\ub86c\ud504\ud2b8\uc785\ub2c8\ub2e4. \uadf8 \ud504\ub86c\ud504\ud2b8\ub97c Gateway\uac00 \uac80\uc0ac\ud569\ub2c8\ub2e4. \uc774 \uc7a5\uba74\uc740 3\ubd80 \ub370\ubaa8\uc5d0\uc11c \uc2e4\uc81c\ub85c \ubcf4\uc5ec \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: \uba54\uac00\uc874\ud074\ub77c\uc6b0\ub4dc \u300c\uc5f0\uad6c\uac1c\ubc1c\ub9dd \uad6c\ucd95\uc2dc \uace0\ub824\uc0ac\ud56d\u300d(\uc6d0\ubcf8 \uc81c\uc548\uc11c 7, 8\uc7a5 \ud45c)\n\n\uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc744 \uace0\ub974\uba74 \ub9dd\uc5f0\uacc4 \uc808\ucc28\uac00 \uc18d\ub3c4\ub97c \uc88c\uc6b0\ud55c\ub2e4\uace0 \ud588\ub294\ub370, \uadf8 \uc808\ucc28\ub97c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
-    7: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- \uc2e0\uccad, \uc2b9\uc778, \uc804\uc1a1, \uc120\ud0dd, \ub2e4\uc2dc \uc2b9\uc778, \ubc18\uc601\uacfc \uae30\ub85d\uc758 6\ub2e8\uacc4\n- \uc0ac\ub78c\uc774 \uc2b9\uc778\ud558\ub294 \ub2e8\uacc4\uac00 \ub450 \ubc88(2, 5\ub2e8\uacc4): \ubcd1\ubaa9 \uc9c0\uc810\n- \uac01 \uad6c\uac04\uc5d0 \uc545\uc131\ucf54\ub4dc \uac80\uc0ac, \ubb34\uacb0\uc131 \uac80\uc99d\n- \uad8c\uace0: \uc2b9\uc778 SLA + SAST, \uc545\uc131\ucf54\ub4dc \uc790\ub3d9 \uac80\uc99d\uc744 \ud568\uaed8 \uc124\uacc4\n\n\uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc5d0\uc11c \ub9cc\ub4e0 \ucf54\ub4dc\ub97c \uc804\uc0b0\uc2e4\ub85c \ubc18\uc601\ud558\ub294 \uc808\ucc28\uc785\ub2c8\ub2e4. \uc2e0\uccad, \uc2b9\uc778, \uc804\uc1a1, \uc120\ud0dd, \ub2e4\uc2dc \uc2b9\uc778, \ubc18\uc601\uacfc \uae30\ub85d\uae4c\uc9c0 \uc5ec\uc12f \ub2e8\uacc4\uc785\ub2c8\ub2e4.\n\n\ub178\ub780 \ud14c\ub450\ub9ac \ub450 \uacf3\uc774 \uc0ac\ub78c\uc774 \uc2b9\uc778\ud558\ub294 \ub2e8\uacc4\uc785\ub2c8\ub2e4. \ucf54\ub529 \uc5d0\uc774\uc804\ud2b8\ub85c \ud558\ub8e8\uc5d0 \uc5ec\ub7ec \ubc88 \ucee4\ubc0b\ud558\ub294\ub370 \ubc18\uc601\uc774 \uc2b9\uc778 \ub300\uae30\uc5d0 \ubb36\uc774\uba74, \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc744 \uc4f0\ub294 \uc758\ubbf8\uac00 \uc904\uc5b4\ub4ed\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc2b9\uc778 SLA\uc640 \uc790\ub3d9 \uac80\uc99d\uc744 \uac19\uc774 \uc124\uacc4\ud558\uc2dc\uae38 \uad8c\ud569\ub2c8\ub2e4.\n\uadfc\uac70: \uba54\uac00\uc874\ud074\ub77c\uc6b0\ub4dc \u300c\uc5f0\uad6c\uac1c\ubc1c\ub9dd \uad6c\ucd95\uc2dc \uace0\ub824\uc0ac\ud56d\u300d p26, p29\n\n\uc138 \ud658\uacbd\uc744 \ud55c \ud45c\ub85c \ub193\uace0 \ube44\uad50\ud574 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    7: "\u23f8\ufe0f \ud83c\udfac \u23f8\ufe0f [2min] [\uc694\uc57d]\n- \uc2e0\uccad, \uc2b9\uc778, \uc804\uc1a1, \uc120\ud0dd, \ub2e4\uc2dc \uc2b9\uc778, \ubc18\uc601\uacfc \uae30\ub85d\uc758 6\ub2e8\uacc4\n- \uc0ac\ub78c\uc774 \uc2b9\uc778\ud558\ub294 \ub2e8\uacc4\uac00 \ub450 \ubc88(2, 5\ub2e8\uacc4): \ubcd1\ubaa9 \uc9c0\uc810\n- \uac01 \uad6c\uac04\uc5d0 \uc545\uc131\ucf54\ub4dc \uac80\uc0ac, \ubb34\uacb0\uc131 \uac80\uc99d\n- \uad8c\uace0: \uc2b9\uc778 SLA + SAST, \uc545\uc131\ucf54\ub4dc \uc790\ub3d9 \uac80\uc99d\uc744 \ud568\uaed8 \uc124\uacc4\n\n\uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc5d0\uc11c \ub9cc\ub4e0 \ucf54\ub4dc\ub97c \uc804\uc0b0\uc2e4\ub85c \ubc18\uc601\ud558\ub294 \uc808\ucc28\uc785\ub2c8\ub2e4. \uc2e0\uccad, \uc2b9\uc778, \uc804\uc1a1, \uc120\ud0dd, \ub2e4\uc2dc \uc2b9\uc778, \ubc18\uc601\uacfc \uae30\ub85d\uae4c\uc9c0 \uc5ec\uc12f \ub2e8\uacc4\uc785\ub2c8\ub2e4.\n\n\ub178\ub780 \ud14c\ub450\ub9ac \ub450 \uacf3\uc774 \uc0ac\ub78c\uc774 \uc2b9\uc778\ud558\ub294 \ub2e8\uacc4\uc785\ub2c8\ub2e4.\n\n\"\ucee4\ubc0b 1\uac74 \ubcf4\ub0b4\uae30\"\ub97c \ub204\ub974\uba74 \ucee4\ubc0b\uc774 \uc5ec\uc12f \ub2e8\uacc4\ub97c \uc9c0\ub098\uac00\ub2e4 \ub178\ub780 \ub2e8\uacc4\uc5d0\uc11c \uba48\ucda5\ub2c8\ub2e4. \uc2ac\ub77c\uc774\ub354\ub85c \uc2b9\uc778 1\ud68c \ub300\uae30 \uc2dc\uac04\uc744 \ubc14\uafd4 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. 4\uc2dc\uac04\uc774\uba74 \ucee4\ubc0b \ud55c \uac74\uc5d0 8\uc2dc\uac04, \ud558\ub8e8\uc5d0 \ud55c \ubc88 \ubc18\uc601\uc785\ub2c8\ub2e4. \uc774 \uac12\uc740 \uac00\uc815 \uc785\ub825\uc774\uace0 \uc2e4\uce21\uc774 \uc544\ub2d9\ub2c8\ub2e4.\n\n\ucf54\ub529 \uc5d0\uc774\uc804\ud2b8\ub85c \ud558\ub8e8\uc5d0 \uc5ec\ub7ec \ubc88 \ucee4\ubc0b\ud558\ub294\ub370 \ubc18\uc601\uc774 \uc2b9\uc778 \ub300\uae30\uc5d0 \ubb36\uc774\uba74, \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc744 \uc4f0\ub294 \uc758\ubbf8\uac00 \uc904\uc5b4\ub4ed\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc2b9\uc778 SLA\uc640 \uc790\ub3d9 \uac80\uc99d\uc744 \uac19\uc774 \uc124\uacc4\ud558\uc2dc\uae38 \uad8c\ud569\ub2c8\ub2e4.\n\uadfc\uac70: \uba54\uac00\uc874\ud074\ub77c\uc6b0\ub4dc \u300c\uc5f0\uad6c\uac1c\ubc1c\ub9dd \uad6c\ucd95\uc2dc \uace0\ub824\uc0ac\ud56d\u300d p26, p29\n\n\uc138 \ud658\uacbd\uc744 \ud55c \ud45c\ub85c \ub193\uace0 \ube44\uad50\ud574 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     8: "\u23f8\ufe0f \ud83c\udfac [2min] [\uc694\uc57d]\n- \uace0\uac1d \uc694\uccad 3\uc790 \ube44\uad50\ub97c \uc131\uaca9\uacfc \uadfc\uac70, \ub2e8\ub9d0\uacfc \uc778\ud504\ub77c, \uacb0\uacfc 3\uac1c \ud0ed\uc73c\ub85c \ub098\ub214\n- \uacb0\uc815\uc801\uc778 \ub450 \uc904: \uc6b4\uc601\uacc4 \uc5f0\uacc4\uc640 Coding Agent \ud65c\uc6a9 \ubc94\uc704\n- 5\ud638\ub9dd\ub9cc \uc2e4\uc5c5\ubb34 \ucf54\ub4dc\uc640 \uc6b4\uc601\uacc4\uc5d0 \ub2ff\uc74c, \ub300\uc2e0 \uc57d 1\ub144\n- \uc5f0\uad6c\uac1c\ubc1c\ub9dd \uc870\ud56d \ubc88\ud638\ub294 \uc6d0\ubb38 \ub300\uc870 \ud6c4 \ud655\uc815\n\n\ud558\ub098\uc99d\uad8c\uc5d0\uc11c \uc694\uccad\ud558\uc2e0 3\uc790 \ube44\uad50\uc785\ub2c8\ub2e4. \ud0ed \uc138 \uac1c\ub85c \ub098\ub234\uc2b5\ub2c8\ub2e4. \uccab \ud0ed\uc740 \uc131\uaca9, \uadfc\uac70, \uc2b9\uc778 \uc8fc\uccb4, \ub370\uc774\ud130\uc785\ub2c8\ub2e4.\n\n\ub450 \ubc88\uc9f8 \ud0ed\uc5d0\uc11c \uc6b4\uc601\uacc4 \uc5f0\uacc4 \uc904\uc744 \ubd10 \uc8fc\uc138\uc694. Playground\uc640 \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \ub458 \ub2e4 \ubd88\uac00\uc785\ub2c8\ub2e4. \uc138 \ubc88\uc9f8 \ud0ed\uc774 \uacb0\ub860\uc785\ub2c8\ub2e4. \uc6b4\uc601\uacc4\uc640 \uc2e4\uc81c \uc5c5\ubb34 \ucf54\ub4dc\ubca0\uc774\uc2a4\uc5d0 \ub2ff\uc744 \uc218 \uc788\ub294 \uac74 5\ud638\ub9dd \uacbd\ub85c\ubfd0\uc774\uace0, \ub300\uc2e0 1\ub144 \uc815\ub3c4 \uac78\ub9bd\ub2c8\ub2e4.\n\n\uc870\ud56d \ubc88\ud638\ub294 \uc790\ub8cc\ub9c8\ub2e4 \ud45c\uae30\uac00 \ub2ec\ub77c\uc11c, \uc6d0\ubb38\uc73c\ub85c \ud655\uc778\ud55c \ub4a4 \ud655\uc815\ud558\uaca0\uc2b5\ub2c8\ub2e4.\n\n\ud1b5\uc81c \ud56d\ubaa9\uc73c\ub85c \ubcf4\uba74 \uc5b4\ub5a4 \ucc28\uc774\uac00 \uc788\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     9: "\u23f8\ufe0f \ud83c\udfac [2min] [\uc694\uc57d]\n- \ud1b5\uc81c \uc601\uc5ed\ubcc4 \ud544\uc218, \uad8c\uc7a5, \ud574\ub2f9 \uc5c6\uc74c (\uc6d0\ubcf8 12\ud589\uc744 \uc5f0\uad00 \ud589\ub07c\ub9ac \ubb36\uc5b4 9\ud589)\n- \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uacfc 5\ud638\ub9dd \uc5f4\uc740 \ub450 \ud589(\ub9dd\uac04 \uc804\uc1a1, \ube44\uc6a9)\ub9cc \ub2e4\ub984\n- \uc758\ubbf8: \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc744 \uba3c\uc800 \uac16\ucdb0\ub3c4 5\ud638\ub9dd\uc73c\ub85c \ub118\uc5b4\uac08 \ub54c \ucd94\uac00\ub85c \ud560 \uc77c\uc774 \uc801\uc74c. \ubc18\ub300\ub85c 5\ud638\ub9dd\uc744 \ubc14\ub85c \uac00\ub3c4 \ube60\uc9c0\ub294 \ud1b5\uc81c\uac00 \uac70\uc758 \uc5c6\uc74c\n- \ub4f1\uae09\uc740 \uad8c\uc7a5\uc548, \ucd5c\uc885\uc740 \ud558\ub098\uc99d\uad8c \uc815\ucc45\n\n\ud1b5\uc81c \ud56d\ubaa9\uc744 \ud658\uacbd\ubcc4\ub85c \ud544\uc218, \uad8c\uc7a5, \ud574\ub2f9 \uc5c6\uc74c\uc73c\ub85c \ub098\ub234\uc2b5\ub2c8\ub2e4. \ubc84\ud2bc\uc73c\ub85c \uc5f4\uc744 \ud558\ub098\uc529 \ucf1c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\ub9c8\uc9c0\ub9c9 \ubc84\ud2bc, \"\uc5f0\uad6c\uac1c\ubc1c\ub9dd\uacfc 5\ud638\ub9dd\uc774 \ub2e4\ub978 \ud589\"\uc744 \ub204\ub974\uba74 \ub450 \uc904\ub9cc \ub178\ub797\uac8c \ud45c\uc2dc\ub429\ub2c8\ub2e4. \ub9dd\uac04 \uc804\uc1a1\uacfc \ube44\uc6a9\uc785\ub2c8\ub2e4. \ub098\uba38\uc9c0\ub294 \uac19\uc2b5\ub2c8\ub2e4.\n\n\uc989 \ud1b5\uc81c \uad00\uc810\uc5d0\uc11c\ub294 \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uacfc 5\ud638\ub9dd\uc774 \uac70\uc758 \uac19\uc740 \uc218\uc900\uc744 \uc694\uad6c\ud569\ub2c8\ub2e4. \uadf8\ub807\ub2e4\uba74 \uac19\uc740 \ub178\ub825\uc73c\ub85c \uc2e4\uc5c5\ubb34 \ucf54\ub4dc\uc5d0 \ub2ff\uc744 \uc218 \uc788\ub294 \ucabd\uc744 \uace0\ub974\ub294 \uac8c \ud569\ub9ac\uc801\uc774\ub77c\ub294 \uc774\uc57c\uae30\ub85c \uc774\uc5b4\uc9d1\ub2c8\ub2e4. \ucd5c\uc885 \ub4f1\uae09\uc740 \ud558\ub098\uc99d\uad8c \uc815\ubcf4\ubcf4\ud638 \uc815\ucc45\uc73c\ub85c \ud655\uc815\ud569\ub2c8\ub2e4.\n\n\uadf8 \uc120\ud0dd\uc744 \ub450 \uac1c\uc758 \ubb38\uc73c\ub85c \uc815\ub9ac\ud574 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     10: "\u23f8\ufe0f \ud83c\udfac [2min] [\uc694\uc57d]\n- PATH A \uc5f0\uad6c\uac1c\ubc1c\ub9dd: \ub0b4\ubd80 \uc758\uacb0, \ube44\uad50\uc801 \uc9e7\uc74c, \uc2e4\ub370\uc774\ud130 \uae08\uc9c0, \uc778\ud504\ub77c \uc2e0\uaddc \uad6c\ucd95\n- PATH B 5\ud638\ub9dd + \ud601\uc2e0\uae08\uc735: \uae08\uc735\uc704 \uc9c0\uc815 + \uae08\ubcf4\uc6d0 \uc810\uac80, \uc57d 1\ub144, \ud544\ud130\ub9c1 \uc804\uc81c\ub85c \uc2e4\uc5c5\ubb34 \ud655\uc7a5\n- \uacb0\uc815\uc801 \ucc28\uc774\ub294 \uc778\ud504\ub77c \uacf5\uc720 \uc5ec\ubd80\n- \uad8c\uc7a5\uc740 PATH B\n\n\uc138 \ud658\uacbd \uc911 Playground\ub294 \uccb4\ud5d8\uc6a9\uc774\ub77c, \uc2e4\uc5c5\ubb34 \ucf54\ub4dc\ub85c \ub4e4\uc5b4\uac00\ub294 \ubb38\uc740 \uacb0\uad6d \ub450 \uac1c\uc785\ub2c8\ub2e4. \ub450 \uacbd\ub85c\ub97c \ub098\ub780\ud788 \ub193\uc73c\uba74 \uc774\ub807\uc2b5\ub2c8\ub2e4. \ud1a0\uae00\ub85c \uc67c\ucabd, \uc624\ub978\ucabd\uc744 \ubc14\uafd4 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\nPATH A\ub294 \ub0b4\ubd80 \uc808\ucc28\ub77c \ube60\ub974\uc9c0\ub9cc, \ube68\uac04\uc0c9\uc73c\ub85c \ud45c\uc2dc\ud55c \uc778\ud504\ub77c \uce78\uc774 \uc911\uc694\ud569\ub2c8\ub2e4. \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \uc644\uc804\ud55c \ub9dd\ubd84\ub9ac\uac00 \uc804\uc81c\ub77c\uc11c, 5\ud638\ub9dd\uc5d0 \ub9cc\ub4e0 Gateway\ub098 \ubcf4\uc548 \uc7a5\ube44\ub97c \uac19\uc774 \uc4f8 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ub124\ud2b8\uc6cc\ud06c\ubd80\ud130 \ubcf4\uc548, Gateway, \ub85c\uadf8\uae4c\uc9c0 \ud55c \ubc8c\uc744 \uc0c8\ub85c \ub9cc\ub4e4\uc5b4\uc57c \ud569\ub2c8\ub2e4.\n\nPATH B\ub294 1\ub144 \uc815\ub3c4 \uac78\ub9ac\uc9c0\ub9cc, 5\ud638\ub9dd \ub79c\ub529\uc874\uacfc Gateway\ub97c \uadf8\ub300\ub85c \uc4f0\uace0 \uc2e4\uc5c5\ubb34\uae4c\uc9c0 \ud655\uc7a5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc800\ud76c \uad8c\uace0\ub294 5\ud638\ub9dd\uc5d0 \uad6c\ucd95\ud558\ub294 \uac83\uc785\ub2c8\ub2e4.\n\nPATH B\ub97c \ud0dd\ud558\uba74 \uc5b4\ub5a4 \uc808\ucc28\ub97c \uac70\uce58\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     11: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- 8\ub2e8\uacc4: \uc218\ub9bd, \ucee8\uc124\ud305, \uc2e0\uccad, \uc9c0\uc815, \uc774\ud589, \uc774\ud589\uc810\uac80, \uacb0\uacfc \uc81c\ucd9c, \uac1c\uc2dc\n- KB\uc99d\uad8c: PoC 2025.07 \u2192 \uc2e0\uccad 2025.09 \u2192 \uc9c0\uc815 2026.01 \u2192 \uc801\ud569 2026.06\n- \uc2e0\uccad\ubd80\ud130 \uc801\ud569\uae4c\uc9c0 \uc57d 9\uac1c\uc6d4, PoC\ubd80\ud130 \uc57d 1\ub144\n- N\ucc28 \ubcf4\uc644: \uc2e0\uccad \uc11c\ub958\ub97c \ubbf8\ub9ac \uc644\uc131\ud574 \ub450\ub294 \uac83\uc774 \uac00\uc7a5 \ud655\uc2e4\ud55c \ub2e8\ucd95 \ubc29\ubc95\n- \uc6a9\uc5b4: \ubd80\uac00\uc870\uac74(\uc9c0\uc815\uacfc \ud568\uaed8 \ubd80\uacfc\ub418\ub294 \uc774\ud589 \uc758\ubb34), \uc774\ud589\uc810\uac80(\ub300\ucc45\uc774 \uc2e4\uc81c \uc801\uc6a9\ub410\ub294\uc9c0 \ud655\uc778)\n\n\uc67c\ucabd\uc774 \uc5ec\ub35f \ub2e8\uacc4 \uc808\ucc28, \uc624\ub978\ucabd\uc774 KB\uc99d\uad8c\uc758 \uc2e4\uc81c \uc77c\uc815\uc785\ub2c8\ub2e4. \uc9c0\uc815\uc744 \ubc1b\ub294 \uac8c \ub05d\uc774 \uc544\ub2c8\ub77c, \uac1c\uc2dc \uc804\uc5d0 \uae08\ubcf4\uc6d0 \uc774\ud589\uc810\uac80\uae4c\uc9c0 \ud1b5\uacfc\ud574\uc57c \uc11c\ube44\uc2a4\ub97c \uc2dc\uc791\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\nKB\uc99d\uad8c\uc740 \uc2e0\uccad\ubd80\ud130 \uc801\ud569\uae4c\uc9c0 \ub300\ub7b5 9\uac1c\uc6d4, PoC\ubd80\ud130 \ubcf4\uba74 1\ub144\uc774 \uac78\ub838\uc2b5\ub2c8\ub2e4. \uc911\uac04\uc5d0 \ubcf4\uc644 \uc694\uccad\uc774 \uc5ec\ub7ec \ubc88 \uc788\uc5c8\uc73c\ub2c8, \uc2e0\uccad \uc11c\ub958\ub97c \ubbf8\ub9ac \uc644\uc131\ud574 \ub450\uace0 \ud68c\ucc28\uc5d0 \ub9de\ucdb0 \ub123\ub294 \uac8c \uae30\uac04\uc744 \uc904\uc774\ub294 \uac00\uc7a5 \ud655\uc2e4\ud55c \ubc29\ubc95\uc785\ub2c8\ub2e4.\n\n1\ubd80\ub97c \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.",
     12: "[1min] [\uc694\uc57d]\n- \ucd9c\ubc1c \ub2e8\ub9d0\uc774 \ubc95\uc801 \uadfc\uac70\ub97c \uc815\ud568\n- \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uacfc 5\ud638\ub9dd\uc758 \ud1b5\uc81c \ucc28\uc774\ub294 \ub450 \uc904\ubfd0\n- \uad8c\uc7a5 PATH B, \uae30\uac04\uc740 \ud68c\ucc28\uc640 \uc11c\ub958 \uc900\ube44\uac00 \uc88c\uc6b0\n\n1\ubd80\ub97c \uc138 \uc904\ub85c \uc815\ub9ac\ud558\uba74, \ucd9c\ubc1c \ub2e8\ub9d0\uc774 \uadfc\uac70\ub97c \uc815\ud558\uace0, \ud1b5\uc81c \uc694\uad6c\ub294 \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc774\ub4e0 5\ud638\ub9dd\uc774\ub4e0 \uac70\uc758 \uac19\uc73c\uba70, \uadf8\ub798\uc11c \uc2e4\uc5c5\ubb34\uc5d0 \ub2ff\ub294 5\ud638\ub9dd \uacbd\ub85c\ub97c \uad8c\ud55c\ub2e4\ub294 \uac83\uc785\ub2c8\ub2e4.\n\n2\ubd80\uc5d0\uc11c\ub294 KB\uc99d\uad8c\uc774 \uc2e4\uc81c\ub85c \ub9cc\ub4e0 \uad6c\uc870\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     13: "[0.5min] [\uc694\uc57d]\n- 2\ubd80 \uc9c8\ubb38 \ub450 \uac00\uc9c0: \ud0c0\uc0ac\ub294 \ubb34\uc5c7\uc744 \uac16\ucdc4\ub098, \ub79c\ub529\uc874\uc744 \ub9cc\ub4e4\uba74 5\ud638 \ub2e8\ub9d0\uc5d0\uc11c \uc4f8 \uc218 \uc788\ub098\n- \uc21c\uc11c: KB\uc99d\uad8c \uad6c\uc870, \uc870\uc9c1 \ubc94\uc704, \uc804\uc81c\uc870\uac74, SI \uacac\uc801, \ub79c\ub529\uc874, OU, SCP, \ub124\ud2b8\uc6cc\ud06c, PrivateLink\n\n2\ubd80\ub294 \ub450 \uc9c8\ubb38\uc5d0 \ub2f5\ud569\ub2c8\ub2e4. \uba3c\uc800 KB\uc99d\uad8c\uc774 \uc2e4\uc81c\ub85c \ubb34\uc5c7\uc744 \uac16\ucdc4\ub294\uc9c0 \ubcf4\uace0, \uadf8\ub2e4\uc74c \"\ub79c\ub529\uc874\uc744 \ub9cc\ub4e4\uba74 5\ud638 \ub2e8\ub9d0\uc5d0\uc11c \uc4f8 \uc218 \uc788\ub290\ub0d0\"\ub294 \uc9c8\ubb38\uc5d0 \ub2f5\ud558\uba74\uc11c OU, SCP, \ub124\ud2b8\uc6cc\ud06c\uae4c\uc9c0 \ub0b4\ub824\uac00 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\nKB\uc99d\uad8c\uc758 \uacf5\uac1c \uc544\ud0a4\ud14d\ucc98\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
-    14: "\u23f8\ufe0f \ud83c\udfac [2.5min] [\uc694\uc57d]\n- KB\uc99d\uad8c\uc774 \ud3ec\ub7fc\uc5d0\uc11c \ubc1c\ud45c\ud55c \uc694\uc57d \uc544\ud0a4\ud14d\ucc98\ub97c \uc7ac\uad6c\uc131\n- 5\ud638 \ub2e8\ub9d0 \u2192 \ubcf4\uc548\uc601\uc5ed \u2192 DXG, TGW \u2192 AWS\n- \ub3c4\uad6c \ud638\ucd9c: Data Center VPC\uc758 AgentCore Gateway \u2192 Lambda, ECS \ucee8\ud14c\uc774\ub108(MCP Hub)\n- \ubaa8\ub378 \ud638\ucd9c: Shared VPC\uc758 LLM Gateway \u2192 VPC Endpoint \u2192 Bedrock\n- \uc778\ud130\ub137 \ud1b5\uc2e0 \uc804\ubd80 \ucc28\ub2e8, \ub2e8\ub9d0\uc758 \uc9c1\uc811 \ud638\ucd9c \ubd88\uac00\uac00 \uc2b9\uc778 \uc870\uac74\n\nKB\uc99d\uad8c\uc774 \ud3ec\ub7fc\uc5d0\uc11c \ubc1c\ud45c\ud55c \uc694\uc57d \uc544\ud0a4\ud14d\ucc98\uc785\ub2c8\ub2e4. 5\ud638 \ub2e8\ub9d0\uc5d0\uc11c \ub098\uac04 \ud2b8\ub798\ud53d\uc740 \ubcf4\uc548\uc601\uc5ed\uc744 \uc9c0\ub098 \uc804\uc6a9\ud68c\uc120 DXG\uc640 TGW\ub85c AWS\uc5d0 \ub4e4\uc5b4\uc635\ub2c8\ub2e4.\n\n\uc704 \ubc84\ud2bc\uc744 \ub20c\ub7ec \ub450 \uacbd\ub85c\ub97c \ub098\ub220 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \ub3c4\uad6c \ud638\ucd9c\uc740 Data Center VPC\uc758 AgentCore Gateway\ub85c \uac00\uace0, \uadf8 \ub4a4\uc5d0 Lambda\uc640 ECS \ucee8\ud14c\uc774\ub108\ub85c \ub744\uc6b4 MCP Hub\uac00 \uc788\uc2b5\ub2c8\ub2e4. \ubaa8\ub378 \ud638\ucd9c\uc740 Shared VPC\uc758 LLM Gateway\ub97c \uac70\uccd0 VPC Endpoint\ub85c Bedrock\uc744 \ubd80\ub985\ub2c8\ub2e4.\n\n\uc778\ud130\ub137\uc73c\ub85c \ub098\uac00\ub294 \ud1b5\uc2e0\uc740 \uc804\ubd80 \ub9c9\ud600 \uc788\uace0, \ub2e8\ub9d0\uc774 Bedrock\uc744 \uc9c1\uc811 \ubd80\ub974\uc9c0 \ubabb\ud558\uac8c \ud55c \uac83\uc774 \uc2b9\uc778 \uc870\uac74 \uc911 \ud558\ub098\uc600\uc2b5\ub2c8\ub2e4. \uc774 \ub450 \uac08\ub798 \uad6c\uc870\uac00 \uc624\ub298 3\ubd80\uc758 \ubf08\ub300\uc785\ub2c8\ub2e4.\n\uadfc\uac70: KB\uc99d\uad8c \ubc1c\ud45c \uc790\ub8cc(AWS Financial Services Forum Seoul 2026) MCP Hub \uc694\uc57d \uc544\ud0a4\ud14d\ucc98\n\n\ub204\uac00 \uc37c\ub294\uc9c0, \uacc4\uc815\uc740 \uc5b4\ub5bb\uac8c \ub098\ub234\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    14: "\u23f8\ufe0f \ud83c\udfac [2.5min] [\uc694\uc57d]\n- KB\uc99d\uad8c\uc774 \ud3ec\ub7fc\uc5d0\uc11c \ubc1c\ud45c\ud55c \uc694\uc57d \uc544\ud0a4\ud14d\ucc98\ub97c \uc7ac\uad6c\uc131\n- 5\ud638 \ub2e8\ub9d0 \u2192 \ubcf4\uc548\uc601\uc5ed \u2192 DXG, TGW \u2192 AWS\n- \ub3c4\uad6c \ud638\ucd9c: Data Center VPC\uc758 AgentCore Gateway \u2192 Lambda, ECS \ucee8\ud14c\uc774\ub108(MCP Hub)\n- \ubaa8\ub378 \ud638\ucd9c: Shared VPC\uc758 LLM Gateway \u2192 VPC Endpoint \u2192 Bedrock\n- \uc778\ud130\ub137 \ud1b5\uc2e0 \uc804\ubd80 \ucc28\ub2e8, \ub2e8\ub9d0\uc758 \uc9c1\uc811 \ud638\ucd9c \ubd88\uac00\uac00 \uc2b9\uc778 \uc870\uac74\n\nKB\uc99d\uad8c\uc774 \ud3ec\ub7fc\uc5d0\uc11c \ubc1c\ud45c\ud55c \uc694\uc57d \uc544\ud0a4\ud14d\ucc98\uc785\ub2c8\ub2e4. 5\ud638 \ub2e8\ub9d0\uc5d0\uc11c \ub098\uac04 \ud2b8\ub798\ud53d\uc740 \ubcf4\uc548\uc601\uc5ed\uc744 \uc9c0\ub098 \uc804\uc6a9\ud68c\uc120 DXG\uc640 TGW\ub85c AWS\uc5d0 \ub4e4\uc5b4\uc635\ub2c8\ub2e4.\n\n\ub3c4\uad6c \ud638\ucd9c\uc740 \uc8fc\ud669 \uc810, \ubaa8\ub378 \ud638\ucd9c\uc740 \ucd08\ub85d \uc810\uc73c\ub85c \uac19\uc740 \uc804\uc6a9\ud68c\uc120\uc744 \uc9c0\ub098 \uac08\ub77c\uc9d1\ub2c8\ub2e4. \uc704 \ubc84\ud2bc\uc744 \ub20c\ub7ec \ub450 \uacbd\ub85c\ub97c \ub098\ub220 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \ub3c4\uad6c \ud638\ucd9c\uc740 Data Center VPC\uc758 AgentCore Gateway\ub85c \uac00\uace0, \uadf8 \ub4a4\uc5d0 Lambda\uc640 ECS \ucee8\ud14c\uc774\ub108\ub85c \ub744\uc6b4 MCP Hub\uac00 \uc788\uc2b5\ub2c8\ub2e4. \ubaa8\ub378 \ud638\ucd9c\uc740 Shared VPC\uc758 LLM Gateway\ub97c \uac70\uccd0 VPC Endpoint\ub85c Bedrock\uc744 \ubd80\ub985\ub2c8\ub2e4.\n\n\uc778\ud130\ub137\uc73c\ub85c \ub098\uac00\ub294 \ud1b5\uc2e0\uc740 \uc804\ubd80 \ub9c9\ud600 \uc788\uace0, \ub2e8\ub9d0\uc774 Bedrock\uc744 \uc9c1\uc811 \ubd80\ub974\uc9c0 \ubabb\ud558\uac8c \ud55c \uac83\uc774 \uc2b9\uc778 \uc870\uac74 \uc911 \ud558\ub098\uc600\uc2b5\ub2c8\ub2e4. \uc774 \ub450 \uac08\ub798 \uad6c\uc870\uac00 \uc624\ub298 3\ubd80\uc758 \ubf08\ub300\uc785\ub2c8\ub2e4.\n\uadfc\uac70: KB\uc99d\uad8c \ubc1c\ud45c \uc790\ub8cc(AWS Financial Services Forum Seoul 2026) MCP Hub \uc694\uc57d \uc544\ud0a4\ud14d\ucc98\n\n\ub204\uac00 \uc37c\ub294\uc9c0, \uacc4\uc815\uc740 \uc5b4\ub5bb\uac8c \ub098\ub234\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     15: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- \uace0\uac1d \uc9c8\ubb38 1-1(\uc870\uc9c1 \ubc94\uc704), 1-2(\uacc4\uc815 \ubd84\ub9ac)\uc5d0 \ub300\ud55c \ub2f5\n- \uacf5\uac1c \uc0ac\ub840 \uc21c\uc11c: IT \uac1c\ubc1c \uc9c1\uc6d0 \u2192 \ubca0\ud0c0\ud14c\uc2a4\ud130 \u2192 \ud558\ub124\uc2a4 \uc815\ucc29 \ud6c4 \ud655\uc0b0. \uc778\uc6d0 \uaddc\ubaa8 \ube44\uacf5\uac1c\n- \uacc4\uc815 \ubd84\ub9ac \uc694\uc778 5\uac00\uc9c0: \ub9dd \uad6c\ubd84, \uadf8\ub8f9 \uacf5\ud1b5 \uc5ec\ubd80, \ubcf4\uc548 R&R, \ub370\uc774\ud130 \ub4f1\uae09, \ube44\uc6a9 \ubc30\ubd84\n- \uacb0\uad6d \ub9dd \uad6c\ubd84\uacfc \uc2b9\uc778 \ucc45\uc784\uc774 \uacc4\uc815 \uacbd\uacc4\ub97c \uc815\ud568\n\n\uace0\uac1d \uc9c8\ubb38 1-1\uacfc 1-2\uc5d0 \ub300\ud55c \ub2f5\uc785\ub2c8\ub2e4. \uc67c\ucabd\uc740 \uc870\uc9c1 \ubc94\uc704\uc785\ub2c8\ub2e4. \uacf5\uac1c\ub41c \uc0ac\ub840\ub294 IT \uac1c\ubc1c \uc9c1\uc6d0\uc5d0\uc11c \uc2dc\uc791\ud574\uc11c \ubca0\ud0c0\ud14c\uc2a4\ud130\ub85c \uc131\uacfc\ub97c \uce21\uc815\ud558\uace0, \ud558\ub124\uc2a4\uac00 \uc815\ucc29\ub41c \ub4a4 \ud300 \ub2e8\uc704\ub85c \ud655\uc0b0\ud558\ub294 \uc21c\uc11c\uc600\uc2b5\ub2c8\ub2e4. \uc778\uc6d0 \uaddc\ubaa8\ub294 \uacf5\uac1c\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd\uc740 \uacc4\uc815\uc744 \ub098\ub20c \ub54c \uc2e4\uc81c\ub85c \uc601\ud5a5\uc744 \uc8fc\ub294 \uc694\uc778\uc785\ub2c8\ub2e4. \ub9dd \uad6c\ubd84, \uadf8\ub8f9 \uacf5\ud1b5\uc778\uc9c0 \uacc4\uc5f4\uc0ac \ub2e8\ub3c5\uc778\uc9c0, \ubcf4\uc548 \uc870\uc9c1\uc758 \uc5ed\ud560, \ub370\uc774\ud130 \ub4f1\uae09, \ube44\uc6a9 \ubc30\ubd84\uc785\ub2c8\ub2e4. \uacb0\uad6d \uacc4\uc815 \uacbd\uacc4\ub294 \uae30\uc220\ubcf4\ub2e4 \ub204\uac00 \uc2b9\uc778\ud558\uace0 \ucc45\uc784\uc9c0\ub294\uc9c0\uc5d0 \ub9de\ucdb0\uc9d1\ub2c8\ub2e4.\n\n\uadf8\ub7fc \ucf54\ub529 \uc5d0\uc774\uc804\ud2b8\ub97c \uc4f0\ub824\uba74 \ubb34\uc5c7\uc744 \uac16\ucdb0\uc57c \ud558\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     16: "\u23f8\ufe0f \ud83c\udfac [2min] [\uc694\uc57d]\n- \uace0\uac1d \uc9c8\ubb38 1-3: \ub450 \uacbd\ub85c\uc5d0\uc11c \uac01\uac01 \ubb34\uc5c7\uc744 \uac16\ucdb0\uc57c \ud558\ub098\n- \uac19\uc740 \ud56d\ubaa9(\uc2b9\uc778, \ub2e8\ub9d0, \uacc4\uc815, \ub3c4\uad6c \uc124\uc815, \ub370\uc774\ud130, \ub85c\uadf8, \uc6b4\uc601 \uc7a5\uce58)\uc744 \ud1a0\uae00\ub85c \ube44\uad50\n- 5\ud638\ub9dd \uace0\uc720 \uc694\uad6c: \uad00\ub9ac \uc124\uc815 \ubc30\ud3ec \ud544\uc218, \ub3c4\uad6c \ud638\ucd9c \ub2e8\uc704 \uac10\uc0ac \ub85c\uadf8, \uc0ac\uc6a9\uc790 \ubc94\uc704\uac00 \uc2e0\uccad\uc11c\uc5d0 \uace0\uc815\n- \uad00\ub9ac \uc124\uc815\uacfc \uac10\uc0ac \ub85c\uadf8\ub294 3\ubd80 \ub370\ubaa8\uc5d0\uc11c \uc2e4\uc81c\ub85c \ubcf4\uc5ec \uc90c\n\n\uace0\uac1d \uc9c8\ubb38 1-3, \uac01 \uacbd\ub85c\uc5d0\uc11c \ubb34\uc5c7\uc744 \uac16\ucdb0\uc57c \ud558\ub290\ub0d0\uc5d0 \ub300\ud55c \ub2f5\uc785\ub2c8\ub2e4. \uac19\uc740 \ud56d\ubaa9\uc744 \ud1a0\uae00\ub85c \ubc14\uafd4 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n5\ud638\ub9dd \ucabd\uc73c\ub85c \ubc14\uafb8\uba74 \uc138 \uad70\ub370\uac00 \ub2ec\ub77c\uc9d1\ub2c8\ub2e4. \uad00\ub9ac \uc124\uc815 \ubc30\ud3ec\uac00 \uad8c\uc7a5\uc774 \uc544\ub2c8\ub77c \ud544\uc218\uac00 \ub418\uace0, \ub85c\uadf8\ub294 \ud504\ub86c\ud504\ud2b8\uc640 \ub3c4\uad6c \ud638\ucd9c \ub2e8\uc704\ub85c \ub0a8\uaca8\uc57c \ud558\uba70, \uc0ac\uc6a9\uc790 \ubc94\uc704\uac00 \uc2e0\uccad\uc11c\uc5d0 \uc801\uc740 \ubc94\uc704\ub85c \uace0\uc815\ub429\ub2c8\ub2e4.\n\n\uac00\uc7a5 \uc911\uc694\ud55c \uac74 \uc0ac\uc6a9\uc790 \ubc94\uc704\uc785\ub2c8\ub2e4. \ub098\uc911\uc5d0 \ub113\ud788\ub824\uba74 \uc808\ucc28\ub97c \ub2e4\uc2dc \ubc1f\uc544\uc57c \ud558\ub2c8, \ucc98\uc74c\ubd80\ud130 \ud30c\uc77c\ub7ff\uacfc \ud655\uc0b0 \ubc94\uc704\ub97c \uac19\uc774 \uc801\uc5b4 \ub450\uc2dc\uae38 \uad8c\ud569\ub2c8\ub2e4. \uad00\ub9ac \uc124\uc815\uacfc \uac10\uc0ac \ub85c\uadf8\uac00 \uc2e4\uc81c\ub85c \uc5b4\ub5bb\uac8c \ub3d9\uc791\ud558\ub294\uc9c0\ub294 3\ubd80 \ub370\ubaa8\uc5d0\uc11c \ubcf4\uc5ec \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.\n\n\ucf54\ub529 \uc5d0\uc774\uc804\ud2b8\uac00 \ubc1c\uc8fc \ubc29\uc2dd\uae4c\uc9c0 \ubc14\uafb8\ub294 \ud750\ub984\ub3c4 \uc9da\uace0 \uac00\uaca0\uc2b5\ub2c8\ub2e4.",
     17: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- \ubc1c\uc8fc\uc0ac\uac00 AI \ud658\uacbd\uc744 \uc81c\uacf5\ud558\uace0 RFP\uc5d0 \ud65c\uc6a9\uc744 \uc804\uc81c\ud558\uba74 \uc218\ud589\uc0ac\uac00 MH\ub97c \ub0ae\ucdb0 \uacac\uc801\ud558\ub294 \uc0ac\ub840\uac00 \ub098\uc634\n- MH \uc870\uc815 \uc5ec\uc9c0: \uad6c\ud604, \ud14c\uc2a4\ud2b8 \ub300 / \ubd84\uc11d, \uc124\uacc4 \uc911 / \uc774\ud589 \uc18c (\uc815\uc131)\n- \uacc4\uc57d\uc5d0 \ub123\uc744 \uac83: SENSORS \ud488\uc9c8 \uae30\uc900, \ud1a0\ud070 \ube44\uc6a9 \ubd80\ub2f4 \uc8fc\uccb4\n- \uacf5\uac1c\ub41c \uc808\uac10\ub960 \uc218\uce58\ub294 \ucd9c\ucc98 \ud655\uc778 \ubd88\uac00\ub77c \uc81c\uc678\n- \uc6a9\uc5b4: MH(Man-Hour), SENSORS(\ud14c\uc2a4\ud2b8, \ub9ac\ubdf0\ucc98\ub7fc \uacb0\uacfc\ub97c \uc790\ub3d9 \uac80\uc99d\ud558\ub294 \uc7a5\uce58, 4\ubd80\uc5d0\uc11c \uc124\uba85)\n\n\ucf54\ub4dc \uc5b4\uc2dc\uc2a4\ud134\ud2b8\uac00 \uac1c\ubc1c\uc790 \ub3c4\uad6c\ub97c \ub118\uc5b4 \ubc1c\uc8fc \uc870\uac74\uc73c\ub85c \ubc14\ub00c\uace0 \uc788\uc2b5\ub2c8\ub2e4. \ubc1c\uc8fc\uc0ac\uac00 AI \ud658\uacbd\uc744 \uc81c\uacf5\ud558\uace0 RFP\uc5d0 \ud65c\uc6a9\uc744 \uc804\uc81c\ud558\uba74, \uc218\ud589\uc0ac\uac00 \uad6c\ud604\uacfc \ud14c\uc2a4\ud2b8 \uacf5\uc815\uc758 MH\ub97c \ub0ae\ucdb0 \uacac\uc801\ud558\ub294 \ubc29\uc2dd\uc785\ub2c8\ub2e4.\n\n\ub2e4\ub9cc \ub450 \uac00\uc9c0\ub294 \uacc4\uc57d\uc5d0 \uaf2d \ub123\uc73c\uc154\uc57c \ud569\ub2c8\ub2e4. \ud488\uc9c8 \uae30\uc900, \uc989 \ud14c\uc2a4\ud2b8\uc640 \ub9ac\ubdf0 \uac19\uc740 SENSORS \uae30\uc900, \uadf8\ub9ac\uace0 \ud1a0\ud070 \ube44\uc6a9\uc744 \ub204\uac00 \ubd80\ub2f4\ud558\ub294\uc9c0\uc785\ub2c8\ub2e4. \uc808\uac10\ub960 \uc218\uce58\ub294 \ucd9c\ucc98\ub97c \ud655\uc778\ud560 \uc218 \uc788\ub294 \uac83\uc774 \uc544\uc9c1 \uc5c6\uc5b4\uc11c \ub123\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.\n\n\uc774\uc81c \"\ub79c\ub529\uc874\uc744 \uad6c\ucd95\ud558\uba74 5\ud638\ub9dd \ub2e8\ub9d0\uc5d0\uc11c \uc4f8 \uc218 \uc788\ub290\ub0d0\"\ub294 \uc9c8\ubb38\uc73c\ub85c \ub118\uc5b4\uac00\uaca0\uc2b5\ub2c8\ub2e4.",
@@ -1823,17 +2372,17 @@ window.addEventListener('hashchange', function () {
     19: "\u23f8\ufe0f \ud83c\udfac [2.5min] [\uc694\uc57d]\n- AWS \uad8c\uc7a5 OU \uad6c\uc870: Security, Infrastructure, Workloads, Sandbox, Policy Staging\n- AI\ub294 \ubcc4\ub3c4 OU\uac00 \uc544\ub2c8\ub77c Workloads OU \uc548: Prod \uc544\ub798 AI Platform(\ud1b5\uc81c\uba74), AI Project(\uc0c1\uc6a9 \ud504\ub85c\uc81d\ud2b8)\n- \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \ubc95\uc801 \uadfc\uac70\uac00 \ub2ec\ub77c R&D OU\ub85c \uc644\uc804\ud788 \ubd84\ub9ac, \uc778\ud504\ub77c\ub3c4 \ubcc4\ub3c4\n- \ub9ac\uc2a4\ud06c: AI Project \uacc4\uc815\uc758 Bedrock \uc9c1\uc811 \ud638\ucd9c\uc740 Gateway \uc6b0\ud68c \u2192 SCP\ub85c Deny (\uaddc\uc81c \uacbd\uacc4 \uae30\ubc18 \uad8c\uc7a5\uc548)\n\n\uacc4\uc815 \uad6c\uc870\uc785\ub2c8\ub2e4. AWS \uad8c\uc7a5 OU\ub97c \uadf8\ub300\ub85c \ub530\ub974\uace0, AI\ub294 \ubcc4\ub3c4 OU\uac00 \uc544\ub2c8\ub77c Workloads OU \uc548\uc5d0 \ub461\ub2c8\ub2e4.\n\n\uacc4\uc815\uc744 \ud558\ub098\uc529 \ub20c\ub7ec \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \uc0c9\uc73c\ub85c \uac15\uc870\ud55c \ub450 \uacc4\uc815\uc774 \ud575\uc2ec\uc785\ub2c8\ub2e4. AI Platform\uc740 5\ud638\ub9dd \uacbd\ub85c\uc758 \ud1b5\uc81c\uba74\uc73c\ub85c Gateway\uc640 MCP Hub\uac00 \uc788\uace0, AI Project\ub294 \uc0c1\uc6a9 AI \ud504\ub85c\uc81d\ud2b8\uc640 \ucee8\ud14d\uc2a4\ud2b8 \uacc4\uce35\uc774 \ub4e4\uc5b4\uac11\ub2c8\ub2e4.\n\nR&D OU\ub97c \ub20c\ub7ec \ubcf4\uc2dc\uba74, \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \ubc95\uc801 \uadfc\uac70\uac00 \ub2e4\ub974\ub2c8 \uc644\uc804\ud788 \ubd84\ub9ac\ud558\uace0 \ub124\ud2b8\uc6cc\ud06c\uc640 \ubcf4\uc548\uae4c\uc9c0 \ub530\ub85c \ub9cc\ub4e0\ub2e4\uace0 \ub098\uc635\ub2c8\ub2e4. \uadf8\ub9ac\uace0 \uc544\ub798 \ube68\uac04 \ub9ac\uc2a4\ud06c\uac00 \uc911\uc694\ud569\ub2c8\ub2e4. Project \uacc4\uc815\uc774 Bedrock\uc744 \uc9c1\uc811 \ubd80\ub974\uba74 Gateway\ub97c \uc6b0\ud68c\ud558\uac8c \ub418\ub2c8, SCP\ub85c \ub9c9\uc2b5\ub2c8\ub2e4. \uadf8 SCP\ub97c \ubc14\ub85c \ub2e4\uc74c\uc5d0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uac00\ub4dc\ub808\uc77c\uc774 \uc5b4\ub5bb\uac8c \uc791\ub3d9\ud558\ub294\uc9c0\ubd80\ud130 \uc9da\uaca0\uc2b5\ub2c8\ub2e4.",
     20: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- \uac00\ub4dc\ub808\uc77c \uc138 \ubc29\uc2dd: Preventive(SCP), Detective(Config), Proactive(CloudFormation \ud6c5)\n- SCP\uac00 \uac00\uc7a5 \uac15\ub825\ud558\uace0 \uadf8\ub9cc\ud07c \uc704\ud5d8: Policy Staging OU\uc5d0\uc11c \uba3c\uc800 \uc2dc\ud5d8, \uae34\uae09 \ud574\uc81c \uc808\ucc28 \ubb38\uc11c\ud654\n- SCP\ub294 \uad8c\ud55c\uc744 \uc8fc\uc9c0 \uc54a\uc74c. IAM \uc815\ucc45\uacfc AND\ub85c \ub3d9\uc791\n\n\uac00\ub4dc\ub808\uc77c\uc740 \ub9c9\uace0, \ucc3e\uace0, \ub9cc\ub4e4\uae30 \uc804\uc5d0 \uac80\uc0ac\ud558\ub294 \uc138 \ubc29\uc2dd\uc785\ub2c8\ub2e4. \uc608\ubc29\uc740 SCP\ub85c \uc791\uc5c5 \uc790\uccb4\ub97c \uac70\ubd80\ud558\uace0, \ud0d0\uc9c0\ub294 Config \uaddc\uce59\uc73c\ub85c \uc704\ubc18\uc744 \ucc3e\uc544 \uc54c\ub9ac\uace0, \uc0ac\uc804 \uac80\uc0ac\ub294 CloudFormation \ud6c5\uc73c\ub85c \ub9cc\ub4e4\uae30 \uc804\uc5d0 \ub9c9\uc2b5\ub2c8\ub2e4.\n\nSCP\uac00 \uac00\uc7a5 \uac15\ub825\ud55c\ub370 \uadf8\ub9cc\ud07c \uc704\ud5d8\ud569\ub2c8\ub2e4. \uc798\ubabb \uac78\uba74 \uc6b4\uc601 \uacc4\uc815\uc774 \ud55c \ubc88\uc5d0 \uba48\ucd9c \uc218 \uc788\uc73c\ub2c8, \uc55e \uc7a5\uc758 Policy Staging OU\uc5d0\uc11c \uba3c\uc800 \uc2dc\ud5d8\ud558\uace0 \uae34\uae09 \ud574\uc81c \uc808\ucc28\ub97c \ubb38\uc11c\ub85c \ub0a8\uaca8 \ub450\uc2dc\uae38 \uad8c\ud569\ub2c8\ub2e4.\n\n\uadf8\ub7fc \uc2e4\uc81c\ub85c \uac78\uac8c \ub420 SCP\ub97c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     21: "\u23f8\ufe0f \ud83c\udfac \u23f8\ufe0f [2.5min] [\uc694\uc57d]\n- \u2460 \ub9ac\uc804 Deny + \uc2b9\uc778 CRIS \ud504\ub85c\ud30c\uc77c \uc608\uc678: bedrock:InferenceProfileArn \uc870\uac74 \ud0a4 \uc0ac\uc6a9(AWS \ubb38\uc11c \ud655\uc778)\n- \u2461 Gateway \uc6b0\ud68c \uae08\uc9c0: bedrock:InvokeModel* \ub97c Gateway \uc5ed\ud560 \uc678 Deny\n- \u2462 \ub85c\uae45 \ube44\ud65c\uc131\ud654, \uc778\ud130\ub137 \uacbd\ub85c \uc0dd\uc131 \uae08\uc9c0, VPC Endpoint \uac15\uc81c\n- \uc11c\uc6b8 \ub9ac\uc804 \ud604\ud669(2026.10.19 AWS \uc11c\uc6b8 \ub9ac\uc804 \uc870\ud68c): Claude Sonnet 5\ub294 \uc11c\uc6b8 in-region, Opus 5.5, Sonnet 5.5\ub294 global CRIS\n- CRIS \ud5c8\uc6a9 \uc2dc \uad6d\uc678 \ucc98\ub9ac \u2192 DLP \uc120\ud589, \uc2e0\uccad\uc11c\uc640 \uc704\uc6d0\ud68c \ubcf4\uace0\uc5d0 \uba85\uc2dc\n\n\uc2e4\uc81c\ub85c \uac78\uac8c \ub420 \uc815\ucc45 \uc608\uc2dc\uc785\ub2c8\ub2e4. \uccab \ud0ed\uc740 \ub9ac\uc804 \uc81c\ud55c\uc785\ub2c8\ub2e4. \uc11c\uc6b8 \ubc16 \ud638\ucd9c\uc740 \ub9c9\ub418, \uc2b9\uc778\ud55c CRIS \ud504\ub85c\ud30c\uc77c\uc744 \uac70\uce58\ub294 Bedrock \ud638\ucd9c\ub9cc \uc608\uc678\ub85c \ub461\ub2c8\ub2e4. \uc774\ub54c \uc4f0\ub294 \uc870\uac74 \ud0a4\uac00 bedrock:InferenceProfileArn\uc785\ub2c8\ub2e4. AWS \ubb38\uc11c \uae30\uc900\uc73c\ub85c, CRIS \uc694\uccad\uc740 \ubaa9\uc801\uc9c0 \ub9ac\uc804\uc758 \ubaa8\ub378\uae4c\uc9c0 \uad8c\ud55c \ud3c9\uac00\ub97c \ud558\ub294\ub370 \uadf8 \ud3c9\uac00\uc5d0 \uc774 \ud0a4\uac00 \ub4e4\uc5b4\uac00\uc11c \uc608\uc678\ub97c \uac78 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\n2026\ub144 10\uc6d4 19\uc77c \uae30\uc900\uc73c\ub85c \uc11c\uc6b8 \ub9ac\uc804\uc5d0\uc11c \uc9c1\uc811 \uc870\ud68c\ud574 \ubcf4\ub2c8, Claude Sonnet 5\ub294 \uc11c\uc6b8 \ub9ac\uc804 \uc548\uc5d0\uc11c \ubc14\ub85c \ud638\ucd9c\ub418\uace0, Opus 5.5\ub098 Sonnet 5.5 \uac19\uc740 \ucd5c\uc2e0 \ubaa8\ub378\uc740 global CRIS \ud504\ub85c\ud30c\uc77c\ub85c \ub098\uc635\ub2c8\ub2e4. \uadf8\ub798\uc11c \uae30\ubcf8\uc740 \uc11c\uc6b8 in-region, \uc2e0\uaddc \ubaa8\ub378\uc774 \ud544\uc694\ud560 \ub54c \uc2b9\uc778\ub41c CRIS\ub9cc \uc5ec\ub294 \uad6c\uc870\ub97c \uad8c\ud569\ub2c8\ub2e4.\n\n\ub450 \ubc88\uc9f8 \ud0ed\uc740 Gateway \uc6b0\ud68c \uae08\uc9c0\uc785\ub2c8\ub2e4. Gateway \uc5ed\ud560\uc774 \uc544\ub2c8\uba74 \ub204\uad6c\ub3c4 \ubaa8\ub378\uc744 \uc9c1\uc811 \ubabb \ubd80\ub985\ub2c8\ub2e4. \uc138 \ubc88\uc9f8 \ud0ed\uc740 \ub85c\uadf8\uc640 \ub124\ud2b8\uc6cc\ud06c \ubcf4\ud638\uc785\ub2c8\ub2e4.\n\nCRIS\ub97c \uc5f4\uba74 \ud574\uc678 \ub9ac\uc804\uc5d0\uc11c \ucc98\ub9ac\ub41c\ub2e4\ub294 \uc810\uc740 \ubc18\ub4dc\uc2dc \uc2e0\uccad\uc11c\uc640 \uc704\uc6d0\ud68c \ubcf4\uace0\uc5d0 \uc801\uace0, \uac1c\uc778\uc2e0\uc6a9\uc815\ubcf4\ub294 Gateway DLP\ub85c \uba3c\uc800 \ub9c9\uc544\uc57c \ud569\ub2c8\ub2e4.\n\uadfc\uac70: AWS \ubb38\uc11c \"Global cross-Region inference\"\uc758 Service Control Policy requirements, re:Post \"AccessDeniedException ... cross-Region inference profile in an Organizations account\". \uc608\uc2dc \ud504\ub85c\ud30c\uc77c ARN\uacfc \uc5ed\ud560 \uc774\ub984\uc740 \uc124\uba85\uc6a9\n\n\uc774\uc81c \ub124\ud2b8\uc6cc\ud06c\uc785\ub2c8\ub2e4. 5\ud638 \ub2e8\ub9d0\uc5d0\uc11c Bedrock\uae4c\uc9c0 \uc2e4\uc81c \uacbd\ub85c\ub97c \ub530\ub77c\uac00 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
-    22: "\u23f8\ufe0f \ud83c\udfac [2.5min] [\uc694\uc57d]\n- 5\ud638 \ub2e8\ub9d0 \u2192 \uc0ac\ub0b4 \ubc29\ud654\ubcbd \u2192 (\uc548 A \uc804\uc0b0\uc2e4 Gateway) \u2192 DX 2\ud68c\uc120 \u2192 TGW 5\ud638\ub9dd RT \u2192 Inspection VPC \u2192 (\uc548 B \ub0b4\ubd80 NLB \ub4a4 Gateway) \u2192 VPC Endpoint \u2192 Bedrock\n- TGW 5\ud638\ub9dd RT\uc5d0\ub294 \uc778\ud130\ub137, Egress \uacbd\ub85c\uac00 \uc544\uc608 \uc5c6\uc74c\n- \ub2e8\ub9d0 \u2192 Bedrock \uc9c1\uc811 \uacbd\ub85c \uc5c6\uc74c\n- Gateway \ubc30\uce58 \ub450 \uc548\uc740 \uae08\ubcf4\uc6d0 \ucee8\uc124\ud305\uc5d0\uc11c \ud655\uc815 (KB\uc99d\uad8c \ubc30\uce58\ub294 \ube44\uacf5\uac1c)\n\n\ub124\ud2b8\uc6cc\ud06c \uacbd\ub85c\uc785\ub2c8\ub2e4. \"\ub2e4\uc74c \ud649\" \ubc84\ud2bc\uc73c\ub85c \uc694\uccad \ud55c \uac74\uc744 \ub530\ub77c\uac00 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n5\ud638 \ub2e8\ub9d0\uc5d0\uc11c \ucd9c\ubc1c\ud574 \uc0ac\ub0b4 \ubc29\ud654\ubcbd\uc744 \uc9c0\ub098\uace0, \uc548 A\ub77c\uba74 \uc804\uc0b0\uc2e4\uc758 Gateway\uc5d0\uc11c \uac80\uc0ac\ub97c \ubc1b\uc2b5\ub2c8\ub2e4. \uc804\uc6a9\ud68c\uc120 \ub450 \ud68c\uc120\uc73c\ub85c AWS\uc5d0 \ub4e4\uc5b4\uc624\uace0, Transit Gateway\uc5d0\uc11c 5\ud638\ub9dd \uc804\uc6a9 \ub77c\uc6b0\ud305 \ud14c\uc774\ube14\uc744 \ud0d1\ub2c8\ub2e4. \uc774 \ud14c\uc774\ube14\uc5d0\ub294 \uc778\ud130\ub137 \uacbd\ub85c\uac00 \uc544\uc608 \uc5c6\uc2b5\ub2c8\ub2e4.\n\nInspection VPC\ub97c \uc9c0\ub098 Bedrock\uc740 VPC \uc5d4\ub4dc\ud3ec\uc778\ud2b8\ub85c\ub9cc \ubd80\ub985\ub2c8\ub2e4. \uc704\uc5d0\uc11c \uc548 B\ub85c \ubc14\uafb8\uba74, Gateway\uac00 \uc628\ud504\ub818 \ub300\uc2e0 AI Platform \uacc4\uc815\uc758 \ub0b4\ubd80 NLB \ub4a4\ub85c \uc62e\uaca8 \uac11\ub2c8\ub2e4. \uc5b4\ub290 \ucabd\uc774 \ub9de\ub294\uc9c0\ub294 \uae08\ubcf4\uc6d0 \ud574\uc11d\uc5d0 \ub530\ub77c \ub2ec\ub77c\uc11c, \ub450 \uc548\uc744 \ub193\uace0 \ucee8\uc124\ud305 \ub2e8\uacc4\uc5d0\uc11c \ud655\uc815\ud558\uaca0\uc2b5\ub2c8\ub2e4.\n\n\ub9c8\uc9c0\ub9c9 \ud649\uc778 PrivateLink\uc640 DNS\ub97c \uc870\uae08 \ub354 \uc790\uc138\ud788 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    22: "\u23f8\ufe0f \ud83c\udfac [2.5min] [\uc694\uc57d]\n- 5\ud638 \ub2e8\ub9d0 \u2192 \uc0ac\ub0b4 \ubc29\ud654\ubcbd \u2192 (\uc548 A \uc804\uc0b0\uc2e4 Gateway) \u2192 DX 2\ud68c\uc120 \u2192 TGW 5\ud638\ub9dd RT \u2192 Inspection VPC \u2192 (\uc548 B \ub0b4\ubd80 NLB \ub4a4 Gateway) \u2192 VPC Endpoint \u2192 Bedrock\n- TGW 5\ud638\ub9dd RT\uc5d0\ub294 \uc778\ud130\ub137, Egress \uacbd\ub85c\uac00 \uc544\uc608 \uc5c6\uc74c\n- \ub2e8\ub9d0 \u2192 Bedrock \uc9c1\uc811 \uacbd\ub85c \uc5c6\uc74c\n- Gateway \ubc30\uce58 \ub450 \uc548\uc740 \uae08\ubcf4\uc6d0 \ucee8\uc124\ud305\uc5d0\uc11c \ud655\uc815 (KB\uc99d\uad8c \ubc30\uce58\ub294 \ube44\uacf5\uac1c)\n\n\ub124\ud2b8\uc6cc\ud06c \uacbd\ub85c\uc785\ub2c8\ub2e4. \"\ub2e4\uc74c \ud649\" \ubc84\ud2bc\uc73c\ub85c \uc694\uccad \ud55c \uac74\uc744 \ub530\ub77c\uac00 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\"\uc790\ub3d9 \uc7ac\uc0dd\"\uc744 \ub204\ub974\uba74 \uc694\uccad\uc774 1.5\ucd08 \uac04\uaca9\uc73c\ub85c \ud649\uc744 \ud558\ub098\uc529 \uc9c0\ub098 Bedrock\uae4c\uc9c0 \uac11\ub2c8\ub2e4. \uc124\uba85\ud560 \ud649\uc5d0\uc11c \uba48\ucd94\ub824\uba74 \"\ub2e4\uc74c \ud649\"\uc744 \uc4f0\uc2dc\uba74 \ub429\ub2c8\ub2e4.\n5\ud638 \ub2e8\ub9d0\uc5d0\uc11c \ucd9c\ubc1c\ud574 \uc0ac\ub0b4 \ubc29\ud654\ubcbd\uc744 \uc9c0\ub098\uace0, \uc548 A\ub77c\uba74 \uc804\uc0b0\uc2e4\uc758 Gateway\uc5d0\uc11c \uac80\uc0ac\ub97c \ubc1b\uc2b5\ub2c8\ub2e4. \uc804\uc6a9\ud68c\uc120 \ub450 \ud68c\uc120\uc73c\ub85c AWS\uc5d0 \ub4e4\uc5b4\uc624\uace0, Transit Gateway\uc5d0\uc11c 5\ud638\ub9dd \uc804\uc6a9 \ub77c\uc6b0\ud305 \ud14c\uc774\ube14\uc744 \ud0d1\ub2c8\ub2e4. \uc774 \ud14c\uc774\ube14\uc5d0\ub294 \uc778\ud130\ub137 \uacbd\ub85c\uac00 \uc544\uc608 \uc5c6\uc2b5\ub2c8\ub2e4.\n\nInspection VPC\ub97c \uc9c0\ub098 Bedrock\uc740 VPC \uc5d4\ub4dc\ud3ec\uc778\ud2b8\ub85c\ub9cc \ubd80\ub985\ub2c8\ub2e4. \uc704\uc5d0\uc11c \uc548 B\ub85c \ubc14\uafb8\uba74, Gateway\uac00 \uc628\ud504\ub818 \ub300\uc2e0 AI Platform \uacc4\uc815\uc758 \ub0b4\ubd80 NLB \ub4a4\ub85c \uc62e\uaca8 \uac11\ub2c8\ub2e4. \uc5b4\ub290 \ucabd\uc774 \ub9de\ub294\uc9c0\ub294 \uae08\ubcf4\uc6d0 \ud574\uc11d\uc5d0 \ub530\ub77c \ub2ec\ub77c\uc11c, \ub450 \uc548\uc744 \ub193\uace0 \ucee8\uc124\ud305 \ub2e8\uacc4\uc5d0\uc11c \ud655\uc815\ud558\uaca0\uc2b5\ub2c8\ub2e4.\n\n\ub9c8\uc9c0\ub9c9 \ud649\uc778 PrivateLink\uc640 DNS\ub97c \uc870\uae08 \ub354 \uc790\uc138\ud788 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     23: "\u23f8\ufe0f \u23f8\ufe0f [2min] [\uc694\uc57d]\n- \ud575\uc2ec \uc5d4\ub4dc\ud3ec\uc778\ud2b8\ub294 bedrock-runtime(\ubaa8\ub378)\uacfc bedrock-agentcore.gateway(MCP Hub). \ub098\uba38\uc9c0\ub294 AgentCore Runtime, KB, STS, \ub85c\uadf8, KMS, RAG, ETL\uc6a9\n- DNS: \uc628\ud504\ub818 DNS \u2192 Route 53 Resolver Inbound \u2192 Private Hosted Zone \u2192 VPC Endpoint ENI(\uc0ac\uc124 IP)\n- \ud37c\ube14\ub9ad DNS\ub97c \ud574\uc11d\ud558\uc9c0 \uc54a\uc73c\ubbc0\ub85c \uc778\ud130\ub137 \uacbd\ub85c\uac00 \uc0dd\uae38 \uc5ec\uc9c0\uac00 \uc5c6\uc74c\n- Endpoint Policy\uae4c\uc9c0 \ub354\ud574 \ubaa8\ub378 allowlist\uac00 \uc138 \uacb9\n\nPrivateLink \uc0c1\uc138\uc785\ub2c8\ub2e4. \uc67c\ucabd\uc774 \uacc4\uc815 VPC\uc5d0 \ub9cc\ub4e4 \uc5d4\ub4dc\ud3ec\uc778\ud2b8 \ubaa9\ub85d\uc778\ub370, \ud575\uc2ec\uc740 \ud14c\ub450\ub9ac \uce5c \ub450 \uac1c, \ubaa8\ub378\uc744 \ubd80\ub974\ub294 bedrock-runtime\uacfc MCP Hub\ub85c \ub4e4\uc5b4\uac00\ub294 bedrock-agentcore.gateway\uc785\ub2c8\ub2e4. AgentCore Gateway\ub294 Runtime\uacfc \ubcc4\ub3c4\uc758 \uc5d4\ub4dc\ud3ec\uc778\ud2b8\ub97c \uc501\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd\uc740 DNS \ud750\ub984\uc785\ub2c8\ub2e4. \ud558\ub098\uc529 \ub118\uae30\uba74, \uc628\ud504\ub818 DNS\uac00 Bedrock \ub3c4\uba54\uc778 \uc9c8\uc758\ub97c Route 53 Resolver\ub85c \ub118\uae30\uace0, Private Hosted Zone\uc744 \ud1b5\ud574 \uc5d4\ub4dc\ud3ec\uc778\ud2b8\uc758 \uc0ac\uc124 IP\ub85c\ub9cc \ud574\uc11d\ud569\ub2c8\ub2e4. \ud37c\ube14\ub9ad IP\ub85c \ud574\uc11d\ub420 \uc77c\uc774 \uc5c6\uc73c\ub2c8 \uc778\ud130\ub137 \uacbd\ub85c\uac00 \uc0dd\uae38 \uc5ec\uc9c0\ub3c4 \uc5c6\uc2b5\ub2c8\ub2e4.\n\n\ub9c8\uc9c0\ub9c9\uc73c\ub85c \uc5d4\ub4dc\ud3ec\uc778\ud2b8 \uc815\ucc45\uc5d0\ub3c4 \ud5c8\uc6a9 \ubaa8\ub378\uacfc Gateway \uc5ed\ud560\uc744 \uac78\uc5b4\uc11c, \ubaa8\ub378 allowlist\uac00 SCP, Gateway, \uc5d4\ub4dc\ud3ec\uc778\ud2b8 \uc138 \uacb9\uc73c\ub85c \uac78\ub9bd\ub2c8\ub2e4.\n\n2\ubd80\ub97c \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.",
     24: "[1min] [\uc694\uc57d]\n- \ub450 \uac08\ub798 \uacbd\ub85c: \ub3c4\uad6c\ub294 MCP Hub, \ubaa8\ub378\uc740 LLM Gateway\n- \ub79c\ub529\uc874\uc740 \ud544\uc694\uc870\uac74, AI\ub294 Workloads OU, SCP \ub124 \uac00\uc9c0\n- \ub124\ud2b8\uc6cc\ud06c: DX, TGW 5\ud638\ub9dd RT, PrivateLink, \ud37c\ube14\ub9ad DNS \ud574\uc11d \uc5c6\uc74c\n\n2\ubd80\ub97c \uc815\ub9ac\ud558\uba74, \ub3c4\uad6c\uc640 \ubaa8\ub378\uc774 \uac01\uac01 \ub2e4\ub978 \uad00\ubb38\uc744 \uc9c0\ub098\ub294 \ub450 \uac08\ub798 \uad6c\uc870\uc774\uace0, \ub79c\ub529\uc874\uacfc SCP\ub85c \uc6b0\ud68c\ub97c \ub9c9\uc73c\uba70, \ub124\ud2b8\uc6cc\ud06c\uc5d0\ub294 \uc778\ud130\ub137\uc73c\ub85c \ube60\uc9c0\ub294 \uae38\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.\n\n\uc774\uc81c 3\ubd80\uc5d0\uc11c \uadf8 \ub450 \uad00\ubb38\uc744 \uc5f4\uc5b4 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     25: "[0.5min] [\uc694\uc57d]\n- 3\ubd80: 2\ubd80 \ub05d\uc5d0\uc11c \ubcf8 \ub450 \uad00\ubb38(LLM Gateway, MCP Hub)\uc744 \uc5f4\uc5b4 \ubd04\n- \ub370\ubaa8 V1(\uad00\ub9ac \uc124\uc815 \uac15\uc81c), V2(LLM Gateway DLP, \ubaa8\ub378 allowlist, \uac10\uc0ac \ub85c\uadf8)\ub97c \uc774 \ube14\ub85d\uc5d0\uc11c \uc0c1\uc601\n- \ub370\ubaa8\ub294 2026.10.19 \uc2e4\uc81c \uc2e4\ud589 \ub179\ud654. \ub2e8\ub9d0 \uc5ed\ud560 \ucee8\ud14c\uc774\ub108 + \uc11c\uc6b8 \ub9ac\uc804 Bedrock\n\n3\ubd80\uc5d0\uc11c\ub294 \uae38 \ub05d\uc5d0 \uc788\ub294 \ub450 \uad00\ubb38, LLM Gateway\uc640 MCP Hub\ub97c \uc5f4\uc5b4 \ubd05\ub2c8\ub2e4. \uc911\uac04\uc911\uac04 \uc624\ub298 \uc544\uce68\uc5d0 \uc2e4\uc81c\ub85c \ub3cc\ub824\uc11c \ub179\ud654\ud55c \ub370\ubaa8 \ub450 \ud3b8\uc744 \ubcf4\uc5ec \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uba3c\uc800 \uc804\uccb4 \uadf8\ub9bc\uc785\ub2c8\ub2e4.",
-    26: "\u23f8\ufe0f \ud83c\udfac [2min] [\uc694\uc57d]\n- \ub2e8\ub9d0\uc758 Claude Code(\uadf8\ub9ac\uace0 Codex)\ub294 \ub450 \uacf3\ub9cc \ubd80\ub984: \ubaa8\ub378\uc740 LLM Gateway, \ub3c4\uad6c\uc640 \ucee8\ud14d\uc2a4\ud2b8\ub294 MCP Hub\n- \ubaa8\ub378: LLM Gateway \u2192 PrivateLink \u2192 Bedrock + Guardrails\n- \ub3c4\uad6c: AgentCore Gateway \u2192 Identity\ub85c \uc0ac\ub0b4 \uc2dc\uc2a4\ud15c \ud638\ucd9c, \ub610\ub294 AI Project \uacc4\uc815\uc758 Vector, Graph \uac80\uc0c9\n- \uc9c0\uc2dd \uc6d0\ubcf8\uc740 \uc628\ud504\ub818 \uc720\uc9c0, \uc2b9\uc778\ub41c \ubc30\uce58\ub85c ETL\ub9cc \uac70\uccd0 \ub4e4\uc5b4\uac10\n- \uc6a9\uc5b4: MCP Target(Gateway \ub4a4\uc5d0 \ub4f1\ub85d\ub418\ub294 \ub3c4\uad6c)\n\n\uc804\uccb4 \uadf8\ub9bc\uc785\ub2c8\ub2e4. \ubc84\ud2bc\uc73c\ub85c \ub450 \uacbd\ub85c\ub97c \ub098\ub220 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n1\ubc88 \ubaa8\ub378 \ud638\ucd9c\uc744 \ucf1c\uba74 \uac00\uc6b4\ub370 \uc704 \uc0c1\uc790\ub9cc \ub0a8\uc2b5\ub2c8\ub2e4. Claude Code\uac00 LLM Gateway\ub97c \uac70\uccd0 PrivateLink\ub85c Bedrock\uc5d0 \uac11\ub2c8\ub2e4. 2\ubc88 \ub3c4\uad6c\uc640 \ucee8\ud14d\uc2a4\ud2b8\ub97c \ucf1c\uba74 MCP Hub, \uc989 AgentCore Gateway\ub85c \uac00\uc11c \uc0ac\ub0b4 \uc2dc\uc2a4\ud15c\uc774\ub098 \uc624\ub978\ucabd \ucee8\ud14d\uc2a4\ud2b8 \uacc4\uce35\uc744 \uac80\uc0c9\ud569\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd \ucee8\ud14d\uc2a4\ud2b8 \uacc4\uce35\uc774 \uc911\uc694\ud569\ub2c8\ub2e4. \uc0ac\ub0b4 \uaddc\uc815\uc9d1\uc774\ub098 \ucf54\ub529 \ud45c\uc900 \uc6d0\ubcf8\uc740 \uc628\ud504\ub818\uc5d0 \uadf8\ub300\ub85c \ub450\uace0, \uc2b9\uc778\ub41c \ubc30\uce58\ub85c ETL\uc5d0 \ub123\uc5b4 Vector\uc640 Graph\ub85c \ub9cc\ub4ed\ub2c8\ub2e4. \uadf8 \uac80\uc0c9 \uae30\ub2a5\uc744 MCP \ub3c4\uad6c\ub85c \ub4f1\ub85d\ud558\uba74, \ucf54\ub529 \uc5d0\uc774\uc804\ud2b8\uac00 \uc0ac\ub0b4 \uaddc\uce59\uc744 \ucc3e\uc544\ubcf4\uba74\uc11c \ucf54\ub4dc\ub97c \uc501\ub2c8\ub2e4.\n\n\uadf8\ub7fc MCP\uc640 Hub\uac00 \uc65c \ud544\uc694\ud55c\uc9c0\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    26: "\u23f8\ufe0f \ud83c\udfac [2min] [\uc694\uc57d]\n- \ub2e8\ub9d0\uc758 Claude Code(\uadf8\ub9ac\uace0 Codex)\ub294 \ub450 \uacf3\ub9cc \ubd80\ub984: \ubaa8\ub378\uc740 LLM Gateway, \ub3c4\uad6c\uc640 \ucee8\ud14d\uc2a4\ud2b8\ub294 MCP Hub\n- \ubaa8\ub378: LLM Gateway \u2192 PrivateLink \u2192 Bedrock + Guardrails\n- \ub3c4\uad6c: AgentCore Gateway \u2192 Identity\ub85c \uc0ac\ub0b4 \uc2dc\uc2a4\ud15c \ud638\ucd9c, \ub610\ub294 AI Project \uacc4\uc815\uc758 Vector, Graph \uac80\uc0c9\n- \uc9c0\uc2dd \uc6d0\ubcf8\uc740 \uc628\ud504\ub818 \uc720\uc9c0, \uc2b9\uc778\ub41c \ubc30\uce58\ub85c ETL\ub9cc \uac70\uccd0 \ub4e4\uc5b4\uac10\n- \uc6a9\uc5b4: MCP Target(Gateway \ub4a4\uc5d0 \ub4f1\ub85d\ub418\ub294 \ub3c4\uad6c)\n\n\uc804\uccb4 \uadf8\ub9bc\uc785\ub2c8\ub2e4. \uc2ac\ub77c\uc774\ub4dc\uac00 \uc5f4\ub9ac\uba74 \uc694\uccad\uc774 \uc2e4\uc81c \uacbd\ub85c\ub97c \ub530\ub77c \uc6c0\uc9c1\uc774\uace0, \uc544\ub798 \uc904\uc5d0 \uc9c0\uae08 \ub2e8\uacc4\uc758 \uc124\uba85\uc774 \ub098\uc635\ub2c8\ub2e4. \ubc84\ud2bc\uc73c\ub85c \ub450 \uacbd\ub85c\ub97c \ub098\ub220 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n1\ubc88 \ubaa8\ub378 \ud638\ucd9c\uc744 \ucf1c\uba74 \uac00\uc6b4\ub370 \uc704 \uc0c1\uc790\ub9cc \ub0a8\uc2b5\ub2c8\ub2e4. Claude Code\uac00 LLM Gateway\ub97c \uac70\uccd0 PrivateLink\ub85c Bedrock\uc5d0 \uac11\ub2c8\ub2e4. 2\ubc88 \ub3c4\uad6c\uc640 \ucee8\ud14d\uc2a4\ud2b8\ub97c \ucf1c\uba74 MCP Hub, \uc989 AgentCore Gateway\ub85c \uac00\uc11c \uc0ac\ub0b4 \uc2dc\uc2a4\ud15c\uc774\ub098 \uc624\ub978\ucabd \ucee8\ud14d\uc2a4\ud2b8 \uacc4\uce35\uc744 \uac80\uc0c9\ud569\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd \ucee8\ud14d\uc2a4\ud2b8 \uacc4\uce35\uc774 \uc911\uc694\ud569\ub2c8\ub2e4. \uc0ac\ub0b4 \uaddc\uc815\uc9d1\uc774\ub098 \ucf54\ub529 \ud45c\uc900 \uc6d0\ubcf8\uc740 \uc628\ud504\ub818\uc5d0 \uadf8\ub300\ub85c \ub450\uace0, \uc2b9\uc778\ub41c \ubc30\uce58\ub85c ETL\uc5d0 \ub123\uc5b4 Vector\uc640 Graph\ub85c \ub9cc\ub4ed\ub2c8\ub2e4. \uadf8 \uac80\uc0c9 \uae30\ub2a5\uc744 MCP \ub3c4\uad6c\ub85c \ub4f1\ub85d\ud558\uba74, \ucf54\ub529 \uc5d0\uc774\uc804\ud2b8\uac00 \uc0ac\ub0b4 \uaddc\uce59\uc744 \ucc3e\uc544\ubcf4\uba74\uc11c \ucf54\ub4dc\ub97c \uc501\ub2c8\ub2e4.\n\n\uadf8\ub7fc MCP\uc640 Hub\uac00 \uc65c \ud544\uc694\ud55c\uc9c0\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     27: "\ud83c\udfac [1.5min] [\uc694\uc57d]\n- MCP: AI\uac00 \uc0ac\ub0b4 \uc2dc\uc2a4\ud15c\uc744 \ub3c4\uad6c\ucc98\ub7fc \ubd80\ub974\ub294 \ud45c\uc900 \uaddc\uc57d\n- WHY: \uc9c1\uc811 \uc5f0\uacb0\ud558\uba74 \ud1b5\uc81c \uc9c0\uc810 \uc5c6\uc74c, \uc2e0\uc6d0 \uac80\uc99d \ubd88\uac00, \uc815\ucc45 \uc81c\uac01\uac01\n- WHAT: Hub\uac00 \uc911\uc559 \uc911\uacc4, \ud1b5\ud569 \uc778\uc99d(AD \ud1a0\ud070), \uc11c\ubc84 \uce21 \uc815\ucc45 \uc8fc\uc785\n\nMCP\ub294 AI\uac00 \uc0ac\ub0b4 \uc2dc\uc2a4\ud15c\uc744 \ub3c4\uad6c\ucc98\ub7fc \ubd80\ub974\ub294 \ud45c\uc900 \uaddc\uc57d\uc785\ub2c8\ub2e4. \ubb38\uc81c\ub294 \uac1c\ubc1c\uc790\ub9c8\ub2e4 \ub530\ub85c \ubd99\uc774\uba74 \ud1b5\uc81c\uac00 \uc548 \ub41c\ub2e4\ub294 \uc810\uc785\ub2c8\ub2e4.\n\n\ud1a0\uae00\uc744 WHAT\uc73c\ub85c \ubc14\uafb8\uaca0\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c \ubaa8\ub4e0 \uc5f0\uacb0\uc744 Hub \ud55c \uacf3\uc73c\ub85c \ubaa8\uc544 \uc911\uacc4\ud558\uace0, \uc0ac\ub0b4 AD \ud1a0\ud070\uc73c\ub85c \uc2e0\uc6d0\uc744 \ud655\uc778\ud558\uace0, \uc815\ucc45\uc744 \uc11c\ubc84 \ucabd\uc5d0\uc11c \uc801\uc6a9\ud569\ub2c8\ub2e4. \uac1c\ubc1c\uc790\uac00 \uc790\uae30 PC \uc124\uc815\uc73c\ub85c \uc9c0\uc6b8 \uc218 \uc5c6\ub294 \uc815\ucc45\uc774\ub77c\ub294 \uac8c \ud575\uc2ec\uc785\ub2c8\ub2e4.\n\n\uc774 Hub\ub97c \uc9c1\uc811 \ub9cc\ub4e4\uc9c0 \uc54a\uace0 \uad00\ub9ac\ud615 \uc11c\ube44\uc2a4\ub85c \uad6c\uc131\ud558\ub294 \ubc29\ubc95\uc744 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     28: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- Hub\ub97c \uc9c1\uc811 \ub9cc\ub4e4\uc9c0 \uc54a\uace0 AgentCore Gateway\ub85c \uad6c\uc131. \ud074\ub77c\uc774\uc5b8\ud2b8\ub294 Hub URL \ud558\ub098\ub9cc \uc54e\n- Inbound: JWT \uac80\uc99d(\uc0ac\ub0b4 AD \uc5f0\ub3d9 IdP)\n- Gateway \uae30\ub2a5: \uad8c\ud55c\ubcc4 tools/list, semantic tool search, Policy(Cedar, 2026.03 GA), Outbound\ub294 Identity\uac00 \uc790\uaca9\uc99d\uba85 \ubcf4\uad00\n- Targets: Lambda, OpenAPI/Smithy, \uae30\uc874 MCP \uc11c\ubc84, KB\n- \uc11c\uc6b8: Gateway, Identity, Policy, Observability \uac00\uc6a9(\ubb38\uc11c). Gateway \uc804\uc6a9 \uc778\ud130\ud398\uc774\uc2a4 \uc5d4\ub4dc\ud3ec\uc778\ud2b8 bedrock-agentcore.gateway. \ud655\uc778 \ud544\uc694\ub294 Policy \ucc98\ub9ac \ub9ac\uc804\ub9cc\n\nMCP Hub\ub97c AgentCore Gateway\ub85c \uad6c\uc131\ud55c \uadf8\ub9bc\uc785\ub2c8\ub2e4. \uc67c\ucabd\uc5d0\uc11c Claude Code\ub4e0 Codex\ub4e0 \uac19\uc740 Hub URL\ub85c \ub4e4\uc5b4\uc635\ub2c8\ub2e4.\n\n\ud1a0\ud070\uc744 \uac80\uc99d\ud558\uace0, \uc0ac\uc6a9\uc790\uc5d0 \ub530\ub77c \ubcf4\uc774\ub294 \ub3c4\uad6c \ubaa9\ub85d\uc774 \ub2ec\ub77c\uc9c0\uba70, Policy\ub85c \ud638\ucd9c \ud558\ub098\ud558\ub098\ub97c \ud5c8\uc6a9\ud558\uac70\ub098 \ub9c9\uc2b5\ub2c8\ub2e4. Policy\ub294 \uc62c\ud574 3\uc6d4\uc5d0 GA\uac00 \ub410\uc2b5\ub2c8\ub2e4. \uc0ac\ub0b4 \uc2dc\uc2a4\ud15c \uc790\uaca9\uc99d\uba85\uc740 Identity\uac00 \ubcf4\uad00\ud574\uc11c \ub2e8\ub9d0\uc5d0\ub294 \ub0a8\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: AWS What's New 2026.03 \"Policy in Amazon Bedrock AgentCore is now generally available\"\n\n\uadf8\ub7f0\ub370 Hub\ub9cc \uc788\uc73c\uba74 \ub05d\uc77c\uae4c\uc694? \uac1c\ubc1c\uc790 PC\uac00 Hub\ub97c \uc6b0\ud68c\ud558\uba74 \uc18c\uc6a9\uc774 \uc5c6\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c \uad00\ubb38\uc774 \uc138 \uac1c \ud544\uc694\ud569\ub2c8\ub2e4.",
     29: "\u23f8\ufe0f \u23f8\ufe0f [2min] [\uc694\uc57d]\n- \uad00\ubb38 \uc138 \uac1c: \u2460 \ub4f1\ub85d \uc2ec\uc0ac, \u2461 \ud074\ub77c\uc774\uc5b8\ud2b8 \uc81c\ud55c, \u2462 \ud638\ucd9c \uc778\uac00\n- \u2460\u2462\uc740 Hub\uc5d0\uc11c \ud558\ubbc0\ub85c \ub3c4\uad6c \ubb34\uad00. \u2461\ub9cc \ud074\ub77c\uc774\uc5b8\ud2b8\ubcc4\ub85c \ub2e4\ub984\n- Claude Code: /etc/claude-code/managed-settings.json \uc758 allowedMcpServers, allowManagedMcpServersOnly, allowManagedPermissionRulesOnly + env\ub85c Bedrock, Gateway, \ubaa8\ub378 \uace0\uc815 (\uacf5\uc2dd \ubb38\uc11c + \ub370\ubaa8\ub85c \ud655\uc778)\n- Codex: \uad00\ub9ac \ubc30\ud3ec config.toml, \uac15\uc81c \ubc94\uc704\ub294 PoC\uc5d0\uc11c \ud655\uc778 \ud544\uc694\n- \uc6d0\ubcf8 \uc81c\uc548\uc11c\uc758 enableAllProjectMcpServers \ud0a4\ub294 \ubb38\uc11c\ub85c \ud655\uc778\ud558\uc9c0 \ubabb\ud574 \ube90\uc74c\n\n\uad00\ubb38\uc740 \uc138 \uac1c\uc785\ub2c8\ub2e4. \ud558\ub098\uc529 \uc62c\ub9ac\uaca0\uc2b5\ub2c8\ub2e4. 1\ubc88 \ub4f1\ub85d \uc2ec\uc0ac\uc640 3\ubc88 \ud638\ucd9c \uc778\uac00\ub294 Hub\uc5d0\uc11c \ud558\ub2c8 \ud074\ub77c\uc774\uc5b8\ud2b8\uac00 \ubb34\uc5c7\uc774\ub4e0 \uac19\uc2b5\ub2c8\ub2e4.\n\n2\ubc88\ub9cc \ud074\ub77c\uc774\uc5b8\ud2b8\ubcc4\ub85c \ub2e4\ub985\ub2c8\ub2e4. Claude Code\ub294 \ub9ac\ub205\uc2a4 \uae30\uc900 /etc/claude-code \uc544\ub798 managed-settings.json\uc744 \ubc30\ud3ec\ud569\ub2c8\ub2e4. \uc5ec\uae30\uc11c \ud5c8\uc6a9 MCP \uc11c\ubc84\ub97c URL\ub85c \uace0\uc815\ud558\uace0, \uad00\ub9ac \uc124\uc815\uc758 \ubaa9\ub85d\ub9cc \uc4f0\uac8c \uac15\uc81c\ud558\uace0, \uad8c\ud55c \uaddc\uce59\ub3c4 \uad00\ub9ac \uc124\uc815 \uac83\ub9cc \uc778\uc815\ud558\uac8c \ud569\ub2c8\ub2e4. Bedrock \uc5f0\uacb0\uacfc Gateway \uc8fc\uc18c, \ubaa8\ub378\ub3c4 \uac19\uc740 \ud30c\uc77c\uc758 env\ub85c \uace0\uc815\ud569\ub2c8\ub2e4. Codex \ucabd\uc740 \uad00\ub9ac \ubc30\ud3ec \uc124\uc815\uc73c\ub85c \ud558\ub294\ub370, \uac15\uc81c \ubc94\uc704\ub294 PoC\uc5d0\uc11c \ud655\uc778\ud558\uaca0\uc2b5\ub2c8\ub2e4.\n\n2\ubc88\uc774 \uc5c6\uc73c\uba74 1\ubc88\uacfc 3\ubc88\uc774 \uc758\ubbf8\uac00 \uc5c6\uc2b5\ub2c8\ub2e4. \uac1c\ubc1c\uc790\uac00 Hub\ub97c \uc6b0\ud68c\ud574\uc11c \uc544\ubb34 MCP\ub098 \ubd99\uc774\uba74 \ub05d\uc774\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4. \uc774 2\ubc88\uc774 \uc2e4\uc81c\ub85c \uc5b4\ub5bb\uac8c \ub3d9\uc791\ud558\ub294\uc9c0 \ubc14\ub85c \uc601\uc0c1\uc73c\ub85c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: code.claude.com \ubb38\uc11c managed-settings, managed-mcp, permissions (2026.10.19 \ud655\uc778)\n\n\uccab \ubc88\uc9f8 \ub370\ubaa8 \uc601\uc0c1\uc785\ub2c8\ub2e4.",
     30: "\u23f8\ufe0f [3.5min] [\uc694\uc57d]\n- \uc601\uc0c1 1\ubd84 11\ucd08, \uc2e4\uc81c \uc2e4\ud589 \ub179\ud654. \uac1c\ubc1c\uc790 \ub2e8\ub9d0 \uc5ed\ud560\uc758 \ucee8\ud14c\uc774\ub108(dev01@5ho-pc)\uc5d0\uc11c \uc2e4\ud589\n- 1: \ub2e8\ub9d0\uc5d0 AWS \uc790\uaca9\uc99d\uba85\uc774 \uc5c6\uc74c (AWS_ \ud658\uacbd\ubcc0\uc218 0\uac1c, ~/.aws \uc5c6\uc74c)\n- 2: root \uc18c\uc720 managed-settings.json: Bedrock \uc0ac\uc6a9, Gateway \uc8fc\uc18c, \ubaa8\ub378, MCP \ud5c8\uc6a9 \ubaa9\ub85d, deny \uaddc\uce59\n- 3: github, \ub85c\uceec npx MCP\ub294 \"not allowed by enterprise policy\", Hub URL\ub9cc \ucd94\uac00\ub428\n- 4: \uac1c\ubc1c\uc790\uac00 ~/.claude/settings.json \uc5d0 curl \ud5c8\uc6a9\uc744 \ub123\uc5b4\ub3c4 \ubb34\uc2dc\ub418\uace0 curl\uc740 \uac70\ubd80(permission_denials)\n- 5, 6: \uace0\uac1d \ub370\uc774\ud130 \ud30c\uc77c \uc77d\uae30\ub294 CLAUDE.md \uaddc\uce59\uc774 \uba3c\uc800 \uac70\uc808, CLAUDE.md \uc5c6\ub294 \ud3f4\ub354\uc5d0\uc11c\ub294 \uad00\ub9ac \uc124\uc815 deny \uaddc\uce59\uc774 Read\ub97c \ub9c9\uc74c\n- \ub9c8\uc9c0\ub9c9\uc5d0 Gateway \uac10\uc0ac \ub85c\uadf8\uc5d0 dev01\uc758 \ud638\ucd9c\uc774 \ub0a8\ub294 \uac83\uae4c\uc9c0\n\nPlay\ub97c \ub204\ub974\uace0 \uc7a5\uba74\ub9c8\ub2e4 \uc9e7\uac8c \uc124\uba85\ud569\ub2c8\ub2e4. \uc601\uc0c1\uc740 \ubb34\uc74c\uc785\ub2c8\ub2e4.\n0:00 \ub2e8\ub9d0\uc5d0\uc11c AWS \uad00\ub828 \ud658\uacbd\ubcc0\uc218\ub97c \uc138\uc5b4 \ubcf4\uba74 0\uac1c, ~/.aws \ud3f4\ub354\ub3c4 \uc5c6\uc2b5\ub2c8\ub2e4. \uc774 \ub2e8\ub9d0\uc740 Bedrock\uc744 \uc9c1\uc811 \ubd80\ub97c \uc218\ub2e8\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.\n0:04 \ud68c\uc0ac\uac00 \ubc30\ud3ec\ud55c \uad00\ub9ac \uc124\uc815\uc785\ub2c8\ub2e4. root \uc18c\uc720\ub77c \uac1c\ubc1c\uc790\uac00 \uace0\uce60 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. Bedrock\uc744 \uc4f0\ub418 \uc8fc\uc18c\ub294 \uc0ac\ub0b4 Gateway, \ubaa8\ub378\uc740 \uc11c\uc6b8 \ub9ac\uc804\uc758 Sonnet 5\ub85c \uace0\uc815\ud588\uace0, MCP\ub294 Hub URL\ub9cc \ud5c8\uc6a9, curl\uacfc \uc6f9 \uc811\uadfc, \uace0\uac1d \ub370\uc774\ud130 \ud3f4\ub354 \uc77d\uae30\ub294 deny\uc785\ub2c8\ub2e4.\n0:18 \uac1c\ubc1c\uc790\uac00 github MCP\uc640 \ub85c\uceec npx MCP\ub97c \ucd94\uac00\ud558\ub824\uace0 \ud558\uba74 \"enterprise policy\ub85c \ud5c8\uc6a9\ub418\uc9c0 \uc54a\uc74c\"\uc774 \ub098\uc635\ub2c8\ub2e4. Hub URL\uc740 \ucd94\uac00\ub429\ub2c8\ub2e4.\n\n0:32 \uac1c\ubc1c\uc790\uac00 \uc790\uae30 \uc124\uc815 \ud30c\uc77c\uc5d0 curl \ud5c8\uc6a9\uc744 \ub123\uace0 curl\uc744 \uc2dc\ucf1c \ubd05\ub2c8\ub2e4. \uc0ac\uc6a9\uc790 \uc124\uc815\uc740 \ubb34\uc2dc\ub418\uace0, Claude\uac00 \uc2dc\ub3c4\ud55c curl \uba85\ub839\uc774 permission_denials\uc5d0 \uadf8\ub300\ub85c \ucc0d\ud799\ub2c8\ub2e4.\n0:48 \uace0\uac1d \ub370\uc774\ud130 \ud30c\uc77c\uc744 \uc77d\uc5b4 \ub2ec\ub77c\uace0 \ud558\uba74, \uc774 \ud504\ub85c\uc81d\ud2b8\uc5d0\uc11c\ub294 CLAUDE.md \uaddc\uce59 \ub54c\ubb38\uc5d0 Claude\uac00 \uba3c\uc800 \uac70\uc808\ud569\ub2c8\ub2e4. 0:59\uc5d0 CLAUDE.md\uac00 \uc5c6\ub294 \ub2e4\ub978 \ud3f4\ub354\uc5d0\uc11c \ub2e4\uc2dc \uc2dc\ud0a4\uba74 \uc774\ubc88\uc5d0\ub294 \uad00\ub9ac \uc124\uc815\uc758 deny \uaddc\uce59\uc774 Read \ub3c4\uad6c \uc790\uccb4\ub97c \ub9c9\uc2b5\ub2c8\ub2e4. \ub450 \uacb9\uc785\ub2c8\ub2e4.\n1:06 \ub9c8\uc9c0\ub9c9\uc740 Gateway \uc6b4\uc601\uc790 \ud654\uba74\uc785\ub2c8\ub2e4. \ubc29\uae08 \ud638\ucd9c\ub4e4\uc774 dev01 \uc774\ub984\uc73c\ub85c \ub0a8\uc558\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: \ub179\ud654 \uc6d0\ubcf8 r1-managed.cast, \ub4dc\ub77c\uc774\ubc84 demo/rec/r1-managed.sh, media/RECORDINGS.md\n\n\uc601\uc0c1\uc5d0\uc11c \ubcf8 \ub0b4\uc6a9\uc744 \ud55c \uc7a5\uc73c\ub85c \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.",
     31: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- V1 \uacb0\uacfc \uc5ec\uc12f \uac00\uc9c0: \uc790\uaca9\uc99d\uba85 \uc5c6\uc74c, root \uc18c\uc720 \uc124\uc815, Hub \uc678 MCP \ucc28\ub2e8, \uc0ac\uc6a9\uc790 allow \ubb34\uc2dc, \uace0\uac1d \ub370\uc774\ud130 \ub450 \uacb9 \ucc28\ub2e8, \uc2e4\uba85 \uac10\uc0ac \ub85c\uadf8\n- \ud55c\uacc4(\uacf5\uc2dd permissions \ubb38\uc11c): Bash deny\ub294 \uba85\ub839 \ubb38\uc790\uc5f4 \uc77c\uce58, Read deny\ub294 \ud558\uc704 \ud504\ub85c\uc138\uc2a4\uac00 \uc9c1\uc811 \uc5ec\ub294 \ud30c\uc77c\uc744 \ubabb \ub9c9\uc74c\n- \ubcf4\uac15: 5\ud638\ub9dd \ubc29\ud654\ubcbd(\ubaa9\uc801\uc9c0\ub294 Gateway\ubfd0), Claude Code sandbox, EDR\n\n\uc601\uc0c1\uc5d0\uc11c \ud655\uc778\ud55c \uac83\uc744 \uc5ec\uc12f \uc7a5 \uce74\ub4dc\ub85c \uc815\ub9ac\ud588\uc2b5\ub2c8\ub2e4. \ud68c\uc0c9 \uae00\uc528\uac00 \uc2e4\uc81c \ud654\uba74\uc5d0 \ub098\uc628 \ucd9c\ub825\uc785\ub2c8\ub2e4.\n\n\ub2e4\ub9cc \ud55c\uacc4\ub3c4 \uc815\uc9c1\ud558\uac8c \ub9d0\uc500\ub4dc\ub824\uc57c \ud569\ub2c8\ub2e4. \uacf5\uc2dd \ubb38\uc11c\uc5d0\ub3c4 \ub098\uc640 \uc788\ub4ef\uc774, Bash deny \uaddc\uce59\uc740 \uba85\ub839 \ubb38\uc790\uc5f4\uc744 \uae30\uc900\uc73c\ub85c \ud558\uae30 \ub54c\ubb38\uc5d0 \uacbd\ub85c\ub97c \ubc14\uafd4 \ubd80\ub974\uba74 \ubabb \ub9c9\uace0, Read deny\ub294 \uc2a4\ud06c\ub9bd\ud2b8\uac00 \uc9c1\uc811 \uc5ec\ub294 \ud30c\uc77c\uae4c\uc9c0 \ub9c9\uc9c0\ub294 \ubabb\ud569\ub2c8\ub2e4. \uadf8\ub798\uc11c \uad00\ub9ac \uc124\uc815\uc740 \uccab \ubc88\uc9f8 \uacb9\uc774\uace0, 5\ud638\ub9dd \ubc29\ud654\ubcbd\ucc98\ub7fc \ub2e8\ub9d0\uc774 \ub098\uac08 \uc218 \uc788\ub294 \ubaa9\uc801\uc9c0\ub97c Gateway \ud558\ub098\ub85c \ubb36\ub294 \uac8c \uc9c4\uc9dc \uacbd\uacc4\uc785\ub2c8\ub2e4. \ud544\uc694\ud558\uba74 Claude Code\uc758 sandbox \uae30\ub2a5\uacfc EDR\ub85c OS \uc218\uc900\uc744 \ubcf4\uac15\ud569\ub2c8\ub2e4.\n\uadfc\uac70: code.claude.com permissions \ubb38\uc11c \"Bash deny rules match the command text\", \"Read deny rules do not block subprocesses\"\n\n\uc774\uc81c \ubaa8\ub378 \ud638\ucd9c \ucabd \uad00\ubb38, LLM Gateway\ub85c \ub118\uc5b4\uac11\ub2c8\ub2e4. \uba3c\uc800 \uc694\uccad \ud55c \uac74\uc774 \uc5b4\ub5bb\uac8c \ud750\ub974\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
-    32: "\u23f8\ufe0f \u23f8\ufe0f [2min] [\uc694\uc57d]\n- \u2460 \ub85c\uadf8\uc778(MFA) \u2461 \ub2e8\uae30 \ud1a0\ud070 \u2462 \ubaa8\ub378 \ud638\ucd9c + \ud1a0\ud070 \u2463 DLP \ud1b5\uacfc \ud6c4 PrivateLink \u2464 \ubaa8\ub378 \ud638\ucd9c \ub85c\uadf8 \u2465 \ub3c4\uad6c \ud638\ucd9c + \ud1a0\ud070 \u2466 Policy \ud5c8\uc6a9 \uc2dc Identity\ub85c \ud638\ucd9c \u2467 \ub3c4\uad6c \ud638\ucd9c \ub85c\uadf8\n- \uc2e0\uc6d0\uc740 AI\uc758 \uc8fc\uc7a5\uc774 \uc544\ub2c8\ub77c \ud1a0\ud070\uc73c\ub85c \ud655\uc778\n- \ubaa8\ub378 \ud638\ucd9c\uacfc \ub3c4\uad6c \ud638\ucd9c\uc774 \uac19\uc740 \uc2e0\uc6d0\uc73c\ub85c \uae30\ub85d\ub428\n\n\uc694\uccad \ud55c \uac74\uc744 \ub530\ub77c\uac00 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \ud558\ub098\uc529 \ub118\uae30\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uac1c\ubc1c\uc790\uac00 AD\ub85c \ub85c\uadf8\uc778\ud574 \ud1a0\ud070\uc744 \ubc1b\uace0, \uadf8 \ud1a0\ud070\uc73c\ub85c \ubaa8\ub378\uc744 \ubd80\ub985\ub2c8\ub2e4. \ubaa8\ub378 \ud638\ucd9c\uc740 Gateway\uc758 DLP\uc640 \ubaa8\ub378 allowlist\ub97c \ud1b5\uacfc\ud574\uc57c Bedrock\uc73c\ub85c \uac00\uace0, \uadf8 \uacb0\uacfc\uac00 5\ubc88 \ub85c\uadf8\ub85c \ub0a8\uc2b5\ub2c8\ub2e4. \ub3c4\uad6c \ud638\ucd9c\uc740 AgentCore Gateway\uac00 Policy\ub85c \ud310\uc815\ud558\uace0 Identity\uac00 \ubcf4\uad00\ud55c \uc790\uaca9\uc99d\uba85\uc73c\ub85c \uc0ac\ub0b4 \uc2dc\uc2a4\ud15c\uc744 \ubd80\ub974\uba70, 8\ubc88 \ub85c\uadf8\ub85c \ub0a8\uc2b5\ub2c8\ub2e4.\n\n\ub450 \ud638\ucd9c\uc774 \uac19\uc740 \uc2e0\uc6d0\uc73c\ub85c \ub0a8\uae30 \ub54c\ubb38\uc5d0, \uae08\ubcf4\uc6d0\uc774 \"\uc774 \ucf54\ub4dc \ubcc0\uacbd\uc740 \ub204\uac00 \uc5b4\ub5a4 \ud504\ub86c\ud504\ud2b8\ub85c \ub9cc\ub4e4\uc5c8\ub0d0\"\uace0 \ubb3c\uc744 \ub54c \ud55c \uc904\ub85c \uc774\uc5b4\uc11c \ub2f5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. 3, 4, 5\ubc88\uc744 \ubc14\ub85c \ub2e4\uc74c \ub370\ubaa8\uc5d0\uc11c \uc2e4\uc81c\ub85c \ubcf4\uc5ec \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uadf8 \uc804\uc5d0 Gateway\uac00 Claude Code\uc640 Codex\ub97c \uc5b4\ub5bb\uac8c \uac19\uc774 \ubc1b\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    32: "\u23f8\ufe0f \u23f8\ufe0f [2min] [\uc694\uc57d]\n- \u2460 \ub85c\uadf8\uc778(MFA) \u2461 \ub2e8\uae30 \ud1a0\ud070 \u2462 \ubaa8\ub378 \ud638\ucd9c + \ud1a0\ud070 \u2463 DLP \ud1b5\uacfc \ud6c4 PrivateLink \u2464 \ubaa8\ub378 \ud638\ucd9c \ub85c\uadf8 \u2465 \ub3c4\uad6c \ud638\ucd9c + \ud1a0\ud070 \u2466 Policy \ud5c8\uc6a9 \uc2dc Identity\ub85c \ud638\ucd9c \u2467 \ub3c4\uad6c \ud638\ucd9c \ub85c\uadf8\n- \uc2e0\uc6d0\uc740 AI\uc758 \uc8fc\uc7a5\uc774 \uc544\ub2c8\ub77c \ud1a0\ud070\uc73c\ub85c \ud655\uc778\n- \ubaa8\ub378 \ud638\ucd9c\uacfc \ub3c4\uad6c \ud638\ucd9c\uc774 \uac19\uc740 \uc2e0\uc6d0\uc73c\ub85c \uae30\ub85d\ub428\n\n\uc694\uccad \ud55c \uac74\uc744 \ub530\ub77c\uac00 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \uc544\ub798 \ubc29\ud5a5\ud0a4\ub85c \ub118\uae38 \ub54c\ub9c8\ub2e4 \ud654\uc0b4\ud45c\uac00 \uadf8\ub824\uc9c0\uace0 \uc694\uccad\uc774 \ub808\uc778 \uc0ac\uc774\ub97c \uc774\ub3d9\ud569\ub2c8\ub2e4.\n\n\uac1c\ubc1c\uc790\uac00 AD\ub85c \ub85c\uadf8\uc778\ud574 \ud1a0\ud070\uc744 \ubc1b\uace0, \uadf8 \ud1a0\ud070\uc73c\ub85c \ubaa8\ub378\uc744 \ubd80\ub985\ub2c8\ub2e4. \ubaa8\ub378 \ud638\ucd9c\uc740 Gateway\uc758 DLP\uc640 \ubaa8\ub378 allowlist\ub97c \ud1b5\uacfc\ud574\uc57c Bedrock\uc73c\ub85c \uac00\uace0, \uadf8 \uacb0\uacfc\uac00 5\ubc88 \ub85c\uadf8\ub85c \ub0a8\uc2b5\ub2c8\ub2e4. \ub3c4\uad6c \ud638\ucd9c\uc740 AgentCore Gateway\uac00 Policy\ub85c \ud310\uc815\ud558\uace0 Identity\uac00 \ubcf4\uad00\ud55c \uc790\uaca9\uc99d\uba85\uc73c\ub85c \uc0ac\ub0b4 \uc2dc\uc2a4\ud15c\uc744 \ubd80\ub974\uba70, 8\ubc88 \ub85c\uadf8\ub85c \ub0a8\uc2b5\ub2c8\ub2e4.\n\n\ub450 \ud638\ucd9c\uc774 \uac19\uc740 \uc2e0\uc6d0\uc73c\ub85c \ub0a8\uae30 \ub54c\ubb38\uc5d0, \uae08\ubcf4\uc6d0\uc774 \"\uc774 \ucf54\ub4dc \ubcc0\uacbd\uc740 \ub204\uac00 \uc5b4\ub5a4 \ud504\ub86c\ud504\ud2b8\ub85c \ub9cc\ub4e4\uc5c8\ub0d0\"\uace0 \ubb3c\uc744 \ub54c \ud55c \uc904\ub85c \uc774\uc5b4\uc11c \ub2f5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. 3, 4, 5\ubc88\uc744 \ubc14\ub85c \ub2e4\uc74c \ub370\ubaa8\uc5d0\uc11c \uc2e4\uc81c\ub85c \ubcf4\uc5ec \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uadf8 \uc804\uc5d0 Gateway\uac00 Claude Code\uc640 Codex\ub97c \uc5b4\ub5bb\uac8c \uac19\uc774 \ubc1b\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     33: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- Gateway\uac00 \ub450 API(Bedrock InvokeModel \uacbd\ub85c, OpenAI \ud638\ud658)\ub97c \uc5f4\uace0, \uc778\uc99d, DLP, \ub85c\uae45, Quota\ub294 \uacf5\ud1b5\n- Claude Code: CLAUDE_CODE_USE_BEDROCK=1 + ANTHROPIC_BEDROCK_BASE_URL(Gateway) + CLAUDE_CODE_SKIP_BEDROCK_AUTH=1 + ANTHROPIC_AUTH_TOKEN(Gateway \ud1a0\ud070). \uacf5\uc2dd LLM gateway \ubb38\uc11c\uc640 \ub370\ubaa8\ub85c \ud655\uc778\n- \ubaa8\ub378 \ud604\ud669(2026.10.19 AWS \uc11c\uc6b8 \ub9ac\uc804 \uc870\ud68c): Claude Sonnet 5 in-region, Opus 5.5, Sonnet 5.5 global. OpenAI GPT-6 Astra, GPT-6.1 Sol \ub4f1\uc740 global \ud504\ub85c\ud30c\uc77c\ub9cc\n- Codex\ub294 CRIS \uc804\uc81c \u2192 \uad6d\uc678 \ucc98\ub9ac \uace0\uc9c0\n\nClaude Code\uc640 Codex\ub97c \uac19\uc774 \ubc1b\ub294 \uad6c\uc870\uc785\ub2c8\ub2e4. Gateway\uac00 \ub450 \uac00\uc9c0 API\ub97c \uc5f4\uc5b4 \ub450\uace0, \uadf8 \ub4a4\uc758 \uc778\uc99d, DLP, \ub85c\uae45, \ud55c\ub3c4\ub294 \uacf5\ud1b5\uc785\ub2c8\ub2e4. \ub3c4\uad6c\ub97c \ubc14\uafd4\ub3c4 \ubcf4\uc548\ub300\ucc45\uc744 \ub2e4\uc2dc \uc124\uacc4\ud560 \ud544\uc694\uac00 \uc5c6\ub2e4\ub294 \uac8c \ud575\uc2ec\uc785\ub2c8\ub2e4.\n\nClaude Code\ub294 Bedrock \ubaa8\ub4dc\ub85c \ub450\ub418 \uc8fc\uc18c\ub9cc \uc0ac\ub0b4 Gateway\ub85c \ubc14\uafb8\uace0, AWS \uc11c\uba85\uc740 \ub044\uace0, Gateway \ud1a0\ud070\ub9cc \ub4e4\uace0 \uac11\ub2c8\ub2e4. Gateway\uac00 \ubc1b\uc740 \uc694\uccad\uc744 \uc790\uae30 \uc5ed\ud560\ub85c \ub2e4\uc2dc \uc11c\uba85\ud574\uc11c Bedrock\uc5d0 \ubcf4\ub0c5\ub2c8\ub2e4. \uc624\ub298 \uc544\uce68 \uc11c\uc6b8 \ub9ac\uc804\uc5d0\uc11c \uc9c1\uc811 \uc870\ud68c\ud55c \uc0c1\ud669\uc740, Claude Sonnet 5\ub294 \uc11c\uc6b8 \uc548\uc5d0\uc11c \ubc14\ub85c \ub418\uace0, Opus 5.5\uc640 Sonnet 5.5\ub294 global CRIS\uc785\ub2c8\ub2e4. OpenAI \ubaa8\ub378\uc740 \uc11c\uc6b8 in-region\uc774 \uc5c6\uc5b4\uc11c Codex\ub294 CRIS\uac00 \uc804\uc81c\uc785\ub2c8\ub2e4.\n\uadfc\uac70: code.claude.com LLM gateway, Amazon Bedrock \ubb38\uc11c. aws bedrock list-foundation-models, list-inference-profiles (ap-northeast-2, 2026.10.19)\n\n\uc774 Gateway\ub97c \uc2e4\uc81c\ub85c \ub9cc\ub4e4\uc5b4\uc11c \ub3cc\ub824 \ubd24\uc2b5\ub2c8\ub2e4. \ub450 \ubc88\uc9f8 \ub370\ubaa8\uc785\ub2c8\ub2e4.",
     34: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- \uc601\uc0c1 33\ucd08. \ub2e8\ub9d0 \u2192 \ub370\ubaa8 LLM Gateway \u2192 \uc11c\uc6b8 \ub9ac\uc804 Bedrock(anthropic.claude-sonnet-5)\n- 1 \uc815\uc0c1 \uc694\uccad: ALLOW, \uc785\ub825 28,950 \ud1a0\ud070(Claude Code \uc2dc\uc2a4\ud15c \ud504\ub86c\ud504\ud2b8 \ud3ec\ud568), \ucd9c\ub825 87 \ud1a0\ud070\n- 2 \uc8fc\ubbfc\ub4f1\ub85d\ubc88\ud638 \ud328\ud134: Bedrock \uc804\uc1a1 \uc804 \ucc28\ub2e8, \ub85c\uadf8\uc5d0\ub294 \uc55e 4\uc790\ub9ac\ub9cc \ub0a8\uae30\uace0 \ub9c8\uc2a4\ud0b9\n- 3 global.anthropic.claude-opus-5-5 \uc694\uccad: \uc2b9\uc778\ub418\uc9c0 \uc54a\uc740 \ubaa8\ub378\ub85c \uac70\ubd80\n- 4 \uc798\ubabb\ub41c \ud1a0\ud070: \ud638\ucd9c \uc790\uccb4 \ubd88\uac00\n- 5 \uc6b4\uc601\uc790 \uc9d1\uacc4: \uc0ac\uc6a9\uc790\ubcc4, \ud310\uc815\ubcc4 \ud638\ucd9c \uc218\n- Claude Code\ub294 \uac70\ubd80 \uc751\ub2f5\uc744 \ud55c \ubc88 \uc7ac\uc2dc\ub3c4\ud558\ubbc0\ub85c BLOCK\uc774 \ud504\ub86c\ud504\ud2b8\ub2f9 2\uac74\uc529 \uae30\ub85d\ub428\n\nPlay\ub97c \ub204\ub974\uace0 \ub530\ub77c\uac00\uaca0\uc2b5\ub2c8\ub2e4.\n0:00 \uc815\uc0c1 \uc694\uccad\uc785\ub2c8\ub2e4. Claude Code\uac00 \ub2f5\uc744 \uc8fc\uace0, \ubc14\ub85c \uc544\ub798 Gateway \uac10\uc0ac \ub85c\uadf8\uc5d0 dev01, \uc11c\uc6b8 \ub9ac\uc804 Sonnet 5, ALLOW, \ud1a0\ud070 \uc218\uac00 \ucc0d\ud799\ub2c8\ub2e4. \uc785\ub825\uc774 2\ub9cc 9\ucc9c \ud1a0\ud070\uc778 \uac74 Claude Code\uc758 \uc2dc\uc2a4\ud15c \ud504\ub86c\ud504\ud2b8\uc640 \ub3c4\uad6c \uc815\uc758\uac00 \ud568\uaed8 \uac00\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4.\n0:09 \ud504\ub86c\ud504\ud2b8\uc5d0 \uc8fc\ubbfc\ub4f1\ub85d\ubc88\ud638\ub97c \ub123\uc73c\uba74, Gateway DLP\uac00 Bedrock\uc73c\ub85c \ubcf4\ub0b4\uae30 \uc804\uc5d0 \ub9c9\uc2b5\ub2c8\ub2e4. \uac1c\ubc1c\uc790 \ud654\uba74\uc5d0\ub294 \uc774\uc720\uac00 \ubc14\ub85c \ub098\uc624\uace0, \ub85c\uadf8\uc5d0\ub294 \ubc88\ud638\ub97c \ub9c8\uc2a4\ud0b9\ud574\uc11c \ub0a8\uae41\ub2c8\ub2e4.\n\n0:16 \uac1c\ubc1c\uc790\uac00 \uc2b9\uc778\ub418\uc9c0 \uc54a\uc740 Opus 5.5 global \ud504\ub85c\ud30c\uc77c\uc744 \uc9c0\uc815\ud558\uba74 Gateway\uac00 \uac70\ubd80\ud569\ub2c8\ub2e4. \uc55e\uc5d0\uc11c \ubcf8 SCP, \uc5d4\ub4dc\ud3ec\uc778\ud2b8 \uc815\ucc45\uacfc \ud568\uaed8 \ubaa8\ub378 allowlist\uc758 \uc138 \uacb9 \uc911 \ud55c \uacb9\uc785\ub2c8\ub2e4.\n0:23 \ud1a0\ud070\uc774 \ud2c0\ub9ac\uba74 \ud638\ucd9c \uc790\uccb4\uac00 \uc548 \ub429\ub2c8\ub2e4.\n0:27 \ub9c8\uc9c0\ub9c9\uc740 \uc6b4\uc601\uc790 \uc9d1\uacc4\uc785\ub2c8\ub2e4. \uc0ac\uc6a9\uc790\ubcc4, \ud310\uc815\ubcc4\ub85c \uba87 \ubc88 \ud638\ucd9c\ud588\ub294\uc9c0\uac00 \ubc14\ub85c \ub098\uc635\ub2c8\ub2e4. \ucc28\ub2e8 \uac74\uc774 \ub450 \uac1c\uc529 \ucc0d\ud78c \uac74 Claude Code\uac00 \uac70\ubd80 \uc751\ub2f5\uc744 \ud55c \ubc88 \uc7ac\uc2dc\ub3c4\ud558\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4.\n\uadfc\uac70: \ub179\ud654 \uc6d0\ubcf8 r2-gateway.cast, \uac10\uc0ac \ub85c\uadf8 r2-audit.jsonl, Gateway \uc18c\uc2a4 demo/gateway/gateway.py\n\n\uc774 \ub85c\uadf8\uac00 \uc2e4\uc81c\ub85c \uc5b4\ub5bb\uac8c \uc0dd\uacbc\ub294\uc9c0 \ud55c \uc7a5\uc73c\ub85c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     35: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- V2 \uac10\uc0ac \ub85c\uadf8 \uc2e4\uc81c \uac12(r2-audit.jsonl, \uc7ac\uc2dc\ub3c4 \uc911\ubcf5 \uc81c\uac70)\n- \uceec\ub7fc: \uc2dc\uac01, \uc0ac\uc6a9\uc790, \ubaa8\ub378, \ud310\uc815, \uc0ac\uc720, \ud1a0\ud070\n- \uae08\ubcf4\uc6d0 \uc810\uac80 \uc9c8\ubb38 \uc138 \uac00\uc9c0\uc5d0 \ubc14\ub85c \ub2f5: \ub204\uac00 \uc5b8\uc81c \uc5b4\ub5a4 \ubaa8\ub378\uc5d0, DLP\uac00 \ubb34\uc5c7\uc744 \ub9c9\uc558\ub098, \uc5bc\ub9c8\ub098 \uc37c\ub098\n- \uc6b4\uc601 \ud658\uacbd: Log Archive + Invocation Logging + CloudTrail + SIEM\n\n\ubc29\uae08 \uc601\uc0c1\uc758 \uac10\uc0ac \ub85c\uadf8\ub97c \ud45c\ub85c \uc62e\uacbc\uc2b5\ub2c8\ub2e4. \uc7ac\uc2dc\ub3c4\ub85c \uc0dd\uae34 \uc911\ubcf5\ub9cc \ube7c\uace0 \uc2e4\uc81c \uac12 \uadf8\ub300\ub85c\uc785\ub2c8\ub2e4.\n\n\ucd08\ub85d \ud55c \uc904, \ube68\uac04 \uc138 \uc904\uc785\ub2c8\ub2e4. \uc774 \ud45c\ub9cc\uc73c\ub85c \uae08\ubcf4\uc6d0 \uc810\uac80\uc5d0\uc11c \uc790\uc8fc \ub098\uc624\ub294 \uc9c8\ubb38, \ub204\uac00 \uc5b8\uc81c \uc5b4\ub5a4 \ubaa8\ub378\uc5d0 \ubcf4\ub0c8\ub294\uc9c0, DLP\uac00 \ubb34\uc5c7\uc744 \ub9c9\uc558\ub294\uc9c0, \uc5bc\ub9c8\ub098 \uc37c\ub294\uc9c0\uc5d0 \ub2f5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. DLP \ucc28\ub2e8 \uac74\uc740 \uc6d0\ubb38\uc744 \ub0a8\uae30\uc9c0 \uc54a\uace0 \ub9c8\uc2a4\ud0b9\ud55c \uc0d8\ud50c\ub9cc \ub0a8\uae34\ub2e4\ub294 \uac83\ub3c4 \uc911\uc694\ud569\ub2c8\ub2e4. \ub85c\uadf8 \uc790\uccb4\uac00 \uac1c\uc778\uc815\ubcf4 \uc800\uc7a5\uc18c\uac00 \ub418\uba74 \uc548 \ub418\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4.\n\n\ub2e4\uc74c\uc740 Claude Code\uac00 \uc0ac\ub0b4 \uaddc\uce59\uc744 \uc54c\uace0 \ucf54\ub4dc\ub97c \uc4f0\uac8c \ub9cc\ub4dc\ub294 \uc9c0\uc2dd \uacc4\uce35\uc785\ub2c8\ub2e4.",
@@ -1843,7 +2392,7 @@ window.addEventListener('hashchange', function () {
     39: "[0.5min] [\uc694\uc57d]\n- 4\ubd80: \uace0\uac1d \uc9c8\ubb38 2-1(\uc628\ud504\ub818 \ube44\uad50), 2-2(\ub2e8\uc77c \ucee8\ud2b8\ub864 \uc13c\ud130), 2-3(\uad50\uccb4 \uac00\ub2a5\uc131)\n- \uc774\uc5b4\uc11c \uac10\uc0ac \ucd94\uc801, \ube44\uc6a9, \ud558\ub124\uc2a4\uc640 \ub370\ubaa8 V3, \uad8c\uc7a5 \ub3c4\uc785 \uacbd\ub85c, \ud655\uc778 \ud544\uc694 \uc0ac\ud56d\n\n\ub9c8\uc9c0\ub9c9 4\ubd80\uc785\ub2c8\ub2e4. \uc628\ud504\ub818\uacfc \ube44\uad50\ud558\uace0, \ud1b5\uc81c\uba74\uc744 \uc5b4\ub5bb\uac8c \ud558\ub098\ub85c \ub458\uc9c0, \uadf8\ub9ac\uace0 Claude Code\uac00 \uc0ac\ub0b4 \ud45c\uc900\ub300\ub85c \uc77c\ud558\uac8c \ub9cc\ub4dc\ub294 \ud558\ub124\uc2a4\ub97c \ub370\ubaa8\uc640 \ud568\uaed8 \ubcf4\uace0, \uad8c\uc7a5 \ub3c4\uc785 \uacbd\ub85c\ub85c \ub9c8\ubb34\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uba3c\uc800 \uc138 \uac00\uc9c0 \uad6c\ucd95 \ubc29\uc548\uc785\ub2c8\ub2e4.",
     40: "\u23f8\ufe0f \ud83c\udfac [2min] [\uc694\uc57d]\n- \uace0\uac1d \uc9c8\ubb38 2-1: \uc628\ud504\ub818 vs 5\ud638\ub9dd \ud601\uc2e0\uae08\uc735 vs \uc5f0\uad6c\uac1c\ubc1c\ub9dd\n- \uc628\ud504\ub818: \uaddc\uc81c\ub294 \uc27d\uc9c0\ub9cc \ucf54\ub529 \ud488\uc9c8(\uc624\ud508\ubaa8\ub378)\uacfc GPU, \uc778\ub825 \ubd80\ub2f4\n- 5\ud638\ub9dd \ud601\uc2e0\uae08\uc735: \ubcf8 \ud2b8\ub799. \ucd5c\uc2e0 \ubaa8\ub378, \uc0ac\uc6a9\ub7c9 \uacfc\uae08, \uc9c0\uc815 \ubc94\uc704 \ub0b4 \uc6b4\uc601\uacc4 \uc5f0\uacc4\n- \uc5f0\uad6c\uac1c\ubc1c\ub9dd: \ub300\uc548\uc774\uc9c0\ub9cc \uc778\ud504\ub77c \ubcc4\ub3c4 \uad6c\ucd95\n- \uc628\ud504\ub818 \ubaa8\ub378\uc740 Gateway \ub4a4 \ubc31\uc5c5 \uacbd\ub85c\ub85c\n\n\uc138 \uac00\uc9c0 \uad6c\ucd95 \ubc29\uc548\uc785\ub2c8\ub2e4. \ubc84\ud2bc\uc73c\ub85c \uc5f4\uc744 \ud558\ub098\uc529 \ube44\uad50\ud574 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uc628\ud504\ub818\uc740 \uaddc\uc81c\ub294 \uac00\uc7a5 \uc27d\uc9c0\ub9cc, \ucf54\ub529 \uc5d0\uc774\uc804\ud2b8\ub294 \ubaa8\ub378 \uc131\ub2a5\uc774 \uace7 \uc0dd\uc0b0\uc131\uc774\ub77c \uc624\ud508\ubaa8\ub378\uc758 \ud55c\uacc4\uac00 \uadf8\ub300\ub85c \uc0dd\uc0b0\uc131 \ud55c\uacc4\uac00 \ub429\ub2c8\ub2e4. GPU\uc640 \uc804\ub825, \uc6b4\uc601 \uc778\ub825\ub3c4 \ub4e4\uc5b4\uac11\ub2c8\ub2e4. \uc800\ud76c \uad8c\uace0\ub294 5\ud638\ub9dd \ud601\uc2e0\uae08\uc735\uc785\ub2c8\ub2e4. \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \ub300\uc548\uc774\uc9c0\ub9cc \uc778\ud504\ub77c\ub97c \uacf5\uc720\ud560 \uc218 \uc5c6\uc5b4 \ud55c \ubc8c\uc744 \uc0c8\ub85c \ub9cc\ub4e4\uc5b4\uc57c \ud569\ub2c8\ub2e4.\n\n\uc628\ud504\ub818 \ubaa8\ub378\uc744 \ubc84\ub9ac\ub77c\ub294 \ub73b\uc740 \uc544\ub2d9\ub2c8\ub2e4. Gateway \ub4a4\uc5d0 \ubc31\uc5c5 \uacbd\ub85c\ub85c \ubd99\uc774\uba74, \uac19\uc740 \ud1b5\uc81c\uba74 \uc548\uc5d0\uc11c \ud568\uaed8 \uc6b4\uc601\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\n\uadf8 \"\uac19\uc740 \ud1b5\uc81c\uba74\"\uc774 \uc65c \uc911\uc694\ud55c\uc9c0, \uad50\uccb4 \uac00\ub2a5\uc131 \uad00\uc810\uc5d0\uc11c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     41: "\u23f8\ufe0f \ud83c\udfac [1.5min] [\uc694\uc57d]\n- \uace0\uac1d \uc9c8\ubb38 2-3: Agent\uc640 Framework\uac00 \ubc14\ub00c\uc5b4\ub3c4 \ubc84\ud2f0\ub294 \uc124\uacc4\n- \ub124 \uce35: \ud074\ub77c\uc774\uc5b8\ud2b8(\uad50\uccb4), \ud504\ub85c\ud1a0\ucf5c(\ud45c\uc900), \ud1b5\uc81c\uba74(\uace0\uc815), \ubaa8\ub378\uacfc \ub7f0\ud0c0\uc784(\uad50\uccb4)\n- \ubaa8\ub378 \uad50\uccb4\ub294 2026.04 \uac04\uc18c\ud654 \uc808\ucc28, \ud504\ub808\uc784\uc6cc\ud06c\ub294 AgentCore Runtime\uc774 \ubb34\uad00\ud558\uac8c \uc2e4\ud589\n- \ubcf4\uc548\ub300\ucc45 \ud3c9\uac00\uc758 \ub300\uc0c1\uc740 \ud1b5\uc81c\uba74 \u2192 \ud1b5\uc81c\uba74\uc744 \uace0\uc815\ud558\uba74 \ub3c4\uad6c \uad50\uccb4 \ub54c \uc7ac\ud3c9\uac00 \ubd80\ub2f4\uc774 \uc904\uc5b4\ub4e6\n\n\ub3c4\uad6c\ub098 \ud504\ub808\uc784\uc6cc\ud06c\uac00 \ubc14\ub00c\ub294 \uac74 \uc2dc\uac04\ubb38\uc81c\uc785\ub2c8\ub2e4. \uadf8\ub798\uc11c \ub124 \uce35\uc73c\ub85c \ub098\ub234\uc2b5\ub2c8\ub2e4. \uce35\uc744 \ub20c\ub7ec \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uc704\uc758 \ud074\ub77c\uc774\uc5b8\ud2b8\uc640 \uc544\ub798\uc758 \ubaa8\ub378\uc740 \ubc14\ub00c\uc5b4\ub3c4 \ub418\uace0, \uac00\uc6b4\ub370 \uac15\uc870\ud55c \ud1b5\uc81c\uba74\ub9cc \uace0\uc815\ud569\ub2c8\ub2e4. \ubaa8\ub378 \uad50\uccb4\ub294 \uc62c\ud574 \uac04\uc18c\ud654\ub41c \uc808\ucc28\ub85c \ucc98\ub9ac\ud560 \uc218 \uc788\uace0, \ud504\ub808\uc784\uc6cc\ud06c\ub294 AgentCore Runtime\uc774 \uac00\ub9ac\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\n\ubca4\ub354 \uc885\uc18d\uc740 \ubaa8\ub378\uc774 \uc544\ub2c8\ub77c \ud1b5\uc81c\uba74\uc5d0\uc11c \uc0dd\uae41\ub2c8\ub2e4. \ud1b5\uc81c\uba74\uc744 \ud2b9\uc815 \ud074\ub77c\uc774\uc5b8\ud2b8\uc5d0 \ubb36\uc9c0 \uc54a\uace0 \ud45c\uc900 \uc704\uc5d0 \ub450\uba74, \ub0b4\uc77c \ub2e4\ub978 \ucf54\ub529 \ub3c4\uad6c\uac00 \ub098\uc640\ub3c4 \uad00\ub9ac \uc124\uc815\ub9cc \ub2e4\uc2dc \ubc30\ud3ec\ud558\uba74 \ub429\ub2c8\ub2e4.\n\n\uadf8 \ud1b5\uc81c\uba74\uc744 \ud55c \uacf3\uc5d0\uc11c \uad00\ub9ac\ud558\ub294 \ub2e8\uc77c \ucee8\ud2b8\ub864 \uc13c\ud130\ub97c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
-    42: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- \uace0\uac1d \uc9c8\ubb38 2-2: \ub2e8\uc77c \ucee8\ud2b8\ub864 \uc13c\ud130\n- \ud1b5\uc81c\uba74\uc740 AI Platform \uacc4\uc815 \ud558\ub098: IdP, Gateway \uc815\ucc45, Hub \ub4f1\ub85d, \ubaa8\ub378 allowlist, Quota, \ub85c\uadf8\n- \uc2e4\ud589\uba74: 5\ud638\ub9dd \ucf54\ub529 \uc5d0\uc774\uc804\ud2b8, \uc0c1\uc6a9 AI \ud504\ub85c\uc81d\ud2b8, \ucee8\ud14d\uc2a4\ud2b8 \uacc4\uce35, (\ud5a5\ud6c4) \uacc4\uc5f4\uc0ac\n- \ub124 \uc9c8\ubb38(\ub204\uac00, \ubb34\uc5c7\uc744, \uc5bc\ub9c8\ub098, \uae30\ub85d)\uc744 \ud55c \uacf3\uc5d0\uc11c. \uc815\ubcf4\ubcf4\ud638\uc704\uc6d0\ud68c \ubcf4\uace0 \uc790\ub8cc\ub3c4 \ud55c \uacf3\uc5d0\uc11c \ub098\uc634\n- \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \ubd99\uc77c \uc218 \uc5c6\uc74c\n\n\ub2e8\uc77c \ucee8\ud2b8\ub864 \uc13c\ud130 \uc9c8\ubb38\uc5d0 \ub300\ud55c \ub2f5\uc785\ub2c8\ub2e4. \ud1b5\uc81c\uba74\uc740 AI Platform \uacc4\uc815 \ud558\ub098\uc5d0 \ub450\uace0, 5\ud638\ub9dd \ucf54\ub529 \uc5d0\uc774\uc804\ud2b8\uc640 \uc0c1\uc6a9 \ud504\ub85c\uc81d\ud2b8, \ucee8\ud14d\uc2a4\ud2b8 \uacc4\uce35\uc774 \uc2e4\ud589\uba74\uc73c\ub85c \ubd99\uc2b5\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd \ud45c\ucc98\ub7fc \ub204\uac00, \ubb34\uc5c7\uc744, \uc5bc\ub9c8\ub098, \uae30\ub85d, \ub124 \uac00\uc9c0\ub97c \ud55c \uacf3\uc5d0\uc11c \ubd05\ub2c8\ub2e4. \uc815\ubcf4\ubcf4\ud638\uc704\uc6d0\ud68c \ubcf4\uace0 \uc790\ub8cc\ub3c4 \uc5ec\uae30\uc11c \ub098\uc635\ub2c8\ub2e4. \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \ub9dd\ubd84\ub9ac \ub54c\ubb38\uc5d0 \uc5ec\uae30\uc5d0 \ubd99\uc77c \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \uadf8\ub8f9 \uacc4\uc5f4\uc0ac\uae4c\uc9c0 \ub113\ud790\uc9c0\ub294 \uadf8\ub8f9\uc5d0\uc11c \uc815\ud558\uc2e4 \ubd80\ubd84\uc774\ub77c \ud655\uc7a5 \uac00\ub2a5\ud558\ub2e4\ub294 \uc815\ub3c4\ub85c \ub9d0\uc500\ub4dc\ub9bd\ub2c8\ub2e4.\n\n\"\uae30\ub85d\"\uc744 \uc870\uae08 \ub354 \uad6c\uccb4\uc801\uc73c\ub85c, \uae08\ubcf4\uc6d0 \uc810\uac80 \uc9c8\ubb38 \uae30\uc900\uc73c\ub85c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    42: "\u23f8\ufe0f \ud83c\udfac [1.5min] [\uc694\uc57d]\n- \uace0\uac1d \uc9c8\ubb38 2-2: \ub2e8\uc77c \ucee8\ud2b8\ub864 \uc13c\ud130\n- \ud1b5\uc81c\uba74\uc740 AI Platform \uacc4\uc815 \ud558\ub098: IdP, Gateway \uc815\ucc45, Hub \ub4f1\ub85d, \ubaa8\ub378 allowlist, Quota, \ub85c\uadf8\n- \uc2e4\ud589\uba74: 5\ud638\ub9dd \ucf54\ub529 \uc5d0\uc774\uc804\ud2b8, \uc0c1\uc6a9 AI \ud504\ub85c\uc81d\ud2b8, \ucee8\ud14d\uc2a4\ud2b8 \uacc4\uce35, (\ud5a5\ud6c4) \uacc4\uc5f4\uc0ac\n- \ub124 \uc9c8\ubb38(\ub204\uac00, \ubb34\uc5c7\uc744, \uc5bc\ub9c8\ub098, \uae30\ub85d)\uc744 \ud55c \uacf3\uc5d0\uc11c. \uc815\ubcf4\ubcf4\ud638\uc704\uc6d0\ud68c \ubcf4\uace0 \uc790\ub8cc\ub3c4 \ud55c \uacf3\uc5d0\uc11c \ub098\uc634\n- \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \ubd99\uc77c \uc218 \uc5c6\uc74c\n\n\ub2e8\uc77c \ucee8\ud2b8\ub864 \uc13c\ud130 \uc9c8\ubb38\uc5d0 \ub300\ud55c \ub2f5\uc785\ub2c8\ub2e4. \ud1b5\uc81c\uba74\uc740 AI Platform \uacc4\uc815 \ud558\ub098\uc5d0 \ub450\uace0, 5\ud638\ub9dd \ucf54\ub529 \uc5d0\uc774\uc804\ud2b8\uc640 \uc0c1\uc6a9 \ud504\ub85c\uc81d\ud2b8, \ucee8\ud14d\uc2a4\ud2b8 \uacc4\uce35\uc774 \uc2e4\ud589\uba74\uc73c\ub85c \ubd99\uc2b5\ub2c8\ub2e4.\n\n\uc2e4\ud589\uba74\uc744 \ub744\uc6b4 \ub4a4 \"\uc815\ucc45 \ud55c \ubc88 \ubc14\uafb8\uae30\"\ub97c \ub204\ub974\uaca0\uc2b5\ub2c8\ub2e4. Gateway \uc815\ucc45\uc744 \ud55c \ubc88 \ubc14\uafb8\uba74 \uc138 \uc2e4\ud589\uba74\uc5d0 \uac19\uc774 \uc801\uc6a9\ub418\uace0, \uc801\uc6a9 \uacb0\uacfc\uc640 \ud638\ucd9c \ub85c\uadf8\uac00 \uac19\uc740 \ub300\uc2dc\ubcf4\ub4dc\ub85c \ub3cc\uc544\uc635\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd \ud45c\ucc98\ub7fc \ub204\uac00, \ubb34\uc5c7\uc744, \uc5bc\ub9c8\ub098, \uae30\ub85d, \ub124 \uac00\uc9c0\ub97c \ud55c \uacf3\uc5d0\uc11c \ubd05\ub2c8\ub2e4. \uc815\ubcf4\ubcf4\ud638\uc704\uc6d0\ud68c \ubcf4\uace0 \uc790\ub8cc\ub3c4 \uc5ec\uae30\uc11c \ub098\uc635\ub2c8\ub2e4. \uc5f0\uad6c\uac1c\ubc1c\ub9dd\uc740 \ub9dd\ubd84\ub9ac \ub54c\ubb38\uc5d0 \uc5ec\uae30\uc5d0 \ubd99\uc77c \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \uadf8\ub8f9 \uacc4\uc5f4\uc0ac\uae4c\uc9c0 \ub113\ud790\uc9c0\ub294 \uadf8\ub8f9\uc5d0\uc11c \uc815\ud558\uc2e4 \ubd80\ubd84\uc774\ub77c \ud655\uc7a5 \uac00\ub2a5\ud558\ub2e4\ub294 \uc815\ub3c4\ub85c \ub9d0\uc500\ub4dc\ub9bd\ub2c8\ub2e4.\n\n\"\uae30\ub85d\"\uc744 \uc870\uae08 \ub354 \uad6c\uccb4\uc801\uc73c\ub85c, \uae08\ubcf4\uc6d0 \uc810\uac80 \uc9c8\ubb38 \uae30\uc900\uc73c\ub85c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     43: "\u23f8\ufe0f \ud83c\udfac [1.5min] [\uc694\uc57d]\n- \ub85c\uadf8 \uc18c\uc2a4 \ub124 \uac1c: Gateway \ub85c\uadf8, Bedrock Invocation Logging, AgentCore Observability, CloudTrail + Config\n- \ubaa8\ub450 Log Archive(S3 Object Lock, KMS)\uc5d0 \ubcc0\uacbd \ubd88\uac00 \uc0c1\ud0dc\ub85c \ubaa8\uc774\uace0 SIEM, Security Lake\ub85c \uc5f0\ub3d9\n- \uc9c8\ubb38\ubcc4 \ub85c\uadf8 \uc18c\uc2a4\ub97c \ubbf8\ub9ac \uc815\ud574 \ub450\ub294 \uac83\uc774 \uc774\ud589\uc810\uac80 \uc900\ube44\uc758 \ud575\uc2ec\n- \ubcf4\uad00 1\ub144 \uc774\uc0c1 \uae30\ubcf8, \ubd80\uac00\uc870\uac74 \ubcf4\uad00 \uae30\uac04\uc740 \ud655\uc778 \ud544\uc694\n\n\uac10\uc0ac \ucd94\uc801\uc785\ub2c8\ub2e4. \uc67c\ucabd\uc758 \uae08\ubcf4\uc6d0 \uc810\uac80 \uc9c8\ubb38\uc744 \ud558\ub098\uc529 \ub20c\ub7ec \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\"\ub204\uac00 \uc5b4\ub5a4 \ubaa8\ub378\uc5d0 \ubb34\uc5c7\uc744 \ubcf4\ub0c8\ub098\"\ub97c \ub204\ub974\uba74 Gateway \ub85c\uadf8\uc640 Invocation Logging\uc774 \ucf1c\uc9d1\ub2c8\ub2e4. \uc55e\uc5d0\uc11c V2 \ub370\ubaa8\ub85c \ubcf8 \uadf8 \ub85c\uadf8\uc785\ub2c8\ub2e4. \ub3c4\uad6c \ud638\ucd9c\uc740 AgentCore Observability, DLP \ucc28\ub2e8\uc740 Gateway \ub85c\uadf8, \uad8c\ud55c \ubcc0\uacbd\uc740 CloudTrail\uacfc Config\uc785\ub2c8\ub2e4.\n\n\ub124 \uac00\uc9c0 \uc18c\uc2a4\uac00 \ubaa8\ub450 Log Archive\uc5d0 \ubcc0\uacbd \ubd88\uac00 \uc0c1\ud0dc\ub85c \ubaa8\uc774\uace0, \uc0ac\ub0b4 SIEM\uc73c\ub85c \uc5f0\ub3d9\ub429\ub2c8\ub2e4. \uc9c8\ubb38\ub9c8\ub2e4 \uc5b4\ub290 \ub85c\uadf8\ub97c \ubcf4\uc5ec \ub4dc\ub9ac\uba74 \ub418\ub294\uc9c0 \ubbf8\ub9ac \uc815\ud574 \ub450\ub294 \uac8c \uc774\ud589\uc810\uac80 \uc900\ube44\uc758 \ud575\uc2ec\uc785\ub2c8\ub2e4.\n\n\"\uc5bc\ub9c8\ub098\"\uc5d0 \ud574\ub2f9\ud558\ub294 \ube44\uc6a9 \ud1b5\uc81c\ub97c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     44: "\u23f8\ufe0f \ud83c\udfac [2min] [\uc694\uc57d]\n- \ube44\uc6a9 \uc138 \uacb9: \uc0ac\uc6a9\uc790 \ud55c\ub3c4(TPM, RPM), \ud300 \uc608\uc0b0(\uc18c\uc9c4\uc728 \uc54c\ub9bc), \uacc4\uc815 \uc608\uc0b0(AWS Budgets)\n- \ucd94\uc815\uae30: \uc778\uc6d0 x \ud558\ub8e8 \ud638\ucd9c x \ud638\ucd9c\ub2f9 \uc785\ub825 \ud1a0\ud070 x \uadfc\ubb34\uc77c. \uae08\uc561\uc774 \uc544\ub2c8\ub77c \ud1a0\ud070 \uaddc\ubaa8\ub97c \uba3c\uc800 \uc7bc\n- \ud638\ucd9c\ub2f9 \uc785\ub825 \ud1a0\ud070 \uae30\ubcf8\uac12 30K\ub294 V2 \ub370\ubaa8 \uc2e4\uce21(28,950)\uc5d0 \uadfc\uac70. Claude Code\ub294 \uc2dc\uc2a4\ud15c \ud504\ub86c\ud504\ud2b8, \ub3c4\uad6c \uc815\uc758\ub97c \ub9e4\ubc88 \ubcf4\ub0b4\uba70 \ub300\ubd80\ubd84 \uce90\uc2dc \uc77d\uae30\n- \uae08\uc561\uc740 Bedrock \uc694\uae08\ud45c(\uce90\uc2dc \uc77d\uae30, \uc785\ub825, \ucd9c\ub825 \ub2e8\uac00)\ub85c \ubcc4\ub3c4 \uacc4\uc0b0\n- \ud558\ub8e8 \ud638\ucd9c \uc218\ub294 \uac00\uc815\uac12. \ud30c\uc77c\ub7ff\uc5d0\uc11c Gateway \ub85c\uadf8\ub85c \uc2e4\uce21\ud574 Quota\ub97c \uc815\ud568\n\n\ube44\uc6a9\uc740 \uc0ac\uc6a9\uc790, \ud300, \uacc4\uc815 \uc138 \uacb9\uc73c\ub85c \ub9c9\uc2b5\ub2c8\ub2e4. \uadf8\ub7f0\ub370 \ud55c\ub3c4\ub97c \uc815\ud558\ub824\uba74 \uba3c\uc800 \ud1a0\ud070 \uaddc\ubaa8\ub97c \uc54c\uc544\uc57c \ud569\ub2c8\ub2e4. \uc624\ub978\ucabd \ucd94\uc815\uae30\ub85c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\ud30c\uc77c\ub7ff 20\uba85\uc774 \ud558\ub8e8 150\ubc88\uc529 \ubaa8\ub378\uc744 \ubd80\ub974\uace0, \ud55c \ubc88\uc5d0 3\ub9cc \ud1a0\ud070\uc744 \ubcf4\ub0b8\ub2e4\uace0 \ud558\uba74 \uc6d4 \uc785\ub825 \ud1a0\ud070\uc774 \uc774 \uc815\ub3c4 \ub098\uc635\ub2c8\ub2e4. 3\ub9cc\uc774\ub77c\ub294 \uac12\uc740 \uc55e\uc758 V2 \ub370\ubaa8\uc5d0\uc11c \uc2e4\uc81c\ub85c \uc7b0 2\ub9cc 9\ucc9c \ud1a0\ud070\uc5d0\uc11c \uc654\uc2b5\ub2c8\ub2e4. Claude Code\ub294 \uc2dc\uc2a4\ud15c \ud504\ub86c\ud504\ud2b8\uc640 \ub3c4\uad6c \uc815\uc758\ub97c \ub9e4\ubc88 \uac19\uc774 \ubcf4\ub0b4\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4.\n\n\ub2e4\ub9cc \uadf8 \ub300\ubd80\ubd84\uc740 \ud504\ub86c\ud504\ud2b8 \uce90\uc2dc\uc5d0\uc11c \uc77d\ud788\uace0, \uce90\uc2dc \uc77d\uae30\ub294 \ub2e8\uac00\uac00 \ub2e4\ub985\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc5ec\uae30\uc11c\ub294 \uae08\uc561\uc774 \uc544\ub2c8\ub77c \ud1a0\ud070 \uaddc\ubaa8\ub9cc \ubcf4\uc5ec \ub4dc\ub9ac\uace0, \uae08\uc561\uc740 \uc694\uae08\ud45c\ub85c \ub530\ub85c \uacc4\uc0b0\ud558\uc2dc\uae38 \uad8c\ud569\ub2c8\ub2e4. \ud558\ub8e8 \ud638\ucd9c \uc218\ub294 \uac00\uc815\uc774\ub2c8, \ud30c\uc77c\ub7ff\uc5d0\uc11c Gateway \ub85c\uadf8\ub85c \uc2e4\uce21\ud574\uc11c 1\uc778 Quota\ub97c \uc815\ud558\ub294 \uac8c \uc815\ud655\ud569\ub2c8\ub2e4.\n\n\uc774\uc81c \ube44\uc6a9\ubcf4\ub2e4 \ub354 \uc911\uc694\ud55c \ubb38\uc81c, \ub3c4\uad6c\ub97c \uae54\uc544\ub3c4 \uc798 \uc548 \uc4f0\uc774\ub294 \uc774\uc720\ub97c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
     45: "\u23f8\ufe0f \u23f8\ufe0f [2.5min] [\uc694\uc57d]\n- \ub3c4\uad6c\ub9cc \uae54\uba74 \ubc18\ubcf5\ub418\ub294 \uc2e4\ud328 \uc14b: \ucee8\ubca4\uc158 \uc704\ubc18, \uc790\uae30 \uac80\uc99d \uc5c6\uc74c, \uac19\uc740 \uc2e4\uc218 \ubc18\ubcf5\n- \ud558\ub124\uc2a4(\uc870\uc9c1\uc774 \uc9c1\uc811 \ub9cc\ub4dc\ub294 \uc6b4\uc601 \uc7a5\uce58): GUIDES(CLAUDE.md, Skills), SENSORS(hooks\ub85c \ud14c\uc2a4\ud2b8, \ub9ac\ubdf0), STEERING LOOP(\uaddc\uce59 \uac1c\uc120)\n- \uacb0\uc815\ub860\uc801\uc778 \uac83\uc740 \ucf54\ub4dc(\uc2a4\ud06c\ub9bd\ud2b8, \ud14c\uc2a4\ud2b8)\ub85c, \uc758\ubbf8 \ud310\ub2e8\ub9cc \ubaa8\ub378\uc5d0\n- \ubaa8\ub378\uc744 \uc62c\ub9b4 \ub54c\ub9c8\ub2e4 \ud558\ub124\uc2a4\ub97c \ub2e4\uc2dc \uc870\uc728\ud574\uc57c \ud568 \u2192 Gateway\uc5d0\uc11c \ubaa8\ub378 \ubc84\uc804\uc744 \uace0\uc815\ud558\uba74 \uacc4\ud68d\ub41c \uc2dc\uc810\uc73c\ub85c \ubaa8\uc744 \uc218 \uc788\uc74c\n- Codex\ub294 AGENTS.md\uac00 \uac19\uc740 \uc5ed\ud560\n\n\ub3c4\uad6c\ub9cc \uae54\uba74 \uc774 \uc138 \uac00\uc9c0 \uc2e4\ud328\uac00 \ubc18\ubcf5\ub429\ub2c8\ub2e4. \ud558\ub098\uc529 \uc62c\ub9ac\uaca0\uc2b5\ub2c8\ub2e4. \uc0ac\ub0b4 \ud45c\uc900\uc744 \ubaa8\ub974\ub294 \ucf54\ub4dc, \ud655\uc778 \uc5c6\uc774 \"\uc644\ub8cc\ud588\uc2b5\ub2c8\ub2e4\", \uadf8\ub9ac\uace0 \uc9c0\uc801\ud574\ub3c4 \ub2e4\uc74c \uc138\uc158\uc5d0\uc11c \uac19\uc740 \uc2e4\uc218\uc785\ub2c8\ub2e4.\n\n\uadf8\ub798\uc11c \uc870\uc9c1\uc774 \uc9c1\uc811 \ub9cc\ub4e4\uc5b4\uc57c \ud558\ub294 \uc6b4\uc601 \uc7a5\uce58, \ud558\ub124\uc2a4\uac00 \ud544\uc694\ud569\ub2c8\ub2e4. \uaddc\uce59\uc744 \ubbf8\ub9ac \uc54c\ub824 \uc8fc\ub294 GUIDES, \uacb0\uacfc\ub97c \uc790\ub3d9\uc73c\ub85c \uac80\uc99d\ud558\ub294 SENSORS, \ubc18\ubcf5 \uc2e4\uc218\ub97c \ubcf4\uace0 \uaddc\uce59 \uc790\uccb4\ub97c \uace0\uce58\ub294 STEERING LOOP\uc785\ub2c8\ub2e4. \uc544\ub798 \ud45c\ucc98\ub7fc \uacb0\uc815\ub860\uc801\uc73c\ub85c \ud560 \uc218 \uc788\ub294 \uac74 \uc2a4\ud06c\ub9bd\ud2b8\uc640 \ud14c\uc2a4\ud2b8\ub85c, \uc758\ubbf8 \ud310\ub2e8\ub9cc \ubaa8\ub378\uc5d0 \ub9e1\uae41\ub2c8\ub2e4.\n\n\ud55c \uac00\uc9c0 \ub354, \ubaa8\ub378\uc744 \uc62c\ub9b4 \ub54c\ub9c8\ub2e4 \ud558\ub124\uc2a4\ub97c \ub2e4\uc2dc \uc870\uc728\ud574\uc57c \ud569\ub2c8\ub2e4. Gateway\uc5d0\uc11c \ubaa8\ub378 \ubc84\uc804\uc744 \uace0\uc815\ud574 \ub450\uba74 \uadf8 \ubd80\ub2f4\uc744 \uacc4\ud68d\ub41c \uc2dc\uc810\uc73c\ub85c \ubaa8\uc744 \uc218 \uc788\uc2b5\ub2c8\ub2e4. Codex\uc5d0\uc11c\ub294 AGENTS.md\uac00 CLAUDE.md\uc640 \uac19\uc740 \uc5ed\ud560\uc744 \ud569\ub2c8\ub2e4.\n\n\uc774 \ud558\ub124\uc2a4\ub97c \uc2e4\uc81c \ub808\uac70\uc2dc \ucf54\ub4dc\uc5d0 \uc801\uc6a9\ud574 \ubcf8 \uc138 \ubc88\uc9f8 \ub370\ubaa8\uc785\ub2c8\ub2e4.",

@@ -60,32 +60,183 @@ Claude Code를 하나의 통제면에서, 실제로 돌려 본 데모와 함께
 .cf-vbox { flex: 1; min-height: 0; container-type: size; }
 .cf-vbox .cf-video { width: min(100cqw, calc(100cqh * 1920 / 1506)); height: auto; margin-inline: auto; }
 .cf-vcap { text-align: center; color: var(--on-surface-muted); font-size: var(--fs-card); }
-.cf-all { display: grid; grid-template-columns: 0.8fr 1.4fr 1.2fr; gap: var(--space-3); align-items: stretch; }
+.cf-all { display: grid; grid-template-columns: 0.8fr 1.4fr 1.2fr; gap: var(--space-3) 80px; align-items: stretch; }
 .cf-all[data-p] .r { opacity: 0.25; }
 .cf-all[data-p="m"] .m, .cf-all[data-p="t"] .t { opacity: 1; outline-color: var(--accent); }
+.cf-flow-host { position: relative; }
+.cf-flow-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 2; }
+.cf-edge { fill: none; stroke: color-mix(in srgb, var(--on-surface) 22%, transparent); stroke-width: 2; stroke-dasharray: 6 6; transition: stroke var(--duration-normal), stroke-width var(--duration-normal); }
+.cf-edge.ghost { stroke: transparent; }
+.cf-edge.on { stroke: var(--accent); stroke-dasharray: none; stroke-width: 3; }
+.cf-edge.on.ok { stroke: var(--success); } .cf-edge.on.bad { stroke: var(--danger); } .cf-edge.on.info { stroke: var(--info); }
+.cf-pkt circle { fill: var(--accent); stroke: var(--surface-1); stroke-width: 3; }
+.cf-pkt.ok circle { fill: var(--success); } .cf-pkt.bad circle { fill: var(--danger); } .cf-pkt.info circle { fill: var(--info); }
+.cf-pkt text { font-style: normal; fill: var(--on-surface); font-size: var(--fs-caption); font-weight: var(--weight-bold); paint-order: stroke; stroke: var(--surface-1); stroke-width: 8px; stroke-linejoin: round; }
+.cf-hit { outline: 2px solid var(--accent) !important; box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 30%, transparent); transition: box-shadow var(--duration-normal); }
+.cf-flow-msg { min-height: 2.8em; margin-top: var(--space-2); font-size: var(--fs-card); }
+.cf-all[data-p=""] .r { opacity: 1; }
 </style>
-<div class="cf-btns" onclick="(function(e){var b=e.target.closest('.cf-btn');if(!b)return;b.parentNode.querySelectorAll('.cf-btn').forEach(function(x){x.classList.toggle('on',x===b)});document.getElementById('cfAll').setAttribute('data-p',b.dataset.p)})(event)">
+<div class="cf-btns" id="cfAllBtns">
+  <button class="cf-btn on" data-p="">전체 흐름</button>
   <button class="cf-btn" data-p="m">① 모델 호출</button>
   <button class="cf-btn" data-p="t">② 도구, 컨텍스트 호출</button>
 </div>
 <div class="cf-all" id="cfAll" data-reveal="static">
   <div class="cf-zone"><h5>전산실 (5호망): 개발자 단말</h5>
-    <div class="cf-box"><b>Claude Code</b>터미널, IDE 플러그인</div>
-    <div class="cf-box"><b>Codex</b>같은 Gateway 뒤 보조 클라이언트</div>
-    <div class="cf-box r t"><b>사내 MCP 서버, 지식 원본</b>형상관리, 일정, 모니터링, 규정집, 코딩 표준</div>
+    <div class="cf-box" data-n="cc"><b>Claude Code</b>터미널, IDE 플러그인</div>
+    <div class="cf-box" data-n="cx"><b>Codex</b>같은 Gateway 뒤 보조 클라이언트</div>
+    <div class="cf-box r t" data-n="op"><b>사내 MCP 서버, 지식 원본</b>형상관리, 일정, 모니터링, 규정집, 코딩 표준</div>
   </div>
   <div class="cf-zone"><h5>AI Platform 계정 (Workloads / Prod), DX 경유</h5>
-    <div class="cf-box r m"><img src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt=""><b>LLM Gateway → VPC Endpoint → Bedrock + Guardrails</b>Anthropic / OpenAI 호환 API</div>
-    <div class="cf-box r t"><img src="images/Gateway.png" alt=""><b>MCP Hub = AgentCore Gateway</b>AgentCore Identity(AD)로 사내 시스템 호출, VPC egress → 온프렘</div>
-    <div class="cf-box"><img src="common/aws-icons/services/Arch_AWS-CloudTrail_48.svg" alt=""><b>감사 로그 → Log Archive</b></div>
+    <div class="cf-box r m" data-n="gw"><img src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt=""><b>LLM Gateway → VPC Endpoint → Bedrock + Guardrails</b>Anthropic / OpenAI 호환 API</div>
+    <div class="cf-box r t" data-n="hub"><img src="images/Gateway.png" alt=""><b>MCP Hub = AgentCore Gateway</b>AgentCore Identity(AD)로 사내 시스템 호출, VPC egress → 온프렘</div>
+    <div class="cf-box" data-n="log"><img src="common/aws-icons/services/Arch_AWS-CloudTrail_48.svg" alt=""><b>감사 로그 → Log Archive</b></div>
   </div>
   <div class="cf-zone"><h5>AI Project 계정 (컨텍스트 계층)</h5>
-    <div class="cf-box r t"><b>Vector: Bedrock Knowledge Bases</b>OpenSearch Serverless, 규정, 가이드 문서 의미 검색</div>
-    <div class="cf-box r t"><img src="common/aws-icons/services/Arch_Amazon-Neptune_48.svg" alt=""><b>Graph: Neptune Analytics (+ AWS Context 검토)</b>온톨로지, 관계 검색</div>
-    <div class="cf-box r t"><img src="common/aws-icons/services/Arch_AWS-Glue_48.svg" alt=""><b>ETL: Glue, Step Functions</b>파싱, 정제, 가명화, 청킹. 원본은 온프렘에 유지</div>
+    <div class="cf-box r t" data-n="kb"><b>Vector: Bedrock Knowledge Bases</b>OpenSearch Serverless, 규정, 가이드 문서 의미 검색</div>
+    <div class="cf-box r t" data-n="gr"><img src="common/aws-icons/services/Arch_Amazon-Neptune_48.svg" alt=""><b>Graph: Neptune Analytics (+ AWS Context 검토)</b>온톨로지, 관계 검색</div>
+    <div class="cf-box r t" data-n="etl"><img src="common/aws-icons/services/Arch_AWS-Glue_48.svg" alt=""><b>ETL: Glue, Step Functions</b>파싱, 정제, 가명화, 청킹. 원본은 온프렘에 유지</div>
   </div>
 </div>
+<div class="cf-panel cf-flow-msg" id="cfAllMsg"></div>
 <div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="cf-info">왜 컨텍스트 계층까지</strong>: Claude Code가 사내 규칙을 알고 코드를 쓰려면 컨텍스트가 필요합니다. 원본은 온프렘에 두고, ETL을 거친 Vector와 Graph만 MCP Hub를 통해 검색합니다.</div>
+:::
+
+:::script
+// cfFlow: SVG connectors between DOM boxes + packets moving along them.
+// Layout is measured when the slide becomes active (slides are display:none otherwise).
+window.cfFlow = window.cfFlow || (function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function rect(root, el) {
+    var R = root.getBoundingClientRect(), r = el.getBoundingClientRect(), k = root.offsetWidth / (R.width || 1);
+    return { x: (r.left - R.left) * k, y: (r.top - R.top) * k, w: r.width * k, h: r.height * k };
+  }
+  function route(a, b, e) {
+    var ax = a.x + a.w / 2, ay = a.y + a.h / 2 + (e.dy || 0), bx = b.x + b.w / 2, by = b.y + b.h / 2 + (e.dy || 0), dx = bx - ax, dy = by - ay, o = e.off || 0;
+    if (e.via === 's') return 'M' + ax + ',' + ay + ' L' + bx + ',' + by;
+    if (e.via === 'r' || e.via === 'l') {
+      var rt = e.via === 'r', s0 = rt ? a.x + a.w : a.x, e0 = rt ? b.x + b.w : b.x, X = rt ? Math.max(s0, e0) + (o || 18) : Math.min(s0, e0) - (o || 18);
+      return 'M' + s0 + ',' + ay + ' H' + X + ' V' + by + ' H' + e0;
+    }
+    if (e.via === 'v' || (e.via !== 'h' && Math.abs(dx) <= (a.w + b.w) / 2)) {
+      var sy = dy > 0 ? a.y + a.h : a.y, ey = dy > 0 ? b.y : b.y + b.h, my = (sy + ey) / 2 + o;
+      return 'M' + (ax + o) + ',' + sy + ' V' + my + ' H' + (bx + o) + ' V' + ey;
+    }
+    var sx = dx > 0 ? a.x + a.w : a.x, ex = dx > 0 ? b.x : b.x + b.w, mx = (sx + ex) / 2 + o;
+    return 'M' + sx + ',' + ay + ' H' + mx + ' V' + by + ' H' + ex;
+  }
+  function mount(root, edges) {
+    var svg = document.createElementNS(NS, 'svg'), paths = {}, gen = 0, onEnter = null, onLeave = null, active = false;
+    svg.setAttribute('class', 'cf-flow-svg'); svg.setAttribute('aria-hidden', 'true');
+    root.classList.add('cf-flow-host'); root.appendChild(svg);
+    edges.forEach(function (e) {
+      var p = document.createElementNS(NS, 'path');
+      p.setAttribute('class', 'cf-edge' + (e.cls ? ' ' + e.cls : '')); svg.appendChild(p); paths[e.id] = { el: p, e: e };
+    });
+    function node(id) { return root.querySelector('[data-n="' + id + '"]'); }
+    function layout() {
+      svg.setAttribute('viewBox', '0 0 ' + root.offsetWidth + ' ' + root.offsetHeight);
+      Object.keys(paths).forEach(function (k) {
+        var e = paths[k].e, a = node(e.from), b = node(e.to);
+        if (!a || !b || !a.offsetParent || !b.offsetParent) { paths[k].el.setAttribute('d', ''); return; }
+        paths[k].el.setAttribute('d', route(rect(root, a), rect(root, b), e));
+      });
+    }
+    function packet(id, opt) {
+      var my = gen, P = paths[id]; if (!P) return Promise.resolve();
+      var path = P.el, len = path.getTotalLength ? path.getTotalLength() : 0;
+      var g = document.createElementNS(NS, 'g'), c = document.createElementNS(NS, 'circle');
+      g.setAttribute('class', 'cf-pkt' + (opt.cls ? ' ' + opt.cls : '')); c.setAttribute('r', '10'); g.appendChild(c);
+      if (opt.label) { var t = document.createElementNS(NS, 'text'); t.setAttribute('x', '16'); t.setAttribute('y', '-14'); t.textContent = opt.label; g.appendChild(t); }
+      svg.appendChild(g); path.classList.add('on'); if (opt.cls) path.classList.add(opt.cls);
+      var dur = reduce ? 1 : (opt.dur || 1100), t0 = null;
+      return new Promise(function (done) {
+        function frame(ts) {
+          if (my !== gen) { g.remove(); return done(); }
+          if (t0 === null) t0 = ts;
+          var f = Math.min(1, (ts - t0) / dur), q = f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+          var pt = len ? path.getPointAtLength(q * len) : { x: 0, y: 0 };
+          g.setAttribute('transform', 'translate(' + pt.x + ',' + pt.y + ')');
+          if (f < 1) return requestAnimationFrame(frame);
+          var to = node(P.e.to); if (to) { to.classList.add('cf-hit'); setTimeout(function () { to.classList.remove('cf-hit'); }, 900); }
+          setTimeout(function () { g.remove(); done(); }, opt.hold || 250);
+        }
+        requestAnimationFrame(frame);
+      });
+    }
+    function clear() { gen++; svg.querySelectorAll('.cf-pkt').forEach(function (g) { g.remove(); }); Object.keys(paths).forEach(function (k) { paths[k].el.setAttribute('class', 'cf-edge' + (paths[k].e.cls ? ' ' + paths[k].e.cls : '')); }); }
+    // steps: [{e:[edgeIds], label, cls, dur, msg}] played in order; edges in one step run in parallel.
+    function play(steps, opt) {
+      clear(); var my = gen; opt = opt || {};
+      return steps.reduce(function (pr, s, i) {
+        return pr.then(function () {
+          if (my !== gen) return;
+          if (opt.onStep) opt.onStep(i, s);
+          return Promise.all(s.e.map(function (id, j) { return packet(id, j ? { cls: s.cls, dur: s.dur } : s); }));
+        });
+      }, Promise.resolve()).then(function () {
+        if (my !== gen) return;
+        var left = opt.loop === true ? 3 : (opt.loop || 0);
+        if (left > 1 && active && !reduce) return new Promise(function (r) { setTimeout(r, 900); }).then(function () { if (my === gen && active) return play(steps, Object.assign({}, opt, { loop: left - 1 })); });
+        if (opt.onDone) opt.onDone();
+      });
+    }
+    function sync() {
+      var s = root.closest('.slide'), now = !!(s && s.classList.contains('active') && !document.querySelector('.overview-mode'));
+      if (now && !active) { active = true; requestAnimationFrame(function () { layout(); if (onEnter) onEnter(); }); }
+      else if (!now && active) { active = false; clear(); if (onLeave) onLeave(); }
+    }
+    var sl = root.closest('.slide');
+    if (sl && window.MutationObserver) new MutationObserver(sync).observe(sl, { attributes: true, attributeFilter: ['class'] });
+    document.addEventListener('rp:slidechange', function () { setTimeout(sync, 60); });
+    if (window.ResizeObserver) new ResizeObserver(function () { if (active) layout(); }).observe(root);
+    setTimeout(sync, 300);
+    return {
+      layout: layout, play: play, clear: clear, packet: packet,
+      enter: function (f) { onEnter = f; }, leave: function (f) { onLeave = f; },
+      isActive: function () { return active; }
+    };
+  }
+  return { mount: mount };
+})();
+
+(function () {
+  var root = document.getElementById('cfAll'); if (!root) return;
+  var f = cfFlow.mount(root, [
+    { id: 'cc-gw', from: 'cc', to: 'gw', dy: -12 }, { id: 'gw-cc', from: 'gw', to: 'cc', dy: 12 },
+    { id: 'cx-gw', from: 'cx', to: 'gw' }, { id: 'gw-log', from: 'gw', to: 'log', via: 'r', off: 30 },
+    { id: 'cc-hub', from: 'cc', to: 'hub', dy: -12 }, { id: 'hub-cc', from: 'hub', to: 'cc', dy: 12 },
+    { id: 'hub-kb', from: 'hub', to: 'kb' }, { id: 'hub-gr', from: 'hub', to: 'gr' },
+    { id: 'hub-op', from: 'hub', to: 'op' }, { id: 'hub-log', from: 'hub', to: 'log' },
+    { id: 'etl-kb', from: 'etl', to: 'kb', via: 'r', off: 30 }, { id: 'etl-gr', from: 'etl', to: 'gr' }
+  ]);
+  var M = [
+    { e: ['cc-gw', 'cx-gw'], msg: '① Claude Code와 Codex 모두 같은 LLM Gateway로 모델을 부릅니다. 단말에는 AWS 자격증명이 없습니다.' },
+    { e: ['gw-log'], cls: 'info', msg: 'Gateway가 인증, DLP, 모델 allowlist를 통과시킨 뒤 PrivateLink로 Bedrock을 부르고, 사용자와 판정을 로그로 남깁니다.' },
+    { e: ['gw-cc'], cls: 'ok', msg: '응답은 같은 경로로 스트리밍됩니다.' }
+  ];
+  var T = [
+    { e: ['cc-hub'], msg: '② 도구와 컨텍스트는 MCP Hub(AgentCore Gateway) 한 곳으로만 갑니다.' },
+    { e: ['hub-kb', 'hub-gr'], msg: '규정, 코딩 표준은 AI Project 계정의 Vector와 Graph에서 검색합니다.' },
+    { e: ['hub-op'], msg: '사내 시스템은 AgentCore Identity가 보관한 자격증명으로 호출합니다. 개발자 단말은 자격증명을 들지 않습니다.' },
+    { e: ['hub-log'], cls: 'info', msg: '도구 호출도 같은 신원으로 감사 로그에 남습니다.' },
+    { e: ['hub-cc'], cls: 'ok', msg: '결과만 Claude Code로 돌아옵니다.' }
+  ];
+  var C = [{ e: ['etl-kb', 'etl-gr'], cls: 'info', msg: '원본은 온프렘에 두고, 승인된 배치로 ETL(가명화, 청킹)을 거친 결과만 Vector와 Graph에 들어갑니다.' }];
+  var msg = document.getElementById('cfAllMsg'), btns = document.getElementById('cfAllBtns'), mode = '';
+  function run() {
+    root.setAttribute('data-p', mode);
+    var steps = mode === 'm' ? M : mode === 't' ? T : M.concat(T, C);
+    f.play(steps, { loop: true, onStep: function (i, s) { msg.innerHTML = '<strong class="cf-accent">' + s.msg + '</strong>'; } });
+  }
+  btns.addEventListener('click', function (ev) {
+    var b = ev.target.closest('.cf-btn'); if (!b) return;
+    btns.querySelectorAll('.cf-btn').forEach(function (x) { x.classList.toggle('on', x === b); });
+    mode = b.dataset.p; if (f.isActive()) run();
+  });
+  f.enter(run);
+})();
 :::
 
 :::notes
@@ -97,7 +248,7 @@ Claude Code를 하나의 통제면에서, 실제로 돌려 본 데모와 함께
 - 지식 원본은 온프렘 유지, 승인된 배치로 ETL만 거쳐 들어감
 - 용어: MCP Target(Gateway 뒤에 등록되는 도구)
 
-전체 그림입니다. 버튼으로 두 경로를 나눠 보겠습니다.
+전체 그림입니다. 슬라이드가 열리면 요청이 실제 경로를 따라 움직이고, 아래 줄에 지금 단계의 설명이 나옵니다. 버튼으로 두 경로를 나눠 보겠습니다.
 {cue: demo}
 1번 모델 호출을 켜면 가운데 위 상자만 남습니다. Claude Code가 LLM Gateway를 거쳐 PrivateLink로 Bedrock에 갑니다. 2번 도구와 컨텍스트를 켜면 MCP Hub, 즉 AgentCore Gateway로 가서 사내 시스템이나 오른쪽 컨텍스트 계층을 검색합니다.
 {cue: pause}
@@ -350,27 +501,56 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 
 :::html
 <style>
-.cf-seq { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--space-2); margin-bottom: var(--space-3); }
-.cf-actor { text-align: center; font-size: var(--fs-card); font-weight: var(--weight-bold); background: var(--surface-3); border-radius: var(--radius-sm); padding: var(--space-2); }
-.cf-msgs { display: flex; flex-direction: column; gap: var(--space-2); }
-.cf-msg { display: grid; grid-template-columns: repeat(7, 1fr); align-items: center; font-size: var(--fs-card); }
-.cf-msg span { grid-row: 1; background: var(--accent-subtle); border-left: 4px solid var(--accent); border-radius: var(--radius-sm); padding: var(--space-1) var(--space-2); }
-.cf-msg.log span { background: var(--info-subtle); border-left-color: var(--info); }
-.c12 { grid-column: 1 / 3; } .c25 { grid-column: 2 / 6; } .c23 { grid-column: 2 / 4; } .c34 { grid-column: 3 / 5; } .c45 { grid-column: 4 / 6; } .c37 { grid-column: 3 / 8; } .c56 { grid-column: 5 / 7; } .c46 { grid-column: 4 / 7; } .c67 { grid-column: 6 / 8; }
+.cf-accent  { color: color-mix(in srgb, var(--accent) 72%, var(--on-surface));  font-weight: var(--weight-bold); }
+.cf-success { color: var(--success); font-weight: var(--weight-bold); }
+.cf-sq { position: relative; margin-bottom: var(--space-3); }
+.cf-sq-head { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--space-2); position: relative; z-index: 1; }
+.cf-actor { text-align: center; font-size: var(--fs-card); font-weight: var(--weight-bold); background: var(--surface-3); border-radius: var(--radius-sm); padding: var(--space-2); word-break: keep-all; }
+.cf-sq-life { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--space-2); pointer-events: none; }
+.cf-sq-life i { justify-self: center; width: 0; border-left: 2px dashed color-mix(in srgb, var(--on-surface) 22%, transparent); }
+.cf-sq-rows { display: flex; flex-direction: column; }
+.cf-m { position: relative; height: 64px; --c: var(--accent); }
+.cf-m.log { --c: var(--info); }
+.cf-m.ok { --c: var(--success); }
+.l0 { --l: 0; } .l1 { --l: 1; } .l2 { --l: 2; } .l4 { --l: 4; }
+.r1 { --r: 1; } .r2 { --r: 2; } .r3 { --r: 3; } .r4 { --r: 4; } .r5 { --r: 5; } .r6 { --r: 6; }
+.cf-m .ar { position: absolute; left: calc((var(--l) + 0.5) / 7 * 100%); width: calc((var(--r) - var(--l)) / 7 * 100%); bottom: 16px; height: 4px; background: var(--c); transform: scaleX(0); transform-origin: left center; }
+.cf-m.back .ar { transform-origin: right center; }
+.cf-m.log .ar { background: repeating-linear-gradient(90deg, var(--c) 0 8px, transparent 8px 16px); }
+.cf-m .ar::after { content: ''; position: absolute; right: -2px; top: -8px; border: 8px solid transparent; border-left: 12px solid var(--c); border-right: 0; }
+.cf-m.back .ar::after { right: auto; left: -2px; border-left: 0; border-right: 12px solid var(--c); }
+.cf-m .pk { position: absolute; top: -8px; left: 0; width: 16px; height: 16px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 30%, transparent); opacity: 0; }
+.cf-m.back .pk { left: auto; right: 0; }
+.cf-m .lb { position: absolute; left: calc((var(--l) + 0.5) / 7 * 100%); width: calc((var(--r) - var(--l)) / 7 * 100%); bottom: 24px; display: flex; justify-content: center; opacity: 0; }
+.cf-m .lb span { white-space: nowrap; font-size: var(--fs-card); background: var(--surface-1); padding: 0 var(--space-2); border-radius: var(--radius-sm); }
+.cf-m .lb b { color: var(--c); margin-right: var(--space-1); }
+.cf-m.visible .ar { animation: cfSqDraw 0.6s ease-out forwards; }
+.cf-m.visible .lb { animation: cfSqFade 0.4s ease-out 0.3s forwards; }
+.cf-m.visible .pk { animation: cfSqRun 0.9s ease-in-out 0.55s; }
+.cf-m.visible.back .pk { animation-name: cfSqRunBack; }
+@keyframes cfSqDraw { to { transform: scaleX(1); } }
+@keyframes cfSqFade { to { opacity: 1; } }
+@keyframes cfSqRun { 0% { left: 0; opacity: 1; } 90% { opacity: 1; } 100% { left: calc(100% - 16px); opacity: 0; } }
+@keyframes cfSqRunBack { 0% { right: 0; opacity: 1; } 90% { opacity: 1; } 100% { right: calc(100% - 16px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .cf-m.visible .ar { animation-duration: 0.01s; } .cf-m.visible .lb { animation-delay: 0s; } .cf-m.visible .pk { animation: none; } }
 </style>
-<div class="cf-seq">
-  <div class="cf-actor">개발자, IdP(AD)</div><div class="cf-actor">Claude Code</div><div class="cf-actor">LLM Gateway</div><div class="cf-actor">Bedrock</div><div class="cf-actor">AgentCore Gateway</div><div class="cf-actor">사내 시스템</div><div class="cf-actor">Log Archive</div>
+<div class="cf-sq">
+  <div class="cf-sq-life"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="cf-sq-head">
+    <div class="cf-actor">IdP (AD)</div><div class="cf-actor">개발자, Claude Code</div><div class="cf-actor">LLM Gateway</div><div class="cf-actor">Bedrock</div><div class="cf-actor">AgentCore Gateway</div><div class="cf-actor">사내 시스템</div><div class="cf-actor">Log Archive</div>
+  </div>
+  <div class="cf-sq-rows">
+    <div class="cf-m back l0 r1 fragment" data-fragment-index="1"><div class="lb"><span><b>①</b>AD 로그인 (MFA)</span></div><div class="ar"><i class="pk"></i></div></div>
+    <div class="cf-m ok l0 r1 fragment" data-fragment-index="2"><div class="lb"><span><b>②</b>단기 토큰</span></div><div class="ar"><i class="pk"></i></div></div>
+    <div class="cf-m l1 r2 fragment" data-fragment-index="3"><div class="lb"><span><b>③</b>모델 호출 + 토큰</span></div><div class="ar"><i class="pk"></i></div></div>
+    <div class="cf-m l2 r3 fragment" data-fragment-index="4"><div class="lb"><span><b>④</b>DLP, allowlist 통과 → PrivateLink</span></div><div class="ar"><i class="pk"></i></div></div>
+    <div class="cf-m log l2 r6 fragment" data-fragment-index="5"><div class="lb"><span><b>⑤</b>모델 호출 로그 (user, model, 판정, 토큰)</span></div><div class="ar"><i class="pk"></i></div></div>
+    <div class="cf-m l1 r4 fragment" data-fragment-index="6"><div class="lb"><span><b>⑥</b>도구 호출 + 같은 토큰</span></div><div class="ar"><i class="pk"></i></div></div>
+    <div class="cf-m l4 r5 fragment" data-fragment-index="7"><div class="lb"><span><b>⑦</b>Policy 허용 → Identity 자격증명으로 호출</span></div><div class="ar"><i class="pk"></i></div></div>
+    <div class="cf-m log l4 r6 fragment" data-fragment-index="8"><div class="lb"><span><b>⑧</b>도구 호출 로그</span></div><div class="ar"><i class="pk"></i></div></div>
+  </div>
 </div>
-<div class="cf-msgs">
-  <div class="cf-msg fragment fade-right" data-fragment-index="1"><span class="c12">① AD 계정 로그인 (MFA) → ② 단기 토큰 발급</span></div>
-  <div class="cf-msg fragment fade-right" data-fragment-index="2"><span class="c23">③ 모델 호출 + 토큰</span></div>
-  <div class="cf-msg fragment fade-right" data-fragment-index="3"><span class="c34">④ DLP, 모델 allowlist 통과 후 PrivateLink 호출</span></div>
-  <div class="cf-msg log fragment fade-right" data-fragment-index="4"><span class="c37">⑤ 프롬프트, 응답 메타데이터 로그 (user, model, 판정, 토큰)</span></div>
-  <div class="cf-msg fragment fade-right" data-fragment-index="5"><span class="c25">⑥ 도구 호출 + 토큰 → AgentCore Gateway</span></div>
-  <div class="cf-msg fragment fade-right" data-fragment-index="6"><span class="c56">⑦ Policy 허용 시 Identity 자격증명으로 호출</span></div>
-  <div class="cf-msg log fragment fade-right" data-fragment-index="7"><span class="c67">⑧ 도구 호출 로그</span></div>
-</div>
-<div class="callout callout-success fragment zoom-in" data-fragment-index="8"><strong class="cf-success">한 줄로 이어지는 감사</strong>: AI가 주장하는 신원이 아니라 토큰으로 확인합니다. 모델 호출과 도구 호출이 같은 신원으로 기록되어 "누가 무엇을 했는지"가 이어집니다.</div>
+<div class="callout callout-success fragment zoom-in" data-fragment-index="9"><strong class="cf-success">한 줄로 이어지는 감사</strong>: AI가 주장하는 신원이 아니라 토큰으로 확인합니다. 모델 호출과 도구 호출이 같은 신원으로 기록되어 "누가 무엇을 했는지"가 이어집니다.</div>
 :::
 
 :::notes
@@ -380,7 +560,7 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 - 신원은 AI의 주장이 아니라 토큰으로 확인
 - 모델 호출과 도구 호출이 같은 신원으로 기록됨
 
-요청 한 건을 따라가 보겠습니다. 하나씩 넘기겠습니다.
+요청 한 건을 따라가 보겠습니다. 아래 방향키로 넘길 때마다 화살표가 그려지고 요청이 레인 사이를 이동합니다.
 {cue: pause}
 개발자가 AD로 로그인해 토큰을 받고, 그 토큰으로 모델을 부릅니다. 모델 호출은 Gateway의 DLP와 모델 allowlist를 통과해야 Bedrock으로 가고, 그 결과가 5번 로그로 남습니다. 도구 호출은 AgentCore Gateway가 Policy로 판정하고 Identity가 보관한 자격증명으로 사내 시스템을 부르며, 8번 로그로 남습니다.
 {cue: pause}

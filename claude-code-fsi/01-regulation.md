@@ -348,7 +348,30 @@ Playground는 인터넷망 PC에서만 쓰고, 파일은 들어가는 것도 나
 .cf-step b { display: block; color: color-mix(in srgb, var(--accent) 72%, var(--on-surface)); font-size: var(--fs-body); }
 .cf-step .z { display: block; color: var(--on-surface-muted); font-size: var(--fs-caption); margin-bottom: var(--space-1); }
 .cf-step.wait { outline: 2px solid var(--warning); }
+.cf-lk { position: relative; }
+.cf-lk .cf-steps { margin-bottom: 0; }
+.cf-lk-track { position: relative; height: 40px; }
+.cf-lk-wire, .cf-lk-fill { position: absolute; left: 0; top: 16px; height: 4px; border-radius: 2px; }
+.cf-lk-wire { right: 0; background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--on-surface) 25%, transparent) 0 8px, transparent 8px 16px); }
+.cf-lk-fill { width: 0; background: var(--accent); transition: width 0.6s ease-in-out; }
+.cf-lk-pk { position: absolute; left: 0; top: 6px; width: 24px; height: 24px; margin-left: -12px; border-radius: 50%; background: var(--accent); opacity: 0; transition: transform 0.6s ease-in-out, opacity var(--duration-normal); }
+.cf-lk-pk.on { opacity: 1; }
+.cf-lk-pk.wait { background: var(--warning); animation: cfLkPulse 0.8s ease-in-out infinite; }
+.cf-lk-pk.end { background: var(--success); }
+.cf-lk-pk.end b { left: auto; right: 32px; }
+.cf-lk-pk b { font-style: normal; position: absolute; left: 32px; top: -2px; white-space: nowrap; font-size: var(--fs-caption); color: var(--on-surface); background: var(--surface-1); padding: 0 var(--space-2); border-radius: var(--radius-sm); }
+@keyframes cfLkPulse { 50% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--warning) 25%, transparent); } }
+.cf-lk-ctl { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; font-size: var(--fs-card); margin-bottom: var(--space-2); }
+.cf-lk-ctl input[type=range] { width: 260px; accent-color: var(--accent); }
+.cf-lk-out { color: var(--on-surface-muted); }
+@media (prefers-reduced-motion: reduce) { .cf-lk-fill, .cf-lk-pk { transition: none; animation: none; } }
 </style>
+<div class="cf-lk-ctl">
+  <button class="cf-btn" onclick="cfLk.play()">커밋 1건 보내기 ▶</button>
+  <label for="cfLkH">승인 1회 대기 (가정)</label><input type="range" id="cfLkH" min="0.5" max="24" step="0.5" value="4" oninput="cfLk.calc()">
+  <span class="cf-lk-out" id="cfLkOut"></span>
+</div>
+<div class="cf-lk" id="cfLk">
 <div class="cf-steps" data-reveal="stagger" data-reveal-anim="right">
   <div class="cf-step"><span class="z">AWS 연구개발망</span><b>1 전송 신청</b>Code Repository에서 Git 소스 전송 신청</div>
   <div class="cf-step wait"><span class="z">AWS 연구개발망</span><b>2 전송 승인</b>승인권자 승인</div>
@@ -356,6 +379,8 @@ Playground는 인터넷망 PC에서만 쓰고, 파일은 들어가는 것도 나
   <div class="cf-step"><span class="z">데이터센터 연구개발망</span><b>4 목록 조회</b>전송 대상 확인, 선택</div>
   <div class="cf-step wait"><span class="z">전산실</span><b>5 망연계 승인</b>망연계 단계 승인, 신청</div>
   <div class="cf-step"><span class="z">전산실</span><b>6 반영, 기록</b>전산실 GitLab 수신, 전송 이력 기록</div>
+</div>
+<div class="cf-lk-track"><i class="cf-lk-wire"></i><i class="cf-lk-fill" id="cfLkFill"></i><i class="cf-lk-pk" id="cfLkPk"><b id="cfLkLb"></b></i></div>
 </div>
 <table class="data-table fragment fade-up" data-fragment-index="1">
   <thead><tr><th>통제</th><th>내용</th></tr></thead>
@@ -370,6 +395,42 @@ Playground는 인터넷망 PC에서만 쓰고, 파일은 들어가는 것도 나
 <div class="cf-src">출처: 메가존클라우드 「연구개발망 구축시 고려사항」 p26, p29</div>
 :::
 
+:::script
+window.cfLk = (function () {
+  var gen = 0;
+  function steps() { return Array.prototype.slice.call(document.querySelectorAll('#cfLk .cf-step')); }
+  function hours() { var el = document.getElementById('cfLkH'); return el ? +el.value : 4; }
+  function calc() {
+    var h = hours(), w = 2 * h, out = document.getElementById('cfLkOut'); if (!out) return;
+    var per = w <= 8 ? Math.floor(8 / w) + '회' : '1회 미만 (다음 영업일 이후 반영)';
+    out.innerHTML = '커밋 1건당 승인 대기 <strong class="cf-warning">' + w + '시간</strong>, 하루 8시간 근무 기준 반영 가능 <strong class="cf-accent">' + per + '</strong>';
+  }
+  function at(i, cls, label) {
+    var s = steps()[i], pk = document.getElementById('cfLkPk'), fill = document.getElementById('cfLkFill'), lb = document.getElementById('cfLkLb');
+    if (!s || !pk) return;
+    var x = s.offsetLeft + s.offsetWidth / 2;
+    pk.className = 'cf-lk-pk on' + (cls ? ' ' + cls : ''); pk.style.transform = 'translateX(' + x + 'px)'; fill.style.width = x + 'px'; lb.textContent = label || '';
+  }
+  function wait(ms, my) { return new Promise(function (r) { setTimeout(function () { r(my === gen); }, ms); }); }
+  function play() {
+    var my = ++gen, h = hours(), seq = Promise.resolve(true);
+    steps().forEach(function (s, i) {
+      seq = seq.then(function (ok) {
+        if (!ok) return false;
+        var isWait = s.classList.contains('wait');
+        at(i, isWait ? 'wait' : '', isWait ? '승인 대기 ' + h + '시간' : '');
+        return wait(isWait ? Math.min(4000, 1600 + h * 150) : 800, my);
+      });
+    });
+    seq.then(function (ok) { if (ok) at(steps().length - 1, 'end', '반영 완료, 이력 기록'); });
+  }
+  function reset() { gen++; var pk = document.getElementById('cfLkPk'), fill = document.getElementById('cfLkFill'); if (pk) { pk.className = 'cf-lk-pk'; pk.style.transform = ''; } if (fill) fill.style.width = '0'; }
+  document.addEventListener('rp:slidechange', reset);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', calc); else calc();
+  return { play: play, calc: calc };
+})();
+:::
+
 :::notes
 {timing: 2min}
 [요약]
@@ -380,7 +441,11 @@ Playground는 인터넷망 PC에서만 쓰고, 파일은 들어가는 것도 나
 
 연구개발망에서 만든 코드를 전산실로 반영하는 절차입니다. 신청, 승인, 전송, 선택, 다시 승인, 반영과 기록까지 여섯 단계입니다.
 {cue: pause}
-노란 테두리 두 곳이 사람이 승인하는 단계입니다. 코딩 에이전트로 하루에 여러 번 커밋하는데 반영이 승인 대기에 묶이면, 연구개발망을 쓰는 의미가 줄어듭니다. 그래서 승인 SLA와 자동 검증을 같이 설계하시길 권합니다.
+노란 테두리 두 곳이 사람이 승인하는 단계입니다.
+{cue: demo}
+"커밋 1건 보내기"를 누르면 커밋이 여섯 단계를 지나가다 노란 단계에서 멈춥니다. 슬라이더로 승인 1회 대기 시간을 바꿔 보겠습니다. 4시간이면 커밋 한 건에 8시간, 하루에 한 번 반영입니다. 이 값은 가정 입력이고 실측이 아닙니다.
+{cue: pause}
+코딩 에이전트로 하루에 여러 번 커밋하는데 반영이 승인 대기에 묶이면, 연구개발망을 쓰는 의미가 줄어듭니다. 그래서 승인 SLA와 자동 검증을 같이 설계하시길 권합니다.
 근거: 메가존클라우드 「연구개발망 구축시 고려사항」 p26, p29
 {cue: transition}
 세 환경을 한 표로 놓고 비교해 보겠습니다.

@@ -6,6 +6,7 @@ block: 01-regulation
 ---
 <!-- Slide 1: 세션 커버 -->
 @type: cover
+@theme: dark
 
 # Claude Code for FSI
 
@@ -30,6 +31,7 @@ block: 01-regulation
 ---
 <!-- Slide 2: 아젠다 -->
 @type: agenda
+@theme: dark
 
 ## 오늘 세션 구성
 
@@ -54,6 +56,7 @@ block: 01-regulation
 ---
 <!-- Slide 3: 선행 사례 -->
 @type: content
+@theme: dark
 @title: 같은 증권업에서 이미 문을 통과했다
 
 ## 같은 증권업에서 이미 문을 통과했다
@@ -114,6 +117,7 @@ block: 01-regulation
 ---
 <!-- Slide 4: 규제 흐름 -->
 @type: content
+@theme: dark
 @title: 금융 클라우드 규제는 10년간 열려왔다
 
 ## 금융 클라우드 규제는 10년간 열려왔다
@@ -189,6 +193,7 @@ block: 01-regulation
 ---
 <!-- Slide 5: 세 환경의 위치 -->
 @type: content
+@theme: dark
 @title: 어느 단말에서 출발하느냐가 근거를 정한다
 
 ## 어느 단말에서 출발하느냐가 근거를 정한다
@@ -266,6 +271,7 @@ block: 01-regulation
 ---
 <!-- Slide 6: 망 연결과 파일 흐름 -->
 @type: content
+@theme: dark
 @title: 파일이 오가는 지점을 하나로 좁힌다
 
 ## 파일이 오가는 지점을 하나로 좁힌다
@@ -330,6 +336,7 @@ Playground는 인터넷망 PC에서만 쓰고, 파일은 들어가는 것도 나
 ---
 <!-- Slide 7: 망연계 6단계 -->
 @type: content
+@theme: dark
 @title: 망연계는 6단계, 병목은 승인 대기
 
 ## 망연계는 6단계, 병목은 승인 대기
@@ -382,6 +389,7 @@ Playground는 인터넷망 PC에서만 쓰고, 파일은 들어가는 것도 나
 ---
 <!-- Slide 8: 3자 비교 -->
 @type: content
+@theme: dark
 @title: 운영계와 실제 코드에 닿는 길은 하나
 
 ## 운영계와 실제 코드에 닿는 길은 하나
@@ -447,6 +455,7 @@ Playground는 인터넷망 PC에서만 쓰고, 파일은 들어가는 것도 나
 ---
 <!-- Slide 9: 통제 매트릭스 -->
 @type: content
+@theme: dark
 @title: 연구개발망과 5호망, 통제는 거의 같다
 
 ## 연구개발망과 5호망, 통제는 거의 같다
@@ -501,6 +510,7 @@ Playground는 인터넷망 PC에서만 쓰고, 파일은 들어가는 것도 나
 ---
 <!-- Slide 10: 두 개의 문 -->
 @type: content
+@theme: dark
 @title: 문은 두 개, 권장은 PATH B
 
 ## 문은 두 개, 권장은 PATH B
@@ -550,6 +560,7 @@ PATH B를 택하면 어떤 절차를 거치는지 보겠습니다.
 ---
 <!-- Slide 11: PATH B 절차와 일정 -->
 @type: content
+@theme: dark
 @title: 지정이 끝이 아니다, 이행점검까지
 
 ## 지정이 끝이 아니다, 이행점검까지
@@ -614,6 +625,7 @@ KB증권은 신청부터 적합까지 대략 9개월, PoC부터 보면 1년이 �
 ---
 <!-- Slide 12: 1부 Key Takeaways -->
 @type: content
+@theme: dark
 @title: 1부 정리: 문은 5호망으로 연다
 
 ## 1부 정리: 문은 5호망으로 연다

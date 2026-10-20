@@ -6,6 +6,7 @@ block: 04-build-harness
 ---
 <!-- Slide 1: 4부 섹션 -->
 @type: section
+@theme: dark
 
 # 4부: 구축 방안, 하네스, 도입 경로
 
@@ -25,6 +26,7 @@ block: 04-build-harness
 ---
 <!-- Slide 2: 구축 방안 비교 -->
 @type: content
+@theme: dark
 @title: 코딩 에이전트는 모델 성능이 곧 생산성
 
 ## 코딩 에이전트는 모델 성능이 곧 생산성
@@ -100,6 +102,7 @@ block: 04-build-harness
 ---
 <!-- Slide 3: 교체 가능한 설계 -->
 @type: content
+@theme: dark
 @title: 벤더 종속은 통제면에서 생긴다
 
 ## 벤더 종속은 통제면에서 생긴다
@@ -162,6 +165,7 @@ block: 04-build-harness
 ---
 <!-- Slide 4: 단일 컨트롤 센터 -->
 @type: content
+@theme: dark
 @title: 망이 여러 개여도 정책은 한 곳에서
 
 ## 망이 여러 개여도 정책은 한 곳에서
@@ -229,6 +233,7 @@ block: 04-build-harness
 ---
 <!-- Slide 5: 감사 추적 -->
 @type: content
+@theme: dark
 @title: 점검 질문마다 답할 로그가 정해져 있다
 
 ## 점검 질문마다 답할 로그가 정해져 있다
@@ -296,6 +301,7 @@ block: 04-build-harness
 ---
 <!-- Slide 6: 비용 세 겹 -->
 @type: content
+@theme: dark
 @title: 비용은 세 겹으로, 먼저 토큰부터 잰다
 
 ## 비용은 세 겹으로, 먼저 토큰부터 잰다
@@ -370,6 +376,7 @@ block: 04-build-harness
 ---
 <!-- Slide 7: 하네스 -->
 @type: content
+@theme: dark
 @title: 도구만 깔면 세 가지 실패가 반복된다
 
 ## 도구만 깔면 세 가지 실패가 반복된다
@@ -429,6 +436,7 @@ block: 04-build-harness
 ---
 <!-- Slide 8: 데모 V3 -->
 @type: content
+@theme: dark
 @fit: off
 @title: 데모 V3: 표준대로 고치고 스스로 검증
 
@@ -479,6 +487,7 @@ Play를 누르고 따라가겠습니다.
 ---
 <!-- Slide 9: V3 정리 -->
 @type: content
+@theme: dark
 @title: V3에서 하네스가 한 일
 
 ## V3에서 하네스가 한 일
@@ -526,6 +535,7 @@ printf <span class="string">'{"systemMessage": "[SENSORS] pytest 통과"}'</span
 ---
 <!-- Slide 10: 권장 도입 경로 -->
 @type: content
+@theme: dark
 @title: 권장 도입 경로: 5호망 혁신금융
 
 ## 권장 도입 경로: 5호망 혁신금융
@@ -592,6 +602,7 @@ printf <span class="string">'{"systemMessage": "[SENSORS] pytest 통과"}'</span
 ---
 <!-- Slide 11: 리스크와 확인 필요 -->
 @type: content
+@theme: dark
 @title: 확정 전에 확인할 여덟 가지
 
 ## 확정 전에 확인할 여덟 가지
@@ -633,6 +644,7 @@ printf <span class="string">'{"systemMessage": "[SENSORS] pytest 통과"}'</span
 ---
 <!-- Slide 12: 부록 랜딩존 접근 -->
 @type: content
+@theme: dark
 @title: [부록] 랜딩존은 구축하고 비중요로 검증
 
 ## [부록] 랜딩존은 구축하고 비중요로 검증
@@ -662,6 +674,7 @@ printf <span class="string">'{"systemMessage": "[SENSORS] pytest 통과"}'</span
 ---
 <!-- Slide 13: 최종 정리 -->
 @type: content
+@theme: dark
 @title: 오늘의 결론, 네 줄
 
 ## 오늘의 결론, 네 줄
@@ -694,6 +707,7 @@ printf <span class="string">'{"systemMessage": "[SENSORS] pytest 통과"}'</span
 ---
 <!-- Slide 14: Thank You -->
 @type: thankyou
+@theme: dark
 @toc: toc.html
 @message: Claude Code for FSI, 감사합니다
 

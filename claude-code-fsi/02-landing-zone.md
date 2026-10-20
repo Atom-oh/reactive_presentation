@@ -59,28 +59,42 @@ KB증권의 공개 아키텍처부터 보겠습니다.
 .cf-arch[data-route] .rt { opacity: 0.25; }
 .cf-arch[data-route="tool"] .tool, .cf-arch[data-route="model"] .model { opacity: 1; outline-color: var(--accent); }
 .cf-arch .both { opacity: 1; }
+.cf-arch[data-route=""] .rt { opacity: 1; }
+.cf-flow-host { position: relative; }
+.cf-flow-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 2; }
+.cf-edge { fill: none; stroke: color-mix(in srgb, var(--on-surface) 22%, transparent); stroke-width: 2; stroke-dasharray: 6 6; transition: stroke var(--duration-normal), stroke-width var(--duration-normal); }
+.cf-edge.ghost { stroke: transparent; }
+.cf-edge.on { stroke: var(--accent); stroke-dasharray: none; stroke-width: 3; }
+.cf-edge.on.ok { stroke: var(--success); } .cf-edge.on.bad { stroke: var(--danger); } .cf-edge.on.info { stroke: var(--info); }
+.cf-pkt circle { fill: var(--accent); stroke: var(--surface-1); stroke-width: 3; }
+.cf-pkt.ok circle { fill: var(--success); } .cf-pkt.bad circle { fill: var(--danger); } .cf-pkt.info circle { fill: var(--info); }
+.cf-pkt text { font-style: normal; fill: var(--on-surface); font-size: var(--fs-caption); font-weight: var(--weight-bold); paint-order: stroke; stroke: var(--surface-1); stroke-width: 8px; stroke-linejoin: round; }
+.cf-hit { outline: 2px solid var(--accent) !important; box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 30%, transparent); transition: box-shadow var(--duration-normal); }
+.cf-flow-msg { min-height: 2.8em; margin-top: var(--space-2); font-size: var(--fs-card); }
+
 </style>
-<div class="cf-btns" onclick="(function(e){var b=e.target.closest('.cf-btn');if(!b)return;b.parentNode.querySelectorAll('.cf-btn').forEach(function(x){x.classList.toggle('on',x===b)});document.getElementById('cfKb').setAttribute('data-route',b.dataset.r)})(event)">
+<div class="cf-btns" id="cfKbBtns">
+  <button class="cf-btn on" data-r="">두 경로 모두</button>
   <button class="cf-btn" data-r="tool">도구 호출 경로</button>
   <button class="cf-btn" data-r="model">모델 호출 경로</button>
 </div>
-<div class="cf-arch" id="cfKb" data-reveal="static">
+<div class="cf-arch" id="cfKb" data-route="" data-reveal="static">
   <div class="cf-stack">
-    <div class="cf-box both"><b>5호 단말</b>전산실, Claude Code</div>
-    <div class="cf-box both"><b>보안영역</b>운영망, 개발망과 분리</div>
+    <div class="cf-box both" data-n="pc"><b>5호 단말</b>전산실, Claude Code</div>
+    <div class="cf-box both" data-n="sec"><b>보안영역</b>운영망, 개발망과 분리</div>
   </div>
-  <div class="cf-arrow">→</div>
+  <div class="cf-arrow"></div>
   <div class="cf-stack">
-    <div class="cf-box both"><img src="common/aws-icons/services/Arch_AWS-Direct-Connect_48.svg" alt=""><b>DXG</b>전용회선</div>
-    <div class="cf-box both"><img src="common/aws-icons/services/Arch_AWS-Transit-Gateway_48.svg" alt=""><b>TGW</b></div>
+    <div class="cf-box both" data-n="dx"><img src="common/aws-icons/services/Arch_AWS-Direct-Connect_48.svg" alt=""><b>DXG</b>전용회선</div>
+    <div class="cf-box both" data-n="tgw"><img src="common/aws-icons/services/Arch_AWS-Transit-Gateway_48.svg" alt=""><b>TGW</b></div>
   </div>
-  <div class="cf-arrow">→</div>
+  <div class="cf-arrow"></div>
   <div class="cf-stack">
     <div class="cf-vpc"><h5>Data Center VPC (서울 리전)</h5>
-      <div class="cf-box rt tool"><img src="images/Gateway.png" alt=""><b>AgentCore Gateway</b>→ Lambda, ECS 컨테이너(MCP Hub)</div>
+      <div class="cf-box rt tool" data-n="agw"><img src="images/Gateway.png" alt=""><b>AgentCore Gateway</b>→ Lambda, ECS 컨테이너(MCP Hub)</div>
     </div>
     <div class="cf-vpc"><h5>Shared VPC</h5>
-      <div class="cf-box rt model"><img src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt=""><b>LLM Gateway → VPC Endpoint → Bedrock</b>Foundation Models</div>
+      <div class="cf-box rt model" data-n="llm"><img src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt=""><b>LLM Gateway → VPC Endpoint → Bedrock</b>Foundation Models</div>
     </div>
   </div>
 </div>
@@ -90,6 +104,124 @@ KB증권의 공개 아키텍처부터 보겠습니다.
   <div class="callout callout-danger"><strong class="cf-danger">인터넷 ✕</strong><div class="cf-muted">외부 통신은 전부 차단</div></div>
 </div>
 <div class="cf-src">출처: KB증권 「망분리를 넘어, AI를 안전하게 확장하다: KB의 AI Ops와 AI Code Assistant 실전 사례」, AWS Financial Services Forum Seoul 2026, MCP Hub 요약 아키텍처</div>
+:::
+
+:::script
+// cfFlow: SVG connectors between DOM boxes + packets moving along them.
+// Layout is measured when the slide becomes active (slides are display:none otherwise).
+window.cfFlow = window.cfFlow || (function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function rect(root, el) {
+    var R = root.getBoundingClientRect(), r = el.getBoundingClientRect(), k = root.offsetWidth / (R.width || 1);
+    return { x: (r.left - R.left) * k, y: (r.top - R.top) * k, w: r.width * k, h: r.height * k };
+  }
+  function route(a, b, e) {
+    var ax = a.x + a.w / 2, ay = a.y + a.h / 2 + (e.dy || 0), bx = b.x + b.w / 2, by = b.y + b.h / 2 + (e.dy || 0), dx = bx - ax, dy = by - ay, o = e.off || 0;
+    if (e.via === 's') return 'M' + ax + ',' + ay + ' L' + bx + ',' + by;
+    if (e.via === 'r' || e.via === 'l') {
+      var rt = e.via === 'r', s0 = rt ? a.x + a.w : a.x, e0 = rt ? b.x + b.w : b.x, X = rt ? Math.max(s0, e0) + (o || 18) : Math.min(s0, e0) - (o || 18);
+      return 'M' + s0 + ',' + ay + ' H' + X + ' V' + by + ' H' + e0;
+    }
+    if (e.via === 'v' || (e.via !== 'h' && Math.abs(dx) <= (a.w + b.w) / 2)) {
+      var sy = dy > 0 ? a.y + a.h : a.y, ey = dy > 0 ? b.y : b.y + b.h, my = (sy + ey) / 2 + o;
+      return 'M' + (ax + o) + ',' + sy + ' V' + my + ' H' + (bx + o) + ' V' + ey;
+    }
+    var sx = dx > 0 ? a.x + a.w : a.x, ex = dx > 0 ? b.x : b.x + b.w, mx = (sx + ex) / 2 + o;
+    return 'M' + sx + ',' + ay + ' H' + mx + ' V' + by + ' H' + ex;
+  }
+  function mount(root, edges) {
+    var svg = document.createElementNS(NS, 'svg'), paths = {}, gen = 0, onEnter = null, onLeave = null, active = false;
+    svg.setAttribute('class', 'cf-flow-svg'); svg.setAttribute('aria-hidden', 'true');
+    root.classList.add('cf-flow-host'); root.appendChild(svg);
+    edges.forEach(function (e) {
+      var p = document.createElementNS(NS, 'path');
+      p.setAttribute('class', 'cf-edge' + (e.cls ? ' ' + e.cls : '')); svg.appendChild(p); paths[e.id] = { el: p, e: e };
+    });
+    function node(id) { return root.querySelector('[data-n="' + id + '"]'); }
+    function layout() {
+      svg.setAttribute('viewBox', '0 0 ' + root.offsetWidth + ' ' + root.offsetHeight);
+      Object.keys(paths).forEach(function (k) {
+        var e = paths[k].e, a = node(e.from), b = node(e.to);
+        if (!a || !b || !a.offsetParent || !b.offsetParent) { paths[k].el.setAttribute('d', ''); return; }
+        paths[k].el.setAttribute('d', route(rect(root, a), rect(root, b), e));
+      });
+    }
+    function packet(id, opt) {
+      var my = gen, P = paths[id]; if (!P) return Promise.resolve();
+      var path = P.el, len = path.getTotalLength ? path.getTotalLength() : 0;
+      var g = document.createElementNS(NS, 'g'), c = document.createElementNS(NS, 'circle');
+      g.setAttribute('class', 'cf-pkt' + (opt.cls ? ' ' + opt.cls : '')); c.setAttribute('r', '10'); g.appendChild(c);
+      if (opt.label) { var t = document.createElementNS(NS, 'text'); t.setAttribute('x', '16'); t.setAttribute('y', '-14'); t.textContent = opt.label; g.appendChild(t); }
+      svg.appendChild(g); path.classList.add('on'); if (opt.cls) path.classList.add(opt.cls);
+      var dur = reduce ? 1 : (opt.dur || 1100), t0 = null;
+      return new Promise(function (done) {
+        function frame(ts) {
+          if (my !== gen) { g.remove(); return done(); }
+          if (t0 === null) t0 = ts;
+          var f = Math.min(1, (ts - t0) / dur), q = f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+          var pt = len ? path.getPointAtLength(q * len) : { x: 0, y: 0 };
+          g.setAttribute('transform', 'translate(' + pt.x + ',' + pt.y + ')');
+          if (f < 1) return requestAnimationFrame(frame);
+          var to = node(P.e.to); if (to) { to.classList.add('cf-hit'); setTimeout(function () { to.classList.remove('cf-hit'); }, 900); }
+          setTimeout(function () { g.remove(); done(); }, opt.hold || 250);
+        }
+        requestAnimationFrame(frame);
+      });
+    }
+    function clear() { gen++; svg.querySelectorAll('.cf-pkt').forEach(function (g) { g.remove(); }); Object.keys(paths).forEach(function (k) { paths[k].el.setAttribute('class', 'cf-edge' + (paths[k].e.cls ? ' ' + paths[k].e.cls : '')); }); }
+    // steps: [{e:[edgeIds], label, cls, dur, msg}] played in order; edges in one step run in parallel.
+    function play(steps, opt) {
+      clear(); var my = gen; opt = opt || {};
+      return steps.reduce(function (pr, s, i) {
+        return pr.then(function () {
+          if (my !== gen) return;
+          if (opt.onStep) opt.onStep(i, s);
+          return Promise.all(s.e.map(function (id, j) { return packet(id, j ? { cls: s.cls, dur: s.dur } : s); }));
+        });
+      }, Promise.resolve()).then(function () {
+        if (my !== gen) return;
+        var left = opt.loop === true ? 3 : (opt.loop || 0);
+        if (left > 1 && active && !reduce) return new Promise(function (r) { setTimeout(r, 900); }).then(function () { if (my === gen && active) return play(steps, Object.assign({}, opt, { loop: left - 1 })); });
+        if (opt.onDone) opt.onDone();
+      });
+    }
+    function sync() {
+      var s = root.closest('.slide'), now = !!(s && s.classList.contains('active') && !document.querySelector('.overview-mode'));
+      if (now && !active) { active = true; requestAnimationFrame(function () { layout(); if (onEnter) onEnter(); }); }
+      else if (!now && active) { active = false; clear(); if (onLeave) onLeave(); }
+    }
+    var sl = root.closest('.slide');
+    if (sl && window.MutationObserver) new MutationObserver(sync).observe(sl, { attributes: true, attributeFilter: ['class'] });
+    document.addEventListener('rp:slidechange', function () { setTimeout(sync, 60); });
+    if (window.ResizeObserver) new ResizeObserver(function () { if (active) layout(); }).observe(root);
+    setTimeout(sync, 300);
+    return {
+      layout: layout, play: play, clear: clear, packet: packet,
+      enter: function (f) { onEnter = f; }, leave: function (f) { onLeave = f; },
+      isActive: function () { return active; }
+    };
+  }
+  return { mount: mount };
+})();
+
+(function () {
+  var root = document.getElementById('cfKb'); if (!root) return;
+  var f = cfFlow.mount(root, [
+    { id: 'pc-sec', from: 'pc', to: 'sec' }, { id: 'sec-dx', from: 'sec', to: 'dx' }, { id: 'dx-tgw', from: 'dx', to: 'tgw' },
+    { id: 'tgw-agw', from: 'tgw', to: 'agw' }, { id: 'tgw-llm', from: 'tgw', to: 'llm' }
+  ]);
+  var T = [{ e: ['pc-sec'], label: '도구 호출' }, { e: ['sec-dx'] }, { e: ['dx-tgw'] }, { e: ['tgw-agw'], label: 'MCP Hub' }];
+  var M = [{ e: ['pc-sec'], label: '모델 호출', cls: 'ok' }, { e: ['sec-dx'], cls: 'ok' }, { e: ['dx-tgw'], cls: 'ok' }, { e: ['tgw-llm'], label: 'LLM Gateway', cls: 'ok' }];
+  var btns = document.getElementById('cfKbBtns'), mode = '';
+  function run() { root.setAttribute('data-route', mode); f.play(mode === 'tool' ? T : mode === 'model' ? M : T.concat(M), { loop: true }); }
+  btns.addEventListener('click', function (ev) {
+    var b = ev.target.closest('.cf-btn'); if (!b) return;
+    btns.querySelectorAll('.cf-btn').forEach(function (x) { x.classList.toggle('on', x === b); });
+    mode = b.dataset.r; if (f.isActive()) run();
+  });
+  f.enter(run);
+})();
 :::
 
 :::notes
@@ -103,7 +235,7 @@ KB증권의 공개 아키텍처부터 보겠습니다.
 
 KB증권이 포럼에서 발표한 요약 아키텍처입니다. 5호 단말에서 나간 트래픽은 보안영역을 지나 전용회선 DXG와 TGW로 AWS에 들어옵니다.
 {cue: demo}
-위 버튼을 눌러 두 경로를 나눠 보겠습니다. 도구 호출은 Data Center VPC의 AgentCore Gateway로 가고, 그 뒤에 Lambda와 ECS 컨테이너로 띄운 MCP Hub가 있습니다. 모델 호출은 Shared VPC의 LLM Gateway를 거쳐 VPC Endpoint로 Bedrock을 부릅니다.
+도구 호출은 주황 점, 모델 호출은 초록 점으로 같은 전용회선을 지나 갈라집니다. 위 버튼을 눌러 두 경로를 나눠 보겠습니다. 도구 호출은 Data Center VPC의 AgentCore Gateway로 가고, 그 뒤에 Lambda와 ECS 컨테이너로 띄운 MCP Hub가 있습니다. 모델 호출은 Shared VPC의 LLM Gateway를 거쳐 VPC Endpoint로 Bedrock을 부릅니다.
 {cue: pause}
 인터넷으로 나가는 통신은 전부 막혀 있고, 단말이 Bedrock을 직접 부르지 못하게 한 것이 승인 조건 중 하나였습니다. 이 두 갈래 구조가 오늘 3부의 뼈대입니다.
 근거: KB증권 발표 자료(AWS Financial Services Forum Seoul 2026) MCP Hub 요약 아키텍처
@@ -539,14 +671,26 @@ CRIS를 열면 해외 리전에서 처리된다는 점은 반드시 신청서와
 .cf-hop.cur { opacity: 1; outline-color: var(--accent); }
 .cf-hop.skip { display: none; }
 .cf-net-msg { margin-top: var(--space-3); min-height: 4.2em; }
+.cf-net { position: relative; padding-bottom: 84px; }
+.cf-net-wire, .cf-net-fill { position: absolute; left: 0; bottom: 56px; height: 4px; border-radius: 2px; }
+.cf-net-wire { right: 0; background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--on-surface) 25%, transparent) 0 8px, transparent 8px 16px); }
+.cf-net-fill { width: 0; background: var(--accent); transition: width 0.7s ease-in-out; }
+.cf-net-pk { position: absolute; left: 0; bottom: 48px; width: 24px; height: 24px; margin-left: -12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 30%, transparent); opacity: 0; transition: transform 0.7s ease-in-out, opacity var(--duration-normal); }
+.cf-net-pk.on { opacity: 1; }
+.cf-net-pk::after { font-style: normal; content: '프롬프트'; position: absolute; left: 50%; top: 32px; transform: translateX(-50%); white-space: nowrap; font-size: var(--fs-caption); font-weight: var(--weight-bold); color: var(--accent-on); background: var(--accent); padding: 0 var(--space-2); border-radius: var(--radius-pill); }
+.cf-net-pk.end::after { content: 'Bedrock 도착'; background: var(--success); }
+.cf-net-pk.end { background: var(--success); }
+@media (prefers-reduced-motion: reduce) { .cf-net-fill, .cf-net-pk { transition: none; } }
 </style>
 <div class="cf-btns">
   <button class="cf-btn on" id="cfNetA" onclick="cfNet.setPlan('A')">(안 A) Gateway 전산실 배치</button>
   <button class="cf-btn" id="cfNetB" onclick="cfNet.setPlan('B')">(안 B) Gateway AI Platform 계정 배치</button>
   <button class="cf-btn" onclick="cfNet.step()">다음 홉 ▶</button>
+  <button class="cf-btn" id="cfNetAuto" onclick="cfNet.auto()">자동 재생 ▶▶</button>
   <button class="cf-btn" onclick="cfNet.reset()">처음으로</button>
 </div>
 <div class="cf-net" id="cfNetRow" data-reveal="static">
+  <i class="cf-net-wire"></i><i class="cf-net-fill" id="cfNetFill"></i><i class="cf-net-pk" id="cfNetPk"></i>
   <div class="cf-hop" data-h="0"><b>5호 단말</b>온프렘, Claude Code</div>
   <div class="cf-hop" data-h="1"><b>사내 방화벽</b>기존 5호망 통제</div>
   <div class="cf-hop pa" data-h="2"><b>LLM Gateway</b>(안 A) 전산실</div>
@@ -556,7 +700,7 @@ CRIS를 열면 해외 리전에서 처리된다는 점은 반드시 신청서와
   <div class="cf-hop pb" data-h="6"><img src="common/aws-icons/services/Arch_Elastic-Load-Balancing_48.svg" alt=""><b>내부 NLB, Gateway</b>(안 B) ECS / EKS</div>
   <div class="cf-hop" data-h="7"><img src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt=""><b>VPC Endpoint, Bedrock</b>bedrock-runtime</div>
 </div>
-<div class="cf-panel cf-net-msg" id="cfNetMsg"><span class="cf-muted">"다음 홉"을 눌러 요청 한 건을 따라가 보세요.</span></div>
+<div class="cf-panel cf-net-msg" id="cfNetMsg"><span class="cf-muted">"다음 홉" 또는 "자동 재생"으로 요청 한 건을 따라가 보세요.</span></div>
 <div class="callout callout-warning fragment fade-up" data-fragment-index="1"><strong class="cf-warning">리스크</strong>: Gateway 배치는 두 안을 함께 제시합니다. KB증권의 배치는 공개되지 않았고 금보원 해석에 따라 달라지므로 컨설팅 단계에서 확정합니다.</div>
 :::
 
@@ -575,6 +719,16 @@ window.cfNet = (function () {
   ];
   function hidden(h) { return (plan === 'A' && h.classList.contains('pb')) || (plan === 'B' && h.classList.contains('pa')); }
   function hops() { return Array.prototype.slice.call(document.querySelectorAll('#cfNetRow .cf-hop')); }
+  var timer = null;
+  function move() {
+    var pk = document.getElementById('cfNetPk'), fill = document.getElementById('cfNetFill');
+    var h = hops().filter(function (x) { return +x.dataset.h === cur; })[0];
+    if (!pk) return;
+    if (!h || !h.offsetParent) { pk.classList.remove('on', 'end'); pk.style.transform = ''; fill.style.width = '0'; return; }
+    var x = h.offsetLeft + h.offsetWidth / 2;
+    pk.classList.add('on'); pk.classList.toggle('end', cur === 7);
+    pk.style.transform = 'translateX(' + x + 'px)'; fill.style.width = x + 'px';
+  }
   function render() {
     hops().forEach(function (h) {
       var i = +h.dataset.h;
@@ -584,17 +738,26 @@ window.cfNet = (function () {
     document.getElementById('cfNetA').classList.toggle('on', plan === 'A');
     document.getElementById('cfNetB').classList.toggle('on', plan === 'B');
     var out = document.getElementById('cfNetMsg');
-    out.innerHTML = cur < 0 ? '<span class="cf-muted">"다음 홉"을 눌러 요청 한 건을 따라가 보세요.</span>' : '<strong class="cf-accent">' + msg[cur] + '</strong>';
+    move();
+    out.innerHTML = cur < 0 ? '<span class="cf-muted">"다음 홉" 또는 "자동 재생"으로 요청 한 건을 따라가 보세요.</span>' : '<strong class="cf-accent">' + msg[cur] + '</strong>';
   }
   function step() {
     var v = hops().filter(function (h) { return !hidden(h); }).map(function (h) { return +h.dataset.h; });
     var nxt = v.filter(function (i) { return i > cur; })[0];
     cur = nxt === undefined ? v[v.length - 1] : nxt; render();
   }
-  function setPlan(p) { plan = p; cur = -1; render(); }
-  function reset() { cur = -1; render(); }
+  function stop() { if (timer) { clearInterval(timer); timer = null; } var b = document.getElementById('cfNetAuto'); if (b) b.classList.remove('on'); }
+  function auto() {
+    stop(); cur = -1; render();
+    var b = document.getElementById('cfNetAuto'); if (b) b.classList.add('on');
+    timer = setInterval(function () { if (cur === 7) return stop(); step(); }, 1500);
+    step();
+  }
+  function setPlan(p) { stop(); plan = p; cur = -1; render(); }
+  function reset() { stop(); cur = -1; render(); }
+  document.addEventListener('rp:slidechange', function () { stop(); });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render); else render();
-  return { step: step, setPlan: setPlan, reset: reset };
+  return { step: step, setPlan: setPlan, reset: reset, auto: auto };
 })();
 :::
 
@@ -608,6 +771,7 @@ window.cfNet = (function () {
 
 네트워크 경로입니다. "다음 홉" 버튼으로 요청 한 건을 따라가 보겠습니다.
 {cue: demo}
+"자동 재생"을 누르면 요청이 1.5초 간격으로 홉을 하나씩 지나 Bedrock까지 갑니다. 설명할 홉에서 멈추려면 "다음 홉"을 쓰시면 됩니다.
 5호 단말에서 출발해 사내 방화벽을 지나고, 안 A라면 전산실의 Gateway에서 검사를 받습니다. 전용회선 두 회선으로 AWS에 들어오고, Transit Gateway에서 5호망 전용 라우팅 테이블을 탑니다. 이 테이블에는 인터넷 경로가 아예 없습니다.
 {cue: pause}
 Inspection VPC를 지나 Bedrock은 VPC 엔드포인트로만 부릅니다. 위에서 안 B로 바꾸면, Gateway가 온프렘 대신 AI Platform 계정의 내부 NLB 뒤로 옮겨 갑니다. 어느 쪽이 맞는지는 금보원 해석에 따라 달라서, 두 안을 놓고 컨설팅 단계에서 확정하겠습니다.

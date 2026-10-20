@@ -175,25 +175,42 @@ block: 04-build-harness
 .cf-cp { display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--space-4); }
 .cf-cp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
 .cf-dp { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-2); margin-top: var(--space-2); }
+.cf-flow-host { position: relative; }
+.cf-flow-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 2; }
+.cf-edge { fill: none; stroke: color-mix(in srgb, var(--on-surface) 22%, transparent); stroke-width: 2; stroke-dasharray: 6 6; transition: stroke var(--duration-normal), stroke-width var(--duration-normal); }
+.cf-edge.ghost { stroke: transparent; }
+.cf-edge.on { stroke: var(--accent); stroke-dasharray: none; stroke-width: 3; }
+.cf-edge.on.ok { stroke: var(--success); } .cf-edge.on.bad { stroke: var(--danger); } .cf-edge.on.info { stroke: var(--info); }
+.cf-pkt circle { fill: var(--accent); stroke: var(--surface-1); stroke-width: 3; }
+.cf-pkt.ok circle { fill: var(--success); } .cf-pkt.bad circle { fill: var(--danger); } .cf-pkt.info circle { fill: var(--info); }
+.cf-pkt text { font-style: normal; fill: var(--on-surface); font-size: var(--fs-caption); font-weight: var(--weight-bold); paint-order: stroke; stroke: var(--surface-1); stroke-width: 8px; stroke-linejoin: round; }
+.cf-hit { outline: 2px solid var(--accent) !important; box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 30%, transparent); transition: box-shadow var(--duration-normal); }
+.cf-flow-msg { min-height: 2.8em; margin-top: var(--space-2); font-size: var(--fs-card); }
+.cf-edge.ghost.on { stroke: transparent; }
+.cf-cp-ctl { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2); font-size: var(--fs-card); }
+.cf-cp-ctl .cf-btn { white-space: nowrap; flex: none; }
+.cf-cp-ctl .cf-muted { margin: 0; font-size: var(--fs-card); min-height: 2.8em; display: flex; align-items: center; }
+.cf-dp .cf-box .v { display: block; font-size: var(--fs-caption); color: var(--success); font-weight: var(--weight-bold); min-height: 1.3em; }
 .cf-dp .cf-box.future { opacity: 0.6; border: 2px dashed color-mix(in srgb, var(--on-surface) 25%, transparent); }
 </style>
 <div class="cf-cp">
-  <div>
+  <div id="cfCp">
+    <div class="cf-cp-ctl"><button class="cf-btn" id="cfCpBtn">정책 한 번 바꾸기 ▶</button><span class="cf-muted" id="cfCpMsg">통제면에서 바꾼 정책이 모든 실행면에 같이 적용됩니다.</span></div>
     <div class="cf-zone"><h5>통제면 (Control Plane), AI Platform 계정</h5>
       <div class="cf-cp-grid" data-reveal="stagger">
         <div class="cf-box"><img src="common/aws-icons/services/Arch_AWS-IAM-Identity-Center_48.svg" alt=""><b>IdP 연동</b></div>
-        <div class="cf-box"><b>Gateway 정책</b>DLP, 라우팅</div>
+        <div class="cf-box" data-n="pol"><b>Gateway 정책</b>DLP, 라우팅</div>
         <div class="cf-box"><img src="images/Gateway.png" alt=""><b>MCP Hub 등록</b></div>
         <div class="cf-box"><img src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt=""><b>모델 allowlist</b></div>
         <div class="cf-box"><img src="common/aws-icons/services/Arch_AWS-Budgets_48.svg" alt=""><b>Quota, 예산</b></div>
-        <div class="cf-box"><img src="common/aws-icons/services/Arch_Amazon-CloudWatch_48.svg" alt=""><b>로그, 대시보드</b></div>
+        <div class="cf-box" data-n="logs"><img src="common/aws-icons/services/Arch_Amazon-CloudWatch_48.svg" alt=""><b>로그, 대시보드</b></div>
       </div>
     </div>
     <div class="cf-zone fragment fade-up" data-fragment-index="1"><h5>실행면 (Data Plane)</h5>
       <div class="cf-dp">
-        <div class="cf-box"><b>5호망 AI</b>코딩 에이전트</div>
-        <div class="cf-box"><b>상용 AI 프로젝트</b>AI Project 계정</div>
-        <div class="cf-box"><b>컨텍스트 계층</b>Vector, Graph</div>
+        <div class="cf-box" data-n="d1"><b>5호망 AI</b>코딩 에이전트<span class="v"></span></div>
+        <div class="cf-box" data-n="d2"><b>상용 AI 프로젝트</b>AI Project 계정<span class="v"></span></div>
+        <div class="cf-box" data-n="d3"><b>컨텍스트 계층</b>Vector, Graph<span class="v"></span></div>
         <div class="cf-box future"><b>(향후) 그룹 계열사</b>그룹 결정 사항</div>
       </div>
     </div>
@@ -214,6 +231,130 @@ block: 04-build-harness
 </div>
 :::
 
+:::script
+// cfFlow: SVG connectors between DOM boxes + packets moving along them.
+// Layout is measured when the slide becomes active (slides are display:none otherwise).
+window.cfFlow = window.cfFlow || (function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function rect(root, el) {
+    var R = root.getBoundingClientRect(), r = el.getBoundingClientRect(), k = root.offsetWidth / (R.width || 1);
+    return { x: (r.left - R.left) * k, y: (r.top - R.top) * k, w: r.width * k, h: r.height * k };
+  }
+  function route(a, b, e) {
+    var ax = a.x + a.w / 2, ay = a.y + a.h / 2 + (e.dy || 0), bx = b.x + b.w / 2, by = b.y + b.h / 2 + (e.dy || 0), dx = bx - ax, dy = by - ay, o = e.off || 0;
+    if (e.via === 's') return 'M' + ax + ',' + ay + ' L' + bx + ',' + by;
+    if (e.via === 'r' || e.via === 'l') {
+      var rt = e.via === 'r', s0 = rt ? a.x + a.w : a.x, e0 = rt ? b.x + b.w : b.x, X = rt ? Math.max(s0, e0) + (o || 18) : Math.min(s0, e0) - (o || 18);
+      return 'M' + s0 + ',' + ay + ' H' + X + ' V' + by + ' H' + e0;
+    }
+    if (e.via === 'v' || (e.via !== 'h' && Math.abs(dx) <= (a.w + b.w) / 2)) {
+      var sy = dy > 0 ? a.y + a.h : a.y, ey = dy > 0 ? b.y : b.y + b.h, my = (sy + ey) / 2 + o;
+      return 'M' + (ax + o) + ',' + sy + ' V' + my + ' H' + (bx + o) + ' V' + ey;
+    }
+    var sx = dx > 0 ? a.x + a.w : a.x, ex = dx > 0 ? b.x : b.x + b.w, mx = (sx + ex) / 2 + o;
+    return 'M' + sx + ',' + ay + ' H' + mx + ' V' + by + ' H' + ex;
+  }
+  function mount(root, edges) {
+    var svg = document.createElementNS(NS, 'svg'), paths = {}, gen = 0, onEnter = null, onLeave = null, active = false;
+    svg.setAttribute('class', 'cf-flow-svg'); svg.setAttribute('aria-hidden', 'true');
+    root.classList.add('cf-flow-host'); root.appendChild(svg);
+    edges.forEach(function (e) {
+      var p = document.createElementNS(NS, 'path');
+      p.setAttribute('class', 'cf-edge' + (e.cls ? ' ' + e.cls : '')); svg.appendChild(p); paths[e.id] = { el: p, e: e };
+    });
+    function node(id) { return root.querySelector('[data-n="' + id + '"]'); }
+    function layout() {
+      svg.setAttribute('viewBox', '0 0 ' + root.offsetWidth + ' ' + root.offsetHeight);
+      Object.keys(paths).forEach(function (k) {
+        var e = paths[k].e, a = node(e.from), b = node(e.to);
+        if (!a || !b || !a.offsetParent || !b.offsetParent) { paths[k].el.setAttribute('d', ''); return; }
+        paths[k].el.setAttribute('d', route(rect(root, a), rect(root, b), e));
+      });
+    }
+    function packet(id, opt) {
+      var my = gen, P = paths[id]; if (!P) return Promise.resolve();
+      var path = P.el, len = path.getTotalLength ? path.getTotalLength() : 0;
+      var g = document.createElementNS(NS, 'g'), c = document.createElementNS(NS, 'circle');
+      g.setAttribute('class', 'cf-pkt' + (opt.cls ? ' ' + opt.cls : '')); c.setAttribute('r', '10'); g.appendChild(c);
+      if (opt.label) { var t = document.createElementNS(NS, 'text'); t.setAttribute('x', '16'); t.setAttribute('y', '-14'); t.textContent = opt.label; g.appendChild(t); }
+      svg.appendChild(g); path.classList.add('on'); if (opt.cls) path.classList.add(opt.cls);
+      var dur = reduce ? 1 : (opt.dur || 1100), t0 = null;
+      return new Promise(function (done) {
+        function frame(ts) {
+          if (my !== gen) { g.remove(); return done(); }
+          if (t0 === null) t0 = ts;
+          var f = Math.min(1, (ts - t0) / dur), q = f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+          var pt = len ? path.getPointAtLength(q * len) : { x: 0, y: 0 };
+          g.setAttribute('transform', 'translate(' + pt.x + ',' + pt.y + ')');
+          if (f < 1) return requestAnimationFrame(frame);
+          var to = node(P.e.to); if (to) { to.classList.add('cf-hit'); setTimeout(function () { to.classList.remove('cf-hit'); }, 900); }
+          setTimeout(function () { g.remove(); done(); }, opt.hold || 250);
+        }
+        requestAnimationFrame(frame);
+      });
+    }
+    function clear() { gen++; svg.querySelectorAll('.cf-pkt').forEach(function (g) { g.remove(); }); Object.keys(paths).forEach(function (k) { paths[k].el.setAttribute('class', 'cf-edge' + (paths[k].e.cls ? ' ' + paths[k].e.cls : '')); }); }
+    // steps: [{e:[edgeIds], label, cls, dur, msg}] played in order; edges in one step run in parallel.
+    function play(steps, opt) {
+      clear(); var my = gen; opt = opt || {};
+      return steps.reduce(function (pr, s, i) {
+        return pr.then(function () {
+          if (my !== gen) return;
+          if (opt.onStep) opt.onStep(i, s);
+          return Promise.all(s.e.map(function (id, j) { return packet(id, j ? { cls: s.cls, dur: s.dur } : s); }));
+        });
+      }, Promise.resolve()).then(function () {
+        if (my !== gen) return;
+        var left = opt.loop === true ? 3 : (opt.loop || 0);
+        if (left > 1 && active && !reduce) return new Promise(function (r) { setTimeout(r, 900); }).then(function () { if (my === gen && active) return play(steps, Object.assign({}, opt, { loop: left - 1 })); });
+        if (opt.onDone) opt.onDone();
+      });
+    }
+    function sync() {
+      var s = root.closest('.slide'), now = !!(s && s.classList.contains('active') && !document.querySelector('.overview-mode'));
+      if (now && !active) { active = true; requestAnimationFrame(function () { layout(); if (onEnter) onEnter(); }); }
+      else if (!now && active) { active = false; clear(); if (onLeave) onLeave(); }
+    }
+    var sl = root.closest('.slide');
+    if (sl && window.MutationObserver) new MutationObserver(sync).observe(sl, { attributes: true, attributeFilter: ['class'] });
+    document.addEventListener('rp:slidechange', function () { setTimeout(sync, 60); });
+    if (window.ResizeObserver) new ResizeObserver(function () { if (active) layout(); }).observe(root);
+    setTimeout(sync, 300);
+    return {
+      layout: layout, play: play, clear: clear, packet: packet,
+      enter: function (f) { onEnter = f; }, leave: function (f) { onLeave = f; },
+      isActive: function () { return active; }
+    };
+  }
+  return { mount: mount };
+})();
+
+(function () {
+  var root = document.getElementById('cfCp'); if (!root) return;
+  var f = cfFlow.mount(root, [
+    { id: 'p1', from: 'pol', to: 'd1', via: 's', cls: 'ghost' }, { id: 'p2', from: 'pol', to: 'd2', via: 's', cls: 'ghost' }, { id: 'p3', from: 'pol', to: 'd3', via: 's', cls: 'ghost' },
+    { id: 'l1', from: 'd1', to: 'logs', via: 's', cls: 'ghost' }, { id: 'l2', from: 'd2', to: 'logs', via: 's', cls: 'ghost' }, { id: 'l3', from: 'd3', to: 'logs', via: 's', cls: 'ghost' }
+  ]);
+  var ver = 1, msg = document.getElementById('cfCpMsg');
+  function run() {
+    ver++;
+    root.querySelectorAll('.cf-dp .v').forEach(function (v) { v.textContent = ''; });
+    f.play([
+      { e: ['p1', 'p2', 'p3'], dur: 1300, msg: 'Gateway 정책 v' + ver + '을 한 곳에서 배포합니다.' },
+      { e: ['l1', 'l2', 'l3'], cls: 'info', dur: 1100, msg: '각 실행면의 적용 결과와 호출 로그가 같은 대시보드로 모입니다.' }
+    ], {
+      onStep: function (i, s) {
+        msg.textContent = s.msg;
+        if (i === 1) root.querySelectorAll('.cf-dp .v').forEach(function (v) { v.textContent = '정책 v' + ver + ' 적용'; });
+      },
+      onDone: function () { msg.textContent = '정책 v' + ver + ': 실행면 3곳 적용, 로그 수집 완료. 망별로 따로 바꾸지 않습니다.'; }
+    });
+  }
+  document.getElementById('cfCpBtn').addEventListener('click', function () { if (f.isActive()) { f.layout(); run(); } });
+})();
+:::
+
 :::notes
 {timing: 1.5min}
 [요약]
@@ -224,6 +365,8 @@ block: 04-build-harness
 - 연구개발망은 붙일 수 없음
 
 단일 컨트롤 센터 질문에 대한 답입니다. 통제면은 AI Platform 계정 하나에 두고, 5호망 코딩 에이전트와 상용 프로젝트, 컨텍스트 계층이 실행면으로 붙습니다.
+{cue: demo}
+실행면을 띄운 뒤 "정책 한 번 바꾸기"를 누르겠습니다. Gateway 정책을 한 번 바꾸면 세 실행면에 같이 적용되고, 적용 결과와 호출 로그가 같은 대시보드로 돌아옵니다.
 {cue: pause}
 오른쪽 표처럼 누가, 무엇을, 얼마나, 기록, 네 가지를 한 곳에서 봅니다. 정보보호위원회 보고 자료도 여기서 나옵니다. 연구개발망은 망분리 때문에 여기에 붙일 수 없습니다. 그룹 계열사까지 넓힐지는 그룹에서 정하실 부분이라 확장 가능하다는 정도로 말씀드립니다.
 {cue: transition}

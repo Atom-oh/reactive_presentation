@@ -571,9 +571,95 @@ ASN은 조율된 기존 값을 쓰세요. private 범위는 64512–65534와 420
 BGP 세션이 Established 됐다고 끝이 아닙니다. 라우터에 의도한 prefix가 실제 수락되고 forwarding table에 설치됐는지 cilium bgp routes와 라우터 쪽에서 둘 다 확인하세요.
 참고로 예제의 apiVersion은 AWS 예제를 따라 v2alpha1이고, 검토한 Cilium 1.18.3 CRD에서 v2도 지원됩니다. 이 때문에 CRD를 교체할 필요는 없습니다. 이 예제들은 로컬 schema로 검토한 것이며 실제 클러스터에서 실행해 검증한 결과는 아니라는 점도 밝혀 둡니다.
 {cue: transition}
-이제 Gateway로 넘어갑니다. 무엇이고 왜 만들어졌는지부터 보겠습니다.
+Pod CIDR이 라우팅되면 SNAT를 끌 수 있습니다. 방화벽이 Pod IP를 보게 되는 구성을 먼저 보겠습니다.
 [근거]
 • 내부 문서 D/02 "옵션 1: BGP" 및 "ASN과 Router 구성"; AWS docs hybrid-nodes-cilium-bgp
+:::
+
+---
+<!-- Slide 10b: masquerade 끄기와 native routing -->
+@type: content
+@title: SNAT를 끄면 방화벽이 Pod IP를 본다
+
+## SNAT를 끄면 방화벽이 Pod IP를 본다
+
+:::html
+<style>
+.text-success { color: var(--success); font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.hn-table { width: 100%; font-size: var(--fs-caption); word-break: keep-all; overflow-wrap: break-word; }
+.hn-note { font-size: var(--fs-caption); color: var(--text-secondary); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: break-word; }
+.hn-code { font-family: var(--font-mono); font-size: var(--fs-caption); white-space: pre; background: var(--surface-2); border: 1px solid var(--surface-3); border-radius: var(--radius-md); padding: var(--space-3); overflow: hidden; line-height: 1.6; }
+.hn-nat-cols { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: start; }
+</style>
+<div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
+  <button class="tab-btn active">세 가지 구성</button>
+  <button class="tab-btn">바꿀 설정</button>
+  <button class="tab-btn">실측과 함정</button>
+</div>
+<div class="tc">
+  <table class="data-table hn-table">
+    <thead><tr><th>구성</th><th>방화벽이 Pod IP를 보는 구간</th><th>AWS 지원</th><th>Gateway</th></tr></thead>
+    <tbody>
+      <tr><td>VXLAN + masquerade (기본)</td><td>없음 (클러스터 밖으로 나가면 노드 IP)</td><td>지원</td><td>사용 가능</td></tr>
+      <tr><td><strong class="text-success">VXLAN + masquerade 끔 + BGP</strong></td><td>클라우드와 온프렘 사이, 온프렘 서버. hybrid 노드 사이는 VXLAN 바깥 헤더(노드 IP)</td><td>지원</td><td>필요 없음 (Pod CIDR이 라우팅됨)</td></tr>
+      <tr><td>native routing + masquerade 끔</td><td>위 구간 + hybrid 노드 사이</td><td><strong class="text-danger">지원 범위 밖</strong></td><td>사용 불가 (VTEP은 VXLAN 필요)</td></tr>
+    </tbody>
+  </table>
+  <div class="hn-note">AWS가 지원하는 Cilium Networking Mode는 VXLAN뿐입니다. masquerade를 끄면 Pod CIDR이 온프렘 네트워크에서 라우팅 가능해야 하고, AWS 문서는 이를 위해 Cilium BGP Control Plane을 권장합니다.</div>
+</div>
+<div class="tc" hidden>
+  <div class="hn-nat-cols">
+    <div class="hn-code"># Cilium values (기본 values 위에 덧씌움)
+enableIPv4Masquerade: false
+# 지원 구성은 여기까지 (VXLAN 유지 + BGP)
+
+# native routing을 시험할 때만 추가
+routingMode: native
+ipv4NativeRoutingCIDR: "10.85.0.0/16"
+autoDirectNodeRoutes: false  # 온프렘 라우터가 전달
+vtep:
+  enabled: false</div>
+    <div>
+      <div class="metric-card"><strong class="text-accent">온프렘 라우터</strong><div class="on-surface-muted">노드별 Pod 블록을 해당 노드로 보내는 경로. 앞 슬라이드의 BGP로 광고합니다.</div></div>
+      <div class="metric-card"><strong class="text-info">클라우드 쪽</strong><div class="on-surface-muted">VPC route table, TGW에 Pod CIDR을 DX/VPN 방향으로. native routing이면 호스트의 source/destination check도 끔.</div></div>
+      <div class="metric-card"><strong class="text-warning">VPC CNI</strong><div class="on-surface-muted"><code>AWS_VPC_K8S_CNI_EXCLUDE_SNAT_CIDRS</code>에 온프렘 Pod와 노드 대역. 빠지면 클라우드 Pod가 노드 IP로 나갑니다.</div></div>
+    </div>
+  </div>
+  <div class="hn-note">Cilium chart는 ConfigMap이 바뀌어도 agent를 재시작하지 않으므로 <code>rollout restart ds/cilium</code>이 필요합니다.</div>
+</div>
+<div class="tc" hidden>
+  <div class="card-grid">
+    <div class="callout callout-success"><strong class="text-success">38개 연결 검사 PASS</strong><div class="on-surface-muted">native routing으로 측정(2026-10-19). Pod에서 출발한 요청은 서버 로그의 출발지가 Pod IP. 상세는 5부.</div></div>
+    <div class="callout callout-info"><strong class="text-info">AWS SG로도 구분된다</strong><div class="on-surface-muted">PrivateLink endpoint SG를 Pod 대역에만 열자 같은 노드에서 Pod는 통과, hostNetwork(노드 IP)는 타임아웃.</div></div>
+    <div class="callout callout-warning"><strong class="text-warning">hostNetwork는 노드 IP</strong><div class="on-surface-muted">hostNetwork Pod의 DNS가 실패: 클러스터 SG에 노드 대역 53번이 없었음. 노드 대역 규칙은 따로 둡니다.</div></div>
+    <div class="callout callout-warning"><strong class="text-warning">BGP 구성은 측정하지 않음</strong><div class="on-surface-muted">VXLAN + masquerade 끔 + BGP는 문서 기준의 설계입니다. 도입 전에 직접 확인하세요.</div></div>
+  </div>
+</div>
+<div class="callout callout-info hn-takeaway fragment zoom-in" data-fragment-index="1"><strong class="text-info">한 줄 정리</strong><div class="on-surface-muted">방화벽이 Pod IP를 봐야 한다면 VXLAN을 유지한 채 masquerade를 끄고 BGP로 Pod CIDR을 광고하는 구성이 지원 범위 안의 출발점입니다.</div></div>
+:::
+
+:::notes
+{timing: 2.5min}
+[요약]
+• 요구사항 "방화벽이 온프렘 Pod를 노드 IP가 아니라 Pod IP로 구분"에 대한 답
+• 지원 범위 안: VXLAN 유지 + masquerade 끔 + BGP. Gateway가 데이터 경로에서 빠짐
+• native routing은 hybrid 노드 사이까지 Pod IP가 보이지만 AWS 지원 범위 밖, Gateway와 함께 못 씀
+• 함정: VPC CNI SNAT 제외 대역, hostNetwork는 노드 IP, Cilium agent 재시작
+고객에게서 "방화벽이 온프렘 Pod를 노드 IP가 아니라 Pod IP로 구분해야 한다"는 요구를 자주 받습니다. 기본 구성에서는 Pod 트래픽이 클러스터 밖으로 나갈 때 Cilium이 노드 IP로 masquerade하고, hybrid 노드 사이는 VXLAN 바깥 헤더로 감싸기 때문에 방화벽은 Pod IP를 볼 수 없습니다.
+{cue: pause}
+첫 번째 탭의 가운데 줄이 지원 범위 안의 답입니다. VXLAN은 그대로 두고 masquerade만 끈 뒤, 앞 슬라이드의 BGP로 Pod CIDR을 광고합니다. 그러면 클라우드와 온프렘 사이, 그리고 온프렘 서버가 Pod IP를 봅니다. Pod CIDR이 라우팅되므로 Gateway도 필요 없습니다. hybrid 노드 사이까지 보려면 native routing이 필요한데, AWS가 지원하는 Networking Mode는 VXLAN뿐이라 지원 범위 밖이고, Gateway의 VTEP도 VXLAN이 필요해서 함께 쓸 수 없습니다.
+두 번째 탭이 바꿀 설정입니다. 지원 구성은 enableIPv4Masquerade false 한 줄과 라우팅 준비입니다. 잊기 쉬운 것은 VPC CNI입니다. 클라우드 Pod가 온프렘으로 갈 때 VPC CNI가 노드 IP로 SNAT하므로, 제외 대역에 온프렘 Pod와 노드 대역을 모두 넣어야 합니다.
+{cue: question}
+세 번째 탭은 5부에서 보여 드릴 실측입니다. native routing으로 38개 연결 검사가 모두 통과했고, AWS 쪽 SG로도 같은 노드의 Pod와 hostNetwork를 구분할 수 있었습니다. 다만 BGP 구성 자체는 이번에 측정하지 않았으니 도입 전에 직접 확인해 주세요. 여러분 환경에서 방화벽 규칙은 노드 IP 기준인가요, Pod IP 기준인가요?
+{cue: transition}
+이제 Pod CIDR을 라우팅할 수 없을 때의 선택지, Gateway로 넘어갑니다.
+[출처]
+• https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html (지원 Networking Mode: VXLAN encapsulation, masquerade를 끄면 Pod CIDR이 온프렘에서 라우팅 가능해야 함, Cilium BGP 권장)
+• 데모 저장소 results/connectivity-20261019-1050.md, 1400.md (native routing 38 PASS), RUNBOOK 5.1절 (2026-10-19 실측)
 :::
 
 ---
@@ -908,6 +994,7 @@ kubectl get ciliumvtepconfig hybrid-gateway -o yaml</div>
       <tr><td>BGP node ↔ router</td><td>TCP 179</td><td>설정한 active/passive peer 기준, BGP 사용 시</td></tr>
       <tr><td>CP/Cloud → hybrid Pod</td><td>실제 앱, webhook port</td><td>Pod CIDR route + return path 필요</td></tr>
       <tr><td>static route</td><td>(포트 없음)</td><td>node별 prefix → node IP 수동 유지</td></tr>
+      <tr><td>masquerade 끔</td><td>규칙을 Pod CIDR 기준으로</td><td>출발지가 Pod IP. hostNetwork Pod는 노드 IP라 노드 대역 규칙(DNS 53 등)도 유지</td></tr>
     </tbody>
   </table>
   <div class="hn-note">UDP 8472는 hybrid 노드 간 VXLAN으로 이 모드에서도 필요합니다.</div>
@@ -935,7 +1022,7 @@ kubectl get ciliumvtepconfig hybrid-gateway -o yaml</div>
 • Gateway 추가: Gateway 노드 private IP ↔ hybrid 노드 UDP 8472 양방향, metrics 10080
 • UDP 8472는 두 모드 모두에서 필요
 세 탭으로 나눴습니다. 공통 탭이 모든 환경의 기본입니다. 443은 온프렘이 열고, 10250과 webhook 포트는 AWS가 엽니다. 웹훅 포트는 실제 설정한 포트이며 "8443 이상"이 아닙니다. 인증 없는 kubelet 10255를 현대적 요구로 열지는 마세요.
-direct routing 탭에서는 BGP를 쓰면 라우터와의 TCP 179가 추가되고, Pod CIDR route와 return path가 필요합니다. UDP 8472는 hybrid 노드 간 VXLAN 때문에 이 모드에서도 필요합니다.
+direct routing 탭에서는 BGP를 쓰면 라우터와의 TCP 179가 추가되고, Pod CIDR route와 return path가 필요합니다. masquerade를 끄면 출발지가 Pod IP가 되므로 규칙을 Pod CIDR 기준으로 쓰되, hostNetwork Pod는 여전히 노드 IP로 나가니 노드 대역의 DNS 53 같은 규칙도 남겨 두세요. UDP 8472는 hybrid 노드 간 VXLAN 때문에 이 모드에서도 필요합니다.
 {cue: pause}
 Gateway 탭은 Gateway 노드와 hybrid 노드 사이의 UDP 8472 양방향이 핵심입니다. 허용 대상은 Gateway 노드의 private IP이며 Elastic IP가 아닙니다. leader와 standby 후보, 교체될 노드까지 모두 반영해야 하고, 노드가 바뀔 때 방화벽 인벤토리를 갱신해야 합니다. 보안 그룹은 stateful이지만 NACL은 stateless이므로 반환 규칙도 따로 확인하세요.
 {cue: transition}

@@ -18,7 +18,8 @@ speaker:
 
 theme:
   footer: "© 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved."
-  logo: "./common/pptx-theme/images/logo_dark.png"
+  mode: dark
+  logo: "./common/pptx-theme/images/logo_1.png"
 
 blocks:
   - name: 01-regulation

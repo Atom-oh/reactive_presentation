@@ -6,6 +6,7 @@ block: 02-landing-zone
 ---
 <!-- Slide 1: 2부 섹션 -->
 @type: section
+@theme: dark
 
 # 2부: 타사 사례와 랜딩존, 네트워크
 
@@ -25,6 +26,7 @@ KB증권의 공개 아키텍처부터 보겠습니다.
 ---
 <!-- Slide 2: KB증권 아키텍처 -->
 @type: content
+@theme: dark
 @title: KB증권: 도구와 모델, 두 갈래 경로
 
 ## KB증권: 도구와 모델, 두 갈래 경로
@@ -112,6 +114,7 @@ KB증권이 포럼에서 발표한 요약 아키텍처입니다. 5호 단말에�
 ---
 <!-- Slide 3: 조직 범위와 계정 분리 -->
 @type: content
+@theme: dark
 @title: 계정 경계는 승인 책임을 따른다
 
 ## 계정 경계는 승인 책임을 따른다
@@ -164,6 +167,7 @@ KB증권이 포럼에서 발표한 요약 아키텍처입니다. 5호 단말에�
 ---
 <!-- Slide 4: 전제조건 -->
 @type: content
+@theme: dark
 @title: 사용자 범위는 신청서에서 정해진다
 
 ## 사용자 범위는 신청서에서 정해진다
@@ -212,6 +216,7 @@ KB증권이 포럼에서 발표한 요약 아키텍처입니다. 5호 단말에�
 ---
 <!-- Slide 5: 외주 SI 견적 -->
 @type: content
+@theme: dark
 @title: 코드 어시스턴트가 발주 조건이 된다
 
 ## 코드 어시스턴트가 발주 조건이 된다
@@ -267,6 +272,7 @@ KB증권이 포럼에서 발표한 요약 아키텍처입니다. 5호 단말에�
 ---
 <!-- Slide 6: 랜딩존은 필요조건 -->
 @type: content
+@theme: dark
 @title: 랜딩존은 고속도로, 지정은 통행 허가
 
 ## 랜딩존은 고속도로, 지정은 통행 허가
@@ -309,6 +315,7 @@ KB증권이 포럼에서 발표한 요약 아키텍처입니다. 5호 단말에�
 ---
 <!-- Slide 7: OU 구조 -->
 @type: content
+@theme: dark
 @title: AI는 별도 OU가 아니라 Workloads OU에
 
 ## AI는 별도 OU가 아니라 Workloads OU에
@@ -396,6 +403,7 @@ R&D OU를 눌러 보시면, 연구개발망은 법적 근거가 다르니 완전
 ---
 <!-- Slide 8: 가드레일 3종 -->
 @type: content
+@theme: dark
 @title: 막고, 찾고, 만들기 전에 검사한다
 
 ## 막고, 찾고, 만들기 전에 검사한다
@@ -427,6 +435,7 @@ SCP가 가장 강력한데 그만큼 위험합니다. 잘못 걸면 운영 계�
 ---
 <!-- Slide 9: SCP 예시 -->
 @type: content
+@theme: dark
 @title: 리전은 서울로, 예외는 승인 CRIS만
 
 ## 리전은 서울로, 예외는 승인 CRIS만
@@ -515,6 +524,7 @@ CRIS를 열면 해외 리전에서 처리된다는 점은 반드시 신청서와
 ---
 <!-- Slide 10: 하이브리드 네트워크 -->
 @type: content
+@theme: dark
 @title: 5호 단말에서 Bedrock까지, 인터넷 없이
 
 ## 5호 단말에서 Bedrock까지, 인터넷 없이
@@ -608,6 +618,7 @@ Inspection VPC를 지나 Bedrock은 VPC 엔드포인트로만 부릅니다. 위�
 ---
 <!-- Slide 11: PrivateLink와 DNS -->
 @type: content
+@theme: dark
 @title: 퍼블릭 DNS를 해석하지 않는다
 
 ## 퍼블릭 DNS를 해석하지 않는다
@@ -670,6 +681,7 @@ PrivateLink 상세입니다. 왼쪽이 계정 VPC에 만들 엔드포인트 목�
 ---
 <!-- Slide 12: 2부 정리 -->
 @type: content
+@theme: dark
 @title: 2부 정리: 길은 하나, 우회로는 없다
 
 ## 2부 정리: 길은 하나, 우회로는 없다

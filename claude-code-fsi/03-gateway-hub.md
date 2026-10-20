@@ -6,6 +6,7 @@ block: 03-gateway-hub
 ---
 <!-- Slide 1: 3부 섹션 -->
 @type: section
+@theme: dark
 
 # 3부: MCP Hub와 LLM Gateway
 
@@ -26,6 +27,7 @@ Claude Code를 하나의 통제면에서, 실제로 돌려 본 데모와 함께
 ---
 <!-- Slide 2: 전체 구성 -->
 @type: content
+@theme: dark
 @title: 모델은 Gateway로, 도구는 Hub로
 
 ## 모델은 Gateway로, 도구는 Hub로
@@ -107,6 +109,7 @@ Claude Code를 하나의 통제면에서, 실제로 돌려 본 데모와 함께
 ---
 <!-- Slide 3: MCP와 Hub -->
 @type: content
+@theme: dark
 @title: MCP는 규약, Hub는 그 연결의 관문
 
 ## MCP는 규약, Hub는 그 연결의 관문
@@ -150,6 +153,7 @@ MCP는 AI가 사내 시스템을 도구처럼 부르는 표준 규약입니다. 
 ---
 <!-- Slide 4: AgentCore Gateway -->
 @type: content
+@theme: dark
 @title: MCP Hub는 AgentCore Gateway로
 
 ## MCP Hub는 AgentCore Gateway로
@@ -206,6 +210,7 @@ MCP Hub를 AgentCore Gateway로 구성한 그림입니다. 왼쪽에서 Claude C
 ---
 <!-- Slide 5: MCP 세 관문 -->
 @type: content
+@theme: dark
 @title: 단말 설정이 없으면 Hub도 무의미하다
 
 ## 단말 설정이 없으면 Hub도 무의미하다
@@ -245,6 +250,7 @@ MCP Hub를 AgentCore Gateway로 구성한 그림입니다. 왼쪽에서 Claude C
 ---
 <!-- Slide 6: 데모 V1 -->
 @type: content
+@theme: dark
 @fit: off
 @title: 데모 V1: 관리 설정은 개발자가 못 푼다
 
@@ -298,6 +304,7 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 ---
 <!-- Slide 7: V1 정리 -->
 @type: content
+@theme: dark
 @title: V1에서 확인한 여섯 가지
 
 ## V1에서 확인한 여섯 가지
@@ -336,6 +343,7 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 ---
 <!-- Slide 8: 요청 한 건의 흐름 -->
 @type: content
+@theme: dark
 @title: 요청 한 건이 남기는 흔적
 
 ## 요청 한 건이 남기는 흔적
@@ -384,6 +392,7 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 ---
 <!-- Slide 9: Claude Code와 Codex 수용 -->
 @type: content
+@theme: dark
 @title: 도구는 개발자가, 통제는 Gateway가
 
 ## 도구는 개발자가, 통제는 Gateway가
@@ -432,6 +441,7 @@ Claude Code는 Bedrock 모드로 두되 주소만 사내 Gateway로 바꾸고, A
 ---
 <!-- Slide 10: 데모 V2 -->
 @type: content
+@theme: dark
 @fit: off
 @title: 데모 V2: Gateway가 막고, 남긴다
 
@@ -472,6 +482,7 @@ Play를 누르고 따라가겠습니다.
 ---
 <!-- Slide 11: V2 감사 로그 -->
 @type: content
+@theme: dark
 @title: 감사 로그 한 줄이 점검 답변이 된다
 
 ## 감사 로그 한 줄이 점검 답변이 된다
@@ -517,6 +528,7 @@ Play를 누르고 따라가겠습니다.
 ---
 <!-- Slide 12: 사내 지식 계층 -->
 @type: content
+@theme: dark
 @title: 원본은 온프렘, AI는 ETL 결과만
 
 ## 원본은 온프렘, AI는 ETL 결과만
@@ -585,6 +597,7 @@ Play를 누르고 따라가겠습니다.
 ---
 <!-- Slide 13: 서울 리전 가용성 -->
 @type: content
+@theme: dark
 @title: 국외 처리는 구성요소별로 확인한다
 
 ## 국외 처리는 구성요소별로 확인한다
@@ -638,6 +651,7 @@ Play를 누르고 따라가겠습니다.
 ---
 <!-- Slide 14: 3부 정리 -->
 @type: content
+@theme: dark
 @title: 3부 정리: 관문은 둘, 겹은 여럿
 
 ## 3부 정리: 관문은 둘, 겹은 여럿

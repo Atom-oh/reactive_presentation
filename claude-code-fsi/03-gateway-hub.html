@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCP Hub와 LLM Gateway, 데모</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="03-gateway-hub.md">
+  <meta name="remarp-block" content="03-gateway-hub">
+  <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/deck-overlay.css">
+  <link rel="stylesheet" href="./common/deck-detail.css">
+  <link rel="stylesheet" href="./common/deck-nav.css">
+  
+  <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
+  
+  <script>window.__remarpTheme = {"colors": {}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}};</script>
+</head>
+<body>
+<div class="slide-deck">
+<div class="slide title-slide" data-remarp-id="s0" data-block="03-gateway-hub" data-block-title="3부: MCP Hub와 LLM Gateway">
+    <h1>3부: MCP Hub와 LLM Gateway</h1>
+  <p class="meta">Claude Code를 하나의 통제면에서, 실제로 돌려 본 데모와 함께</p>
+</div>
+
+<div class="slide" data-remarp-id="s1" data-block="03-gateway-hub" data-block-title="3부: MCP Hub와 LLM Gateway">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>모델은 Gateway로, 도구는 Hub로</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <p><!-- Slide 2: 전체 구성 --></p>
+<style>
+.cf-muted { color: var(--on-surface-muted); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.cf-src { color: var(--on-surface-muted); font-size: var(--fs-caption); margin-top: var(--space-2); word-break: keep-all; }
+.cf-accent  { color: color-mix(in srgb, var(--accent) 72%, var(--on-surface));  font-weight: var(--weight-bold); }
+.cf-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.cf-success { color: var(--success); font-weight: var(--weight-bold); }
+.cf-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.cf-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.cf-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.cf-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+.cf-stack { display: flex; flex-direction: column; gap: var(--space-3); }
+.cf-btns { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3); }
+.cf-btn { border: 1px solid color-mix(in srgb, var(--on-surface) 20%, transparent); background: var(--surface-1); color: var(--on-surface); padding: var(--space-2) var(--space-4); border-radius: var(--radius-pill); font-size: var(--fs-card); cursor: pointer; }
+.cf-btn.on { background: var(--accent); color: var(--accent-on); border-color: var(--accent); }
+.cf-panel { background: var(--surface-2); border-radius: var(--radius-md); padding: var(--space-4); }
+.data-table th { text-transform: none; letter-spacing: normal; }
+.data-table td, .data-table th { word-break: keep-all; overflow-wrap: anywhere; }
+.cf-box { background: var(--surface-2); border-radius: var(--radius-md); padding: var(--space-3); font-size: var(--fs-card); text-align: center; transition: opacity var(--duration-normal), outline-color var(--duration-normal); outline: 2px solid transparent; }
+.cf-box img { width: 48px; height: 48px; object-fit: contain; display: block; margin: 0 auto var(--space-1); }
+.cf-box b { display: block; }
+.cf-zone { border: 2px dashed color-mix(in srgb, var(--on-surface) 25%, transparent); border-radius: var(--radius-md); padding: var(--space-2); display: flex; flex-direction: column; gap: var(--space-2); }
+.cf-zone h5 { margin: 0; font-size: var(--fs-card); color: var(--on-surface-muted); }
+.cf-video { display: block; width: 100%; max-height: 100%; background: var(--surface-3); border-radius: var(--radius-md); }
+.cf-vwrap { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.cf-vbox { flex: 1; min-height: 0; container-type: size; }
+.cf-vbox .cf-video { width: min(100cqw, calc(100cqh * 1920 / 1506)); height: auto; margin-inline: auto; }
+.cf-vcap { text-align: center; color: var(--on-surface-muted); font-size: var(--fs-card); }
+.cf-all { display: grid; grid-template-columns: 0.8fr 1.4fr 1.2fr; gap: var(--space-3); align-items: stretch; }
+.cf-all[data-p] .r { opacity: 0.25; }
+.cf-all[data-p="m"] .m, .cf-all[data-p="t"] .t { opacity: 1; outline-color: var(--accent); }
+</style>
+<div class="cf-btns" onclick="(function(e){var b=e.target.closest('.cf-btn');if(!b)return;b.parentNode.querySelectorAll('.cf-btn').forEach(function(x){x.classList.toggle('on',x===b)});document.getElementById('cfAll').setAttribute('data-p',b.dataset.p)})(event)">
+  <button class="cf-btn" data-p="m">① 모델 호출</button>
+  <button class="cf-btn" data-p="t">② 도구, 컨텍스트 호출</button>
+</div>
+<div class="cf-all" id="cfAll" data-reveal="static">
+  <div class="cf-zone"><h5>전산실 (5호망): 개발자 단말</h5>
+    <div class="cf-box"><b>Claude Code</b>터미널, IDE 플러그인</div>
+    <div class="cf-box"><b>Codex</b>같은 Gateway 뒤 보조 클라이언트</div>
+    <div class="cf-box r t"><b>사내 MCP 서버, 지식 원본</b>형상관리, 일정, 모니터링, 규정집, 코딩 표준</div>
+  </div>
+  <div class="cf-zone"><h5>AI Platform 계정 (Workloads / Prod), DX 경유</h5>
+    <div class="cf-box r m"><img src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt=""><b>LLM Gateway → VPC Endpoint → Bedrock + Guardrails</b>Anthropic / OpenAI 호환 API</div>
+    <div class="cf-box r t"><img src="images/Gateway.png" alt=""><b>MCP Hub = AgentCore Gateway</b>AgentCore Identity(AD)로 사내 시스템 호출, VPC egress → 온프렘</div>
+    <div class="cf-box"><img src="common/aws-icons/services/Arch_AWS-CloudTrail_48.svg" alt=""><b>감사 로그 → Log Archive</b></div>
+  </div>
+  <div class="cf-zone"><h5>AI Project 계정 (컨텍스트 계층)</h5>
+    <div class="cf-box r t"><b>Vector: Bedrock Knowledge Bases</b>OpenSearch Serverless, 규정, 가이드 문서 의미 검색</div>
+    <div class="cf-box r t"><img src="common/aws-icons/services/Arch_Amazon-Neptune_48.svg" alt=""><b>Graph: Neptune Analytics (+ AWS Context 검토)</b>온톨로지, 관계 검색</div>
+    <div class="cf-box r t"><img src="common/aws-icons/services/Arch_AWS-Glue_48.svg" alt=""><b>ETL: Glue, Step Functions</b>파싱, 정제, 가명화, 청킹. 원본은 온프렘에 유지</div>
+  </div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="cf-info">왜 컨텍스트 계층까지</strong>: Claude Code가 사내 규칙을 알고 코드를 쓰려면 컨텍스트가 필요합니다. 원본은 온프렘에 두고, ETL을 거친 Vector와 Graph만 MCP Hub를 통해 검색합니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s2" data-block="03-gateway-hub" data-block-title="3부: MCP Hub와 LLM Gateway">
+  <div class="slide-header" data-remarp-id="s2-header"><h2>MCP는 규약, Hub는 그 연결의 관문</h2></div>
+  <div class="slide-body" data-remarp-id="s2-body">
+    <p><!-- Slide 3: MCP와 Hub --></p>
+<div class="compare-toggle">
+  <button class="compare-btn active" data-compare="why">WHY: 직접 연결하면</button>
+  <button class="compare-btn" data-compare="what">WHAT: Hub가 하는 일</button>
+</div>
+<div class="compare-content active" data-compare="why">
+  <div class="cf-grid-3">
+    <div class="card"><strong class="cf-danger">통제 지점이 없음</strong><div class="cf-muted">클라이언트마다 MCP 서버를 따로 붙이면 누가 무엇에 붙었는지 알 수 없습니다.</div></div>
+    <div class="card"><strong class="cf-danger">신원 확인 불가</strong><div class="cf-muted">AI가 스스로 "나는 누구"라고 말하는 방식은 검증할 수 없습니다.</div></div>
+    <div class="card"><strong class="cf-danger">정책이 제각각</strong><div class="cf-muted">보안정책, 코딩표준을 개발자 설정에 맡기면 사람마다 다릅니다.</div></div>
+  </div>
+</div>
+<div class="compare-content" data-compare="what">
+  <div class="cf-grid-3">
+    <div class="card"><strong class="cf-success">01 중앙 중계</strong><div class="cf-muted">모든 MCP 호출이 Hub를 한 번 거쳐 나갑니다. 감사 추적이 한 곳에 모입니다.</div></div>
+    <div class="card"><strong class="cf-success">02 통합 인증</strong><div class="cf-muted">사내 AD 계정으로 로그인하고 토큰으로 신원을 증명합니다. 권한 없는 서버는 목록에 안 보입니다.</div></div>
+    <div class="card"><strong class="cf-success">03 정책 주입</strong><div class="cf-muted">허용 도구, 호출 정책을 Hub가 서버 측에서 적용합니다. 개발자가 지울 수 없습니다.</div></div>
+  </div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="cf-info">MCP(Model Context Protocol)</strong>: AI가 사내 시스템을 도구처럼 호출하게 해 주는 표준 인터페이스. Claude Code와 Codex 모두 지원합니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s3" data-block="03-gateway-hub" data-block-title="3부: MCP Hub와 LLM Gateway">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>MCP Hub는 AgentCore Gateway로</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body">
+    <p><!-- Slide 4: AgentCore Gateway --></p>
+<style>
+.cf-gw { display: grid; grid-template-columns: 0.8fr 1fr 1.6fr 1fr; gap: var(--space-2); align-items: stretch; }
+.cf-gw .cf-zone { justify-content: center; }
+.cf-feat { background: var(--surface-1); border-radius: var(--radius-sm); padding: var(--space-2); font-size: var(--fs-card); }
+.cf-feat b { color: color-mix(in srgb, var(--accent) 72%, var(--on-surface)); }
+</style>
+<div class="cf-gw" data-reveal="stagger" data-reveal-anim="right">
+  <div class="cf-zone"><h5>MCP 클라이언트</h5>
+    <div class="cf-box"><b>Claude Code</b></div><div class="cf-box"><b>Codex</b></div><div class="cf-box"><b>사내 에이전트</b></div>
+  </div>
+  <div class="cf-zone"><h5>Inbound Auth</h5>
+    <div class="cf-box"><img src="images/Identity.png" alt=""><b>JWT 검증</b>IdP: 사내 AD 연동 (Keycloak, Entra ID, Cognito 중 택1, 확인 필요)</div>
+  </div>
+  <div class="cf-zone"><h5>AgentCore Gateway (MCP Endpoint)</h5>
+    <div class="cf-feat"><b>tools/list 분기</b>: 사용자 권한별로 보이는 도구가 다름</div>
+    <div class="cf-feat"><b>Semantic tool search</b>: 도구가 많아도 필요한 것만 노출</div>
+    <div class="cf-feat"><b>AgentCore Policy (Cedar)</b>: 호출 단위 허용 / 거부 (2026.03 GA)</div>
+    <div class="cf-feat"><b>Outbound Auth: AgentCore Identity</b>: 자격증명 보관, 사용자 대신 호출. 단말에 자격증명이 남지 않음</div>
+  </div>
+  <div class="cf-zone"><h5>Targets</h5>
+    <div class="cf-box"><img src="common/aws-icons/services/Arch_AWS-Lambda_48.svg" alt=""><b>Lambda</b>사내 API 래핑</div>
+    <div class="cf-box"><b>OpenAPI / Smithy</b>형상관리, 배포, 티켓</div>
+    <div class="cf-box"><b>기존 MCP 서버, KB 조회</b>사내 문서, RAG</div>
+  </div>
+</div>
+<div class="cf-grid-2 fragment fade-up" data-fragment-index="1">
+  <div class="callout callout-info"><strong class="cf-info">Observability</strong>: 호출 로그 → CloudWatch → Log Archive. 클라이언트는 Hub URL 하나만 압니다.</div>
+  <div class="callout callout-warning"><strong class="cf-warning">서울 리전</strong>: Gateway, Identity, Policy, Observability 가용(AgentCore 리전 문서). 전용 엔드포인트 bedrock-agentcore.gateway. 확인 필요: Policy 엔진의 처리 리전</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s4" data-block="03-gateway-hub" data-block-title="3부: MCP Hub와 LLM Gateway">
+  <div class="slide-header" data-remarp-id="s4-header"><h2>단말 설정이 없으면 Hub도 무의미하다</h2></div>
+  <div class="slide-body" data-remarp-id="s4-body">
+    <p><!-- Slide 5: MCP 세 관문 --></p>
+<table class="data-table">
+  <thead><tr><th>관문</th><th>무엇을 통제하나</th><th>Claude Code 구현</th><th>Codex 구현</th></tr></thead>
+  <tbody>
+    <tr class="fragment fade-up" data-fragment-index="1"><td><strong>① 등록 심사</strong></td><td>사내 MCP 서버를 Hub에 올릴지</td><td>Hub 운영 조직이 기능, 권한 심사 후 Gateway Target 등록. 개발자 임의 추가 불가</td><td>동일 (Hub 공용)</td></tr>
+    <tr class="fragment fade-up" data-fragment-index="2"><td><strong class="cf-accent">② 클라이언트 제한</strong></td><td>개발자 PC가 Hub 외의 MCP에 붙는 것</td><td>/etc/claude-code/managed-settings.json: <code>allowedMcpServers</code>(serverUrl), <code>allowManagedMcpServersOnly</code>, <code>allowManagedPermissionRulesOnly</code>, env로 Bedrock, Gateway, 모델 고정</td><td>관리 배포 config.toml: model_provider = 사내 Gateway, mcp_servers = Hub만 (강제 범위 PoC 확인 필요)</td></tr>
+    <tr class="fragment fade-up" data-fragment-index="3"><td><strong>③ 호출 인가</strong></td><td>사용자별로 어떤 도구를 쓸 수 있나</td><td>토큰 검증 후 허용 도구 목록만 반환, Policy로 호출 단위 판정</td><td>동일 (Hub 공용)</td></tr>
+  </tbody>
+</table>
+<div class="callout callout-danger fragment zoom-in" data-fragment-index="4"><strong class="cf-danger">②가 없으면 ①과 ③이 무의미</strong>: 단말 관리 설정 배포가 MCP 통제의 전제 조건입니다. 다음 장에서 실제로 동작하는 모습을 보여 드립니다.</div>
+<div class="cf-src">관리 설정: 회사가 배포해 개발자가 바꿀 수 없게 고정한 도구 설정. 키 이름은 Claude Code 공식 문서(managed settings, managed MCP) 기준이며 데모에서 동작을 확인했습니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s5" data-fit="off" data-block="03-gateway-hub" data-block-title="3부: MCP Hub와 LLM Gateway">
+  <div class="slide-header" data-remarp-id="s5-header"><h2>데모 V1: 관리 설정은 개발자가 못 푼다</h2></div>
+  <div class="slide-body" data-remarp-id="s5-body">
+    <p><!-- Slide 6: 데모 V1 --></p>
+<div class="cf-vwrap" data-reveal="static">
+  <div class="cf-vbox">
+    <video class="cf-video" poster="media/r1-managed.jpg" aria-label="데모 V1 영상: Claude Code 관리 설정 강제, 실제 터미널 녹화, 무음, 1분 11초" title="데모 V1 영상: Claude Code 관리 설정 강제, 실제 터미널 녹화, 무음, 1분 11초" controls preload="metadata" muted playsinline tabindex="-1"><source src="media/r1-managed.mp4" type='video/mp4; codecs="avc1.640034"'><source src="media/r1-managed.webm" type='video/webm; codecs="vp9"'></video>
+  </div>
+  <div class="cf-vcap">실제 터미널 녹화 (2026.10.19 13:59 UTC), Claude Code 2.1.303, 서울 리전 Bedrock. 출력이 2초 넘게 없는 구간은 2초로 줄임, 무음</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s6" data-block="03-gateway-hub" data-block-title="3부: MCP Hub와 LLM Gateway">
+  <div class="slide-header" data-remarp-id="s6-header"><h2>V1에서 확인한 여섯 가지</h2></div>
+  <div class="slide-body" data-remarp-id="s6-body">
+    <p><!-- Slide 7: V1 정리 --></p>
+<style>
+.cf-res { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+.cf-res .card code { font-size: var(--fs-caption); display: block; margin-top: var(--space-2); color: var(--on-surface-muted); white-space: normal; overflow-wrap: anywhere; word-break: break-all; }
+</style>
+<div class="cf-res" data-reveal="stagger">
+  <div class="card"><strong class="cf-success">자격증명 없음</strong><div class="cf-muted">단말의 AWS_ 환경변수 0개, ~/.aws 없음</div><code>env | grep -c "^AWS_" → 0</code></div>
+  <div class="card"><strong class="cf-success">설정은 root 소유</strong><div class="cf-muted">Gateway 주소, 모델, MCP 허용 목록, deny 규칙을 한 파일로</div><code>-rw-r--r-- root root managed-settings.json</code></div>
+  <div class="card"><strong class="cf-success">Hub 외 MCP 차단</strong><div class="cf-muted">github, 로컬 npx 서버 추가 거부. Hub URL만 허용</div><code>Cannot add MCP server "github": not allowed by enterprise policy</code></div>
+  <div class="card"><strong class="cf-success">사용자 allow 무시</strong><div class="cf-muted">~/.claude/settings.json 의 curl 허용이 적용되지 않음</div><code>denied: ["curl -s https://example.com | head -n 1"]</code></div>
+  <div class="card"><strong class="cf-success">고객 데이터 두 겹</strong><div class="cf-muted">CLAUDE.md 규칙이 먼저 거절, 없는 폴더에서는 deny 규칙이 Read 차단</div><code>denied: ["Read .../customer-data/accounts.csv"]</code></div>
+  <div class="card"><strong class="cf-success">호출은 실명으로</strong><div class="cf-muted">모든 모델 호출이 Gateway 감사 로그에 dev01로 기록</div><code>{"user":"dev01","decision":"ALLOW",...}</code></div>
+</div>
+<div class="callout callout-warning fragment fade-up" data-fragment-index="1"><strong class="cf-warning">한계도 정직하게</strong>: Bash deny 규칙은 명령 문자열 기준이라 /usr/bin/curl, sh -c 같은 우회는 막지 못하고, Read deny는 스크립트가 직접 여는 파일을 막지 못합니다(공식 문서). 단말 방화벽과 sandbox로 OS 수준을 보강합니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s7" data-block="03-gateway-hub" data-block-title="3부: MCP Hub와 LLM Gateway">
+  <div class="slide-header" data-remarp-id="s7-header"><h2>요청 한 건이 남기는 흔적</h2></div>
+  <div class="slide-body" data-remarp-id="s7-body">
+    <p><!-- Slide 8: 요청 한 건의 흐름 --></p>
+<style>
+.cf-seq { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--space-2); margin-bottom: var(--space-3); }
+.cf-actor { text-align: center; font-size: var(--fs-card); font-weight: var(--weight-bold); background: var(--surface-3); border-radius: var(--radius-sm); padding: var(--space-2); }
+.cf-msgs { display: flex; flex-direction: column; gap: var(--space-2); }
+.cf-msg { display: grid; grid-template-columns: repeat(7, 1fr); align-items: center; font-size: var(--fs-card); }
+.cf-msg span { grid-row: 1; background: var(--accent-subtle); border-left: 4px solid var(--accent); border-radius: var(--radius-sm); padding: var(--space-1) var(--space-2); }
+.cf-msg.log span { background: var(--info-subtle); border-left-color: var(--info); }
+.c12 { grid-column: 1 / 3; } .c25 { grid-column: 2 / 6; } .c23 { grid-column: 2 / 4; } .c34 { grid-column: 3 / 5; } .c45 { grid-column: 4 / 6; } .c37 { grid-column: 3 / 8; } .c56 { grid-column: 5 / 7; } .c46 { grid-column: 4 / 7; } .c67 { grid-column: 6 / 8; }
+</style>
+<div class="cf-seq">
+  <div class="cf-actor">개발자, IdP(AD)</div><div class="cf-actor">Claude Code</div><div class="cf-actor">LLM Gateway</div><div class="cf-actor">Bedrock</div><div class="cf-actor">AgentCore Gateway</div><div class="cf-actor">사내 시스템</div><div class="cf-actor">Log Archive</div>
+</div>
+<div class="cf-msgs">
+  <div class="cf-msg fragment fade-right" data-fragment-index="1"><span class="c12">① AD 계정 로그인 (MFA) → ② 단기 토큰 발급</span></div>
+  <div class="cf-msg fragment fade-right" data-fragment-index="2"><span class="c23">③ 모델 호출 + 토큰</span></div>
+  <div class="cf-msg fragment fade-right" data-fragment-index="3"><span class="c34">④ DLP, 모델 allowlist 통과 후 PrivateLink 호출</span></div>
+  <div class="cf-msg log fragment fade-right" data-fragment-index="4"><span class="c37">⑤ 프롬프트, 응답 메타데이터 로그 (user, model, 판정, 토큰)</span></div>
+  <div class="cf-msg fragment fade-right" data-fragment-index="5"><span class="c25">⑥ 도구 호출 + 토큰 → AgentCore Gateway</span></div>
+  <div class="cf-msg fragment fade-right" data-fragment-index="6"><span class="c56">⑦ Policy 허용 시 Identity 자격증명으로 호출</span></div>
+  <div class="cf-msg log fragment fade-right" data-fragment-index="7"><span class="c67">⑧ 도구 호출 로그</span></div>
+</div>
+<div class="callout callout-success fragment zoom-in" data-fragment-index="8"><strong class="cf-success">한 줄로 이어지는 감사</strong>: AI가 주장하는 신원이 아니라 토큰으로 확인합니다. 모델 호출과 도구 호출이 같은 신원으로 기록되어 "누가 무엇을 했는지"가 이어집니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s8" data-block="03-gateway-hub" data-block-title="3부: MCP Hub와 LLM Gateway">
+  <div class="slide-header" data-remarp-id="s8-header"><h2>도구는 개발자가, 통제는 Gateway가</h2></div>
+  <div class="slide-body" data-remarp-id="s8-body">
+    <p><!-- Slide 9: Claude Code와 Codex 수용 --></p>
+<style>
+.cf-gw3 { display: grid; grid-template-columns: 0.8fr 1.4fr 1fr; gap: var(--space-3); margin-bottom: var(--space-3); }
+.cf-ctl { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.cf-ctl div { background: var(--success-subtle); border-radius: var(--radius-sm); padding: var(--space-2); font-size: var(--fs-card); text-align: center; font-weight: var(--weight-bold); }
+</style>
+<div class="cf-gw3" data-reveal="stagger" data-reveal-anim="right">
+  <div class="cf-zone"><h5>클라이언트</h5><div class="cf-box"><b>Claude Code</b>CLAUDE_CODE_USE_BEDROCK</div><div class="cf-box"><b>Codex</b>Responses API</div></div>
+  <div class="cf-zone"><h5>LLM Gateway</h5>
+    <div class="cf-box"><b>Bedrock InvokeModel 경로</b>ANTHROPIC_BEDROCK_BASE_URL, CLAUDE_CODE_SKIP_BEDROCK_AUTH</div>
+    <div class="cf-box"><b>OpenAI 호환 API</b>Responses / Chat Completions</div>
+    <div class="cf-ctl"><div>① 인증, 인가</div><div>② DLP</div><div>③ 로깅</div><div>④ Quota</div></div>
+  </div>
+  <div class="cf-zone"><h5>백엔드</h5>
+    <div class="cf-box"><img src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt=""><b>Claude</b>Sonnet 5 서울 in-region, Opus 5.5, Sonnet 5.5 global CRIS</div>
+    <div class="cf-box"><b>OpenAI on Bedrock</b>GPT-6 Astra, GPT-6.1 Sol 등 global / US CRIS만</div>
+    <div class="cf-box"><b>(향후) 사내 모델</b>온프렘 vLLM</div>
+  </div>
+</div>
+<div class="cf-grid-2">
+  <div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="cf-info">Claude Code 연결 방식</strong>: Bedrock 모드에서 Gateway가 /model/{id}/invoke-with-response-stream 을 받아 자기 역할로 다시 서명합니다. 단말은 Gateway 토큰(Authorization: Bearer)만 가집니다.</div>
+  <div class="callout callout-warning fragment fade-up" data-fragment-index="2"><strong class="cf-warning">리스크</strong>: OpenAI 모델은 서울 in-region이 없어 Codex는 CRIS가 전제입니다. 국외 처리와 DLP 범위를 신청서에 명시하고, 지정서에 "사용 도구"를 적는 경우 도구 추가 시 변경 신고가 필요한지 확인합니다.</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s9" data-fit="off" data-block="03-gateway-hub" data-block-title="3부: MCP Hub와 LLM Gateway">
+  <div class="slide-header" data-remarp-id="s9-header"><h2>데모 V2: Gateway가 막고, 남긴다</h2></div>
+  <div class="slide-body" data-remarp-id="s9-body">
+    <p><!-- Slide 10: 데모 V2 --></p>
+<div class="cf-vwrap" data-reveal="static">
+  <div class="cf-vbox">
+    <video class="cf-video" poster="media/r2-gateway.jpg" aria-label="데모 V2 영상: LLM Gateway DLP, 모델 allowlist, 토큰 인증, 감사 로그, 실제 터미널 녹화, 무음, 33초" title="데모 V2 영상: LLM Gateway, 실제 터미널 녹화, 무음, 33초" controls preload="metadata" muted playsinline tabindex="-1"><source src="media/r2-gateway.mp4" type='video/mp4; codecs="avc1.640034"'><source src="media/r2-gateway.webm" type='video/webm; codecs="vp9"'></video>
+  </div>
+  <div class="cf-vcap">실제 터미널 녹화 (2026.10.19 14:01 UTC). Gateway는 데모용 Python 구현(약 150줄), Bedrock은 서울 리전 실호출. 대기 구간 2초로 줄임, 무음</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s10" data-block="03-gateway-hub" data-block-title="3부: MCP Hub와 LLM Gateway">
+  <div class="slide-header" data-remarp-id="s10-header"><h2>감사 로그 한 줄이 점검 답변이 된다</h2></div>
+  <div class="slide-body" data-remarp-id="s10-body">
+    <p><!-- Slide 11: V2 감사 로그 --></p>
+<style>
+.cf-log td { font-family: var(--font-mono, monospace); font-size: var(--fs-caption); }
+.cf-log tr.b td { background: var(--danger-subtle); }
+.cf-log tr.a td { background: var(--success-subtle); }
+</style>
+<table class="data-table cf-log" data-reveal="static">
+  <thead><tr><th>시각 (UTC)</th><th>user</th><th>model</th><th>decision</th><th>reason</th><th>in / out 토큰</th></tr></thead>
+  <tbody>
+    <tr class="a"><td>14:01:12</td><td>dev01</td><td>anthropic.claude-sonnet-5</td><td>ALLOW</td><td>bedrock:200</td><td>28,950 / 87</td></tr>
+    <tr class="b"><td>14:01:18</td><td>dev01</td><td>anthropic.claude-sonnet-5</td><td>BLOCK</td><td>dlp:주민등록번호 (9001**********)</td><td>- (전송 안 됨)</td></tr>
+    <tr class="b"><td>14:01:25</td><td>dev01</td><td>global.anthropic.claude-opus-5-5</td><td>BLOCK</td><td>model_not_allowed</td><td>-</td></tr>
+    <tr class="b"><td>14:01:30</td><td>(unknown)</td><td>anthropic.claude-sonnet-5</td><td>BLOCK</td><td>auth</td><td>-</td></tr>
+  </tbody>
+</table>
+<div class="cf-grid-3 fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="card"><strong class="cf-accent">누가 언제 어떤 모델에</strong><div class="cf-muted">user, ts, model. 토큰은 IdP 신원과 연결</div></div>
+  <div class="card"><strong class="cf-accent">DLP가 무엇을 막았나</strong><div class="cf-muted">reason과 마스킹된 샘플. 원문은 남기지 않음</div></div>
+  <div class="card"><strong class="cf-accent">얼마나 썼나</strong><div class="cf-muted">입출력 토큰. 사용자 Quota와 팀 예산의 원천 데이터</div></div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="cf-info">운영 환경에서는</strong>: 이 로그를 Log Archive(S3 Object Lock)로 보내고, Bedrock Invocation Logging, CloudTrail과 함께 사내 SIEM에 연동합니다. 4부 감사 추적에서 이어집니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s11" data-block="03-gateway-hub" data-block-title="3부: MCP Hub와 LLM Gateway">
+  <div class="slide-header" data-remarp-id="s11-header"><h2>원본은 온프렘, AI는 ETL 결과만</h2></div>
+  <div class="slide-body" data-remarp-id="s11-body">
+    <p><!-- Slide 12: 사내 지식 계층 --></p>
+<style>
+.cf-kl { display: grid; grid-template-columns: 0.9fr 1.1fr 1.2fr; gap: var(--space-3); }
+.cf-store { transition: outline-color var(--duration-normal), background var(--duration-normal); }
+.cf-store.hit { outline-color: var(--accent); background: var(--accent-subtle); }
+.cf-q { border: 0; text-align: left; width: 100%; background: var(--surface-2); color: var(--on-surface); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); font-size: var(--fs-card); cursor: pointer; outline: 2px solid transparent; }
+.cf-q.on { outline-color: var(--accent); }
+</style>
+<div class="cf-kl">
+  <div class="cf-zone"><h5>온프렘 전산실 (원본)</h5>
+    <div class="cf-box"><b>사내 규정집, 디자인 가이드</b></div>
+    <div class="cf-box"><b>코딩 표준, 아키텍처, 기술문서</b></div>
+    <div class="cf-box"><span class="cf-danger">✕ AI에 원본 직접 연결 없음</span><br>DX 경유 승인 배치</div>
+  </div>
+  <div class="cf-zone"><h5>AI Project 계정 (지식 계층)</h5>
+    <div class="cf-box"><img src="common/aws-icons/services/Arch_AWS-Glue_48.svg" alt=""><b>ETL: Glue, Step Functions</b>파싱, 정제, 가명화(규칙 기반), 청킹, 엔티티, 관계 추출, 등급 태깅 → S3 curated(KMS)</div>
+    <div class="cf-box cf-store" id="cfSv"><b>Bedrock Knowledge Bases + OpenSearch Serverless</b>Vector: 문서 의미 검색 (서울 가용)</div>
+    <div class="cf-box cf-store" id="cfSc"><b>AWS Context</b>지식 그래프: 데이터, 조직, 정책 관계 (서울 확인 필요)</div>
+    <div class="cf-box cf-store" id="cfSg"><img src="common/aws-icons/services/Arch_Amazon-Neptune_48.svg" alt=""><b>Neptune Analytics</b>그래프 질의: 규정 조항 간 관계 (서울 가용)</div>
+  </div>
+  <div class="cf-stack">
+    <strong class="cf-accent">개발자 질의를 눌러 보세요</strong>
+    <button class="cf-q" data-s="cfSv">"디자인 가이드에서 주문 버튼 색상, 문구 규칙은?"</button>
+    <button class="cf-q" data-s="cfSg">"이 API 설계가 사내 보안 규정 어느 조항과 충돌하나?"</button>
+    <button class="cf-q" data-s="cfSc">"이 서비스와 연결된 데이터, 담당 조직, 적용 정책은?"</button>
+    <div class="cf-muted">Claude Code는 AgentCore Gateway의 MCP 도구(search_policy, search_design, graph_query)로만 검색합니다.</div>
+  </div>
+</div>
+<div class="callout callout-warning fragment fade-up" data-fragment-index="1"><strong class="cf-warning">서울 리전 기준 설계</strong>: Amazon Bedrock Managed Knowledge Base(2026.06 GA)와 Bedrock KB GraphRAG는 서울 리전 미지원(AWS 문서)이라, 기본안은 Bedrock Knowledge Bases + OpenSearch Serverless와 Neptune Analytics입니다. AWS Context는 서울 가용성 확인 필요. ETL 가명화 규칙은 컴플라이언스 검토 대상입니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s12" data-block="03-gateway-hub" data-block-title="3부: MCP Hub와 LLM Gateway">
+  <div class="slide-header" data-remarp-id="s12-header"><h2>국외 처리는 구성요소별로 확인한다</h2></div>
+  <div class="slide-body" data-remarp-id="s12-body">
+    <p><!-- Slide 13: 서울 리전 가용성 --></p>
+<style>
+.cf-av tr { transition: opacity var(--duration-normal); }
+.cf-av[data-f="use"] tr[data-s="chk"], .cf-av[data-f="chk"] tr[data-s="use"] { opacity: 0.2; }
+</style>
+<div class="cf-btns" onclick="(function(e){var b=e.target.closest('.cf-btn');if(!b)return;b.parentNode.querySelectorAll('.cf-btn').forEach(function(x){x.classList.toggle('on',x===b)});document.getElementById('cfAv').setAttribute('data-f',b.dataset.f)})(event)">
+  <button class="cf-btn on" data-f="all">전체</button>
+  <button class="cf-btn" data-f="use">바로 사용</button>
+  <button class="cf-btn" data-f="chk">확인 필요, 미지원</button>
+</div>
+<table class="data-table cf-av" id="cfAv" data-f="all">
+  <thead><tr><th>구성요소</th><th>서울 리전</th><th>국외 처리 리스크</th><th>판단</th></tr></thead>
+  <tbody>
+    <tr data-s="use"><td>Bedrock Runtime</td><td>가용 (Sonnet 5 in-region)</td><td>CRIS 사용 시 해외 리전 처리</td><td>사용 (서울 기본, 신규 모델 CRIS)</td></tr>
+    <tr data-s="use"><td>AgentCore Runtime / Gateway / Identity / Observability</td><td>가용</td><td>-</td><td>사용</td></tr>
+    <tr data-s="chk"><td>AgentCore Policy</td><td>가용</td><td>정책 엔진 처리 리전 확인 필요</td><td>확인 후 사용</td></tr>
+    <tr data-s="use"><td>AgentCore Memory / Evaluations</td><td>가용</td><td>교차 리전 추론 사용</td><td>CRIS 허용 정책 범위에서 사용</td></tr>
+    <tr data-s="chk"><td>Amazon Bedrock Managed Knowledge Base</td><td>미지원 (2026.06 GA, 서울 미포함)</td><td>-</td><td>서울 기본안에서 제외</td></tr>
+    <tr data-s="chk"><td>AWS Context (지식 그래프)</td><td>확인 필요</td><td>처리 리전, 데이터 위치</td><td>확인 후 사용</td></tr>
+    <tr data-s="use"><td>Bedrock Knowledge Bases + OpenSearch Serverless</td><td>가용</td><td>임베딩 모델 리전 확인</td><td>기본안 (Vector)</td></tr>
+    <tr data-s="chk"><td>Knowledge Bases GraphRAG</td><td>미지원</td><td>-</td><td>Neptune Analytics 직접 질의로 대체</td></tr><tr data-s="use"><td>Neptune Analytics</td><td>가용</td><td>-</td><td>기본안 (Graph)</td></tr>
+    <tr data-s="use"><td>Glue, Step Functions (ETL)</td><td>가용</td><td>-</td><td>사용</td></tr>
+  </tbody>
+</table>
+<div class="cf-src">원본 제안서 35장을 2026.10.19 기준으로 갱신: AgentCore 지원 리전, Managed Knowledge Base 리전, Knowledge Bases 지원 리전 문서와 서울 리전 API 조회(Bedrock, Neptune Analytics).</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s13" data-block="03-gateway-hub" data-block-title="3부: MCP Hub와 LLM Gateway">
+  <div class="slide-header" data-remarp-id="s13-header"><h2>3부 정리: 관문은 둘, 겹은 여럿</h2></div>
+  <div class="slide-body" data-remarp-id="s13-body">
+    <p><!-- Slide 14: 3부 정리 --></p>
+<div class="cf-grid-3" data-reveal="stagger">
+  <div class="card"><strong class="cf-accent">MCP Hub = AgentCore Gateway</strong><div class="cf-muted">등록 심사, 호출 인가, Identity로 자격증명 보관. 클라이언트는 Hub URL 하나만 압니다.</div></div>
+  <div class="card"><strong class="cf-accent">단말 관리 설정이 전제</strong><div class="cf-muted">V1: Hub 외 MCP, 사용자 allow, 고객 데이터 읽기를 개발자가 풀 수 없음을 확인했습니다.</div></div>
+  <div class="card"><strong class="cf-success">LLM Gateway가 막고 남긴다</strong><div class="cf-muted">V2: DLP, 모델 allowlist, 토큰 인증, 실명 감사 로그를 서울 리전 실호출로 확인했습니다.</div></div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="cf-info">다음 4부</strong>: 온프렘과의 비교, 단일 통제면, 그리고 Claude Code가 사내 표준대로 일하게 만드는 하네스 데모입니다.</div>
+  </div>
+</div>
+</div>
+<script src="./common/animation-utils.js"></script>
+<script src="./common/deck-overlay.js"></script>
+<script src="./common/deck-detail.js"></script>
+<script src="./common/deck-nav.js"></script>
+<script src="./common/slide-framework.js"></script>
+<script src="./common/quiz-component.js"></script>
+<script src="./common/presenter-view.js"></script>
+<script>
+(function(){
+// While a video plays, native controls keep focus and swallow arrow keys: give focus back to the deck.
+document.querySelectorAll('video.cf-video').forEach(function (v) {
+  var release = function () { setTimeout(function () { if (document.activeElement === v) v.blur(); }, 0); };
+  ['focus', 'play', 'pause', 'seeked', 'volumechange', 'click', 'pointerup'].forEach(function (ev) { v.addEventListener(ev, release); });
+});
+// Pause any video left on a slide that is no longer active.
+window.addEventListener('hashchange', function () {
+  document.querySelectorAll('.slide:not(.active) video.cf-video').forEach(function (v) { if (!v.paused) v.pause(); });
+});
+})();
+</script>
+<script>
+(function(){
+(function () {
+  var qs = document.querySelectorAll('.cf-q');
+  qs.forEach(function (q) {
+    q.addEventListener('click', function () {
+      qs.forEach(function (x) { x.classList.toggle('on', x === q); });
+      ['cfSv', 'cfSc', 'cfSg'].forEach(function (id) { var el = document.getElementById(id); if (el) el.classList.toggle('hit', id === q.dataset.s); });
+    });
+  });
+})();
+})();
+</script>
+<script>
+  
+  const presenterNotes = {
+    1: "[0.5min] [\uc694\uc57d]\n- 3\ubd80: 2\ubd80 \ub05d\uc5d0\uc11c \ubcf8 \ub450 \uad00\ubb38(LLM Gateway, MCP Hub)\uc744 \uc5f4\uc5b4 \ubd04\n- \ub370\ubaa8 V1(\uad00\ub9ac \uc124\uc815 \uac15\uc81c), V2(LLM Gateway DLP, \ubaa8\ub378 allowlist, \uac10\uc0ac \ub85c\uadf8)\ub97c \uc774 \ube14\ub85d\uc5d0\uc11c \uc0c1\uc601\n- \ub370\ubaa8\ub294 2026.10.19 \uc2e4\uc81c \uc2e4\ud589 \ub179\ud654. \ub2e8\ub9d0 \uc5ed\ud560 \ucee8\ud14c\uc774\ub108 + \uc11c\uc6b8 \ub9ac\uc804 Bedrock\n\n3\ubd80\uc5d0\uc11c\ub294 \uae38 \ub05d\uc5d0 \uc788\ub294 \ub450 \uad00\ubb38, LLM Gateway\uc640 MCP Hub\ub97c \uc5f4\uc5b4 \ubd05\ub2c8\ub2e4. \uc911\uac04\uc911\uac04 \uc624\ub298 \uc544\uce68\uc5d0 \uc2e4\uc81c\ub85c \ub3cc\ub824\uc11c \ub179\ud654\ud55c \ub370\ubaa8 \ub450 \ud3b8\uc744 \ubcf4\uc5ec \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uba3c\uc800 \uc804\uccb4 \uadf8\ub9bc\uc785\ub2c8\ub2e4.",
+    2: "\u23f8\ufe0f \ud83c\udfac [2min] [\uc694\uc57d]\n- \ub2e8\ub9d0\uc758 Claude Code(\uadf8\ub9ac\uace0 Codex)\ub294 \ub450 \uacf3\ub9cc \ubd80\ub984: \ubaa8\ub378\uc740 LLM Gateway, \ub3c4\uad6c\uc640 \ucee8\ud14d\uc2a4\ud2b8\ub294 MCP Hub\n- \ubaa8\ub378: LLM Gateway \u2192 PrivateLink \u2192 Bedrock + Guardrails\n- \ub3c4\uad6c: AgentCore Gateway \u2192 Identity\ub85c \uc0ac\ub0b4 \uc2dc\uc2a4\ud15c \ud638\ucd9c, \ub610\ub294 AI Project \uacc4\uc815\uc758 Vector, Graph \uac80\uc0c9\n- \uc9c0\uc2dd \uc6d0\ubcf8\uc740 \uc628\ud504\ub818 \uc720\uc9c0, \uc2b9\uc778\ub41c \ubc30\uce58\ub85c ETL\ub9cc \uac70\uccd0 \ub4e4\uc5b4\uac10\n- \uc6a9\uc5b4: MCP Target(Gateway \ub4a4\uc5d0 \ub4f1\ub85d\ub418\ub294 \ub3c4\uad6c)\n\n\uc804\uccb4 \uadf8\ub9bc\uc785\ub2c8\ub2e4. \ubc84\ud2bc\uc73c\ub85c \ub450 \uacbd\ub85c\ub97c \ub098\ub220 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n1\ubc88 \ubaa8\ub378 \ud638\ucd9c\uc744 \ucf1c\uba74 \uac00\uc6b4\ub370 \uc704 \uc0c1\uc790\ub9cc \ub0a8\uc2b5\ub2c8\ub2e4. Claude Code\uac00 LLM Gateway\ub97c \uac70\uccd0 PrivateLink\ub85c Bedrock\uc5d0 \uac11\ub2c8\ub2e4. 2\ubc88 \ub3c4\uad6c\uc640 \ucee8\ud14d\uc2a4\ud2b8\ub97c \ucf1c\uba74 MCP Hub, \uc989 AgentCore Gateway\ub85c \uac00\uc11c \uc0ac\ub0b4 \uc2dc\uc2a4\ud15c\uc774\ub098 \uc624\ub978\ucabd \ucee8\ud14d\uc2a4\ud2b8 \uacc4\uce35\uc744 \uac80\uc0c9\ud569\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd \ucee8\ud14d\uc2a4\ud2b8 \uacc4\uce35\uc774 \uc911\uc694\ud569\ub2c8\ub2e4. \uc0ac\ub0b4 \uaddc\uc815\uc9d1\uc774\ub098 \ucf54\ub529 \ud45c\uc900 \uc6d0\ubcf8\uc740 \uc628\ud504\ub818\uc5d0 \uadf8\ub300\ub85c \ub450\uace0, \uc2b9\uc778\ub41c \ubc30\uce58\ub85c ETL\uc5d0 \ub123\uc5b4 Vector\uc640 Graph\ub85c \ub9cc\ub4ed\ub2c8\ub2e4. \uadf8 \uac80\uc0c9 \uae30\ub2a5\uc744 MCP \ub3c4\uad6c\ub85c \ub4f1\ub85d\ud558\uba74, \ucf54\ub529 \uc5d0\uc774\uc804\ud2b8\uac00 \uc0ac\ub0b4 \uaddc\uce59\uc744 \ucc3e\uc544\ubcf4\uba74\uc11c \ucf54\ub4dc\ub97c \uc501\ub2c8\ub2e4.\n\n\uadf8\ub7fc MCP\uc640 Hub\uac00 \uc65c \ud544\uc694\ud55c\uc9c0\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    3: "\ud83c\udfac [1.5min] [\uc694\uc57d]\n- MCP: AI\uac00 \uc0ac\ub0b4 \uc2dc\uc2a4\ud15c\uc744 \ub3c4\uad6c\ucc98\ub7fc \ubd80\ub974\ub294 \ud45c\uc900 \uaddc\uc57d\n- WHY: \uc9c1\uc811 \uc5f0\uacb0\ud558\uba74 \ud1b5\uc81c \uc9c0\uc810 \uc5c6\uc74c, \uc2e0\uc6d0 \uac80\uc99d \ubd88\uac00, \uc815\ucc45 \uc81c\uac01\uac01\n- WHAT: Hub\uac00 \uc911\uc559 \uc911\uacc4, \ud1b5\ud569 \uc778\uc99d(AD \ud1a0\ud070), \uc11c\ubc84 \uce21 \uc815\ucc45 \uc8fc\uc785\n\nMCP\ub294 AI\uac00 \uc0ac\ub0b4 \uc2dc\uc2a4\ud15c\uc744 \ub3c4\uad6c\ucc98\ub7fc \ubd80\ub974\ub294 \ud45c\uc900 \uaddc\uc57d\uc785\ub2c8\ub2e4. \ubb38\uc81c\ub294 \uac1c\ubc1c\uc790\ub9c8\ub2e4 \ub530\ub85c \ubd99\uc774\uba74 \ud1b5\uc81c\uac00 \uc548 \ub41c\ub2e4\ub294 \uc810\uc785\ub2c8\ub2e4.\n\n\ud1a0\uae00\uc744 WHAT\uc73c\ub85c \ubc14\uafb8\uaca0\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c \ubaa8\ub4e0 \uc5f0\uacb0\uc744 Hub \ud55c \uacf3\uc73c\ub85c \ubaa8\uc544 \uc911\uacc4\ud558\uace0, \uc0ac\ub0b4 AD \ud1a0\ud070\uc73c\ub85c \uc2e0\uc6d0\uc744 \ud655\uc778\ud558\uace0, \uc815\ucc45\uc744 \uc11c\ubc84 \ucabd\uc5d0\uc11c \uc801\uc6a9\ud569\ub2c8\ub2e4. \uac1c\ubc1c\uc790\uac00 \uc790\uae30 PC \uc124\uc815\uc73c\ub85c \uc9c0\uc6b8 \uc218 \uc5c6\ub294 \uc815\ucc45\uc774\ub77c\ub294 \uac8c \ud575\uc2ec\uc785\ub2c8\ub2e4.\n\n\uc774 Hub\ub97c \uc9c1\uc811 \ub9cc\ub4e4\uc9c0 \uc54a\uace0 \uad00\ub9ac\ud615 \uc11c\ube44\uc2a4\ub85c \uad6c\uc131\ud558\ub294 \ubc29\ubc95\uc744 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    4: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- Hub\ub97c \uc9c1\uc811 \ub9cc\ub4e4\uc9c0 \uc54a\uace0 AgentCore Gateway\ub85c \uad6c\uc131. \ud074\ub77c\uc774\uc5b8\ud2b8\ub294 Hub URL \ud558\ub098\ub9cc \uc54e\n- Inbound: JWT \uac80\uc99d(\uc0ac\ub0b4 AD \uc5f0\ub3d9 IdP)\n- Gateway \uae30\ub2a5: \uad8c\ud55c\ubcc4 tools/list, semantic tool search, Policy(Cedar, 2026.03 GA), Outbound\ub294 Identity\uac00 \uc790\uaca9\uc99d\uba85 \ubcf4\uad00\n- Targets: Lambda, OpenAPI/Smithy, \uae30\uc874 MCP \uc11c\ubc84, KB\n- \uc11c\uc6b8: Gateway, Identity, Policy, Observability \uac00\uc6a9(\ubb38\uc11c). Gateway \uc804\uc6a9 \uc778\ud130\ud398\uc774\uc2a4 \uc5d4\ub4dc\ud3ec\uc778\ud2b8 bedrock-agentcore.gateway. \ud655\uc778 \ud544\uc694\ub294 Policy \ucc98\ub9ac \ub9ac\uc804\ub9cc\n\nMCP Hub\ub97c AgentCore Gateway\ub85c \uad6c\uc131\ud55c \uadf8\ub9bc\uc785\ub2c8\ub2e4. \uc67c\ucabd\uc5d0\uc11c Claude Code\ub4e0 Codex\ub4e0 \uac19\uc740 Hub URL\ub85c \ub4e4\uc5b4\uc635\ub2c8\ub2e4.\n\n\ud1a0\ud070\uc744 \uac80\uc99d\ud558\uace0, \uc0ac\uc6a9\uc790\uc5d0 \ub530\ub77c \ubcf4\uc774\ub294 \ub3c4\uad6c \ubaa9\ub85d\uc774 \ub2ec\ub77c\uc9c0\uba70, Policy\ub85c \ud638\ucd9c \ud558\ub098\ud558\ub098\ub97c \ud5c8\uc6a9\ud558\uac70\ub098 \ub9c9\uc2b5\ub2c8\ub2e4. Policy\ub294 \uc62c\ud574 3\uc6d4\uc5d0 GA\uac00 \ub410\uc2b5\ub2c8\ub2e4. \uc0ac\ub0b4 \uc2dc\uc2a4\ud15c \uc790\uaca9\uc99d\uba85\uc740 Identity\uac00 \ubcf4\uad00\ud574\uc11c \ub2e8\ub9d0\uc5d0\ub294 \ub0a8\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: AWS What's New 2026.03 \"Policy in Amazon Bedrock AgentCore is now generally available\"\n\n\uadf8\ub7f0\ub370 Hub\ub9cc \uc788\uc73c\uba74 \ub05d\uc77c\uae4c\uc694? \uac1c\ubc1c\uc790 PC\uac00 Hub\ub97c \uc6b0\ud68c\ud558\uba74 \uc18c\uc6a9\uc774 \uc5c6\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c \uad00\ubb38\uc774 \uc138 \uac1c \ud544\uc694\ud569\ub2c8\ub2e4.",
+    5: "\u23f8\ufe0f \u23f8\ufe0f [2min] [\uc694\uc57d]\n- \uad00\ubb38 \uc138 \uac1c: \u2460 \ub4f1\ub85d \uc2ec\uc0ac, \u2461 \ud074\ub77c\uc774\uc5b8\ud2b8 \uc81c\ud55c, \u2462 \ud638\ucd9c \uc778\uac00\n- \u2460\u2462\uc740 Hub\uc5d0\uc11c \ud558\ubbc0\ub85c \ub3c4\uad6c \ubb34\uad00. \u2461\ub9cc \ud074\ub77c\uc774\uc5b8\ud2b8\ubcc4\ub85c \ub2e4\ub984\n- Claude Code: /etc/claude-code/managed-settings.json \uc758 allowedMcpServers, allowManagedMcpServersOnly, allowManagedPermissionRulesOnly + env\ub85c Bedrock, Gateway, \ubaa8\ub378 \uace0\uc815 (\uacf5\uc2dd \ubb38\uc11c + \ub370\ubaa8\ub85c \ud655\uc778)\n- Codex: \uad00\ub9ac \ubc30\ud3ec config.toml, \uac15\uc81c \ubc94\uc704\ub294 PoC\uc5d0\uc11c \ud655\uc778 \ud544\uc694\n- \uc6d0\ubcf8 \uc81c\uc548\uc11c\uc758 enableAllProjectMcpServers \ud0a4\ub294 \ubb38\uc11c\ub85c \ud655\uc778\ud558\uc9c0 \ubabb\ud574 \ube90\uc74c\n\n\uad00\ubb38\uc740 \uc138 \uac1c\uc785\ub2c8\ub2e4. \ud558\ub098\uc529 \uc62c\ub9ac\uaca0\uc2b5\ub2c8\ub2e4. 1\ubc88 \ub4f1\ub85d \uc2ec\uc0ac\uc640 3\ubc88 \ud638\ucd9c \uc778\uac00\ub294 Hub\uc5d0\uc11c \ud558\ub2c8 \ud074\ub77c\uc774\uc5b8\ud2b8\uac00 \ubb34\uc5c7\uc774\ub4e0 \uac19\uc2b5\ub2c8\ub2e4.\n\n2\ubc88\ub9cc \ud074\ub77c\uc774\uc5b8\ud2b8\ubcc4\ub85c \ub2e4\ub985\ub2c8\ub2e4. Claude Code\ub294 \ub9ac\ub205\uc2a4 \uae30\uc900 /etc/claude-code \uc544\ub798 managed-settings.json\uc744 \ubc30\ud3ec\ud569\ub2c8\ub2e4. \uc5ec\uae30\uc11c \ud5c8\uc6a9 MCP \uc11c\ubc84\ub97c URL\ub85c \uace0\uc815\ud558\uace0, \uad00\ub9ac \uc124\uc815\uc758 \ubaa9\ub85d\ub9cc \uc4f0\uac8c \uac15\uc81c\ud558\uace0, \uad8c\ud55c \uaddc\uce59\ub3c4 \uad00\ub9ac \uc124\uc815 \uac83\ub9cc \uc778\uc815\ud558\uac8c \ud569\ub2c8\ub2e4. Bedrock \uc5f0\uacb0\uacfc Gateway \uc8fc\uc18c, \ubaa8\ub378\ub3c4 \uac19\uc740 \ud30c\uc77c\uc758 env\ub85c \uace0\uc815\ud569\ub2c8\ub2e4. Codex \ucabd\uc740 \uad00\ub9ac \ubc30\ud3ec \uc124\uc815\uc73c\ub85c \ud558\ub294\ub370, \uac15\uc81c \ubc94\uc704\ub294 PoC\uc5d0\uc11c \ud655\uc778\ud558\uaca0\uc2b5\ub2c8\ub2e4.\n\n2\ubc88\uc774 \uc5c6\uc73c\uba74 1\ubc88\uacfc 3\ubc88\uc774 \uc758\ubbf8\uac00 \uc5c6\uc2b5\ub2c8\ub2e4. \uac1c\ubc1c\uc790\uac00 Hub\ub97c \uc6b0\ud68c\ud574\uc11c \uc544\ubb34 MCP\ub098 \ubd99\uc774\uba74 \ub05d\uc774\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4. \uc774 2\ubc88\uc774 \uc2e4\uc81c\ub85c \uc5b4\ub5bb\uac8c \ub3d9\uc791\ud558\ub294\uc9c0 \ubc14\ub85c \uc601\uc0c1\uc73c\ub85c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: code.claude.com \ubb38\uc11c managed-settings, managed-mcp, permissions (2026.10.19 \ud655\uc778)\n\n\uccab \ubc88\uc9f8 \ub370\ubaa8 \uc601\uc0c1\uc785\ub2c8\ub2e4.",
+    6: "\u23f8\ufe0f [3.5min] [\uc694\uc57d]\n- \uc601\uc0c1 1\ubd84 11\ucd08, \uc2e4\uc81c \uc2e4\ud589 \ub179\ud654. \uac1c\ubc1c\uc790 \ub2e8\ub9d0 \uc5ed\ud560\uc758 \ucee8\ud14c\uc774\ub108(dev01@5ho-pc)\uc5d0\uc11c \uc2e4\ud589\n- 1: \ub2e8\ub9d0\uc5d0 AWS \uc790\uaca9\uc99d\uba85\uc774 \uc5c6\uc74c (AWS_ \ud658\uacbd\ubcc0\uc218 0\uac1c, ~/.aws \uc5c6\uc74c)\n- 2: root \uc18c\uc720 managed-settings.json: Bedrock \uc0ac\uc6a9, Gateway \uc8fc\uc18c, \ubaa8\ub378, MCP \ud5c8\uc6a9 \ubaa9\ub85d, deny \uaddc\uce59\n- 3: github, \ub85c\uceec npx MCP\ub294 \"not allowed by enterprise policy\", Hub URL\ub9cc \ucd94\uac00\ub428\n- 4: \uac1c\ubc1c\uc790\uac00 ~/.claude/settings.json \uc5d0 curl \ud5c8\uc6a9\uc744 \ub123\uc5b4\ub3c4 \ubb34\uc2dc\ub418\uace0 curl\uc740 \uac70\ubd80(permission_denials)\n- 5, 6: \uace0\uac1d \ub370\uc774\ud130 \ud30c\uc77c \uc77d\uae30\ub294 CLAUDE.md \uaddc\uce59\uc774 \uba3c\uc800 \uac70\uc808, CLAUDE.md \uc5c6\ub294 \ud3f4\ub354\uc5d0\uc11c\ub294 \uad00\ub9ac \uc124\uc815 deny \uaddc\uce59\uc774 Read\ub97c \ub9c9\uc74c\n- \ub9c8\uc9c0\ub9c9\uc5d0 Gateway \uac10\uc0ac \ub85c\uadf8\uc5d0 dev01\uc758 \ud638\ucd9c\uc774 \ub0a8\ub294 \uac83\uae4c\uc9c0\n\nPlay\ub97c \ub204\ub974\uace0 \uc7a5\uba74\ub9c8\ub2e4 \uc9e7\uac8c \uc124\uba85\ud569\ub2c8\ub2e4. \uc601\uc0c1\uc740 \ubb34\uc74c\uc785\ub2c8\ub2e4.\n0:00 \ub2e8\ub9d0\uc5d0\uc11c AWS \uad00\ub828 \ud658\uacbd\ubcc0\uc218\ub97c \uc138\uc5b4 \ubcf4\uba74 0\uac1c, ~/.aws \ud3f4\ub354\ub3c4 \uc5c6\uc2b5\ub2c8\ub2e4. \uc774 \ub2e8\ub9d0\uc740 Bedrock\uc744 \uc9c1\uc811 \ubd80\ub97c \uc218\ub2e8\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.\n0:04 \ud68c\uc0ac\uac00 \ubc30\ud3ec\ud55c \uad00\ub9ac \uc124\uc815\uc785\ub2c8\ub2e4. root \uc18c\uc720\ub77c \uac1c\ubc1c\uc790\uac00 \uace0\uce60 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. Bedrock\uc744 \uc4f0\ub418 \uc8fc\uc18c\ub294 \uc0ac\ub0b4 Gateway, \ubaa8\ub378\uc740 \uc11c\uc6b8 \ub9ac\uc804\uc758 Sonnet 5\ub85c \uace0\uc815\ud588\uace0, MCP\ub294 Hub URL\ub9cc \ud5c8\uc6a9, curl\uacfc \uc6f9 \uc811\uadfc, \uace0\uac1d \ub370\uc774\ud130 \ud3f4\ub354 \uc77d\uae30\ub294 deny\uc785\ub2c8\ub2e4.\n0:18 \uac1c\ubc1c\uc790\uac00 github MCP\uc640 \ub85c\uceec npx MCP\ub97c \ucd94\uac00\ud558\ub824\uace0 \ud558\uba74 \"enterprise policy\ub85c \ud5c8\uc6a9\ub418\uc9c0 \uc54a\uc74c\"\uc774 \ub098\uc635\ub2c8\ub2e4. Hub URL\uc740 \ucd94\uac00\ub429\ub2c8\ub2e4.\n\n0:32 \uac1c\ubc1c\uc790\uac00 \uc790\uae30 \uc124\uc815 \ud30c\uc77c\uc5d0 curl \ud5c8\uc6a9\uc744 \ub123\uace0 curl\uc744 \uc2dc\ucf1c \ubd05\ub2c8\ub2e4. \uc0ac\uc6a9\uc790 \uc124\uc815\uc740 \ubb34\uc2dc\ub418\uace0, Claude\uac00 \uc2dc\ub3c4\ud55c curl \uba85\ub839\uc774 permission_denials\uc5d0 \uadf8\ub300\ub85c \ucc0d\ud799\ub2c8\ub2e4.\n0:48 \uace0\uac1d \ub370\uc774\ud130 \ud30c\uc77c\uc744 \uc77d\uc5b4 \ub2ec\ub77c\uace0 \ud558\uba74, \uc774 \ud504\ub85c\uc81d\ud2b8\uc5d0\uc11c\ub294 CLAUDE.md \uaddc\uce59 \ub54c\ubb38\uc5d0 Claude\uac00 \uba3c\uc800 \uac70\uc808\ud569\ub2c8\ub2e4. 0:59\uc5d0 CLAUDE.md\uac00 \uc5c6\ub294 \ub2e4\ub978 \ud3f4\ub354\uc5d0\uc11c \ub2e4\uc2dc \uc2dc\ud0a4\uba74 \uc774\ubc88\uc5d0\ub294 \uad00\ub9ac \uc124\uc815\uc758 deny \uaddc\uce59\uc774 Read \ub3c4\uad6c \uc790\uccb4\ub97c \ub9c9\uc2b5\ub2c8\ub2e4. \ub450 \uacb9\uc785\ub2c8\ub2e4.\n1:06 \ub9c8\uc9c0\ub9c9\uc740 Gateway \uc6b4\uc601\uc790 \ud654\uba74\uc785\ub2c8\ub2e4. \ubc29\uae08 \ud638\ucd9c\ub4e4\uc774 dev01 \uc774\ub984\uc73c\ub85c \ub0a8\uc558\uc2b5\ub2c8\ub2e4.\n\uadfc\uac70: \ub179\ud654 \uc6d0\ubcf8 r1-managed.cast, \ub4dc\ub77c\uc774\ubc84 demo/rec/r1-managed.sh, media/RECORDINGS.md\n\n\uc601\uc0c1\uc5d0\uc11c \ubcf8 \ub0b4\uc6a9\uc744 \ud55c \uc7a5\uc73c\ub85c \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.",
+    7: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- V1 \uacb0\uacfc \uc5ec\uc12f \uac00\uc9c0: \uc790\uaca9\uc99d\uba85 \uc5c6\uc74c, root \uc18c\uc720 \uc124\uc815, Hub \uc678 MCP \ucc28\ub2e8, \uc0ac\uc6a9\uc790 allow \ubb34\uc2dc, \uace0\uac1d \ub370\uc774\ud130 \ub450 \uacb9 \ucc28\ub2e8, \uc2e4\uba85 \uac10\uc0ac \ub85c\uadf8\n- \ud55c\uacc4(\uacf5\uc2dd permissions \ubb38\uc11c): Bash deny\ub294 \uba85\ub839 \ubb38\uc790\uc5f4 \uc77c\uce58, Read deny\ub294 \ud558\uc704 \ud504\ub85c\uc138\uc2a4\uac00 \uc9c1\uc811 \uc5ec\ub294 \ud30c\uc77c\uc744 \ubabb \ub9c9\uc74c\n- \ubcf4\uac15: 5\ud638\ub9dd \ubc29\ud654\ubcbd(\ubaa9\uc801\uc9c0\ub294 Gateway\ubfd0), Claude Code sandbox, EDR\n\n\uc601\uc0c1\uc5d0\uc11c \ud655\uc778\ud55c \uac83\uc744 \uc5ec\uc12f \uc7a5 \uce74\ub4dc\ub85c \uc815\ub9ac\ud588\uc2b5\ub2c8\ub2e4. \ud68c\uc0c9 \uae00\uc528\uac00 \uc2e4\uc81c \ud654\uba74\uc5d0 \ub098\uc628 \ucd9c\ub825\uc785\ub2c8\ub2e4.\n\n\ub2e4\ub9cc \ud55c\uacc4\ub3c4 \uc815\uc9c1\ud558\uac8c \ub9d0\uc500\ub4dc\ub824\uc57c \ud569\ub2c8\ub2e4. \uacf5\uc2dd \ubb38\uc11c\uc5d0\ub3c4 \ub098\uc640 \uc788\ub4ef\uc774, Bash deny \uaddc\uce59\uc740 \uba85\ub839 \ubb38\uc790\uc5f4\uc744 \uae30\uc900\uc73c\ub85c \ud558\uae30 \ub54c\ubb38\uc5d0 \uacbd\ub85c\ub97c \ubc14\uafd4 \ubd80\ub974\uba74 \ubabb \ub9c9\uace0, Read deny\ub294 \uc2a4\ud06c\ub9bd\ud2b8\uac00 \uc9c1\uc811 \uc5ec\ub294 \ud30c\uc77c\uae4c\uc9c0 \ub9c9\uc9c0\ub294 \ubabb\ud569\ub2c8\ub2e4. \uadf8\ub798\uc11c \uad00\ub9ac \uc124\uc815\uc740 \uccab \ubc88\uc9f8 \uacb9\uc774\uace0, 5\ud638\ub9dd \ubc29\ud654\ubcbd\ucc98\ub7fc \ub2e8\ub9d0\uc774 \ub098\uac08 \uc218 \uc788\ub294 \ubaa9\uc801\uc9c0\ub97c Gateway \ud558\ub098\ub85c \ubb36\ub294 \uac8c \uc9c4\uc9dc \uacbd\uacc4\uc785\ub2c8\ub2e4. \ud544\uc694\ud558\uba74 Claude Code\uc758 sandbox \uae30\ub2a5\uacfc EDR\ub85c OS \uc218\uc900\uc744 \ubcf4\uac15\ud569\ub2c8\ub2e4.\n\uadfc\uac70: code.claude.com permissions \ubb38\uc11c \"Bash deny rules match the command text\", \"Read deny rules do not block subprocesses\"\n\n\uc774\uc81c \ubaa8\ub378 \ud638\ucd9c \ucabd \uad00\ubb38, LLM Gateway\ub85c \ub118\uc5b4\uac11\ub2c8\ub2e4. \uba3c\uc800 \uc694\uccad \ud55c \uac74\uc774 \uc5b4\ub5bb\uac8c \ud750\ub974\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    8: "\u23f8\ufe0f \u23f8\ufe0f [2min] [\uc694\uc57d]\n- \u2460 \ub85c\uadf8\uc778(MFA) \u2461 \ub2e8\uae30 \ud1a0\ud070 \u2462 \ubaa8\ub378 \ud638\ucd9c + \ud1a0\ud070 \u2463 DLP \ud1b5\uacfc \ud6c4 PrivateLink \u2464 \ubaa8\ub378 \ud638\ucd9c \ub85c\uadf8 \u2465 \ub3c4\uad6c \ud638\ucd9c + \ud1a0\ud070 \u2466 Policy \ud5c8\uc6a9 \uc2dc Identity\ub85c \ud638\ucd9c \u2467 \ub3c4\uad6c \ud638\ucd9c \ub85c\uadf8\n- \uc2e0\uc6d0\uc740 AI\uc758 \uc8fc\uc7a5\uc774 \uc544\ub2c8\ub77c \ud1a0\ud070\uc73c\ub85c \ud655\uc778\n- \ubaa8\ub378 \ud638\ucd9c\uacfc \ub3c4\uad6c \ud638\ucd9c\uc774 \uac19\uc740 \uc2e0\uc6d0\uc73c\ub85c \uae30\ub85d\ub428\n\n\uc694\uccad \ud55c \uac74\uc744 \ub530\ub77c\uac00 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \ud558\ub098\uc529 \ub118\uae30\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uac1c\ubc1c\uc790\uac00 AD\ub85c \ub85c\uadf8\uc778\ud574 \ud1a0\ud070\uc744 \ubc1b\uace0, \uadf8 \ud1a0\ud070\uc73c\ub85c \ubaa8\ub378\uc744 \ubd80\ub985\ub2c8\ub2e4. \ubaa8\ub378 \ud638\ucd9c\uc740 Gateway\uc758 DLP\uc640 \ubaa8\ub378 allowlist\ub97c \ud1b5\uacfc\ud574\uc57c Bedrock\uc73c\ub85c \uac00\uace0, \uadf8 \uacb0\uacfc\uac00 5\ubc88 \ub85c\uadf8\ub85c \ub0a8\uc2b5\ub2c8\ub2e4. \ub3c4\uad6c \ud638\ucd9c\uc740 AgentCore Gateway\uac00 Policy\ub85c \ud310\uc815\ud558\uace0 Identity\uac00 \ubcf4\uad00\ud55c \uc790\uaca9\uc99d\uba85\uc73c\ub85c \uc0ac\ub0b4 \uc2dc\uc2a4\ud15c\uc744 \ubd80\ub974\uba70, 8\ubc88 \ub85c\uadf8\ub85c \ub0a8\uc2b5\ub2c8\ub2e4.\n\n\ub450 \ud638\ucd9c\uc774 \uac19\uc740 \uc2e0\uc6d0\uc73c\ub85c \ub0a8\uae30 \ub54c\ubb38\uc5d0, \uae08\ubcf4\uc6d0\uc774 \"\uc774 \ucf54\ub4dc \ubcc0\uacbd\uc740 \ub204\uac00 \uc5b4\ub5a4 \ud504\ub86c\ud504\ud2b8\ub85c \ub9cc\ub4e4\uc5c8\ub0d0\"\uace0 \ubb3c\uc744 \ub54c \ud55c \uc904\ub85c \uc774\uc5b4\uc11c \ub2f5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. 3, 4, 5\ubc88\uc744 \ubc14\ub85c \ub2e4\uc74c \ub370\ubaa8\uc5d0\uc11c \uc2e4\uc81c\ub85c \ubcf4\uc5ec \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uadf8 \uc804\uc5d0 Gateway\uac00 Claude Code\uc640 Codex\ub97c \uc5b4\ub5bb\uac8c \uac19\uc774 \ubc1b\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    9: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- Gateway\uac00 \ub450 API(Bedrock InvokeModel \uacbd\ub85c, OpenAI \ud638\ud658)\ub97c \uc5f4\uace0, \uc778\uc99d, DLP, \ub85c\uae45, Quota\ub294 \uacf5\ud1b5\n- Claude Code: CLAUDE_CODE_USE_BEDROCK=1 + ANTHROPIC_BEDROCK_BASE_URL(Gateway) + CLAUDE_CODE_SKIP_BEDROCK_AUTH=1 + ANTHROPIC_AUTH_TOKEN(Gateway \ud1a0\ud070). \uacf5\uc2dd LLM gateway \ubb38\uc11c\uc640 \ub370\ubaa8\ub85c \ud655\uc778\n- \ubaa8\ub378 \ud604\ud669(2026.10.19 AWS \uc11c\uc6b8 \ub9ac\uc804 \uc870\ud68c): Claude Sonnet 5 in-region, Opus 5.5, Sonnet 5.5 global. OpenAI GPT-6 Astra, GPT-6.1 Sol \ub4f1\uc740 global \ud504\ub85c\ud30c\uc77c\ub9cc\n- Codex\ub294 CRIS \uc804\uc81c \u2192 \uad6d\uc678 \ucc98\ub9ac \uace0\uc9c0\n\nClaude Code\uc640 Codex\ub97c \uac19\uc774 \ubc1b\ub294 \uad6c\uc870\uc785\ub2c8\ub2e4. Gateway\uac00 \ub450 \uac00\uc9c0 API\ub97c \uc5f4\uc5b4 \ub450\uace0, \uadf8 \ub4a4\uc758 \uc778\uc99d, DLP, \ub85c\uae45, \ud55c\ub3c4\ub294 \uacf5\ud1b5\uc785\ub2c8\ub2e4. \ub3c4\uad6c\ub97c \ubc14\uafd4\ub3c4 \ubcf4\uc548\ub300\ucc45\uc744 \ub2e4\uc2dc \uc124\uacc4\ud560 \ud544\uc694\uac00 \uc5c6\ub2e4\ub294 \uac8c \ud575\uc2ec\uc785\ub2c8\ub2e4.\n\nClaude Code\ub294 Bedrock \ubaa8\ub4dc\ub85c \ub450\ub418 \uc8fc\uc18c\ub9cc \uc0ac\ub0b4 Gateway\ub85c \ubc14\uafb8\uace0, AWS \uc11c\uba85\uc740 \ub044\uace0, Gateway \ud1a0\ud070\ub9cc \ub4e4\uace0 \uac11\ub2c8\ub2e4. Gateway\uac00 \ubc1b\uc740 \uc694\uccad\uc744 \uc790\uae30 \uc5ed\ud560\ub85c \ub2e4\uc2dc \uc11c\uba85\ud574\uc11c Bedrock\uc5d0 \ubcf4\ub0c5\ub2c8\ub2e4. \uc624\ub298 \uc544\uce68 \uc11c\uc6b8 \ub9ac\uc804\uc5d0\uc11c \uc9c1\uc811 \uc870\ud68c\ud55c \uc0c1\ud669\uc740, Claude Sonnet 5\ub294 \uc11c\uc6b8 \uc548\uc5d0\uc11c \ubc14\ub85c \ub418\uace0, Opus 5.5\uc640 Sonnet 5.5\ub294 global CRIS\uc785\ub2c8\ub2e4. OpenAI \ubaa8\ub378\uc740 \uc11c\uc6b8 in-region\uc774 \uc5c6\uc5b4\uc11c Codex\ub294 CRIS\uac00 \uc804\uc81c\uc785\ub2c8\ub2e4.\n\uadfc\uac70: code.claude.com LLM gateway, Amazon Bedrock \ubb38\uc11c. aws bedrock list-foundation-models, list-inference-profiles (ap-northeast-2, 2026.10.19)\n\n\uc774 Gateway\ub97c \uc2e4\uc81c\ub85c \ub9cc\ub4e4\uc5b4\uc11c \ub3cc\ub824 \ubd24\uc2b5\ub2c8\ub2e4. \ub450 \ubc88\uc9f8 \ub370\ubaa8\uc785\ub2c8\ub2e4.",
+    10: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- \uc601\uc0c1 33\ucd08. \ub2e8\ub9d0 \u2192 \ub370\ubaa8 LLM Gateway \u2192 \uc11c\uc6b8 \ub9ac\uc804 Bedrock(anthropic.claude-sonnet-5)\n- 1 \uc815\uc0c1 \uc694\uccad: ALLOW, \uc785\ub825 28,950 \ud1a0\ud070(Claude Code \uc2dc\uc2a4\ud15c \ud504\ub86c\ud504\ud2b8 \ud3ec\ud568), \ucd9c\ub825 87 \ud1a0\ud070\n- 2 \uc8fc\ubbfc\ub4f1\ub85d\ubc88\ud638 \ud328\ud134: Bedrock \uc804\uc1a1 \uc804 \ucc28\ub2e8, \ub85c\uadf8\uc5d0\ub294 \uc55e 4\uc790\ub9ac\ub9cc \ub0a8\uae30\uace0 \ub9c8\uc2a4\ud0b9\n- 3 global.anthropic.claude-opus-5-5 \uc694\uccad: \uc2b9\uc778\ub418\uc9c0 \uc54a\uc740 \ubaa8\ub378\ub85c \uac70\ubd80\n- 4 \uc798\ubabb\ub41c \ud1a0\ud070: \ud638\ucd9c \uc790\uccb4 \ubd88\uac00\n- 5 \uc6b4\uc601\uc790 \uc9d1\uacc4: \uc0ac\uc6a9\uc790\ubcc4, \ud310\uc815\ubcc4 \ud638\ucd9c \uc218\n- Claude Code\ub294 \uac70\ubd80 \uc751\ub2f5\uc744 \ud55c \ubc88 \uc7ac\uc2dc\ub3c4\ud558\ubbc0\ub85c BLOCK\uc774 \ud504\ub86c\ud504\ud2b8\ub2f9 2\uac74\uc529 \uae30\ub85d\ub428\n\nPlay\ub97c \ub204\ub974\uace0 \ub530\ub77c\uac00\uaca0\uc2b5\ub2c8\ub2e4.\n0:00 \uc815\uc0c1 \uc694\uccad\uc785\ub2c8\ub2e4. Claude Code\uac00 \ub2f5\uc744 \uc8fc\uace0, \ubc14\ub85c \uc544\ub798 Gateway \uac10\uc0ac \ub85c\uadf8\uc5d0 dev01, \uc11c\uc6b8 \ub9ac\uc804 Sonnet 5, ALLOW, \ud1a0\ud070 \uc218\uac00 \ucc0d\ud799\ub2c8\ub2e4. \uc785\ub825\uc774 2\ub9cc 9\ucc9c \ud1a0\ud070\uc778 \uac74 Claude Code\uc758 \uc2dc\uc2a4\ud15c \ud504\ub86c\ud504\ud2b8\uc640 \ub3c4\uad6c \uc815\uc758\uac00 \ud568\uaed8 \uac00\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4.\n0:09 \ud504\ub86c\ud504\ud2b8\uc5d0 \uc8fc\ubbfc\ub4f1\ub85d\ubc88\ud638\ub97c \ub123\uc73c\uba74, Gateway DLP\uac00 Bedrock\uc73c\ub85c \ubcf4\ub0b4\uae30 \uc804\uc5d0 \ub9c9\uc2b5\ub2c8\ub2e4. \uac1c\ubc1c\uc790 \ud654\uba74\uc5d0\ub294 \uc774\uc720\uac00 \ubc14\ub85c \ub098\uc624\uace0, \ub85c\uadf8\uc5d0\ub294 \ubc88\ud638\ub97c \ub9c8\uc2a4\ud0b9\ud574\uc11c \ub0a8\uae41\ub2c8\ub2e4.\n\n0:16 \uac1c\ubc1c\uc790\uac00 \uc2b9\uc778\ub418\uc9c0 \uc54a\uc740 Opus 5.5 global \ud504\ub85c\ud30c\uc77c\uc744 \uc9c0\uc815\ud558\uba74 Gateway\uac00 \uac70\ubd80\ud569\ub2c8\ub2e4. \uc55e\uc5d0\uc11c \ubcf8 SCP, \uc5d4\ub4dc\ud3ec\uc778\ud2b8 \uc815\ucc45\uacfc \ud568\uaed8 \ubaa8\ub378 allowlist\uc758 \uc138 \uacb9 \uc911 \ud55c \uacb9\uc785\ub2c8\ub2e4.\n0:23 \ud1a0\ud070\uc774 \ud2c0\ub9ac\uba74 \ud638\ucd9c \uc790\uccb4\uac00 \uc548 \ub429\ub2c8\ub2e4.\n0:27 \ub9c8\uc9c0\ub9c9\uc740 \uc6b4\uc601\uc790 \uc9d1\uacc4\uc785\ub2c8\ub2e4. \uc0ac\uc6a9\uc790\ubcc4, \ud310\uc815\ubcc4\ub85c \uba87 \ubc88 \ud638\ucd9c\ud588\ub294\uc9c0\uac00 \ubc14\ub85c \ub098\uc635\ub2c8\ub2e4. \ucc28\ub2e8 \uac74\uc774 \ub450 \uac1c\uc529 \ucc0d\ud78c \uac74 Claude Code\uac00 \uac70\ubd80 \uc751\ub2f5\uc744 \ud55c \ubc88 \uc7ac\uc2dc\ub3c4\ud558\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4.\n\uadfc\uac70: \ub179\ud654 \uc6d0\ubcf8 r2-gateway.cast, \uac10\uc0ac \ub85c\uadf8 r2-audit.jsonl, Gateway \uc18c\uc2a4 demo/gateway/gateway.py\n\n\uc774 \ub85c\uadf8\uac00 \uc2e4\uc81c\ub85c \uc5b4\ub5bb\uac8c \uc0dd\uacbc\ub294\uc9c0 \ud55c \uc7a5\uc73c\ub85c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    11: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- V2 \uac10\uc0ac \ub85c\uadf8 \uc2e4\uc81c \uac12(r2-audit.jsonl, \uc7ac\uc2dc\ub3c4 \uc911\ubcf5 \uc81c\uac70)\n- \uceec\ub7fc: \uc2dc\uac01, \uc0ac\uc6a9\uc790, \ubaa8\ub378, \ud310\uc815, \uc0ac\uc720, \ud1a0\ud070\n- \uae08\ubcf4\uc6d0 \uc810\uac80 \uc9c8\ubb38 \uc138 \uac00\uc9c0\uc5d0 \ubc14\ub85c \ub2f5: \ub204\uac00 \uc5b8\uc81c \uc5b4\ub5a4 \ubaa8\ub378\uc5d0, DLP\uac00 \ubb34\uc5c7\uc744 \ub9c9\uc558\ub098, \uc5bc\ub9c8\ub098 \uc37c\ub098\n- \uc6b4\uc601 \ud658\uacbd: Log Archive + Invocation Logging + CloudTrail + SIEM\n\n\ubc29\uae08 \uc601\uc0c1\uc758 \uac10\uc0ac \ub85c\uadf8\ub97c \ud45c\ub85c \uc62e\uacbc\uc2b5\ub2c8\ub2e4. \uc7ac\uc2dc\ub3c4\ub85c \uc0dd\uae34 \uc911\ubcf5\ub9cc \ube7c\uace0 \uc2e4\uc81c \uac12 \uadf8\ub300\ub85c\uc785\ub2c8\ub2e4.\n\n\ucd08\ub85d \ud55c \uc904, \ube68\uac04 \uc138 \uc904\uc785\ub2c8\ub2e4. \uc774 \ud45c\ub9cc\uc73c\ub85c \uae08\ubcf4\uc6d0 \uc810\uac80\uc5d0\uc11c \uc790\uc8fc \ub098\uc624\ub294 \uc9c8\ubb38, \ub204\uac00 \uc5b8\uc81c \uc5b4\ub5a4 \ubaa8\ub378\uc5d0 \ubcf4\ub0c8\ub294\uc9c0, DLP\uac00 \ubb34\uc5c7\uc744 \ub9c9\uc558\ub294\uc9c0, \uc5bc\ub9c8\ub098 \uc37c\ub294\uc9c0\uc5d0 \ub2f5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. DLP \ucc28\ub2e8 \uac74\uc740 \uc6d0\ubb38\uc744 \ub0a8\uae30\uc9c0 \uc54a\uace0 \ub9c8\uc2a4\ud0b9\ud55c \uc0d8\ud50c\ub9cc \ub0a8\uae34\ub2e4\ub294 \uac83\ub3c4 \uc911\uc694\ud569\ub2c8\ub2e4. \ub85c\uadf8 \uc790\uccb4\uac00 \uac1c\uc778\uc815\ubcf4 \uc800\uc7a5\uc18c\uac00 \ub418\uba74 \uc548 \ub418\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4.\n\n\ub2e4\uc74c\uc740 Claude Code\uac00 \uc0ac\ub0b4 \uaddc\uce59\uc744 \uc54c\uace0 \ucf54\ub4dc\ub97c \uc4f0\uac8c \ub9cc\ub4dc\ub294 \uc9c0\uc2dd \uacc4\uce35\uc785\ub2c8\ub2e4.",
+    12: "\u23f8\ufe0f \ud83c\udfac [2.5min] [\uc694\uc57d]\n- \ucf54\ub529 \uc5d0\uc774\uc804\ud2b8\uc5d0\ub294 \uc0ac\ub0b4 \uaddc\uc815, \ub514\uc790\uc778 \uac00\uc774\ub4dc, \ucf54\ub529 \ud45c\uc900 \uac19\uc740 \uc9c0\uc2dd\uc774 \ud544\uc694\n- \uc6d0\ubcf8\uc740 \uc628\ud504\ub818 \uc720\uc9c0, \uc2b9\uc778\ub41c \ubc30\uce58\ub85c ETL(\uc815\uc81c, \uac00\uba85\ud654, \uad00\uacc4 \ucd94\ucd9c) \ud6c4 Vector\uc640 Graph\ub85c\n- \uc9c8\uc758 \uc720\ud615\ubcc4 \uc800\uc7a5\uc18c: \ubb38\uc11c \uc758\ubbf8 \uac80\uc0c9\uc740 Bedrock Knowledge Bases(OpenSearch Serverless), \uaddc\uc815 \uc870\ud56d \uad00\uacc4\ub294 Neptune Analytics, \ub370\uc774\ud130, \uc870\uc9c1 \uad00\uacc4\ub294 AWS Context(\uc11c\uc6b8 \ud655\uc778 \ud544\uc694)\n- Claude Code\ub294 MCP \ub3c4\uad6c\ub85c\ub9cc \uac80\uc0c9\n- Amazon Bedrock Managed Knowledge Base, KB GraphRAG\ub294 \uc11c\uc6b8 \ubbf8\uc9c0\uc6d0(AWS \ubb38\uc11c, 2026.10.19 \ud655\uc778)\uc774\ub77c \uc11c\uc6b8 \uae30\ubcf8\uc548\uc5d0\uc11c \uc81c\uc678. Neptune Analytics\ub294 \uc11c\uc6b8 API \uc751\ub2f5\uc73c\ub85c \ud655\uc778\n\n\ucf54\ub529 \uc5d0\uc774\uc804\ud2b8\uac00 \uc81c\ub300\ub85c \uc77c\ud558\ub824\uba74 \uc0ac\ub0b4 \uaddc\uc815\uc9d1, \ub514\uc790\uc778 \uac00\uc774\ub4dc, \ucf54\ub529 \ud45c\uc900 \uac19\uc740 \uc9c0\uc2dd\uc774 \ud544\uc694\ud569\ub2c8\ub2e4. \uc6d0\ubcf8\uc740 \uc628\ud504\ub818\uc5d0 \uadf8\ub300\ub85c \ub450\uace0, \uc2b9\uc778\ub41c \ubc30\uce58\ub85c \uac00\uc838\uc640 ETL\uc5d0\uc11c \uc815\uc81c\uc640 \uac00\uba85\ud654, \uad00\uacc4 \ucd94\ucd9c\uae4c\uc9c0 \ud569\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd \uc9c8\uc758\ub97c \ud558\ub098\uc529 \ub20c\ub7ec \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \ub514\uc790\uc778 \uac00\uc774\ub4dc \uc9c8\ubb38\uc740 \ubb38\uc11c \uc758\ubbf8 \uac80\uc0c9\uc774\ub77c Bedrock Knowledge Bases\uac00, \ubcf4\uc548 \uaddc\uc815 \uc870\ud56d\uacfc\uc758 \ucda9\ub3cc\uc740 \uc870\ud56d \uc0ac\uc774 \uad00\uacc4\ub77c Neptune Analytics\uac00, \uc11c\ube44\uc2a4\uc640 \ub370\uc774\ud130, \uc870\uc9c1\uc758 \uad00\uacc4\ub294 AWS Context\uac00 \ub9e1\uc2b5\ub2c8\ub2e4.\n\n\uc62c\ud574 \ub098\uc628 Amazon Bedrock Managed Knowledge Base\uc640 Knowledge Bases\uc758 GraphRAG\ub294 \uc544\uc9c1 \uc11c\uc6b8 \ub9ac\uc804\uc5d0 \uc5c6\uc5b4\uc11c, \uc11c\uc6b8\ub9cc \uc4f0\ub294 \uc624\ub298\uc758 SCP \uae30\uc900\uc73c\ub85c\ub294 \uae30\uc874 Bedrock Knowledge Bases\uc640 OpenSearch Serverless, Neptune Analytics\ub97c \uae30\ubcf8\uc548\uc73c\ub85c \uc7a1\uc558\uc2b5\ub2c8\ub2e4. AWS Context\ub294 \uc11c\uc6b8 \uc9c0\uc6d0\uc744 \ud655\uc778\ud574\uc57c \ud569\ub2c8\ub2e4.\n\n\uad6c\uc131\uc694\uc18c\ubcc4 \uc11c\uc6b8 \ub9ac\uc804 \uc0c1\ud0dc\ub97c \ud55c \ud45c\ub85c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    13: "\u23f8\ufe0f \ud83c\udfac [1.5min] [\uc694\uc57d]\n- 2026.10.19 \ubb38\uc11c\uc640 \uc11c\uc6b8 \ub9ac\uc804 \uc870\ud68c\ub85c \uc6d0\ubcf8 \uc81c\uc548\uc11c \ud45c\ub97c \uac31\uc2e0\n- \uc11c\uc6b8 \uac00\uc6a9: Bedrock Runtime(Sonnet 5 in-region), AgentCore Runtime, Gateway, Identity, Observability, Policy, Memory, Evaluations, Bedrock KB + OpenSearch Serverless, Neptune Analytics, Glue, Step Functions\n- \uc11c\uc6b8 \ubbf8\uc9c0\uc6d0: Amazon Bedrock Managed Knowledge Base, Knowledge Bases GraphRAG \u2192 \uae30\ubcf8\uc548\uc5d0\uc11c \uc81c\uc678\n- \ud655\uc778 \ud544\uc694: AgentCore Policy \ucc98\ub9ac \ub9ac\uc804, AWS Context\n- \ucf54\ub529 \uc5d0\uc774\uc804\ud2b8\uc6a9 Gateway, Hub, \ub85c\uadf8 \uccb4\uacc4\ub97c \uc0c1\uc6a9 AI \ud504\ub85c\uc81d\ud2b8\uac00 \uadf8\ub300\ub85c \uc500\n\n\uad6c\uc131\uc694\uc18c\ubcc4 \uc11c\uc6b8 \ub9ac\uc804 \uc0c1\ud0dc\uc785\ub2c8\ub2e4. \uc6d0\ubcf8 \uc81c\uc548\uc11c \ud45c\ub97c \uc624\ub298 \ub0a0\uc9dc \uae30\uc900 AWS \ubb38\uc11c\uc640 \uc11c\uc6b8 \ub9ac\uc804 \uc870\ud68c\ub85c \uac31\uc2e0\ud588\uc2b5\ub2c8\ub2e4.\n\n\"\ud655\uc778 \ud544\uc694, \ubbf8\uc9c0\uc6d0\" \ubc84\ud2bc\uc744 \ub204\ub974\uba74 \ub124 \uc904\uc774 \ub0a8\uc2b5\ub2c8\ub2e4. \ub450 \uc904\uc740 \ubbf8\uc9c0\uc6d0\uc73c\ub85c \ud655\uc815\ub410\uc2b5\ub2c8\ub2e4. \uc62c\ud574 GA\ub41c Managed Knowledge Base\uc640 Knowledge Bases\uc758 GraphRAG\ub294 \uc11c\uc6b8\uc5d0 \uc5c6\uc5b4\uc11c \uae30\ubcf8\uc548\uc5d0\uc11c \ube90\uace0, \ub300\uc2e0 Bedrock Knowledge Bases\uc640 OpenSearch Serverless, Neptune Analytics\ub97c \uc501\ub2c8\ub2e4. \ub0a8\uc740 \ud655\uc778 \ud56d\ubaa9\uc740 Policy \uc5d4\uc9c4\uc774 \uc5b4\ub290 \ub9ac\uc804\uc5d0\uc11c \ucc98\ub9ac\ud558\ub294\uc9c0\uc640 AWS Context \ub450 \uac00\uc9c0\uc785\ub2c8\ub2e4.\n\n\ub098\uba38\uc9c0\ub294 \uc11c\uc6b8\uc5d0\uc11c \uc4f8 \uc218 \uc788\uace0, CRIS\ub97c \ud5c8\uc6a9\ud558\uae30\ub85c \ud588\uae30 \ub54c\ubb38\uc5d0 \uad50\ucc28 \ub9ac\uc804 \ucd94\ub860\uc744 \uc4f0\ub294 Memory\uc640 Evaluations\ub3c4 \uac19\uc740 \uc815\ucc45 \uc548\uc5d0\uc11c \uc4f8 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \ub2e4\ub9cc \ud574\uc678 \ucc98\ub9ac\ub77c\ub294 \uc810\uc740 \uc2e0\uccad\uc11c\uc5d0 \uc801\uc5b4\uc57c \ud569\ub2c8\ub2e4.\n\uadfc\uac70: AgentCore \uac1c\ubc1c\uc790 \uac00\uc774\ub4dc \uc9c0\uc6d0 \ub9ac\uc804, Managed Knowledge Base \ubc1c\ud45c \ube14\ub85c\uadf8(\uc9c0\uc6d0 \ub9ac\uc804 \ubaa9\ub85d), Bedrock Knowledge Bases \uc9c0\uc6d0 \ub9ac\uc804, aws neptune-graph list-graphs(ap-northeast-2)\n\n3\ubd80\ub97c \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.",
+    14: "[1min] [\uc694\uc57d]\n- MCP Hub\ub294 AgentCore Gateway, \uc138 \uad00\ubb38 \uc911 \u2461\ub294 \ub2e8\ub9d0 \uad00\ub9ac \uc124\uc815\n- V1: \uad00\ub9ac \uc124\uc815 \uac15\uc81c \ud655\uc778, V2: Gateway DLP, allowlist, \uac10\uc0ac \ub85c\uadf8 \ud655\uc778\n- \ub2e4\uc74c: \uad6c\ucd95 \ubc29\uc548 \ube44\uad50\uc640 \ud558\ub124\uc2a4\n\n3\ubd80\ub97c \uc815\ub9ac\ud558\uba74, \ub3c4\uad6c\ub294 AgentCore Gateway\ub85c \ub41c Hub\uac00, \ubaa8\ub378\uc740 LLM Gateway\uac00 \ub9e1\uace0, \uadf8 \uc55e\uc5d0 \uac1c\ubc1c\uc790\uac00 \ud480 \uc218 \uc5c6\ub294 \ub2e8\ub9d0 \uad00\ub9ac \uc124\uc815\uc774 \uc788\uc2b5\ub2c8\ub2e4. \ub450 \ub370\ubaa8\ub85c \uac01\uac01\uc774 \uc2e4\uc81c\ub85c \ub3d9\uc791\ud558\ub294 \uac83\uc744 \ubcf4\uc168\uc2b5\ub2c8\ub2e4.\n\n\ub9c8\uc9c0\ub9c9 4\ubd80\ub85c \ub118\uc5b4\uac00\uaca0\uc2b5\ub2c8\ub2e4."
+  };
+  const deck = new SlideFramework({
+    logoSrc: "./common/pptx-theme/images/logo_dark.png",
+    
+    footer: "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.",
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

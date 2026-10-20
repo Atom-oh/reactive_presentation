@@ -1,0 +1,25 @@
+{
+  "tokens": {
+    "tok-dev01-demo": {
+      "user": "dev01",
+      "group": "it-dev"
+    },
+    "tok-dev02-demo": {
+      "user": "dev02",
+      "group": "it-ops"
+    }
+  },
+  "allowed_models": [
+    "anthropic.claude-sonnet-5"
+  ],
+  "dlp_rules": [
+    {
+      "name": "주민등록번호",
+      "pattern": "\\b\\d{6}-?[1-4]\\d{6}\\b"
+    },
+    {
+      "name": "카드번호",
+      "pattern": "\\b\\d{4}-\\d{4}-\\d{4}-\\d{4}\\b"
+    }
+  ]
+}

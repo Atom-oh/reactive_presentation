@@ -1,0 +1,39 @@
+{
+  "env": {
+    "CLAUDE_CODE_USE_BEDROCK": "1",
+    "AWS_REGION": "ap-northeast-2",
+    "ANTHROPIC_BEDROCK_BASE_URL": "http://172.17.0.1:8787",
+    "CLAUDE_CODE_SKIP_BEDROCK_AUTH": "1",
+    "ANTHROPIC_MODEL": "anthropic.claude-sonnet-5",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "anthropic.claude-sonnet-5",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "anthropic.claude-sonnet-5",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "anthropic.claude-sonnet-5",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Bash(python3 -m pytest *)",
+      "Bash(git diff *)",
+      "Bash(git status *)",
+      "Bash(git log *)"
+    ],
+    "deny": [
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "WebFetch",
+      "WebSearch",
+      "Read(./.env)",
+      "Read(./customer-data/**)"
+    ],
+    "disableBypassPermissionsMode": "disable",
+    "disableAutoMode": "disable"
+  },
+  "allowManagedPermissionRulesOnly": true,
+  "allowedMcpServers": [
+    {
+      "serverUrl": "https://mcp-hub.ai-platform.internal/*"
+    }
+  ],
+  "allowManagedMcpServersOnly": true
+}

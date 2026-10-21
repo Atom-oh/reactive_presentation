@@ -173,12 +173,12 @@ consolidation은 남는 노드를 줄이는 기능이고, 정책이 세 가지�
 .akb-bar .btn { color: var(--on-surface); }
 .akb-bar .btn.active { background: var(--accent-subtle); border-color: var(--accent); color: var(--accent); }
 .akb-pool { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--space-2); }
-.akb-node { position: relative; border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-2); min-height: 4.2rem; transition: opacity 0.6s ease, border-color 0.4s ease, box-shadow 0.4s ease, transform 0.6s ease; }
+.akb-node { position: relative; border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-2); min-height: 4.2rem; transition: opacity 1.2s ease, border-color 0.6s ease, box-shadow 0.6s ease, transform 1.2s ease; }
 .akb-node.big { border-style: double; border-width: 3px; }
 .akb-node .t { font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-primary); white-space: nowrap; }
 .akb-node .p { font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-secondary); white-space: nowrap; }
 .akb-dots { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
-.akb-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--info); transition: transform 0.6s ease, opacity 0.6s ease, background 0.3s ease; }
+.akb-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--info); transition: transform 1.2s ease, opacity 1.2s ease, background 0.3s ease; }
 .akb-dot.heavy { background: var(--warning); width: 12px; height: 12px; }
 .akb-node.cand { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-subtle); }
 .akb-node.gone { opacity: 0.18; transform: scale(0.92); }
@@ -192,15 +192,15 @@ consolidation은 남는 노드를 줄이는 기능이고, 정책이 세 가지�
 .akb-row .lbl { display: flex; justify-content: space-between; color: var(--text-secondary); }
 .akb-row .lbl b { color: var(--text-primary); font-family: var(--font-mono); }
 .akb-track { position: relative; height: 0.9rem; background: var(--bg-secondary); border-radius: 0.45rem; overflow: hidden; margin-top: 4px; }
-.akb-fill { height: 100%; width: 0; border-radius: 0.45rem; transition: width 0.8s ease; }
+.akb-fill { height: 100%; width: 0; border-radius: 0.45rem; transition: width 1.6s ease; }
 .akb-fill.s { background: var(--success); }
 .akb-fill.d { background: var(--warning); }
 .akb-gauge { position: relative; height: 1.4rem; margin-bottom: 1.4rem; background: var(--bg-secondary); border-radius: 0.7rem; margin-top: 4px; }
 .akb-gauge .th { left: 25%; position: absolute; top: -0.3rem; bottom: -0.3rem; width: 2px; background: var(--text-primary); }
 .akb-gauge .th span { position: absolute; top: 1.6rem; left: -1.4rem; font-size: var(--fs-caption); color: var(--text-secondary); white-space: nowrap; }
-.akb-needle { position: absolute; top: 0.15rem; width: 1.1rem; height: 1.1rem; border-radius: 50%; background: var(--accent); left: 0; transition: left 0.9s cubic-bezier(.2,.8,.2,1); }
-.akb-formula { font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-secondary); word-break: break-all; }
-.akb-verdict { font-size: var(--fs-card); font-weight: var(--weight-bold); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--border); opacity: 0; transition: opacity 0.4s ease; }
+.akb-needle { position: absolute; top: 0.15rem; width: 1.1rem; height: 1.1rem; border-radius: 50%; background: var(--accent); left: 0; transition: left 1.8s cubic-bezier(.2,.8,.2,1); }
+.akb-formula { font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-secondary); word-break: keep-all; overflow-wrap: anywhere; }
+.akb-verdict { font-size: var(--fs-card); font-weight: var(--weight-bold); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--border); opacity: 0; transition: opacity 0.8s ease; }
 .akb-verdict.show { opacity: 1; }
 .akb-ok { color: var(--success); }
 .akb-verdict.ok { color: var(--success); border-color: var(--success); }
@@ -208,24 +208,27 @@ consolidation은 남는 노드를 줄이는 기능이고, 정책이 세 가지�
 .akb-ctl { margin-left: auto; display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
 .akb-ctl label { font-size: var(--fs-caption); color: var(--text-secondary); display: flex; gap: 0.4rem; align-items: center; }
 .akb-mt { margin-top: var(--space-2); }
+.akb-step { font-size: var(--fs-caption); color: var(--accent); font-weight: var(--weight-bold); min-height: 1.2em; }
 .akb-cap { font-size: var(--fs-caption); color: var(--text-secondary); word-break: keep-all; }
 </style>
 <div class="akb-bar" id="akb-sc">
-  <button class="btn btn-sm active" data-s="0">큰 노드 줄이기</button>
-  <button class="btn btn-sm" data-s="1">여유 자리로 삭제</button>
-  <button class="btn btn-sm" data-s="2">작은 절감 교체</button>
+  <button class="btn btn-sm active" data-s="0">큰 노드</button>
+  <button class="btn btn-sm" data-s="1">여유 자리 삭제</button>
+  <button class="btn btn-sm" data-s="2">작은 절감</button>
   <button class="btn btn-sm" data-s="3">빈 노드</button>
-  <button class="btn btn-sm" data-s="4">V2 데모: 노드 1대</button>
+  <button class="btn btn-sm" data-s="4">V2 데모(1대)</button>
   <span class="akb-ctl">
     <button class="btn btn-sm btn-primary" id="akb-play">Play</button>
-    <button class="btn btn-sm" id="akb-reset">Reset</button>
-    <label><input type="checkbox" id="akb-heavy"> 후보 Pod 가중치 ×5</label>
+    <button class="btn btn-sm" id="akb-step">한 단계</button>
+    <button class="btn btn-sm" id="akb-replay">Replay</button>
+    <label><input type="checkbox" id="akb-heavy"> 가중치 ×5</label>
   </span>
 </div>
 <div class="akb-wrap">
   <div>
     <div class="akb-pool" id="akb-pool"></div>
-    <div class="akb-cap akb-mt" id="akb-pinfo"></div>
+    <div class="akb-step akb-mt" id="akb-stage"></div>
+    <div class="akb-cap" id="akb-pinfo"></div>
   </div>
   <div class="akb-calc card">
     <div class="akb-row"><div class="lbl"><span>① 절감 비율 (절감액 ÷ 풀 비용)</span><b id="akb-sv">-</b></div><div class="akb-track"><div class="akb-fill s" id="akb-sf"></div></div></div>
@@ -255,10 +258,11 @@ consolidation은 남는 노드를 줄이는 기능이고, 정책이 세 가지�
   var sc = document.getElementById('akb-sc');
   var heavy = document.getElementById('akb-heavy');
   if (!pool || !sc) return;
-  var cur = 0, timers = [];
+  var cur = 0, timer = null, steps = [], idx = 0, playing = false;
+  var GAP = 2600;
   function $(id) { return document.getElementById(id); }
-  function clear() { timers.forEach(clearTimeout); timers = []; }
-  function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
+  function stop() { if (timer) clearTimeout(timer); timer = null; }
+  function setPlaying(p) { playing = p; $('akb-play').textContent = p ? 'Pause' : 'Play'; }
   function pct(x) { return (x * 100).toFixed(2) + '%'; }
   function calc() {
     var s = SC[cur], nodes = s.nodes || BASE, w = heavy.checked ? 5 : 1;
@@ -271,7 +275,7 @@ consolidation은 남는 노드를 줄이는 기능이고, 정책이 세 가지�
     return { totalCost: totalCost, totalDis: totalDis, savings: savings, moveDis: moveDis, sf: sf, df: df, score: Math.round(sf / df * 1e6) / 1e6, w: w };
   }
   function render() {
-    clear();
+    stop(); steps = []; idx = 0; setPlaying(false); $('akb-stage').textContent = '';
     var s = SC[cur], nodes = s.nodes || BASE, w = heavy.checked ? 5 : 1;
     pool.innerHTML = '';
     nodes.forEach(function (n, i) {
@@ -299,50 +303,81 @@ consolidation은 남는 노드를 줄이는 기능이고, 정책이 세 가지�
     var v = $('akb-vd'); v.className = 'akb-verdict'; v.textContent = '';
     sc.querySelectorAll('.btn[data-s]').forEach(function (b) { b.classList.toggle('active', +b.getAttribute('data-s') === cur); });
   }
-  function play() {
+  function build() {
     render();
     var s = SC[cur], c = calc();
     var cand = $('akb-n' + s.cand);
-    at(200, function () { cand.classList.add('cand'); });
-    at(900, function () {
-      $('akb-sf').style.width = Math.min(100, c.sf * 100) + '%';
-      $('akb-sv').textContent = pct(c.sf);
-      if (s.repl) $('akb-new').classList.add('show');
-    });
-    at(1900, function () {
-      $('akb-df').style.width = Math.min(100, c.df * 100) + '%';
-      $('akb-dv').textContent = pct(c.df);
-    });
-    at(2900, function () {
-      var pos = Math.min(c.score, 2) / 2 * 100;
-      $('akb-nd').style.left = 'calc(' + pos + '% - ' + (pos / 100 * 1.1) + 'rem)';
-      $('akb-scv').textContent = c.score.toFixed(2);
-      $('akb-fx').textContent = '절감 $' + c.savings.toFixed(2) + ' / $' + c.totalCost.toFixed(2) + ' = ' + pct(c.sf) + ',  중단 ' + c.moveDis + ' / ' + c.totalDis + ' = ' + pct(c.df) + ',  ' + pct(c.sf) + ' / ' + pct(c.df) + ' = ' + c.score.toFixed(2) + (c.score > 2 ? ' (게이지는 2에서 자름)' : '');
-    });
-    at(3900, function () {
-      var ok = c.score >= 0.5, v = $('akb-vd');
-      v.className = 'akb-verdict show ' + (ok ? 'ok' : 'no');
-      v.textContent = ok ? '승인: ' + c.score.toFixed(2) + ' >= 0.50, ConsolidationApproved 이벤트' : '거절: ' + c.score.toFixed(2) + ' < 0.50, 노드 유지 (WhenEmptyOrUnderutilized라면 실행)';
-      if (ok) {
-        cand.classList.remove('cand'); cand.classList.add('gone');
-        cand.querySelectorAll('.akb-dot').forEach(function (d) { d.style.opacity = '0'; d.style.transform = 'translateY(-10px)'; });
-        if (s.repl) {
-          var box = $('akb-newdots'), h = '';
-          for (var k = 0; k < s.pods[s.cand]; k++) h += '<span class="akb-dot' + (c.w > 1 ? ' heavy' : '') + '"></span>';
-          box.innerHTML = h;
+    steps = [
+      function () { $('akb-stage').textContent = '1/5 후보 이동을 고릅니다'; cand.classList.add('cand'); if (s.repl) $('akb-new').classList.add('show'); },
+      function () {
+        $('akb-stage').textContent = '2/5 절감 비율: 이 이동이 풀 비용의 몇 %를 줄이나';
+        $('akb-sf').style.width = Math.min(100, c.sf * 100) + '%';
+        $('akb-sv').textContent = pct(c.sf);
+      },
+      function () {
+        $('akb-stage').textContent = '3/5 중단 비율: 풀 전체 중단 비용 중 몇 %를 일으키나';
+        $('akb-df').style.width = Math.min(100, c.df * 100) + '%';
+        $('akb-dv').textContent = pct(c.df);
+      },
+      function () {
+        $('akb-stage').textContent = '4/5 score = 절감 비율 ÷ 중단 비율, 기준선 0.5와 비교';
+        var pos = Math.min(c.score, 2) / 2 * 100;
+        $('akb-nd').style.left = 'calc(' + pos + '% - ' + (pos / 100 * 1.1) + 'rem)';
+        $('akb-scv').textContent = c.score.toFixed(2);
+        $('akb-fx').textContent = '$' + c.savings.toFixed(2) + ' / $' + c.totalCost.toFixed(2) + ' = ' + pct(c.sf) + ',  ' + c.moveDis + ' / ' + c.totalDis + ' = ' + pct(c.df) + (c.score > 2 ? ',  게이지는 2에서 자름' : '');
+      },
+      function () {
+        var ok = c.score >= 0.5, v = $('akb-vd');
+        $('akb-stage').textContent = '5/5 ' + (ok ? '승인되어 실행합니다' : '거절되어 노드를 그대로 둡니다');
+        v.className = 'akb-verdict show ' + (ok ? 'ok' : 'no');
+        v.textContent = ok ? '승인: ' + c.score.toFixed(2) + ' >= 0.50, ConsolidationApproved 이벤트' : '거절: ' + c.score.toFixed(2) + ' < 0.50, 노드 유지 (WhenEmptyOrUnderutilized라면 실행)';
+        if (ok) {
+          cand.classList.remove('cand'); cand.classList.add('gone');
+          cand.querySelectorAll('.akb-dot').forEach(function (d) { d.style.opacity = '0'; d.style.transform = 'translateY(-10px)'; });
+          if (s.repl) {
+            var box = $('akb-newdots'), h = '';
+            for (var k = 0; k < s.pods[s.cand]; k++) h += '<span class="akb-dot' + (c.w > 1 ? ' heavy' : '') + '"></span>';
+            box.innerHTML = h;
+          }
+        } else {
+          cand.classList.remove('cand'); cand.classList.add('keep');
+          cand.querySelector('.akb-tag').textContent = '유지';
+          cand.querySelector('.akb-tag').className = 'akb-tag text-danger';
+          if (s.repl) $('akb-new').classList.remove('show');
         }
-      } else {
-        cand.classList.remove('cand'); cand.classList.add('keep');
-        cand.querySelector('.akb-tag').textContent = '유지';
-        cand.querySelector('.akb-tag').className = 'akb-tag text-danger';
-        if (s.repl) $('akb-new').classList.remove('show');
       }
-    });
+    ];
+    idx = 0;
   }
+  function next() {
+    if (idx >= steps.length) { stop(); setPlaying(false); return false; }
+    steps[idx++]();
+    return true;
+  }
+  function tick() {
+    if (!playing) return;
+    if (!next()) return;
+    if (idx >= steps.length) { setPlaying(false); return; }
+    timer = setTimeout(tick, GAP);
+  }
+  function togglePlay() {
+    if (playing) { stop(); setPlaying(false); return; }
+    if (!steps.length || idx >= steps.length) build();
+    setPlaying(true);
+    tick();
+  }
+  function step() {
+    stop(); setPlaying(false);
+    if (!steps.length || idx >= steps.length) build();
+    next();
+    setPlaying(false);
+  }
+  function replay() { build(); setPlaying(true); timer = setTimeout(tick, 300); }
   sc.addEventListener('click', function (e) { var b = e.target.closest('.btn[data-s]'); if (!b) return; cur = +b.getAttribute('data-s'); render(); });
   heavy.addEventListener('change', render);
-  $('akb-play').addEventListener('click', play);
-  $('akb-reset').addEventListener('click', render);
+  $('akb-play').addEventListener('click', togglePlay);
+  $('akb-step').addEventListener('click', step);
+  $('akb-replay').addEventListener('click', replay);
   render();
 })();
 :::
@@ -353,18 +388,19 @@ consolidation은 남는 노드를 줄이는 기능이고, 정책이 세 가지�
 - Balanced는 consolidation 후보 이동 하나하나를 채점: score = (절감액 / NodePool 전체 비용) / (이동의 중단 비용 / NodePool 전체 중단 비용)
 - 중단 비용: 노드마다 1.0 + 옮겨야 하는 Pod마다 1.0 (karpenter.sh/disruption-cost annotation과 priority로 가중, Pod당 0~10)
 - score >= 1/k = 0.5 (k=2 고정)이면 승인. 풀 크기와 무관(비율끼리 나눔)
-- 예시(가격은 us-east-1 On-Demand 하루 요금, Karpenter 설계 문서 예시): 큰 노드 줄이기 2.81 승인, 여유 자리로 삭제 1.50 승인, 작은 절감 교체 0.42 거절, 빈 노드 7.50 승인, 노드 1대 풀 0.50 승인(V2 데모와 같은 값)
+- 예시(가격은 us-east-1 On-Demand 하루 요금, Karpenter 설계 문서 예시): 큰 노드 2.81 승인, 여유 자리 삭제 1.50 승인, 작은 절감 0.42 거절, 빈 노드 7.50 승인, 노드 1대 풀 0.50 승인(V2 데모와 같은 값)
 - 후보 Pod 가중치를 5배로 올리면 여유 자리 삭제도 0.42로 거절. 중요한 Pod가 있는 노드는 덜 건드림
 - 승인된 이동은 score 순으로 정렬해 budget 안에서 실행
+- 조작: Play/Pause, 한 단계(수동 진행), Replay(처음부터 다시). 단계 간격 2.6초. "가중치 ×5"는 후보 노드 Pod 가중치
 
 앞 장에서 Balanced는 절감이 중단보다 가치 있을 때만 실행한다고 했는데, 실제로 어떻게 계산하는지 보겠습니다. Karpenter v1.15.0 코드 그대로입니다. 왼쪽은 노드 10대짜리 NodePool이고, 점 하나가 Pod 하나입니다. 오른쪽에서 세 줄을 계산합니다.
 {cue: demo}
-첫 번째 시나리오 "큰 노드 줄이기"에서 Play를 눌러 보겠습니다. 2xlarge 노드에 Pod 세 개만 남아 있어서 후보가 됩니다. large로 바꾸면 하루 7.26달러, 풀 전체 비용의 12.5%를 아낍니다. 이게 첫째 줄입니다. 둘째 줄은 중단입니다. 노드마다 1.0, Pod마다 1.0을 매기니 풀 전체 중단 비용은 노드 10과 Pod 80을 더한 90이고, 이 이동은 노드 하나와 Pod 세 개라 4, 4.44%입니다. 12.5를 4.44로 나누면 2.81, 기준선 0.5를 넘으니 승인됩니다.
+첫 번째 시나리오 "큰 노드"에서 Play를 눌러 보겠습니다. 단계마다 2.6초씩 멈추고, Pause로 세우거나 "한 단계"로 한 칸씩 넘기며 설명할 수 있습니다. 2xlarge 노드에 Pod 세 개만 남아 있어서 후보가 됩니다. large로 바꾸면 하루 7.26달러, 풀 전체 비용의 12.5%를 아낍니다. 이게 첫째 줄입니다. 둘째 줄은 중단입니다. 노드마다 1.0, Pod마다 1.0을 매기니 풀 전체 중단 비용은 노드 10과 Pod 80을 더한 90이고, 이 이동은 노드 하나와 Pod 세 개라 4, 4.44%입니다. 12.5를 4.44로 나누면 2.81, 기준선 0.5를 넘으니 승인됩니다.
 {cue: pause}
-세 번째 시나리오 "작은 절감 교체"를 눌러 보세요. 이번에는 Pod 여덟 개가 있는 xlarge를 large로 바꾸는 경우입니다. 절감은 4.17%인데 중단은 9 나누기 90, 10%입니다. 점수 0.42로 거절되고 노드는 그대로 남습니다. WhenEmptyOrUnderutilized였다면 이 교체를 실행했을 겁니다. 이것이 Balanced가 줄이는 churn입니다.
-빈 노드는 중단 비용이 노드 자체의 1.0뿐이라 점수가 7.5로 항상 통과합니다. 그리고 마지막 "V2 데모" 버튼은 데모 영상 두 번째 편과 같은 상황입니다. 풀에 노드가 한 대뿐이면 어떤 이동이든 중단 비율이 100%라서, 반값 노드로 바꿔 절감 50%가 나와야 0.5로 겨우 통과합니다. 영상의 이벤트에 찍힌 숫자와 같습니다.
+세 번째 시나리오 "작은 절감"를 눌러 보세요. 이번에는 Pod 여덟 개가 있는 xlarge를 large로 바꾸는 경우입니다. 절감은 4.17%인데 중단은 9 나누기 90, 10%입니다. 점수 0.42로 거절되고 노드는 그대로 남습니다. WhenEmptyOrUnderutilized였다면 이 교체를 실행했을 겁니다. 이것이 Balanced가 줄이는 churn입니다.
+빈 노드는 중단 비용이 노드 자체의 1.0뿐이라 점수가 7.5로 항상 통과합니다. 그리고 마지막 "V2 데모(1대)" 버튼은 데모 영상 두 번째 편과 같은 상황입니다. 풀에 노드가 한 대뿐이면 어떤 이동이든 중단 비율이 100%라서, 반값 노드로 바꿔 절감 50%가 나와야 0.5로 겨우 통과합니다. 영상의 이벤트에 찍힌 숫자와 같습니다.
 {cue: question}
-그럼 중요한 Pod는 어떻게 보호할까요. 아래 체크박스로 후보 노드 Pod의 가중치를 5배로 올리고 "여유 자리로 삭제"를 다시 Play 해 보겠습니다. 1.50이던 점수가 0.42로 떨어져 거절됩니다. Pod 가중치는 priority와 karpenter.sh/disruption-cost annotation으로 올라가고, Pod 하나는 0에서 10 사이로 제한됩니다.
+그럼 중요한 Pod는 어떻게 보호할까요. 위쪽 "가중치 ×5" 체크박스로 후보 노드 Pod의 가중치를 5배로 올리고 "여유 자리 삭제"를 다시 Play 해 보겠습니다. 1.50이던 점수가 0.42로 떨어져 거절됩니다. Pod 가중치는 priority와 karpenter.sh/disruption-cost annotation으로 올라가고, Pod 하나는 0에서 10 사이로 제한됩니다.
 두 가지만 더 말씀드리면, 점수는 비율끼리 나누기 때문에 풀이 10대든 100대든 같은 상황이면 같은 값이 나옵니다. 그리고 승인된 이동이 여러 개면 점수가 높은 순으로 budget이 허용하는 만큼만 실행합니다.
 
 [출처]

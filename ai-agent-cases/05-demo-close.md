@@ -227,6 +227,7 @@ Play를 누르고 노란 자막에 맞춰 설명합니다. 영상은 무음입�
 .rp-res3 a { color: var(--accent); text-decoration: none; font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
 .rp-res3 li > b { display: block; }
 .rp-res3 li > a + a { margin-left: var(--space-1); }
+.rp-res3 li > a + span { margin-top: var(--space-1); }
 .rp-res3 li span { display: block; font-size: var(--fs-caption); color: var(--on-surface-muted); }
 .rp-res3 .card-title { margin-bottom: var(--space-2); }
 </style>
@@ -234,7 +235,7 @@ Play를 누르고 노란 자막에 맞춰 설명합니다. 영상은 무음입�
   <div class="card">
     <div class="card-title">코드와 워크숍</div>
     <ul>
-      <li><a href="https://github.com/awslabs/amazon-bedrock-agentcore-samples" target="_blank" rel="noopener">awslabs/amazon-bedrock-agentcore-samples</a><span>AgentCore 튜토리얼, 유즈케이스, 블루프린트</span></li>
+      <li><a href="https://github.com/awslabs/agentcore-samples" target="_blank" rel="noopener">awslabs/agentcore-samples</a><span>AgentCore 튜토리얼, 유즈케이스, 블루프린트</span></li>
       <li><a href="https://github.com/strands-agents/samples" target="_blank" rel="noopener">strands-agents/samples</a><span>Strands Agents 예제 (Python, TypeScript)</span></li>
       <li><a href="https://github.com/aws-samples/sample-deep-insight" target="_blank" rel="noopener">aws-samples/sample-deep-insight</a><span>Deep Insight 멀티 에이전트 분석과 보고서 (TASK 03)</span></li>
       <li><a href="https://github.com/aws-samples/sample-strands-agent-with-agentcore" target="_blank" rel="noopener">aws-samples/sample-strands-agent-with-agentcore</a><span>Strands + AgentCore 멀티 에이전트 챗봇 참조 구현</span></li>
@@ -248,9 +249,9 @@ Play를 누르고 노란 자막에 맞춰 설명합니다. 영상은 무음입�
       <li><b>LG전자</b><a href="https://aws.amazon.com/ko/blogs/tech/lge-agentic-report-automation/" target="_blank" rel="noopener">Agentic AI 리포트 자동화</a> / <a href="https://aws.amazon.com/ko/blogs/tech/practical-design-lessons-from-the-deep-insight-arch/" target="_blank" rel="noopener">Deep Insight 설계 교훈</a></li>
       <li><b>신한카드</b><a href="https://aws.amazon.com/ko/blogs/tech/shinhan-card-ontology-based-decentralized-agentic-ai-chatbot/" target="_blank" rel="noopener">온톨로지 기반 분산형 Agentic AI 챗봇</a></li>
       <li><b>미래에셋증권</b><span>AI-Ready Data (AWS FSI Forum 발표, 공개 링크 없음)</span></li>
-      <li><b>Canva</b><a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering 발표 영상</a> / <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></li>
-      <li><b>미리디(미리캔버스)</b><a href="https://aws.amazon.com/ko/blogs/tech/amazon-bedrock-miri-canvas-design-template-chatbot/" target="_blank" rel="noopener">디자인 템플릿 추천 챗봇</a></li>
-      <li><b>과제별 사례</b><span>PropHero, NewDay, 미리디, 위메이드플레이, 링크알파, 서울경제신문, Rocket Close, Sun Finance, 춘시리, A1Mobilsoft, GS리테일, 삼성계정</span></li>
+      <li><b>Canva</b><a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a><span>ANT105 Agentic Engineering 발표 (공개 영상 미확인)</span></li>
+      <li><b>미리디(미리캔버스)</b><a href="https://aws.amazon.com/ko/blogs/tech/amazon-bedrock-miri-canvas-design-template-chatbot/" target="_blank" rel="noopener">디자인 템플릿 추천 챗봇</a> / <a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">AI 서비스 소개 영상</a></li>
+      <li><b>과제별 사례</b><a href="https://aws.amazon.com/blogs/machine-learning/how-prophero-built-an-intelligent-property-investment-advisor-with-continuous-evaluation-using-amazon-bedrock/" target="_blank" rel="noopener">PropHero</a>, <a href="https://aws.amazon.com/blogs/machine-learning/newday-builds-a-generative-ai-based-customer-service-agent-assist-with-over-90-accuracy/" target="_blank" rel="noopener">NewDay</a>, <a href="https://aws.amazon.com/ko/blogs/tech/wemadeplay-game-ui-aq-automation-with-amazon-bedrock/" target="_blank" rel="noopener">위메이드플레이</a>, <a href="https://aws.amazon.com/ko/blogs/tech/kakaostyle-leverage-genai-with-amazon-bedrock/" target="_blank" rel="noopener">카카오스타일</a>, <a href="https://aws.amazon.com/ko/blogs/tech/linqalpha-company-screener-ai-agent-with-amazon-opensearch/" target="_blank" rel="noopener">링크알파(LinqAlpha)</a>, <a href="https://aws.amazon.com/ko/blogs/tech/ai-news-service-using-amazon-bedrock-prompt-engineering-case/" target="_blank" rel="noopener">서울경제신문</a>, <a href="https://aws.amazon.com/blogs/machine-learning/rocket-close-transforms-mortgage-document-processing-with-amazon-bedrock-and-amazon-textract/" target="_blank" rel="noopener">Rocket Close</a>, <a href="https://aws.amazon.com/blogs/machine-learning/sun-finance-automates-id-extraction-and-fraud-detection-with-generative-ai-on-aws/" target="_blank" rel="noopener">Sun Finance</a>, <a href="https://tech.kakaopay.com/post/ifkakao2024-document-ai/" target="_blank" rel="noopener">카카오페이손해보험</a>, <a href="https://tech.kakaopay.com/post/choonsiri/" target="_blank" rel="noopener">춘시리</a>, <a href="https://aws.amazon.com/ko/blogs/tech/a1mobilsoft-ops-automation-1/" target="_blank" rel="noopener">A1Mobilsoft 1부</a>, <a href="https://aws.amazon.com/ko/blogs/tech/a1mobilsoft-ops-automation-2/" target="_blank" rel="noopener">2부</a>, <a href="https://aws.amazon.com/ko/blogs/tech/gsretail-aiops-sre-agent/" target="_blank" rel="noopener">GS리테일</a>, <a href="https://aws.amazon.com/ko/blogs/tech/part2-agentic-aiops-samsung-account-service/" target="_blank" rel="noopener">삼성계정</a>, <a href="https://www.fntimes.com/html/view.php?ud=2026090816062073095e6e69892f_18" target="_blank" rel="noopener">토스뱅크 ZeroOps</a></li>
       <li><b>온톨로지 도구</b><span>Amazon Neptune, Bedrock Knowledge Bases GraphRAG, GraphRAG Toolkit</span></li>
     </ul>
   </div>
@@ -263,12 +264,12 @@ Play를 누르고 노란 자막에 맞춰 설명합니다. 영상은 무음입�
 - 코드: AgentCore 샘플(튜토리얼, 유즈케이스, 블루프린트), Strands 예제, Deep Insight(TASK 03 출발점), Strands + AgentCore 참조 구현, AgentCore 입문 워크숍
 - 오늘 데모 D1, D2 코드와 실행 기록: 이 덱의 demo 폴더
 - 사례 원문: LG전자, 신한카드, 미래에셋증권, Canva, 과제별 사례
-- Canva 발표 영상: https://youtu.be/4EJJwXseuzw
+- 미리캔버스 AI 서비스 소개 영상: https://youtu.be/4EJJwXseuzw (PPTX 노트에는 Canva 영상으로 적혀 있었음)
 
 바로 쓰실 수 있는 자료입니다. 왼쪽은 코드입니다. AgentCore 샘플 저장소에 튜토리얼부터 유즈케이스, 블루프린트까지 있고, Strands 예제 저장소에는 파이썬과 타입스크립트 예제가 있습니다. 리서치 보고서 과제 팀은 Deep Insight 저장소를 출발점으로 쓰시면 시간을 많이 아끼실 수 있습니다.
 {cue: pause}
 오늘 2부에서 보여 드린 D1, D2 데모 코드와 실행 기록도 이 덱의 demo 폴더에 넣어 두었습니다. 온톨로지 파일 하나와 파이썬 파일 몇 개라서, 과제 데이터로 바꿔서 바로 돌려 보실 수 있습니다. 오른쪽은 오늘 소개한 사례의 원문입니다.
-Canva 발표 영상 참고 링크: https://youtu.be/4EJJwXseuzw
+참고: PPTX 노트의 영상 링크(https://youtu.be/4EJJwXseuzw)는 Canva 발표가 아니라 미리캔버스 AI 서비스 소개 영상이라 미리디 항목에 연결했습니다. Canva ANT105 공개 영상은 확인하지 못했습니다
 {cue: transition}
 정리하겠습니다.
 :::

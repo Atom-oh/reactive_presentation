@@ -179,7 +179,7 @@ block: 04-task-cases
   <div class="card"><span class="rp-k">AWS 기능, 바로 실험</span><div class="card-title">User Simulation</div><div class="card-desc">합성 고객을 정의하면 LLM이 고객을 연기하며 멀티턴 대화. 예: context 40대 직장인, 은행 3곳 연동 / goal 노후 대비 상품 조합 / traits 금융 초보, 인내심 낮음</div><div class="rp-ms"><div><b>Goal success</b><span>종료 후 자동 채점</span></div><div><b>멀티턴</b><span>같은 평가기로 반복 측정</span></div></div></div>
 </div>
 <div class="callout callout-info rp-tc-foot fragment fade-up" data-fragment-index="2"><strong class="text-accent">가져올 것</strong>: 골든셋 + 합성 페르소나로 채점되는 상담봇부터. 근거와 점수가 곧 코칭 피드백입니다. 상품과 자산 용어는 2부의 어휘 사전으로 확정하세요.</div>
-<div class="rp-src">출처: AWS ML Blog, PropHero (2025.09), NewDay (2025.06); AWS 문서, AgentCore User simulation. 예시 페르소나는 발표자 작성</div>
+<div class="rp-src">출처: AWS ML Blog, <a href="https://aws.amazon.com/blogs/machine-learning/how-prophero-built-an-intelligent-property-investment-advisor-with-continuous-evaluation-using-amazon-bedrock/" target="_blank" rel="noopener">PropHero (2025.09)</a>, <a href="https://aws.amazon.com/blogs/machine-learning/newday-builds-a-generative-ai-based-customer-service-agent-assist-with-over-90-accuracy/" target="_blank" rel="noopener">NewDay (2025.06)</a>; AWS 문서, <a href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/user-simulation.html" target="_blank" rel="noopener">AgentCore User simulation</a>. 예시 페르소나는 발표자 작성</div>
 :::
 
 :::notes
@@ -225,7 +225,7 @@ block: 04-task-cases
   <div class="card"><span class="rp-k">국내, 패션 플랫폼</span><div class="card-title">카카오스타일</div><div class="card-desc">이미지 소재, 기획전, 상품 정보로 지면별 포맷과 여러 콘셉트 시안을 생성, 추천 문구 오탈자까지 점검</div><div class="rp-ms"><div><b>몇 주 → 몇 시간</b><span>콘텐츠 제작 시간</span></div><div><b>다중 콘셉트</b><span>지면별 시안 자동 생성</span></div></div></div>
 </div>
 <div class="callout callout-info rp-tc-foot fragment fade-up" data-fragment-index="2"><strong class="text-accent">가져올 것</strong>: 디자인 시스템을 구조화 스펙(JSON)으로 먼저. 초안 생성과 규칙 점검이 같은 데이터 위에서 돕니다. Canva의 features.json도 같은 생각입니다.</div>
-<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/amazon-bedrock-miri-canvas-design-template-chatbot/" target="_blank" rel="noopener">미리디 템플릿 추천 챗봇 (2024.06)</a>, 위메이드플레이 UI QA (2024.11), 카카오스타일 (2024.12)</div>
+<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/amazon-bedrock-miri-canvas-design-template-chatbot/" target="_blank" rel="noopener">미리디 템플릿 추천 챗봇 (2024.06)</a>, <a href="https://aws.amazon.com/ko/blogs/tech/wemadeplay-game-ui-aq-automation-with-amazon-bedrock/" target="_blank" rel="noopener">위메이드플레이 UI QA (2024.11)</a>, <a href="https://aws.amazon.com/ko/blogs/tech/kakaostyle-leverage-genai-with-amazon-bedrock/" target="_blank" rel="noopener">카카오스타일 (2024.12)</a></div>
 :::
 
 :::notes
@@ -319,7 +319,7 @@ UX 팀을 위해 미리캔버스 아키텍처를 한 장 더 넣었습니다.
   <div class="card"><span class="rp-k">국내, 언론</span><div class="card-title">서울경제신문</div><div class="card-desc">14개 항목 자가검증 체크리스트 + 수치는 원문과 100% 일치 규칙 + 사람 이중 검수</div><div class="rp-ms"><div><b>환각, 오보 0건</b><span>연간 2,500건 기사 기준, 자체 집계</span></div><div><b>14개 항목</b><span>자가검증 체크리스트</span></div></div></div>
 </div>
 <div class="callout callout-info rp-tc-foot fragment fade-up" data-fragment-index="2"><strong class="text-accent">가져올 것</strong>: "출처 없는 문장은 쓰지 않는다"를 규칙, 체크리스트, 검증 에이전트로 강제하세요.</div>
-<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/lge-agentic-report-automation/" target="_blank" rel="noopener">LG전자 (Deep Insight)</a>, 링크알파 Company Screener (2025.04), 서울경제신문 (2026.04)</div>
+<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/lge-agentic-report-automation/" target="_blank" rel="noopener">LG전자 (Deep Insight)</a>, <a href="https://aws.amazon.com/ko/blogs/tech/linqalpha-company-screener-ai-agent-with-amazon-opensearch/" target="_blank" rel="noopener">링크알파(LinqAlpha) Company Screener (2025.04)</a>, <a href="https://aws.amazon.com/ko/blogs/tech/ai-news-service-using-amazon-bedrock-prompt-engineering-case/" target="_blank" rel="noopener">서울경제신문 (2026.04)</a></div>
 :::
 
 :::notes
@@ -367,7 +367,7 @@ UX 팀을 위해 미리캔버스 아키텍처를 한 장 더 넣었습니다.
   <div class="card"><span class="rp-k">국내 보험, 보험금 청구</span><div class="card-title">카카오페이손해보험</div><div class="card-desc">영수증 여부 판별, 수리처, 발행일, 결제금액 추출, 자동 지급 연결 (자체 OCR 모델 + AWS GPU 인스턴스)</div><div class="rp-ms"><div><b>10분 이내</b><span>고객 대기 시간 (기존 하루+)</span></div><div><b>3개 필수 항목</b><span>자동 추출 후 지급 연결</span></div></div></div>
 </div>
 <div class="callout callout-info rp-tc-foot fragment fade-up" data-fragment-index="2"><strong class="text-accent">가져올 것</strong>: 서류 유형별 필수 항목과 서명 위치를 표로 먼저. 이 표가 서류의 온톨로지이자 정답지입니다. 한국어 서류는 OCR 엔진의 한국어 지원부터 확인하세요.</div>
-<div class="rp-src">출처: AWS ML Blog, Rocket Close, Sun Finance (2026.04); 카카오페이 기술블로그 (if(kakao) 2024)</div>
+<div class="rp-src">출처: AWS ML Blog, <a href="https://aws.amazon.com/blogs/machine-learning/rocket-close-transforms-mortgage-document-processing-with-amazon-bedrock-and-amazon-textract/" target="_blank" rel="noopener">Rocket Close</a>, <a href="https://aws.amazon.com/blogs/machine-learning/sun-finance-automates-id-extraction-and-fraud-detection-with-generative-ai-on-aws/" target="_blank" rel="noopener">Sun Finance</a> (2026.04); 카카오페이 기술블로그 <a href="https://tech.kakaopay.com/post/ifkakao2024-document-ai/" target="_blank" rel="noopener">Document AI (if(kakao) 2024)</a></div>
 :::
 
 :::notes
@@ -416,7 +416,7 @@ Sun Finance는 온라인 대출 KYC 사례로, 신분증에서 뽑은 값을 고
   <div class="card highlight"><span class="rp-k">A1Mobilsoft의 지식 보강 루프</span><div class="card-title">쓸수록 똑똑해지는 위키</div><ol><li>질문, 출처 인용 답변</li><li>좋아요 = 도움 됐다는 명시 신호</li><li>스레드 정제, KB 동기화</li><li>다음 질문부터 반영</li></ol><div class="rp-ms"><div><b>14건</b><span>사람 답변 비교 표본 (작음)</span></div><div><b>좋아요</b><span>지식 승격 기준</span></div></div></div>
 </div>
 <div class="callout callout-info rp-tc-foot fragment fade-up" data-fragment-index="2"><strong class="text-accent">가져올 것</strong>: 위키는 정기 동기화, 빈칸은 학습하기, 좋은 답은 자동 승격. 질의 이력이 곧 지식 보강 데이터이고, 시스템명과 장애 용어는 어휘 사전으로 묶으세요.</div>
-<div class="rp-src">출처: 카카오페이 기술블로그 춘시리 (2025.01); AWS 기술 블로그, A1Mobilsoft 운영 자동화 1, 2부 (2026.07)</div>
+<div class="rp-src">출처: 카카오페이 기술블로그 <a href="https://tech.kakaopay.com/post/choonsiri/" target="_blank" rel="noopener">춘시리 (2025.01)</a>; AWS 기술 블로그, A1Mobilsoft 운영 자동화 <a href="https://aws.amazon.com/ko/blogs/tech/a1mobilsoft-ops-automation-1/" target="_blank" rel="noopener">1부</a>, <a href="https://aws.amazon.com/ko/blogs/tech/a1mobilsoft-ops-automation-2/" target="_blank" rel="noopener">2부</a> (2026.07)</div>
 :::
 
 :::notes
@@ -463,7 +463,7 @@ A1Mobilsoft는 Slack 운영 문의에 답하는 멀티 에이전트를 AgentCore
   <div class="card"><span class="rp-k">국내 은행</span><div class="card-title">토스뱅크 ZeroOps</div><div class="card-desc">Bedrock 기반 에이전트가 로그, 지표, 코드 변경, 에러 정보를 조회해 원인 추정과 조치 권고</div><div class="rp-ms"><div><b>혁신금융서비스</b><span>2026.07 금융위원회 지정 (임직원용)</span></div><div><b>국내 은행</b><span>규제 틀 안의 관제 에이전트 선례</span></div></div></div>
 </div>
 <div class="callout callout-info rp-tc-foot fragment fade-up" data-fragment-index="2"><strong class="text-accent">가져올 것</strong>: 내부망 환경이라면 기존 로그와 지표 도구를 MCP로 감싸는 것부터. 실행 권한은 사람에게 둡니다.</div>
-<div class="rp-src">출처: AWS 기술 블로그, GS리테일 (2026.04), 삼성계정 Part 2 (2026.03); 한국금융신문 (2026.09); 참고 AWS DevOps Agent 고객 사례 (Banco Bmg, Commonwealth Bank)</div>
+<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/gsretail-aiops-sre-agent/" target="_blank" rel="noopener">GS리테일 (2026.04)</a>, <a href="https://aws.amazon.com/ko/blogs/tech/part2-agentic-aiops-samsung-account-service/" target="_blank" rel="noopener">삼성계정 Part 2 (2026.03)</a>; <a href="https://www.fntimes.com/html/view.php?ud=2026090816062073095e6e69892f_18" target="_blank" rel="noopener">한국금융신문 (2026.09)</a>; 참고 AWS DevOps Agent 고객 사례 (Banco Bmg, Commonwealth Bank)</div>
 :::
 
 :::notes

@@ -27,10 +27,10 @@ blocks:
     duration: 15
   - name: 02-disruption
     title: "스케일링과 Disruption"
-    duration: 18
+    duration: 20
   - name: 03-operations
     title: "Auto Mode 심화와 운영"
-    duration: 33
+    duration: 31
   - name: 04-demo-close
     title: "데모 영상과 마무리"
     duration: 24

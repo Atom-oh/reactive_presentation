@@ -138,7 +138,7 @@ requirements는 특정 유형을 나열하기보다 category, arch 같은 속성
 :::
 
 :::notes
-{timing: 2.5min}
+{timing: 1.5min}
 [요약]
 - 정책 3가지: WhenEmpty(빈 노드만, DaemonSet만 있는 노드 포함), WhenEmptyOrUnderutilized(작은 절감에도 교체, upstream 기본), Balanced(절감이 disruption만큼 가치 있을 때만)
 - Balanced는 upstream v1.14.0에서 opt-in으로 추가, Auto Mode에는 2026-07-27 추가
@@ -155,6 +155,222 @@ consolidation은 남는 노드를 줄이는 기능이고, 정책이 세 가지�
 [출처]
 - https://docs.aws.amazon.com/eks/latest/userguide/auto-change.html (2026-07-27, 2026-10-01 항목)
 - https://karpenter.sh/docs/concepts/disruption/, https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.0
+{cue: transition}
+그럼 Balanced가 "가치 있다"를 실제로 어떻게 계산하는지, 다음 장의 애니메이션으로 보겠습니다.
+:::
+
+---
+<!-- Slide 3-1: Balanced 점수 애니메이션 -->
+@type: content
+@title: Balanced는 이렇게 채점한다
+
+## Balanced는 이렇게 채점한다
+
+:::html
+<style>
+.akb-wrap { display: grid; grid-template-columns: 1.15fr 1fr; gap: var(--space-4); align-items: start; }
+.akb-bar { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-3); }
+.akb-bar .btn { color: var(--on-surface); }
+.akb-bar .btn.active { background: var(--accent-subtle); border-color: var(--accent); color: var(--accent); }
+.akb-pool { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--space-2); }
+.akb-node { position: relative; border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-2); min-height: 4.2rem; transition: opacity 0.6s ease, border-color 0.4s ease, box-shadow 0.4s ease, transform 0.6s ease; }
+.akb-node.big { border-style: double; border-width: 3px; }
+.akb-node .t { font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-primary); white-space: nowrap; }
+.akb-node .p { font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-secondary); white-space: nowrap; }
+.akb-dots { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+.akb-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--info); transition: transform 0.6s ease, opacity 0.6s ease, background 0.3s ease; }
+.akb-dot.heavy { background: var(--warning); width: 12px; height: 12px; }
+.akb-node.cand { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-subtle); }
+.akb-node.gone { opacity: 0.18; transform: scale(0.92); }
+.akb-node.keep { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(255, 92, 133, 0.25); }
+.akb-node.new { border-style: dashed; border-color: var(--success); opacity: 0; transform: translateY(8px); }
+.akb-node.new.show { opacity: 1; transform: none; }
+.akb-tag { position: absolute; top: -0.7rem; right: 0.4rem; font-size: var(--fs-caption); font-weight: var(--weight-bold); padding: 0 0.4rem; border-radius: 0.4rem; background: var(--bg-card); opacity: 0; transition: opacity 0.4s ease; }
+.akb-node.cand .akb-tag, .akb-node.new.show .akb-tag, .akb-node.keep .akb-tag { opacity: 1; }
+.akb-calc { display: flex; flex-direction: column; gap: var(--space-2); }
+.akb-row { font-size: var(--fs-card); }
+.akb-row .lbl { display: flex; justify-content: space-between; color: var(--text-secondary); }
+.akb-row .lbl b { color: var(--text-primary); font-family: var(--font-mono); }
+.akb-track { position: relative; height: 0.9rem; background: var(--bg-secondary); border-radius: 0.45rem; overflow: hidden; margin-top: 4px; }
+.akb-fill { height: 100%; width: 0; border-radius: 0.45rem; transition: width 0.8s ease; }
+.akb-fill.s { background: var(--success); }
+.akb-fill.d { background: var(--warning); }
+.akb-gauge { position: relative; height: 1.4rem; margin-bottom: 1.4rem; background: var(--bg-secondary); border-radius: 0.7rem; margin-top: 4px; }
+.akb-gauge .th { left: 25%; position: absolute; top: -0.3rem; bottom: -0.3rem; width: 2px; background: var(--text-primary); }
+.akb-gauge .th span { position: absolute; top: 1.6rem; left: -1.4rem; font-size: var(--fs-caption); color: var(--text-secondary); white-space: nowrap; }
+.akb-needle { position: absolute; top: 0.15rem; width: 1.1rem; height: 1.1rem; border-radius: 50%; background: var(--accent); left: 0; transition: left 0.9s cubic-bezier(.2,.8,.2,1); }
+.akb-formula { font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-secondary); word-break: break-all; }
+.akb-verdict { font-size: var(--fs-card); font-weight: var(--weight-bold); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--border); opacity: 0; transition: opacity 0.4s ease; }
+.akb-verdict.show { opacity: 1; }
+.akb-ok { color: var(--success); }
+.akb-verdict.ok { color: var(--success); border-color: var(--success); }
+.akb-verdict.no { color: var(--danger); border-color: var(--danger); }
+.akb-ctl { margin-left: auto; display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+.akb-ctl label { font-size: var(--fs-caption); color: var(--text-secondary); display: flex; gap: 0.4rem; align-items: center; }
+.akb-mt { margin-top: var(--space-2); }
+.akb-cap { font-size: var(--fs-caption); color: var(--text-secondary); word-break: keep-all; }
+</style>
+<div class="akb-bar" id="akb-sc">
+  <button class="btn btn-sm active" data-s="0">큰 노드 줄이기</button>
+  <button class="btn btn-sm" data-s="1">여유 자리로 삭제</button>
+  <button class="btn btn-sm" data-s="2">작은 절감 교체</button>
+  <button class="btn btn-sm" data-s="3">빈 노드</button>
+  <button class="btn btn-sm" data-s="4">V2 데모: 노드 1대</button>
+  <span class="akb-ctl">
+    <button class="btn btn-sm btn-primary" id="akb-play">Play</button>
+    <button class="btn btn-sm" id="akb-reset">Reset</button>
+    <label><input type="checkbox" id="akb-heavy"> 후보 Pod 가중치 ×5</label>
+  </span>
+</div>
+<div class="akb-wrap">
+  <div>
+    <div class="akb-pool" id="akb-pool"></div>
+    <div class="akb-cap akb-mt" id="akb-pinfo"></div>
+  </div>
+  <div class="akb-calc card">
+    <div class="akb-row"><div class="lbl"><span>① 절감 비율 (절감액 ÷ 풀 비용)</span><b id="akb-sv">-</b></div><div class="akb-track"><div class="akb-fill s" id="akb-sf"></div></div></div>
+    <div class="akb-row"><div class="lbl"><span>② 중단 비율 (이동 중단 ÷ 풀 중단)</span><b id="akb-dv">-</b></div><div class="akb-track"><div class="akb-fill d" id="akb-df"></div></div></div>
+    <div class="akb-row"><div class="lbl"><span>③ score = ① ÷ ②</span><b id="akb-scv">-</b></div><div class="akb-gauge"><div class="th"><span>0.5 (1/k, k=2)</span></div><div class="akb-needle" id="akb-nd"></div></div></div>
+    <div class="akb-formula" id="akb-fx"></div>
+    <div class="akb-verdict" id="akb-vd"></div>
+  </div>
+</div>
+:::
+
+:::script
+(function () {
+  var XL = 4.84, X2 = 9.68, LG = 2.42;
+  var BASE = [
+    { t: 'xlarge', p: XL }, { t: 'xlarge', p: XL }, { t: 'xlarge', p: XL }, { t: 'xlarge', p: XL }, { t: 'xlarge', p: XL },
+    { t: 'xlarge', p: XL }, { t: 'xlarge', p: XL }, { t: 'xlarge', p: XL }, { t: '2xlarge', p: X2, big: true }, { t: '2xlarge', p: X2, big: true }
+  ];
+  var SC = [
+    { pods: [9,9,9,9,8,8,8,8,3,9], cand: 8, repl: { t: 'large', p: LG }, why: 'm7i.2xlarge에 Pod 3개만 남음. m7i.large로 교체' },
+    { pods: [4,9,9,8,8,8,8,8,9,9], cand: 0, repl: null, why: 'Pod 4개가 다른 노드 빈 자리에 들어감. 대체 노드 없이 삭제' },
+    { pods: [8,8,8,8,8,8,8,8,8,8], cand: 0, repl: { t: 'large', p: LG }, why: 'Pod 8개를 m7i.large로 옮기면 하루 $2.42 절감' },
+    { pods: [0,10,10,10,10,10,10,10,5,5], cand: 0, repl: null, why: 'Pod가 없는 노드. 노드 자체 비용 1.0만 남음' },
+    { pods: [6], cand: 0, repl: { t: 'large', p: LG }, nodes: [{ t: 'xlarge', p: XL }], why: '데모처럼 풀에 노드 1대. 반값 노드로 교체하면 중단 비율은 100%' }
+  ];
+  var pool = document.getElementById('akb-pool');
+  var sc = document.getElementById('akb-sc');
+  var heavy = document.getElementById('akb-heavy');
+  if (!pool || !sc) return;
+  var cur = 0, timers = [];
+  function $(id) { return document.getElementById(id); }
+  function clear() { timers.forEach(clearTimeout); timers = []; }
+  function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
+  function pct(x) { return (x * 100).toFixed(2) + '%'; }
+  function calc() {
+    var s = SC[cur], nodes = s.nodes || BASE, w = heavy.checked ? 5 : 1;
+    var totalCost = nodes.reduce(function (a, n) { return a + n.p; }, 0);
+    var totalDis = 0;
+    s.pods.forEach(function (n, i) { totalDis += 1 + (i === s.cand ? n * w : n); });
+    var savings = nodes[s.cand].p - (s.repl ? s.repl.p : 0);
+    var moveDis = 1 + s.pods[s.cand] * w;
+    var sf = savings / totalCost, df = moveDis / totalDis;
+    return { totalCost: totalCost, totalDis: totalDis, savings: savings, moveDis: moveDis, sf: sf, df: df, score: Math.round(sf / df * 1e6) / 1e6, w: w };
+  }
+  function render() {
+    clear();
+    var s = SC[cur], nodes = s.nodes || BASE, w = heavy.checked ? 5 : 1;
+    pool.innerHTML = '';
+    nodes.forEach(function (n, i) {
+      var d = document.createElement('div');
+      d.className = 'akb-node' + (n.big ? ' big' : '');
+      d.id = 'akb-n' + i;
+      var dots = '';
+      for (var k = 0; k < s.pods[i]; k++) dots += '<span class="akb-dot' + (i === s.cand && w > 1 ? ' heavy' : '') + '"></span>';
+      d.innerHTML = '<span class="akb-tag text-accent">후보</span><div class="t">' + n.t + '</div><div class="p">$' + n.p.toFixed(2) + '</div><div class="akb-dots">' + dots + '</div>';
+      pool.appendChild(d);
+    });
+    if (s.repl) {
+      var r = document.createElement('div');
+      r.className = 'akb-node new';
+      r.id = 'akb-new';
+      r.innerHTML = '<span class="akb-tag akb-ok">대체</span><div class="t">' + s.repl.t + '</div><div class="p">$' + s.repl.p.toFixed(2) + '</div><div class="akb-dots" id="akb-newdots"></div>';
+      pool.appendChild(r);
+    }
+    var c = calc();
+    $('akb-pinfo').textContent = 'm7i 계열 풀, 가격은 하루 On-Demand 요금: 노드 ' + nodes.length + '대, 비용 $' + c.totalCost.toFixed(2) + '/일, 중단 비용 ' + c.totalDis + ' (노드마다 1.0 + Pod마다 1.0' + (w > 1 ? ', 후보 Pod는 5.0' : '') + '). ' + s.why;
+    ['akb-sf', 'akb-df'].forEach(function (id) { $(id).style.width = '0'; });
+    $('akb-sv').textContent = '-'; $('akb-dv').textContent = '-'; $('akb-scv').textContent = '-';
+    $('akb-nd').style.left = '0';
+    $('akb-fx').textContent = '';
+    var v = $('akb-vd'); v.className = 'akb-verdict'; v.textContent = '';
+    sc.querySelectorAll('.btn[data-s]').forEach(function (b) { b.classList.toggle('active', +b.getAttribute('data-s') === cur); });
+  }
+  function play() {
+    render();
+    var s = SC[cur], c = calc();
+    var cand = $('akb-n' + s.cand);
+    at(200, function () { cand.classList.add('cand'); });
+    at(900, function () {
+      $('akb-sf').style.width = Math.min(100, c.sf * 100) + '%';
+      $('akb-sv').textContent = pct(c.sf);
+      if (s.repl) $('akb-new').classList.add('show');
+    });
+    at(1900, function () {
+      $('akb-df').style.width = Math.min(100, c.df * 100) + '%';
+      $('akb-dv').textContent = pct(c.df);
+    });
+    at(2900, function () {
+      var pos = Math.min(c.score, 2) / 2 * 100;
+      $('akb-nd').style.left = 'calc(' + pos + '% - ' + (pos / 100 * 1.1) + 'rem)';
+      $('akb-scv').textContent = c.score.toFixed(2);
+      $('akb-fx').textContent = '절감 $' + c.savings.toFixed(2) + ' / $' + c.totalCost.toFixed(2) + ' = ' + pct(c.sf) + ',  중단 ' + c.moveDis + ' / ' + c.totalDis + ' = ' + pct(c.df) + ',  ' + pct(c.sf) + ' / ' + pct(c.df) + ' = ' + c.score.toFixed(2) + (c.score > 2 ? ' (게이지는 2에서 자름)' : '');
+    });
+    at(3900, function () {
+      var ok = c.score >= 0.5, v = $('akb-vd');
+      v.className = 'akb-verdict show ' + (ok ? 'ok' : 'no');
+      v.textContent = ok ? '승인: ' + c.score.toFixed(2) + ' >= 0.50, ConsolidationApproved 이벤트' : '거절: ' + c.score.toFixed(2) + ' < 0.50, 노드 유지 (WhenEmptyOrUnderutilized라면 실행)';
+      if (ok) {
+        cand.classList.remove('cand'); cand.classList.add('gone');
+        cand.querySelectorAll('.akb-dot').forEach(function (d) { d.style.opacity = '0'; d.style.transform = 'translateY(-10px)'; });
+        if (s.repl) {
+          var box = $('akb-newdots'), h = '';
+          for (var k = 0; k < s.pods[s.cand]; k++) h += '<span class="akb-dot' + (c.w > 1 ? ' heavy' : '') + '"></span>';
+          box.innerHTML = h;
+        }
+      } else {
+        cand.classList.remove('cand'); cand.classList.add('keep');
+        cand.querySelector('.akb-tag').textContent = '유지';
+        cand.querySelector('.akb-tag').className = 'akb-tag text-danger';
+        if (s.repl) $('akb-new').classList.remove('show');
+      }
+    });
+  }
+  sc.addEventListener('click', function (e) { var b = e.target.closest('.btn[data-s]'); if (!b) return; cur = +b.getAttribute('data-s'); render(); });
+  heavy.addEventListener('change', render);
+  $('akb-play').addEventListener('click', play);
+  $('akb-reset').addEventListener('click', render);
+  render();
+})();
+:::
+
+:::notes
+{timing: 3min}
+[요약]
+- Balanced는 consolidation 후보 이동 하나하나를 채점: score = (절감액 / NodePool 전체 비용) / (이동의 중단 비용 / NodePool 전체 중단 비용)
+- 중단 비용: 노드마다 1.0 + 옮겨야 하는 Pod마다 1.0 (karpenter.sh/disruption-cost annotation과 priority로 가중, Pod당 0~10)
+- score >= 1/k = 0.5 (k=2 고정)이면 승인. 풀 크기와 무관(비율끼리 나눔)
+- 예시(가격은 us-east-1 On-Demand 하루 요금, Karpenter 설계 문서 예시): 큰 노드 줄이기 2.81 승인, 여유 자리로 삭제 1.50 승인, 작은 절감 교체 0.42 거절, 빈 노드 7.50 승인, 노드 1대 풀 0.50 승인(V2 데모와 같은 값)
+- 후보 Pod 가중치를 5배로 올리면 여유 자리 삭제도 0.42로 거절. 중요한 Pod가 있는 노드는 덜 건드림
+- 승인된 이동은 score 순으로 정렬해 budget 안에서 실행
+
+앞 장에서 Balanced는 절감이 중단보다 가치 있을 때만 실행한다고 했는데, 실제로 어떻게 계산하는지 보겠습니다. Karpenter v1.15.0 코드 그대로입니다. 왼쪽은 노드 10대짜리 NodePool이고, 점 하나가 Pod 하나입니다. 오른쪽에서 세 줄을 계산합니다.
+{cue: demo}
+첫 번째 시나리오 "큰 노드 줄이기"에서 Play를 눌러 보겠습니다. 2xlarge 노드에 Pod 세 개만 남아 있어서 후보가 됩니다. large로 바꾸면 하루 7.26달러, 풀 전체 비용의 12.5%를 아낍니다. 이게 첫째 줄입니다. 둘째 줄은 중단입니다. 노드마다 1.0, Pod마다 1.0을 매기니 풀 전체 중단 비용은 노드 10과 Pod 80을 더한 90이고, 이 이동은 노드 하나와 Pod 세 개라 4, 4.44%입니다. 12.5를 4.44로 나누면 2.81, 기준선 0.5를 넘으니 승인됩니다.
+{cue: pause}
+세 번째 시나리오 "작은 절감 교체"를 눌러 보세요. 이번에는 Pod 여덟 개가 있는 xlarge를 large로 바꾸는 경우입니다. 절감은 4.17%인데 중단은 9 나누기 90, 10%입니다. 점수 0.42로 거절되고 노드는 그대로 남습니다. WhenEmptyOrUnderutilized였다면 이 교체를 실행했을 겁니다. 이것이 Balanced가 줄이는 churn입니다.
+빈 노드는 중단 비용이 노드 자체의 1.0뿐이라 점수가 7.5로 항상 통과합니다. 그리고 마지막 "V2 데모" 버튼은 데모 영상 두 번째 편과 같은 상황입니다. 풀에 노드가 한 대뿐이면 어떤 이동이든 중단 비율이 100%라서, 반값 노드로 바꿔 절감 50%가 나와야 0.5로 겨우 통과합니다. 영상의 이벤트에 찍힌 숫자와 같습니다.
+{cue: question}
+그럼 중요한 Pod는 어떻게 보호할까요. 아래 체크박스로 후보 노드 Pod의 가중치를 5배로 올리고 "여유 자리로 삭제"를 다시 Play 해 보겠습니다. 1.50이던 점수가 0.42로 떨어져 거절됩니다. Pod 가중치는 priority와 karpenter.sh/disruption-cost annotation으로 올라가고, Pod 하나는 0에서 10 사이로 제한됩니다.
+두 가지만 더 말씀드리면, 점수는 비율끼리 나누기 때문에 풀이 10대든 100대든 같은 상황이면 같은 값이 나옵니다. 그리고 승인된 이동이 여러 개면 점수가 높은 순으로 budget이 허용하는 만큼만 실행합니다.
+
+[출처]
+- kubernetes-sigs/karpenter v1.15.0: pkg/controllers/disruption/balanced.go (ScoreMove, computeNodePoolTotals), types.go (Score, Threshold = 1/k), pkg/apis/v1/nodepool.go (BalancedK = 2), pkg/utils/disruption/disruption.go (EvictionCost, PerNodeBaseDisruptionCost = 1.0)
+- designs/balanced-consolidation.md (Examples, Why k=2, Move Score as Ranking Function), https://karpenter.sh/docs/concepts/disruption/#balanced-consolidation
+- 설계 문서 예시는 노드 기본 비용 1.0을 빼고 계산해 3.33처럼 조금 다른 값이 나옵니다. 슬라이드는 코드 기준입니다.
 {cue: transition}
 정책이 "무엇을 줄일지"였다면, 그 전에 Pod가 처음부터 어디에 놓이는지도 consolidation에 영향을 줍니다. 스케줄러 점수 전략입니다.
 :::

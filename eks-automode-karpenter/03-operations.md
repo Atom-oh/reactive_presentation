@@ -133,7 +133,7 @@ kubectl wait nodepool/general-purpose nodepool/system \
 :::
 
 :::notes
-{timing: 2min}
+{timing: 1.5min}
 [요약]
 - general-purpose: amd64, On-Demand, C/M/R 5세대 이상. system: amd64와 arm64, CriticalAddonsOnly toleration Pod 전용
 - 둘 다 Spot 없음. Spot, 다른 아키텍처, GPU는 커스텀 NodePool. 1.37 built-in 풀은 Balanced
@@ -282,7 +282,7 @@ subnet과 security group은 태그 selector로 고르고, 디스크는 blockDevi
 :::
 
 :::notes
-{timing: 2min}
+{timing: 1.5min}
 [요약]
 - IMDSv2와 hop limit 1은 강제, NodeClass로 변경 불가. hostNetwork Pod는 도달성이 다름
 - SSH, SSM 없음. 관리형 Bottlerocket, 읽기 전용 root, SELinux enforcing
@@ -541,7 +541,7 @@ GPU 워크로드입니다. Auto Mode에는 NVIDIA와 Neuron 드라이버, NVIDIA
 :::
 
 :::notes
-{timing: 2min}
+{timing: 1.5min}
 [요약]
 - 2026-07-10부터 Auto Mode 클러스터에서 ARC zonal shift와 autoshift 사용 가능. 클러스터에서 활성화만 하면 됨
 - shift 중: 장애 AZ의 신규 프로비저닝 중단, 그 AZ의 voluntary disruption 중단. 대체 Pod가 장애 AZ에 의존하면 정상 AZ의 voluntary disruption도 중단
@@ -944,7 +944,7 @@ GPU는 7월 1일부터 관리비가 G 계열 35%, P 계열과 Trainium 60% 인�
 :::
 
 :::notes
-{timing: 2min}
+{timing: 1.5min}
 [요약]
 - Savings Plans(Compute 최대 66%, EC2 Instance 최대 72%), RI, Spot은 EC2 요금만 할인. Auto Mode 관리비는 구매 옵션과 독립
 - 클러스터 귀속 태그는 aws:eks:cluster-name(EC2에 AWS가 부착), Billing에서 활성화 필요, control plane 제외

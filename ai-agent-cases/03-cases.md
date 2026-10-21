@@ -133,7 +133,7 @@ Data Rich, Insight Poor. 무엇을 물어야 할지부터 막히던 마케터의
   </div>
   <img class="rp-fig" src="media/lg-initial.png" alt="LG전자 초기 멀티 에이전트 구조: Coordinator, Planner, Supervisor, Coder, Reporter">
 </div>
-<div class="rp-src">출처: AWS 기술 블로그, LG전자 Agentic AI 리포트 자동화 (2025-08), Deep Insight 아키텍처 설계 교훈 (2026-04)</div>
+<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/lge-agentic-report-automation/" target="_blank" rel="noopener">LG전자 Agentic AI 리포트 자동화 (2025-08)</a>, <a href="https://aws.amazon.com/ko/blogs/tech/practical-design-lessons-from-the-deep-insight-arch/" target="_blank" rel="noopener">Deep Insight 아키텍처 설계 교훈 (2026-04)</a></div>
 :::
 
 :::notes
@@ -168,7 +168,7 @@ Data Rich, Insight Poor. 무엇을 물어야 할지부터 막히던 마케터의
 </style>
 <div class="rp-figwrap">
   <img src="media/lg-deepinsight-arch.png" alt="Deep Insight 전체 아키텍처: VPC 안 AgentCore Runtime의 Strands 그래프, S3 피드백, ALB와 ECS Code Interpreter Task">
-  <div class="rp-src">출처: AWS 기술 블로그, LG전자 Agentic AI 리포트 자동화 (2025-08), Deep Insight 아키텍처 설계 교훈 (2026-04)</div>
+  <div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/lge-agentic-report-automation/" target="_blank" rel="noopener">LG전자 Agentic AI 리포트 자동화 (2025-08)</a>, <a href="https://aws.amazon.com/ko/blogs/tech/practical-design-lessons-from-the-deep-insight-arch/" target="_blank" rel="noopener">Deep Insight 아키텍처 설계 교훈 (2026-04)</a></div>
 </div>
 :::
 
@@ -203,7 +203,7 @@ AWS가 오픈소스로 공개한 Deep Insight의 전체 아키텍처입니다. V
 </style>
 <div class="rp-figwrap">
   <img src="media/lg-hierarchy.png" alt="계층형 멀티 에이전트: Coordinator, Planner, Plan Reviewer, Supervisor와 실행 에이전트 Coder, Validator, Reporter, Tracker">
-  <div class="rp-src">출처: AWS 기술 블로그, LG전자 Agentic AI 리포트 자동화 (2025-08), Deep Insight 아키텍처 설계 교훈 (2026-04)</div>
+  <div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/lge-agentic-report-automation/" target="_blank" rel="noopener">LG전자 Agentic AI 리포트 자동화 (2025-08)</a>, <a href="https://aws.amazon.com/ko/blogs/tech/practical-design-lessons-from-the-deep-insight-arch/" target="_blank" rel="noopener">Deep Insight 아키텍처 설계 교훈 (2026-04)</a></div>
 </div>
 :::
 
@@ -246,7 +246,7 @@ Supervisor가 이들을 도구처럼 호출하기 때문에 각 에이전트의 
   <div class="card"><div class="card-title">역할별 모델 + 선택적 캐싱</div><div class="card-desc">반복 호출되는 에이전트만 <span class="rp-tip" tabindex="0" data-tip="반복되는 프롬프트 앞부분을 캐시해 재사용하는 기능. 입력 토큰 비용과 지연을 줄임">Prompt Caching</span>. 입력 토큰 비용 최대 90% 절감</div></div>
   <div class="card"><div class="card-title">격리된 코드 실행</div><div class="card-desc">세션별 컨테이너를 Private VPC에서 실행, 인터넷 차단, 1시간 후 자동 종료</div></div>
 </div>
-<div class="rp-src">출처: AWS 기술 블로그, LG전자 Agentic AI 리포트 자동화 (2025-08), Deep Insight 아키텍처 설계 교훈 (2026-04)</div>
+<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/lge-agentic-report-automation/" target="_blank" rel="noopener">LG전자 Agentic AI 리포트 자동화 (2025-08)</a>, <a href="https://aws.amazon.com/ko/blogs/tech/practical-design-lessons-from-the-deep-insight-arch/" target="_blank" rel="noopener">Deep Insight 아키텍처 설계 교훈 (2026-04)</a></div>
 :::
 
 :::notes
@@ -289,7 +289,7 @@ Deep Insight에서 바로 가져갈 만한 설계 패턴 여섯 가지입니다.
   <figure><img src="media/lg-dashboard.png" alt="Deep Insight 관리자 대시보드: 작업별 소요시간, 토큰, Cache Hit"><figcaption>관리자 대시보드: 작업당 15~23분, 토큰 100만 개 이상, Cache Hit 50~70%</figcaption></figure>
 </div>
 <div class="callout callout-danger rp-risk fragment fade-up" data-fragment-index="1"><strong class="text-danger">리스크</strong>: <span class="rp-tip" tabindex="0" data-tip="Human-in-the-loop: 실행 중간에 사람이 승인하거나 수정하는 단계">HITL</span> 300초 자동 승인은 금융권에서 무승인 실행으로 해석될 수 있습니다. 타임아웃 시 보류로 바꾸세요. 블로그의 288배 표기는 산술상 144배이므로, 3일에서 30분으로 줄었다는 표현만 인용하세요.</div>
-<div class="rp-src">출처: AWS 기술 블로그, LG전자 Agentic AI 리포트 자동화 (2025-08), Deep Insight 아키텍처 설계 교훈 (2026-04)</div>
+<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/lge-agentic-report-automation/" target="_blank" rel="noopener">LG전자 Agentic AI 리포트 자동화 (2025-08)</a>, <a href="https://aws.amazon.com/ko/blogs/tech/practical-design-lessons-from-the-deep-insight-arch/" target="_blank" rel="noopener">Deep Insight 아키텍처 설계 교훈 (2026-04)</a></div>
 :::
 
 :::notes
@@ -324,7 +324,7 @@ Deep Insight에서 바로 가져갈 만한 설계 패턴 여섯 가지입니다.
 </style>
 <div class="rp-figwrap">
   <img src="media/shc-overview.png" alt="신한카드 Agentic AI 챗봇: 유저 쿼리, 온톨로지 기반 인텐트 분류, 분산형 에이전틱 AI 워크플로우">
-  <div class="rp-src">출처: AWS 기술 블로그, 신한카드 온톨로지 기반 분산형 Agentic AI 챗봇 (2026-06)</div>
+  <div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/shinhan-card-ontology-based-decentralized-agentic-ai-chatbot/" target="_blank" rel="noopener">신한카드 온톨로지 기반 분산형 Agentic AI 챗봇 (2026-06)</a></div>
 </div>
 :::
 
@@ -387,7 +387,7 @@ Deep Insight에서 바로 가져갈 만한 설계 패턴 여섯 가지입니다.
     <div class="callout callout-info rp-callnote">작은 32B 모델이 약 7배 큰 235B 모델보다 2.3%p 높음. 측정 조건 비공개 수치이므로 참고용. 2부 D2처럼 조건(51개, 유사 의도, sLLM)이 효과를 만든다는 점도 함께</div>
   </div>
 </div>
-<div class="rp-src">출처: AWS 기술 블로그, 신한카드 온톨로지 기반 분산형 Agentic AI 챗봇 (2026-06)</div>
+<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/shinhan-card-ontology-based-decentralized-agentic-ai-chatbot/" target="_blank" rel="noopener">신한카드 온톨로지 기반 분산형 Agentic AI 챗봇 (2026-06)</a></div>
 :::
 
 :::notes
@@ -427,7 +427,7 @@ Deep Insight에서 바로 가져갈 만한 설계 패턴 여섯 가지입니다.
   <figure><img src="media/shc-central.png" alt="중앙집중형 에이전틱 AI 아키텍처: Central Orchestrator가 모든 위임을 담당"><figcaption>중앙집중형: Orchestrator가 모든 위임을 맡아 병목</figcaption></figure>
   <figure class="fragment fade-up" data-fragment-index="1"><img src="media/shc-distributed.png" alt="간소화된 분산형 에이전트 AI 아키텍처"><figcaption>분산형: 관련 에이전트만 후속 처리 후 통합</figcaption></figure>
 </div>
-<div class="rp-src">출처: AWS 기술 블로그, 신한카드 온톨로지 기반 분산형 Agentic AI 챗봇 (2026-06)</div>
+<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/shinhan-card-ontology-based-decentralized-agentic-ai-chatbot/" target="_blank" rel="noopener">신한카드 온톨로지 기반 분산형 Agentic AI 챗봇 (2026-06)</a></div>
 :::
 
 :::notes
@@ -464,7 +464,7 @@ Router Agent, 전문 에이전트(AgentCore Runtime), AgentCore Gateway(MCP), Be
 </style>
 <div class="rp-figwrap">
   <img src="media/shc-aws-arch.png" alt="신한카드 AWS 아키텍처: Router Agent, AgentCore Runtime 전문 에이전트, AgentCore Gateway, Lambda, DynamoDB, Bedrock">
-  <div class="rp-src">출처: AWS 기술 블로그, 신한카드 온톨로지 기반 분산형 Agentic AI 챗봇 (2026-06). 다이어그램의 QWEN 30B 표기와 달리 본문 수치는 Qwen3 32B 기준</div>
+  <div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/shinhan-card-ontology-based-decentralized-agentic-ai-chatbot/" target="_blank" rel="noopener">신한카드 온톨로지 기반 분산형 Agentic AI 챗봇 (2026-06)</a>. 다이어그램의 QWEN 30B 표기와 달리 본문 수치는 Qwen3 32B 기준</div>
 </div>
 :::
 
@@ -516,7 +516,7 @@ Router Agent, 전문 에이전트(AgentCore Runtime), AgentCore Gateway(MCP), Be
   <div class="card"><span class="badge badge-blue">TASK 01 마이데이터 상담</span><div class="card-desc">합성 고객 페르소나, 응답 품질 평가, 코칭과 같은 구조. AgentCore User Simulation과 Evaluations로 시뮬레이션과 채점 구간을 바로 구성</div></div>
 </div>
 <div class="callout callout-danger rp-risk fragment fade-up" data-fragment-index="3"><strong class="text-danger">리스크</strong>: AI가 코드를 고쳐 배포하는 루프는 금융 변경관리 통제와 충돌합니다. Update 단계에는 사람 승인 게이트를 두세요.</div>
-<div class="rp-src">출처: AWS 기술 블로그, 신한카드 온톨로지 기반 분산형 Agentic AI 챗봇 (2026-06)</div>
+<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/shinhan-card-ontology-based-decentralized-agentic-ai-chatbot/" target="_blank" rel="noopener">신한카드 온톨로지 기반 분산형 Agentic AI 챗봇 (2026-06)</a></div>
 :::
 
 :::notes
@@ -554,7 +554,7 @@ Router Agent, 전문 에이전트(AgentCore Runtime), AgentCore Gateway(MCP), Be
 </style>
 <div class="rp-figwrap">
   <img src="media/mirae-network.jpg" alt="미래에셋증권 망 구성: 5호망 AWS Private Cloud 지식DB, AWS DMZ 프록시, 망분리 예외 허용 구간의 Bedrock과 Azure OpenAI">
-  <div class="rp-src">출처: 미래에셋증권 「AI-Ready Data: 온톨로지 기반 금융상품 지식 데이터 혁신 여정」 AWS FSI Forum 발표</div>
+  <div class="rp-src">출처: 미래에셋증권 「AI-Ready Data: 온톨로지 기반 금융상품 지식 데이터 혁신 여정」 AWS FSI Forum 발표 (공개 링크 없음)</div>
 </div>
 :::
 
@@ -590,7 +590,7 @@ AI-Ready Data: 수집과 파싱, 온톨로지 설계, 지식 추출, 질의와 �
 </style>
 <div class="rp-figwrap">
   <img src="media/mirae-pipeline.jpg" alt="4-Task 파이프라인: Data Pipeline, Ontology Engineering, Knowledge Extract, Query and Retrieval과 Knowledge Base 저장소">
-  <div class="rp-src">출처: 미래에셋증권 「AI-Ready Data: 온톨로지 기반 금융상품 지식 데이터 혁신 여정」 AWS FSI Forum 발표</div>
+  <div class="rp-src">출처: 미래에셋증권 「AI-Ready Data: 온톨로지 기반 금융상품 지식 데이터 혁신 여정」 AWS FSI Forum 발표 (공개 링크 없음)</div>
 </div>
 :::
 
@@ -642,7 +642,7 @@ AI-Ready Data: 수집과 파싱, 온톨로지 설계, 지식 추출, 질의와 �
   </tbody>
 </table>
 <div class="callout callout-info rp-ch-foot fragment fade-up" data-fragment-index="1"><strong class="text-accent">TASK 01, 05</strong>: 사내 용어가 많은 과제일수록 5번 Grounding과 6번 Semantic Layer부터. 2부 D1이 바로 이 두 가지를 작게 재현한 것입니다.</div>
-<div class="rp-src">출처: 미래에셋증권 「AI-Ready Data: 온톨로지 기반 금융상품 지식 데이터 혁신 여정」 AWS FSI Forum 발표</div>
+<div class="rp-src">출처: 미래에셋증권 「AI-Ready Data: 온톨로지 기반 금융상품 지식 데이터 혁신 여정」 AWS FSI Forum 발표 (공개 링크 없음)</div>
 :::
 
 :::notes
@@ -678,7 +678,7 @@ AI-Ready Data: 수집과 파싱, 온톨로지 설계, 지식 추출, 질의와 �
 </style>
 <div class="rp-figwrap">
   <img src="media/mirae-federated.jpg" alt="Federated Query Architecture: Semantic Layer, 의도 분류, 대상 확정, Query Planning, 권한 검증과 Aurora, Neptune, OpenSearch 동시 조회">
-  <div class="rp-src">출처: 미래에셋증권 「AI-Ready Data: 온톨로지 기반 금융상품 지식 데이터 혁신 여정」 AWS FSI Forum 발표</div>
+  <div class="rp-src">출처: 미래에셋증권 「AI-Ready Data: 온톨로지 기반 금융상품 지식 데이터 혁신 여정」 AWS FSI Forum 발표 (공개 링크 없음)</div>
 </div>
 :::
 
@@ -713,7 +713,7 @@ AI-Ready Data: 수집과 파싱, 온톨로지 설계, 지식 추출, 질의와 �
 </style>
 <div class="rp-figwrap">
   <img src="media/mirae-accuracy.jpg" alt="정확도 막대: 스키마만 45%, 온톨로지 프롬프트 설명 47.4%, 온톨로지로 실제 값 변경 65%, Federation 검색 84.7%">
-  <div class="rp-src">출처: 미래에셋증권 「AI-Ready Data: 온톨로지 기반 금융상품 지식 데이터 혁신 여정」 AWS FSI Forum 발표</div>
+  <div class="rp-src">출처: 미래에셋증권 「AI-Ready Data: 온톨로지 기반 금융상품 지식 데이터 혁신 여정」 AWS FSI Forum 발표 (공개 링크 없음)</div>
 </div>
 :::
 
@@ -769,7 +769,7 @@ AI-Ready Data: 수집과 파싱, 온톨로지 설계, 지식 추출, 질의와 �
     <tr><td>Phase 3</td><td>2026.10~</td><td>전사 AI 표준 지식 기반, AI-Ready Data 거버넌스</td></tr>
   </tbody>
 </table>
-<div class="rp-src">출처: 미래에셋증권 「AI-Ready Data: 온톨로지 기반 금융상품 지식 데이터 혁신 여정」 AWS FSI Forum 발표. 최신 상황은 별도 확인 필요</div>
+<div class="rp-src">출처: 미래에셋증권 「AI-Ready Data: 온톨로지 기반 금융상품 지식 데이터 혁신 여정」 AWS FSI Forum 발표 (공개 링크 없음). 최신 상황은 별도 확인 필요</div>
 :::
 
 :::notes
@@ -814,7 +814,7 @@ Canva Code가 스케일 전에 먼저 만든 것, Amazon Bedrock 기반
   </div>
   <img class="rp-fig" src="media/canva-revenue.jpg" alt="Canva Code, Canva AI 출시 이후 매출 곡선: 2026년 5월 17M MRR, 8주 구간 표시">
 </div>
-<div class="rp-src">출처: ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS); AWS Prescriptive Guidance, Agentic Design Patterns (2026-05)</div>
+<div class="rp-src">출처: <a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS)</a>; AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
 :::
 
 :::notes
@@ -848,7 +848,7 @@ Architect(Opus)가 계획, Builder와 Editor(Haiku)가 실행
 </style>
 <div class="rp-figwrap">
   <img src="media/canva-lesson1.jpg" alt="Decompose the agent: Architect(Opus), Builder(Haiku), Editor(Haiku) 역할 분리">
-  <div class="rp-src">출처: ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS); AWS Prescriptive Guidance, Agentic Design Patterns (2026-05)</div>
+  <div class="rp-src">출처: <a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS)</a>; AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
 </div>
 :::
 
@@ -883,7 +883,7 @@ Sonnet 주 스레드, 평균 총비용 −46%, 사용자 성공 지표 +9%
 </style>
 <div class="rp-figwrap">
   <img src="media/canva-final.jpg" alt="Smarter model routing with sub-agents: Sonnet 주 스레드, Opus와 Haiku sub-agent, 평균 총비용 -46%, 사용자 성공 지표 +9%">
-  <div class="rp-src">출처: ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS); AWS Prescriptive Guidance, Agentic Design Patterns (2026-05)</div>
+  <div class="rp-src">출처: <a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS)</a>; AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
 </div>
 :::
 
@@ -944,7 +944,7 @@ Sonnet 주 스레드, 평균 총비용 −46%, 사용자 성공 지표 +9%
   </div>
 </div>
 <div class="callout callout-info rp-l23-foot fragment fade-up" data-fragment-index="3"><strong class="text-accent">같은 원리</strong>: 신한카드 규칙 매칭, 미래에셋 Grounding, 2부의 "규칙 강제" 자리. 지켜야 할 것은 코드로, 판단만 모델에게</div>
-<div class="rp-src">출처: ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS); AWS Prescriptive Guidance, Agentic Design Patterns (2026-05)</div>
+<div class="rp-src">출처: <a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS)</a>; AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
 :::
 
 :::notes
@@ -993,7 +993,7 @@ AWS Prescriptive Guidance, 과제의 어느 지점에 어떤 패턴을 쓸지
     <tr><td>Coordinator-Subagent</td><td>병렬 디스패치, 겹치지 않는 영역</td><td>TASK 05, 06 지식, 코드, DB 에이전트 분리</td></tr>
   </tbody>
 </table>
-<div class="rp-src">출처: ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS); AWS Prescriptive Guidance, Agentic Design Patterns (2026-05)</div>
+<div class="rp-src">출처: <a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS)</a>; AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
 :::
 
 :::notes
@@ -1029,7 +1029,7 @@ Agentic Loop를 먼저 제대로 만들고, 필요한 지점에만 패턴을 추
 </style>
 <div class="rp-figwrap">
   <img src="media/canva-loop.jpg" alt="Every later pattern modifies one step of the loop: 가운데 Agentic Loop와 도구 호출 지점, 결과 지점의 패턴들">
-  <div class="rp-src">출처: ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS); AWS Prescriptive Guidance, Agentic Design Patterns (2026-05)</div>
+  <div class="rp-src">출처: <a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS)</a>; AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
 </div>
 :::
 

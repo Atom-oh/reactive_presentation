@@ -225,7 +225,7 @@ block: 04-task-cases
   <div class="card"><span class="rp-k">국내, 패션 플랫폼</span><div class="card-title">카카오스타일</div><div class="card-desc">이미지 소재, 기획전, 상품 정보로 지면별 포맷과 여러 콘셉트 시안을 생성, 추천 문구 오탈자까지 점검</div><div class="rp-ms"><div><b>몇 주 → 몇 시간</b><span>콘텐츠 제작 시간</span></div><div><b>다중 콘셉트</b><span>지면별 시안 자동 생성</span></div></div></div>
 </div>
 <div class="callout callout-info rp-tc-foot fragment fade-up" data-fragment-index="2"><strong class="text-accent">가져올 것</strong>: 디자인 시스템을 구조화 스펙(JSON)으로 먼저. 초안 생성과 규칙 점검이 같은 데이터 위에서 돕니다. Canva의 features.json도 같은 생각입니다.</div>
-<div class="rp-src">출처: AWS 기술 블로그, 미리디 템플릿 추천 챗봇 (2024.06), 위메이드플레이 UI QA (2024.11), 카카오스타일 (2024.12)</div>
+<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/amazon-bedrock-miri-canvas-design-template-chatbot/" target="_blank" rel="noopener">미리디 템플릿 추천 챗봇 (2024.06)</a>, 위메이드플레이 UI QA (2024.11), 카카오스타일 (2024.12)</div>
 :::
 
 :::notes
@@ -272,7 +272,7 @@ UX 팀을 위해 미리캔버스 아키텍처를 한 장 더 넣었습니다.
   </div>
   <img class="rp-fig4" src="media/miri-arch.png" alt="미리캔버스 템플릿 추천 챗봇 아키텍처: Bedrock Claude 3 Sonnet 캡셔닝, 임베딩 모델, Vector DB, ECS, RDS">
 </div>
-<div class="rp-src">출처: AWS 기술 블로그, Amazon Bedrock 기반 미리캔버스 디자인 템플릿 추천 챗봇 구현하기 (2024-06)</div>
+<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/amazon-bedrock-miri-canvas-design-template-chatbot/" target="_blank" rel="noopener">Amazon Bedrock 기반 미리캔버스 디자인 템플릿 추천 챗봇 구현하기 (2024-06)</a></div>
 :::
 
 :::notes
@@ -319,7 +319,7 @@ UX 팀을 위해 미리캔버스 아키텍처를 한 장 더 넣었습니다.
   <div class="card"><span class="rp-k">국내, 언론</span><div class="card-title">서울경제신문</div><div class="card-desc">14개 항목 자가검증 체크리스트 + 수치는 원문과 100% 일치 규칙 + 사람 이중 검수</div><div class="rp-ms"><div><b>환각, 오보 0건</b><span>연간 2,500건 기사 기준, 자체 집계</span></div><div><b>14개 항목</b><span>자가검증 체크리스트</span></div></div></div>
 </div>
 <div class="callout callout-info rp-tc-foot fragment fade-up" data-fragment-index="2"><strong class="text-accent">가져올 것</strong>: "출처 없는 문장은 쓰지 않는다"를 규칙, 체크리스트, 검증 에이전트로 강제하세요.</div>
-<div class="rp-src">출처: AWS 기술 블로그, LG전자 (Deep Insight), 링크알파 Company Screener (2025.04), 서울경제신문 (2026.04)</div>
+<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/lge-agentic-report-automation/" target="_blank" rel="noopener">LG전자 (Deep Insight)</a>, 링크알파 Company Screener (2025.04), 서울경제신문 (2026.04)</div>
 :::
 
 :::notes

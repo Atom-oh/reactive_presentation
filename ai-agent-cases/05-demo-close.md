@@ -225,6 +225,8 @@ Play를 누르고 노란 자막에 맞춰 설명합니다. 영상은 무음입�
 .rp-res3 li { font-size: var(--fs-card); border-top: 1px solid var(--border); padding-top: var(--space-1); }
 .rp-res3 li:first-child { border-top: 0; padding-top: 0; }
 .rp-res3 a { color: var(--accent); text-decoration: none; font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+.rp-res3 li > b { display: block; }
+.rp-res3 li > a + a { margin-left: var(--space-1); }
 .rp-res3 li span { display: block; font-size: var(--fs-caption); color: var(--on-surface-muted); }
 .rp-res3 .card-title { margin-bottom: var(--space-2); }
 </style>
@@ -243,10 +245,11 @@ Play를 누르고 노란 자막에 맞춰 설명합니다. 영상은 무음입�
   <div class="card fragment fade-up" data-fragment-index="1">
     <div class="card-title">사례 원문</div>
     <ul>
-      <li><b>LG전자</b><span>Agentic 리포트 자동화, Deep Insight 설계 교훈</span></li>
-      <li><b>신한카드</b><span>온톨로지 기반 분산형 챗봇</span></li>
-      <li><b>미래에셋증권</b><span>AI-Ready Data (AWS FSI Forum 발표)</span></li>
-      <li><b>Canva</b><span>ANT105 Agentic Engineering, Agentic Design Patterns</span></li>
+      <li><b>LG전자</b><a href="https://aws.amazon.com/ko/blogs/tech/lge-agentic-report-automation/" target="_blank" rel="noopener">Agentic AI 리포트 자동화</a> / <a href="https://aws.amazon.com/ko/blogs/tech/practical-design-lessons-from-the-deep-insight-arch/" target="_blank" rel="noopener">Deep Insight 설계 교훈</a></li>
+      <li><b>신한카드</b><a href="https://aws.amazon.com/ko/blogs/tech/shinhan-card-ontology-based-decentralized-agentic-ai-chatbot/" target="_blank" rel="noopener">온톨로지 기반 분산형 Agentic AI 챗봇</a></li>
+      <li><b>미래에셋증권</b><span>AI-Ready Data (AWS FSI Forum 발표, 공개 링크 없음)</span></li>
+      <li><b>Canva</b><a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering 발표 영상</a> / <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></li>
+      <li><b>미리디(미리캔버스)</b><a href="https://aws.amazon.com/ko/blogs/tech/amazon-bedrock-miri-canvas-design-template-chatbot/" target="_blank" rel="noopener">디자인 템플릿 추천 챗봇</a></li>
       <li><b>과제별 사례</b><span>PropHero, NewDay, 미리디, 위메이드플레이, 링크알파, 서울경제신문, Rocket Close, Sun Finance, 춘시리, A1Mobilsoft, GS리테일, 삼성계정</span></li>
       <li><b>온톨로지 도구</b><span>Amazon Neptune, Bedrock Knowledge Bases GraphRAG, GraphRAG Toolkit</span></li>
     </ul>

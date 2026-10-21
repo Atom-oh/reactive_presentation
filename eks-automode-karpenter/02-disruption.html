@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스케일링과 Disruption</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="02-disruption.md">
+  <meta name="remarp-block" content="02-disruption">
+  <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/deck-overlay.css">
+  <link rel="stylesheet" href="./common/deck-detail.css">
+  <link rel="stylesheet" href="./common/deck-nav.css">
+  <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
+  <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
+  
+  <script>window.__remarpTheme = {"colors": {"dk1": "#000000", "lt1": "#FFFFFF", "dk2": "#161D26", "lt2": "#F3F3F7", "accent1": "#41B3FF", "accent2": "#AD5CFF", "accent3": "#00E500", "accent4": "#FF5C85", "accent5": "#FF693C", "accent6": "#FBD332", "hlink": "#41B1E8", "folHlink": "#41B1E8"}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}};</script>
+</head>
+<body>
+<div class="slide-deck theme-dark">
+<div class="slide title-slide" data-remarp-id="s0" data-block="02-disruption" data-block-title="3부: 스케일링과 Disruption">
+    <h1>3부: 스케일링과 Disruption</h1>
+  <p class="meta">노드를 고르고, 줄이고, 바꾸는 규칙</p>
+</div>
+
+<div class="slide" data-remarp-id="s1" data-block="02-disruption" data-block-title="3부: 스케일링과 Disruption">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>requirements는 넓게, 제약은 명확하게</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <p><!-- Slide 2: 프로비저닝 결정 --></p>
+<style>
+.ak2-body { display: grid; grid-template-columns: 1.15fr 1fr; gap: var(--space-4); align-items: start; margin-top: var(--space-3); }
+.ak2-stack { display: flex; flex-direction: column; gap: var(--space-3); }
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
+  <button class="tab-btn active">Self-managed NodePool</button>
+  <button class="tab-btn">Auto Mode NodePool</button>
+</div>
+<div class="tc">
+  <div class="ak2-body">
+<pre class="code-block"><span class="key">requirements</span>:
+- <span class="key">key</span>: karpenter.sh/capacity-type
+  <span class="key">operator</span>: In
+  <span class="key">values</span>: [<span class="string">"spot"</span>, <span class="string">"on-demand"</span>]
+- <span class="key">key</span>: karpenter.k8s.aws/instance-category
+  <span class="key">operator</span>: In
+  <span class="key">values</span>: [<span class="string">"c"</span>, <span class="string">"m"</span>, <span class="string">"r"</span>]
+- <span class="key">key</span>: kubernetes.io/arch
+  <span class="key">operator</span>: In
+  <span class="key">values</span>: [<span class="string">"amd64"</span>, <span class="string">"arm64"</span>]</pre>
+    <div class="ak2-stack">
+      <div class="callout callout-info fragment fade-left" data-fragment-index="1"><strong class="text-info">계열 단위로 넓게</strong><div class="on-surface-muted">특정 유형 몇 개보다 category, generation 같은 속성으로 후보를 넓힙니다.</div></div>
+      <div class="callout callout-info fragment fade-left" data-fragment-index="2"><strong class="text-info">Spot은 유연성이 조건</strong><div class="on-surface-muted">single-node spot-to-spot 교체는 instance type 15개 이상 유연성이 필요합니다.</div></div>
+    </div>
+  </div>
+</div>
+<div class="tc" hidden>
+  <div class="ak2-body">
+<pre class="code-block"><span class="key">nodeClassRef</span>:
+  <span class="key">group</span>: eks.amazonaws.com
+  <span class="key">kind</span>: NodeClass
+  <span class="key">name</span>: default
+<span class="key">requirements</span>:
+- <span class="key">key</span>: eks.amazonaws.com/instance-category
+  <span class="key">operator</span>: In
+  <span class="key">values</span>: [<span class="string">"c"</span>, <span class="string">"m"</span>, <span class="string">"r"</span>]
+- <span class="key">key</span>: karpenter.sh/capacity-type
+  <span class="key">operator</span>: In
+  <span class="key">values</span>: [<span class="string">"on-demand"</span>]</pre>
+    <div class="ak2-stack">
+      <div class="callout callout-info"><strong class="text-info">Built-in pool의 범위</strong><div class="on-surface-muted"><code>system</code>, <code>general-purpose</code>: On-Demand만, C/M/R 계열, 5세대 이상. 수정 불가</div></div>
+      <div class="callout callout-warning"><strong class="text-warning">지원 인스턴스 제약</strong><div class="on-surface-muted">1 vCPU 초과만, nano, micro, small 제외. Linux만 지원</div></div>
+    </div>
+  </div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="3"><strong class="text-info">capacity-type을 비워 두면</strong>: 두 방식 모두 reserved, spot, on-demand 순서로 고릅니다. Auto Mode 기본 풀은 On-Demand 고정이라 Spot은 커스텀 NodePool에서, self-managed는 비워 두면 Spot이 먼저 선택되니 의도를 명시하세요.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s2" data-block="02-disruption" data-block-title="3부: 스케일링과 Disruption">
+  <div class="slide-header" data-remarp-id="s2-header"><h2>Consolidation: 절감이 중단보다 클 때</h2></div>
+  <div class="slide-body" data-remarp-id="s2-body">
+    <p><!-- Slide 3: Consolidation 정책 --></p>
+<style>
+.ak2-pol { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-bottom: var(--space-3); }
+.ak2-pol code { font-size: var(--fs-card); }
+.ak2-time { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-bottom: var(--space-3); }
+.ak2-when { font-weight: var(--weight-bold); color: var(--accent); font-size: var(--fs-card); margin-bottom: var(--space-1); }
+.ak2-ev { border: 1px dashed var(--border); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); font-size: var(--fs-card); word-break: keep-all; }
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="ak2-pol" data-reveal="stagger">
+  <div class="card"><strong class="text-accent"><code>WhenEmpty</code></strong><div class="on-surface-muted">Pod가 없는 노드만 회수합니다.</div></div>
+  <div class="card"><strong class="text-accent"><code>WhenEmptyOrUnderutilized</code></strong><div class="on-surface-muted">작은 절감이라도 있으면 교체합니다. upstream 기본값</div></div>
+  <div class="card"><strong class="text-accent"><code>Balanced</code></strong><div class="on-surface-muted">절감 비율이 유발하는 Pod disruption 비율보다 가치 있을 때만 실행</div></div>
+</div>
+<div class="ak2-time">
+  <div class="ak2-ev fragment fade-right" data-fragment-index="1"><div class="ak2-when">2026-07-11 Karpenter v1.14.0</div>upstream에 <code>Balanced</code> 추가, opt-in</div>
+  <div class="ak2-ev fragment fade-right" data-fragment-index="2"><div class="ak2-when">2026-07-27 Auto Mode</div>NodePool에 <code>Balanced</code> 추가, 기존 NodePool 동작은 그대로</div>
+  <div class="ak2-ev fragment fade-right" data-fragment-index="3"><div class="ak2-when">2026-10-01 EKS 1.37</div>새로 만든 NodePool 중 정책 미지정은 <code>Balanced</code>, built-in pool도 <code>Balanced</code></div>
+</div>
+<div class="callout callout-warning fragment fade-up" data-fragment-index="4"><strong class="text-warning">GitOps라면 명시하세요</strong>: 기본값은 생성 시점에만 적용됩니다. 미지정 NodePool을 재생성하면 Git에는 값이 없고 live 객체는 <code>Balanced</code>인 drift가 생깁니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s3" data-block="02-disruption" data-block-title="3부: 스케일링과 Disruption">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>스케줄러 점수: 흩을까, 모을까</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body">
+    <p><!-- Slide 3a: 스케줄러 점수 전략 --></p>
+<style>
+.ak2s-wrap { display: grid; grid-template-columns: 1.15fr 1fr; gap: var(--space-4); align-items: start; }
+.ak2s-nodes { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-top: var(--space-3); }
+.ak2s-node { border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-4) var(--space-3); font-size: var(--fs-card); text-align: center; }
+.ak2s-bar { height: var(--space-7); border-radius: var(--radius-sm); background: var(--bg-card); margin-top: var(--space-3); overflow: hidden; display: flex; }
+.ak2s-legend { display: flex; gap: var(--space-4); margin-top: var(--space-3); font-size: var(--fs-card); color: var(--text-secondary); }
+.ak2s-legend i { display: inline-block; width: var(--space-4); height: var(--space-4); border-radius: var(--radius-sm); vertical-align: middle; margin-right: var(--space-1); }
+.ak2s-effect { margin-top: var(--space-4); }
+.ak2s-used { background: var(--text-secondary); }
+.ak2s-new { background: var(--accent); }
+.ak2s-bar [data-w="70"] { width: 70%; } .ak2s-bar [data-w="40"] { width: 40%; } .ak2s-bar [data-w="15"] { width: 15%; } .ak2s-bar [data-w="20"] { width: 20%; }
+.ak2s-pick { color: var(--accent); font-weight: var(--weight-bold); }
+.ak2s-cli { font-family: var(--font-mono); font-size: var(--fs-card); background: var(--bg-card); border-radius: var(--radius-md); padding: var(--space-3); white-space: pre; overflow-x: auto; margin: 0 0 var(--space-3); }
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.ak2s-wrap .callout + .callout { margin-top: var(--space-3); }
+</style>
+<div class="ak2s-wrap">
+  <div>
+    <div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
+      <button class="tab-btn active">LeastAllocated (기본)</button>
+      <button class="tab-btn">MostAllocated</button>
+    </div>
+    <div class="tc">
+      <div class="on-surface-muted">여유가 많은 노드에 새 Pod를 보냅니다. 노드마다 여유를 남기는 분산 배치입니다.</div>
+      <div class="ak2s-nodes">
+        <div class="ak2s-node">노드 A<div class="ak2s-bar"><span class="ak2s-used" data-w="70"></span></div></div>
+        <div class="ak2s-node">노드 B<div class="ak2s-bar"><span class="ak2s-used" data-w="40"></span></div></div>
+        <div class="ak2s-node"><span class="ak2s-pick">노드 C, 선택</span><div class="ak2s-bar"><span class="ak2s-used" data-w="15"></span><span class="ak2s-new" data-w="20"></span></div></div>
+      </div>
+    </div>
+    <div class="tc" hidden>
+      <div class="on-surface-muted">이미 많이 쓰는 노드에 새 Pod를 보냅니다. 적게 쓰인 노드는 비워져 consolidation 대상이 되기 쉽습니다.</div>
+      <div class="ak2s-nodes">
+        <div class="ak2s-node"><span class="ak2s-pick">노드 A, 선택</span><div class="ak2s-bar"><span class="ak2s-used" data-w="70"></span><span class="ak2s-new" data-w="20"></span></div></div>
+        <div class="ak2s-node">노드 B<div class="ak2s-bar"><span class="ak2s-used" data-w="40"></span></div></div>
+        <div class="ak2s-node">노드 C<div class="ak2s-bar"><span class="ak2s-used" data-w="15"></span></div></div>
+      </div>
+    </div>
+    <div class="ak2s-legend"><span><i class="ak2s-used"></i>기존 Pod requests</span><span><i class="ak2s-new"></i>새 Pod</span><span>개념 그림, 사용률은 예시</span></div>
+    <div class="callout callout-info ak2s-effect fragment fade-up" data-fragment-index="4"><strong class="text-info">consolidation과의 관계</strong><div class="on-surface-muted">MostAllocated는 적게 쓰인 노드에 새 Pod를 보내지 않아, 그 노드가 비면 Auto Mode나 Karpenter가 정리할 수 있습니다.</div></div>
+  </div>
+  <div>
+    <pre class="ak2s-cli fragment fade-up" data-fragment-index="1">aws eks update-cluster-config \
+  --name $CLUSTER \
+  --kube-scheduler-config \
+  '{"nodeResourcesFit":{"scoringStrategy":
+    {"type":"MostAllocated"}}}'</pre>
+    <div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">EKS control plane configuration</strong><div class="on-surface-muted">2026-08-12 출시, Kubernetes 1.31 이상. 가중치 1 to 100: cpu, memory, nvidia.com/gpu, Neuron</div></div>
+    <div class="callout callout-warning fragment fade-up" data-fragment-index="3"><strong class="text-warning">노드 생성, 삭제 방식은 그대로</strong><div class="on-surface-muted">Pod 배치 점수만 바뀝니다. 클러스터 전체 적용, 실행 중 Pod는 옮기지 않고, 밀집할수록 노드 장애 영향이 커집니다.</div></div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s4" data-block="02-disruption" data-block-title="3부: 스케일링과 Disruption">
+  <div class="slide-header" data-remarp-id="s4-header"><h2>In-place resize: 재시작 없이 requests를 줄인다</h2></div>
+  <div class="slide-body" data-remarp-id="s4-body">
+    <p><!-- Slide 3b: In-place Pod resize --></p>
+<style>
+.ak2r-time { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-bottom: var(--space-3); }
+.ak2r-when { font-weight: var(--weight-bold); color: var(--accent); font-size: var(--fs-card); margin-bottom: var(--space-1); }
+.ak2r-ev { border: 1px dashed var(--border); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); font-size: var(--fs-card); word-break: keep-all; }
+.ak2r-two .callout + .callout { margin-top: var(--space-3); }
+.ak2r-two { display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--space-4); align-items: start; }
+.ak2r-table { width: 100%; font-size: var(--fs-card); word-break: keep-all; }
+.ak2r-table td, .ak2r-table th { white-space: nowrap; }
+.ak2r-table td.ak2r-num { font-variant-numeric: tabular-nums; font-weight: var(--weight-bold); }
+.data-table th { text-transform: none; letter-spacing: normal; font-size: var(--fs-card); }
+.ak2r-cap { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-1); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="ak2r-time" data-reveal="stagger">
+  <div class="ak2r-ev"><div class="ak2r-when">1.35 GA</div>컨테이너 in-place resize, <code>resize</code> subresource</div>
+  <div class="ak2r-ev"><div class="ak2r-when">1.36 Beta, 기본 켜짐</div>Pod 단위 <code>.spec.resources</code>도 Pod 재생성 없이 resize</div>
+  <div class="ak2r-ev"><div class="ak2r-when">1.37 Alpha</div>노드가 꽉 차 Deferred된 resize를 위해 scheduler가 낮은 priority Pod를 preempt</div>
+</div>
+<div class="ak2r-two">
+  <div class="fragment fade-up" data-fragment-index="1">
+    <table class="data-table ak2r-table">
+      <thead><tr><th>워크로드</th><th>CPU req=limit</th><th>Guaranteed</th><th>restartCount</th><th>containerID</th></tr></thead>
+      <tbody>
+        <tr><td>Deployment (Pod 2개)</td><td class="ak2r-num">200m → 50m</td><td>유지</td><td class="ak2r-num">0 → 0</td><td>동일</td></tr>
+        <tr><td>StatefulSet</td><td class="ak2r-num">200m → 50m</td><td>유지</td><td class="ak2r-num">0 → 0</td><td>동일</td></tr>
+        <tr><td>DaemonSet</td><td class="ak2r-num">200m → 50m</td><td>유지</td><td class="ak2r-num">0 → 0</td><td>동일</td></tr>
+      </tbody>
+    </table>
+    <div class="ak2r-cap">실측 2026-06, EKS 1.36.1, AL2023 arm64 노드(Auto Mode 아님): startup probe 통과 후 <code>pods/resize</code>로 축소, memory 고정</div>
+  </div>
+  <div>
+    <div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">노드 자동화와 만나는 지점</strong><div class="on-surface-muted">Karpenter v1.14.0부터 Pod 크기를 requests와 allocatedResources 중 큰 값으로 계산합니다. requests가 줄면 consolidation 여지가 생깁니다.</div></div>
+    <div class="callout callout-warning fragment fade-up" data-fragment-index="3"><strong class="text-warning">주의</strong><div class="on-surface-muted">QoS class는 바뀌지 않고, memory 축소는 재시작될 수 있습니다. Auto Mode의 resize 동작은 AWS 문서에 따로 없습니다.</div></div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s5" data-block="02-disruption" data-block-title="3부: 스케일링과 Disruption">
+  <div class="slide-header" data-remarp-id="s5-header"><h2>Disruption budget: 한 번에 몇 대까지</h2></div>
+  <div class="slide-body" data-remarp-id="s5-body">
+    <p><!-- Slide 4: Disruption budget --></p>
+<style>
+.ak2-bud { display: grid; grid-template-columns: 1fr 1.1fr; gap: var(--space-4); align-items: start; }
+.ak2-calc { display: flex; flex-direction: column; gap: var(--space-2); }
+.ak2-row { display: grid; grid-template-columns: 7.5rem 1fr; align-items: center; gap: var(--space-3); font-size: var(--fs-card); }
+.ak2-row label { color: var(--text-secondary); }
+.ak2-calc .slider-value { min-width: 4rem; }
+.ak2-calc .metric-value { font-size: var(--fs-subtitle); }
+.ak2-formula { font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-secondary); word-break: break-all; }
+.ak2-notes { margin-top: var(--space-3); }
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="ak2-bud">
+<pre class="code-block"><span class="key">disruption</span>:
+  <span class="key">consolidationPolicy</span>: Balanced
+  <span class="key">budgets</span>:
+  - <span class="key">nodes</span>: <span class="string">"10%"</span>
+  - <span class="key">nodes</span>: <span class="string">"0"</span>
+    <span class="key">schedule</span>: <span class="string">"0 0 * * 1-5"</span>  <span class="comment"># UTC</span>
+    <span class="key">duration</span>: 9h
+    <span class="key">reasons</span>: [<span class="string">"Underutilized"</span>, <span class="string">"Drifted"</span>]</pre>
+  <div class="ak2-calc card">
+    <div class="ak2-row"><label for="ak2-n">NodePool 노드</label><div class="slider-container"><input type="range" id="ak2-n" min="1" max="200" value="40"><span class="slider-value" id="ak2-n-v">40</span></div></div>
+    <div class="ak2-row"><label for="ak2-p">nodes (%)</label><div class="slider-container"><input type="range" id="ak2-p" min="0" max="100" step="5" value="10"><span class="slider-value" id="ak2-p-v">10%</span></div></div>
+    <div class="ak2-row"><label for="ak2-d">삭제 중</label><div class="slider-container"><input type="range" id="ak2-d" min="0" max="20" value="1"><span class="slider-value" id="ak2-d-v">1</span></div></div>
+    <div class="ak2-row"><label for="ak2-r">NotReady</label><div class="slider-container"><input type="range" id="ak2-r" min="0" max="20" value="0"><span class="slider-value" id="ak2-r-v">0</span></div></div>
+    <div class="metric-card"><div class="metric-value" id="ak2-out">-</div><div class="metric-label">지금 허용되는 voluntary disruption 수</div></div>
+    <div class="ak2-formula" id="ak2-f"></div>
+  </div>
+</div>
+<div class="card-grid ak2-notes fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="callout callout-info"><strong class="text-info">여러 budget은 최솟값</strong><div class="on-surface-muted">미지정 시 <code>nodes: 10%</code> 하나. Auto Mode 기본도 같습니다.</div></div>
+  <div class="callout callout-info"><strong class="text-info">schedule은 UTC만</strong><div class="on-surface-muted">위 예시는 평일 KST 09시부터 9시간 동안 교체 금지입니다.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">만료는 막지 못함</strong><div class="on-surface-muted"><code>expireAfter</code>에 의한 교체는 budget과 무관하게 진행됩니다.</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s6" data-block="02-disruption" data-block-title="3부: 스케일링과 Disruption">
+  <div class="slide-header" data-remarp-id="s6-header"><h2>Drift와 만료: 노드는 결국 교체된다</h2></div>
+  <div class="slide-body" data-remarp-id="s6-body">
+    <p><!-- Slide 5: Drift와 만료 --></p>
+<style>
+.ak2-two { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
+.ak2-life { width: 100%; font-size: var(--fs-card); word-break: keep-all; margin-top: var(--space-3); }
+.data-table th { text-transform: none; letter-spacing: normal; font-size: var(--fs-card); }
+.ak2-take { margin-top: var(--space-3); }
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.text-danger  { color: var(--danger);  font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
+  <button class="tab-btn active">Drift</button>
+  <button class="tab-btn">만료와 grace period</button>
+</div>
+<div class="tc">
+  <div class="ak2-two">
+    <div class="card"><strong class="text-accent">Drift를 일으킴</strong><div class="on-surface-muted">NodePool template과 NodeClass spec 변경. requirements, subnet, SG, AMI는 resolve 결과로 비교</div></div>
+    <div class="card"><strong class="text-accent">Drift를 일으키지 않음</strong><div class="on-surface-muted"><code>spec.weight</code>, <code>spec.limits</code>, <code>spec.disruption.*</code></div></div>
+    <div class="card"><strong class="text-accent">AMI는 alias로 고정</strong><div class="on-surface-muted"><code>al2023@v20261012</code>처럼 pin. <code>@latest</code>는 새 AMI마다 전체 Drift라 프로덕션 비권장</div></div>
+    <div class="card"><strong class="text-accent">Auto Mode는 AMI가 Drift 신호</strong><div class="on-surface-muted">새 AMI가 대략 주 1회 나오고 Drift로 롤링. <code>advancedCompute</code> 변경도 in-place 없이 Drift</div></div>
+  </div>
+</div>
+<div class="tc" hidden>
+  <table class="data-table ak2-life">
+    <thead><tr><th>항목</th><th>Self-managed v1.15</th><th>Auto Mode</th></tr></thead>
+    <tbody>
+      <tr><td><code>expireAfter</code> 기본</td><td>720h (30일)</td><td>336h (14일)</td></tr>
+      <tr><td>최대 수명</td><td>상한 없음, <code>Never</code> 허용</td><td>21일 강제</td></tr>
+      <tr><td><code>terminationGracePeriod</code></td><td>CRD 기본값 없음 (무제한 대기)</td><td>NodeClaim에 24h 적용</td></tr>
+    </tbody>
+  </table>
+  <div class="callout callout-info ak2-take"><strong class="text-info">실제 최대 수명</strong>: <code>expireAfter</code> + <code>terminationGracePeriod</code>. grace period가 지나면 남은 Pod는 강제 삭제됩니다.</div>
+</div>
+<div class="callout callout-danger ak2-take fragment fade-up" data-fragment-index="1"><strong class="text-danger">만료는 강제입니다</strong>: NodePool budget을 무시합니다. <code>expireAfter</code> 값을 바꾸면 기존 NodeClaim은 Drift로 교체됩니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s7" data-block="02-disruption" data-block-title="3부: 스케일링과 Disruption">
+  <div class="slide-header" data-remarp-id="s7-header"><h2>Spot 중단: 2분 경고는 누가 받나</h2></div>
+  <div class="slide-body" data-remarp-id="s7-body">
+    <p><!-- Slide 6: Spot 중단 처리 --></p>
+<style>
+.ak2-spot { display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--space-4); align-items: start; margin-bottom: var(--space-3); }
+.ak2-col { border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3); }
+.ak2-col h4 { margin: 0 0 var(--space-2); font-size: var(--fs-body); }
+.ak2-rules { margin: 0; padding-left: var(--space-4); font-size: var(--fs-card); color: var(--text-secondary); word-break: keep-all; }
+.ak2-rules li { margin-bottom: var(--space-1); }
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="ak2-spot">
+  <div class="ak2-col fragment fade-right" data-fragment-index="1">
+    <h4 class="text-accent">Self-managed: SQS와 EventBridge를 직접</h4>
+    <ul class="ak2-rules">
+      <li>SQS interruption queue, Helm <code>settings.interruptionQueue</code>로 연결</li>
+      <li>EventBridge rule 5개: Spot Interruption Warning, Rebalance, State-change, AWS Health, Capacity Reservation Interruption</li>
+      <li>Spot 경고를 받으면 drain과 새 노드 생성을 병행</li>
+      <li>Rebalance Recommendation은 이벤트 기록만 함</li>
+    </ul>
+  </div>
+  <div class="ak2-col fragment fade-left" data-fragment-index="2">
+    <h4 class="text-accent">Auto Mode: AWS가 처리</h4>
+    <ul class="ak2-rules">
+      <li>Spot 중단 알림, EC2 health 이벤트, 상태 검사 실패를 자동 처리</li>
+      <li>사용자가 SQS나 EventBridge를 구성하지 않음</li>
+      <li>ARC zonal shift 시 해당 AZ의 노드 생성과 자발적 disruption 중지</li>
+    </ul>
+  </div>
+</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="3">
+  <div class="callout callout-warning"><strong class="text-warning">queue를 안 붙이면 비활성</strong><div class="on-surface-muted">self-managed에서 <code>interruptionQueue</code>가 없으면 interruption 처리가 꺼집니다.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">FIS EC2 action은 Auto Mode 미지원</strong><div class="on-surface-muted"><code>SendSpotInstanceInterruptions</code> 포함. Spot 중단 리허설은 self-managed 노드에서 합니다.</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s8" data-block="02-disruption" data-block-title="3부: 스케일링과 Disruption">
+  <div class="slide-header" data-remarp-id="s8-header"><h2>교체 중 앱을 지키는 장치들</h2></div>
+  <div class="slide-body" data-remarp-id="s8-body">
+    <p><!-- Slide 7: 앱 보호 --></p>
+<style>
+.ak2-guard { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); margin-bottom: var(--space-3); }
+.ak2-scope { display: inline-block; font-size: var(--fs-caption); color: var(--text-secondary); margin-left: var(--space-2); }
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="ak2-guard">
+  <div class="card fragment fade-up" data-fragment-index="1"><strong class="text-accent">PodDisruptionBudget</strong><span class="ak2-scope">Pod 그룹</span><div class="on-surface-muted">drain 중 동시에 빠질 수 있는 Pod 수를 제한합니다. Karpenter와 Auto Mode 모두 존중</div></div>
+  <div class="card fragment fade-up" data-fragment-index="2"><strong class="text-accent">karpenter.sh/do-not-disrupt</strong><span class="ak2-scope">Pod 또는 Node</span><div class="on-surface-muted">자발적 disruption 대상에서 뺍니다. 배치 작업처럼 끊으면 안 되는 Pod에 사용</div></div>
+  <div class="card fragment fade-up" data-fragment-index="3"><strong class="text-accent">karpenter.sh/disruption-cost</strong><span class="ak2-scope">Pod, v1.15</span><div class="on-surface-muted">consolidation 비용 가중치. <code>pod-deletion-cost</code>로 조정하는 방식은 deprecated</div></div>
+  <div class="card fragment fade-up" data-fragment-index="4"><strong class="text-accent">karpenter.sh/do-not-repair</strong><span class="ak2-scope">Node, v1.15 신규</span><div class="on-surface-muted">Node Auto Repair 대상에서 제외합니다.</div></div>
+</div>
+<div class="callout callout-warning fragment fade-up" data-fragment-index="5"><strong class="text-warning">보호에는 끝이 있습니다</strong>: <code>terminationGracePeriod</code>를 설정하면 blocking PDB나 do-not-disrupt가 있어도 Drift 교체가 진행됩니다. Auto Mode는 21일 최대 수명에서 blocking PDB가 있으면 개입이 필요할 수 있습니다.</div>
+  </div>
+</div>
+</div>
+<script src="./common/animation-utils.js"></script>
+<script src="./common/deck-overlay.js"></script>
+<script src="./common/deck-detail.js"></script>
+<script src="./common/deck-nav.js"></script>
+<script src="./common/slide-framework.js"></script>
+<script src="./common/quiz-component.js"></script>
+<script src="./common/presenter-view.js"></script>
+<script>
+(function(){
+(function () {
+  var ids = ['ak2-n', 'ak2-p', 'ak2-d', 'ak2-r'];
+  var el = {};
+  for (var i = 0; i < ids.length; i++) { el[ids[i]] = document.getElementById(ids[i]); if (!el[ids[i]]) return; }
+  function update() {
+    var n = parseInt(el['ak2-n'].value, 10);
+    var p = parseInt(el['ak2-p'].value, 10);
+    var d = parseInt(el['ak2-d'].value, 10);
+    var r = parseInt(el['ak2-r'].value, 10);
+    var base = Math.ceil(n * p / 100);
+    var allowed = Math.max(0, base - d - r);
+    document.getElementById('ak2-n-v').textContent = n;
+    document.getElementById('ak2-p-v').textContent = p + '%';
+    document.getElementById('ak2-d-v').textContent = d;
+    document.getElementById('ak2-r-v').textContent = r;
+    document.getElementById('ak2-out').textContent = allowed + '대';
+    document.getElementById('ak2-f').textContent = 'roundup(' + n + ' x ' + p + '%) = ' + base + ', 빼기 삭제 중 ' + d + ', 빼기 NotReady ' + r;
+  }
+  ids.forEach(function (id) { el[id].addEventListener('input', update); });
+  update();
+})();
+})();
+</script>
+<script>
+  
+  const presenterNotes = {
+    1: "[0.5min] [\uc694\uc57d]\n- 3\ubd80\uc758 \uc9c8\ubb38: Karpenter\ub294 \uc5b4\ub5a4 \ub178\ub4dc\ub97c \uace0\ub974\uace0, \uc5b8\uc81c \uc904\uc774\uace0, \uc5b8\uc81c \ubc14\uafb8\ub294\uac00\n- \uc21c\uc11c: \ud504\ub85c\ube44\uc800\ub2dd, consolidation, \uc2a4\ucf00\uc904\ub7ec \uc810\uc218 \uc804\ub7b5, in-place resize, disruption budget, Drift\uc640 \ub9cc\ub8cc, Spot \uc911\ub2e8, \uc571 \ubcf4\ud638\n- \uac01 \ud56d\ubaa9\ub9c8\ub2e4 self-managed Karpenter v1.15\uc640 Auto Mode\uc758 \uae30\ubcf8\uac12 \ucc28\uc774\ub97c \ud568\uaed8 \ubd05\ub2c8\ub2e4.\n\n3\ubd80\ub294 \uc2a4\ucf00\uc77c\ub9c1\uacfc disruption\uc785\ub2c8\ub2e4. \ub178\ub4dc\ub97c \ub9cc\ub4dc\ub294 \uac83\ubcf4\ub2e4 \uc904\uc774\uace0 \ubc14\uafb8\ub294 \ucabd\uc5d0\uc11c \uc6b4\uc601 \uc774\uc288\uac00 \ud6e8\uc52c \ub9ce\uc774 \uc0dd\uae41\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc774\ubc88 \ud30c\ud2b8\uac00 \uc624\ub298 \uc138\uc158\uc5d0\uc11c \uac00\uc7a5 \uae41\ub2c8\ub2e4.\n\ud504\ub85c\ube44\uc800\ub2dd\ubd80\ud130 \uc2dc\uc791\ud574\uc11c consolidation, \uc2a4\ucf00\uc904\ub7ec \uc810\uc218 \uc804\ub7b5, in-place resize, budget, Drift\uc640 \ub9cc\ub8cc, Spot \uc911\ub2e8, \uadf8\ub9ac\uace0 \uc571\uc744 \uc9c0\ud0a4\ub294 \uc7a5\uce58 \uc21c\uc11c\ub85c \uac00\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uba3c\uc800 \ub178\ub4dc\ub97c \uace0\ub974\ub294 \uaddc\uce59\uc785\ub2c8\ub2e4.",
+    2: "\u23f8\ufe0f \ud83c\udfac [1.5min] [\uc694\uc57d]\n- requirements\ub294 \ud2b9\uc815 \uc778\uc2a4\ud134\uc2a4 \uc720\ud615\ubcf4\ub2e4 category, generation, arch \uac19\uc740 \uc18d\uc131\uc73c\ub85c \ub113\uac8c \uc7a1\uc2b5\ub2c8\ub2e4.\n- Spot\uc740 \uc720\uc5f0\uc131\uc774 \ud575\uc2ec\uc774\uba70, single-node spot-to-spot \uad50\uccb4\ub294 15\uac1c \uc774\uc0c1 instance type\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.\n- Auto Mode built-in pool\uc740 On-Demand, C/M/R, 5\uc138\ub300 \uc774\uc0c1 \uace0\uc815\uc774\uace0 \uc218\uc815\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.\n- capacity-type \ubbf8\uc9c0\uc815 \uc2dc \ub450 \ubc29\uc2dd \ubaa8\ub450 reserved, spot, on-demand \uc21c. self-managed\ub294 \ube44\uc6cc \ub450\uba74 Spot\uc774 \uba3c\uc800 \uc120\ud0dd\ub428\n\nrequirements\ub294 \ud2b9\uc815 \uc720\ud615\uc744 \ub098\uc5f4\ud558\uae30\ubcf4\ub2e4 category, arch \uac19\uc740 \uc18d\uc131\uc73c\ub85c \ub113\uac8c \uc7a1\uc2b5\ub2c8\ub2e4. \ud6c4\ubcf4\uac00 \ub9ce\uc744\uc218\ub85d \uac00\uaca9\uacfc \uac00\uc6a9\uc131\uc5d0 \ub9de\ucdb0 \uace0\ub97c \uc5ec\uc9c0\uac00 \uc0dd\uae30\uace0, Spot\uc5d0\uc11c\ub294 \ub354 \uc911\uc694\ud569\ub2c8\ub2e4. single-node spot-to-spot \uad50\uccb4\ub294 15\uac1c \uc774\uc0c1 \uc720\ud615\uc774 \ud544\uc694\ud558\uace0 alpha gate \ub4a4\uc5d0 \uc788\uc2b5\ub2c8\ub2e4.\n\n\ub450 \ubc88\uc9f8 \ud0ed Auto Mode\ub294 \ub77c\ubca8 \ud0a4\uac00 eks.amazonaws.com\uc73c\ub85c \uc2dc\uc791\ud558\uace0, 1 vCPU \uc774\ud558 \uc720\ud615\uc740 \uc4f8 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.\n\n\uc544\ub798 \ubc15\uc2a4\uac00 \uc2e4\ubb34 \ud301\uc785\ub2c8\ub2e4. capacity-type\uc744 \ube44\uc6cc \ub450\uba74 \ub450 \ubc29\uc2dd \ubaa8\ub450 reserved, spot, on-demand \uc21c\uc11c\ub85c \uace0\ub985\ub2c8\ub2e4. Auto Mode \uae30\ubcf8 \ud480\uc740 On-Demand \uace0\uc815\uc774\ub77c Spot\uc740 \ucee4\uc2a4\ud140 NodePool\uc774 \ud544\uc694\ud558\uace0, self-managed\ub294 \ube44\uc6cc \ub450\uba74 Spot\uc774 \uba3c\uc800 \ub739\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n- https://karpenter.sh/docs/concepts/disruption/ (spot-to-spot 15\uac1c \uc720\uc5f0\uc131)\n- https://docs.aws.amazon.com/eks/latest/userguide/set-builtin-node-pools.html, create-node-pool.html, automode-learn-instances.html\n\n\ub178\ub4dc\ub97c \ub9cc\ub4e4\uc5c8\uc73c\uba74, \ub2e4\uc74c\uc740 \uc5b8\uc81c \uc904\uc774\ub290\ub0d0\uc785\ub2c8\ub2e4.",
+    3: "\u2753 \u23f8\ufe0f [2.5min] [\uc694\uc57d]\n- \uc815\ucc45 3\uac00\uc9c0: WhenEmpty(\ube48 \ub178\ub4dc\ub9cc), WhenEmptyOrUnderutilized(\uc791\uc740 \uc808\uac10\uc5d0\ub3c4 \uad50\uccb4, upstream \uae30\ubcf8), Balanced(\uc808\uac10\uc774 disruption\ub9cc\ud07c \uac00\uce58 \uc788\uc744 \ub54c\ub9cc)\n- Balanced\ub294 upstream v1.14.0\uc5d0\uc11c opt-in\uc73c\ub85c \ucd94\uac00, Auto Mode\uc5d0\ub294 2026-07-27 \ucd94\uac00\n- EKS 1.37\ubd80\ud130 Auto Mode\uc5d0\uc11c \uc0c8\ub85c \ub9cc\ub4dc\ub294 \ubbf8\uc9c0\uc815 NodePool\uc740 Balanced, built-in pool\ub3c4 Balanced\uc774\uba70 \ub9e4\uc2dc\uac04 reconcile\ub418\uc5b4 \ub36e\uc5b4\uc4f8 \uc218 \uc5c6\uc74c\n- \uae30\ubcf8\uac12\uc740 \uc0dd\uc131 \uc2dc\uc810\uc5d0\ub9cc \uc801\uc6a9\ub418\ubbc0\ub85c GitOps\uc5d0\uc11c\ub294 \uac12\uc744 \uba85\uc2dc\n\nconsolidation\uc740 \ub0a8\ub294 \ub178\ub4dc\ub97c \uc904\uc774\ub294 \uae30\ub2a5\uc774\uace0, \uc815\ucc45\uc774 \uc138 \uac00\uc9c0\uc785\ub2c8\ub2e4. WhenEmpty\ub294 Pod\uac00 \ud558\ub098\ub3c4 \uc5c6\ub294 \ub178\ub4dc\ub9cc \ud68c\uc218\ud569\ub2c8\ub2e4. WhenEmptyOrUnderutilized\ub294 \ub35c \uc4f0\uc774\ub294 \ub178\ub4dc\uae4c\uc9c0 \uad50\uccb4 \ub300\uc0c1\uc73c\ub85c \ubcf4\uace0, AWS \ud45c\ud604\uc73c\ub85c\ub294 \uc2dc\uac04\ub2f9 0.01\ub2ec\ub7ec \uac19\uc740 \uc791\uc740 \uc808\uac10\uc5d0\ub3c4 \uad50\uccb4\ub97c \uc9c4\ud589\ud569\ub2c8\ub2e4. upstream Karpenter\uc758 \uae30\ubcf8\uac12\uc740 \uc5ec\uc804\ud788 \uc774\uac83\uc785\ub2c8\ub2e4.\n\n\uc138 \ubc88\uc9f8 Balanced\uac00 \uc0c8 \uc815\ucc45\uc785\ub2c8\ub2e4. \uac01 consolidation \ub3d9\uc791\uc744 NodePool \ube44\uc6a9 \uc911 \uc5bc\ub9c8\ub97c \uc904\uc774\ub294\uc9c0, \uadf8\ub9ac\uace0 NodePool \uc804\uccb4 Pod disruption \uc911 \uc5bc\ub9c8\ub97c \uc77c\uc73c\ud0a4\ub294\uc9c0\ub85c \uc810\uc218\ub97c \ub9e4\uae30\uace0, \uc808\uac10\uc774 \ucda9\ubd84\ud560 \ub54c\ub9cc \uc2e4\ud589\ud569\ub2c8\ub2e4. \uae30\ubcf8\uc73c\ub85c\ub294 \ucd95\ucd9c\ub418\ub294 Pod \uc218\ub85c \uacc4\uc0b0\ud558\uace0, priority\uac00 \ub192\uc740 Pod\ub294 \ub354 \ud070 \uac00\uc911\uce58\ub97c \ubc1b\uc2b5\ub2c8\ub2e4. AWS\ub294 \"\ube44\uc2b7\ud55c \ube44\uc6a9\uc5d0 \ub354 \uc801\uc740 Pod eviction\"\uc774\ub77c\uace0 \uc124\uba85\ud569\ub2c8\ub2e4.\n\uc544\ub798 \ud0c0\uc784\ub77c\uc778\uc744 \ubcf4\uc2dc\uba74, upstream\uc5d0\ub294 7\uc6d4 11\uc77c v1.14.0\uc5d0\uc11c opt-in\uc73c\ub85c \ub4e4\uc5b4\uc654\uace0, Auto Mode\uc5d0\ub294 7\uc6d4 27\uc77c\uc5d0 \ucd94\uac00\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uadf8\ub9ac\uace0 10\uc6d4 1\uc77c EKS 1.37\ubd80\ud130 Auto Mode\uc5d0\uc11c \uc0c8\ub85c \ub9cc\ub4dc\ub294 NodePool \uc911 \uc815\ucc45\uc744 \uc9c0\uc815\ud558\uc9c0 \uc54a\uc740 \uac83\uc740 Balanced\uac00 \uae30\ubcf8\uac12\uc774 \ub429\ub2c8\ub2e4. built-in NodePool \ub450 \uac1c\ub3c4 1.37\uc5d0\uc11c Balanced\ub85c \ubc14\ub00c\uace0, EKS\uac00 \ub9e4\uc2dc\uac04 \uc7ac\uc870\uc815\ud558\ubbc0\ub85c \ub36e\uc5b4\uc4f8 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.\n\n\uc5ec\uae30\uc11c GitOps\ub97c \uc4f0\uc2dc\ub294 \ubd84\ub4e4\uc740 \uc8fc\uc758\ud558\uc154\uc57c \ud569\ub2c8\ub2e4. \uae30\ubcf8\uac12\uc740 \uac1d\uccb4\ub97c \ub9cc\ub4e4 \ub54c\ub9cc \uc801\uc6a9\ub429\ub2c8\ub2e4. \uc5c5\uadf8\ub808\uc774\ub4dc\ud55c\ub2e4\uace0 \uae30\uc874 NodePool\uc774 \ubc14\ub00c\uc9c0\ub294 \uc54a\uc9c0\ub9cc, Argo CD\uac00 NodePool\uc744 \uc9c0\uc6e0\ub2e4 \ub2e4\uc2dc \ub9cc\ub4e4\uac70\ub098 \uc0c8 1.37 \ud074\ub7ec\uc2a4\ud130\ub97c \ubd80\ud2b8\uc2a4\ud2b8\ub7a9\ud558\uba74 Balanced\uac00 \ub429\ub2c8\ub2e4. Git\uc5d0\ub294 \uac12\uc774 \uc5c6\ub294\ub370 live \uac1d\uccb4\uc5d0\ub294 Balanced\uac00 \ubcf4\uc774\ub294 \uc0c1\ud0dc\uc785\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc815\ucc45\uc740 \ubc18\ub4dc\uc2dc \uba85\uc2dc\ud558\uc138\uc694. \uc774\uc804 \ub3d9\uc791\uc774 \ud544\uc694\ud558\uba74 WhenEmptyOrUnderutilized\ub97c \uba85\uc2dc\ud55c \ucee4\uc2a4\ud140 NodePool\ub85c \uc6cc\ud06c\ub85c\ub4dc\ub97c \ubcf4\ub0b4\uba74 \ub429\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n- https://docs.aws.amazon.com/eks/latest/userguide/auto-change.html (2026-07-27, 2026-10-01 \ud56d\ubaa9)\n- https://karpenter.sh/docs/concepts/disruption/, https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.0\n\n\uc815\ucc45\uc774 \"\ubb34\uc5c7\uc744 \uc904\uc77c\uc9c0\"\uc600\ub2e4\uba74, \uadf8 \uc804\uc5d0 Pod\uac00 \ucc98\uc74c\ubd80\ud130 \uc5b4\ub514\uc5d0 \ub193\uc774\ub294\uc9c0\ub3c4 consolidation\uc5d0 \uc601\ud5a5\uc744 \uc90d\ub2c8\ub2e4. \uc2a4\ucf00\uc904\ub7ec \uc810\uc218 \uc804\ub7b5\uc785\ub2c8\ub2e4.",
+    4: "\u23f8\ufe0f \ud83c\udfac [2.5min] [\uc694\uc57d]\n- EKS advanced control plane configuration(2026-08-12, 1.31 \uc774\uc0c1)\uc73c\ub85c kube-scheduler nodeResourcesFit \uc810\uc218 \uc804\ub7b5\uc744 \ubc14\uafc0 \uc218 \uc788\uc74c\n- LeastAllocated(\uae30\ubcf8)\ub294 \ubd84\uc0b0, MostAllocated\ub294 \uc774\ubbf8 \uc4f0\ub294 \ub178\ub4dc\ub85c \ubaa8\uc544\uc11c \uc801\uac8c \uc4f0\uc778 \ub178\ub4dc\ub97c consolidation\uc774 \uc9c0\uc6b0\uae30 \uc26c\uc6cc\uc9d0\n- Auto Mode\uc640 Karpenter\uc758 \ub178\ub4dc \uc0dd\uc131, \uc0ad\uc81c \ubc29\uc2dd\uc740 \ubc14\ub00c\uc9c0 \uc54a\uc74c. \ud074\ub7ec\uc2a4\ud130 \uc804\uccb4 \uc801\uc6a9, \uc2e4\ud589 \uc911 Pod \uc774\ub3d9 \uc5c6\uc74c, \ubc00\uc9d1 \uc2dc \uc7a5\uc560 \uc601\ud5a5 \ubc94\uc704 \uc99d\uac00\n\nconsolidation \uc774\uc57c\uae30\ub97c \ud558\uba74 \uaf2d \ub098\uc624\ub294 \uc9c8\ubb38\uc774 \"\uc560\ucd08\uc5d0 Pod\ub97c \ubaa8\uc544\uc11c \ubc30\uce58\ud560 \uc218\ub294 \uc5c6\ub098\uc694\"\uc785\ub2c8\ub2e4. \ub178\ub4dc\ub97c \uace0\ub974\ub294 \uac74 Karpenter\uc9c0\ub9cc, \uc774\ubbf8 \uc788\ub294 \ub178\ub4dc \uc911 \uc5b4\ub514\uc5d0 Pod\ub97c \ub193\uc744\uc9c0\ub294 kube-scheduler\uac00 \uc815\ud569\ub2c8\ub2e4.\n\n\uc67c\ucabd \ud0ed\uc744 \ubcf4\uc2dc\uba74 \uae30\ubcf8\uac12 LeastAllocated\ub294 \uc5ec\uc720\uac00 \ub9ce\uc740 \ub178\ub4dc C\ub97c \uace0\ub985\ub2c8\ub2e4. \ub450 \ubc88\uc9f8 \ud0ed MostAllocated\ub85c \ubc14\uafb8\uba74 \uc774\ubbf8 \ub9ce\uc774 \uc4f0\ub294 \ub178\ub4dc A\ub85c \ubcf4\ub0c5\ub2c8\ub2e4. \uc0c8 Pod\uac00 \uc801\uac8c \uc4f0\uc778 \ub178\ub4dc\ub85c \uac00\uc9c0 \uc54a\uc73c\ub2c8, \uadf8 \ub178\ub4dc\ub294 \uc810\uc810 \ube44\uace0 consolidation\uc774 \uc9c0\uc6b0\uae30 \uc26c\uc6cc\uc9d1\ub2c8\ub2e4.\n\nEKS\uc5d0\uc11c\ub294 8\uc6d4 12\uc77c\ubd80\ud130 \uc774 \uac12\uc744 \ubc14\uafc0 \uc218 \uc788\uc2b5\ub2c8\ub2e4. 1.36 \uc804\uc6a9\uc774 \uc544\ub2c8\ub77c 1.31 \uc774\uc0c1\uc774\uba74 \ub429\ub2c8\ub2e4. update-cluster-config\uc5d0 kube-scheduler-config\ub97c \ub118\uae30\uba74 control plane\uc774 \uba87 \ubd84\uac04 rolling update\ub429\ub2c8\ub2e4. GPU\ub098 Neuron \uac00\uc911\uce58\ub97c \ub192\uc774\uba74 \uac00\uc18d\uae30 Pod\ub97c \uc774\ubbf8 \uc77c\ubd80 \uc4f0\ub294 \ub178\ub4dc\ub85c \ubaa8\uc744 \uc218\ub3c4 \uc788\uc2b5\ub2c8\ub2e4.\n\uc8fc\uc758\ud560 \uc810\uc740 \uc138 \uac00\uc9c0\uc785\ub2c8\ub2e4. \ud074\ub7ec\uc2a4\ud130 \uc804\uccb4\uc5d0 \uc801\uc6a9\ub418\uace0, \uc774\ubbf8 \uc2e4\ud589 \uc911\uc778 Pod\ub294 \uc62e\uae30\uc9c0 \uc54a\uc73c\uba70, \ubaa8\uc744\uc218\ub85d \ub178\ub4dc \ud558\ub098\uac00 \uc8fd\uc744 \ub54c \uc601\ud5a5\ubc1b\ub294 Pod\uac00 \ub9ce\uc544\uc9d1\ub2c8\ub2e4. \uadf8\ub9ac\uace0 AWS \ubb38\uc11c\uc5d0 \uba85\uc2dc\ub41c \ub300\ub85c, \uc774 \uc124\uc815\uc740 Auto Mode\ub098 Karpenter\uac00 \ub178\ub4dc\ub97c \ub9cc\ub4e4\uace0 \uc9c0\uc6b0\ub294 \ubc29\uc2dd\uc740 \ubc14\uafb8\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uc624\ub298 \ub370\ubaa8\uc5d0\uc11c\ub294 \uc774 \uac12\uc744 \ubc14\uafb8\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n- https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-control-plane-configuration-parameters/\n- https://docs.aws.amazon.com/eks/latest/userguide/control-plane-configuration.html\n- https://docs.aws.amazon.com/eks/latest/userguide/control-plane-configuration-getting-started.html\n\nPod \ucabd\uc5d0\uc11c\ub3c4 \ub178\ub4dc\ub97c \ub35c \uc4f0\uac8c \ub9cc\ub4dc\ub294 \ubc29\ubc95\uc774 \uc788\uc2b5\ub2c8\ub2e4. requests\ub97c \uc7ac\uc2dc\uc791 \uc5c6\uc774 \ubc14\uafb8\ub294 \uac83\uc785\ub2c8\ub2e4.",
+    5: "\u2753 \u23f8\ufe0f [2.5min] [\uc694\uc57d]\n- 1.35 in-place resize GA, 1.36 Pod-level resources resize Beta(\uae30\ubcf8 \ucf1c\uc9d0), 1.37 resize\ub97c \uc704\ud55c scheduler preemption Alpha\n- \uc2e4\uce21(EKS 1.36.1): CPU 200m\uc5d0\uc11c 50m\ub85c \ucd95\uc18c, Guaranteed \uc720\uc9c0, restartCount 0, containerID \ub3d9\uc77c. Deployment, StatefulSet, DaemonSet \ubaa8\ub450\n- Karpenter v1.14.0+\ub294 requests\uc640 allocatedResources \uc911 \ud070 \uac12\uc73c\ub85c Pod \ud06c\uae30 \uacc4\uc0b0. QoS \ubd88\ubcc0, memory \ucd95\uc18c\ub294 \uc7ac\uc2dc\uc791 \uac00\ub2a5, Auto Mode \ub3d9\uc791\uc740 \ubb38\uc11c\ud654\ub418\uc9c0 \uc54a\uc74c\n\n\uc55e \uc2ac\ub77c\uc774\ub4dc\uac00 Pod\ub97c \uc5b4\ub514\uc5d0 \ub193\uc744\uc9c0\uc600\ub2e4\uba74, \uc774\ubc88\uc5d0\ub294 Pod \ud06c\uae30 \uc790\uccb4\ub97c \uc904\uc774\ub294 \ubc29\ubc95\uc785\ub2c8\ub2e4. 1.35\uc5d0\uc11c in-place resize\uac00 GA\uac00 \ub418\uc5b4 Pod\ub97c \ub2e4\uc2dc \ub9cc\ub4e4\uc9c0 \uc54a\uace0 CPU\uc640 memory\ub97c \ubc14\uafc0 \uc218 \uc788\uc2b5\ub2c8\ub2e4. 1.36\uc5d0\uc11c\ub294 Pod \ub2e8\uc704 \ub9ac\uc18c\uc2a4\uae4c\uc9c0 Beta\ub85c \ub4e4\uc5b4\uc640 \uae30\ubcf8\uc73c\ub85c \ucf1c\uc838 \uc788\uace0, 1.37\uc5d0\uc11c\ub294 \ub178\ub4dc\uac00 \uaf49 \ucc28\uc11c resize\uac00 Deferred\ub85c \uba48\ucd9c \ub54c scheduler\uac00 \ub0ae\uc740 priority Pod\ub97c \ubc00\uc5b4\ub0b4\ub294 \uae30\ub2a5\uc774 Alpha\ub85c \ucd94\uac00\ub410\uc2b5\ub2c8\ub2e4.\n\n\uc67c\ucabd \ud45c\ub294 EKS 1.36.1\uc5d0\uc11c \uc9c1\uc811 \uce21\uc815\ud55c \uacb0\uacfc\uc785\ub2c8\ub2e4. JVM \uc6cc\ubc0d\uc5c5\ucc98\ub7fc \uc2dc\uc791\ud560 \ub54c\ub9cc CPU\ub97c \ub9ce\uc774 \uc4f0\ub294 \uc571\uc744 \uac00\uc815\ud574, startup probe\uac00 \ud1b5\uacfc\ud558\uba74 \uc791\uc740 \ucee8\ud2b8\ub864\ub7ec\uac00 CPU\ub97c 200m\uc5d0\uc11c 50m\ub85c \uc904\uc774\uac8c \ud588\uc2b5\ub2c8\ub2e4. requests\uc640 limits\ub97c \uac19\uac8c \uc720\uc9c0\ud574\uc11c Guaranteed QoS\uac00 \uadf8\ub300\ub85c\uc600\uace0, restartCount\ub294 0, containerID\ub3c4 \uadf8\ub300\ub85c\uc600\uc2b5\ub2c8\ub2e4. \ucee8\ud14c\uc774\ub108\ub97c \ub2e4\uc2dc \ub9cc\ub4e4\uc9c0 \uc54a\uc558\ub2e4\ub294 \ub73b\uc785\ub2c8\ub2e4. resizePolicy\ub294 1.36\uc5d0\uc11c GA\ub41c MutatingAdmissionPolicy\ub85c webhook \uc5c6\uc774 \ub123\uc5c8\uc2b5\ub2c8\ub2e4.\n\n\uadf8\ub7fc \ub178\ub4dc \uc790\ub3d9\ud654\uc640\ub294 \uc5b4\ub5bb\uac8c \uc5ee\uc77c\uae4c\uc694. Karpenter\ub294 v1.14.0\ubd80\ud130 Pod \ud06c\uae30\ub97c requests\uc640 \uc2e4\uc81c \ud560\ub2f9\uac12 \uc911 \ud070 \uac12\uc73c\ub85c \ubd10\uc11c resize \uc911\uc5d0\ub3c4 scheduler\uc640 \uac19\uc740 \ud310\ub2e8\uc744 \ud569\ub2c8\ub2e4. requests\uac00 \uc904\uc5b4 \ub178\ub4dc\uac00 \ube44\uba74 consolidation\uc774 \uc815\ub9ac\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \ub2e4\ub9cc QoS class\ub294 \uc0dd\uc131 \uc2dc \uc815\ud574\uc838 \ubc14\ub00c\uc9c0 \uc54a\uace0, memory\ub97c \uc904\uc774\uba74 \uc7ac\uc2dc\uc791\ub420 \uc218 \uc788\uc2b5\ub2c8\ub2e4. Auto Mode\uc5d0\uc11c\uc758 resize \uad00\ub828 \ub3d9\uc791\uc740 AWS \ubb38\uc11c\uc5d0 \ub530\ub85c \uc124\uba85\uc774 \uc5c6\uc73c\ub2c8 \uc9c1\uc811 \uac80\uc99d\ud558\uc154\uc57c \ud569\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n- https://kubernetes.io/blog/2026/04/30/kubernetes-v1-36-inplace-pod-level-resources-beta/\n- https://kubernetes.io/blog/2026/09/10/kubernetes-v1-37-scheduler-preemption-for-in-place-pod-resize-alpha/\n- \uc2e4\uce21: https://atomoh.notion.site/Amazon-EKS-1-36-What-s-New-2026-06-3748907d4b018102983bd4a31f243512 \ud558\uc704 \ud398\uc774\uc9c0 \uc608\uc2dc \u2460, \u2461\n- Karpenter in-place resize \uc124\uacc4: https://github.com/kubernetes-sigs/karpenter/blob/v1.15.0/designs/in-place-pod-vertical-scaling.md\n\n\uc774\uc81c \uc904\uc774\ub294 \uc18d\ub3c4\ub97c \uc815\ud558\ub294 \uc7a5\uce58, disruption budget\uc785\ub2c8\ub2e4.",
+    6: "\u2753 \ud83c\udfac \u23f8\ufe0f [2.5min] [\uc694\uc57d]\n- budget \ud544\ub4dc: nodes(\uc815\uc218 \ub610\ub294 %, \uc62c\ub9bc), schedule(cron, UTC\ub9cc), duration(schedule\uacfc \ud568\uaed8), reasons(Drifted, Underutilized, Empty, Unhealthy)\n- \ud5c8\uc6a9 \uc218 = roundup(\uc804\uccb4 x %) - \uc0ad\uc81c \uc911 - NotReady. \uc5ec\ub7ec budget\uc774 \uacb9\uce58\uba74 \uac00\uc7a5 \uc791\uc740 \uac12\n- \ubbf8\uc9c0\uc815 \uc2dc nodes 10% \ud558\ub098, Auto Mode \uae30\ubcf8\ub3c4 10%\n- expireAfter \ub9cc\ub8cc\ub294 budget\uc73c\ub85c \ub9c9\uc744 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.\n\nbudget\uc740 voluntary disruption, \uc989 consolidation\uc774\ub098 Drift \uac19\uc740 \uc790\ubc1c\uc801 \uad50\uccb4\ub97c \ud55c \ubc88\uc5d0 \uba87 \ub300\uae4c\uc9c0 \ud5c8\uc6a9\ud560\uc9c0 \uc815\ud569\ub2c8\ub2e4. \uc67c\ucabd \uc608\uc2dc\ub294 budget \ub450 \uac1c\uc785\ub2c8\ub2e4. \ud3c9\uc18c\uc5d0\ub294 10%\uae4c\uc9c0, \uadf8\ub9ac\uace0 \ud3c9\uc77c \ud2b9\uc815 \uc2dc\uac04\ub300\uc5d0\ub294 Underutilized\uc640 Drifted \uc0ac\uc720\ub85c\ub294 0\ub300, \uc989 \uad50\uccb4 \uae08\uc9c0\uc785\ub2c8\ub2e4.\n\nschedule\uc740 UTC\ub9cc \ubc1b\uc2b5\ub2c8\ub2e4. \uc608\uc2dc\uc758 \"0 0 * * 1-5\"\ub294 UTC \uc790\uc815\uc774\ub2c8 \ud55c\uad6d \uc2dc\uac04\uc73c\ub85c \ud3c9\uc77c \uc624\uc804 9\uc2dc\uc774\uace0, duration 9h\uba74 \uc624\ud6c4 6\uc2dc\uae4c\uc9c0\uc785\ub2c8\ub2e4. \uc5c5\ubb34 \uc2dc\uac04 \ubcf4\ud638\ub97c KST\ub85c \uc4f0\uba74 9\uc2dc\uac04 \uc5b4\uae0b\ub098\ub2c8 \uc8fc\uc758\ud558\uc138\uc694. reasons\uc5d0\ub294 Drifted, Underutilized, Empty, \uadf8\ub9ac\uace0 v1.15\uc5d0\uc11c \ucd94\uac00\ub41c Unhealthy\ub97c \ub123\uc744 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd \uacc4\uc0b0\uae30\ub85c \uacf5\uc2dd\uc744 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \ud5c8\uc6a9 \uc218\ub294 \uc804\uccb4 \ub178\ub4dc\uc5d0 \ud37c\uc13c\ud2b8\ub97c \uacf1\ud574 \uc62c\ub9bc\ud55c \uac12\uc5d0\uc11c, \uc774\ubbf8 \uc0ad\uc81c \uc911\uc778 \ub178\ub4dc\uc640 NotReady \ub178\ub4dc\ub97c \ube80 \uac12\uc785\ub2c8\ub2e4. 40\ub300\uc5d0 10%\uba74 4\ub300\uc774\uace0, \uc0ad\uc81c \uc911 1\ub300\ub97c \ube7c\uba74 3\ub300\uc785\ub2c8\ub2e4. NotReady \uc2ac\ub77c\uc774\ub354\ub97c \uc62c\ub824 \ubcf4\uba74 \ud5c8\uc6a9 \uc218\uac00 \ubc14\ub85c \uc904\uc5b4\ub4ed\ub2c8\ub2e4. \uc7a5\uc560\uac00 \ub09c \uc0c1\ud669\uc5d0\uc11c \uad50\uccb4\uac00 \ub354 \ubcf4\uc218\uc801\uc73c\ub85c \ubc14\ub00c\ub294 \uad6c\uc870\uc785\ub2c8\ub2e4. \ucc38\uace0\ub85c Unhealthy \uc0ac\uc720\ub294 NotReady\ub97c \ube7c\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\uc5ec\ub7ec budget\uc774 \ub3d9\uc2dc\uc5d0 \ud574\ub2f9\ub418\uba74 \uac00\uc7a5 \uc791\uc740 \uac12\uc774 \uc801\uc6a9\ub429\ub2c8\ub2e4. \uc9c0\uc815\ud558\uc9c0 \uc54a\uc73c\uba74 nodes 10% \ud558\ub098\uac00 \uae30\ubcf8\uc774\uace0, Auto Mode\uc758 \uae30\ubcf8\ub3c4 10%\uc785\ub2c8\ub2e4.\n\n\uadf8\ub7fc \uc5c5\ubb34 \uc2dc\uac04\uc5d0 \ub178\ub4dc\uac00 \uc808\ub300 \uc548 \ubc14\ub014\uae4c\uc694. \uc544\ub2d9\ub2c8\ub2e4. \uc624\ub978\ucabd \uc544\ub798 \ubc15\uc2a4\ucc98\ub7fc, expireAfter\uc5d0 \uc758\ud55c \ub9cc\ub8cc\ub294 budget\uc774 \ub9c9\uc9c0 \ubabb\ud569\ub2c8\ub2e4. \uc774\uac83\uc774 \ub2e4\uc74c \uc2ac\ub77c\uc774\ub4dc \uc8fc\uc81c\uc785\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n- https://karpenter.sh/docs/concepts/disruption/ (budgets, \uacc4\uc0b0\uc2dd, \ub9cc\ub8cc \uc608\uc678)\n- https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html (Auto Mode \uae30\ubcf8 budget 10%)\n\nDrift\uc640 \ub9cc\ub8cc, \ub178\ub4dc\uac00 \uad50\uccb4\ub418\ub294 \ub450 \uac00\uc9c0 \uc774\uc720\ub97c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    7: "\ud83c\udfac \u23f8\ufe0f [2min] [\uc694\uc57d]\n- Drift: NodePool template, NodeClass spec \ubcc0\uacbd\uc73c\ub85c \ubc1c\uc0dd. weight, limits, disruption \ud544\ub4dc\ub294 Drift\ub97c \uc77c\uc73c\ud0a4\uc9c0 \uc54a\uc74c\n- AMI\ub294 al2023@v20261012\ucc98\ub7fc alias\ub97c pin. @latest\ub294 \uc0c8 AMI\ub9c8\ub2e4 \ubaa8\ub4e0 \ub178\ub4dc\uac00 Drift\ub418\uc5b4 \ud504\ub85c\ub355\uc158 \ube44\uad8c\uc7a5\n- Auto Mode\ub294 \uc0c8 AMI(\ub300\ub7b5 \uc8fc 1\ud68c)\uc640 advancedCompute \ubcc0\uacbd\uc774 Drift\ub85c \uad50\uccb4\ub428\n- \ub9cc\ub8cc: expireAfter \uae30\ubcf8 720h(upstream), 336h(Auto Mode), Auto Mode \ucd5c\ub300 21\uc77c. terminationGracePeriod\ub294 upstream \uae30\ubcf8 \uc5c6\uc74c, Auto Mode NodeClaim 24h\n- \ub9cc\ub8cc\ub294 budget\uc744 \ubb34\uc2dc\ud558\ub294 \uac15\uc81c \uad50\uccb4\n\n\ub178\ub4dc\uac00 \uad50\uccb4\ub418\ub294 \uc774\uc720\ub294 \ud06c\uac8c \ub450 \uac00\uc9c0, Drift\uc640 \ub9cc\ub8cc\uc785\ub2c8\ub2e4. \uccab \ubc88\uc9f8 \ud0ed Drift\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. Drift\ub294 \"\uc9c0\uae08 \ub178\ub4dc\uac00 \uc120\uc5b8\ub41c \uc124\uc815\uacfc \ub2e4\ub974\ub2e4\"\ub294 \ub73b\uc785\ub2c8\ub2e4. NodePool template\uc774\ub098 NodeClass spec\uc744 \ubc14\uafb8\uba74 \ud574\uc2dc\ub97c \ube44\uad50\ud574 Drift\ub85c \ud310\ub2e8\ud558\uace0, requirements, subnet, security group, AMI\ub294 \uc2e4\uc81c resolve\ub41c \uacb0\uacfc\ub85c \ube44\uad50\ud569\ub2c8\ub2e4. \ubc18\ub300\ub85c weight, limits, disruption \uc124\uc815\uc740 \ubc14\uafd4\ub3c4 \ub178\ub4dc\ub97c \uad50\uccb4\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\nAMI\uac00 \uac00\uc7a5 \ud754\ud55c Drift \uc6d0\uc778\uc785\ub2c8\ub2e4. \uc9c1\uc811 \uc6b4\uc601\ud560 \ub54c\ub294 al2023@v20261012\ucc98\ub7fc \ub0a0\uc9dc \ubc84\uc804\uc73c\ub85c \uace0\uc815\ud558\uc138\uc694. @latest\ub294 \uc0c8 AMI\ub9c8\ub2e4 \ubaa8\ub4e0 \ub178\ub4dc\uac00 Drift \ub300\uc0c1\uc774 \ub418\uc5b4 \ud504\ub85c\ub355\uc158\uc5d0\uc11c \uad8c\uc7a5\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. Auto Mode\ub294 AWS\uac00 \ub300\ub7b5 \uc8fc 1\ud68c \uc0c8 AMI\ub97c \ub0b4\uace0 \uadf8\uac83\uc774 Drift \uc2e0\ud638\uac00 \ub418\uba70, advancedCompute \ubcc0\uacbd\ub3c4 Drift\ub85c \uad50\uccb4\ub429\ub2c8\ub2e4.\n\n\ub450 \ubc88\uc9f8 \ud0ed\uc774 \ub9cc\ub8cc\uc785\ub2c8\ub2e4. expireAfter \uae30\ubcf8\uac12\uc740 upstream 720\uc2dc\uac04, Auto Mode 336\uc2dc\uac04\uc774\uace0, Auto Mode\ub294 \ucd5c\ub300 21\uc77c\uc785\ub2c8\ub2e4. terminationGracePeriod\ub294 upstream \uae30\ubcf8\uac12\uc774 \uc5c6\uace0 Auto Mode\ub294 24\uc2dc\uac04\uc785\ub2c8\ub2e4. \uc2e4\uc81c \ucd5c\ub300 \uc218\uba85\uc740 \ub458\uc744 \ub354\ud55c \uac12\uc785\ub2c8\ub2e4.\n\ube68\uac04 \ubc15\uc2a4\uac00 \ud575\uc2ec\uc785\ub2c8\ub2e4. \ub9cc\ub8cc\ub294 budget\uc744 \ubb34\uc2dc\ud558\ub294 \uac15\uc81c \uad50\uccb4\uc785\ub2c8\ub2e4. \uc5c5\ubb34 \uc2dc\uac04 \ubcf4\ud638 budget\uc744 \uac78\uc5b4\ub3c4 \ub9cc\ub8cc\ub294 \uc9c4\ud589\ub418\ub2c8, \ub9cc\ub8cc \uc8fc\uae30\uc640 PDB\ub97c \ud568\uaed8 \uc124\uacc4\ud574\uc57c \ud569\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n- https://karpenter.sh/docs/concepts/disruption/, https://karpenter.sh/docs/tasks/managing-amis/\n- https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html, auto-security.html (21\uc77c), automode-learn-instances.html (\uc8fc\uac04 AMI)\n- SSM /aws/service/eks/optimized-ami/1.37/amazon-linux-2023/x86_64/standard/recommended/image_id (2026-10-20 \uc870\ud68c)\n\n\uacc4\ud68d\ub41c \uad50\uccb4 \ub9d0\uace0, AWS\uac00 2\ubd84 \uc804\uc5d0 \uc54c\ub824 \uc8fc\ub294 \uad50\uccb4\ub3c4 \uc788\uc2b5\ub2c8\ub2e4. Spot \uc911\ub2e8\uc785\ub2c8\ub2e4.",
+    8: "\u2753 \u23f8\ufe0f [2min] [\uc694\uc57d]\n- self-managed: SQS queue\uc640 EventBridge rule 5\uac1c\ub97c \ub9cc\ub4e4\uace0 Helm settings.interruptionQueue\ub85c \uc5f0\uacb0. \uc5c6\uc73c\uba74 interruption \ucc98\ub9ac \ube44\ud65c\uc131\n- Spot \uacbd\uace0(2\ubd84)\ub97c \ubc1b\uc73c\uba74 drain\uacfc \uc0c8 \ub178\ub4dc \uc0dd\uc131\uc744 \ubcd1\ud589, Rebalance Recommendation\uc740 \uc774\ubca4\ud2b8\ub9cc \uae30\ub85d\n- Auto Mode: Spot \uc911\ub2e8, EC2 health, \uc0c1\ud0dc \uac80\uc0ac \uc2e4\ud328\ub97c AWS\uac00 \uc790\ub3d9 \ucc98\ub9ac. \uc0ac\uc6a9\uc790 \uad6c\uc131 \uc5c6\uc74c\n- Auto Mode \uc778\uc2a4\ud134\uc2a4\uc5d0\ub294 FIS EC2 action(SendSpotInstanceInterruptions \ub4f1)\uc744 \uc4f8 \uc218 \uc5c6\uc74c\n\nSpot \uc778\uc2a4\ud134\uc2a4\ub294 \ud68c\uc218 2\ubd84 \uc804\uc5d0 \uacbd\uace0\uac00 \uc635\ub2c8\ub2e4. \uc774 \uacbd\uace0\ub97c \ub204\uac00 \ubc1b\uc544\uc11c \ucc98\ub9ac\ud558\ub290\ub0d0\uac00 \ub450 \ubc29\uc2dd\uc758 \ucc28\uc774\uc785\ub2c8\ub2e4.\n\uc67c\ucabd self-managed\ub294 \uc0ac\uc6a9\uc790\uac00 \uc218\uc2e0 \uacbd\ub85c\ub97c \ub9cc\ub4ed\ub2c8\ub2e4. Karpenter\uac00 \uc81c\uacf5\ud558\ub294 CloudFormation \ud15c\ud50c\ub9bf\uc73c\ub85c SQS queue\uc640 EventBridge rule \ub2e4\uc12f \uac1c\ub97c \ub9cc\ub4e4\uace0, Helm \uac12 settings.interruptionQueue\uc5d0 queue \uc774\ub984\uc744 \ub123\uc2b5\ub2c8\ub2e4. Spot \uacbd\uace0\ub97c \ubc1b\uc73c\uba74 Karpenter\ub294 \uae30\uc874 \ub178\ub4dc drain\uacfc \ub300\uccb4 \ub178\ub4dc \uc0dd\uc131\uc744 \ub3d9\uc2dc\uc5d0 \uc9c4\ud589\ud574\uc11c 2\ubd84\uc744 \ucd5c\ub300\ud55c \ud65c\uc6a9\ud569\ub2c8\ub2e4. Rebalance Recommendation\uc740 \uc774\ubca4\ud2b8\ub85c\ub9cc \ub0a8\uae30\uace0 \ub178\ub4dc\ub97c \uac74\ub4dc\ub9ac\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\n\uc8fc\uc758\ud560 \uc810\uc774 \uc788\uc2b5\ub2c8\ub2e4. interruptionQueue\ub97c \uc9c0\uc815\ud558\uc9c0 \uc54a\uc544\ub3c4 Karpenter\ub294 \uc815\uc0c1\uc801\uc73c\ub85c \uc124\uce58\ub418\uace0 \ub3cc\uc544\uac11\ub2c8\ub2e4. \uadf8\ub7f0\ub370 \uc774 \uacbd\uc6b0 interruption \ucc98\ub9ac \uc790\uccb4\uac00 \uaebc\uc9c4 \uc0c1\ud0dc\uc785\ub2c8\ub2e4. \uc124\uce58 \ud6c4 Helm \uac12\uc744 \uaf2d \ud655\uc778\ud558\uc138\uc694.\n\uc624\ub978\ucabd Auto Mode\ub294 \uc774 \ubaa8\ub4e0 \uac83\uc744 AWS\uac00 \ucc98\ub9ac\ud569\ub2c8\ub2e4. Spot \uc911\ub2e8 \uc54c\ub9bc, EC2 health \uc774\ubca4\ud2b8, \uc0c1\ud0dc \uac80\uc0ac \uc2e4\ud328\uae4c\uc9c0 \uc790\ub3d9\uc774\uace0 \uc0ac\uc6a9\uc790\uac00 queue\ub97c \ub9cc\ub4e4 \ud544\uc694\uac00 \uc5c6\uc2b5\ub2c8\ub2e4. ARC zonal shift\uc640\ub3c4 \uc5f0\ub3d9\ub418\uc5b4 \uc601\ud5a5\ubc1b\uc740 AZ\uc5d0\ub294 \ub178\ub4dc\ub97c \ub9cc\ub4e4\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\n\uadf8\ub7fc Auto Mode\uc5d0\uc11c Spot \uc911\ub2e8\uc744 \ud14c\uc2a4\ud2b8\ud574 \ubcfc \uc218 \uc788\uc744\uae4c\uc694. AWS FIS\uc758 EC2 action, Spot interruption\uc744 \ud3ec\ud568\ud574 reboot, stop, terminate \uac19\uc740 action\uc740 Auto Mode \uc778\uc2a4\ud134\uc2a4\uc5d0\uc11c \uc9c0\uc6d0\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc624\ub298 \ub370\ubaa8 \uc601\uc0c1\uc758 Spot \uc911\ub2e8 \uc7a5\uba74\uc740 self-managed Karpenter \ub178\ub4dc\uc5d0\uc11c FIS\ub85c \uc7ac\ud604\ud588\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n- https://karpenter.sh/docs/concepts/disruption/#interruption, Karpenter v1.15 CloudFormation template (preview \uacbd\ub85c)\n- https://docs.aws.amazon.com/eks/latest/userguide/automode.html (Automated Components, FIS \ubbf8\uc9c0\uc6d0 action, zonal shift)\n\n\ub9c8\uc9c0\ub9c9\uc73c\ub85c, \uc774\ub807\uac8c \ub178\ub4dc\uac00 \ubc14\ub00c\ub294 \ub3d9\uc548 \uc560\ud50c\ub9ac\ucf00\uc774\uc158\uc744 \uc9c0\ud0a4\ub294 \uc7a5\uce58\ub97c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    9: "\u2753 \u23f8\ufe0f [2min] [\uc694\uc57d]\n- PDB: drain \uc911 \ub3d9\uc2dc\uc5d0 \ube60\uc9c0\ub294 Pod \uc218 \uc81c\ud55c, Karpenter\uc640 Auto Mode \ubaa8\ub450 \uc874\uc911\n- karpenter.sh/do-not-disrupt(Pod/Node): \uc790\ubc1c\uc801 disruption \uc81c\uc678\n- karpenter.sh/disruption-cost(v1.15): consolidation \uac00\uc911\uce58, pod-deletion-cost \ubc29\uc2dd\uc740 deprecated. do-not-repair(Node, v1.15 \uc2e0\uaddc)\n- terminationGracePeriod\uac00 \uc788\uc73c\uba74 blocking PDB\ub098 do-not-disrupt\uac00 \uc788\uc5b4\ub3c4 Drift \uad50\uccb4 \uc9c4\ud589. Auto Mode 21\uc77c \uc0c1\ud55c\uc5d0\uc11c\ub294 \uac1c\uc785 \ud544\uc694 \uac00\ub2a5\n\n\uc9c0\uae08\uae4c\uc9c0 \ub178\ub4dc\ub97c \ubc14\uafb8\ub294 \uaddc\uce59\uc744 \ubd24\uc73c\ub2c8, \uc774\uc81c \uc560\ud50c\ub9ac\ucf00\uc774\uc158 \ucabd \ubc29\uc5b4 \uc7a5\uce58\uc785\ub2c8\ub2e4. \uccab\uc9f8\ub294 PodDisruptionBudget\uc785\ub2c8\ub2e4. \ub178\ub4dc\ub97c drain\ud560 \ub54c \ud55c \ubc88\uc5d0 \ube60\uc9c8 \uc218 \uc788\ub294 Pod \uc218\ub97c \uc81c\ud55c\ud558\uace0, Karpenter\uc640 Auto Mode \ubaa8\ub450 \uc774\ub97c \uc874\uc911\ud569\ub2c8\ub2e4. \uac00\uc7a5 \uae30\ubcf8\uc774\ub2c8 replica\uac00 \ub458 \uc774\uc0c1\uc778 \uc11c\ube44\uc2a4\uc5d0\ub294 \uaf2d \ub450\uc138\uc694.\n\n\ub458\uc9f8, karpenter.sh/do-not-disrupt annotation\uc785\ub2c8\ub2e4. Pod\ub098 Node\uc5d0 \ubd99\uc774\uba74 consolidation \uac19\uc740 \uc790\ubc1c\uc801 disruption \ub300\uc0c1\uc5d0\uc11c \ube60\uc9d1\ub2c8\ub2e4. \ub04a\uae30\uba74 \ucc98\uc74c\ubd80\ud130 \ub2e4\uc2dc \ud574\uc57c \ud558\ub294 \ubc30\uce58 \uc791\uc5c5\uc5d0 \uc801\ud569\ud569\ub2c8\ub2e4.\n\uc14b\uc9f8, v1.15\uc5d0\uc11c consolidation \ub300\uc0c1\uc744 \uc870\uc815\ud558\ub294 \ubc29\ubc95\uc774 \ubc14\ub00c\uc5c8\uc2b5\ub2c8\ub2e4. karpenter.sh/disruption-cost annotation\uc744 \uc4f0\uace0, \uae30\uc874\ucc98\ub7fc controller.kubernetes.io/pod-deletion-cost\ub85c \uc870\uc815\ud558\ub294 \ubc29\uc2dd\uc740 deprecated\uc785\ub2c8\ub2e4. Balanced \uc815\ucc45\uc5d0\uc11c \uc774 \uac12\uc774 \ub192\uc73c\uba74 consolidation\uc774 \ub9c9\ud790 \uc218\ub3c4 \uc788\uc2b5\ub2c8\ub2e4. \ub137\uc9f8, v1.15\uc5d0 \uc0c8\ub85c \uc0dd\uae34 karpenter.sh/do-not-repair\ub294 Node\uc5d0 \ubd99\uc5ec auto repair \ub300\uc0c1\uc5d0\uc11c \uc81c\uc678\ud569\ub2c8\ub2e4.\n\n\uadf8\ub7fc \uc774 \uc7a5\uce58\ub4e4\ub85c \ub178\ub4dc\ub97c \uc601\uc6d0\ud788 \ubd99\uc7a1\uc544 \ub458 \uc218 \uc788\uc744\uae4c\uc694. \ub178\ub780 \ubc15\uc2a4\ucc98\ub7fc, terminationGracePeriod\uac00 \uc124\uc815\ub418\uc5b4 \uc788\uc73c\uba74 blocking PDB\ub098 do-not-disrupt\uac00 \uc788\uc5b4\ub3c4 Drift \uad50\uccb4\ub294 \uacb0\uad6d \uc9c4\ud589\ub429\ub2c8\ub2e4. Auto Mode\ub294 21\uc77c \ucd5c\ub300 \uc218\uba85\uc774 \uc788\uc5b4\uc11c, \uadf8\ub54c\uae4c\uc9c0 PDB\uac00 \uacc4\uc18d \ub9c9\uace0 \uc788\uc73c\uba74 \uc0ac\ub78c\uc774 \uac1c\uc785\ud574\uc57c \ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \ubcf4\ud638 \uc7a5\uce58\ub294 \uad50\uccb4\ub97c \ub2a6\ucd94\ub294 \uac83\uc774\uc9c0 \uc5c6\uc560\ub294 \uac83\uc774 \uc544\ub2c8\ub77c\uace0 \uae30\uc5b5\ud574 \uc8fc\uc138\uc694.\n\n[\ucd9c\ucc98]\n- https://karpenter.sh/docs/concepts/disruption/ (do-not-disrupt, terminationGracePeriod)\n- https://karpenter.sh/docs/upgrading/upgrade-guide/#upgrading-to-1150 (disruption-cost, do-not-repair)\n- https://docs.aws.amazon.com/eks/latest/userguide/automode.html (PDB, NDB \uc874\uc911\uacfc 21\uc77c)\n\n\uc5ec\uae30\uae4c\uc9c0\uac00 3\ubd80 \uc2a4\ucf00\uc77c\ub9c1\uacfc disruption\uc774\uc5c8\uc2b5\ub2c8\ub2e4. 4\ubd80\uc5d0\uc11c\ub294 \uc774 \ubaa8\ub4e0 \uac83\uc744 \uc6b4\uc601\ud558\ub294 \uad00\uc810, \uc5c5\uadf8\ub808\uc774\ub4dc\uc640 \uad00\uce21, \ube44\uc6a9\uc744 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4."
+  };
+  const deck = new SlideFramework({
+    logoSrc: "./common/pptx-theme/images/logo_1.png",
+    
+    footer: "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.",
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

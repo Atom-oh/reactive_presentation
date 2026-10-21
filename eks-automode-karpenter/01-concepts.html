@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>노드 자동화의 구조, Auto Mode와 Karpenter</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="01-concepts.md">
+  <meta name="remarp-block" content="01-concepts">
+  <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/deck-overlay.css">
+  <link rel="stylesheet" href="./common/deck-detail.css">
+  <link rel="stylesheet" href="./common/deck-nav.css">
+  <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
+  <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
+  
+  <script>window.__remarpTheme = {"colors": {"dk1": "#000000", "lt1": "#FFFFFF", "dk2": "#161D26", "lt2": "#F3F3F7", "accent1": "#41B3FF", "accent2": "#AD5CFF", "accent3": "#00E500", "accent4": "#FF5C85", "accent5": "#FF693C", "accent6": "#FBD332", "hlink": "#41B1E8", "folHlink": "#41B1E8"}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}};</script>
+</head>
+<body>
+<div class="slide-deck theme-dark">
+<div class="slide theme-dark" data-remarp-id="s0" data-block="01-concepts" data-block-title="EKS Auto Mode와 Karpenter" style="background:linear-gradient(135deg, #16212f 0%, #0f1b2a 55%, #14243a 100%); padding:0; overflow:hidden;">
+  <div style="position:absolute; top:-20%; right:-10%; width:60%; height:80%; background:radial-gradient(ellipse, rgba(255,153,0,0.10) 0%, transparent 70%); pointer-events:none;"></div>
+  <div style="position:absolute; left:5%; top:42%; width:80px; height:3px; background:linear-gradient(90deg, var(--accent, #ff9900), rgba(255,153,0,0.25)); border-radius:2px;"></div>
+  <h1 style="position:absolute; left:5%; top:45%; font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:60%; margin:0;">EKS Auto Mode와 Karpenter</h1>
+  <p style="position:absolute; left:5%; top:60%; font-size:1.3rem; color:rgba(255,255,255,0.7); width:60%; margin:0;">노드 자동화 운영</p>
+  <div style="position:absolute; left:5%; top:75%;">
+    <p style="font-size:1.05rem; color:#fff; font-weight:600; margin:0;">EKS 1.37, Karpenter v1.15 기준 (2026-10-20 확인)</p>
+    <p style="font-size:0.9rem; color:rgba(255,255,255,0.6); margin:6px 0 0 0;"></p>
+    <p style="font-size:0.9rem; color:rgba(255,255,255,0.6); margin:2px 0 0 0;"></p>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s1" data-block="01-concepts" data-block-title="EKS Auto Mode와 Karpenter">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>오늘 세션 구성</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <div class="agenda-timeline">
+            <div class="agenda-step active">
+          <div class="agenda-dot">1</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>개념: 왜 노드 자동화인가</strong>
+            
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">2</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>구조: NodePool, NodeClass, Auto Mode</strong>
+            
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">3</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>스케일링과 disruption</strong>
+            
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">4</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>운영: 업그레이드, 관측, 비용, 선택</strong>
+            
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">5</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>데모 영상 4편</strong>
+            
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">6</div>
+          
+          <div class="agenda-label">
+            <strong>마무리</strong>
+            
+          </div>
+        </div>
+    </div>
+    
+  </div>
+  
+<script>(function() {
+  const slide = document.currentScript.closest('.slide');
+  if (!slide) return;
+  const steps = slide.querySelectorAll('.agenda-step:not(.break)');
+  const connectors = slide.querySelectorAll('.agenda-connector');
+  let current = 0;
+  function update() {
+    steps.forEach((s, i) => {
+      s.classList.remove('active', 'done');
+      if (i < current) s.classList.add('done');
+      else if (i === current) s.classList.add('active');
+    });
+    connectors.forEach((c, i) => {
+      c.classList.toggle('done', i < current);
+    });
+  }
+  update();
+  slide.__canvasStep = function(dir) {
+    if (dir === 'next' && current < steps.length - 1) current++;
+    else if (dir === 'prev' && current > 0) current--;
+    else return false;
+    update();
+    return current;
+  };
+  slide.dataset.slideAction = 'canvas-step';
+  slide.dataset.canvasMaxStep = String(steps.length - 1);
+})();</script>
+</div>
+
+<div class="slide" data-remarp-id="s2" data-block="01-concepts" data-block-title="EKS Auto Mode와 Karpenter">
+  <div class="slide-header" data-remarp-id="s2-header"><h2>1부: Pending Pod가 노드를 부른다</h2></div>
+  <div class="slide-body" data-remarp-id="s2-body">
+    <p><!-- Slide 3: 왜 노드 자동화인가 --></p>
+<style>
+.ak1-cmp { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-3); }
+.ak1-col { border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3); }
+.ak1-col h4 { margin: 0 0 var(--space-2); font-size: var(--fs-body); }
+.ak1-col ul { margin: 0; padding-left: var(--space-4); font-size: var(--fs-card); color: var(--text-secondary); word-break: keep-all; }
+.ak1-col li { margin-bottom: var(--space-1); }
+.ak1-new { border-color: var(--accent); background: var(--accent-subtle); }
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="ak1-cmp">
+  <div class="ak1-col fragment fade-right" data-fragment-index="1">
+    <h4 class="text-warning">고정된 노드 그룹 중심</h4>
+    <ul>
+      <li>인스턴스 유형과 크기를 그룹마다 미리 정함</li>
+      <li>워크로드 모양이 바뀌면 그룹을 새로 설계</li>
+      <li>비어 가는 노드를 줄이는 판단은 사람이 함</li>
+      <li>AMI 교체와 노드 수명 관리도 별도 작업</li>
+    </ul>
+  </div>
+  <div class="ak1-col ak1-new fragment fade-left" data-fragment-index="2">
+    <h4 class="text-accent">Pending Pod 기반 프로비저닝</h4>
+    <ul>
+      <li>스케줄되지 못한 Pod의 요구 사항이 수요 신호</li>
+      <li>requirements를 만족하는 인스턴스 유형 중에서 선택</li>
+      <li>남는 노드는 consolidation으로 회수</li>
+      <li>설정이나 AMI가 바뀌면 Drift, 오래되면 만료로 교체</li>
+    </ul>
+  </div>
+</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="3">
+  <strong class="text-info">핵심 질문이 바뀝니다</strong>: "몇 대를 띄울까"가 아니라 "어떤 조건의 노드를 허용하고, 언제 바꿔도 되는가"를 선언합니다.
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s3" data-block="01-concepts" data-block-title="EKS Auto Mode와 Karpenter">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>제어 루프: 누가 무엇을 하나</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body">
+    <p><!-- Slide 4: Karpenter 제어 루프 --></p>
+<style>
+.ak1-loop { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-3); margin-bottom: var(--space-3); }
+.ak1-step { border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3); font-size: var(--fs-card); word-break: keep-all; overflow-wrap: break-word; }
+.ak1-num { display: inline-flex; align-items: center; justify-content: center; width: 1.8em; height: 1.8em; border-radius: 50%; background: var(--accent-subtle); color: var(--accent); font-weight: var(--weight-bold); margin-bottom: var(--space-2); }
+.ak1-who { display: block; font-size: var(--fs-caption); color: var(--text-secondary); margin-top: var(--space-2); }
+.ak1-step strong { display: block; }
+.ak1-k { border-color: var(--accent); }
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="ak1-loop">
+  <div class="ak1-step fragment fade-up" data-fragment-index="1"><span class="ak1-num">1</span><strong>Pod가 Pending</strong>자리를 찾지 못한 Pod를 unschedulable로 표시<span class="ak1-who">kube-scheduler</span></div>
+  <div class="ak1-step ak1-k fragment fade-up" data-fragment-index="2"><span class="ak1-num">2</span><strong>NodeClaim 생성</strong>NodePool 조건 안에서 인스턴스 후보를 계산하고 NodeClaim을 만듦<span class="ak1-who">Karpenter controller</span></div>
+  <div class="ak1-step ak1-k fragment fade-up" data-fragment-index="3"><span class="ak1-num">3</span><strong>EC2 시작</strong>NodeClass의 subnet, SG, AMI로 인스턴스를 띄움<span class="ak1-who">Karpenter cloud provider, EC2</span></div>
+  <div class="ak1-step fragment fade-up" data-fragment-index="4"><span class="ak1-num">4</span><strong>노드 Ready</strong>kubelet이 클러스터에 등록, NodeClaim이 Node와 연결<span class="ak1-who">kubelet</span></div>
+  <div class="ak1-step fragment fade-up" data-fragment-index="5"><span class="ak1-num">5</span><strong>Pod 바인딩</strong>새 노드에 Pod를 배치<span class="ak1-who">kube-scheduler</span></div>
+</div>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="6">
+  <div class="callout callout-info"><strong class="text-info">Karpenter는 Pod를 배치하지 않음</strong><div class="on-surface-muted">노드를 만들 뿐이고, 바인딩은 여전히 kube-scheduler가 합니다.</div></div>
+  <div class="callout callout-info"><strong class="text-info">NodeClaim이 노드 한 대의 기록</strong><div class="on-surface-muted">교체, 만료, 중단 판단도 NodeClaim 단위로 이루어집니다.</div></div>
+  <div class="callout callout-info"><strong class="text-info">Auto Mode도 같은 루프</strong><div class="on-surface-muted">2번과 3번을 AWS가 운영하는 관리형 Karpenter가 맡습니다.</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s4" data-block="01-concepts" data-block-title="EKS Auto Mode와 Karpenter">
+  <div class="slide-header" data-remarp-id="s4-header"><h2>2부: NodePool과 NodeClass의 분업</h2></div>
+  <div class="slide-body" data-remarp-id="s4-body">
+    <p><!-- Slide 5: NodePool vs NodeClass --></p>
+<style>
+.ak1-tab-body { display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--space-4); align-items: start; margin-top: var(--space-3); }
+.ak1-api { font-family: var(--font-mono); font-size: var(--fs-card); color: var(--accent); margin-bottom: var(--space-2); }
+.ak1-fields { margin: 0; padding-left: var(--space-4); font-size: var(--fs-card); color: var(--text-secondary); word-break: keep-all; }
+.ak1-fields li { margin-bottom: var(--space-1); }
+.ak1-fields code { color: var(--text-primary); }
+.ak1-take { margin-top: var(--space-3); }
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
+  <button class="tab-btn active">NodePool (공통)</button>
+  <button class="tab-btn">EC2NodeClass (직접 운영)</button>
+  <button class="tab-btn">NodeClass (Auto Mode)</button>
+</div>
+<div class="tc">
+  <div class="ak1-tab-body">
+    <div>
+      <div class="ak1-api">karpenter.sh/v1, kind: NodePool</div>
+      <ul class="ak1-fields">
+        <li><code>template.spec.requirements</code>: 허용할 인스턴스 조건</li>
+        <li><code>disruption</code>: consolidation 정책, budget</li>
+        <li><code>template.spec.expireAfter</code>, <code>terminationGracePeriod</code></li>
+        <li><code>limits</code>, <code>weight</code>, <code>nodeClassRef</code></li>
+      </ul>
+    </div>
+    <div class="callout callout-info"><strong class="text-info">무엇을, 언제 바꿀지</strong><div class="on-surface-muted">어떤 노드를 허용하고 언제 회수, 교체할지를 정합니다. Auto Mode와 직접 운영이 같은 API를 씁니다.</div></div>
+  </div>
+</div>
+<div class="tc" hidden>
+  <div class="ak1-tab-body">
+    <div>
+      <div class="ak1-api">karpenter.k8s.aws/v1, kind: EC2NodeClass</div>
+      <ul class="ak1-fields">
+        <li><code>amiSelectorTerms</code>: alias, id, name, tags, ssmParameter</li>
+        <li><code>subnetSelectorTerms</code>, <code>securityGroupSelectorTerms</code></li>
+        <li><code>role</code> 또는 <code>instanceProfile</code></li>
+        <li><code>kubelet</code>, <code>userData</code></li>
+      </ul>
+    </div>
+    <div class="callout callout-info"><strong class="text-info">어디에, 어떤 이미지로</strong><div class="on-surface-muted">AMI, 네트워크, IAM, 부팅 설정을 사용자가 정합니다. Karpenter가 launch template을 만듭니다.</div></div>
+  </div>
+</div>
+<div class="tc" hidden>
+  <div class="ak1-tab-body">
+    <div>
+      <div class="ak1-api">eks.amazonaws.com/v1, kind: NodeClass</div>
+      <ul class="ak1-fields">
+        <li><code>role</code> 또는 <code>instanceProfile</code></li>
+        <li><code>subnetSelectorTerms</code>, <code>securityGroupSelectorTerms</code></li>
+        <li><code>ephemeralStorage</code>, <code>advancedNetworking</code></li>
+        <li><code>advancedCompute</code>: kubelet, sysctl, hugepages 일부</li>
+      </ul>
+    </div>
+    <div class="callout callout-info"><strong class="text-info">AMI 필드가 없음</strong><div class="on-surface-muted">OS는 AWS가 고르는 Bottlerocket 변형입니다. launch template, userData, SSH, SSM도 쓰지 않습니다.</div></div>
+  </div>
+</div>
+<div class="callout callout-warning ak1-take fragment fade-up" data-fragment-index="1"><strong class="text-warning">라벨 접두사도 다름</strong>: 직접 운영은 <code>karpenter.k8s.aws/instance-*</code>, Auto Mode는 <code>eks.amazonaws.com/instance-*</code>. NodePool을 옮길 때 requirements 키를 바꿔야 합니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s5" data-block="01-concepts" data-block-title="EKS Auto Mode와 Karpenter">
+  <div class="slide-header" data-remarp-id="s5-header"><h2>Auto Mode는 Karpenter를 AWS가 운영</h2></div>
+  <div class="slide-body" data-remarp-id="s5-body">
+    <p><!-- Slide 6: Auto Mode 책임 분담 --></p>
+<style>
+.ak1-resp { width: 100%; font-size: var(--fs-card); word-break: keep-all; overflow-wrap: break-word; margin-bottom: var(--space-3); }
+.data-table th { text-transform: none; letter-spacing: normal; font-size: var(--fs-card); }
+.ak1-aws { color: var(--accent); font-weight: var(--weight-bold); }
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<table class="data-table ak1-resp">
+  <thead><tr><th>항목</th><th>EKS Auto Mode</th><th>Self-managed Karpenter v1.15</th></tr></thead>
+  <tbody>
+    <tr class="fragment fade-up" data-fragment-index="1"><td>Karpenter controller</td><td><span class="ak1-aws">AWS 관리</span>, 클러스터 Pod 아님, 버전 비공개</td><td>사용자 노드의 Pod, Helm과 CRD chart로 업그레이드</td></tr>
+    <tr class="fragment fade-up" data-fragment-index="2"><td>AMI, OS</td><td><span class="ak1-aws">AWS 결정</span>, Bottlerocket 변형, 새 AMI는 Drift로 교체</td><td><code>amiSelectorTerms</code>, custom AMI, userData</td></tr>
+    <tr class="fragment fade-up" data-fragment-index="3"><td>VPC CNI, CoreDNS, kube-proxy, EBS CSI, Pod Identity Agent</td><td><span class="ak1-aws">내장</span>, CNI, CoreDNS, kube-proxy는 노드의 systemd service</td><td>add-on으로 설치, 관리</td></tr>
+    <tr class="fragment fade-up" data-fragment-index="4"><td>Spot 중단, 노드 health</td><td><span class="ak1-aws">AWS 자동 처리</span>, 자동 repair 내장</td><td>SQS, EventBridge 구성, NodeRepair는 alpha gate</td></tr>
+  </tbody>
+</table>
+<div class="card-grid fragment" data-reveal="stagger" data-fragment-index="5">
+  <div class="callout callout-info"><strong class="text-info">그래도 사용자 몫</strong><div class="on-surface-muted">NodePool과 NodeClass 정의, PDB, 워크로드 설계, 비용 관리는 여전히 사용자가 정합니다.</div></div>
+  <div class="callout callout-warning"><strong class="text-warning">둘 중 하나를 권장</strong><div class="on-surface-muted">AWS는 한쪽을 권장합니다. 마이그레이션 중 공존하면 NodePool로 워크로드를 분리합니다.</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s6" data-block="01-concepts" data-block-title="EKS Auto Mode와 Karpenter">
+  <div class="slide-header" data-remarp-id="s6-header"><h2>버전 지도: 2026-10-20 기준</h2></div>
+  <div class="slide-body" data-remarp-id="s6-body">
+    <p><!-- Slide 7: 버전 지도 --></p>
+<style>
+.ak1-ver { display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--space-4); align-items: start; }
+.ak1-pick { display: flex; gap: var(--space-2); margin-bottom: var(--space-3); }
+.ak1-pick .btn { color: var(--on-surface); }
+.ak1-pick .btn.active { background: var(--accent-subtle); border-color: var(--accent); color: var(--accent); }
+.ak1-kv { display: grid; grid-template-columns: 9rem 1fr; gap: var(--space-2) var(--space-3); font-size: var(--fs-card); }
+.ak1-kv dt { color: var(--text-secondary); }
+.ak1-kv dd { margin: 0; font-weight: var(--weight-bold); }
+.ak1-hint { font-size: var(--fs-caption); color: var(--text-secondary); margin-top: var(--space-3); word-break: keep-all; }
+.ak1-stack { display: flex; flex-direction: column; gap: var(--space-3); }
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="ak1-ver">
+  <div class="card">
+    <div class="ak1-pick" id="ak1-pick">
+      <button class="btn btn-sm" data-v="1.34">1.34</button>
+      <button class="btn btn-sm" data-v="1.35">1.35</button>
+      <button class="btn btn-sm" data-v="1.36">1.36</button>
+      <button class="btn btn-sm active" data-v="1.37">1.37</button>
+    </div>
+    <dl class="ak1-kv">
+      <dt>EKS 출시</dt><dd id="ak1-rel">-</dd>
+      <dt>표준 지원 종료</dt><dd id="ak1-std">-</dd>
+      <dt>확장 지원 종료</dt><dd id="ak1-ext">-</dd>
+      <dt>Karpenter 최소</dt><dd id="ak1-kp">-</dd>
+      <dt>비고</dt><dd id="ak1-note">-</dd>
+    </dl>
+    <div class="ak1-hint">버전을 누르면 ap-northeast-2 기준 지원 일정과 Karpenter 호환 버전이 바뀝니다.</div>
+  </div>
+  <div class="ak1-stack">
+    <div class="callout callout-info fragment fade-left" data-fragment-index="1"><strong class="text-info">Karpenter v1.15.0 (2026-10-10)</strong><div class="on-surface-muted">1.37에 필요. regular release라 다음 minor 출시 전까지만 지원</div></div>
+    <div class="callout callout-info fragment fade-left" data-fragment-index="2"><strong class="text-info">v1.14.x LTS (2027-07까지)</strong><div class="on-surface-muted">K8s 1.36까지. v1.14.2 패치 2026-10-19 출시</div></div>
+    <div class="callout callout-warning fragment fade-left" data-fragment-index="3"><strong class="text-warning">Auto Mode는 버전 선택 없음</strong><div class="on-surface-muted">관리형 Karpenter 버전은 비공개이고 AWS가 업그레이드합니다.</div></div>
+  </div>
+</div>
+  </div>
+</div>
+</div>
+<script src="./common/animation-utils.js"></script>
+<script src="./common/deck-overlay.js"></script>
+<script src="./common/deck-detail.js"></script>
+<script src="./common/deck-nav.js"></script>
+<script src="./common/slide-framework.js"></script>
+<script src="./common/quiz-component.js"></script>
+<script src="./common/presenter-view.js"></script>
+<script>
+(function(){
+(function () {
+  var DATA = {
+    '1.34': ['2025-10-02', '2026-12-02', '2027-12-02', '>= 1.6', '표준 지원 중'],
+    '1.35': ['2026-01-27', '2027-03-27', '2028-03-27', '>= 1.9', '표준 지원 중'],
+    '1.36': ['2026-06-02', '2027-08-02', '2028-08-02', '>= 1.13', '리전 기본 버전 (v1.14 LTS 가능)'],
+    '1.37': ['2026-10-01', '2027-12-01', '2028-12-01', '1.15.x', '버전 명시 필요, v1.14 LTS 불가']
+  };
+  var pick = document.getElementById('ak1-pick');
+  if (!pick) return;
+  function show(v) {
+    var d = DATA[v];
+    document.getElementById('ak1-rel').textContent = d[0];
+    document.getElementById('ak1-std').textContent = d[1];
+    document.getElementById('ak1-ext').textContent = d[2];
+    document.getElementById('ak1-kp').textContent = d[3];
+    document.getElementById('ak1-note').textContent = d[4];
+    pick.querySelectorAll('.btn').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-v') === v); });
+  }
+  pick.addEventListener('click', function (e) {
+    var b = e.target.closest('.btn');
+    if (b) show(b.getAttribute('data-v'));
+  });
+  show('1.37');
+})();
+})();
+</script>
+<script>
+  
+  const presenterNotes = {
+    1: "\u2753 \u23f8\ufe0f [1min] [\uc694\uc57d]\n- 1\uc2dc\uac04 L300 \uc138\uc158: \ud50c\ub7ab\ud3fc \uc5d4\uc9c0\ub2c8\uc5b4, SRE, \uc544\ud0a4\ud14d\ud2b8 \ub300\uc0c1\n- \ub178\ub4dc\ub97c \ub204\uac00 \ub9cc\ub4e4\uace0, \uc5b8\uc81c \ubc14\uafb8\uace0, \uc5b4\ub5bb\uac8c \uc9c0\ud0a4\ub294\uc9c0\ub97c Auto Mode\uc640 self-managed Karpenter \uc591\ucabd\uc5d0\uc11c \ubd05\ub2c8\ub2e4.\n- \ubaa8\ub4e0 \ubc84\uc804\uacfc \uae30\ubcf8\uac12\uc740 2026-10-20 \uae30\uc900\uc73c\ub85c \ud655\uc778\ud55c \uac12\uc785\ub2c8\ub2e4.\n\n\uc548\ub155\ud558\uc138\uc694. \uc624\ub298\uc740 EKS Auto Mode\uc640 Karpenter\ub97c \ud55c \uc2dc\uac04 \ub3d9\uc548 \ub2e4\ub8f9\ub2c8\ub2e4. \ub450 \uac00\uc9c0\ub294 \ub530\ub85c \ub178\ub294 \uae30\uc220\uc774 \uc544\ub2c8\ub77c, \uac19\uc740 Karpenter API\ub97c \ub204\uac00 \uc6b4\uc601\ud558\ub290\ub0d0\uc758 \ucc28\uc774\uc785\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc624\ub298\uc740 \ub458\uc744 \ub098\ub780\ud788 \ub193\uace0 \ub178\ub4dc\uac00 \uc0dd\uae30\uace0, \ubc14\ub00c\uace0, \uc0ac\ub77c\uc9c0\ub294 \uacfc\uc815\uc744 \ub530\ub77c\uac00 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\ubc84\uc804 \uc774\uc57c\uae30\uac00 \ub9ce\uc774 \ub098\uc635\ub2c8\ub2e4. EKS 1.37\uacfc Karpenter v1.15.0\uc774 \ub098\uc628 \uc9c0 \uc5bc\ub9c8 \ub418\uc9c0 \uc54a\uc558\uace0, \uae30\ubcf8\uac12 \uba87 \uac00\uc9c0\uac00 \ubc14\ub00c\uc5c8\uc2b5\ub2c8\ub2e4. \uc624\ub298 \uc22b\uc790\ub294 \ubaa8\ub450 2026\ub144 10\uc6d4 20\uc77c\uc5d0 \uacf5\uc2dd \ubb38\uc11c\uc640 \ub9b4\ub9ac\uc2a4 \ub178\ud2b8\ub85c \ub2e4\uc2dc \ud655\uc778\ud55c \uac12\uc785\ub2c8\ub2e4.\n\n\uc9c0\uae08 \uc6b4\uc601 \uc911\uc778 \ud074\ub7ec\uc2a4\ud130\uc5d0\uc11c Karpenter\ub97c \uc9c1\uc811 \uc124\uce58\ud574 \uc4f0\uace0 \uacc4\uc2e0 \ubd84, \uadf8\ub9ac\uace0 Auto Mode\ub97c \uc4f0\uace0 \uacc4\uc2e0 \ubd84\uc774 \uac01\uac01 \uc5bc\ub9c8\ub098 \ub418\uc2dc\ub294\uc9c0 \uc190\uc744 \ud55c\ubc88 \ub4e4\uc5b4 \uc8fc\uc2dc\uaca0\uc5b4\uc694?\n\n\uc804\uccb4 \uc21c\uc11c\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    2: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- 1, 2\ubd80(\uc57d 15\ubd84): Karpenter \uc81c\uc5b4 \ub8e8\ud504, API \uad6c\uc870, Auto Mode \ucc45\uc784 \ubd84\ub2f4, \ubc84\uc804\n- 3\ubd80(\uc57d 13\ubd84): \ud504\ub85c\ube44\uc800\ub2dd, consolidation, budget, drift\uc640 \ub9cc\ub8cc, Spot, \uc571 \ubcf4\ud638\n- 4\ubd80(\uc57d 8\ubd84): \uc5c5\uadf8\ub808\uc774\ub4dc \uc21c\uc11c, \uad00\uce21, \ube44\uc6a9, \uc120\ud0dd \uccb4\ud06c\ub9ac\uc2a4\ud2b8\n- 5, 6\ubd80(\uc57d 24\ubd84): \ub370\ubaa8 \uc601\uc0c1 4\ud3b8\uacfc \ub9c8\ubb34\ub9ac\n\n\uc5ec\uc12f \ud30c\ud2b8\ub85c \uc9c4\ud589\ud569\ub2c8\ub2e4. \uc55e\uc758 \ub450 \ud30c\ud2b8\uc5d0\uc11c \uac1c\ub150\uacfc \uad6c\uc870\ub97c \uc7a1\uace0, 3\ubd80\uc5d0\uc11c \ub178\ub4dc\ub97c \ub298\ub9ac\uace0 \uc904\uc774\uace0 \uad50\uccb4\ud558\ub294 disruption\uc744 \uc790\uc138\ud788 \ubd05\ub2c8\ub2e4. 4\ubd80\ub294 \uc6b4\uc601 \uad00\uc810\uc5d0\uc11c \uc5c5\uadf8\ub808\uc774\ub4dc \uc21c\uc11c, \ubb34\uc5c7\uc744 \uad00\uce21\ud560\uc9c0, \ube44\uc6a9, \uadf8\ub9ac\uace0 Auto Mode\uc640 \uc9c1\uc811 \uc6b4\uc601 \uc911 \ubb34\uc5c7\uc744 \uace0\ub97c\uc9c0\uc785\ub2c8\ub2e4.\n\n\ud6c4\ubc18 24\ubd84\uc740 \ub370\ubaa8 \uc601\uc0c1 \ub124 \ud3b8\uc785\ub2c8\ub2e4. \uc55e\uc5d0\uc11c \uc124\uba85\ud55c \ub3d9\uc791\uc744 \uc2e4\uc81c \ud074\ub7ec\uc2a4\ud130\uc5d0\uc11c \ud655\uc778\ud558\ub294 \uc21c\uc11c\ub85c \uad6c\uc131\ud588\uc73c\ub2c8, \uc774\ub860 \ud30c\ud2b8\uc5d0\uc11c \uad81\uae08\ud55c \uc810\uc774 \uc0dd\uae30\uba74 \uba54\ubaa8\ud574 \ub450\uc168\ub2e4\uac00 \uc601\uc0c1\uacfc \uc5f0\uacb0\ud574 \ubcf4\uc154\ub3c4 \uc88b\uc2b5\ub2c8\ub2e4.\n\n\uba3c\uc800 \ub178\ub4dc \uc790\ub3d9\ud654\uac00 \uc65c \ud544\uc694\ud55c\uc9c0\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    3: "\u23f8\ufe0f [2min] [\uc694\uc57d]\n- \ub178\ub4dc \uadf8\ub8f9 \uc911\uc2ec \uc6b4\uc601\uc740 \uc778\uc2a4\ud134\uc2a4 \uc720\ud615, \uc218\ub7c9, \uad50\uccb4\ub97c \uc0ac\ub78c\uc774 \ubbf8\ub9ac \uc815\ud569\ub2c8\ub2e4.\n- Karpenter\ub294 Pending Pod\ub97c \uc218\uc694 \uc2e0\ud638\ub85c \ubcf4\uace0 \uc870\uac74\uc5d0 \ub9de\ub294 \ub178\ub4dc\ub97c \uc9c1\uc811 \ub9cc\ub4ed\ub2c8\ub2e4.\n- \ub9cc\ub4dc\ub294 \uac83\ubfd0 \uc544\ub2c8\ub77c \ud68c\uc218(consolidation)\uc640 \uad50\uccb4(Drift, \ub9cc\ub8cc)\uae4c\uc9c0 \ud558\ub098\uc758 \ub8e8\ud504\ub85c \ub2e4\ub8f9\ub2c8\ub2e4.\n\n\uc67c\ucabd\uc740 \uc6b0\ub9ac\uac00 \uc775\uc219\ud55c \ubc29\uc2dd\uc785\ub2c8\ub2e4. \ub178\ub4dc \uadf8\ub8f9\ub9c8\ub2e4 \uc778\uc2a4\ud134\uc2a4 \uc720\ud615\uc744 \uc815\ud574 \ub450\uace0, \uc6cc\ud06c\ub85c\ub4dc\uac00 \ubc14\ub00c\uba74 \uadf8\ub8f9\uc744 \ub2e4\uc2dc \uc124\uacc4\ud569\ub2c8\ub2e4. \ub178\ub4dc\uac00 \ube44\uc5b4 \uac00\ub294\uc9c0, AMI\ub97c \uc5b8\uc81c \ubc14\uafc0\uc9c0\ub3c4 \uc0ac\ub78c\uc774 \ub530\ub85c \ucc59\uae41\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd\uc774 Karpenter\uc758 \ubc29\uc2dd\uc785\ub2c8\ub2e4. \ucd9c\ubc1c\uc810\uc740 Pending Pod\uc785\ub2c8\ub2e4. \uc2a4\ucf00\uc904\ub7ec\uac00 \uc790\ub9ac\ub97c \ucc3e\uc9c0 \ubabb\ud55c Pod\uc758 CPU, \uba54\ubaa8\ub9ac, node selector, toleration \uac19\uc740 \uc694\uad6c \uc0ac\ud56d\uc744 \ubcf4\uace0, NodePool\uc5d0 \ud5c8\uc6a9\ub41c \uc870\uac74 \uc548\uc5d0\uc11c \ub9de\ub294 \uc778\uc2a4\ud134\uc2a4\ub97c \uace0\ub985\ub2c8\ub2e4. \uadf8\ub9ac\uace0 \uc5ec\uae30\uc11c \ub05d\ub098\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ub0a8\ub294 \ub178\ub4dc\ub294 consolidation\uc73c\ub85c \uc904\uc774\uace0, \uc124\uc815\uc774\ub098 AMI\uac00 \ubc14\ub00c\uba74 Drift\ub85c, \uc815\ud574\uc9c4 \uc218\uba85\uc774 \uc9c0\ub098\uba74 \ub9cc\ub8cc\ub85c \uad50\uccb4\ud569\ub2c8\ub2e4.\n\uadf8\ub798\uc11c \uc6b4\uc601\uc790\uac00 \uc120\uc5b8\ud558\ub294 \uac83\uc774 \ub2ec\ub77c\uc9d1\ub2c8\ub2e4. \uba87 \ub300\ub97c \ub744\uc6b8\uc9c0\uac00 \uc544\ub2c8\ub77c, \uc5b4\ub5a4 \ub178\ub4dc\ub97c \ud5c8\uc6a9\ud558\uace0 \uc5b8\uc81c \ubc14\uafd4\ub3c4 \ub418\ub294\uc9c0\ub97c \uc815\ud569\ub2c8\ub2e4. \uc624\ub298 3\ubd80 \uc804\uccb4\uac00 \uc774 \"\uc5b8\uc81c \ubc14\uafd4\ub3c4 \ub418\ub294\uac00\"\uc5d0 \ub300\ud55c \uc774\uc57c\uae30\uc785\ub2c8\ub2e4.\n\n\uadf8\ub7fc Pending Pod \ud558\ub098\uac00 \ub178\ub4dc\uac00 \ub418\uae30\uae4c\uc9c0 \ub204\uac00 \ubb34\uc5c7\uc744 \ud558\ub294\uc9c0 \uc21c\uc11c\ub300\ub85c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    4: "\u2753 \u23f8\ufe0f [3min] [\uc694\uc57d]\n- \ub2e4\uc12f \ub2e8\uacc4: Pending \ud45c\uc2dc(scheduler), NodeClaim \uc0dd\uc131(Karpenter), EC2 \uc2dc\uc791(Karpenter cloud provider), Ready(kubelet), \ubc14\uc778\ub529(scheduler)\n- Karpenter\ub294 \ub178\ub4dc\ub97c \ub9cc\ub4e4 \ubfd0 Pod\ub97c \ubc30\uce58\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n- NodeClaim\uc740 \ub178\ub4dc \ud55c \ub300\uc5d0 \ub300\ud55c Karpenter\uc758 \uae30\ub85d\uc774\uace0, disruption \ud310\ub2e8\uc758 \ub2e8\uc704\uc785\ub2c8\ub2e4.\n- Auto Mode\uc5d0\uc11c\ub3c4 \ub8e8\ud504\ub294 \uac19\uace0 2, 3\ubc88\uc744 AWS\uac00 \uc6b4\uc601\ud569\ub2c8\ub2e4.\n\nPending Pod \ud558\ub098\uac00 \ub178\ub4dc\uac00 \ub418\uae30\uae4c\uc9c0\ub97c \ub2e4\uc12f \ub2e8\uacc4\ub85c \ub098\ub220 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \uccab \ub2e8\uacc4\ub294 kube-scheduler\uc785\ub2c8\ub2e4. \ub4e4\uc5b4\uac08 \ub178\ub4dc\uac00 \uc5c6\uc73c\uba74 Pod\ub97c unschedulable\ub85c \ud45c\uc2dc\ud569\ub2c8\ub2e4. Karpenter\ub294 \uc774 Pod\ub4e4\uc744 \ubcf4\uace0 \uc788\ub2e4\uac00, NodePool\uc774 \ud5c8\uc6a9\ud558\ub294 \uc870\uac74 \uc548\uc5d0\uc11c \uc5b4\ub5a4 \uc778\uc2a4\ud134\uc2a4 \uc720\ud615\uc774\uba74 \uc774 Pod\ub4e4\uc774 \ub4e4\uc5b4\uac08\uc9c0 \uacc4\uc0b0\ud558\uace0 NodeClaim\uc774\ub77c\ub294 \uac1d\uccb4\ub97c \ub9cc\ub4ed\ub2c8\ub2e4.\n\n\uc138 \ubc88\uc9f8 \ub2e8\uacc4\uc5d0\uc11c Karpenter\uc758 AWS cloud provider\uac00 NodeClass\uc5d0 \uc801\ud78c subnet, security group, AMI\ub85c EC2 \uc778\uc2a4\ud134\uc2a4\ub97c \ub744\uc6c1\ub2c8\ub2e4. \ub124 \ubc88\uc9f8\ub85c kubelet\uc774 \ud074\ub7ec\uc2a4\ud130\uc5d0 \ub4f1\ub85d\ud558\uba74 NodeClaim\uacfc Node\uac00 \uc5f0\uacb0\ub418\uace0, \ub2e4\uc12f \ubc88\uc9f8\ub85c kube-scheduler\uac00 \uadf8 \ub178\ub4dc\uc5d0 Pod\ub97c \ubc30\uce58\ud569\ub2c8\ub2e4.\n\uc5ec\uae30\uc11c \uc790\uc8fc \uc624\ud574\ud558\ub294 \ubd80\ubd84\uc774 \uc788\uc2b5\ub2c8\ub2e4. Karpenter\ub294 Pod\ub97c \ubc30\uce58\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ub178\ub4dc\ub97c \ub9cc\ub4e4 \ubfd0\uc774\uace0, \ubc30\uce58\ub294 \uc5ec\uc804\ud788 \uc2a4\ucf00\uc904\ub7ec\uac00 \ud569\ub2c8\ub2e4. \uadf8\ub798\uc11c affinity\ub098 topology spread \uac19\uc740 \uc2a4\ucf00\uc904\ub9c1 \uaddc\uce59\uc740 \uadf8\ub300\ub85c \uc720\ud6a8\ud558\uace0, Karpenter\ub294 \uadf8 \uaddc\uce59\uc744 \ub9cc\uc871\ud560 \ub178\ub4dc\ub97c \uc900\ube44\ud558\ub294 \uc5ed\ud560\uc785\ub2c8\ub2e4.\n\n\uadf8\ub7fc NodeClaim\uc740 \uc65c \ub530\ub85c \uc788\uc744\uae4c\uc694. \ub178\ub4dc \ud55c \ub300\uc5d0 \ub300\ud55c Karpenter\uc758 \uae30\ub85d\uc774\ub77c\uc11c, \ub098\uc911\uc5d0 \uad50\uccb4\ud560\uc9c0, \ub9cc\ub8cc\ub410\ub294\uc9c0, Spot \uc911\ub2e8\uc744 \ubc1b\uc558\ub294\uc9c0\ub97c \ubaa8\ub450 NodeClaim \ub2e8\uc704\ub85c \ud310\ub2e8\ud569\ub2c8\ub2e4. 3\ubd80\uc5d0\uc11c \uacc4\uc18d \uc774 \uc774\ub984\uc774 \ub098\uc635\ub2c8\ub2e4.\nAuto Mode\ub3c4 \ub8e8\ud504\ub294 \uac19\uc2b5\ub2c8\ub2e4. 2\ubc88\uacfc 3\ubc88\uc744 AWS\uac00 \uc6b4\uc601\ud558\ub294 \uad00\ub9ac\ud615 Karpenter\uac00 \ub9e1\ub294\ub2e4\ub294 \uc810\ub9cc \ub2e4\ub985\ub2c8\ub2e4.\n\n\uc774 \ub8e8\ud504\uac00 \uc77d\ub294 \uc124\uc815, NodePool\uacfc NodeClass\ub97c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    5: "\u23f8\ufe0f \ud83c\udfac [3min] [\uc694\uc57d]\n- NodePool(karpenter.sh/v1)\uc740 \"\ubb34\uc5c7\uc744, \uc5b8\uc81c\": requirements, disruption, \uc218\uba85, limits. Auto Mode\uc640 \uc9c1\uc811 \uc6b4\uc601\uc774 \uacf5\ud1b5\uc73c\ub85c \uc0ac\uc6a9\n- EC2NodeClass(karpenter.k8s.aws/v1)\ub294 \"\uc5b4\ub514\uc5d0, \uc5b4\ub5a4 \uc774\ubbf8\uc9c0\ub85c\": AMI, subnet, SG, role, kubelet, userData\n- Auto Mode NodeClass(eks.amazonaws.com/v1)\ub294 AMI \ud544\ub4dc\uac00 \uc5c6\uace0, advancedCompute\ub85c kubelet, sysctl, hugepages \uc77c\ubd80\ub9cc \uc870\uc815\n- \ub77c\ubca8 \uc811\ub450\uc0ac\uac00 karpenter.k8s.aws/instance-* \uc640 eks.amazonaws.com/instance-* \ub85c \ub2e4\ub985\ub2c8\ub2e4.\n\n\uc5ec\uae30\uc11c 2\ubd80 \uad6c\uc870\ub85c \ub118\uc5b4\uac11\ub2c8\ub2e4. Karpenter \uc124\uc815\uc740 \ub450 \uac1d\uccb4\ub85c \ub098\ub269\ub2c8\ub2e4. \uccab \ubc88\uc9f8 \ud0ed NodePool\uc740 karpenter.sh/v1 API\uc774\uace0, \uc5b4\ub5a4 \ub178\ub4dc\ub97c \ud5c8\uc6a9\ud560\uc9c0, \uc5b8\uc81c \ud68c\uc218\ud558\uace0 \uad50\uccb4\ud560\uc9c0\ub97c \uc815\ud569\ub2c8\ub2e4. \uc774 API\ub294 Auto Mode\uc640 \uc9c1\uc811 \uc6b4\uc601\ud558\ub294 Karpenter\uac00 \ub611\uac19\uc774 \uc501\ub2c8\ub2e4.\n\n\ub450 \ubc88\uc9f8 \ud0ed\uc744 \ub20c\ub7ec \uc8fc\uc138\uc694. \uc9c1\uc811 \uc6b4\uc601\ud560 \ub54c\uc758 EC2NodeClass\ub294 karpenter.k8s.aws/v1\uc774\uace0, AMI\ub97c \uace0\ub974\ub294 amiSelectorTerms, subnet\uacfc security group, IAM role, kubelet\uacfc userData\uae4c\uc9c0 \uc0ac\uc6a9\uc790\uac00 \uc815\ud569\ub2c8\ub2e4. launch template\uc740 Karpenter\uac00 \ub9cc\ub4e4\uc5b4 \uc90d\ub2c8\ub2e4.\n\uc138 \ubc88\uc9f8 \ud0ed\uc774 Auto Mode\uc758 NodeClass\uc785\ub2c8\ub2e4. API \uadf8\ub8f9\uc774 eks.amazonaws.com/v1\ub85c \ubc14\ub00c\uace0, \uac00\uc7a5 \ud070 \ucc28\uc774\ub294 AMI \ud544\ub4dc\uac00 \uc5c6\ub2e4\ub294 \uc810\uc785\ub2c8\ub2e4. OS\ub294 AWS\uac00 \uace0\ub974\ub294 Bottlerocket \ubcc0\ud615\uc774\uace0 userData\ub098 SSH, SSM \uc811\uc18d\ub3c4 \uc5c6\uc2b5\ub2c8\ub2e4. \ub300\uc2e0 2026\ub144 10\uc6d4 1\uc77c\uc5d0 advancedCompute\uac00 \ucd94\uac00\ub418\uc5b4 kubelet\uc758 maxPods, eviction, \uc77c\ubd80 sysctl\uacfc hugepages\ub294 \uc870\uc815\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. 4\ubd80 \uc120\ud0dd \uae30\uc900\uc5d0\uc11c \ub2e4\uc2dc \ubd05\ub2c8\ub2e4.\n\n\ub9c8\uc9c0\ub9c9\uc73c\ub85c \ub77c\ubca8\uc785\ub2c8\ub2e4. NodePool requirements\uc5d0\uc11c \uc778\uc2a4\ud134\uc2a4 \uacc4\uc5f4\uc744 \uace0\ub97c \ub54c \uc9c1\uc811 \uc6b4\uc601\uc740 karpenter.k8s.aws/instance-category, Auto Mode\ub294 eks.amazonaws.com/instance-category\ub97c \uc501\ub2c8\ub2e4. \ub9c8\uc774\uadf8\ub808\uc774\uc158\ud560 \ub54c \uc774 \ud0a4\ub97c \ubc14\uafb8\uc9c0 \uc54a\uc73c\uba74 \uc870\uac74\uc774 \ub9de\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n- https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html\n- https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html\n- https://karpenter.sh/docs/concepts/nodeclasses/\n\n\uadf8\ub7fc Auto Mode\uc5d0\uc11c AWS\uac00 \uc815\ud655\ud788 \uc5b4\ub514\uae4c\uc9c0 \ub9e1\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    6: "\u2753 \u23f8\ufe0f [2.5min] [\uc694\uc57d]\n- Auto Mode = \uc5c5\uc2a4\ud2b8\ub9bc \ud638\ud658 \uad00\ub9ac\ud615 Karpenter + \uad00\ub9ac\ud615 \uad6c\uc131 \uc694\uc18c(VPC CNI, CoreDNS, kube-proxy, EBS CSI, Pod Identity Agent \ubd88\ud544\uc694, AWS LBC)\n- controller\ub294 \ud074\ub7ec\uc2a4\ud130 Pod\uac00 \uc544\ub2c8\uace0 \ubc84\uc804\uc744 \uc0ac\uc6a9\uc790\uac00 \uace0\ub974\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n- AMI\ub294 AWS\uac00 \uacb0\uc815\ud558\uace0 \uc0c8 AMI\ub294 Drift\ub85c \uad50\uccb4, Spot \uc911\ub2e8\uacfc \ub178\ub4dc health\ub3c4 AWS\uac00 \ucc98\ub9ac\n- NodePool, NodeClass, PDB, \uc6cc\ud06c\ub85c\ub4dc, \ube44\uc6a9\uc740 \uc0ac\uc6a9\uc790 \ubaab. \uacf5\uc874\ubcf4\ub2e4 \ud55c\ucabd \uc120\ud0dd\uc774 AWS \uad8c\uc7a5\n\nAuto Mode\ub97c \ud55c \uc904\ub85c \uc815\uc758\ud558\uba74, Karpenter\uc640 \ub178\ub4dc \uc6b4\uc601\uc5d0 \ud544\uc694\ud55c \uad6c\uc131 \uc694\uc18c\ub97c AWS\uac00 \ub300\uc2e0 \uc6b4\uc601\ud558\ub294 \ubaa8\ub4dc\uc785\ub2c8\ub2e4. EKS FAQ\uc758 \uad00\ub9ac\ud615 \uad6c\uc131 \uc694\uc18c \ubaa9\ub85d\uc5d0\ub294 \uc5c5\uc2a4\ud2b8\ub9bc \ud638\ud658 \uad00\ub9ac\ud615 Karpenter controller, EBS CSI controller, \uad00\ub9ac\ud615 VPC CNI, CoreDNS, AWS Load Balancer Controller\uac00 \ub4e4\uc5b4 \uc788\uc2b5\ub2c8\ub2e4.\n\n\ud45c\ub97c \uc704\uc5d0\uc11c\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \uccab\uc9f8 \uc904, controller\ub294 \ud074\ub7ec\uc2a4\ud130 \uc548\uc758 Pod\uac00 \uc544\ub2c8\uace0 AWS\uac00 \uc5c5\uadf8\ub808\uc774\ub4dc\ud558\uba70, \ubc84\uc804\uc740 \uacf5\uac1c\ub418\uc9c0 \uc54a\uace0 \uc0ac\uc6a9\uc790\uac00 \uace0\ub974\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ub458\uc9f8 \uc904, AMI\ub3c4 AWS\uac00 \uacb0\uc815\ud569\ub2c8\ub2e4. Bottlerocket \ubcc0\ud615\uc774\uace0, \uc0c8 AMI\uac00 \ub098\uc624\uba74 Drift\ub85c \ub178\ub4dc\uac00 \uad50\uccb4\ub429\ub2c8\ub2e4. \uc14b\uc9f8 \uc904, VPC CNI, CoreDNS, kube-proxy\ub294 Pod\uac00 \uc544\ub2c8\ub77c \uac01 \ub178\ub4dc\uc758 systemd service\ub85c \ub3cc\uace0, EBS CSI\uc640 Pod Identity Agent\ub3c4 add-on\uc73c\ub85c \uc124\uce58\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ub137\uc9f8 \uc904, Spot \uc911\ub2e8 \uc54c\ub9bc\uacfc EC2 health \uc774\ubca4\ud2b8, \uc0c1\ud0dc \uac80\uc0ac \uc2e4\ud328\ub97c AWS\uac00 \uc790\ub3d9 \ucc98\ub9ac\ud569\ub2c8\ub2e4. \uc9c1\uc811 \uc6b4\uc601\ud560 \ub54c\ub294 \uc774 \ubaa8\ub4e0 \uc904\uc774 \uc0ac\uc6a9\uc790 \uc791\uc5c5\uc785\ub2c8\ub2e4.\n\n\uadf8\ub7fc Auto Mode\uba74 \ub178\ub4dc\ub294 \uc2e0\uacbd \uc4f0\uc9c0 \uc54a\uc544\ub3c4 \ub420\uae4c\uc694. \uc544\ub2d9\ub2c8\ub2e4. \uc5b4\ub5a4 \ub178\ub4dc\ub97c \ud5c8\uc6a9\ud560\uc9c0, \uc5b8\uc81c \ubc14\uafd4\ub3c4 \ub418\ub294\uc9c0, \uc571\uc744 \uc5b4\ub5bb\uac8c \ubcf4\ud638\ud560\uc9c0, \ube44\uc6a9\uc740 \uc5ec\uc804\ud788 \uc0ac\uc6a9\uc790\uac00 \uc815\ud569\ub2c8\ub2e4. \uc624\ub298 3\ubd80\uc640 4\ubd80\uac00 \uc591\ucabd \ubaa8\ub450\uc5d0 \ud574\ub2f9\ud558\ub294 \uc774\uc720\uc785\ub2c8\ub2e4.\n\uadf8\ub9ac\uace0 \ud55c \ud074\ub7ec\uc2a4\ud130\uc5d0\uc11c \ub458\uc744 \uc11e\ub294 \uac83\uc740 \uad8c\uc7a5\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ub9c8\uc774\uadf8\ub808\uc774\uc158 \uc911 \uc7a0\uc2dc \uacf5\uc874\ud560 \ub54c\ub294 NodePool\ub85c \uc6cc\ud06c\ub85c\ub4dc\ub97c \ub098\ub220 \ub450\ub77c\ub294 \uac83\uc774 AWS \uc548\ub0b4\uc785\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n- https://aws.amazon.com/eks/faqs/ (\uad00\ub9ac\ud615 \uad6c\uc131 \uc694\uc18c \ubaa9\ub85d)\n- https://docs.aws.amazon.com/eks/latest/userguide/automode.html (Automated Components)\n- https://docs.aws.amazon.com/eks/latest/userguide/automode-learn-instances.html (\uacf5\uc874 \uc2dc NodePool \ubd84\ub9ac)\n\n\ub9c8\uc9c0\ub9c9\uc73c\ub85c \uc624\ub298 \uae30\uc900\uc758 \ubc84\uc804 \uc9c0\ub3c4\ub97c \uc815\ub9ac\ud558\uace0 3\ubd80\ub85c \ub118\uc5b4\uac00\uaca0\uc2b5\ub2c8\ub2e4.",
+    7: "\u23f8\ufe0f \ud83c\udfac [2.5min] [\uc694\uc57d]\n- EKS 1.37: 2026-10-01 \ucd9c\uc2dc, \ud45c\uc900 \uc9c0\uc6d0 2027-12-01, \ud655\uc7a5 \uc9c0\uc6d0 2028-12-01. \uc11c\uc6b8 \ub9ac\uc804 \uae30\ubcf8 \ubc84\uc804\uc740 \uc544\uc9c1 1.36\uc774\ub77c 1.37\uc740 \uba85\uc2dc\ud574\uc57c \ud568\n- 1.37\uc5d0\ub294 Karpenter 1.15.x\uac00 \ud544\uc694. v1.15.0(2026-10-10)\uc740 LTS\uac00 \uc544\ub2c8\ub77c \ub2e4\uc74c minor \ucd9c\uc2dc \uc804\uae4c\uc9c0\ub9cc \uc9c0\uc6d0\n- v1.14.x\ub294 LTS(Jul 2027\uae4c\uc9c0)\uc9c0\ub9cc K8s 1.36\uae4c\uc9c0. v1.14.2 \ud328\uce58\uac00 2026-10-19 \ucd9c\uc2dc\n- Auto Mode\ub294 Karpenter \ubc84\uc804\uc744 \uc0ac\uc6a9\uc790\uac00 \uace0\ub974\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\n\uc67c\ucabd\uc740 \ud074\ub9ad\ud574 \ubcf4\uc2e4 \uc218 \uc788\ub294 \ubc84\uc804 \uce74\ub4dc\uc785\ub2c8\ub2e4. \uc9c0\uae08 1.37\uc774 \uc120\ud0dd\ub418\uc5b4 \uc788\uc2b5\ub2c8\ub2e4. EKS 1.37\uc740 10\uc6d4 1\uc77c\uc5d0 \ub098\uc654\uace0 \ud45c\uc900 \uc9c0\uc6d0\uc740 2027\ub144 12\uc6d4 1\uc77c, \ud655\uc7a5 \uc9c0\uc6d0\uc740 2028\ub144 12\uc6d4 1\uc77c\uae4c\uc9c0\uc785\ub2c8\ub2e4. \uc11c\uc6b8 \ub9ac\uc804\uc758 \uae30\ubcf8 \ubc84\uc804\uc740 \uc544\uc9c1 1.36\uc774\ub77c\uc11c, 1.37 \ud074\ub7ec\uc2a4\ud130\ub97c \ub9cc\ub4e4 \ub54c\ub294 \ubc84\uc804\uc744 \uba85\uc2dc\ud574\uc57c \ud569\ub2c8\ub2e4.\n\n1.36\uc744 \ub20c\ub7ec \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. Karpenter \ucd5c\uc18c \ubc84\uc804\uc774 1.13 \uc774\uc0c1\uc73c\ub85c \ubc14\ub01d\ub2c8\ub2e4. 1.37\ub85c \ub3cc\uc544\uc624\uba74 1.15.x\uc785\ub2c8\ub2e4. \uc774 \ucc28\uc774\uac00 \uc624\ub978\ucabd \uce74\ub4dc\uc758 \uc774\uc57c\uae30\uc785\ub2c8\ub2e4.\n\nKarpenter v1.15.0\uc740 10\uc6d4 10\uc77c\uc5d0 \ub098\uc654\uace0 1.37\uc744 \uc4f0\ub824\uba74 \ud544\uc694\ud569\ub2c8\ub2e4. \uadf8\ub7f0\ub370 v1.15\ub294 LTS\uac00 \uc544\ub2c8\ub77c regular release\ub77c\uc11c, \uc9c0\uc6d0 \uc815\ucc45\uc0c1 \ub2e4\uc74c minor\uac00 \ub098\uc62c \ub54c\uae4c\uc9c0\ub9cc \uc9c0\uc6d0\ub429\ub2c8\ub2e4. LTS\uc778 v1.14 \uacc4\uc5f4\uc740 2027\ub144 7\uc6d4\uae4c\uc9c0 \uc9c0\uc6d0\ub418\uace0 2026-10-19\uc5d0 v1.14.2 \ud328\uce58\uac00 \ub098\uc654\uc9c0\ub9cc, \ud638\ud658\uc131\uc740 1.36\uae4c\uc9c0\uc785\ub2c8\ub2e4. \uc815\ub9ac\ud558\uba74 1.37\ub85c \uac00\ub294 \uc21c\uac04 Karpenter\ub3c4 regular release \uc8fc\uae30\ub97c \ub530\ub77c\uac00\uc57c \ud55c\ub2e4\ub294 \ub73b\uc785\ub2c8\ub2e4. \uc774 \uc810\uc774 4\ubd80 \uc120\ud0dd \uae30\uc900\uc758 \"Karpenter minor\ub9c8\ub2e4 CRD\uc640 breaking change\ub97c \ub530\ub77c\uac08 \uc778\ub825\" \ud56d\ubaa9\uc73c\ub85c \uc774\uc5b4\uc9d1\ub2c8\ub2e4.\nAuto Mode\uc5d0\ub294 \uc774 \uace0\ubbfc\uc774 \uc5c6\uc2b5\ub2c8\ub2e4. \uad00\ub9ac\ud615 Karpenter \ubc84\uc804\uc740 \uacf5\uac1c\ub418\uc9c0 \uc54a\uace0 AWS\uac00 \uc5c5\uadf8\ub808\uc774\ub4dc\ud569\ub2c8\ub2e4.\n\n[\ucd9c\ucc98]\n- aws eks describe-cluster-versions --region ap-northeast-2 (2026-10-20 \uc2e4\ud589), https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html\n- https://karpenter.sh/docs/upgrading/compatibility/\n- https://github.com/aws/karpenter-provider-aws/releases (v1.15.0, v1.14.2), SUPPORT.md @ v1.15.0\n\n\uc5ec\uae30\uae4c\uc9c0\uac00 \uac1c\ub150\uacfc \uad6c\uc870\uc600\uc2b5\ub2c8\ub2e4. 3\ubd80\uc5d0\uc11c\ub294 \uc774 \ub8e8\ud504\uac00 \ub178\ub4dc\ub97c \ub298\ub9ac\uace0, \uc904\uc774\uace0, \ubc14\uafb8\ub294 \ubc29\uc2dd\uc744 \uc790\uc138\ud788 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4."
+  };
+  const deck = new SlideFramework({
+    logoSrc: "./common/pptx-theme/images/logo_1.png",
+    
+    footer: "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.",
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

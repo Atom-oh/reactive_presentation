@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>V3 Drift 교체</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --bg: #161d26;
+        --panel: #1d2632;
+        --panel-2: #222d3a;
+        --line: #3a4a5e;
+        --fg: #ffffff;
+        --fg-2: rgba(243, 243, 247, 0.78);
+        --fg-3: rgba(243, 243, 247, 0.62);
+        --accent: #41b3ff;
+        --warning: #fbd332;
+        --success: #00e500;
+        --danger: #ff5c85;
+        --sans: "Noto Sans KR", sans-serif;
+        --mono: "JetBrains Mono", "Noto Sans KR", monospace;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--bg);
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: var(--sans);
+        color: var(--fg);
+        word-break: keep-all;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+      .mono {
+        font-family: var(--mono);
+      }
+      .ok {
+        color: var(--success);
+      }
+      .wn {
+        color: var(--warning);
+      }
+      .bad {
+        color: var(--danger);
+      }
+      .ac {
+        color: var(--accent);
+      }
+      .dim {
+        color: var(--fg-3);
+      }
+
+      /* background */
+      #bg {
+        position: absolute;
+        inset: 0;
+        background: var(--bg);
+      }
+      #bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(65, 179, 255, 0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(65, 179, 255, 0.05) 1px, transparent 1px);
+        background-size: 80px 80px;
+      }
+      #bg-glow {
+        position: absolute;
+        left: 1100px;
+        top: -300px;
+        width: 1100px;
+        height: 1100px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(65, 179, 255, 0.12) 0%, rgba(65, 179, 255, 0) 65%);
+      }
+
+      /* footer */
+      .footer-label {
+        position: absolute;
+        left: 60px;
+        bottom: 26px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 36px;
+        font-weight: 500;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+      .footer-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--warning);
+      }
+      .footer-label.rec-label .footer-dot {
+        background: var(--danger);
+      }
+      .footer-right {
+        position: absolute;
+        right: 60px;
+        bottom: 26px;
+        font-size: 36px;
+        color: var(--fg-3);
+        white-space: nowrap;
+      }
+
+      /* opening title */
+      #s0-title {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 160px 80px;
+      }
+      .kicker {
+        font-size: 40px;
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 0.02em;
+      }
+      .big-title {
+        margin-top: 24px;
+        font-size: 104px;
+        font-weight: 900;
+        line-height: 1.15;
+      }
+      .big-msg {
+        margin-top: 40px;
+        max-width: 1600px;
+        font-size: 48px;
+        font-weight: 500;
+        line-height: 1.4;
+        color: var(--fg-2);
+      }
+      .big-msg b {
+        color: var(--success);
+        font-weight: 700;
+      }
+      .ln {
+        display: block;
+      }
+
+      /* header */
+      .hdr {
+        position: absolute;
+        left: 60px;
+        top: 56px;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+      }
+      .step {
+        display: block;
+        padding: 6px 22px;
+        border: 2px solid var(--accent);
+        border-radius: 999px;
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--accent);
+        white-space: nowrap;
+      }
+      .hdr-title {
+        display: block;
+        font-size: 58px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .sub {
+        position: absolute;
+        left: 60px;
+        top: 160px;
+        font-size: 36px;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+
+      /* cards */
+      .card {
+        position: absolute;
+        padding: 28px 36px;
+        border-radius: 22px;
+        background: var(--panel);
+        border: 2px solid var(--line);
+      }
+      .card.auto {
+        border-color: var(--accent);
+      }
+      .card.karp {
+        border-color: var(--warning);
+      }
+      .card-h {
+        font-size: 42px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .card-line {
+        margin-top: 16px;
+        font-size: 38px;
+        line-height: 1.3;
+      }
+      .card-sub {
+        margin-top: 14px;
+        font-size: 36px;
+        line-height: 1.3;
+        color: var(--fg-2);
+      }
+      .code {
+        margin-top: 16px;
+        padding: 10px 20px;
+        border-radius: 12px;
+        background: #121820;
+        border: 2px solid var(--line);
+        font-family: var(--mono);
+        font-size: 36px;
+        line-height: 1.35;
+        white-space: nowrap;
+      }
+      .strike {
+        text-decoration: line-through;
+        color: var(--fg-3);
+      }
+
+      /* scene 1 cluster panels */
+      .cpanel {
+        position: absolute;
+        top: 560px;
+        width: 870px;
+        height: 310px;
+        border-radius: 22px;
+        border: 2px dashed var(--line);
+      }
+      .cp-title {
+        position: absolute;
+        left: 30px;
+        top: 16px;
+        font-size: 38px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .cp-pods {
+        position: absolute;
+        left: 30px;
+        top: 244px;
+        font-size: 36px;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+      .nbox {
+        position: absolute;
+        top: 80px;
+        width: 380px;
+        height: 150px;
+        border-radius: 16px;
+        background: var(--panel);
+        border: 3px solid var(--line);
+      }
+      .nb-name {
+        position: absolute;
+        left: 24px;
+        top: 14px;
+        font-size: 38px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .nb-slot {
+        position: absolute;
+        left: 24px;
+        top: 76px;
+        width: 330px;
+        height: 54px;
+      }
+      .nb-st {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 54px;
+        padding: 0 18px;
+        display: flex;
+        align-items: center;
+        border-radius: 10px;
+        font-family: var(--mono);
+        font-size: 36px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .nb-st.ready {
+        color: var(--success);
+        background: rgba(0, 229, 0, 0.1);
+      }
+      .nb-st.drift {
+        color: var(--danger);
+        background: rgba(255, 92, 133, 0.14);
+      }
+      #s1-say {
+        position: absolute;
+        left: 60px;
+        top: 900px;
+        width: 1800px;
+        font-size: 40px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      /* recording */
+      #recwin {
+        position: absolute;
+        left: 60px;
+        top: 150px;
+        width: 1800px;
+        height: 830px;
+        overflow: hidden;
+        border-radius: 16px;
+        border: 2px solid var(--line);
+        background: #0e1013;
+        z-index: 5;
+      }
+      #recpan {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 2160px;
+        height: 1364px;
+      }
+      .rec {
+        position: absolute;
+        left: 6px;
+        top: 8px;
+        width: 2160px;
+        height: 1364px;
+        object-fit: fill;
+      }
+      .rec-note {
+        position: absolute;
+        right: 60px;
+        top: 60px;
+        padding: 8px 24px;
+        border-radius: 14px;
+        border: 2px solid var(--warning);
+        background: rgba(251, 211, 50, 0.1);
+        color: var(--warning);
+        font-size: 36px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      #callouts {
+        z-index: 6;
+        pointer-events: none;
+      }
+      .co {
+        position: absolute;
+        left: 1380px;
+        width: 460px;
+        padding: 22px 28px;
+        border-radius: 18px;
+        background: rgba(29, 38, 50, 0.96);
+        border: 3px solid var(--accent);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      }
+      .co-h {
+        font-size: 40px;
+        font-weight: 800;
+        line-height: 1.25;
+      }
+      .co-l {
+        margin-top: 10px;
+        font-size: 36px;
+        line-height: 1.3;
+        color: var(--fg-2);
+      }
+
+      /* scene 3 timeline */
+      .lane {
+        position: absolute;
+        left: 60px;
+        width: 1800px;
+        height: 180px;
+        border-radius: 20px;
+        background: var(--panel);
+        border: 2px solid var(--line);
+      }
+      .lane-name {
+        position: absolute;
+        left: 30px;
+        top: 40px;
+        font-size: 44px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .lane-sub {
+        position: absolute;
+        left: 30px;
+        top: 102px;
+        font-size: 36px;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+      .lane-track {
+        position: absolute;
+        left: 360px;
+        top: 88px;
+        width: 1420px;
+        height: 4px;
+        background: var(--line);
+      }
+      .ev {
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+      }
+      .ev.L {
+        background: var(--success);
+        box-shadow: 0 0 20px rgba(0, 229, 0, 0.55);
+      }
+      .ev.T {
+        background: var(--danger);
+        box-shadow: 0 0 20px rgba(255, 92, 133, 0.55);
+      }
+      .evl {
+        position: absolute;
+        width: 200px;
+        text-align: center;
+        font-family: var(--mono);
+        font-size: 36px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .evl.L {
+        color: var(--success);
+      }
+      .evl.T {
+        color: var(--danger);
+      }
+      #axis {
+        position: absolute;
+        left: 420px;
+        top: 712px;
+        width: 1400px;
+        height: 3px;
+        background: var(--fg-3);
+      }
+      .tick {
+        position: absolute;
+        top: 704px;
+        width: 3px;
+        height: 18px;
+        background: var(--fg-3);
+      }
+      .tick-l {
+        position: absolute;
+        top: 728px;
+        width: 220px;
+        text-align: center;
+        font-family: var(--mono);
+        font-size: 36px;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+      #playhead {
+        position: absolute;
+        left: 420px;
+        top: 236px;
+        width: 4px;
+        height: 486px;
+        background: rgba(255, 255, 255, 0.55);
+      }
+      .legend {
+        position: absolute;
+        top: 160px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-size: 36px;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+      .lg-dot {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+      }
+      .done {
+        position: absolute;
+        top: 810px;
+        width: 870px;
+        height: 150px;
+        padding: 18px 30px;
+        border-radius: 18px;
+        background: var(--panel);
+        border: 3px solid var(--line);
+      }
+      .done.auto {
+        left: 60px;
+        border-color: var(--accent);
+      }
+      .done.karp {
+        left: 990px;
+        border-color: var(--warning);
+      }
+      .done-k {
+        font-size: 36px;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+      .done-v {
+        margin-top: 4px;
+        font-size: 52px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      /* scene 4 */
+      .big-num {
+        font-size: 150px;
+        font-weight: 900;
+        line-height: 1;
+        color: var(--accent);
+      }
+      .num-row {
+        margin-top: 18px;
+        display: flex;
+        align-items: flex-end;
+        gap: 40px;
+      }
+      .num-side {
+        padding-bottom: 14px;
+        font-size: 40px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      /* scene 5 */
+      .msg {
+        position: absolute;
+        left: 60px;
+        top: 180px;
+        width: 1800px;
+        font-size: 52px;
+        font-weight: 800;
+        line-height: 1.34;
+      }
+      .msg b {
+        color: var(--success);
+      }
+      .kc {
+        top: 390px;
+        width: 573px;
+        height: 320px;
+      }
+      .kc .card-h {
+        font-size: 40px;
+        white-space: normal;
+        line-height: 1.25;
+      }
+      .caveat {
+        position: absolute;
+        left: 60px;
+        top: 760px;
+        width: 1800px;
+        height: 130px;
+        padding: 0 40px;
+        border-radius: 22px;
+        background: rgba(251, 211, 50, 0.06);
+        border: 2px solid var(--warning);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 12px;
+      }
+      .cv {
+        font-size: 36px;
+        line-height: 1.3;
+        white-space: nowrap;
+      }
+      .cv i {
+        font-style: normal;
+        font-weight: 800;
+        color: var(--warning);
+        margin-right: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="160"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div id="bg">
+        <div id="bg-grid"></div>
+        <div id="bg-glow"></div>
+      </div>
+
+      <!-- Opening title -->
+      <section id="s0-title" class="clip" data-start="0" data-duration="6" data-track-index="1">
+        <div id="t-kicker" class="kicker">EKS Auto Mode와 Karpenter 데모 3</div>
+        <div id="t-title" class="big-title">Drift 교체</div>
+        <div id="t-msg" class="big-msg">
+          <span class="ln">NodeClass를 바꾸면 기존 노드는 <b>Drift</b>로 표시되고,</span>
+          <span class="ln">budget 1대 기준으로 <b>새 노드를 먼저</b> 띄운 뒤 하나씩 교체됩니다</span>
+        </div>
+      </section>
+
+      <!-- Headers -->
+      <div id="h1" class="clip" data-start="5.5" data-duration="23.5" data-track-index="2">
+        <div id="h1-in" class="hdr">
+          <span class="step">1 / 5</span>
+          <span class="hdr-title">무엇을 바꿨나</span>
+        </div>
+      </div>
+      <div id="h3" class="clip" data-start="98.8" data-duration="25.2" data-track-index="2">
+        <div id="h3-in" class="hdr">
+          <span class="step">3 / 5</span>
+          <span class="hdr-title">교체 순서: budget 1대씩</span>
+        </div>
+      </div>
+      <div id="h4" class="clip" data-start="124" data-duration="20" data-track-index="2">
+        <div id="h4-in" class="hdr">
+          <span class="step">4 / 5</span>
+          <span class="hdr-title">결과 확인</span>
+        </div>
+      </div>
+      <div id="h5" class="clip" data-start="144" data-duration="16" data-track-index="2">
+        <div id="h5-in" class="hdr">
+          <span class="step">5 / 5</span>
+          <span class="hdr-title">정리</span>
+        </div>
+      </div>
+
+      <!-- Scene 1: two patches and start state -->
+      <section id="s1" class="clip" data-start="5.5" data-duration="23.5" data-track-index="4">
+        <div id="p-auto" class="card auto" style="left: 60px; top: 180px; width: 870px; height: 350px">
+          <div class="card-h ac">akd-auto: EKS Auto Mode</div>
+          <div class="card-line">NodeClass demo에 추가</div>
+          <div class="code">advancedCompute.kubelet.maxPods: <span class="ac">64</span></div>
+          <div class="card-sub">AMI는 사용자가 고르지 않음 (Bottlerocket)</div>
+        </div>
+        <div id="p-karp" class="card karp" style="left: 990px; top: 180px; width: 870px; height: 350px">
+          <div class="card-h wn">akd-karp: Karpenter 1.15.0</div>
+          <div class="card-line">EC2NodeClass amiSelectorTerms alias</div>
+          <div class="code"><span class="strike">al2023@v20261003</span></div>
+          <div id="p-karp-new" class="code" style="border-color: var(--warning)"><span class="wn">al2023@v20261012</span></div>
+        </div>
+
+        <div id="cp-auto" class="cpanel" style="left: 60px">
+          <div class="cp-title ac">akd-auto 시작 상태</div>
+          <div class="nbox" style="left: 30px">
+            <div class="nb-name">demo 노드 2a</div>
+            <div class="nb-slot" data-layout-allow-overlap>
+              <div id="na1r" class="nb-st ready">Ready</div>
+              <div id="na1d" class="nb-st drift">Drifted=True</div>
+            </div>
+          </div>
+          <div class="nbox" style="left: 450px">
+            <div class="nb-name">demo 노드 2b</div>
+            <div class="nb-slot" data-layout-allow-overlap>
+              <div id="na2r" class="nb-st ready">Ready</div>
+              <div id="na2d" class="nb-st drift">Drifted=True</div>
+            </div>
+          </div>
+          <div class="cp-pods">Pod 6개, zone topology spread (minDomains 2)</div>
+        </div>
+        <div id="cp-karp" class="cpanel" style="left: 990px">
+          <div class="cp-title wn">akd-karp 시작 상태</div>
+          <div class="nbox" style="left: 30px">
+            <div class="nb-name">demo 노드 2a</div>
+            <div class="nb-slot" data-layout-allow-overlap>
+              <div id="nk1r" class="nb-st ready">Ready</div>
+              <div id="nk1d" class="nb-st drift">Drifted=True</div>
+            </div>
+          </div>
+          <div class="nbox" style="left: 450px">
+            <div class="nb-name">demo 노드 2b</div>
+            <div class="nb-slot" data-layout-allow-overlap>
+              <div id="nk2r" class="nb-st ready">Ready</div>
+              <div id="nk2d" class="nb-st drift">Drifted=True</div>
+            </div>
+          </div>
+          <div class="cp-pods">Pod 6개, zone topology spread (minDomains 2)</div>
+        </div>
+        <div id="s1-say">패치 직후 두 클러스터 모두 기존 NodeClaim 2개가&nbsp;<span class="bad">Drifted=True</span>, 교체 budget은&nbsp;<span class="ac">nodes: 1</span></div>
+      </section>
+
+      <!-- Footer: reconstruction (outside recording) -->
+      <div id="fA" class="clip" data-start="0" data-duration="29" data-track-index="9">
+        <div class="footer-label"><span class="footer-dot"></span>실측 결과 재구성 (2026-10-20, akd-auto / akd-karp)</div>
+        <div class="footer-right">데모 3: Drift 교체</div>
+      </div>
+      <div id="fB" class="clip" data-start="98.8" data-duration="61.2" data-track-index="9">
+        <div class="footer-label"><span class="footer-dot"></span>실측 결과 재구성 (2026-10-20, akd-auto / akd-karp)</div>
+        <div class="footer-right">데모 3: Drift 교체</div>
+      </div>
+
+      <!-- Recording scene A: start state and patches (media 2 to 13 s at 0.5x) -->
+      <div id="recA" class="clip" data-start="29" data-duration="22" data-track-index="10">
+        <div id="recA-h" class="hdr">
+          <span class="step">2 / 5</span>
+          <span class="hdr-title">녹화: 시작 상태와 패치</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임, 0.5배속</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-20, EKS 1.37)</div>
+        <div class="footer-right">데모 3: Drift 교체</div>
+      </div>
+      <!-- Recording scene B: drift replacement (media 13 to 36.9 s at 0.5x) -->
+      <div id="recB" class="clip" data-start="51" data-duration="47.8" data-track-index="10">
+        <div class="hdr">
+          <span class="step">2 / 5</span>
+          <span class="hdr-title">녹화: Drift 교체 진행</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임, 0.5배속</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-20, EKS 1.37)</div>
+        <div class="footer-right">데모 3: Drift 교체</div>
+      </div>
+
+      <!-- Recording window (untimed wrapper; shown only during 29 to 98.8 s) -->
+      <div id="recwin">
+        <div id="recpan" data-layout-allow-overflow>
+          <video id="vD3" class="rec" src="assets/d3-drift.mp4" data-start="29" data-duration="69.8" data-media-start="2" data-playback-rate="0.5" data-track-index="11" muted playsinline></video>
+        </div>
+      </div>
+
+      <!-- Recording callouts -->
+      <div id="callouts" class="clip" data-start="29" data-duration="69.8" data-track-index="12">
+        <div id="co1" class="co" style="top: 360px">
+          <div class="co-h ac">budget nodes: 1</div>
+          <div class="co-l">두 클러스터 demo NodePool 같은 값</div>
+        </div>
+        <div id="co2" class="co" style="top: 360px; border-color: var(--danger)">
+          <div class="co-h bad">기존 노드 DRIFTED</div>
+          <div class="co-l">패치 직후 두 클러스터 모두 2대씩</div>
+        </div>
+        <div id="co3" class="co" style="top: 360px; border-color: var(--success)">
+          <div class="co-h ok">새 노드 먼저 Launch</div>
+          <div class="co-l">그다음 기존 노드 Terminate, 한 대씩</div>
+        </div>
+        <div id="co4" class="co" style="top: 270px">
+          <div class="co-h">완료</div>
+          <div class="co-l"><span class="ac">akd-auto +98초</span></div>
+          <div class="co-l"><span class="wn">akd-karp +127초</span></div>
+        </div>
+      </div>
+
+      <!-- Scene 3: replacement timeline -->
+      <section id="s3" class="clip" data-start="98.8" data-duration="25.2" data-track-index="4">
+        <div id="lgL" class="legend" style="left: 60px"><span class="lg-dot" style="background: var(--success)"></span>Launch: 새 NodeClaim</div>
+        <div id="lgT" class="legend" style="left: 560px"><span class="lg-dot" style="background: var(--danger)"></span>Terminate: 기존 노드</div>
+        <div id="lgU" class="legend" style="left: 1140px">시각은 녹화 이벤트 기준 (UTC)</div>
+        <div id="laneA" class="lane" style="top: 240px">
+          <div class="lane-name ac">akd-auto</div>
+          <div class="lane-sub">Auto Mode</div>
+        </div>
+        <div id="laneK" class="lane" style="top: 480px">
+          <div class="lane-name wn">akd-karp</div>
+          <div class="lane-sub">Karpenter</div>
+        </div>
+        <div id="axis"></div>
+        <div id="ticks"></div>
+        <div id="evs"></div>
+        <div id="playhead"></div>
+        <div id="dA" class="done auto">
+          <div class="done-k">완료: 기존 NodeClaim 0, 6/6 Running</div>
+          <div class="done-v ac">akd-auto +98초</div>
+        </div>
+        <div id="dK" class="done karp">
+          <div class="done-k">완료: 기존 NodeClaim 0, 6/6 Running</div>
+          <div class="done-v wn">akd-karp +127초</div>
+        </div>
+      </section>
+
+      <!-- Scene 4: results -->
+      <section id="s4" class="clip" data-start="124" data-duration="20" data-track-index="4">
+        <div id="r-ami" class="card karp" style="left: 60px; top: 180px; width: 1800px; height: 230px">
+          <div class="card-h wn">akd-karp: 새 노드 AMI</div>
+          <div class="code" style="font-size: 40px">amazon-eks-node-al2023-x86_64-standard-1.37-<span class="wn">v20261012</span></div>
+          <div class="card-sub" style="position: absolute; right: 36px; top: 28px">시작 시 v20261003</div>
+        </div>
+        <div id="r-pods" class="card auto" style="left: 60px; top: 450px; width: 880px; height: 450px">
+          <div class="card-h ac">akd-auto: 새 노드 capacity.pods</div>
+          <div class="num-row">
+            <div id="r-56" class="big-num">56</div>
+            <div class="num-side">설정값&nbsp;<span class="strike">64</span></div>
+          </div>
+          <div class="card-line">실제값 = min(설정값, 인스턴스 IP 수, 110)</div>
+          <div class="card-sub">maxPods는 상한이고, 실제값은 더 작을 수 있음</div>
+        </div>
+        <div id="r-spot" class="card karp" style="left: 980px; top: 450px; width: 880px; height: 450px">
+          <div class="card-h wn">akd-karp: spot NodePool도 교체</div>
+          <div class="card-line">같은 EC2NodeClass를 쓰는 spot 노드도 함께 Drift 교체</div>
+          <div class="code" style="margin-top: 30px">spot-8wplw <span class="dim">→</span> <span class="wn">spot-89g4w</span></div>
+          <div class="card-sub">NodeClass 하나를 바꾸면 그 NodeClass를 참조하는 모든 NodePool이 대상</div>
+        </div>
+      </section>
+
+      <!-- Scene 5: wrap-up -->
+      <section id="s5" class="clip" data-start="144" data-duration="16" data-track-index="4">
+        <div id="msg" class="msg">
+          <span class="ln">NodeClass를 바꾸면 기존 노드는 <b>Drift</b>로 표시되고,</span>
+          <span class="ln">budget 1대 기준으로 <b>새 노드를 먼저</b> 띄운 뒤 하나씩 교체된다</span>
+        </div>
+        <div id="k1" class="card kc karp" style="left: 60px">
+          <div class="card-h wn">AMI는 버전 고정 후 의도적으로 올림</div>
+          <div class="card-sub">alias에 @버전을 지정하고, 바꾸는 순간 Drift 교체가 시작됨</div>
+        </div>
+        <div id="k2" class="card kc" style="left: 673px">
+          <div class="card-h ok">budget과 PDB로 속도 조절</div>
+          <div class="card-sub">nodes: 1이면 새 노드를 먼저 띄우고 한 대씩 교체</div>
+        </div>
+        <div id="k3" class="card kc auto" style="left: 1286px">
+          <div class="card-h ac">Auto Mode도 NodeClass 변경이 Drift</div>
+          <div class="card-sub">AMI는 AWS가 관리, 설정 변경은 같은 교체 흐름</div>
+        </div>
+        <div id="cav" class="caveat">
+          <div class="cv"><i>!</i>1회 실행 결과이며 벤치마크가 아님: +98초와 +127초의 차이를 일반화하지 않음</div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      (function () {
+        const tl = gsap.timeline({ paused: true });
+
+        function show(sel, t, dy) {
+          tl.fromTo(sel, { opacity: 0, y: dy === undefined ? 20 : dy }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, t);
+        }
+        function swap(outSel, inSel, t) {
+          tl.to(outSel, { opacity: 0, duration: 0.3 }, t);
+          tl.fromTo(inSel, { opacity: 0 }, { opacity: 1, duration: 0.4 }, t + 0.15);
+        }
+        function fade(sel, t) {
+          tl.to(sel, { opacity: 0, duration: 0.35 }, t);
+        }
+
+        // Ambient background drift (finite).
+        tl.fromTo("#bg-glow", { x: 0, y: 0 }, { x: -260, y: 120, duration: 16, ease: "sine.inOut", yoyo: true, repeat: 9 }, 0);
+
+        // ---------- Title (0 to 6) ----------
+        show("#t-kicker", 0.3);
+        show("#t-title", 0.6, 30);
+        show("#t-msg", 1.4);
+        tl.to(["#t-kicker", "#t-title", "#t-msg"], { opacity: 0, duration: 0.5 }, 5.3);
+
+        // Headers
+        show("#h1-in", 5.6, 0);
+        show("#recA-h", 29.05, 0);
+        show("#h3-in", 98.85, 0);
+        show("#h4-in", 124.05, 0);
+        show("#h5-in", 144.05, 0);
+        fade("#h1-in", 28.6);
+        fade("#h3-in", 123.6);
+        fade("#h4-in", 143.6);
+
+        // ---------- Scene 1 (5.5 to 29) ----------
+        show("#p-auto", 6.2, 24);
+        show("#p-karp", 8.2, 24);
+        tl.fromTo("#p-karp-new", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, 10.2);
+        show("#cp-auto", 13.0, 20);
+        show("#cp-karp", 13.6, 20);
+        tl.set(["#na1d", "#na2d", "#nk1d", "#nk2d", "#s1-say"], { opacity: 0 }, 0);
+        ["1", "2"].forEach((n, i) => {
+          swap("#na" + n + "r", "#na" + n + "d", 18.0 + i * 0.3);
+          swap("#nk" + n + "r", "#nk" + n + "d", 18.6 + i * 0.3);
+        });
+        tl.to("#cp-auto .nbox, #cp-karp .nbox", { borderColor: "#ff5c85", duration: 0.4 }, 18.2);
+        show("#s1-say", 20.0, 12);
+        tl.to("#s1", { opacity: 0, duration: 0.4 }, 28.55);
+
+        // ---------- Recording (29 to 98.8): media = 2 + (t - 29) * 0.5 ----------
+        tl.set("#recwin", { opacity: 0 }, 0);
+        tl.set("#recwin", { opacity: 1 }, 29);
+        tl.set("#recwin", { opacity: 0 }, 98.8);
+        tl.set("#recpan", { y: 0 }, 0);
+        // media 6 to 13: typed patch commands run below the visible window.
+        tl.to("#recpan", { y: -230, duration: 0.4, ease: "power2.out" }, 36.6);
+        // media 13: screen redraws with the drift view.
+        tl.to("#recpan", { y: 0, duration: 0.3, ease: "power2.out" }, 50.9);
+        // media 34, 35: event tables are printed at the bottom.
+        tl.to("#recpan", { y: -200, duration: 0.4, ease: "power2.out" }, 92.8);
+        tl.to("#recpan", { y: -410, duration: 0.4, ease: "power2.out" }, 94.8);
+
+        tl.set(["#co1", "#co2", "#co3", "#co4"], { opacity: 0 }, 0);
+        show("#co1", 35.0, 14);
+        fade("#co1", 41.5);
+        show("#co2", 52.5, 14);
+        fade("#co2", 64.5);
+        show("#co3", 67.0, 14);
+        fade("#co3", 88.0);
+        show("#co4", 89.0, 14);
+
+        // ---------- Scene 3 (98.8 to 124): timeline ----------
+        const X0 = 420;
+        const X1 = 1820;
+        const SPAN = 90; // 14:20:00 to 14:21:30
+        const xAt = (s) => X0 + ((X1 - X0) * s) / SPAN;
+        const ticks = document.getElementById("ticks");
+        [
+          [0, "14:20:00"],
+          [30, "14:20:30"],
+          [60, "14:21:00"],
+          [90, "14:21:30"],
+        ].forEach(([s, lab], i) => {
+          const t = document.createElement("div");
+          t.className = "tick";
+          t.style.left = xAt(s) - 1.5 + "px";
+          ticks.appendChild(t);
+          const l = document.createElement("div");
+          l.className = "tick-l";
+          l.id = "tk" + i;
+          l.textContent = lab;
+          l.style.left = (i === 3 ? 1860 - 220 : xAt(s) - 110) + "px";
+          if (i === 3) l.style.textAlign = "right";
+          ticks.appendChild(l);
+        });
+
+        const LANES = [
+          { k: "A", top: 240, ev: [[12, "L", "14:20:12"], [30, "T", "14:20:30"], [45, "L", "14:20:45"], [60, "T", "14:21:00"]] },
+          { k: "K", top: 480, ev: [[10, "L", "14:20:10"], [46, "T", "14:20:46"], [57, "L", "14:20:57"], [87, "T", "14:21:27"]] },
+        ];
+        const evs = document.getElementById("evs");
+        const T0 = 101.5;
+        const SWEEP = 14;
+        const evT = (s) => T0 + (SWEEP * s) / SPAN;
+        LANES.forEach((ln) => {
+          const cy = ln.top + 90;
+          ln.ev.forEach(([s, kind, lab], i) => {
+            const d = document.createElement("div");
+            d.className = "ev " + kind;
+            d.id = "ev" + ln.k + i;
+            d.style.left = xAt(s) - 20 + "px";
+            d.style.top = cy - 20 + "px";
+            evs.appendChild(d);
+            const l = document.createElement("div");
+            l.className = "evl " + kind;
+            l.id = "evl" + ln.k + i;
+            let lx = xAt(s) - 100;
+            if (lx + 200 > 1850) lx = 1850 - 200;
+            l.style.left = lx + "px";
+            l.style.top = (kind === "L" ? cy - 78 : cy + 28) + "px";
+            l.textContent = lab;
+            evs.appendChild(l);
+            const t = evT(s);
+            tl.fromTo(d, { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2.4)" }, t);
+            tl.fromTo(l, { opacity: 0 }, { opacity: 1, duration: 0.3 }, t + 0.05);
+          });
+        });
+
+        show("#lgL", 99.2, 8);
+        show("#lgT", 99.5, 8);
+        show("#lgU", 99.8, 8);
+        show("#laneA", 99.6, 16);
+        show("#laneK", 99.9, 16);
+        tl.fromTo(["#axis", "#ticks"], { opacity: 0 }, { opacity: 1, duration: 0.5 }, 100.4);
+        tl.fromTo("#playhead", { opacity: 0, x: 0 }, { opacity: 1, x: 0, duration: 0.3 }, T0 - 0.3);
+        tl.to("#playhead", { x: X1 - X0, duration: SWEEP, ease: "none" }, T0);
+        tl.to("#playhead", { opacity: 0, duration: 0.4 }, T0 + SWEEP + 0.2);
+        show("#dA", 116.6, 16);
+        show("#dK", 117.4, 16);
+        tl.to("#s3", { opacity: 0, duration: 0.4 }, 123.55);
+
+        // ---------- Scene 4 (124 to 144): results ----------
+        show("#r-ami", 124.6, 20);
+        show("#r-pods", 127.5, 20);
+        tl.fromTo("#r-56", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2)" }, 128.4);
+        show("#r-spot", 133.0, 20);
+        tl.to("#s4", { opacity: 0, duration: 0.4 }, 143.55);
+
+        // ---------- Scene 5 (144 to 160) ----------
+        show("#msg", 144.6, 20);
+        show("#k1", 146.4, 24);
+        show("#k2", 147.2, 24);
+        show("#k3", 148.0, 24);
+        show("#cav", 150.0, 16);
+
+        window.__timelines["main"] = tl;
+      })();
+    </script>
+  </body>
+</html>

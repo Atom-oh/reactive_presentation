@@ -1,0 +1,1080 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>V4 Spot 중단 처리 (AWS FIS)</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --bg: #161d26;
+        --panel: #1d2632;
+        --panel-2: #222d3a;
+        --line: #3a4a5e;
+        --fg: #ffffff;
+        --fg-2: rgba(243, 243, 247, 0.78);
+        --fg-3: rgba(243, 243, 247, 0.62);
+        --accent: #41b3ff;
+        --warning: #fbd332;
+        --success: #00e500;
+        --danger: #ff5c85;
+        --sans: "Noto Sans KR", sans-serif;
+        --mono: "JetBrains Mono", "Noto Sans KR", monospace;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--bg);
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: var(--sans);
+        color: var(--fg);
+        word-break: keep-all;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+      .mono {
+        font-family: var(--mono);
+      }
+      .ok {
+        color: var(--success);
+      }
+      .wn {
+        color: var(--warning);
+      }
+      .bad {
+        color: var(--danger);
+      }
+      .ac {
+        color: var(--accent);
+      }
+      .dim {
+        color: var(--fg-2);
+      }
+
+      /* background */
+      #bg {
+        position: absolute;
+        inset: 0;
+        background: var(--bg);
+      }
+      #bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(65, 179, 255, 0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(65, 179, 255, 0.05) 1px, transparent 1px);
+        background-size: 80px 80px;
+      }
+      #bg-glow {
+        position: absolute;
+        left: 1100px;
+        top: -300px;
+        width: 1100px;
+        height: 1100px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(251, 211, 50, 0.08) 0%, rgba(251, 211, 50, 0) 65%);
+      }
+
+      /* footer */
+      #footer {
+        pointer-events: none;
+      }
+      .footer-label {
+        position: absolute;
+        left: 60px;
+        bottom: 26px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 36px;
+        font-weight: 500;
+        color: var(--fg-2);
+      }
+      .footer-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--warning);
+      }
+      .footer-right {
+        position: absolute;
+        right: 60px;
+        bottom: 26px;
+        font-size: 36px;
+        color: var(--fg-3);
+      }
+      .footer-label.rec-label .footer-dot {
+        background: var(--danger);
+      }
+
+      /* opening title */
+      #s0-title {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 160px 80px;
+      }
+      .kicker {
+        font-size: 40px;
+        font-weight: 700;
+        color: var(--warning);
+        letter-spacing: 0.02em;
+      }
+      .big-title {
+        margin-top: 24px;
+        font-size: 104px;
+        font-weight: 900;
+        line-height: 1.15;
+      }
+      .big-msg {
+        margin-top: 40px;
+        max-width: 1600px;
+        font-size: 48px;
+        font-weight: 500;
+        line-height: 1.4;
+        color: var(--fg-2);
+      }
+      .big-msg b {
+        font-weight: 700;
+      }
+      .msg-l {
+        display: block;
+      }
+      .t-note {
+        margin-top: 44px;
+        font-size: 40px;
+        font-weight: 700;
+        color: var(--warning);
+      }
+
+      /* header */
+      .hdr {
+        position: absolute;
+        left: 60px;
+        top: 56px;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+      }
+      .step {
+        display: block;
+        padding: 6px 22px;
+        border: 2px solid var(--accent);
+        border-radius: 999px;
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .hdr-title {
+        display: block;
+        font-size: 58px;
+        font-weight: 800;
+      }
+
+      /* generic card */
+      .card {
+        position: absolute;
+        padding: 30px 36px;
+        border-radius: 22px;
+        background: var(--panel);
+        border: 2px solid var(--line);
+      }
+      .card-h {
+        font-size: 42px;
+        font-weight: 800;
+      }
+      .card-line {
+        margin-top: 16px;
+        font-size: 36px;
+        line-height: 1.3;
+      }
+      .card-sub {
+        margin-top: 16px;
+        font-size: 36px;
+        line-height: 1.3;
+        color: var(--fg-2);
+      }
+
+      /* scene 1: path */
+      #lane {
+        position: absolute;
+        left: 60px;
+        top: 160px;
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--warning);
+        white-space: nowrap;
+      }
+      #pkt {
+        position: absolute;
+        left: 202px;
+        top: 313px;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: var(--warning);
+        box-shadow: 0 0 22px rgba(251, 211, 50, 0.9);
+      }
+      .arrow {
+        position: absolute;
+        top: 326px;
+        width: 44px;
+        height: 4px;
+        background: var(--warning);
+      }
+      .arrow::after {
+        content: "";
+        position: absolute;
+        right: -6px;
+        top: -9px;
+        border-left: 14px solid var(--warning);
+        border-top: 11px solid transparent;
+        border-bottom: 11px solid transparent;
+      }
+      .fbox {
+        position: absolute;
+        top: 222px;
+        width: 312px;
+        height: 210px;
+        border-radius: 20px;
+        background: var(--panel);
+        border: 3px solid var(--warning);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .fbox.src {
+        border-color: var(--line);
+      }
+      .fbox-t {
+        font-size: 42px;
+        font-weight: 800;
+        line-height: 1.2;
+      }
+      .fbox-s {
+        margin-top: 8px;
+        font-size: 36px;
+        line-height: 1.25;
+        color: var(--fg-2);
+      }
+      #rules {
+        left: 60px;
+        top: 466px;
+        width: 1800px;
+        height: 364px;
+        padding: 24px 36px;
+      }
+      .rules-h {
+        font-size: 40px;
+        font-weight: 800;
+      }
+      .rule {
+        display: flex;
+        align-items: center;
+        height: 50px;
+        font-size: 36px;
+      }
+      .rule:first-of-type {
+        margin-top: 12px;
+      }
+      .rule-n {
+        width: 840px;
+        font-family: var(--mono);
+        font-weight: 700;
+        color: var(--warning);
+        white-space: nowrap;
+      }
+      .rule-d {
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+      #automode {
+        left: 60px;
+        top: 852px;
+        width: 1800px;
+        height: 136px;
+        padding: 16px 36px;
+        border: 2px solid var(--accent);
+        background: rgba(65, 179, 255, 0.07);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 6px;
+      }
+      .am {
+        font-size: 38px;
+        line-height: 1.3;
+        white-space: nowrap;
+      }
+
+      /* recording */
+      #recwin {
+        position: absolute;
+        left: 60px;
+        top: 150px;
+        width: 1800px;
+        height: 830px;
+        overflow: hidden;
+        border-radius: 16px;
+        border: 2px solid var(--line);
+        background: #121314;
+      }
+      #recpan {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1800px;
+        height: 1204px;
+      }
+      .rec {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1800px;
+        height: 1204px;
+        object-fit: fill;
+      }
+      .hl {
+        position: absolute;
+        border: 3px solid var(--warning);
+        border-radius: 10px;
+        background: rgba(251, 211, 50, 0.08);
+      }
+      .hl.g {
+        border-color: var(--success);
+        background: rgba(0, 229, 0, 0.08);
+      }
+      .tag {
+        position: absolute;
+        padding: 2px 16px;
+        border-radius: 10px;
+        border: 2px solid var(--warning);
+        background: #2a2a1c;
+        color: var(--warning);
+        font-size: 36px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .tag.g {
+        border-color: var(--success);
+        background: #15301a;
+        color: var(--success);
+      }
+      #capstrip {
+        position: absolute;
+        left: 0;
+        top: 744px;
+        width: 1800px;
+        height: 86px;
+        background: rgba(29, 38, 50, 0.96);
+        border-top: 2px solid var(--warning);
+      }
+      .cap {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        padding: 0 30px;
+        font-size: 38px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .rec-note {
+        position: absolute;
+        right: 60px;
+        top: 56px;
+        padding: 8px 24px;
+        border-radius: 14px;
+        border: 2px solid var(--warning);
+        background: rgba(251, 211, 50, 0.1);
+        color: var(--warning);
+        font-size: 36px;
+        font-weight: 700;
+      }
+
+      /* scene 3: timeline */
+      #tl-line {
+        position: absolute;
+        left: 342px;
+        top: 214px;
+        width: 4px;
+        height: 528px;
+        background: var(--line);
+      }
+      .ev {
+        position: absolute;
+        left: 60px;
+        width: 1800px;
+        height: 88px;
+      }
+      .ev-t {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 88px;
+        display: flex;
+        align-items: center;
+        font-family: var(--mono);
+        font-size: 40px;
+        font-weight: 700;
+        color: var(--warning);
+      }
+      .ev-dot {
+        position: absolute;
+        left: 268px;
+        top: 30px;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--bg);
+        border: 4px solid var(--warning);
+      }
+      .ev-x {
+        position: absolute;
+        left: 330px;
+        top: 0;
+        height: 88px;
+        display: flex;
+        align-items: center;
+        font-size: 38px;
+        white-space: nowrap;
+      }
+      .ev-x .mono {
+        font-size: 36px;
+      }
+      .callout {
+        position: absolute;
+        left: 60px;
+        width: 1800px;
+        padding: 0 40px;
+        border-radius: 22px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 10px;
+      }
+      .callout.w {
+        border: 2px solid var(--warning);
+        background: rgba(251, 211, 50, 0.07);
+      }
+      .callout.d {
+        border: 2px solid var(--danger);
+        background: rgba(255, 92, 133, 0.08);
+      }
+      .co-1 {
+        font-size: 42px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .co-2 {
+        font-size: 38px;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+
+      /* scene 4: gap */
+      .node {
+        position: absolute;
+        top: 180px;
+        width: 620px;
+        height: 380px;
+        border-radius: 20px;
+        background: var(--panel);
+        border: 3px solid var(--warning);
+      }
+      .node-t {
+        position: absolute;
+        left: 30px;
+        top: 22px;
+        font-family: var(--mono);
+        font-size: 42px;
+        font-weight: 800;
+      }
+      .node-s {
+        position: absolute;
+        left: 30px;
+        top: 82px;
+        font-size: 36px;
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+      .nst-slot {
+        position: absolute;
+        left: 30px;
+        top: 300px;
+        width: 560px;
+        height: 56px;
+      }
+      .nst {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        font-size: 36px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .pod {
+        position: absolute;
+        width: 104px;
+        height: 104px;
+        border-radius: 50%;
+        background: var(--success);
+        box-shadow: 0 0 20px rgba(0, 229, 0, 0.45);
+      }
+      #ctr {
+        position: absolute;
+        left: 700px;
+        top: 180px;
+        width: 520px;
+        height: 380px;
+        border-radius: 20px;
+        border: 2px solid var(--line);
+        background: var(--panel-2);
+      }
+      #ctr-k {
+        position: absolute;
+        left: 0;
+        top: 26px;
+        width: 520px;
+        text-align: center;
+        font-size: 40px;
+        font-weight: 700;
+        color: var(--fg-2);
+      }
+      .ctr-slot {
+        position: absolute;
+        left: 0;
+        top: 90px;
+        width: 520px;
+        height: 260px;
+      }
+      .ctr-v {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 220px;
+        font-weight: 900;
+        line-height: 1;
+      }
+      #bar-track {
+        position: absolute;
+        left: 60px;
+        top: 612px;
+        width: 1800px;
+        height: 76px;
+        border-radius: 14px;
+        background: var(--panel);
+        border: 2px solid var(--line);
+        overflow: hidden;
+      }
+      #bar-fill {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1800px;
+        height: 76px;
+        background: rgba(255, 92, 133, 0.55);
+        transform-origin: left center;
+      }
+      #bar-txt {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        font-weight: 800;
+      }
+      .bar-l {
+        position: absolute;
+        top: 704px;
+        font-size: 36px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      /* scene 5 */
+      .msg {
+        position: absolute;
+        left: 60px;
+        top: 176px;
+        width: 1800px;
+        font-size: 54px;
+        font-weight: 800;
+        line-height: 1.34;
+      }
+      .msg b {
+        color: var(--warning);
+      }
+      .kc {
+        top: 372px;
+        width: 573px;
+        height: 344px;
+      }
+      .caveat {
+        position: absolute;
+        left: 60px;
+        top: 744px;
+        width: 1800px;
+        height: 230px;
+        padding: 26px 40px;
+        border-radius: 22px;
+        background: rgba(251, 211, 50, 0.06);
+        border: 2px solid var(--warning);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 24px;
+      }
+      .cv {
+        font-size: 38px;
+        line-height: 1.3;
+        white-space: nowrap;
+      }
+      .cv i {
+        font-style: normal;
+        font-weight: 800;
+        color: var(--warning);
+        margin-right: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="150"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div id="bg">
+        <div id="bg-grid"></div>
+        <div id="bg-glow"></div>
+      </div>
+
+      <!-- Opening title (0 to 7) -->
+      <section id="s0-title" class="clip" data-start="0" data-duration="7" data-track-index="1">
+        <div id="t-kicker" class="kicker">EKS Auto Mode와 직접 설치 Karpenter: 데모 4</div>
+        <div id="t-title" class="big-title">Spot 중단 처리 (AWS FIS)</div>
+        <div id="t-msg" class="big-msg">
+          <span class="msg-l">Karpenter는 Spot 중단 경고를 받자마자 <b class="wn">노드를 비우고 대체 노드</b>를 띄운다.</span>
+          <span class="msg-l">Pod가 한 노드에 몰려 있으면 그 사이 <b class="bad">서비스가 비어 있다</b>.</span>
+        </div>
+        <div id="t-note" class="t-note">akd-karp에서만 실행: Auto Mode는 FIS EC2 액션을 지원하지 않음</div>
+      </section>
+
+      <!-- Scene headers -->
+      <div id="h1" class="clip" data-start="7" data-duration="27" data-track-index="2">
+        <div id="h1-in" class="hdr">
+          <span class="step">1 / 4</span>
+          <span class="hdr-title">Spot 중단 알림 경로</span>
+        </div>
+      </div>
+      <div id="h3" class="clip" data-start="83.6" data-duration="28.4" data-track-index="2">
+        <div id="h3-in" class="hdr">
+          <span class="step">3 / 4</span>
+          <span class="hdr-title">타임라인: FIS 시작부터 대체 노드 Ready까지</span>
+        </div>
+      </div>
+      <div id="h4" class="clip" data-start="112" data-duration="20" data-track-index="2">
+        <div id="h4-in" class="hdr">
+          <span class="step">3 / 4</span>
+          <span class="hdr-title">Pod 3개가 한 노드에: 약 30초 Running 0개</span>
+        </div>
+      </div>
+      <div id="h5" class="clip" data-start="132" data-duration="18" data-track-index="2">
+        <div id="h5-in" class="hdr">
+          <span class="step">4 / 4</span>
+          <span class="hdr-title">정리: Spot 중단에 대비한 배치</span>
+        </div>
+      </div>
+
+      <!-- Scene 1: notification path (7 to 34) -->
+      <section id="s1" class="clip" data-start="7" data-duration="27" data-track-index="4">
+        <div id="lane">akd-karp (직접 설치 Karpenter 1.15.0): Helm settings.interruptionQueue로 큐를 지정</div>
+        <div id="pkt"></div>
+        <div id="ar0" class="arrow" style="left: 380px"></div>
+        <div id="ar1" class="arrow" style="left: 752px"></div>
+        <div id="ar2" class="arrow" style="left: 1124px"></div>
+        <div id="ar3" class="arrow" style="left: 1496px"></div>
+        <div id="fb0" class="fbox src" style="left: 60px">
+          <div class="fbox-t">AWS FIS</div>
+          <div class="fbox-s">Spot 중단 주입</div>
+        </div>
+        <div id="fb1" class="fbox src" style="left: 432px">
+          <div class="fbox-t">EC2 Spot</div>
+          <div class="fbox-s">중단 알림</div>
+          <div class="fbox-s wn" style="margin-top: 0; font-weight: 700">2분 전</div>
+        </div>
+        <div id="fb2" class="fbox" style="left: 804px">
+          <div class="fbox-t">EventBridge</div>
+          <div class="fbox-s">규칙 5개</div>
+        </div>
+        <div id="fb3" class="fbox" style="left: 1176px">
+          <div class="fbox-t">SQS</div>
+          <div class="fbox-s">interruption queue</div>
+        </div>
+        <div id="fb4" class="fbox" style="left: 1548px">
+          <div class="fbox-t wn">Karpenter</div>
+          <div class="fbox-s">drain, 대체 노드</div>
+        </div>
+        <div id="rules" class="card">
+          <div class="rules-h">EventBridge 규칙 (Karpenter CloudFormation), 대상은 모두 SQS 큐</div>
+          <div id="ru0" class="rule"><span class="rule-n">SpotInterruptionRule</span><span class="rule-d">EC2 Spot 중단 경고</span></div>
+          <div id="ru1" class="rule"><span class="rule-n">RebalanceRule</span><span class="rule-d">EC2 Rebalance 권고</span></div>
+          <div id="ru2" class="rule"><span class="rule-n">ScheduledChangeRule</span><span class="rule-d">AWS Health 이벤트</span></div>
+          <div id="ru3" class="rule"><span class="rule-n">InstanceStateChangeRule</span><span class="rule-d">EC2 인스턴스 상태 변경</span></div>
+          <div id="ru4" class="rule"><span class="rule-n">CapacityReservationInterruptionRule</span><span class="rule-d">용량 예약 인스턴스 중단 경고</span></div>
+        </div>
+        <div id="automode" class="card">
+          <div class="am"><b class="ac">Auto Mode (akd-auto)</b>: Spot 중단 알림을 AWS가 처리, 사용자가 SQS, EventBridge를 구성하지 않음</div>
+          <div class="am dim">FIS EC2 액션을 지원하지 않으므로 이 데모는 akd-karp에서만 실행</div>
+        </div>
+      </section>
+
+      <!-- Scene 3: timeline (83.6 to 112) -->
+      <section id="s3" class="clip" data-start="83.6" data-duration="28.4" data-track-index="4">
+        <div id="tl-line"></div>
+        <div id="ev0" class="ev" style="top: 170px">
+          <div class="ev-t">14:23:15</div><div class="ev-dot"></div>
+          <div class="ev-x">FIS 실험 시작: 대상&nbsp;<span class="mono">spot-89g4w</span>&nbsp;(m7i.xlarge spot, 2b)</div>
+        </div>
+        <div id="ev1" class="ev" style="top: 258px">
+          <div class="ev-t">14:23:28</div><div class="ev-dot"></div>
+          <div class="ev-x"><span class="mono">SpotRebalanceRecommendation</span>&nbsp;(이벤트만 기록), FIS 실험 완료</div>
+        </div>
+        <div id="ev2" class="ev" style="top: 346px">
+          <div class="ev-t">14:23:29</div><div class="ev-dot"></div>
+          <div class="ev-x"><span class="mono">SpotInterrupted</span>,&nbsp;<span class="mono">TerminatingOnInterruption</span></div>
+        </div>
+        <div id="ev3" class="ev" style="top: 434px">
+          <div class="ev-t">14:23:29</div><div class="ev-dot"></div>
+          <div class="ev-x"><span class="bad" style="font-weight: 800">Pod 3개 Evicted</span>&nbsp;(Forceful Termination), 대체 NodeClaim&nbsp;<span class="mono">spot-cx877</span>&nbsp;지명</div>
+        </div>
+        <div id="ev4" class="ev" style="top: 522px">
+          <div class="ev-t">14:23:33</div><div class="ev-dot"></div>
+          <div class="ev-x">대체 NodeClaim&nbsp;<span class="mono">spot-cx877</span>&nbsp;Launched</div>
+        </div>
+        <div id="ev5" class="ev" style="top: 610px">
+          <div class="ev-t">14:23:35</div><div class="ev-dot"></div>
+          <div class="ev-x">기존 인스턴스&nbsp;<span class="mono">InstanceTerminating</span></div>
+        </div>
+        <div id="ev6" class="ev" style="top: 698px">
+          <div class="ev-t">14:24:00</div><div class="ev-dot"></div>
+          <div class="ev-x"><span class="ok" style="font-weight: 800">대체 노드 Ready</span>&nbsp;(c7i-flex.xlarge spot)</div>
+        </div>
+        <div id="co3" class="callout w" style="top: 822px; height: 154px">
+          <div class="co-1">Karpenter는 2분을 기다리지 않고, 경고 직후 기존 노드를 비우고 종료했다</div>
+          <div class="co-2">Pod는 Evicted 뒤 대체 노드가 Ready가 될 때까지 Pending</div>
+        </div>
+      </section>
+
+      <!-- Scene 4: service gap (112 to 132) -->
+      <section id="s4" class="clip" data-start="112" data-duration="20" data-track-index="4">
+        <div id="n-old" class="node" style="left: 60px">
+          <div class="node-t">spot-89g4w</div>
+          <div class="node-s">m7i.xlarge spot, 2b</div>
+          <div class="nst-slot" data-layout-allow-overlap>
+            <div id="no-a" class="nst ok">Pod 3개 Running</div>
+            <div id="no-b" class="nst bad">SpotInterrupted, Evicted</div>
+            <div id="no-c" class="nst dim">InstanceTerminating</div>
+          </div>
+        </div>
+        <div id="ctr">
+          <div id="ctr-k">Running Pod</div>
+          <div class="ctr-slot" data-layout-allow-overlap>
+            <div id="cv3a" class="ctr-v ok">3</div>
+            <div id="cv0" class="ctr-v bad">0</div>
+            <div id="cv3b" class="ctr-v ok">3</div>
+          </div>
+        </div>
+        <div id="n-new" class="node" style="left: 1240px">
+          <div class="node-t">spot-cx877</div>
+          <div class="node-s">c7i-flex.xlarge spot, 2b</div>
+          <div class="nst-slot" data-layout-allow-overlap>
+            <div id="nn-a" class="nst wn">14:23:33 Launched, 준비 중</div>
+            <div id="nn-b" class="nst ok">14:24:00 Ready, Pod 3개</div>
+          </div>
+        </div>
+        <div id="pods"></div>
+        <div id="bar-track">
+          <div id="bar-fill"></div>
+          <div id="bar-txt">약 30초 동안 Running 0개</div>
+        </div>
+        <div id="bl-l" class="bar-l bad" style="left: 60px">14:23:29 Pod 3개 Evicted</div>
+        <div id="bl-r" class="bar-l ok" style="right: 60px">14:24:00 대체 노드 Ready</div>
+        <div id="co4" class="callout d" style="top: 800px; height: 176px">
+          <div class="co-1">replica 3개가 모두 한 노드(spot-89g4w)에 있었다</div>
+          <div class="co-2">노드 하나가 중단되자 대체 노드가 Ready가 될 때까지 서비스 전체가 비었다</div>
+        </div>
+      </section>
+
+      <!-- Scene 5: summary (132 to 150) -->
+      <section id="s5" class="clip" data-start="132" data-duration="18" data-track-index="4">
+        <div id="msg" class="msg">
+          <span class="msg-l">Karpenter는 Spot 중단 경고를 받자마자 <b>노드를 비우고 대체 노드</b>를 띄운다.</span>
+          <span class="msg-l">Pod가 한 노드에 몰려 있으면 그 사이 서비스가 비어 있다.</span>
+        </div>
+        <div id="k1" class="card kc" style="left: 60px; border-color: var(--success)">
+          <div class="card-h ok">replica 분산</div>
+          <div class="card-line">topology spread로</div>
+          <div class="card-line">노드, zone에 나눠 배치</div>
+          <div class="card-sub"><span class="msg-l">한 노드가 중단돼도</span><span class="msg-l">일부 Pod는 계속 Running</span></div>
+        </div>
+        <div id="k2" class="card kc" style="left: 673px">
+          <div class="card-h">PDB</div>
+          <div class="card-line">자발적 중단의 동시 축출 제한</div>
+          <div class="card-line">(consolidation, drift)</div>
+          <div class="card-sub"><span class="msg-l">이번 Spot 중단은</span><span class="msg-l">Forceful Termination</span></div>
+        </div>
+        <div id="k3" class="card kc" style="left: 1286px">
+          <div class="card-h">여러 인스턴스 유형 허용</div>
+          <div class="card-line">대체 노드 후보가 넓어짐</div>
+          <div class="card-sub"><span class="msg-l">이번 녹화: m7i.xlarge 대신</span><span class="msg-l">c7i-flex.xlarge</span></div>
+        </div>
+        <div id="cav" class="caveat">
+          <div id="cv1" class="cv"><i>!</i>1회 실행 결과, 벤치마크가 아님: 3/3 Running 회복은 FIS 시작 기준 +65초</div>
+          <div id="cv2" class="cv"><i>!</i><span class="ac">Auto Mode</span>는 Spot 중단을 AWS가 처리: FIS EC2 액션 미지원으로 같은 실험 불가</div>
+        </div>
+      </section>
+
+      <!-- Persistent label (hidden during recording scenes) -->
+      <div id="footer" class="clip" data-start="0" data-duration="150" data-track-index="9">
+        <div class="footer-label"><span class="footer-dot"></span>실측 결과 재구성 (2026-10-20, akd-karp)</div>
+        <div class="footer-right">데모 4: Spot 중단</div>
+      </div>
+
+      <!-- Recording scene A: setup and FIS start (media 2.05 to 14.95 s at 0.6x) -->
+      <div id="recA" class="clip" data-start="34" data-duration="21.5" data-track-index="10">
+        <div class="hdr">
+          <span class="step">2 / 4</span>
+          <span class="hdr-title">녹화: 설정 확인과 FIS 실행</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임, 0.6배속</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-20, EKS 1.37)</div>
+        <div class="footer-right">데모 4: Spot 중단</div>
+      </div>
+      <!-- Recording scene B: interruption handling (media 15.05 to 31.95 s at 0.6x) -->
+      <div id="recB" class="clip" data-start="55.5" data-duration="28.1" data-track-index="10">
+        <div class="hdr">
+          <span class="step">2 / 4</span>
+          <span class="hdr-title">녹화: 중단 처리와 대체 노드</span>
+        </div>
+        <div class="rec-note">실제 터미널 녹화, 대기 구간 줄임, 0.6배속</div>
+        <div class="footer-label rec-label"><span class="footer-dot"></span>실측 터미널 녹화 (2026-10-20, EKS 1.37)</div>
+        <div class="footer-right">데모 4: Spot 중단</div>
+      </div>
+      <!-- Recording window (untimed wrapper; shown only during 34 to 83.6 s) -->
+      <div id="recwin">
+        <div id="recpan" data-layout-allow-overflow>
+          <video id="vA" class="rec" src="assets/d4-spot-30fps.mp4" data-start="34" data-duration="21.5" data-media-start="2.05" data-playback-rate="0.6" data-track-index="11" muted playsinline></video>
+          <video id="vB" class="rec" src="assets/d4-spot-30fps.mp4" data-start="55.5" data-duration="28.1" data-media-start="15.05" data-playback-rate="0.6" data-track-index="11" muted playsinline></video>
+          <div id="hlPods" class="hl" style="left: 4px; top: 288px; width: 1250px; height: 108px"></div>
+          <div id="tgPods" class="tag" style="left: 1272px; top: 314px">3개 모두 한 노드</div>
+          <div id="hlQ" class="hl" style="left: 4px; top: 698px; width: 470px; height: 44px"></div>
+          <div id="tgQ" class="tag" style="left: 494px; top: 694px">Helm settings.interruptionQueue</div>
+          <div id="hlR" class="hl" style="left: 4px; top: 838px; width: 960px; height: 178px"></div>
+          <div id="tgR" class="tag" style="left: 990px; top: 900px">EventBridge 규칙 5개</div>
+          <div id="hlF" class="hl" style="left: 4px; top: 1044px; width: 700px; height: 80px"></div>
+          <div id="tgF" class="tag" style="left: 730px; top: 1060px">FIS 실험 시작</div>
+          <div id="hlEnd" class="hl g" style="left: 4px; top: 704px; width: 600px; height: 44px"></div>
+          <div id="tgEnd" class="tag g" style="left: 624px; top: 700px">FIS 시작 기준 +65초</div>
+        </div>
+        <div id="capstrip" data-layout-allow-overlap>
+          <div id="cap1" class="cap">경고 직후 Pod 3개 Evicted, 모두 Pending:&nbsp;<span class="wn">대체 NodeClaim spot-cx877 Launched</span></div>
+          <div id="cap2" class="cap">기존 NodeClaim spot-89g4w Drained, InstanceTerminating:&nbsp;<span class="wn">2분을 기다리지 않음</span></div>
+          <div id="cap3" class="cap">대체 노드 ip-10-0-49-93 Registered, 아직 not-ready:&nbsp;<span class="bad">Pod는 계속 Pending</span></div>
+          <div id="cap4" class="cap"><span class="ok">대체 노드(c7i-flex.xlarge spot)에서 Pod 3개 Running</span></div>
+          <div id="cap5" class="cap">기존 NodeClaim spot-89g4w 사라짐, 대체 노드 spot-cx877만 남음</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const tl = gsap.timeline({ paused: true });
+
+        function show(sel, t, dy) {
+          tl.fromTo(sel, { opacity: 0, y: dy === undefined ? 20 : dy }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, t);
+        }
+        function hide(sel, t) {
+          tl.to(sel, { opacity: 0, duration: 0.35 }, t);
+        }
+        function swap(outSel, inSel, t) {
+          tl.to(outSel, { opacity: 0, duration: 0.3 }, t);
+          tl.fromTo(inSel, { opacity: 0 }, { opacity: 1, duration: 0.4 }, t + 0.15);
+        }
+        function win(sel, t0, t1) {
+          tl.fromTo(sel, { opacity: 0 }, { opacity: 1, duration: 0.35 }, t0);
+          tl.to(sel, { opacity: 0, duration: 0.3 }, t1 - 0.3);
+        }
+
+        // Ambient background drift (finite).
+        tl.fromTo("#bg-glow", { x: 0, y: 0 }, { x: -260, y: 120, duration: 15, ease: "sine.inOut", yoyo: true, repeat: 9 }, 0);
+
+        // ---------- Title (0 to 7) ----------
+        show("#t-kicker", 0.3);
+        show("#t-title", 0.6, 30);
+        show("#t-msg", 1.4);
+        show("#t-note", 2.6, 12);
+        tl.to(["#t-kicker", "#t-title", "#t-msg", "#t-note"], { opacity: 0, duration: 0.5 }, 6.3);
+
+        // ---------- Headers ----------
+        show("#h1-in", 7.05, 0);
+        show("#h3-in", 83.65, 0);
+        show("#h4-in", 112.05, 0);
+        show("#h5-in", 132.05, 0);
+        [["#h1-in", 34], ["#h3-in", 112], ["#h4-in", 132]].forEach(([s, e]) => hide(s, e - 0.4));
+
+        // ---------- Scene 1: path (7 to 34) ----------
+        show("#lane", 7.5, 10);
+        ["#fb0", "#fb1", "#fb2", "#fb3", "#fb4"].forEach((s, i) => show(s, 8.2 + i * 0.7, 18));
+        ["#ar0", "#ar1", "#ar2", "#ar3"].forEach((s, i) => tl.fromTo(s, { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, transformOrigin: "left center", duration: 0.35 }, 8.7 + i * 0.7));
+        // Notification packet travels behind the boxes (visible in the gaps).
+        tl.set("#pkt", { opacity: 0, x: 0 }, 0);
+        const hop = (from, to, t) => tl.to("#pkt", { x: to, duration: 0.9, ease: "power1.inOut" }, t);
+        tl.to("#pkt", { opacity: 1, duration: 0.2 }, 12.2);
+        hop(0, 372, 12.3);
+        tl.to("#fb1", { borderColor: "#fbd332", duration: 0.3 }, 13.1);
+        hop(372, 744, 13.6);
+        tl.to("#fb2", { boxShadow: "0 0 30px rgba(251, 211, 50, 0.45)", duration: 0.3 }, 14.4);
+        hop(744, 1116, 14.9);
+        tl.to("#fb3", { boxShadow: "0 0 30px rgba(251, 211, 50, 0.45)", duration: 0.3 }, 15.7);
+        hop(1116, 1488, 16.2);
+        tl.to("#fb4", { boxShadow: "0 0 34px rgba(251, 211, 50, 0.6)", backgroundColor: "#2a2a1c", duration: 0.3 }, 17.0);
+        tl.to("#pkt", { opacity: 0, duration: 0.2 }, 17.1);
+        tl.to(["#fb2", "#fb3"], { boxShadow: "0 0 0 rgba(0,0,0,0)", duration: 0.5 }, 18.0);
+
+        show("#rules", 18.4, 20);
+        ["#ru0", "#ru1", "#ru2", "#ru3", "#ru4"].forEach((s, i) => show(s, 19.1 + i * 0.6, 10));
+        // Highlight the two rules this demo triggers.
+        tl.to(["#ru0", "#ru1"], { backgroundColor: "rgba(251, 211, 50, 0.12)", duration: 0.4 }, 22.6);
+        show("#automode", 24.6, 20);
+        tl.to("#s1", { opacity: 0, duration: 0.4 }, 33.55);
+
+        // ---------- Recording (34 to 83.6) ----------
+        tl.set("#recwin", { opacity: 0 }, 0);
+        tl.set("#recwin", { opacity: 1 }, 34);
+        tl.set("#recwin", { opacity: 0 }, 83.6);
+        tl.set("#footer", { opacity: 0 }, 34);
+        tl.set("#footer", { opacity: 1 }, 83.6);
+        tl.set(["#hlPods", "#tgPods", "#hlQ", "#tgQ", "#hlR", "#tgR", "#hlF", "#tgF", "#hlEnd", "#tgEnd", "#capstrip", "#cap1", "#cap2", "#cap3", "#cap4", "#cap5"], { opacity: 0 }, 0);
+        // A: media 2.05 to 14.95. Window pans up once the list-rules command line drops below view.
+        tl.set("#recpan", { y: 0 }, 0);
+        win(["#hlPods", "#tgPods"], 35.0, 41.8);
+        win(["#hlQ", "#tgQ"], 40.8, 48.6);
+        tl.to("#recpan", { y: -326, duration: 0.45, ease: "power2.inOut" }, 41.9);
+        win(["#hlR", "#tgR"], 45.8, 52.2);
+        win(["#hlF", "#tgF"], 49.2, 55.5);
+        tl.set("#recpan", { y: 0 }, 55.5);
+        // B: media 15.05 to 31.95. Captions follow the 1 fps recording frames.
+        tl.set("#capstrip", { opacity: 1 }, 55.5);
+        win("#cap1", 55.6, 58.75);
+        win("#cap2", 58.75, 65.42);
+        win("#cap3", 65.42, 72.08);
+        win("#cap4", 72.08, 75.42);
+        win("#cap5", 75.42, 78.75);
+        tl.to("#capstrip", { opacity: 0, duration: 0.3 }, 78.45);
+        win(["#hlEnd", "#tgEnd"], 78.9, 83.6);
+
+        // ---------- Scene 3: timeline (83.6 to 112) ----------
+        const T3 = 83.6;
+        tl.fromTo("#tl-line", { scaleY: 0 }, { scaleY: 1, transformOrigin: "top center", duration: 1.2, ease: "power2.out" }, T3 + 0.4);
+        const evT = [0.8, 3.6, 6.4, 8.6, 11.6, 13.8, 16.6];
+        evT.forEach((d, i) => show("#ev" + i, T3 + d, 14));
+        tl.to("#ev3 .ev-dot", { borderColor: "#ff5c85", backgroundColor: "#ff5c85", duration: 0.3 }, T3 + 9.0);
+        tl.to("#ev6 .ev-dot", { borderColor: "#00e500", backgroundColor: "#00e500", duration: 0.3 }, T3 + 17.0);
+        show("#co3", T3 + 19.4, 18);
+        tl.to("#s3", { opacity: 0, duration: 0.4 }, 111.55);
+
+        // ---------- Scene 4: gap (112 to 132) ----------
+        const T4 = 112;
+        const podsEl = document.getElementById("pods");
+        const OLD = [[215, 450], [370, 450], [525, 450]];
+        const NEW = [[1395, 450], [1550, 450], [1705, 450]];
+        const pods = OLD.map((p, i) => {
+          const e = document.createElement("div");
+          e.className = "pod";
+          e.id = "pd" + i;
+          e.style.left = p[0] - 52 + "px";
+          e.style.top = p[1] - 52 - 60 + "px";
+          podsEl.appendChild(e);
+          return e;
+        });
+        const npods = NEW.map((p, i) => {
+          const e = document.createElement("div");
+          e.className = "pod";
+          e.id = "pn" + i;
+          e.style.left = p[0] - 52 + "px";
+          e.style.top = p[1] - 52 - 60 + "px";
+          podsEl.appendChild(e);
+          return e;
+        });
+        tl.set(["#no-b", "#no-c", "#nn-b", "#cv0", "#cv3b", "#n-new", "#bl-l", "#bl-r", "#co4"], { opacity: 0 }, 0);
+        tl.set(npods, { opacity: 0 }, 0);
+        tl.set("#bar-fill", { scaleX: 0 }, 0);
+        tl.set("#bar-txt", { opacity: 0 }, 0);
+        show("#n-old", T4 + 0.4, 18);
+        pods.forEach((p, i) => tl.fromTo(p, { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T4 + 0.9 + i * 0.2));
+        show("#ctr", T4 + 1.2, 18);
+        show("#bar-track", T4 + 1.6, 10);
+        // Interruption: pods evicted, counter drops to 0.
+        swap("#no-a", "#no-b", T4 + 3.6);
+        tl.to("#n-old", { borderColor: "#ff5c85", duration: 0.3 }, T4 + 3.6);
+        tl.to(pods, { backgroundColor: "#ff5c85", boxShadow: "0 0 26px rgba(255, 92, 133, 0.9)", duration: 0.25 }, T4 + 3.8);
+        tl.to(pods, { opacity: 0, scale: 0.3, duration: 0.5, ease: "power2.in" }, T4 + 4.6);
+        swap("#cv3a", "#cv0", T4 + 4.6);
+        tl.to("#ctr", { borderColor: "#ff5c85", duration: 0.3 }, T4 + 4.6);
+        show("#bl-l", T4 + 4.8, 8);
+        tl.to("#bar-fill", { scaleX: 1, duration: 4.4, ease: "none" }, T4 + 5.0);
+        tl.to("#bar-txt", { opacity: 1, duration: 0.4 }, T4 + 5.4);
+        // Replacement launched while the old instance terminates.
+        tl.fromTo("#n-new", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.6)" }, T4 + 5.8);
+        tl.set("#n-new", { borderStyle: "dashed" }, T4 + 5.8);
+        swap("#no-b", "#no-c", T4 + 7.0);
+        tl.to("#n-old", { opacity: 0.4, borderColor: "#3a4a5e", duration: 0.6 }, T4 + 7.0);
+        // Ready: pods come back on the new node.
+        tl.set("#n-new", { borderStyle: "solid" }, T4 + 9.4);
+        tl.to("#n-new", { borderColor: "#00e500", duration: 0.3 }, T4 + 9.4);
+        swap("#nn-a", "#nn-b", T4 + 9.4);
+        show("#bl-r", T4 + 9.4, 8);
+        npods.forEach((p, i) => tl.fromTo(p, { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T4 + 9.8 + i * 0.2));
+        swap("#cv0", "#cv3b", T4 + 10.2);
+        tl.to("#ctr", { borderColor: "#00e500", duration: 0.3 }, T4 + 10.2);
+        show("#co4", T4 + 11.6, 18);
+        tl.to("#s4", { opacity: 0, duration: 0.4 }, 131.55);
+
+        // ---------- Scene 5: summary (132 to 150) ----------
+        show("#msg", 132.6, 20);
+        show("#k1", 134.6, 24);
+        show("#k2", 135.6, 24);
+        show("#k3", 136.6, 24);
+        show("#cav", 139.2, 16);
+        show("#cv1", 139.7, 10);
+        show("#cv2", 140.9, 10);
+
+        window.__timelines["main"] = tl;
+      })();
+    </script>
+  </body>
+</html>

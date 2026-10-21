@@ -1,14 +1,14 @@
 ---
 remarp: true
 version: 1
-title: "EKS Auto Mode와 Karpenter, 노드 자동화 운영 (1시간)"
+title: "EKS Auto Mode와 Karpenter, 노드 자동화 운영 (65분)"
 ratio: "16:9"
 date: 2026-10-20
 lang: ko
 level: 300
 audience: "플랫폼 엔지니어, SRE, 아키텍트"
 quiz: false
-duration: 60
+duration: 65
 
 speaker:
   name: ""
@@ -27,7 +27,7 @@ blocks:
     duration: 15
   - name: 02-disruption
     title: "스케일링과 Disruption"
-    duration: 13
+    duration: 18
   - name: 03-operations
     title: "운영과 선택 기준"
     duration: 8

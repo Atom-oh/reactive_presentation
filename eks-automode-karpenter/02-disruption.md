@@ -15,11 +15,11 @@ block: 02-disruption
 {timing: 0.5min}
 [요약]
 - 3부의 질문: Karpenter는 어떤 노드를 고르고, 언제 줄이고, 언제 바꾸는가
-- 순서: 프로비저닝, consolidation, disruption budget, Drift와 만료, Spot 중단, 앱 보호
+- 순서: 프로비저닝, consolidation, 스케줄러 점수 전략, in-place resize, disruption budget, Drift와 만료, Spot 중단, 앱 보호
 - 각 항목마다 self-managed Karpenter v1.15와 Auto Mode의 기본값 차이를 함께 봅니다.
 
 3부는 스케일링과 disruption입니다. 노드를 만드는 것보다 줄이고 바꾸는 쪽에서 운영 이슈가 훨씬 많이 생깁니다. 그래서 이번 파트가 오늘 세션에서 가장 깁니다.
-프로비저닝부터 시작해서 consolidation, budget, Drift와 만료, Spot 중단, 그리고 앱을 지키는 장치 순서로 가겠습니다.
+프로비저닝부터 시작해서 consolidation, 스케줄러 점수 전략, in-place resize, budget, Drift와 만료, Spot 중단, 그리고 앱을 지키는 장치 순서로 가겠습니다.
 {cue: transition}
 먼저 노드를 고르는 규칙입니다.
 :::
@@ -156,7 +156,162 @@ consolidation은 남는 노드를 줄이는 기능이고, 정책이 세 가지�
 - https://docs.aws.amazon.com/eks/latest/userguide/auto-change.html (2026-07-27, 2026-10-01 항목)
 - https://karpenter.sh/docs/concepts/disruption/, https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.0
 {cue: transition}
-정책이 "무엇을 줄일지"라면, 다음은 "한 번에 몇 대까지"입니다.
+정책이 "무엇을 줄일지"였다면, 그 전에 Pod가 처음부터 어디에 놓이는지도 consolidation에 영향을 줍니다. 스케줄러 점수 전략입니다.
+:::
+
+---
+<!-- Slide 3a: 스케줄러 점수 전략 -->
+@type: content
+@title: 스케줄러 점수: 흩을까, 모을까
+
+## 스케줄러 점수: 흩을까, 모을까
+
+:::html
+<style>
+.ak2s-wrap { display: grid; grid-template-columns: 1.15fr 1fr; gap: var(--space-4); align-items: start; }
+.ak2s-nodes { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-top: var(--space-3); }
+.ak2s-node { border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-4) var(--space-3); font-size: var(--fs-card); text-align: center; }
+.ak2s-bar { height: var(--space-7); border-radius: var(--radius-sm); background: var(--bg-card); margin-top: var(--space-3); overflow: hidden; display: flex; }
+.ak2s-legend { display: flex; gap: var(--space-4); margin-top: var(--space-3); font-size: var(--fs-card); color: var(--text-secondary); }
+.ak2s-legend i { display: inline-block; width: var(--space-4); height: var(--space-4); border-radius: var(--radius-sm); vertical-align: middle; margin-right: var(--space-1); }
+.ak2s-effect { margin-top: var(--space-4); }
+.ak2s-used { background: var(--text-secondary); }
+.ak2s-new { background: var(--accent); }
+.ak2s-bar [data-w="70"] { width: 70%; } .ak2s-bar [data-w="40"] { width: 40%; } .ak2s-bar [data-w="15"] { width: 15%; } .ak2s-bar [data-w="20"] { width: 20%; }
+.ak2s-pick { color: var(--accent); font-weight: var(--weight-bold); }
+.ak2s-cli { font-family: var(--font-mono); font-size: var(--fs-card); background: var(--bg-card); border-radius: var(--radius-md); padding: var(--space-3); white-space: pre; overflow-x: auto; margin: 0 0 var(--space-3); }
+.text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+.ak2s-wrap .callout + .callout { margin-top: var(--space-3); }
+</style>
+<div class="ak2s-wrap">
+  <div>
+    <div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
+      <button class="tab-btn active">LeastAllocated (기본)</button>
+      <button class="tab-btn">MostAllocated</button>
+    </div>
+    <div class="tc">
+      <div class="on-surface-muted">여유가 많은 노드에 새 Pod를 보냅니다. 노드마다 여유를 남기는 분산 배치입니다.</div>
+      <div class="ak2s-nodes">
+        <div class="ak2s-node">노드 A<div class="ak2s-bar"><span class="ak2s-used" data-w="70"></span></div></div>
+        <div class="ak2s-node">노드 B<div class="ak2s-bar"><span class="ak2s-used" data-w="40"></span></div></div>
+        <div class="ak2s-node"><span class="ak2s-pick">노드 C, 선택</span><div class="ak2s-bar"><span class="ak2s-used" data-w="15"></span><span class="ak2s-new" data-w="20"></span></div></div>
+      </div>
+    </div>
+    <div class="tc" hidden>
+      <div class="on-surface-muted">이미 많이 쓰는 노드에 새 Pod를 보냅니다. 적게 쓰인 노드는 비워져 consolidation 대상이 되기 쉽습니다.</div>
+      <div class="ak2s-nodes">
+        <div class="ak2s-node"><span class="ak2s-pick">노드 A, 선택</span><div class="ak2s-bar"><span class="ak2s-used" data-w="70"></span><span class="ak2s-new" data-w="20"></span></div></div>
+        <div class="ak2s-node">노드 B<div class="ak2s-bar"><span class="ak2s-used" data-w="40"></span></div></div>
+        <div class="ak2s-node">노드 C<div class="ak2s-bar"><span class="ak2s-used" data-w="15"></span></div></div>
+      </div>
+    </div>
+    <div class="ak2s-legend"><span><i class="ak2s-used"></i>기존 Pod requests</span><span><i class="ak2s-new"></i>새 Pod</span><span>개념 그림, 사용률은 예시</span></div>
+    <div class="callout callout-info ak2s-effect fragment fade-up" data-fragment-index="4"><strong class="text-info">consolidation과의 관계</strong><div class="on-surface-muted">MostAllocated는 적게 쓰인 노드에 새 Pod를 보내지 않아, 그 노드가 비면 Auto Mode나 Karpenter가 정리할 수 있습니다.</div></div>
+  </div>
+  <div>
+    <pre class="ak2s-cli fragment fade-up" data-fragment-index="1">aws eks update-cluster-config \
+  --name $CLUSTER \
+  --kube-scheduler-config \
+  '{"nodeResourcesFit":{"scoringStrategy":
+    {"type":"MostAllocated"}}}'</pre>
+    <div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">EKS control plane configuration</strong><div class="on-surface-muted">2026-08-12 출시, Kubernetes 1.31 이상. 가중치 1 to 100: cpu, memory, nvidia.com/gpu, Neuron</div></div>
+    <div class="callout callout-warning fragment fade-up" data-fragment-index="3"><strong class="text-warning">노드 생성, 삭제 방식은 그대로</strong><div class="on-surface-muted">Pod 배치 점수만 바뀝니다. 클러스터 전체 적용, 실행 중 Pod는 옮기지 않고, 밀집할수록 노드 장애 영향이 커집니다.</div></div>
+  </div>
+</div>
+:::
+
+:::notes
+{timing: 2.5min}
+[요약]
+- EKS advanced control plane configuration(2026-08-12, 1.31 이상)으로 kube-scheduler nodeResourcesFit 점수 전략을 바꿀 수 있음
+- LeastAllocated(기본)는 분산, MostAllocated는 이미 쓰는 노드로 모아서 적게 쓰인 노드를 consolidation이 지우기 쉬워짐
+- Auto Mode와 Karpenter의 노드 생성, 삭제 방식은 바뀌지 않음. 클러스터 전체 적용, 실행 중 Pod 이동 없음, 밀집 시 장애 영향 범위 증가
+
+consolidation 이야기를 하면 꼭 나오는 질문이 "애초에 Pod를 모아서 배치할 수는 없나요"입니다. 노드를 고르는 건 Karpenter지만, 이미 있는 노드 중 어디에 Pod를 놓을지는 kube-scheduler가 정합니다.
+{cue: demo}
+왼쪽 탭을 보시면 기본값 LeastAllocated는 여유가 많은 노드 C를 고릅니다. 두 번째 탭 MostAllocated로 바꾸면 이미 많이 쓰는 노드 A로 보냅니다. 새 Pod가 적게 쓰인 노드로 가지 않으니, 그 노드는 점점 비고 consolidation이 지우기 쉬워집니다.
+{cue: pause}
+EKS에서는 8월 12일부터 이 값을 바꿀 수 있습니다. 1.36 전용이 아니라 1.31 이상이면 됩니다. update-cluster-config에 kube-scheduler-config를 넘기면 control plane이 몇 분간 rolling update됩니다. GPU나 Neuron 가중치를 높이면 가속기 Pod를 이미 일부 쓰는 노드로 모을 수도 있습니다.
+주의할 점은 세 가지입니다. 클러스터 전체에 적용되고, 이미 실행 중인 Pod는 옮기지 않으며, 모을수록 노드 하나가 죽을 때 영향받는 Pod가 많아집니다. 그리고 AWS 문서에 명시된 대로, 이 설정은 Auto Mode나 Karpenter가 노드를 만들고 지우는 방식은 바꾸지 않습니다. 오늘 데모에서는 이 값을 바꾸지 않았습니다.
+
+[출처]
+- https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-control-plane-configuration-parameters/
+- https://docs.aws.amazon.com/eks/latest/userguide/control-plane-configuration.html
+- https://docs.aws.amazon.com/eks/latest/userguide/control-plane-configuration-getting-started.html
+{cue: transition}
+Pod 쪽에서도 노드를 덜 쓰게 만드는 방법이 있습니다. requests를 재시작 없이 바꾸는 것입니다.
+:::
+
+---
+<!-- Slide 3b: In-place Pod resize -->
+@type: content
+@title: In-place resize: 재시작 없이 requests를 줄인다
+
+## In-place resize: 재시작 없이 requests를 줄인다
+
+:::html
+<style>
+.ak2r-time { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-bottom: var(--space-3); }
+.ak2r-when { font-weight: var(--weight-bold); color: var(--accent); font-size: var(--fs-card); margin-bottom: var(--space-1); }
+.ak2r-ev { border: 1px dashed var(--border); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); font-size: var(--fs-card); word-break: keep-all; }
+.ak2r-two .callout + .callout { margin-top: var(--space-3); }
+.ak2r-two { display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--space-4); align-items: start; }
+.ak2r-table { width: 100%; font-size: var(--fs-card); word-break: keep-all; }
+.ak2r-table td, .ak2r-table th { white-space: nowrap; }
+.ak2r-table td.ak2r-num { font-variant-numeric: tabular-nums; font-weight: var(--weight-bold); }
+.data-table th { text-transform: none; letter-spacing: normal; font-size: var(--fs-card); }
+.ak2r-cap { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-1); }
+.text-info    { color: var(--info);    font-weight: var(--weight-bold); }
+.text-warning { color: var(--warning); font-weight: var(--weight-bold); }
+.on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
+</style>
+<div class="ak2r-time" data-reveal="stagger">
+  <div class="ak2r-ev"><div class="ak2r-when">1.35 GA</div>컨테이너 in-place resize, <code>resize</code> subresource</div>
+  <div class="ak2r-ev"><div class="ak2r-when">1.36 Beta, 기본 켜짐</div>Pod 단위 <code>.spec.resources</code>도 Pod 재생성 없이 resize</div>
+  <div class="ak2r-ev"><div class="ak2r-when">1.37 Alpha</div>노드가 꽉 차 Deferred된 resize를 위해 scheduler가 낮은 priority Pod를 preempt</div>
+</div>
+<div class="ak2r-two">
+  <div class="fragment fade-up" data-fragment-index="1">
+    <table class="data-table ak2r-table">
+      <thead><tr><th>워크로드</th><th>CPU req=limit</th><th>Guaranteed</th><th>restartCount</th><th>containerID</th></tr></thead>
+      <tbody>
+        <tr><td>Deployment (Pod 2개)</td><td class="ak2r-num">200m → 50m</td><td>유지</td><td class="ak2r-num">0 → 0</td><td>동일</td></tr>
+        <tr><td>StatefulSet</td><td class="ak2r-num">200m → 50m</td><td>유지</td><td class="ak2r-num">0 → 0</td><td>동일</td></tr>
+        <tr><td>DaemonSet</td><td class="ak2r-num">200m → 50m</td><td>유지</td><td class="ak2r-num">0 → 0</td><td>동일</td></tr>
+      </tbody>
+    </table>
+    <div class="ak2r-cap">실측 2026-06, EKS 1.36.1, AL2023 arm64 노드(Auto Mode 아님): startup probe 통과 후 <code>pods/resize</code>로 축소, memory 고정</div>
+  </div>
+  <div>
+    <div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">노드 자동화와 만나는 지점</strong><div class="on-surface-muted">Karpenter v1.14.0부터 Pod 크기를 requests와 allocatedResources 중 큰 값으로 계산합니다. requests가 줄면 consolidation 여지가 생깁니다.</div></div>
+    <div class="callout callout-warning fragment fade-up" data-fragment-index="3"><strong class="text-warning">주의</strong><div class="on-surface-muted">QoS class는 바뀌지 않고, memory 축소는 재시작될 수 있습니다. Auto Mode의 resize 동작은 AWS 문서에 따로 없습니다.</div></div>
+  </div>
+</div>
+:::
+
+:::notes
+{timing: 2.5min}
+[요약]
+- 1.35 in-place resize GA, 1.36 Pod-level resources resize Beta(기본 켜짐), 1.37 resize를 위한 scheduler preemption Alpha
+- 실측(EKS 1.36.1): CPU 200m에서 50m로 축소, Guaranteed 유지, restartCount 0, containerID 동일. Deployment, StatefulSet, DaemonSet 모두
+- Karpenter v1.14.0+는 requests와 allocatedResources 중 큰 값으로 Pod 크기 계산. QoS 불변, memory 축소는 재시작 가능, Auto Mode 동작은 문서화되지 않음
+
+앞 슬라이드가 Pod를 어디에 놓을지였다면, 이번에는 Pod 크기 자체를 줄이는 방법입니다. 1.35에서 in-place resize가 GA가 되어 Pod를 다시 만들지 않고 CPU와 memory를 바꿀 수 있습니다. 1.36에서는 Pod 단위 리소스까지 Beta로 들어와 기본으로 켜져 있고, 1.37에서는 노드가 꽉 차서 resize가 Deferred로 멈출 때 scheduler가 낮은 priority Pod를 밀어내는 기능이 Alpha로 추가됐습니다.
+{cue: pause}
+왼쪽 표는 EKS 1.36.1에서 직접 측정한 결과입니다. JVM 워밍업처럼 시작할 때만 CPU를 많이 쓰는 앱을 가정해, startup probe가 통과하면 작은 컨트롤러가 CPU를 200m에서 50m로 줄이게 했습니다. requests와 limits를 같게 유지해서 Guaranteed QoS가 그대로였고, restartCount는 0, containerID도 그대로였습니다. 컨테이너를 다시 만들지 않았다는 뜻입니다. resizePolicy는 1.36에서 GA된 MutatingAdmissionPolicy로 webhook 없이 넣었습니다.
+{cue: question}
+그럼 노드 자동화와는 어떻게 엮일까요. Karpenter는 v1.14.0부터 Pod 크기를 requests와 실제 할당값 중 큰 값으로 봐서 resize 중에도 scheduler와 같은 판단을 합니다. requests가 줄어 노드가 비면 consolidation이 정리할 수 있습니다. 다만 QoS class는 생성 시 정해져 바뀌지 않고, memory를 줄이면 재시작될 수 있습니다. Auto Mode에서의 resize 관련 동작은 AWS 문서에 따로 설명이 없으니 직접 검증하셔야 합니다.
+
+[출처]
+- https://kubernetes.io/blog/2026/04/30/kubernetes-v1-36-inplace-pod-level-resources-beta/
+- https://kubernetes.io/blog/2026/09/10/kubernetes-v1-37-scheduler-preemption-for-in-place-pod-resize-alpha/
+- 실측: https://atomoh.notion.site/Amazon-EKS-1-36-What-s-New-2026-06-3748907d4b018102983bd4a31f243512 하위 페이지 예시 ①, ②
+- Karpenter in-place resize 설계: https://github.com/kubernetes-sigs/karpenter/blob/v1.15.0/designs/in-place-pod-vertical-scaling.md
+{cue: transition}
+이제 줄이는 속도를 정하는 장치, disruption budget입니다.
 :::
 
 ---

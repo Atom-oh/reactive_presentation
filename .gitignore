@@ -13,3 +13,6 @@ Thumbs.db
 
 # Claude Code agent memory (per-repo and per-deck)
 **/.claude/agent-memory/
+
+# Python bytecode
+__pycache__/

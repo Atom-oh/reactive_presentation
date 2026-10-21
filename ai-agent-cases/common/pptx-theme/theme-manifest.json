@@ -1,0 +1,84 @@
+{
+  "source_file": "source.pptx",
+  "theme_name": "Office Theme",
+  "master_index": 0,
+  "master_name": "",
+  "slide_count": 45,
+  "layout_count": 1,
+  "colors": {
+    "dk1": "#000000",
+    "lt1": "#FFFFFF",
+    "dk2": "#44546A",
+    "lt2": "#E7E6E6",
+    "accent1": "#4472C4",
+    "accent2": "#ED7D31",
+    "accent3": "#A5A5A5",
+    "accent4": "#FFC000",
+    "accent5": "#5B9BD5",
+    "accent6": "#70AD47",
+    "hlink": "#0563C1",
+    "folHlink": "#954F72"
+  },
+  "fonts": {
+    "heading": "Calibri Light",
+    "body": "Calibri"
+  },
+  "backgrounds": {
+    "master": {
+      "type": "inherited"
+    },
+    "layouts": {}
+  },
+  "logos": [],
+  "footer": null,
+  "slide_number": null,
+  "date": null,
+  "master_texts": [],
+  "layout_details": [
+    {
+      "index": 0,
+      "name": "DEFAULT",
+      "background": {
+        "type": "solid",
+        "color": "#FFFFFF"
+      },
+      "placeholders": [],
+      "texts": []
+    }
+  ],
+  "footer_text": null,
+  "slide_master": {
+    "slide_size": {
+      "width_emu": 12191695,
+      "height_emu": 6858000,
+      "width_px": 1280,
+      "height_px": 720,
+      "aspect_ratio": "16:9"
+    },
+    "color_palette": {
+      "background": "#000000",
+      "text_primary": "#FFFFFF",
+      "text_secondary": "#E7E6E6",
+      "primary": "#4472C4",
+      "secondary": "#ED7D31",
+      "accent": "#A5A5A5",
+      "danger": "#FFC000",
+      "warning": "#5B9BD5",
+      "info": "#70AD47",
+      "link": "#0563C1"
+    },
+    "header": {
+      "position": "top",
+      "height_percent": 0,
+      "elements": []
+    },
+    "footer": {
+      "position": "bottom",
+      "height_percent": 0,
+      "resolved_text": null,
+      "elements": []
+    },
+    "decorative_elements": [],
+    "layout_decorative_patterns": []
+  }
+}

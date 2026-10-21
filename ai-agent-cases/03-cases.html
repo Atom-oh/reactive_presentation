@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>대표 사례 4선: LG전자, 신한카드, 미래에셋증권, Canva</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="03-cases.md">
+  <meta name="remarp-block" content="03-cases">
+  <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/deck-overlay.css">
+  <link rel="stylesheet" href="./common/deck-detail.css">
+  <link rel="stylesheet" href="./common/deck-nav.css">
+  <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
+  <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
+  
+  <script>window.__remarpTheme = {"colors": {"dk1": "#000000", "lt1": "#FFFFFF", "dk2": "#44546A", "lt2": "#E7E6E6", "accent1": "#4472C4", "accent2": "#ED7D31", "accent3": "#A5A5A5", "accent4": "#FFC000", "accent5": "#5B9BD5", "accent6": "#70AD47", "hlink": "#0563C1", "folHlink": "#954F72"}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}, "slideSize": {"width_emu": 12191695, "height_emu": 6858000, "width_px": 1280, "height_px": 720, "aspect_ratio": "16:9"}};</script>
+</head>
+<body>
+<div class="slide-deck">
+<div class="slide title-slide" data-remarp-id="s0" data-block="03-cases" data-block-title="대표 사례 4선">
+    <h1>대표 사례 4선</h1>
+  <p class="meta">LG전자, 신한카드, 미래에셋증권, Canva. 원문 아키텍처로 보기</p>
+</div>
+
+<div class="slide" data-remarp-id="s1" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>CASE 1 LG전자: 질문에서 보고서까지</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <p><!-- Slide 2: LG전자 개요 --></p>
+<p>Data Rich, Insight Poor. 무엇을 물어야 할지부터 막히던 마케터의 데이터 분석</p>
+<style>
+.rp-case { display: grid; grid-template-columns: 1fr 1.25fr; gap: var(--space-4); align-items: center; }
+.rp-case-l { display: flex; flex-direction: column; gap: var(--space-2); }
+.rp-case-l .card { word-break: keep-all; padding: var(--space-2) var(--space-3); }
+.rp-case-l .card-title { font-size: var(--fs-card); }
+.rp-case-l .rp-k { font-size: var(--fs-caption); color: var(--on-surface-muted); font-weight: var(--weight-bold); letter-spacing: .08em; }
+.rp-case-l .card.highlight .card-title { color: var(--accent); font-size: var(--fs-subtitle); }
+.rp-fig { width: 100%; max-height: 600px; object-fit: contain; display: block; border-radius: var(--radius-md); background: var(--bg-card); }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-2); word-break: keep-all; }
+</style>
+<div class="rp-case">
+  <div class="rp-case-l fragment" data-reveal="stagger" data-fragment-index="1">
+    <div class="card"><span class="rp-k">BEFORE</span><div class="card-title">요구사항 정의부터 결과 해석까지 평균 2~3주, 데이터 과학자에게 의존</div></div>
+    <div class="card highlight"><span class="rp-k">AFTER</span><div class="card-title">데이터 분석 업무 3일 → 30분</div></div>
+    <div class="card"><span class="rp-k">초기 구조</span><div class="card-desc">Coordinator가 복잡도를 판단하고, Planner가 계획과 추적, Supervisor가 Coder와 Reporter에 배분</div></div>
+    <div class="card"><span class="rp-k">적용</span><div class="card-desc">워시콤보, 식기세척기 구매 고객 분석, CRM 캠페인 성과 비교 등 실무</div></div>
+  </div>
+  <img class="rp-fig" src="media/lg-initial.png" alt="LG전자 초기 멀티 에이전트 구조: Coordinator, Planner, Supervisor, Coder, Reporter">
+</div>
+<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/lge-agentic-report-automation/" target="_blank" rel="noopener">LG전자 Agentic AI 리포트 자동화 (2025-08)</a>, <a href="https://aws.amazon.com/ko/blogs/tech/practical-design-lessons-from-the-deep-insight-arch/" target="_blank" rel="noopener">Deep Insight 아키텍처 설계 교훈 (2026-04)</a></div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s2" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s2-header"><h2>Deep Insight 전체 아키텍처</h2></div>
+  <div class="slide-body" data-remarp-id="s2-body">
+    <p><!-- Slide 3: Deep Insight 전체 --></p>
+<p>8개 에이전트, 3계층. AgentCore Runtime 위의 Strands 그래프와 격리된 Code Interpreter</p>
+<style>
+.rp-figwrap { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.rp-figwrap img { max-width: 100%; max-height: 640px; object-fit: contain; border-radius: var(--radius-md); }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); word-break: keep-all; align-self: stretch; }
+</style>
+<div class="rp-figwrap">
+  <img src="media/lg-deepinsight-arch.png" alt="Deep Insight 전체 아키텍처: VPC 안 AgentCore Runtime의 Strands 그래프, S3 피드백, ALB와 ECS Code Interpreter Task">
+  <div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/lge-agentic-report-automation/" target="_blank" rel="noopener">LG전자 Agentic AI 리포트 자동화 (2025-08)</a>, <a href="https://aws.amazon.com/ko/blogs/tech/practical-design-lessons-from-the-deep-insight-arch/" target="_blank" rel="noopener">Deep Insight 아키텍처 설계 교훈 (2026-04)</a></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s3" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>계층형 멀티 에이전트와 Agents as Tools</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body">
+    <p><!-- Slide 4: 계층형 멀티 에이전트 --></p>
+<p>계획 계층이 계획하고 승인받은 뒤, 실행 에이전트는 도구처럼 호출</p>
+<style>
+.rp-figwrap { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.rp-figwrap img { max-width: 100%; max-height: 640px; object-fit: contain; border-radius: var(--radius-md); }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); word-break: keep-all; align-self: stretch; }
+</style>
+<div class="rp-figwrap">
+  <img src="media/lg-hierarchy.png" alt="계층형 멀티 에이전트: Coordinator, Planner, Plan Reviewer, Supervisor와 실행 에이전트 Coder, Validator, Reporter, Tracker">
+  <div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/lge-agentic-report-automation/" target="_blank" rel="noopener">LG전자 Agentic AI 리포트 자동화 (2025-08)</a>, <a href="https://aws.amazon.com/ko/blogs/tech/practical-design-lessons-from-the-deep-insight-arch/" target="_blank" rel="noopener">Deep Insight 아키텍처 설계 교훈 (2026-04)</a></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s4" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s4-header"><h2>Deep Insight에서 가져올 6가지 패턴</h2></div>
+  <div class="slide-body" data-remarp-id="s4-body">
+    <p><!-- Slide 5: 6가지 패턴 --></p>
+<p>과제 3(보고서), 4(서류 점검), 6(관제)에 그대로 적용 가능</p>
+<style>
+.rp-six { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+.rp-six .card { word-break: keep-all; }
+.rp-six .card-title { font-size: var(--fs-card); }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-3); word-break: keep-all; }
+</style>
+<div class="rp-six fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="card"><div class="card-title">라우팅 먼저</div><div class="card-desc">가벼운 모델(Haiku)이 요청을 분류. 단순 요청엔 비싼 오케스트레이션을 생략</div></div>
+  <div class="card"><div class="card-title">계획 + 사람 승인</div><div class="card-desc">Planner가 5~10단계로 분해하고, 사용자가 승인하거나 수정한 뒤 실행</div></div>
+  <div class="card"><div class="card-title">요약 말고 원본 누적</div><div class="card-desc">에이전트 간 결과를 요약해 넘기지 않고 파일에 누적. 세부 맥락 손실 방지</div></div>
+  <div class="card highlight"><div class="card-title">검증 에이전트 분리</div><div class="card-desc">Validator가 원본 데이터로 다시 계산(허용 오차 0.01). 검증된 값만 인용</div></div>
+  <div class="card"><div class="card-title">역할별 모델 + 선택적 캐싱</div><div class="card-desc">반복 호출되는 에이전트만 <span class="rp-tip" tabindex="0" data-tip="반복되는 프롬프트 앞부분을 캐시해 재사용하는 기능. 입력 토큰 비용과 지연을 줄임">Prompt Caching</span>. 입력 토큰 비용 최대 90% 절감</div></div>
+  <div class="card"><div class="card-title">격리된 코드 실행</div><div class="card-desc">세션별 컨테이너를 Private VPC에서 실행, 인터넷 차단, 1시간 후 자동 종료</div></div>
+</div>
+<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/lge-agentic-report-automation/" target="_blank" rel="noopener">LG전자 Agentic AI 리포트 자동화 (2025-08)</a>, <a href="https://aws.amazon.com/ko/blogs/tech/practical-design-lessons-from-the-deep-insight-arch/" target="_blank" rel="noopener">Deep Insight 아키텍처 설계 교훈 (2026-04)</a></div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s5" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s5-header"><h2>운영 화면: 보고서와 관리자 대시보드</h2></div>
+  <div class="slide-body" data-remarp-id="s5-body">
+    <p><!-- Slide 6: 운영 화면 --></p>
+<p>작업별 소요시간, 토큰, Cache Hit을 같은 화면에서</p>
+<style>
+.rp-two { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.rp-two figure { margin: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.rp-two img { width: 100%; max-height: 360px; object-fit: contain; border-radius: var(--radius-md); background: var(--bg-card); }
+.rp-two figcaption { font-size: var(--fs-card); word-break: keep-all; }
+.rp-risk { margin-top: var(--space-3); word-break: keep-all; }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-2); }
+.text-danger { color: var(--danger); font-weight: var(--weight-bold); }
+</style>
+<div class="rp-two">
+  <figure><img src="media/lg-reports.png" alt="워시타워 고객분석, 캠페인 비교, 수익성 분석 보고서 화면"><figcaption>워시타워 고객분석, 캠페인 비교, 수익성 분석 보고서</figcaption></figure>
+  <figure><img src="media/lg-dashboard.png" alt="Deep Insight 관리자 대시보드: 작업별 소요시간, 토큰, Cache Hit"><figcaption>관리자 대시보드: 작업당 15~23분, 토큰 100만 개 이상, Cache Hit 50~70%</figcaption></figure>
+</div>
+<div class="callout callout-danger rp-risk fragment fade-up" data-fragment-index="1"><strong class="text-danger">리스크</strong>: <span class="rp-tip" tabindex="0" data-tip="Human-in-the-loop: 실행 중간에 사람이 승인하거나 수정하는 단계">HITL</span> 300초 자동 승인은 금융권에서 무승인 실행으로 해석될 수 있습니다. 타임아웃 시 보류로 바꾸세요. 블로그의 288배 표기는 산술상 144배이므로, 3일에서 30분으로 줄었다는 표현만 인용하세요.</div>
+<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/lge-agentic-report-automation/" target="_blank" rel="noopener">LG전자 Agentic AI 리포트 자동화 (2025-08)</a>, <a href="https://aws.amazon.com/ko/blogs/tech/practical-design-lessons-from-the-deep-insight-arch/" target="_blank" rel="noopener">Deep Insight 아키텍처 설계 교훈 (2026-04)</a></div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s6" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s6-header"><h2>CASE 2 신한카드: 세 가지 혁신</h2></div>
+  <div class="slide-body" data-remarp-id="s6-body">
+    <p><!-- Slide 7: 신한카드 개요 --></p>
+<p>온톨로지 인텐트 분류, 분산형 에이전트 워크플로우, 에이전트 간 대화 기반 self-healing</p>
+<style>
+.rp-figwrap { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.rp-figwrap img { max-width: 100%; max-height: 640px; object-fit: contain; border-radius: var(--radius-md); }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); word-break: keep-all; align-self: stretch; }
+</style>
+<div class="rp-figwrap">
+  <img src="media/shc-overview.png" alt="신한카드 Agentic AI 챗봇: 유저 쿼리, 온톨로지 기반 인텐트 분류, 분산형 에이전틱 AI 워크플로우">
+  <div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/shinhan-card-ontology-based-decentralized-agentic-ai-chatbot/" target="_blank" rel="noopener">신한카드 온톨로지 기반 분산형 Agentic AI 챗봇 (2026-06)</a></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s7" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s7-header"><h2>51개 상담 의도를 온톨로지로 쪼개 분류</h2></div>
+  <div class="slide-body" data-remarp-id="s7-body">
+    <p><!-- Slide 8: 인텐트 온톨로지 --></p>
+<p>규제, 비용, 5초 응답 제약 속에서 소형 모델(sLLM)로 정확도를 올린 방법</p>
+<style>
+.rp-int { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); align-items: start; }
+.rp-int-steps { display: flex; flex-direction: column; gap: var(--space-2); }
+.rp-int-steps .card { word-break: keep-all; padding: var(--space-2) var(--space-3); }
+.rp-int-steps .card-title { font-size: var(--fs-card); }
+.rp-int img { width: 100%; max-height: 220px; object-fit: contain; border-radius: var(--radius-md); background: var(--bg-card); }
+.rp-acc { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.rp-acc .metric-card { padding: var(--space-2); }
+.rp-acc .rp-v { font-size: 1.6rem; font-weight: var(--weight-bold); font-variant-numeric: tabular-nums; }
+.rp-acc .rp-v.up { color: var(--accent); }
+.rp-acc small { display: block; font-size: var(--fs-caption); color: var(--on-surface-muted); }
+.rp-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-top: var(--space-2); }
+.rp-meta div { font-size: var(--fs-caption); color: var(--on-surface-muted); text-align: center; }
+.rp-meta b { display: block; font-size: var(--fs-card); color: var(--text-primary); }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-2); }
+.rp-callnote { font-size: var(--fs-caption); margin-top: var(--space-2); word-break: keep-all; }
+</style>
+<div class="rp-int">
+  <div class="rp-int-steps fragment" data-reveal="stagger" data-fragment-index="1">
+    <div class="card"><div class="card-title">1. 3속성 병렬 추출</div><div class="card-desc"><span class="rp-tip" tabindex="0" data-tip="소형 언어 모델(small LLM). 파라미터가 작아 사내 배포, 비용, 규제 대응에 유리">sLLM</span>이 Domain, Action, Tag를 각각 독립적으로 고른다</div></div>
+    <div class="card"><div class="card-title">2. 그래프 매칭으로 후보 축소</div><div class="card-desc">Tag로 거르고, Domain과 Action이 맞는 인텐트만 남긴다</div></div>
+    <div class="card"><div class="card-title">3. 남은 후보만 LLM이 비교</div><div class="card-desc">하나면 확정, 여럿이면 원문과 후보 설명을 비교해 선택</div></div>
+    <img src="media/shc-ontology-map.png" alt="신한카드 인텐트 온톨로지 맵 일부: Intent, Domain, Action, Tag 노드">
+  </div>
+  <div class="fragment fade-up" data-fragment-index="2">
+    <div class="rp-acc">
+      <div class="metric-card"><small>Qwen3 32B 기존</small><span class="rp-v">84.2%</span></div>
+      <div class="metric-card"><small>Qwen3 32B 온톨로지</small><span class="rp-v up">91.0%</span></div>
+      <div class="metric-card"><small><span class="rp-tip" tabindex="0" data-tip="전체 235B 파라미터 중 토큰마다 22B만 쓰는 MoE(전문가 혼합) 모델">Qwen3 235B A22B 기존</span></small><span class="rp-v">77.4%</span></div>
+      <div class="metric-card"><small>Qwen3 235B A22B 온톨로지</small><span class="rp-v up">88.7%</span></div>
+    </div>
+    <div class="rp-meta"><div><b>5초 이내</b>요청당 응답</div><div><b>약 18배</b>비용 절감 (Opus 4.5 대비)</div><div><b>~98%</b><span class="rp-tip" tabindex="0" data-tip="대화 중에 사용자가 다른 주제로 넘어가는 것">topic switching</span> 감지</div></div>
+    <div class="callout callout-info rp-callnote">작은 32B 모델이 약 7배 큰 235B 모델보다 2.3%p 높음. 측정 조건 비공개 수치이므로 참고용. 2부 D2처럼 조건(51개, 유사 의도, sLLM)이 효과를 만든다는 점도 함께</div>
+  </div>
+</div>
+<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/shinhan-card-ontology-based-decentralized-agentic-ai-chatbot/" target="_blank" rel="noopener">신한카드 온톨로지 기반 분산형 Agentic AI 챗봇 (2026-06)</a></div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s8" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s8-header"><h2>중앙 오케스트레이터 대신 분산형 구조</h2></div>
+  <div class="slide-body" data-remarp-id="s8-body">
+    <p><!-- Slide 9: 분산형 --></p>
+<p>각 전문 에이전트가 "내 일인가"만 병렬 판단, 에이전트가 늘어도 응답 시간은 거의 그대로</p>
+<style>
+.rp-two9 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); align-items: end; }
+.rp-two9 figure { margin: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.rp-two9 img { width: 100%; max-height: 520px; object-fit: contain; border-radius: var(--radius-md); background: var(--bg-card); }
+.rp-two9 figcaption { font-size: var(--fs-card); word-break: keep-all; }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-2); }
+</style>
+<div class="rp-two9">
+  <figure><img src="media/shc-central.png" alt="중앙집중형 에이전틱 AI 아키텍처: Central Orchestrator가 모든 위임을 담당"><figcaption>중앙집중형: Orchestrator가 모든 위임을 맡아 병목</figcaption></figure>
+  <figure class="fragment fade-up" data-fragment-index="1"><img src="media/shc-distributed.png" alt="간소화된 분산형 에이전트 AI 아키텍처"><figcaption>분산형: 관련 에이전트만 후속 처리 후 통합</figcaption></figure>
+</div>
+<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/shinhan-card-ontology-based-decentralized-agentic-ai-chatbot/" target="_blank" rel="noopener">신한카드 온톨로지 기반 분산형 Agentic AI 챗봇 (2026-06)</a></div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s9" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s9-header"><h2>신한카드 AWS 아키텍처</h2></div>
+  <div class="slide-body" data-remarp-id="s9-body">
+    <p><!-- Slide 10: 신한카드 AWS 아키텍처 --></p>
+<p>Router Agent, 전문 에이전트(AgentCore Runtime), AgentCore Gateway(MCP), Bedrock</p>
+<style>
+.rp-figwrap { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.rp-figwrap img { max-width: 100%; max-height: 620px; object-fit: contain; border-radius: var(--radius-md); }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); word-break: keep-all; align-self: stretch; }
+</style>
+<div class="rp-figwrap">
+  <img src="media/shc-aws-arch.png" alt="신한카드 AWS 아키텍처: Router Agent, AgentCore Runtime 전문 에이전트, AgentCore Gateway, Lambda, DynamoDB, Bedrock">
+  <div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/shinhan-card-ontology-based-decentralized-agentic-ai-chatbot/" target="_blank" rel="noopener">신한카드 온톨로지 기반 분산형 Agentic AI 챗봇 (2026-06)</a>. 다이어그램의 QWEN 30B 표기와 달리 본문 수치는 Qwen3 32B 기준</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s10" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s10-header"><h2>자율 개선 루프 Tikitaka</h2></div>
+  <div class="slide-body" data-remarp-id="s10-body">
+    <p><!-- Slide 11: Tikitaka --></p>
+<p>합성 고객이 테스트하고 에이전트가 고친다: 수일에서 수주 걸리던 멀티턴 테스트를 자동 루프로</p>
+<style>
+.rp-loop4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); }
+.rp-loop4 .card { word-break: keep-all; }
+.rp-loop4 .card-title { font-size: var(--fs-card); }
+.rp-step { font-size: var(--fs-caption); color: var(--accent); font-weight: var(--weight-bold); letter-spacing: .08em; }
+.rp-tk-bot { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
+.rp-tk-bot .card { word-break: keep-all; }
+.rp-tk-big { font-size: 1.8rem; font-weight: var(--weight-bold); color: var(--accent); }
+.rp-risk { margin-top: var(--space-3); word-break: keep-all; }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-2); }
+.text-danger { color: var(--danger); font-weight: var(--weight-bold); }
+</style>
+<div class="rp-loop4 fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="card"><span class="rp-step">01 SIMULATE</span><div class="card-title">시뮬레이션</div><div class="card-desc">실제 고객 데이터에서 도출한 페르소나의 Test Agent가 멀티턴 대화</div></div>
+  <div class="card"><span class="rp-step">02 DIAGNOSE</span><div class="card-title">진단</div><div class="card-desc">Analyzer Agent가 비정상 패턴과 원인 코드, 함수까지 특정</div></div>
+  <div class="card"><span class="rp-step">03 PROPOSE</span><div class="card-title">해결책 제안</div><div class="card-desc">Code Reviewer, Solution Designer Agent가 라우팅 로직과 수정안 제시</div></div>
+  <div class="card"><span class="rp-step">04 VERIFY</span><div class="card-title">검증과 배포</div><div class="card-desc">같은 페르소나로 재테스트, Update Agent가 적용하고 모니터링</div></div>
+</div>
+<div class="rp-tk-bot fragment" data-reveal="stagger" data-fragment-index="2">
+  <div class="card"><div class="card-desc">한도 조회와 상향 시나리오</div><div class="rp-tk-big">7턴 실패 → 4턴 완료</div><div class="card-desc">개선 전: 고객번호 입력 요청만 반복. 개선 후: 조회와 상향까지 처리 (AI 평가자 확인)</div></div>
+  <div class="card"><span class="badge badge-blue">TASK 01 마이데이터 상담</span><div class="card-desc">합성 고객 페르소나, 응답 품질 평가, 코칭과 같은 구조. AgentCore User Simulation과 Evaluations로 시뮬레이션과 채점 구간을 바로 구성</div></div>
+</div>
+<div class="callout callout-danger rp-risk fragment fade-up" data-fragment-index="3"><strong class="text-danger">리스크</strong>: AI가 코드를 고쳐 배포하는 루프는 금융 변경관리 통제와 충돌합니다. Update 단계에는 사람 승인 게이트를 두세요.</div>
+<div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/shinhan-card-ontology-based-decentralized-agentic-ai-chatbot/" target="_blank" rel="noopener">신한카드 온톨로지 기반 분산형 Agentic AI 챗봇 (2026-06)</a></div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s11" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s11-header"><h2>CASE 3 미래에셋증권: 망분리 지식DB</h2></div>
+  <div class="slide-body" data-remarp-id="s11-body">
+    <p><!-- Slide 12: 미래에셋 망분리 --></p>
+<p>5호망 AWS Private Cloud의 지식DB, 망분리 예외 구간에서만 LLM 호출</p>
+<style>
+.rp-figwrap { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.rp-figwrap img { max-width: 100%; max-height: 640px; object-fit: contain; border-radius: var(--radius-md); }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); word-break: keep-all; align-self: stretch; }
+</style>
+<div class="rp-figwrap">
+  <img src="media/mirae-network.jpg" alt="미래에셋증권 망 구성: 5호망 AWS Private Cloud 지식DB, AWS DMZ 프록시, 망분리 예외 허용 구간의 Bedrock과 Azure OpenAI">
+  <div class="rp-src">출처: 미래에셋증권 「AI-Ready Data: 온톨로지 기반 금융상품 지식 데이터 혁신 여정」 AWS FSI Forum 발표 (공개 링크 없음)</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s12" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s12-header"><h2>4-Task 지식 파이프라인</h2></div>
+  <div class="slide-body" data-remarp-id="s12-body">
+    <p><!-- Slide 13: 4-Task 파이프라인 --></p>
+<p>AI-Ready Data: 수집과 파싱, 온톨로지 설계, 지식 추출, 질의와 검색</p>
+<style>
+.rp-figwrap { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.rp-figwrap img { max-width: 100%; max-height: 640px; object-fit: contain; border-radius: var(--radius-md); }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); word-break: keep-all; align-self: stretch; }
+</style>
+<div class="rp-figwrap">
+  <img src="media/mirae-pipeline.jpg" alt="4-Task 파이프라인: Data Pipeline, Ontology Engineering, Knowledge Extract, Query and Retrieval과 Knowledge Base 저장소">
+  <div class="rp-src">출처: 미래에셋증권 「AI-Ready Data: 온톨로지 기반 금융상품 지식 데이터 혁신 여정」 AWS FSI Forum 발표 (공개 링크 없음)</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s13" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s13-header"><h2>6대 Challenge와 해법</h2></div>
+  <div class="slide-body" data-remarp-id="s13-body">
+    <p><!-- Slide 14: 6대 Challenge --></p>
+<p>법령과 업무 상식을 결정적인 규칙으로 옮기기</p>
+<style>
+.rp-ch { width: 100%; font-size: var(--fs-card); word-break: keep-all; }
+.rp-ch th { text-transform: none; letter-spacing: normal; font-size: var(--fs-caption); }
+.rp-ch td:first-child { white-space: nowrap; font-weight: var(--weight-semibold); }
+.rp-ch tr.hl td { background: var(--accent-subtle); }
+.rp-ch tr.hl td:first-child { color: var(--text-primary); font-weight: var(--weight-bold); }
+.rp-ch-foot { margin-top: var(--space-3); word-break: keep-all; }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-2); }
+.text-accent { color: var(--accent); font-weight: var(--weight-bold); }
+</style>
+<table class="data-table rp-ch">
+  <thead><tr><th>Challenge</th><th>해법</th></tr></thead>
+  <tbody>
+    <tr><td>1 Ontology Axioms</td><td>자본시장법 §229 집합투자기구 유형을 <span class="rp-tip" tabindex="0" data-tip="허용되는 값을 목록으로 못박아 그 밖의 값은 들어올 수 없게 한 집합">폐쇄집합</span>으로. 별칭은 출처별 구분, 단일값과 상호배타 제약</td></tr>
+    <tr><td>2 Ontology Sampler</td><td>축 기반 표본: <span class="rp-tip" tabindex="0" data-tip="운용자산 규모(Assets Under Management)">AUM</span> 상위 50개는 23개 축값 중 11개, Sampler 50개는 22개 커버</td></tr>
+    <tr><td>3 Mapping Rules</td><td>YAML 규칙표로 코드 수정 없이 확장 (7 네임스페이스, 6 도메인, 이름 맞추기 12종)</td></tr>
+    <tr><td>4 <span class="rp-tip" tabindex="0" data-tip="그래프에는 항상 참인 최소 구조만 두고(Thin), 기간이 있는 사실은 유효기간과 함께 따로 관리(Temporal)">Thin, Temporal Graph</span></td><td>항상 참인 구조와 유효기간 있는 사실을 분리. 새 사실이 옛 사실을 자동 만료</td></tr>
+    <tr class="hl"><td>5 Ontology Grounding</td><td>vocabulary.ttl로 미국국채를 해외채권으로 확정한 뒤 LLM은 질의만 조립. 실패 시 되묻기</td></tr>
+    <tr class="hl"><td>6 Semantic Layer</td><td>배당은 분배율, 배당 질의에 투자지역 필터 금지, 브랜드에서 운용사 매핑</td></tr>
+  </tbody>
+</table>
+<div class="callout callout-info rp-ch-foot fragment fade-up" data-fragment-index="1"><strong class="text-accent">TASK 01, 05</strong>: 사내 용어가 많은 과제일수록 5번 Grounding과 6번 Semantic Layer부터. 2부 D1이 바로 이 두 가지를 작게 재현한 것입니다.</div>
+<div class="rp-src">출처: 미래에셋증권 「AI-Ready Data: 온톨로지 기반 금융상품 지식 데이터 혁신 여정」 AWS FSI Forum 발표 (공개 링크 없음)</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s14" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s14-header"><h2>Federated Query Architecture</h2></div>
+  <div class="slide-body" data-remarp-id="s14-body">
+    <p><!-- Slide 15: Federated Query --></p>
+<p>하나의 질문이 네 저장소를 동시에 조회하고, 근거로 합쳐짐</p>
+<style>
+.rp-figwrap { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.rp-figwrap img { max-width: 100%; max-height: 640px; object-fit: contain; border-radius: var(--radius-md); }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); word-break: keep-all; align-self: stretch; }
+</style>
+<div class="rp-figwrap">
+  <img src="media/mirae-federated.jpg" alt="Federated Query Architecture: Semantic Layer, 의도 분류, 대상 확정, Query Planning, 권한 검증과 Aurora, Neptune, OpenSearch 동시 조회">
+  <div class="rp-src">출처: 미래에셋증권 「AI-Ready Data: 온톨로지 기반 금융상품 지식 데이터 혁신 여정」 AWS FSI Forum 발표 (공개 링크 없음)</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s15" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s15-header"><h2>무엇이 정확도를 끌어올렸나</h2></div>
+  <div class="slide-body" data-remarp-id="s15-body">
+    <p><!-- Slide 16: 45 → 84.7 --></p>
+<p>국내 ETF 도메인, 자체 벤치마크 72문항, 구성요소를 하나씩 더하며 측정</p>
+<style>
+.rp-figwrap { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.rp-figwrap img { max-width: 100%; max-height: 640px; object-fit: contain; border-radius: var(--radius-md); }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); word-break: keep-all; align-self: stretch; }
+</style>
+<div class="rp-figwrap">
+  <img src="media/mirae-accuracy.jpg" alt="정확도 막대: 스키마만 45%, 온톨로지 프롬프트 설명 47.4%, 온톨로지로 실제 값 변경 65%, Federation 검색 84.7%">
+  <div class="rp-src">출처: 미래에셋증권 「AI-Ready Data: 온톨로지 기반 금융상품 지식 데이터 혁신 여정」 AWS FSI Forum 발표 (공개 링크 없음)</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s16" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s16-header"><h2>PoC 이후: 혁신금융서비스 여정</h2></div>
+  <div class="slide-body" data-remarp-id="s16-body">
+    <p><!-- Slide 17: 혁신금융서비스 여정 --></p>
+<p>기술 트랙과 규제 트랙을 병렬로, 일정은 발표 시점 기준</p>
+<style>
+.rp-tl { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--space-2); margin-bottom: var(--space-4); }
+.rp-tl .card { padding: var(--space-2); text-align: center; word-break: keep-all; }
+.rp-tl .rp-d { font-size: var(--fs-caption); color: var(--on-surface-muted); font-variant-numeric: tabular-nums; }
+.rp-tl b { display: block; font-size: var(--fs-card); margin: var(--space-1) 0; }
+.rp-tl .badge { font-size: var(--fs-caption); }
+.rp-ph { width: 100%; font-size: var(--fs-card); word-break: keep-all; }
+.rp-ph th { text-transform: none; letter-spacing: normal; font-size: var(--fs-caption); }
+.rp-ph td:first-child, .rp-ph td:nth-child(2) { white-space: nowrap; }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-2); }
+</style>
+<div class="rp-tl fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="card"><span class="rp-d">2025.12</span><b>서비스 신청</b><span class="badge badge-green">완료</span></div>
+  <div class="card"><span class="rp-d">2026.03</span><b>지정 고시</b><span class="badge badge-green">완료</span></div>
+  <div class="card"><span class="rp-d">2026.07</span><b>금융보안원 보안대책 평가</b><span class="badge badge-green">완료</span></div>
+  <div class="card"><span class="rp-d">2026.08</span><b>금감원 개시 신청</b><span class="badge badge-yellow">진행 중</span></div>
+  <div class="card"><span class="rp-d">2026.09</span><b>임직원 오픈</b><span class="badge badge-blue">예정</span></div>
+  <div class="card"><span class="rp-d">2027.1Q</span><b>대고객 오픈</b><span class="badge badge-blue">예정</span></div>
+</div>
+<table class="data-table rp-ph fragment fade-up" data-fragment-index="2">
+  <thead><tr><th>Phase</th><th>기간</th><th>내용</th></tr></thead>
+  <tbody>
+    <tr><td>Phase 1</td><td>2026.02~03</td><td>상품지식 <span class="rp-tip" tabindex="0" data-tip="Experience-Based Acceleration: AWS와 고객이 짧은 기간 집중해서 함께 구축하는 프로그램">EBA</span>: GraphRAG Toolkit으로 Ontology, ER, Search 방법론 검증</td></tr>
+    <tr><td>Phase 2</td><td>2026.04~09</td><td>지식DB와 지식검색서비스 구축 (AWS Professional Services 협업)</td></tr>
+    <tr><td>Phase 3</td><td>2026.10~</td><td>전사 AI 표준 지식 기반, AI-Ready Data 거버넌스</td></tr>
+  </tbody>
+</table>
+<div class="rp-src">출처: 미래에셋증권 「AI-Ready Data: 온톨로지 기반 금융상품 지식 데이터 혁신 여정」 AWS FSI Forum 발표 (공개 링크 없음). 최신 상황은 별도 확인 필요</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s17" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s17-header"><h2>CASE 4 Canva: 프로덕션의 세 가지 실패</h2></div>
+  <div class="slide-body" data-remarp-id="s17-body">
+    <p><!-- Slide 18: Canva 세 가지 실패 --></p>
+<p>Canva Code가 스케일 전에 먼저 만든 것, Amazon Bedrock 기반</p>
+<style>
+.rp-case { display: grid; grid-template-columns: 1fr 1.2fr; gap: var(--space-4); align-items: center; }
+.rp-case-l { display: flex; flex-direction: column; gap: var(--space-2); }
+.rp-case-l .card { word-break: keep-all; padding: var(--space-2) var(--space-3); }
+.rp-case-l .card-title { font-size: var(--fs-card); }
+.rp-fig { width: 100%; max-height: 560px; object-fit: contain; display: block; border-radius: var(--radius-md); }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-2); word-break: keep-all; }
+</style>
+<div class="rp-case">
+  <div class="rp-case-l fragment" data-reveal="stagger" data-fragment-index="1">
+    <div class="card"><div class="card-title">Monolithic prompt</div><div class="card-desc">한 모델이 다섯 가지 일을 하며 최고가 모델 요금을 다섯 번 낸다</div></div>
+    <div class="card"><div class="card-title">기계적 작업에 확률적 생성</div><div class="card-desc">CSS 클래스 하나 바꾸려고 HTML 8,000 토큰을 다시 생성</div></div>
+    <div class="card"><div class="card-title">Vibes 기반 마이그레이션</div><div class="card-desc">평가가 없으니 신호도 없고, 새 모델이 나오면 hype로 배포</div></div>
+  </div>
+  <img class="rp-fig" src="media/canva-revenue.jpg" alt="Canva Code, Canva AI 출시 이후 매출 곡선: 2026년 5월 17M MRR, 8주 구간 표시">
+</div>
+<div class="rp-src">출처: <a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS)</a>; AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s18" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s18-header"><h2>Lesson 1: 모델 말고 에이전트를 분해하라</h2></div>
+  <div class="slide-body" data-remarp-id="s18-body">
+    <p><!-- Slide 19: Lesson 1 --></p>
+<p>Architect(Opus)가 계획, Builder와 Editor(Haiku)가 실행</p>
+<style>
+.rp-figwrap { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.rp-figwrap img { max-width: 100%; max-height: 640px; object-fit: contain; border-radius: var(--radius-md); }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); word-break: keep-all; align-self: stretch; }
+</style>
+<div class="rp-figwrap">
+  <img src="media/canva-lesson1.jpg" alt="Decompose the agent: Architect(Opus), Builder(Haiku), Editor(Haiku) 역할 분리">
+  <div class="rp-src">출처: <a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS)</a>; AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s19" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s19-header"><h2>최종 구조: Sonnet + sub-agent</h2></div>
+  <div class="slide-body" data-remarp-id="s19-body">
+    <p><!-- Slide 20: 최종 구조 --></p>
+<p>Sonnet 주 스레드, 평균 총비용 −46%, 사용자 성공 지표 +9%</p>
+<style>
+.rp-figwrap { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.rp-figwrap img { max-width: 100%; max-height: 640px; object-fit: contain; border-radius: var(--radius-md); }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); word-break: keep-all; align-self: stretch; }
+</style>
+<div class="rp-figwrap">
+  <img src="media/canva-final.jpg" alt="Smarter model routing with sub-agents: Sonnet 주 스레드, Opus와 Haiku sub-agent, 평균 총비용 -46%, 사용자 성공 지표 +9%">
+  <div class="rp-src">출처: <a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS)</a>; AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s20" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s20-header"><h2>Lesson 2, 3: 결정론적 도구와 평가</h2></div>
+  <div class="slide-body" data-remarp-id="s20-body">
+    <p><!-- Slide 21: Lesson 2, 3 --></p>
+<p>모델은 확률적 권한, 주변 코드는 결정론적 권한</p>
+<style>
+.rp-l23 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); align-items: start; }
+.rp-l23 .card { word-break: keep-all; display: flex; flex-direction: column; gap: var(--space-2); }
+.rp-k { font-size: var(--fs-caption); color: var(--accent); font-weight: var(--weight-bold); letter-spacing: .08em; }
+.rp-big3 { font-size: 2rem; font-weight: var(--weight-bold); color: var(--accent); }
+.rp-l23 .data-table { width: 100%; font-size: var(--fs-card); }
+.rp-l23 .data-table th { text-transform: none; letter-spacing: normal; font-size: var(--fs-caption); }
+.rp-l23 td { font-variant-numeric: tabular-nums; }
+.rp-l23-foot { margin-top: var(--space-3); word-break: keep-all; }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-2); }
+.text-accent { color: var(--accent); font-weight: var(--weight-bold); }
+</style>
+<div class="rp-l23">
+  <div class="card fragment fade-up" data-fragment-index="1">
+    <span class="rp-k">LESSON 2</span>
+    <div class="card-title">replace_text: 정확히 일치하는 부분만 교체</div>
+    <div class="card-desc">유일하게 일치하지 않으면 에러를 내고 모델이 재시도합니다.</div>
+    <div><span class="rp-big3">~40×</span> <span class="card-desc">patch 경로 출력 토큰 감소 (약 8,000에서 약 200)</span></div>
+  </div>
+  <div class="card fragment fade-up" data-fragment-index="2">
+    <span class="rp-k">LESSON 3</span>
+    <div class="card-title">Eval이 마이그레이션의 활주로다</div>
+    <table class="data-table">
+      <thead><tr><th>Opus 4.6 High</th><th>출력 토큰</th><th>지연</th><th><span class="rp-tip" tabindex="0" data-tip="웹 접근성 국제 표준(WCAG)의 AA 등급: 대비, 대체 텍스트 등">WCAG AA</span></th></tr></thead>
+      <tbody>
+        <tr><td>thinking 끔</td><td>11k</td><td>138s</td><td>1 / 10</td></tr>
+        <tr><td><span class="rp-tip" tabindex="0" data-tip="확장 추론(extended thinking): 답하기 전에 추론 과정을 길게 생성하는 기능">thinking 켬</span></td><td>37k (3.4×)</td><td>530s (3.8×)</td><td>2 / 10</td></tr>
+      </tbody>
+    </table>
+    <div class="card-desc">토큰 3.4배, 지연 3.8배로 10개 중 1건 더 통과해서 thinking을 끈 채로 배포. 품질(WCAG, <span class="rp-tip" tabindex="0" data-tip="웹 접근성 자동 점검 오픈소스 도구">axe-core</span>), 토큰 비용, 지연 3축으로 모든 모델 교체를 검증</div>
+  </div>
+</div>
+<div class="callout callout-info rp-l23-foot fragment fade-up" data-fragment-index="3"><strong class="text-accent">같은 원리</strong>: 신한카드 규칙 매칭, 미래에셋 Grounding, 2부의 "규칙 강제" 자리. 지켜야 할 것은 코드로, 판단만 모델에게</div>
+<div class="rp-src">출처: <a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS)</a>; AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s21" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s21-header"><h2>Agentic Design Patterns 8종</h2></div>
+  <div class="slide-body" data-remarp-id="s21-body">
+    <p><!-- Slide 22: Agentic Design Patterns 8 --></p>
+<p>AWS Prescriptive Guidance, 과제의 어느 지점에 어떤 패턴을 쓸지</p>
+<style>
+.rp-pt { width: 100%; font-size: var(--fs-card); word-break: keep-all; }
+.rp-pt th { text-transform: none; letter-spacing: normal; font-size: var(--fs-caption); }
+.rp-pt td:first-child { white-space: nowrap; font-weight: var(--weight-semibold); }
+.rp-pt td:last-child { color: var(--accent); }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-2); }
+</style>
+<table class="data-table rp-pt">
+  <thead><tr><th>패턴</th><th>해법</th><th>PoC 과제 연결</th></tr></thead>
+  <tbody>
+    <tr><td>Agentic Loop</td><td>도구 결과를 한 메시지로 묶어 재호출, 반복 상한</td><td>모든 과제의 뿌리</td></tr>
+    <tr><td>Deterministic Override</td><td><span class="rp-tip" tabindex="0" data-tip="도구가 실행되기 직전에 끼어들어 규칙을 검사하고 막을 수 있는 코드">pre-tool hook</span>으로 반드시 지킬 규칙 강제</td><td>TASK 01 상담 금지 표현, 고액 처리</td></tr>
+    <tr><td>Tool Gate</td><td>선행 도구가 성공하기 전 호출 차단</td><td>TASK 04 분류, 추출, 대조 순서</td></tr>
+    <tr><td>Validation-Retry</td><td>앱 코드로 검증 후 원문 에러로 재시도, 2회 상한</td><td>TASK 03 수치 검증, TASK 04 필드 검증</td></tr>
+    <tr><td>Structured Error</td><td>transient, validation, permission, prerequisite 4분류</td><td>TASK 06 조치 권한 오류 재시도 금지</td></tr>
+    <tr><td>Confidence Routing</td><td>0~1 점수 대신 4개 이름 라벨로 사람 검토 선별</td><td>TASK 04 불확실 서류만 사람 검토</td></tr>
+    <tr><td>Review Pass</td><td><span class="rp-tip" tabindex="0" data-tip="예 또는 아니오로만 답하는 채점 항목">이진 루브릭</span> 5개 이내로 2차 검토</td><td>TASK 02 디자인 규칙, TASK 03 인용 점검</td></tr>
+    <tr><td>Coordinator-Subagent</td><td>병렬 디스패치, 겹치지 않는 영역</td><td>TASK 05, 06 지식, 코드, DB 에이전트 분리</td></tr>
+  </tbody>
+</table>
+<div class="rp-src">출처: <a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS)</a>; AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s22" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s22-header"><h2>모든 패턴은 루프의 한 단계를 고친다</h2></div>
+  <div class="slide-body" data-remarp-id="s22-body">
+    <p><!-- Slide 23: 루프 --></p>
+<p>Agentic Loop를 먼저 제대로 만들고, 필요한 지점에만 패턴을 추가</p>
+<style>
+.rp-figwrap { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.rp-figwrap img { max-width: 100%; max-height: 640px; object-fit: contain; border-radius: var(--radius-md); }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); word-break: keep-all; align-self: stretch; }
+</style>
+<div class="rp-figwrap">
+  <img src="media/canva-loop.jpg" alt="Every later pattern modifies one step of the loop: 가운데 Agentic Loop와 도구 호출 지점, 결과 지점의 패턴들">
+  <div class="rp-src">출처: <a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS)</a>; AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s23" data-block="03-cases" data-block-title="대표 사례 4선">
+  <div class="slide-header" data-remarp-id="s23-header"><h2>네 사례의 공통점: 지식, 역할, 평가</h2></div>
+  <div class="slide-body" data-remarp-id="s23-body">
+    <p><!-- Slide 24: 공통점 --></p>
+<p>모델을 바꾸기 전에 세 가지를 먼저 설계</p>
+<style>
+.rp-cm { width: 100%; font-size: var(--fs-card); word-break: keep-all; }
+.rp-cm th { text-transform: none; letter-spacing: normal; font-size: var(--fs-caption); }
+.rp-cm td:first-child { white-space: nowrap; font-weight: var(--weight-semibold); }
+.rp-cm tr.num td { color: var(--accent); font-weight: var(--weight-bold); font-variant-numeric: tabular-nums; }
+</style>
+<table class="data-table rp-cm">
+  <thead><tr><th>패턴</th><th>LG전자</th><th>신한카드</th><th>미래에셋증권</th><th>Canva</th></tr></thead>
+  <tbody>
+    <tr class="fragment fade-up" data-fragment-index="1"><td>지식 구조화</td><td>에이전트 간 원본 누적 기록</td><td>Domain, Action, Tag 인텐트 온톨로지</td><td>FIBO 기반 온톨로지 + Semantic Layer</td><td>features.json 스펙, 프로젝트 파일 3종</td></tr>
+    <tr class="fragment fade-up" data-fragment-index="2"><td>역할 분리와 검증</td><td>Planner, Supervisor, Validator</td><td>내 일인가 판단하는 분산형 에이전트</td><td>근거, 권한, 출처 검증 후 반환</td><td>Architect, Builder, Editor + exact-match 도구</td></tr>
+    <tr class="fragment fade-up" data-fragment-index="3"><td>평가 루프</td><td>계획 대비 Task Tracking</td><td>페르소나 시뮬레이션 후 재테스트</td><td>72문항 벤치마크로 단계별 측정</td><td>품질, 비용, 지연 3축 eval</td></tr>
+    <tr class="num fragment fade-up" data-fragment-index="4"><td>대표 수치</td><td>3일 → 30분</td><td>84.2% → 91.0%</td><td>45% → 84.7%</td><td>비용 −46%, 성공 +9%</td></tr>
+  </tbody>
+</table>
+  </div>
+</div>
+</div>
+<script src="./common/animation-utils.js"></script>
+<script src="./common/deck-overlay.js"></script>
+<script src="./common/deck-detail.js"></script>
+<script src="./common/deck-nav.js"></script>
+<script src="./common/slide-framework.js"></script>
+<script src="./common/quiz-component.js"></script>
+<script src="./common/presenter-view.js"></script>
+<script>
+(function(){
+(function () {
+  // Click-to-zoom for architecture figures: opens the image over the whole viewport.
+  if (window.__rpLightbox) return;
+  window.__rpLightbox = true;
+  var css = document.createElement('style');
+  css.textContent =
+    '.slide img.rp-zoomable { cursor: zoom-in; }' +
+    '.rp-lb { position: fixed; inset: 0; z-index: 100000; display: none; align-items: center; justify-content: center; background: color-mix(in srgb, black 95%, transparent); cursor: zoom-out; }' +
+    '.rp-lb.open { display: flex; }' +
+    '.rp-lb img { width: 96vw; height: 92vh; object-fit: contain; }' +
+    '.rp-lb span { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); color: white; font-size: 14px; opacity: .7; }';
+  document.head.appendChild(css);
+  var lb = document.createElement('div');
+  lb.className = 'rp-lb';
+  lb.innerHTML = '<img alt=""><span>클릭하거나 Esc를 누르면 닫힙니다</span>';
+  var big = lb.querySelector('img');
+  function close() { lb.classList.remove('open'); }
+  lb.addEventListener('click', close);
+  function mount() {
+    document.body.appendChild(lb);
+    document.querySelectorAll('.slide img[src^="media/"]').forEach(function (img) {
+      if (/\/ac-/.test(img.getAttribute('src'))) return;
+      img.classList.add('rp-zoomable');
+      img.title = '클릭하면 크게 보기';
+      img.addEventListener('click', function (e) {
+        e.stopPropagation();
+        big.src = img.src; big.alt = img.alt;
+        lb.classList.add('open');
+      });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+  // While open, swallow deck keys so arrows do not change slides; Esc closes.
+  document.addEventListener('keydown', function (e) {
+    if (!lb.classList.contains('open')) return;
+    e.stopPropagation(); e.preventDefault();
+    if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') close();
+  }, true);
+})();
+})();
+</script>
+<script>
+(function(){
+(function () {
+  // Hover (or focus) glossary: elements with data-tip show a one-line explanation near the term.
+  if (window.__rpTips) return;
+  window.__rpTips = true;
+  var css = document.createElement('style');
+  css.textContent =
+    '.rp-tip { border-bottom: 2px dotted var(--accent); cursor: help; }' +
+    '.rp-tipbox { position: fixed; z-index: 100001; max-width: min(38vw, 720px); padding: .6em .9em; border-radius: 8px;' +
+    ' background: var(--text-primary); color: var(--bg-primary); font-size: clamp(14px, 1.75vh, 38px); line-height: 1.45;' +
+    ' box-shadow: 0 6px 24px color-mix(in srgb, black 35%, transparent); pointer-events: none; opacity: 0; transition: opacity .12s; word-break: keep-all; }' +
+    '.rp-tipbox.on { opacity: 1; }';
+  document.head.appendChild(css);
+  var box = document.createElement('div');
+  box.className = 'rp-tipbox';
+  box.setAttribute('role', 'tooltip');
+  function show(t) {
+    box.textContent = t.getAttribute('data-tip');
+    box.classList.add('on');
+    var r = t.getBoundingClientRect(), b = box.getBoundingClientRect();
+    var x = Math.min(Math.max(8, r.left + r.width / 2 - b.width / 2), window.innerWidth - b.width - 8);
+    var y = r.top - b.height - 10;
+    if (y < 8) y = r.bottom + 10;
+    box.style.left = x + 'px'; box.style.top = y + 'px';
+  }
+  function hide() { box.classList.remove('on'); }
+  function mount() {
+    document.body.appendChild(box);
+    document.addEventListener('mouseover', function (e) { var t = e.target.closest && e.target.closest('.slide [data-tip]'); if (t) show(t); });
+    document.addEventListener('mouseout', function (e) { if (e.target.closest && e.target.closest('.slide [data-tip]')) hide(); });
+    document.addEventListener('focusin', function (e) { var t = e.target.closest && e.target.closest('.slide [data-tip]'); if (t) show(t); });
+    document.addEventListener('focusout', hide);
+    window.addEventListener('hashchange', hide);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+})();
+})();
+</script>
+<script>
+  
+  const presenterNotes = {
+    1: "[0.5min] [\uc694\uc57d]\n- 3\ubd80: \ub124 \uc0ac\ub840\ub97c \uc6d0\ubb38 \uc544\ud0a4\ud14d\ucc98\ub85c. \uadf8\ub9bc\uc740 \ud074\ub9ad\ud558\uba74 \uc804\uccb4 \ud654\uba74\uc73c\ub85c \ud655\ub300(\ub2e4\uc2dc \ud074\ub9ad\ud558\uac70\ub098 Esc\ub85c \ub2eb\uae30)\n- LG\uc804\uc790(\uc5ed\ud560 \ubd84\ub9ac\uc640 \uac80\uc99d), \uc2e0\ud55c\uce74\ub4dc(\uc778\ud150\ud2b8 \uc628\ud1a8\ub85c\uc9c0\uc640 \uc790\uc728 \uac1c\uc120 \ub8e8\ud504), \ubbf8\ub798\uc5d0\uc14b\uc99d\uad8c(\uc9c0\uc2ddDB\uc640 Grounding), Canva(PoC\uc5d0\uc11c \ud504\ub85c\ub355\uc158\uc73c\ub85c)\n- 2\ubd80\uc758 \ub124 \uc790\ub9ac(\uc758\ub3c4 \uc774\ud574, \uac12 \ud655\uc815, \uad00\uacc4 \ud0d0\uc0c9, \uaddc\uce59 \uac15\uc81c)\uac00 \uc5b4\ub514\uc5d0 \uc4f0\uc600\ub294\uc9c0 \ud568\uaed8 \ubcf4\uae30\n\n3\ubd80\ub294 \ub300\ud45c \uc0ac\ub840 \ub124 \uac1c\uc785\ub2c8\ub2e4. \uc6d0\ubb38 \ube14\ub85c\uadf8\uc640 \ubc1c\ud45c\uc758 \uc544\ud0a4\ud14d\ucc98 \uadf8\ub9bc\uc744 \uadf8\ub300\ub85c \uac00\uc838\uc654\uc2b5\ub2c8\ub2e4.\n2\ubd80\uc5d0\uc11c \ub9d0\uc500\ub4dc\ub9b0 \uc628\ud1a8\ub85c\uc9c0\uc758 \ub124 \uc790\ub9ac, \uc758\ub3c4 \uc774\ud574, \uac12 \ud655\uc815, \uad00\uacc4 \ud0d0\uc0c9, \uaddc\uce59 \uac15\uc81c\uac00 \uac01 \uc0ac\ub840\uc758 \uc5b4\ub514\uc5d0 \ub4e4\uc5b4\uac14\ub294\uc9c0 \uac19\uc774 \ubcf4\uc2dc\uba74 \uc88b\uc2b5\ub2c8\ub2e4.\n\n\uccab \ubc88\uc9f8\ub294 LG\uc804\uc790\uc785\ub2c8\ub2e4.",
+    2: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- LG\uc804\uc790 \ud55c\uad6d\uc601\uc5c5\ubcf8\ubd80: Data Rich, Insight Poor. \uc694\uccad\ubd80\ud130 \ud574\uc11d\uae4c\uc9c0 \ud3c9\uade0 2~3\uc8fc\n- \uc790\uc5f0\uc5b4 SQL \ub3c4\uad6c\uac00 \uc788\uc5b4\ub3c4 \"\ubb34\uc5c7\uc744 \ubb3c\uc5b4\uc57c \ud560\uc9c0\"\uc5d0\uc11c \ub9c9\ud798\n- \ucd08\uae30 \uad6c\uc870: Coordinator, Planner, Supervisor, Coder, Reporter. \uacc4\ud68d\uacfc \ub9ac\ud3ec\ud2b8\uc5d0\ub9cc \ucd94\ub860 \ubaa8\ub378\n- \uacb0\uacfc: \ub370\uc774\ud130 \ubd84\uc11d \uc5c5\ubb34 3\uc77c\uc5d0\uc11c 30\ubd84\n\n\uccab \ubc88\uc9f8 \uc0ac\ub840\ub294 LG\uc804\uc790 \ud55c\uad6d\uc601\uc5c5\ubcf8\ubd80\uc785\ub2c8\ub2e4. \ub370\uc774\ud130\ub294 \ub9ce\uc740\ub370 \uc778\uc0ac\uc774\ud2b8\uac00 \uc548 \ub098\uc624\ub294, \uc774\ub978\ubc14 Data Rich, Insight Poor \uc0c1\ud669\uc774\uc5c8\uc2b5\ub2c8\ub2e4. \ub9c8\ucf00\ud130\uac00 \ub370\uc774\ud130 \uacfc\ud559\uc790\uc5d0\uac8c \uc694\uccad\ud558\uace0 \uacb0\uacfc\ub97c \ud574\uc11d\ubc1b\uae30\uae4c\uc9c0 \ud3c9\uade0 2~3\uc8fc\uac00 \uac78\ub838\uace0, \uc790\uc5f0\uc5b4\ub85c SQL\uc744 \ub9cc\ub4e4\uc5b4 \uc8fc\ub294 \ub3c4\uad6c\uac00 \uc788\uc5b4\ub3c4 \ubb34\uc5c7\uc744 \ubb3c\uc5b4\uc57c \ud560\uc9c0\uc5d0\uc11c \ub9c9\ud614\uc2b5\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd\uc774 \ucd08\uae30 \uad6c\uc870\uc785\ub2c8\ub2e4. Coordinator\uac00 \uac04\ub2e8\ud55c \uc9c8\ubb38\uc778\uc9c0 \ud310\ub2e8\ud558\uace0, \ubcf5\uc7a1\ud558\uba74 Planner\uac00 \uacc4\ud68d\uc744 \uc138\uc6b0\uace0, Supervisor\uac00 \ucf54\ub529 \uc5d0\uc774\uc804\ud2b8\uc640 \ub9ac\ud3ec\ud2b8 \uc5d0\uc774\uc804\ud2b8\uc5d0 \uc77c\uc744 \ub098\ub215\ub2c8\ub2e4. \uacc4\ud68d\uacfc \ub9ac\ud3ec\ud2b8\uc5d0\ub9cc \ucd94\ub860 \ubaa8\ub378\uc744 \uc37c\uc2b5\ub2c8\ub2e4. \uacb0\uacfc\uc801\uc73c\ub85c \ub370\uc774\ud130 \ubd84\uc11d \uc5c5\ubb34\uac00 3\uc77c\uc5d0\uc11c 30\ubd84\uc73c\ub85c \uc904\uc5c8\uc2b5\ub2c8\ub2e4.\n\n\uc774 \uad6c\uc870\uac00 \ubc1c\uc804\ud55c Deep Insight \uc804\uccb4 \uc544\ud0a4\ud14d\ucc98\uc785\ub2c8\ub2e4.",
+    3: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- VPC \uc548 AgentCore Runtime\uc5d0 Strands Agents \uadf8\ub798\ud504\n- Coder\uac00 \ub9cc\ub4e0 \ucf54\ub4dc\ub294 ALB\ub97c \uac70\uccd0 ECS Code Interpreter Task\uc5d0\uc11c \ub530\ub85c \uc2e4\ud589\n- \uc0ac\uc6a9\uc790 \ud53c\ub4dc\ubc31\uc740 S3 \ud30c\uc77c\ub85c, Plan Reviewer\uac00 \uc77d\uc5b4 \uacc4\ud68d \uc218\uc815(Human-in-the-loop)\n\nAWS\uac00 \uc624\ud508\uc18c\uc2a4\ub85c \uacf5\uac1c\ud55c Deep Insight\uc758 \uc804\uccb4 \uc544\ud0a4\ud14d\ucc98\uc785\ub2c8\ub2e4. VPC \uc548\uc758 AgentCore Runtime\uc5d0 Strands Agents \uadf8\ub798\ud504\uac00 \uc62c\ub77c\uac00 \uc788\uace0, Coder\uac00 \ub9cc\ub4e0 \ubd84\uc11d \ucf54\ub4dc\ub294 ALB\ub97c \uac70\uccd0 ECS\uc758 Code Interpreter Task\uc5d0\uc11c \ub530\ub85c \uc2e4\ud589\ub429\ub2c8\ub2e4.\n\n\uc0ac\uc6a9\uc790 \ud53c\ub4dc\ubc31\uc740 S3\uc5d0 \ud30c\uc77c\ub85c \uc800\uc7a5\ub418\uace0 Plan Reviewer\uac00 \uc774\uac78 \uc77d\uc5b4\uc11c \uacc4\ud68d\uc744 \uace0\uce69\ub2c8\ub2e4. \uc774\uac8c Human-in-the-loop \uad6c\uac04\uc785\ub2c8\ub2e4.\n\n\uacc4\uce35\uc744 \ub098\ub220\uc11c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    4: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- \uacc4\ud68d \uacc4\uce35: Coordinator, Planner, Plan Reviewer, Supervisor\n- \uc2e4\ud589 \uc5d0\uc774\uc804\ud2b8 4\uac1c: Coder(\ucf54\ub4dc), Validator(\uc6d0\ubcf8\uc73c\ub85c \uc7ac\uacc4\uc0b0 \uac80\uc99d), Reporter(\ubcf4\uace0\uc11c), Tracker(\uc9c4\ud589 \uccb4\ud06c)\n- Supervisor\uac00 \uc2e4\ud589 \uc5d0\uc774\uc804\ud2b8\ub97c \ub3c4\uad6c\ucc98\ub7fc \ud638\ucd9c\ud574 context\uac00 \uc11e\uc774\uc9c0 \uc54a\uc74c\n\n\uacc4\uce35\uc744 \ub098\ub220 \ubcf4\uba74 \uc704\ucabd\uc774 Coordinator, Planner, Plan Reviewer, Supervisor\uc774\uace0 \uc544\ub798\uac00 \uc2e4\ud589 \uc5d0\uc774\uc804\ud2b8 \ub124 \uac1c\uc785\ub2c8\ub2e4.\nCoder\ub294 \ubd84\uc11d \ucf54\ub4dc\ub97c \ub9cc\ub4e4\uace0 \uc2e4\ud589\ud558\uace0, Validator\ub294 \uacb0\uacfc\ub97c \uc6d0\ubcf8 \ub370\uc774\ud130\ub85c \ub2e4\uc2dc \uacc4\uc0b0\ud574\uc11c \uac80\uc99d\ud558\uace0, Reporter\uac00 \ubcf4\uace0\uc11c\ub97c \uc4f0\uace0, Tracker\uac00 \uc9c4\ud589 \uc0c1\ud669\uc744 \uccb4\ud06c\ud569\ub2c8\ub2e4.\n\nSupervisor\uac00 \uc774\ub4e4\uc744 \ub3c4\uad6c\ucc98\ub7fc \ud638\ucd9c\ud558\uae30 \ub54c\ubb38\uc5d0 \uac01 \uc5d0\uc774\uc804\ud2b8\uc758 context\uac00 \uc11e\uc774\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. 1\ubd80\uc5d0\uc11c \ub9d0\uc500\ub4dc\ub9b0 Agents-as-Tools \ud328\ud134\uc785\ub2c8\ub2e4.\n\n\uc5ec\uae30\uc11c \uac00\uc838\uac08 \uc124\uacc4 \ud328\ud134 \uc5ec\uc12f \uac00\uc9c0\uc785\ub2c8\ub2e4.",
+    5: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- \ub77c\uc6b0\ud305 \uba3c\uc800, \uacc4\ud68d\uacfc \uc0ac\ub78c \uc2b9\uc778, \uc694\uc57d \ub9d0\uace0 \uc6d0\ubcf8 \ub204\uc801\n- \uac80\uc99d \uc5d0\uc774\uc804\ud2b8 \ubd84\ub9ac(\uc6d0\ubcf8 \uc7ac\uacc4\uc0b0, \ud5c8\uc6a9 \uc624\ucc28 0.01): \ub9ac\uc11c\uce58 \ubcf4\uace0\uc11c \uacfc\uc81c\uc758 \ud575\uc2ec\n- \uc5ed\ud560\ubcc4 \ubaa8\ub378\uacfc \uc120\ud0dd\uc801 \uce90\uc2f1(\uc785\ub825 \ud1a0\ud070 \ube44\uc6a9 \ucd5c\ub300 90% \uc808\uac10), \uaca9\ub9ac\ub41c \ucf54\ub4dc \uc2e4\ud589\n- \uc8fc\uc758: \uc0ac\ub78c \uc2b9\uc778\uc774 300\ucd08 \ud6c4 \uc790\ub3d9 \uc2b9\uc778. \uc740\ud589\uc5d0\uc11c\ub294 \ud0c0\uc784\uc544\uc6c3 \uc2dc \ubcf4\ub958 \uad8c\uc7a5\n\nDeep Insight\uc5d0\uc11c \ubc14\ub85c \uac00\uc838\uac08 \ub9cc\ud55c \uc124\uacc4 \ud328\ud134 \uc5ec\uc12f \uac00\uc9c0\uc785\ub2c8\ub2e4. \ud558\ub098, \ub77c\uc6b0\ud305\uc744 \uba3c\uc800 \ub461\ub2c8\ub2e4. \uc778\uc0ac\ub9d0 \uac19\uc740 \ub2e8\uc21c \uc694\uccad\uc5d0 \ube44\uc2fc \uba40\ud2f0 \uc5d0\uc774\uc804\ud2b8\ub97c \ub3cc\ub9ac\uc9c0 \uc54a\ub3c4\ub85d \uac00\ubcbc\uc6b4 \ubaa8\ub378\uc774 \uba3c\uc800 \ubd84\ub958\ud569\ub2c8\ub2e4. \ub458, \ubcf5\uc7a1\ud55c \uc791\uc5c5\uc740 \uc2e4\ud589 \uc804\uc5d0 \uacc4\ud68d\uc73c\ub85c \ucabc\uac1c\uace0 \uc0ac\ub78c\uc774 \uc2b9\uc778\ud569\ub2c8\ub2e4. \uc14b, \uc5d0\uc774\uc804\ud2b8\ub07c\ub9ac \uacb0\uacfc\ub97c \uc694\uc57d\ud574\uc11c \ub118\uae30\uba74 \uc138\ubd80 \uc815\ubcf4\uac00 \uc0ac\ub77c\uc9d1\ub2c8\ub2e4. \uc6d0\ubcf8\uc744 \ud30c\uc77c\uc5d0 \uacc4\uc18d \uc313\uace0 \ub2e4\uc74c \uc5d0\uc774\uc804\ud2b8\uac00 \uc77d\uac8c \ud588\uc2b5\ub2c8\ub2e4.\n\n\ub137, \uac80\uc99d \uc5d0\uc774\uc804\ud2b8\ub97c \ub530\ub85c \ub461\ub2c8\ub2e4. \ub9ac\uc11c\uce58 \ubcf4\uace0\uc11c \uacfc\uc81c\ub77c\uba74 \uc774 \ubd80\ubd84\uc774 \ud575\uc2ec\uc785\ub2c8\ub2e4. \ub2e4\uc12f, \uc5ed\ud560\ub9c8\ub2e4 \ubaa8\ub378\uc744 \ub2e4\ub974\uac8c \uc4f0\uace0 \ubc18\ubcf5 \ud638\ucd9c\ub418\ub294 \uc5d0\uc774\uc804\ud2b8\uc5d0\ub9cc \uce90\uc2f1\uc744 \uc801\uc6a9\ud569\ub2c8\ub2e4. \uc5ec\uc12f, LLM\uc774 \ub9cc\ub4e0 \ucf54\ub4dc\ub294 \uc138\uc158\ubcc4\ub85c \uaca9\ub9ac\ub41c \ucee8\ud14c\uc774\ub108\uc5d0\uc11c \uc778\ud130\ub137 \uc5c6\uc774 \uc2e4\ud589\ud569\ub2c8\ub2e4.\n\ucc38\uace0\ub85c \uc774 \uad6c\uc870\uc758 \uc0ac\ub78c \uc2b9\uc778\uc740 300\ucd08\uac00 \uc9c0\ub098\uba74 \uc790\ub3d9 \uc2b9\uc778\ub418\ub294\ub370, \uc740\ud589\uc5d0\uc11c\ub294 \ud0c0\uc784\uc544\uc6c3 \uc2dc \ubcf4\ub958\ub85c \ubc14\uafb8\ub294 \uac78 \uad8c\ud569\ub2c8\ub2e4.\n\n\uc2e4\uc81c \uc6b4\uc601 \ud654\uba74\uc785\ub2c8\ub2e4.",
+    6: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- \uc67c\ucabd: \uc2e4\uc81c \uc0dd\uc131\ub41c \ubcf4\uace0\uc11c\ub4e4 / \uc624\ub978\ucabd: \uad00\ub9ac\uc790 \ub300\uc2dc\ubcf4\ub4dc\n- \uc791\uc5c5\ub2f9 15~23\ubd84, \ud1a0\ud070 100\ub9cc \uac1c \uc774\uc0c1, Cache Hit 50~70%: \uce90\uc2f1\uc774 \ube44\uc6a9\uc758 \ud575\uc2ec\n- \uc6b4\uc601\ud558\ub824\uba74 \uc774\ub7f0 \ud654\uba74\uc774 \ucc98\uc74c\ubd80\ud130 \ud544\uc694\n- \uc778\uc6a9 \uc8fc\uc758: 288\ubc30 \ud45c\uae30\ub294 \uc0b0\uc220\uc0c1 144\ubc30, \"3\uc77c\uc5d0\uc11c 30\ubd84\"\ub9cc \uc778\uc6a9\n\n\uc67c\ucabd\uc740 \uc2e4\uc81c\ub85c \ub9cc\ub4e4\uc5b4\uc9c4 \ubcf4\uace0\uc11c\ub4e4\uc774\uace0, \uc624\ub978\ucabd\uc740 \uad00\ub9ac\uc790 \ub300\uc2dc\ubcf4\ub4dc\uc785\ub2c8\ub2e4. \uc791\uc5c5 \ud558\ub098\uc5d0 15\ubd84\uc5d0\uc11c 23\ubd84, \ud1a0\ud070\uc740 100\ub9cc \uac1c \ub118\uac8c \uc4f0\uace0 \uce90\uc2dc \uc801\uc911\ub960\uc774 50\uc5d0\uc11c 70% \uc815\ub3c4\uc785\ub2c8\ub2e4.\n\n\uce90\uc2f1\uc774 \ube44\uc6a9\uc5d0 \uc5bc\ub9c8\ub098 \uc911\uc694\ud55c\uc9c0 \ubcf4\uc5ec\uc8fc\ub294 \ud654\uba74\uc774\uace0, \uc6b4\uc601\ud558\ub824\uba74 \uc774\ub7f0 \ud654\uba74\uc774 \ucc98\uc74c\ubd80\ud130 \uc788\uc5b4\uc57c \ud55c\ub2e4\ub294 \uc810\ub3c4 \uac19\uc774 \ub9d0\uc500\ub4dc\ub9bd\ub2c8\ub2e4. \ube14\ub85c\uadf8\uc5d0 \ub098\uc628 288\ubc30\ub77c\ub294 \ud45c\uae30\ub294 \uacc4\uc0b0\ud574 \ubcf4\uba74 144\ubc30\ub77c\uc11c, \uc778\uc6a9\ud558\uc2e4 \ub54c\ub294 3\uc77c\uc5d0\uc11c 30\ubd84\uc774\ub77c\ub294 \ud45c\ud604\ub9cc \uc4f0\uc2dc\uae38 \uad8c\ud569\ub2c8\ub2e4.\n\n\ub450 \ubc88\uc9f8, \uc2e0\ud55c\uce74\ub4dc\uc785\ub2c8\ub2e4.",
+    7: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- AWS \uc0dd\uc131\ud615 AI \uc774\ub178\ubca0\uc774\uc158 \uc13c\ud130\uc640 \ub9cc\ub4e0 \ucc28\uc138\ub300 \ucc57\ubd07\n- \uc81c\uc57d: \uc0c1\ub2f4 \uc758\ub3c4 51\uac1c, \ubb38\ub9e5\uc774 \ube44\uc2b7\ud55c\ub370 \ucc98\ub9ac\uac00 \ub2e4\ub978 \uc758\ub3c4(\uacb0\uc81c \ucde8\uc18c, \uacb0\uc81c \uc2e4\ud328), \uaddc\uc81c \ubd80\ub2f4\uc774 \uc801\uc740 \uc18c\ud615 \ubaa8\ub378, 5\ucd08 \uc751\ub2f5\n- \uc138 \uac00\uc9c0 \ud601\uc2e0: \uc628\ud1a8\ub85c\uc9c0 \uc778\ud150\ud2b8 \ubd84\ub958, \uc911\uc559 \uc624\ucf00\uc2a4\ud2b8\ub808\uc774\ud130 \uc5c6\ub294 \ubd84\uc0b0\ud615, \uc5d0\uc774\uc804\ud2b8 \uac04 \ub300\ud654\ub85c \uc2a4\uc2a4\ub85c \uac1c\uc120\n\n\ub450 \ubc88\uc9f8\ub294 \uc2e0\ud55c\uce74\ub4dc\uac00 AWS \uc0dd\uc131\ud615 AI \uc774\ub178\ubca0\uc774\uc158 \uc13c\ud130\uc640 \ub9cc\ub4e0 \ucc28\uc138\ub300 \ucc57\ubd07\uc785\ub2c8\ub2e4. \uc81c\uc57d\uc774 \ub9ce\uc558\uc2b5\ub2c8\ub2e4. \uc0c1\ub2f4 \uc758\ub3c4\uac00 51\uac1c\ub85c \uc798\uac8c \ub098\ub258\uc5b4 \uc788\uace0, \uacb0\uc81c \ucde8\uc18c\uc640 \uacb0\uc81c \uc2e4\ud328\ucc98\ub7fc \ubb38\ub9e5\uc740 \ube44\uc2b7\ud55c\ub370 \ucc98\ub9ac\uac00 \ub2e4\ub978 \uacbd\uc6b0\uac00 \uc788\uc2b5\ub2c8\ub2e4.\n\n\uace0\uac1d \ub370\uc774\ud130\ub97c \ub2e4\ub8e8\ub824\uba74 \uaddc\uc81c \uc2b9\uc778 \ubd80\ub2f4\uc774 \uc801\uc740 \uc18c\ud615 \ubaa8\ub378\uc774 \uc720\ub9ac\ud588\uace0, \uc751\ub2f5\uc740 5\ucd08 \uc548\uc5d0 \ub098\uc640\uc57c \ud588\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc138 \uac00\uc9c0\ub97c \ud588\uc2b5\ub2c8\ub2e4. \uc628\ud1a8\ub85c\uc9c0\ub85c \uc758\ub3c4\ub97c \ubd84\ub958\ud558\uace0, \uc911\uc559 \uc624\ucf00\uc2a4\ud2b8\ub808\uc774\ud130 \uc5c6\ub294 \ubd84\uc0b0\ud615 \uad6c\uc870\ub97c \uc4f0\uace0, \uc5d0\uc774\uc804\ud2b8\ub07c\ub9ac \ub300\ud654\ud558\uba74\uc11c \uc2a4\uc2a4\ub85c \uac1c\uc120\ud558\ub294 \ub8e8\ud504\ub97c \ub9cc\ub4e4\uc5c8\uc2b5\ub2c8\ub2e4.\n\n2\ubd80\uc758 \uccab \ubc88\uc9f8 \uc790\ub9ac, \uc758\ub3c4 \uc774\ud574\uc785\ub2c8\ub2e4.",
+    8: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- \ubaa8\ub378\uc5d0\uac8c 51\uac1c \uc911 \ud558\ub098\ub97c \uace0\ub974\uac8c \ud558\uc9c0 \uc54a\uc74c: \uc778\ud150\ud2b8\ub97c Domain, Action, Tag\ub85c \ubd84\ud574\ud55c \uc628\ud1a8\ub85c\uc9c0 \ub9f5\n- sLLM\uc774 \uc138 \uc18d\uc131\uc744 \ubcd1\ub82c\ub85c \uace0\ub974\uace0, \uaddc\uce59 \uae30\ubc18 \uadf8\ub798\ud504 \ub9e4\uce6d\uc73c\ub85c \ud6c4\ubcf4 \ucd95\uc18c, \ub0a8\uc740 \ud6c4\ubcf4\ub9cc LLM \ube44\uad50\n- 32B \uc815\ud655\ub3c4 84.2%\uc5d0\uc11c 91.0%, \uc57d 7\ubc30 \ud070 235B(88.7%)\ubcf4\ub2e4 \ub192\uc74c (\uc6d0\ubb38 \ud45c\uae30\ub294 \uc57d 8\ubc30, 235/32 = 7.3)\n- 5\ucd08 \uc774\ub0b4, Opus 4.5 \ub300\ube44 \uc57d 18\ubc30 \ube44\uc6a9 \uc808\uac10(\uce21\uc815 \uc870\uac74 \ube44\uacf5\uac1c, \ucc38\uace0\ub9cc)\n\n\ud574\ubc95\uc740 \ubaa8\ub378\uc5d0\uac8c 51\uac1c \uc911 \ud558\ub098\ub97c \uace0\ub974\uac8c \ud558\uc9c0 \uc54a\ub294 \uac83\uc774\uc5c8\uc2b5\ub2c8\ub2e4. \ubaa8\ub4e0 \uc778\ud150\ud2b8\ub97c \ub3c4\uba54\uc778, \uc561\uc158, \ud0dc\uadf8 \uc138 \uc18d\uc131\uc73c\ub85c \ubd84\ud574\ud55c \uc628\ud1a8\ub85c\uc9c0 \ub9f5\uc744 \ub9cc\ub4e4\uace0, \uc18c\ud615 \ubaa8\ub378\uc740 \uc138 \uc18d\uc131\ub9cc \ubcd1\ub82c\ub85c \uace0\ub974\uac8c \ud55c \ub4a4, \uaddc\uce59 \uae30\ubc18 \uadf8\ub798\ud504 \ub9e4\uce6d\uc73c\ub85c \ud6c4\ubcf4\ub97c \uc881\ud614\uc2b5\ub2c8\ub2e4. \uc67c\ucabd \uc544\ub798\uac00 \uadf8 \uc628\ud1a8\ub85c\uc9c0 \ub9f5\uc758 \uc77c\ubd80\uc785\ub2c8\ub2e4.\n\n\uacb0\uacfc\uc801\uc73c\ub85c 32B \ubaa8\ub378 \uc815\ud655\ub3c4\uac00 84.2%\uc5d0\uc11c 91.0%\ub85c \uc62c\ub77c, \uc57d 7\ubc30 \ud070 235B \ubaa8\ub378\ubcf4\ub2e4 \ub192\uc544\uc84c\uc2b5\ub2c8\ub2e4. \uc6d0\ubb38\uc5d0\ub294 \uc57d 8\ubc30\ub85c \uc801\ud600 \uc788\ub294\ub370, 235\ub97c 32\ub85c \ub098\ub204\uba74 7.3\uc774\ub77c \uc800\ub294 \uc57d 7\ubc30\ub85c \ub9d0\uc500\ub4dc\ub9bd\ub2c8\ub2e4. \uc751\ub2f5\uc740 5\ucd08 \uc774\ub0b4, Opus 4.5 \ub300\ube44 \uc57d 18\ubc30 \ube44\uc6a9 \uc808\uac10\uc774\ub77c\uace0 \ubc1d\ud614\uc2b5\ub2c8\ub2e4. \uce21\uc815 \uc870\uac74\uc774 \uacf5\uac1c\ub418\uc9c0 \uc54a\uc740 \uc218\uce58\ub77c \uc778\uc6a9\ud558\uc2e4 \ub54c \ucc38\uace0\ub9cc \ud574 \uc8fc\uc138\uc694.\n2\ubd80 D2\uc5d0\uc11c \ubcf4\uc168\ub4ef\uc774, \uc774 \ud6a8\uacfc\ub294 51\uac1c\ub85c \uc798\uac8c \ub098\ub25c \uc758\ub3c4\uc640 \uc18c\ud615 \ubaa8\ub378\uc774\ub77c\ub294 \uc870\uac74\uc5d0\uc11c \ub098\uc628\ub2e4\ub294 \uc810\ub3c4 \uac19\uc774 \uae30\uc5b5\ud574 \uc8fc\uc138\uc694.\n\n\ub450 \ubc88\uc9f8 \ud601\uc2e0, \ubd84\uc0b0\ud615 \uad6c\uc870\uc785\ub2c8\ub2e4.",
+    9: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- \uc911\uc559 \uc624\ucf00\uc2a4\ud2b8\ub808\uc774\ud130\uac00 \ubaa8\ub4e0 \uc704\uc784\uc744 \ub9e1\uc73c\uba74 \ubcd1\ubaa9\n- \ubd84\uc0b0\ud615: \ubaa8\ub4e0 \uc804\ubb38 \uc5d0\uc774\uc804\ud2b8\uac00 \ub3d9\uc2dc\uc5d0 \"\ub0b4 \uc77c\uc778\uac00\"\ub9cc \ud310\ub2e8, \ud574\ub2f9 \uc5d0\uc774\uc804\ud2b8\ub9cc \ud6c4\uc18d \ucc98\ub9ac\n- \uc5d0\uc774\uc804\ud2b8 \uc218\uac00 \ub298\uc5b4\ub3c4 \uc751\ub2f5 \uc2dc\uac04\uc774 \ud06c\uac8c \ub298\uc9c0 \uc54a\uc74c\n- \ubbf8\uacf5\uac1c: 51\uac1c\ub85c \ud655\uc7a5 \uc2dc \uc5ec\ub7ec \uc5d0\uc774\uc804\ud2b8\uac00 \ub3d9\uc2dc\uc5d0 \"\ub0b4 \uc77c\"\uc774\ub77c\uace0 \ud560 \ub54c\uc758 \uc815\ub9ac \ubc29\uc2dd\n\n\uc67c\ucabd\ucc98\ub7fc \uc911\uc559 \uc624\ucf00\uc2a4\ud2b8\ub808\uc774\ud130\uac00 \ubaa8\ub4e0 \uac78 \ub098\ub220 \uc8fc\uba74 \uadf8\uac8c \ubcd1\ubaa9\uc774 \ub429\ub2c8\ub2e4.\n\n\uc2e0\ud55c\uce74\ub4dc\ub294 \uc624\ub978\ucabd\ucc98\ub7fc \ubaa8\ub4e0 \uc804\ubb38 \uc5d0\uc774\uc804\ud2b8\uac00 \ub3d9\uc2dc\uc5d0 \uc774 \uc9c8\ubb38\uc774 \ub0b4 \uc77c\uc778\uac00\ub9cc \ud310\ub2e8\ud558\uac8c \ud588\uc2b5\ub2c8\ub2e4. \ud574\ub2f9\ub418\ub294 \uc5d0\uc774\uc804\ud2b8\ub9cc \uc774\uc5b4\uc11c \ucc98\ub9ac\ud558\ub2c8, \uc5d0\uc774\uc804\ud2b8 \uc218\uac00 \ub298\uc5b4\ub3c4 \uc751\ub2f5 \uc2dc\uac04\uc774 \ud06c\uac8c \ub298\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\n\ub2e4\ub9cc 51\uac1c\ub85c \ud655\uc7a5\ud588\uc744 \ub54c \uc5ec\ub7ec \uc5d0\uc774\uc804\ud2b8\uac00 \ub3d9\uc2dc\uc5d0 \ub0b4 \uc77c\uc774\ub77c\uace0 \ud558\uba74 \uc5b4\ub5bb\uac8c \uc815\ub9ac\ud558\ub294\uc9c0\ub294 \uc544\uc9c1 \uacf5\uac1c\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.\n\n\uc2e4\uc81c AWS \uad6c\uc131\uc785\ub2c8\ub2e4.",
+    10: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- 1 Router Agent\uac00 \uc628\ud1a8\ub85c\uc9c0\ub85c \uc758\ub3c4 \ubd84\ub958\n- 2 \ud55c\ub3c4 \uad00\ub9ac, \uc774\uc6a9\ub0b4\uc5ed \uc870\ud68c, FAQ \ub4f1 \uc804\ubb38 \uc5d0\uc774\uc804\ud2b8\uac00 \uac01\uac01 AgentCore Runtime \uc704\uc5d0\uc11c \uc18c\ud615 \ubaa8\ub378\ub85c\n- 3 \ubc31\uc5d4\ub4dc \ub370\uc774\ud130\ub294 AgentCore Gateway(MCP)\ub85c API Gateway, Lambda, DynamoDB\n- 4 \ubaa8\ub378 \ucd94\ub860\uc740 VPC \uc5d4\ub4dc\ud3ec\uc778\ud2b8\ub85c Bedrock\n\n\uc2e4\uc81c AWS \uad6c\uc131\uc785\ub2c8\ub2e4. \ubc88\ud638 \uc21c\uc11c\ub300\ub85c \ubcf4\uc2dc\uba74, 1\ubc88 Router Agent\uac00 \uc628\ud1a8\ub85c\uc9c0\ub85c \uc758\ub3c4\ub97c \ubd84\ub958\ud558\uace0, 2\ubc88 \ud55c\ub3c4 \uad00\ub9ac, \uc774\uc6a9\ub0b4\uc5ed \uc870\ud68c, FAQ \uac19\uc740 \uc804\ubb38 \uc5d0\uc774\uc804\ud2b8\uac00 \uac01\uac01 AgentCore Runtime \uc704\uc5d0\uc11c \uc18c\ud615 \ubaa8\ub378\ub85c \uc77c\uc744 \uc218\ud589\ud569\ub2c8\ub2e4.\n\n3\ubc88 \ubc31\uc5d4\ub4dc \ub370\uc774\ud130\ub294 AgentCore Gateway\ub97c MCP\ub85c \uac70\uccd0 API Gateway, Lambda, DynamoDB\uc5d0 \uc811\uadfc\ud558\uace0, 4\ubc88 \ubaa8\ub378 \ucd94\ub860\uc740 VPC \uc5d4\ub4dc\ud3ec\uc778\ud2b8\ub85c Bedrock\uc744 \ubd80\ub985\ub2c8\ub2e4. \ub2e4\uc774\uc5b4\uadf8\ub7a8\uc5d0\ub294 QWEN 30B\ub85c \uc801\ud600 \uc788\uace0 \ubcf8\ubb38 \uc218\uce58\ub294 Qwen3 32B \uae30\uc900\uc785\ub2c8\ub2e4.\n\n\uc138 \ubc88\uc9f8 \ud601\uc2e0, \ub9c8\uc774\ub370\uc774\ud130 \uacfc\uc81c\uc640 \uac00\uc7a5 \uac00\uae4c\uc6b4 \ubd80\ubd84\uc785\ub2c8\ub2e4.",
+    11: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- \uc815\uc801 \uc2a4\ud06c\ub9bd\ud2b8\ub85c\ub294 \uc8fc\uc81c\ub97c \ubc14\uafb8\ub294 \uba40\ud2f0\ud134 \ub300\ud654\ub97c \ud14c\uc2a4\ud2b8\ud558\uae30 \uc5b4\ub824\uc6c0. \uc2e4\ud328 \ubd84\uc11d\ubd80\ud130 \uc7ac\ubc30\ud3ec\uae4c\uc9c0 \uc218\uc77c\uc5d0\uc11c \uc218\uc8fc\n- \uc2dc\ubbac\ub808\uc774\uc158, \uc9c4\ub2e8, \ud574\uacb0\ucc45 \uc81c\uc548, \uac80\uc99d\uacfc \ubc30\ud3ec\uc758 \uc790\ub3d9 \ub8e8\ud504\n- \ud55c\ub3c4 \uc0c1\ud5a5: \uac1c\uc120 \uc804 \uace0\uac1d\ubc88\ud638\ub9cc \ubc18\ubcf5\ud558\uba70 7\ud134 \uc2e4\ud328, \uac1c\uc120 \ud6c4 4\ud134 \uc644\ub8cc(AI \ud3c9\uac00\uc790 \uae30\uc900, \ub450 \uc720\uc988\ucf00\uc774\uc2a4 \uac80\uc99d)\n- \uc740\ud589\uc5d0\uc11c\ub294 Update \ub2e8\uacc4\uc5d0 \uc0ac\ub78c \uc2b9\uc778 \uac8c\uc774\ud2b8 \ud544\uc218\n\n\uc2e0\ud55c\uce74\ub4dc \uc0ac\ub840\uc5d0\uc11c \ub9c8\uc774\ub370\uc774\ud130 \uc0c1\ub2f4 \uacfc\uc81c\uc640 \uac00\uc7a5 \uac00\uae5d\ub2e4\uace0 \ubcf8 \ubd80\ubd84\uc774 \uc774 \uc790\uc728 \uac1c\uc120 \ub8e8\ud504, \ud2f0\ud0a4\ud0c0\uce74\uc785\ub2c8\ub2e4. \uc2e4\uc81c \uace0\uac1d\ucc98\ub7fc \uc8fc\uc81c\ub97c \ubc14\uafd4 \uac00\uba70 \uc5ec\ub7ec \ud134 \ub300\ud654\ud558\ub294 \uac78 \uc815\uc801 \uc2a4\ud06c\ub9bd\ud2b8\ub85c \ud14c\uc2a4\ud2b8\ud558\uae30\ub294 \uc5b4\ub835\uace0, \uc2e4\ud328\ub97c \ubd84\uc11d\ud574\uc11c \ub2e4\uc2dc \ubc30\ud3ec\ud558\uae30\uae4c\uc9c0 \uc218\uc77c\uc5d0\uc11c \uc218\uc8fc\uac00 \uac78\ub838\uc2b5\ub2c8\ub2e4.\n\uadf8\ub798\uc11c \ud398\ub974\uc18c\ub098\ub97c \uac00\uc9c4 \ud14c\uc2a4\ud2b8 \uc5d0\uc774\uc804\ud2b8\uac00 \ucc57\ubd07\uacfc \ub300\ud654\ud558\uace0, \ubd84\uc11d \uc5d0\uc774\uc804\ud2b8\uac00 \uc6d0\uc778 \ucf54\ub4dc\uae4c\uc9c0 \ucc3e\uace0, \ub9ac\ubdf0 \uc5d0\uc774\uc804\ud2b8\uac00 \uc218\uc815\uc548\uc744 \ub0b4\uace0, \uac19\uc740 \ud398\ub974\uc18c\ub098\ub85c \ub2e4\uc2dc \ud14c\uc2a4\ud2b8\ud558\ub294 \ub8e8\ud504\ub97c \ub9cc\ub4e4\uc5c8\uc2b5\ub2c8\ub2e4.\n\n\ud55c\ub3c4 \uc0c1\ud5a5 \uc2dc\ub098\ub9ac\uc624\uc5d0\uc11c \uac1c\uc120 \uc804\uc5d0\ub294 \uace0\uac1d\ubc88\ud638\ub9cc \uacc4\uc18d \ubb3b\ub2e4\uac00 7\ud134 \ub3d9\uc548 \ucc98\ub9ac\ub97c \ubabb \ud588\ub294\ub370, \uac1c\uc120 \ud6c4\uc5d0\ub294 4\ud134 \ub9cc\uc5d0 \ub05d\ub0ac\uc2b5\ub2c8\ub2e4.\n\n\ub2e4\ub9cc AI \ud3c9\uac00\uc790 \uae30\uc900\uc774\uace0 \ub450 \uac1c \uc720\uc988\ucf00\uc774\uc2a4\uc5d0\uc11c \uac80\uc99d\ub41c \uacb0\uacfc\ub77c\ub294 \uc810, \uadf8\ub9ac\uace0 \uc740\ud589\uc5d0\uc11c\ub294 \ub9c8\uc9c0\ub9c9 \ubc30\ud3ec \ub2e8\uacc4\uc5d0 \uc0ac\ub78c \uc2b9\uc778\uc774 \uaf2d \uc788\uc5b4\uc57c \ud55c\ub2e4\ub294 \uc810\uc744 \uac19\uc774 \ub9d0\uc500\ub4dc\ub9bd\ub2c8\ub2e4.\n\n\uc138 \ubc88\uc9f8 \uc0ac\ub840, \ubbf8\ub798\uc5d0\uc14b\uc99d\uad8c\uc785\ub2c8\ub2e4.",
+    12: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- \ubb38\uc81c \uc815\uc758: \"LLM\uc774 \ub611\ub611\ud558\uc9c0 \uc54a\ub2e4\"\uac00 \uc544\ub2c8\ub77c \"\ub370\uc774\ud130\uac00 AI\ub97c \uc4f8 \uc900\ube44\uac00 \uc548 \ub410\ub2e4\"\n- 5\ud638\ub9dd AWS Private Cloud \uc548\uc5d0 \uc0ac\ub0b4\uc5c5\ubb34, \ub9c8\ucf13 Pulse, \ub9c8\ucf13\uacfc \ud22c\uc790\uc815\ubcf4 \uc9c0\uc2ddDB\n- AWS DMZ \ud504\ub85d\uc2dc\ub97c \uac70\uccd0 \ub9dd\ubd84\ub9ac \uc608\uc678 \ud5c8\uc6a9 \uad6c\uac04(\ube68\uac04 \ubc15\uc2a4)\uc5d0\uc11c\ub9cc Bedrock Claude, Azure OpenAI \ud638\ucd9c\n- \ud601\uc2e0\uae08\uc735\uc11c\ube44\uc2a4\ub85c \uc9c0\uc815\ubc1b\uc740 \uad6c\uc870, \uc740\ud589\uc5d0\ub3c4 \ucc38\uace0\n\n\uc138 \ubc88\uc9f8\ub294 \ubbf8\ub798\uc5d0\uc14b\uc99d\uad8c\uc785\ub2c8\ub2e4. \uc774 \ud300\uc740 \ubb38\uc81c\ub97c LLM\uc774 \ub611\ub611\ud558\uc9c0 \uc54a\ub2e4\uac00 \uc544\ub2c8\ub77c \ub370\uc774\ud130\uac00 AI\ub97c \uc4f8 \uc900\ube44\uac00 \uc548 \ub410\ub2e4\ub85c \uc815\uc758\ud588\uc2b5\ub2c8\ub2e4. 2\ubd80\uc5d0\uc11c \ubcf8 \uc138 \uac00\uc9c0 \uac04\uadf9\uc744 \ub370\uc774\ud130 \ucabd\uc5d0\uc11c \uba54\uc6b4 \uc0ac\ub840\uc785\ub2c8\ub2e4.\n\n\uba3c\uc800 \ub9dd \uad6c\uc131\ubd80\ud130 \ubcf4\uc2dc\uba74, 5\ud638\ub9dd AWS Private Cloud \uc548\uc5d0 \uc0ac\ub0b4\uc5c5\ubb34, \ub9c8\ucf13 Pulse, \ub9c8\ucf13\uacfc \ud22c\uc790\uc815\ubcf4 \uc9c0\uc2ddDB\uac00 \uc788\uace0, AWS DMZ\uc758 \ud504\ub85d\uc2dc\ub97c \uac70\uccd0 \ube68\uac04 \ubc15\uc2a4\ub85c \ud45c\uc2dc\ub41c \ub9dd\ubd84\ub9ac \uc608\uc678 \ud5c8\uc6a9 \uad6c\uac04\uc5d0\uc11c\ub9cc Bedrock Claude\uc640 Azure OpenAI\ub97c \ud638\ucd9c\ud569\ub2c8\ub2e4. \ud601\uc2e0\uae08\uc735\uc11c\ube44\uc2a4\ub85c \uc9c0\uc815\ubc1b\uc740 \uad6c\uc870\ub77c \uc740\ud589\uc5d0\uc11c\ub3c4 \ucc38\uace0\uac00 \ub418\uc2e4 \uac81\ub2c8\ub2e4.\n\n\uc9c0\uc2dd \ud30c\uc774\ud504\ub77c\uc778 \ub124 \ub2e8\uacc4\uc785\ub2c8\ub2e4.",
+    13: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- Task 1: \uac04\uc774\ud22c\uc790\uc124\uba85\uc11c PDF\ub97c \ub0b4\ubd80\ub9dd GPU\uc758 OCR\uacfc VLM\uc73c\ub85c \ud45c\uc640 \uadf8\ub9bc\uae4c\uc9c0 Markdown\uacfc \uba54\ud0c0\ub370\uc774\ud130\ub85c\n- Task 2: \uc628\ud1a8\ub85c\uc9c0\uac00 \ub2f5\ud574\uc57c \ud560 \uc9c8\ubb38 \ubaa9\ub85d\uc744 \uba3c\uc800 \ubf51\uace0, \uae08\uc735 \ud45c\uc900 FIBO \uc704\uc5d0\uc11c \uac1c\ub150 \uc124\uacc4 \ud6c4 \uac80\uc99d\n- Task 3: \uc6d0\uc7a5 \uc815\ud615 \ub370\uc774\ud130\uc640 \ubb38\uc11c \uc0ac\uc2e4\uc744 \ud558\ub098\uc758 \uac1c\uccb4\ub85c, \ud56d\uc0c1 \ucc38\uc778 \uad6c\uc870\uc640 \uc9c0\uae08\ub9cc \ucc38\uc778 \uc0ac\uc2e4\uc744 \ub2e4\ub978 \uadf8\ub798\ud504\uc5d0\n- Task 4: \uc758\ub3c4 \ud30c\uc545, \ub300\uc0c1 \ud655\uc815, \uc5ec\ub7ec \uc800\uc7a5\uc18c \ub3d9\uc2dc \uc870\ud68c, \uadfc\uac70 \ubaa9\ub85d \ubc18\ud658\n\n\ub124 \ub2e8\uacc4 \ud30c\uc774\ud504\ub77c\uc778\uc785\ub2c8\ub2e4. \uccab\uc9f8, \uac04\uc774\ud22c\uc790\uc124\uba85\uc11c \uac19\uc740 PDF\ub97c \ub0b4\ubd80\ub9dd GPU\uc758 OCR\uacfc VLM\uc73c\ub85c \ud45c\uc640 \uadf8\ub9bc\uae4c\uc9c0 \uc77d\uc5b4 Markdown\uacfc \uba54\ud0c0\ub370\uc774\ud130\ub85c \ubc14\uafc9\ub2c8\ub2e4.\n\ub458\uc9f8, \uc628\ud1a8\ub85c\uc9c0\uac00 \ub2f5\ud574\uc57c \ud560 \uc9c8\ubb38 \ubaa9\ub85d\uc744 \uba3c\uc800 \ubf51\uace0, \uae08\uc735 \ud45c\uc900\uc778 FIBO \uc704\uc5d0\uc11c \uac1c\ub150\uc744 \uc124\uacc4\ud55c \ub4a4 \uadf8 \uc9c8\ubb38\uc5d0 \ub2f5\ud560 \uc218 \uc788\ub294\uc9c0 \uac80\uc99d\ud569\ub2c8\ub2e4. 2\ubd80 \ub9c8\uc9c0\ub9c9\uc5d0 \"\uc9c8\ubb38\ubd80\ud130\"\ub77c\uace0 \ub9d0\uc500\ub4dc\ub9b0 \uac8c \uc774 \ub2e8\uacc4\uc785\ub2c8\ub2e4.\n\n\uc14b\uc9f8, \uc0ac\ub0b4 \uc6d0\uc7a5\uc758 \uc815\ud615 \ub370\uc774\ud130\uc640 \ubb38\uc11c\uc758 \uc0ac\uc2e4\uc744 \ud558\ub098\uc758 \uac1c\uccb4\ub85c \ud569\uce58\uace0, \ud56d\uc0c1 \ucc38\uc778 \uad6c\uc870\uc640 \uc9c0\uae08\ub9cc \ucc38\uc778 \uc2dc\uc810 \uc0ac\uc2e4\uc744 \ub2e4\ub978 \uadf8\ub798\ud504\uc5d0 \ub2f4\uc2b5\ub2c8\ub2e4. \ub137\uc9f8, \uc9c8\ubb38 \uc758\ub3c4\ub97c \ud30c\uc545\ud558\uace0 \ub300\uc0c1\uc744 \ud655\uc815\ud55c \ub4a4 \uc5ec\ub7ec \uc800\uc7a5\uc18c\ub97c \ub3d9\uc2dc\uc5d0 \uc870\ud68c\ud574 \uadfc\uac70 \ubaa9\ub85d\uc744 \ub3cc\ub824\uc90d\ub2c8\ub2e4.\n\n\uc774 \uacfc\uc815\uc5d0\uc11c \ubd80\ub52a\ud78c \uc5ec\uc12f \uac00\uc9c0 \ubb38\uc81c\uc785\ub2c8\ub2e4.",
+    14: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- 1 Axioms(\ud3d0\uc1c4\uc9d1\ud569, \ub2e8\uc77c\uac12, \uc0c1\ud638\ubc30\ud0c0). \ubc1c\ud45c \uc6d0\ubb38\uc740 \"6\uc885\"\uc73c\ub85c \ud45c\uae30, \uc870\ubb38\uc0c1 \uc9d1\ud569\ud22c\uc790\uae30\uad6c \uc885\ub958\ub294 5\uc885(\uc99d\uad8c, \ubd80\ub3d9\uc0b0, \ud2b9\ubcc4\uc790\uc0b0, \ud63c\ud569\uc790\uc0b0, \ub2e8\uae30\uae08\uc735)\uc774\ub77c \uc22b\uc790\ub294 \uc0dd\ub7b5, 2 Sampler(\ucd95 \uae30\ubc18 \ud45c\ubcf8), 3 YAML Mapping Rules, 4 Thin, Temporal Graph\n- 5 Ontology Grounding: \uc0ac\uc804\uc73c\ub85c \uac12\uc744 \ud655\uc815\ud55c \ub4a4 LLM\uc740 \uc9c8\uc758\ub9cc \uc870\ub9bd, \uc2e4\ud328 \uc2dc \ub418\ubb3b\uae30\n- 6 Semantic Layer: \ub2f4\ub2f9\uc790\uac00 \uc544\ub294 \uc5c5\ubb34 \uc0c1\uc2dd(\ubc30\ub2f9\uc740 \ubd84\ubc30\uc728, \ud22c\uc790\uc9c0\uc5ed \ud544\ud130 \uae08\uc9c0 \ub4f1)\n- \uc740\ud589 \uacfc\uc81c\uc5d0\ub294 5\ubc88\uacfc 6\ubc88\ubd80\ud130. 2\ubd80 D1\uc774 \uc774 \ub458\uc744 \uc7ac\ud604\n\n\uc774 \uacfc\uc815\uc5d0\uc11c \ubd80\ub52a\ud78c \uc5ec\uc12f \uac00\uc9c0 \ubb38\uc81c\uc640 \ud574\ubc95\uc785\ub2c8\ub2e4. \uc740\ud589 \uacfc\uc81c\uc5d0 \ud2b9\ud788 \uac00\uc838\uac00\uc2e4 \uac74 5\ubc88\uacfc 6\ubc88\uc785\ub2c8\ub2e4.\n\uc0ac\uc6a9\uc790\uac00 \ubbf8\uad6d\uad6d\ucc44 \uc54c\ub824\uc918\ub77c\uace0 \ud558\uba74 DB\uc5d0\ub294 \uadf8\ub7f0 \uac12\uc774 \uc5c6\uc2b5\ub2c8\ub2e4. \uc774\uac78 \ubaa8\ub378\uc5d0\uac8c \uc124\uba85\ud558\ub294 \uac8c \uc544\ub2c8\ub77c, \uc9c8\uc758\ub97c \ub9cc\ub4e4\uae30 \uc804\uc5d0 \uc2dc\uc2a4\ud15c\uc774 \uc0ac\uc804\uc744 \uc870\ud68c\ud574\uc11c \ud574\uc678\ucc44\uad8c\uc73c\ub85c \ud655\uc815\ud574 \uc8fc\uace0, \ud655\uc815\uc774 \uc548 \ub418\uba74 \ub418\ubb3b\uac8c \ud588\uc2b5\ub2c8\ub2e4.\n\n\uadf8\ub9ac\uace0 \ub2f4\ub2f9\uc790\ub294 \ub2f9\uc5f0\ud788 \uc544\ub294 \uc5c5\ubb34 \uc0c1\uc2dd, \uc608\ub97c \ub4e4\uc5b4 \ubc30\ub2f9 \uc9c8\ubb38\uc5d4 \ud22c\uc790\uc9c0\uc5ed \ud544\ud130\ub97c \uac78\uba74 \uc548 \ub41c\ub2e4 \uac19\uc740 \uac78 Semantic Layer\ub85c \ub530\ub85c \ub123\uc5c8\uc2b5\ub2c8\ub2e4. 2\ubd80\uc5d0\uc11c \ubcf4\uc2e0 D1 \ub370\ubaa8\uac00 \ubc14\ub85c \uc774 \ub450 \uac00\uc9c0\ub97c \uc791\uac8c \uc7ac\ud604\ud55c \uac83\uc785\ub2c8\ub2e4. \ub9c8\uc774\ub370\uc774\ud130 \uc0c1\ub2f4\uc774\ub098 \uc6b4\uc601\uc9c0\uc2dd \uc704\ud0a4\ucc98\ub7fc \uc0ac\ub0b4 \uc6a9\uc5b4\uac00 \ub9ce\uc740 \uacfc\uc81c\uc5d0 \uadf8\ub300\ub85c \uc801\uc6a9\ub429\ub2c8\ub2e4.\n\n\uac80\uc0c9 \ub2e8\uacc4 \uad6c\uc870\uc785\ub2c8\ub2e4.",
+    15: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- \uc9c8\ubb38\uacfc \uc0ac\uc6a9\uc790 \uc5ed\ud560, Semantic Layer, \uc758\ub3c4 \ubd84\ub958, \ub300\uc0c1 \ud655\uc815, \uc9c8\uc758 \uacc4\ud68d, \uad8c\ud55c \uac80\uc99d\n- \uc870\uac74 \uc870\ud68c\ub294 Aurora, \uad00\uacc4 \uc870\ud68c\ub294 Neptune(SPARQL), \uc758\ubbf8 \uac80\uc0c9\uc740 OpenSearch, \uc2dc\uc810 \uc870\ud68c\ub294 Neptune\uacfc OpenSearch\n- \uacb0\uacfc\ub294 \ub2f5\ubcc0\uc774 \uc544\ub2c8\ub77c \uadfc\uac70 \ubaa9\ub85d, \uad8c\ud55c\uc744 \ud55c \ubc88 \ub354 \ud655\uc778 \ud6c4 \ubc18\ud658\n\n\uac80\uc0c9 \ub2e8\uacc4 \uad6c\uc870\uc785\ub2c8\ub2e4. \uc9c8\ubb38\uacfc \uc0ac\uc6a9\uc790 \uc5ed\ud560\uc774 \ub4e4\uc5b4\uc624\uba74 Semantic Layer, \uc758\ub3c4 \ubd84\ub958, \ub300\uc0c1 \ud655\uc815, \uc9c8\uc758 \uacc4\ud68d, \uad8c\ud55c \uac80\uc99d\uc744 \uac70\uccd0 \ub124 \uc800\uc7a5\uc18c\ub97c \ub3d9\uc2dc\uc5d0 \uc870\ud68c\ud569\ub2c8\ub2e4.\n\n\ucd1d\ubcf4\uc218 0.5% \uc774\ud558 \uac19\uc740 \uc870\uac74\uc740 Aurora, \uc774\ucc28\uc804\uc9c0 \ud14c\ub9c8 ETF \uac19\uc740 \uad00\uacc4\ub294 Neptune, \uc694\uc998 \uc8fc\ubaa9\ubc1b\ub294 \ud14c\ub9c8 \uac19\uc740 \uc758\ubbf8 \uac80\uc0c9\uc740 OpenSearch, \uc9c0\uae08 \uc720\ud6a8\ud55c \ucd94\ucc9c \uc0ac\uc720 \uac19\uc740 \uc2dc\uc810 \uc870\ud68c\ub294 Neptune\uacfc OpenSearch\ub97c \uac19\uc774 \uc501\ub2c8\ub2e4. 2\ubd80\uc5d0\uc11c \"\ubca1\ud130, \uadf8\ub798\ud504, \uc628\ud1a8\ub85c\uc9c0\ub294 \uce35\"\uc774\ub77c\uace0 \ub9d0\uc500\ub4dc\ub9b0 \uadf8\ub9bc\uc774 \uc774\uac83\uc785\ub2c8\ub2e4. \uacb0\uacfc\ub294 \ub2f5\ubcc0\uc774 \uc544\ub2c8\ub77c \uadfc\uac70 \ubaa9\ub85d\uc73c\ub85c \ud569\uccd0\uc9c0\uace0, \uad8c\ud55c\uc744 \ud55c \ubc88 \ub354 \ud655\uc778\ud55c \ub4a4 \ubc18\ud658\ub429\ub2c8\ub2e4.\n\n\ubb34\uc5c7\uc774 \uc815\ud655\ub3c4\ub97c \uc62c\ub838\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    16: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- \uc2a4\ud0a4\ub9c8\ub9cc 45%, \uc628\ud1a8\ub85c\uc9c0\ub97c \ud504\ub86c\ud504\ud2b8 \uc124\uba85\uc73c\ub85c +2.4%p, \uc2e4\uc81c DB \uac12\uc73c\ub85c \ud655\uc815 65%, \uc5f0\ud569 \uac80\uc0c9\uacfc Semantic Layer 84.7%\n- SQL \uc2e4\ud589 \uc131\uacf5\ub960\uc740 \uac70\uc758 100%\uc778\ub370 \uc815\ub2f5\ub960\uc740 45%: \uc5d0\ub7ec \uc5c6\uc774 \ub3c8\ub2e4\uace0 \ub9de\ub294 \ub2f5\uc774 \uc544\ub2d8\n- 72\ubb38\ud56d, \uad6d\ub0b4 ETF \ud55c\uc815 \uacb0\uacfc\n- 2\ubd80 D1(50%, 33%, 92%)\uacfc \uac19\uc740 \ubc29\ud5a5\n\n\uad6c\uc131\uc694\uc18c\ub97c \ud558\ub098\uc529 \ub354\ud558\uba74\uc11c \uce21\uc815\ud55c \uacb0\uacfc\uc785\ub2c8\ub2e4. \ud14c\uc774\ube14 \uc2a4\ud0a4\ub9c8\ub9cc \uc8fc\uba74 \uc815\ub2f5\ub960 45%\uc785\ub2c8\ub2e4. \uc5ec\uae30\uc5d0 \uc628\ud1a8\ub85c\uc9c0\ub97c \ud504\ub86c\ud504\ud2b8\uc5d0 \uc124\uba85\uc73c\ub85c \ub123\uc5b4 \uc8fc\uba74 \uace0\uc791 2.4%p \uc624\ub985\ub2c8\ub2e4. \uadf8\ub7f0\ub370 \uc628\ud1a8\ub85c\uc9c0\ub97c \uc368\uc11c \uc0ac\uc6a9\uc790\uac00 \uc4f4 \ub9d0\uc744 \uc2e4\uc81c DB \uac12\uc73c\ub85c \ud655\uc815\ud574 \uc8fc\uba74 65%\ub85c \ub6f0\uace0, \uad00\uacc4\ud615 DB\uc640 \uadf8\ub798\ud504\ub97c \ud568\uaed8 \uc870\ud68c\ud558\ub294 \uc5f0\ud569 \uac80\uc0c9\uacfc \uc5c5\ubb34 \uc0c1\uc2dd\uc744 \ub2f4\uc740 Semantic Layer\uae4c\uc9c0 \ubd99\uc774\uba74 84.7%\uac00 \ub429\ub2c8\ub2e4. 2\ubd80 D1\uc5d0\uc11c \ubcf4\uc2e0 \uacb0\uacfc\uc640 \uac19\uc740 \ubc29\ud5a5\uc785\ub2c8\ub2e4.\n\n\uac00\uc7a5 \uac15\uc870\ud558\uace0 \uc2f6\uc740 \uac74 \uc544\ub798 \uc67c\ucabd\uc785\ub2c8\ub2e4. SQL\uc774 \uc5d0\ub7ec \uc5c6\uc774 \uc2e4\ud589\ub41c\ub2e4\uace0 \ub9de\ub294 \ub2f5\uc740 \uc544\ub2d9\ub2c8\ub2e4. \uc2e4\ud589 \uc131\uacf5\ub960\uc740 \uac70\uc758 100%\uc778\ub370 \uc815\ub2f5\ub960\uc740 45%\uc600\uc2b5\ub2c8\ub2e4. 72\ubb38\ud56d, \uad6d\ub0b4 ETF \ud55c\uc815 \uacb0\uacfc\ub77c\ub294 \uc810\uc740 \uac10\uc548\ud574 \uc8fc\uc138\uc694.\n\n\uc774 \uc11c\ube44\uc2a4\uac00 \uc0c1\uc6a9\ud654\ub418\ub294 \uacfc\uc815\uc785\ub2c8\ub2e4.",
+    17: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- 2025.12 \uc2e0\uccad, 2026.03 \uc9c0\uc815, 2026.07 \uae08\uc735\ubcf4\uc548\uc6d0 \uc0dd\uc131\ud615 AI \ubcf4\uc548\ub300\ucc45 \ud3c9\uac00, 2026.08 \uae08\uac10\uc6d0 \uac1c\uc2dc \uc2e0\uccad\n- \uc784\uc9c1\uc6d0 \uc624\ud508 \ud6c4 2027\ub144 1\ubd84\uae30 \ub300\uace0\uac1d \uc624\ud508 \ubaa9\ud45c\n- \uc2e0\uccad\ubd80\ud130 \ub300\uace0\uac1d \uc624\ud508\uae4c\uc9c0 1\ub144 \uc774\uc0c1: \uae30\uc220 PoC\uc640 \uaddc\uc81c \ud2b8\ub799\uc744 \ucc98\uc74c\ubd80\ud130 \ubcd1\ub82c\ub85c\n- \uc77c\uc815\uc740 \ubc1c\ud45c \uc2dc\uc810 \uae30\uc900\n\n\uc774 \uc11c\ube44\uc2a4\uac00 \ud601\uc2e0\uae08\uc735\uc11c\ube44\uc2a4\ub85c \uc0c1\uc6a9\ud654\ub418\ub294 \uacfc\uc815\uc785\ub2c8\ub2e4. \uc774\ubc88 \uacfc\uc81c\uac00 PoC\ub85c \ub05d\ub098\uc9c0 \uc54a\uc73c\ub824\uba74 \uc774 \ubd80\ubd84\uc744 \ubbf8\ub9ac \ubcf4\uc154\uc57c \ud574\uc11c \ub123\uc5c8\uc2b5\ub2c8\ub2e4.\n\uc791\ub144 12\uc6d4\uc5d0 \uc2e0\uccad\ud574\uc11c \uc62c\ud574 3\uc6d4\uc5d0 \uc9c0\uc815\ub410\uace0, 7\uc6d4\uc5d0 \uae08\uc735\ubcf4\uc548\uc6d0 \uc0dd\uc131\ud615 AI \ubcf4\uc548\ub300\ucc45 \ud3c9\uac00\ub97c \ub9c8\ucce4\uace0, 8\uc6d4\uc5d0 \uae08\uac10\uc6d0 \uac1c\uc2dc \uc2e0\uccad\uc744 \ud588\uc2b5\ub2c8\ub2e4. \uc784\uc9c1\uc6d0 \uc624\ud508 \ud6c4 \ub0b4\ub144 1\ubd84\uae30 \ub300\uace0\uac1d \uc624\ud508\uc774 \ubaa9\ud45c\uc785\ub2c8\ub2e4.\n\n\uc2e0\uccad\ubd80\ud130 \ub300\uace0\uac1d \uc624\ud508\uae4c\uc9c0 1\ub144\uc774 \ub118\uac8c \uac78\ub9ac\uae30 \ub54c\ubb38\uc5d0, \uae30\uc220 PoC\uc640 \uaddc\uc81c \ud2b8\ub799\uc744 \ucc98\uc74c\ubd80\ud130 \uac19\uc774 \uad74\ub824\uc57c \ud55c\ub2e4\ub294 \uac8c \ud575\uc2ec\uc785\ub2c8\ub2e4. \uc77c\uc815\uc740 \ubc1c\ud45c \uc2dc\uc810 \uae30\uc900\uc774\ub77c \ucd5c\uc2e0 \uc0c1\ud669\uc740 \ub530\ub85c \ud655\uc778\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.\n\n\ub124 \ubc88\uc9f8, \uae08\uc735\uc740 \uc544\ub2c8\uc9c0\ub9cc \uaf2d \ubcf4\uc5ec\ub4dc\ub9ac\uace0 \uc2f6\uc740 Canva\uc785\ub2c8\ub2e4.",
+    18: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- Canva Code(\ucf54\ub4dc \uc0dd\uc131 \uae30\ub2a5)\ub294 Bedrock \uae30\ubc18, \ucd9c\uc2dc \ud6c4 \ub9e4\ucd9c \uae09\uc99d, 8\uc8fc \ub9cc\uc5d0 \ud2b8\ub798\ud53d 6\ubc30\n- \ubc84\ud2f4 \uc774\uc720: PoC\uc5d0\uc11c \ud504\ub85c\ub355\uc158\uc73c\ub85c \uac08 \ub54c \ud754\ud55c \uc138 \uc2e4\ud328\ub97c \ubbf8\ub9ac \ud53c\ud568\n- \ud55c \ubaa8\ub378\uc5d0 \ub2e4 \uc2dc\ud0a4\ub294 \ud504\ub86c\ud504\ud2b8, \uae30\uacc4\uc801 \uc791\uc5c5\uae4c\uc9c0 \ubaa8\ub378\uc774 \uc0c8\ub85c \uc4f0\uae30, \ud3c9\uac00 \uc5c6\uc774 \ub290\ub08c\uc73c\ub85c \ubaa8\ub378 \uad50\uccb4\n\n\ub124 \ubc88\uc9f8\ub294 \uae08\uc735\uc740 \uc544\ub2c8\uc9c0\ub9cc \uaf2d \ubcf4\uc5ec\ub4dc\ub9ac\uace0 \uc2f6\uc740 Canva\uc785\ub2c8\ub2e4. \ub514\uc790\uc778 \ud50c\ub7ab\ud3fc Canva\uc758 \ucf54\ub4dc \uc0dd\uc131 \uae30\ub2a5\uc778 Canva Code\ub294 Bedrock \uc704\uc5d0\uc11c \ub3cc\uc544\uac00\ub294\ub370, \uc624\ub978\ucabd\ucc98\ub7fc \ucd9c\uc2dc \ud6c4 \ub9e4\ucd9c\uc774 \uae09\uaca9\ud788 \ub298\uc5c8\uace0 8\uc8fc \ub9cc\uc5d0 \ud2b8\ub798\ud53d\uc774 6\ubc30\uac00 \ub410\uc2b5\ub2c8\ub2e4.\n\n\uadf8\ub54c \ubc84\ud2f8 \uc218 \uc788\uc5c8\ub358 \uac74 PoC\uc5d0\uc11c \ud504\ub85c\ub355\uc158\uc73c\ub85c \uac08 \ub54c \ud754\ud788 \ubb34\ub108\uc9c0\ub294 \uc138 \uac00\uc9c0\ub97c \ubbf8\ub9ac \ud53c\ud588\uae30 \ub54c\ubb38\uc774\ub77c\uace0 \ud569\ub2c8\ub2e4. \ud55c \ubaa8\ub378\uc5d0 \ub2e4 \uc2dc\ud0a4\ub294 \ud504\ub86c\ud504\ud2b8, \uae30\uacc4\uc801\uc778 \uc791\uc5c5\uae4c\uc9c0 \ubaa8\ub378\uc774 \uc0c8\ub85c \uc4f0\uac8c \ud558\ub294 \uac83, \uadf8\ub9ac\uace0 \ud3c9\uac00 \uc5c6\uc774 \ub290\ub08c\uc73c\ub85c \ubaa8\ub378\uc744 \ubc14\uafb8\ub294 \uac83\uc785\ub2c8\ub2e4.\n\n\uccab \ubc88\uc9f8 \uad50\ud6c8\uc785\ub2c8\ub2e4.",
+    19: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- \ud488\uc9c8\uc774 \ub5a8\uc5b4\uc9c0\uba74 \ub354 \ud070 \ubaa8\ub378\uc5d0 thinking\uc744 \ucf1c\ub294 \uac8c \ubcf8\ub2a5\uc774\uc9c0\ub9cc \uac00\uc7a5 \ube44\uc2fc \ud574\ubc95\n- Architect(Opus)\ub294 \uacc4\ud68d\ub9cc, \uc804\uccb4\ub97c \ub2e4\uc2dc \uc4f8 \uc77c\uc740 Builder, \uc77c\ubd80\ub9cc \uace0\uce60 \uc77c\uc740 Editor(Haiku)\n- LG\uc804\uc790\uc758 Planner, Coder \uad6c\uc870\uc640 \uac19\uc740 \uc0dd\uac01\n\n\ud488\uc9c8\uc774 \ub5a8\uc5b4\uc9c0\uba74 \ub354 \ud070 \ubaa8\ub378\uc5d0 thinking\uc744 \ucf1c\ub294 \uac8c \ubcf8\ub2a5\uc778\ub370, \uadf8\uac8c \uac00\uc7a5 \ube44\uc2fc \ud574\ubc95\uc785\ub2c8\ub2e4.\n\nCanva\ub294 \uc5ed\ud560\uc744 \uc14b\uc73c\ub85c \ub098\ub234\uc2b5\ub2c8\ub2e4. Architect\ub294 Opus\ub85c \ubb34\uc5c7\uc744 \uc5b4\ub5bb\uac8c \ub9cc\ub4e4\uc9c0 \uacc4\ud68d\ub9cc \ud558\uace0, \uc804\uccb4\ub97c \ub2e4\uc2dc \uc4f8 \uc77c\uc774\uba74 Builder, \uc77c\ubd80\ub9cc \uace0\uce60 \uc77c\uc774\uba74 Editor\uac00 Haiku\ub85c \uc2e4\ud589\ud569\ub2c8\ub2e4. LG\uc804\uc790\uc758 Planner, Coder \uad6c\uc870\uc640 \uac19\uc740 \uc0dd\uac01\uc785\ub2c8\ub2e4.\n\n\ucd5c\uc885\uc801\uc73c\ub85c \ub3c4\ub2ec\ud55c \uad6c\uc870\uc785\ub2c8\ub2e4.",
+    20: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- Sonnet \ud558\ub098\uac00 \ubaa8\ub4e0 \ub300\ud654\ub97c \ud558\ub098\uc758 \uc2a4\ub808\ub4dc\ub85c, \uc5b4\ub824\uc6b4 \ucd94\ub860\uc740 Opus, \ub2e8\uc21c \uc791\uc5c5\uc740 Haiku sub-agent\n- \uc2a4\ub808\ub4dc\uac00 \ud558\ub098\ub77c \uac19\uc740 \uce90\uc2dc\ub97c \ud0d0: \ube44\uc6a9 \uc808\uac10\uc758 \ud070 \ubd80\ubd84\uc774 \uce90\uc2dc\n- \ud3c9\uade0 \ucd1d\ube44\uc6a9 46% \uac10\uc18c, \uc0ac\uc6a9\uc790 \uc131\uacf5 \uc9c0\ud45c 9% \uc0c1\uc2b9\n\n\ucd5c\uc885\uc801\uc73c\ub85c\ub294 Sonnet \ud558\ub098\uac00 \ubaa8\ub4e0 \ub300\ud654\ub97c \ud558\ub098\uc758 \uc2a4\ub808\ub4dc\ub85c \ucc98\ub9ac\ud558\uace0, \uc5b4\ub824\uc6b4 \ucd94\ub860\uc740 Opus, \ub2e8\uc21c \uc791\uc5c5\uc740 Haiku sub-agent\uc5d0 \ub9e1\uae30\ub294 \uad6c\uc870\uac00 \ub410\uc2b5\ub2c8\ub2e4.\n\n\ub300\ud654 \uc2a4\ub808\ub4dc\uac00 \ud558\ub098\ub85c \uc720\uc9c0\ub418\ub2c8 \ub9e4\ubc88 \uac19\uc740 \uce90\uc2dc\ub97c \ud0c0\uc11c, \ube44\uc6a9 \uc808\uac10\uc758 \ud070 \ubd80\ubd84\uc774 \ubaa8\ub378\uc774 \uc2f8\uc11c\uac00 \uc544\ub2c8\ub77c \uce90\uc2dc\uc5d0\uc11c \ub098\uc654\ub2e4\uace0 \ud569\ub2c8\ub2e4. \ud3c9\uade0 \ucd1d\ube44\uc6a9\uc774 46% \uc904\uace0 \uc0ac\uc6a9\uc790 \uc131\uacf5 \uc9c0\ud45c\ub294 9% \uc62c\ub790\uc2b5\ub2c8\ub2e4.\n\n\ub450 \ubc88\uc9f8\uc640 \uc138 \ubc88\uc9f8 \uad50\ud6c8\uc785\ub2c8\ub2e4.",
+    21: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- Lesson 2: replace_text, \uc815\ud655\ud788 \ud55c \uad70\ub370 \uc77c\uce58\ud560 \ub54c\ub9cc \uad50\uccb4, \uc544\ub2c8\uba74 \uc5d0\ub7ec\ub85c \uc7ac\uc2dc\ub3c4. \ucd9c\ub825 \ud1a0\ud070 \uc57d 40\ubd84\uc758 1\n- Lesson 3: \uc0c8 \ubaa8\ub378\ub9c8\ub2e4 \ud488\uc9c8, \ud1a0\ud070 \ube44\uc6a9, \uc9c0\uc5f0 3\ucd95 \ud3c9\uac00. thinking \ucf1c\uba74 \ud1a0\ud070 3.4\ubc30, \uc9c0\uc5f0 3.8\ubc30, 10\uac1c \uc911 1\uac74\ub9cc \ub354 \ud1b5\uacfc\ud574 \ub048 \ucc44\ub85c \ubc30\ud3ec\n- \uc2e0\ud55c\uce74\ub4dc \uaddc\uce59 \ub9e4\uce6d, \ubbf8\ub798\uc5d0\uc14b \uac12 \ud655\uc815\uacfc \uac19\uc740 \uc6d0\ub9ac: \uc9c0\ucf1c\uc57c \ud560 \uac83\uc740 \ucf54\ub4dc\ub85c\n\n\ub450 \ubc88\uc9f8 \uad50\ud6c8\uc740 \uacb0\uc815\ub860\uc785\ub2c8\ub2e4. \ub300\ubd80\ubd84\uc758 \ud3b8\uc9d1\uc740 \ucc3d\uc758\uc801\uc778 \uc77c\uc774 \uc544\ub2d9\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc815\ud655\ud788 \uc77c\uce58\ud558\ub294 \ubd80\ubd84\ub9cc \ubc14\uafb8\ub294 replace_text \ub3c4\uad6c\ub97c \ub9cc\ub4e4\uc5c8\uace0, \uc6d0\ub798 \ucf54\ub4dc\uac00 \uc815\ud655\ud788 \ud55c \uad70\ub370\ub9cc \ub9de\uc9c0 \uc54a\uc73c\uba74 \uc5d0\ub7ec\ub97c \ub0b4\uc11c \ubaa8\ub378\uc774 \ub2e4\uc2dc \uc2dc\ub3c4\ud558\uac8c \ud588\uc2b5\ub2c8\ub2e4. \ubaa8\ub378\uc774 \uc5c9\ub6b1\ud55c \ucf54\ub4dc\ub97c \uace0\uce60 \uc218 \uc5c6\ub294 \uad6c\uc870\ub77c\uc11c \ucd9c\ub825 \ud1a0\ud070\uc774 40\ubd84\uc758 1\ub85c \uc904\uc5c8\uc2b5\ub2c8\ub2e4.\n\n\uc138 \ubc88\uc9f8\ub294 \ud3c9\uac00\uc785\ub2c8\ub2e4. \uc0c8 \ubaa8\ub378\uc774 \ub098\uc62c \ub54c\ub9c8\ub2e4 \ud488\uc9c8, \ud1a0\ud070 \ube44\uc6a9, \uc9c0\uc5f0 \uc138 \ucd95\uc73c\ub85c \ud3c9\uac00\ud588\ub294\ub370, thinking\uc744 \ucf1c\ub2c8 \ud1a0\ud070 3.4\ubc30, \uc9c0\uc5f0 3.8\ubc30\ub97c \uc4f0\uace0 10\uac1c \uc911 1\uac74\ub9cc \ub354 \ud1b5\uacfc\ud588\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c thinking\uc744 \ub044\uace0 \ubc30\ud3ec\ud588\uc2b5\ub2c8\ub2e4.\n\n\uc55e\uc5d0\uc11c \ubcf8 \uc2e0\ud55c\uce74\ub4dc\uc758 \uaddc\uce59 \ub9e4\uce6d, \ubbf8\ub798\uc5d0\uc14b\uc758 \uac12 \ud655\uc815, \uadf8\ub9ac\uace0 2\ubd80\uc758 \uaddc\uce59 \uac15\uc81c \uc790\ub9ac\uc640 \uac19\uc740 \uc6d0\ub9ac\uc785\ub2c8\ub2e4. \uc9c0\ucf1c\uc57c \ud560 \uac83\uc740 \ucf54\ub4dc\ub85c, \ud310\ub2e8\ub9cc \ubaa8\ub378\uc5d0\uac8c \ub9e1\uae41\ub2c8\ub2e4.\n\nCanva \ubc1c\ud45c\uc5d0\uc11c \uc18c\uac1c\ub41c \ub514\uc790\uc778 \ud328\ud134 \uc5ec\ub35f \uac00\uc9c0\ub97c \uacfc\uc81c\uc5d0 \uc5f0\uacb0\ud574 \ubd24\uc2b5\ub2c8\ub2e4.",
+    22: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- 8\uac1c \ud328\ud134\uc744 \uc774\ubc88 PoC \uacfc\uc81c\uc5d0 \uc5f0\uacb0\ud55c \ud45c\n- \uc11c\ub958 \uc810\uac80: Tool Gate\ub85c \ubd84\ub958, \ucd94\ucd9c, \ub300\uc870 \uc21c\uc11c \uac15\uc81c + Confidence Routing\uc73c\ub85c \ubd88\ud655\uc2e4\ud55c \uc11c\ub958\ub9cc \uc0ac\ub78c\uc5d0\uac8c\n- \uad00\uc81c: Structured Error\ub85c \uad8c\ud55c \uc624\ub958 \uc7ac\uc2dc\ub3c4 \uae08\uc9c0\n- \uacf5\uc720 \uc790\ub8cc\uc5d0 \ud45c\uac00 \uc788\uc73c\ub2c8 \uacfc\uc81c \uc124\uacc4 \uccb4\ud06c\ub9ac\uc2a4\ud2b8\ub85c\n\nCanva \ubc1c\ud45c\uc5d0\uc11c \uc18c\uac1c\ub41c \uc5d0\uc774\uc804\ud2b8 \ub514\uc790\uc778 \ud328\ud134 \uc5ec\ub35f \uac00\uc9c0\ub97c \uc774\ubc88 PoC \uacfc\uc81c\uc5d0 \uc5f0\uacb0\ud574 \ubd24\uc2b5\ub2c8\ub2e4.\n\uc608\ub97c \ub4e4\uc5b4 \uc11c\ub958 \uc810\uac80 \uacfc\uc81c\ub77c\uba74 \ubd84\ub958, \ucd94\ucd9c, \ub300\uc870 \uc21c\uc11c\ub97c Tool Gate\ub85c \uac15\uc81c\ud558\uace0, \ud655\uc2e0\uc774 \ub0ae\uc740 \uc11c\ub958\ub9cc Confidence Routing\uc73c\ub85c \uc0ac\ub78c\uc5d0\uac8c \ub118\uae30\uba74 \ub429\ub2c8\ub2e4.\n\n\uad00\uc81c \uacfc\uc81c\ub77c\uba74 \uad8c\ud55c \uc624\ub958\ub97c \uc7ac\uc2dc\ub3c4\ud558\uc9c0 \uc54a\ub3c4\ub85d \uc624\ub958\ub97c \uad6c\uc870\ud654\ud558\ub294 \ud328\ud134\uc774 \uc911\uc694\ud569\ub2c8\ub2e4. \uc774 \ud45c\ub294 \uacf5\uc720 \uc790\ub8cc\uc5d0 \ub123\uc5b4 \ub450\uc5c8\uc73c\ub2c8 \uacfc\uc81c \uc124\uacc4\ud558\uc2e4 \ub54c \uccb4\ud06c\ub9ac\uc2a4\ud2b8\ucc98\ub7fc \uc368 \uc8fc\uc138\uc694.\n\n\uc774 \ud328\ud134\ub4e4\uc774 \uc5b4\ub5bb\uac8c \uc870\ud569\ub418\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    23: "\u23f8\ufe0f [0.5min] [\uc694\uc57d]\n- \uac00\uc6b4\ub370 \uae30\ubcf8 \ub8e8\ud504, \ub3c4\uad6c \ud638\ucd9c \uc9c0\uc810\uc5d0 Tool Gate, Deterministic Override, \uc624\ub958 \ubd84\ub958\n- \uacb0\uacfc \uc9c0\uc810\uc5d0 \uac80\uc99d \uc7ac\uc2dc\ub3c4, \uc2e0\ub8b0\ub3c4 \ub77c\uc6b0\ud305, \ub9ac\ubdf0\n- \ub8e8\ud504\ub97c \uba3c\uc800 \ub2e8\ub2e8\ud558\uac8c \ub9cc\ub4dc\ub294 \uac8c \ucd9c\ubc1c\uc810\n\n\uc5ec\ub35f \uac00\uc9c0 \ud328\ud134\uc774 \uc5b4\ub5bb\uac8c \uc870\ud569\ub418\ub294\uc9c0 \ubcf4\uc5ec\uc8fc\ub294 \uadf8\ub9bc\uc785\ub2c8\ub2e4. \uac00\uc6b4\ub370 \uae30\ubcf8 \ub8e8\ud504\uac00 \uc788\uace0, \ub3c4\uad6c\ub97c \ud638\ucd9c\ud558\ub294 \uc9c0\uc810\uc5d0 Tool Gate, Deterministic Override, \uc624\ub958 \ubd84\ub958\uac00 \ubd99\uace0, \uacb0\uacfc\uac00 \ub098\uc624\ub294 \uc9c0\uc810\uc5d0 \uac80\uc99d \uc7ac\uc2dc\ub3c4, \uc2e0\ub8b0\ub3c4 \ub77c\uc6b0\ud305, \ub9ac\ubdf0\uac00 \ubd99\uc2b5\ub2c8\ub2e4.\n\n\uacb0\uad6d \ub8e8\ud504\ub97c \uba3c\uc800 \ub2e8\ub2e8\ud558\uac8c \ub9cc\ub4dc\ub294 \uac8c \ucd9c\ubc1c\uc810\uc785\ub2c8\ub2e4.\n\n\ub124 \uc0ac\ub840\ub97c \ub098\ub780\ud788 \ub193\uace0 \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.",
+    24: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- \uc9c0\uc2dd \uad6c\uc870\ud654: \uc6d0\ubcf8 \ub204\uc801(LG), \uc778\ud150\ud2b8 \uc628\ud1a8\ub85c\uc9c0(\uc2e0\ud55c), FIBO \uc628\ud1a8\ub85c\uc9c0\uc640 Semantic Layer(\ubbf8\ub798\uc5d0\uc14b), \uc2a4\ud399 \ud30c\uc77c(Canva)\n- \uc5ed\ud560 \ubd84\ub9ac\uc640 \uac80\uc99d: Planner\uc640 Validator, \ubd84\uc0b0\ud615, \uadfc\uac70\uc640 \uad8c\ud55c \uac80\uc99d, Architect\uc640 exact-match \ub3c4\uad6c\n- \ud3c9\uac00 \ub8e8\ud504: Task Tracking, \ud398\ub974\uc18c\ub098 \uc2dc\ubbac\ub808\uc774\uc158, 72\ubb38\ud56d \ubca4\uce58\ub9c8\ud06c, 3\ucd95 eval\n- \uc774 \uc138 \uac00\uc9c0\uac00 \ub370\ubaa8\uc758 \uc124\ub4dd\ub825\uc744 \ub9cc\ub4e0\ub2e4\n\n\ub124 \uc0ac\ub840\ub97c \ub098\ub780\ud788 \ub193\uc73c\uba74 \uacf5\ud1b5\uc810\uc774 \ubd84\uba85\ud569\ub2c8\ub2e4. \ubaa8\ub450 \ubaa8\ub378\uc744 \ubc14\uafb8\ub294 \uac83\ubcf4\ub2e4 \uba3c\uc800 \uc9c0\uc2dd\uc744 \uad6c\uc870\ud654\ud588\uc2b5\ub2c8\ub2e4. LG\uc804\uc790\ub294 \uc5d0\uc774\uc804\ud2b8 \uc0ac\uc774 \uc815\ubcf4\ub97c \uc6d0\ubcf8 \uadf8\ub300\ub85c \uc313\uc558\uace0, \uc2e0\ud55c\uce74\ub4dc\ub294 \uc758\ub3c4\ub97c \uc138 \uc18d\uc131\uc73c\ub85c \ucabc\uac20 \uc628\ud1a8\ub85c\uc9c0\ub97c, \ubbf8\ub798\uc5d0\uc14b\uc99d\uad8c\uc740 \uae08\uc735 \ud45c\uc900 \uc704\uc5d0 \uc628\ud1a8\ub85c\uc9c0\uc640 \uc5c5\ubb34 \uc0c1\uc2dd \uacc4\uce35\uc744, Canva\ub294 \ub9cc\ub4e4 \ud654\uba74\uc744 \uc2a4\ud399 \ud30c\uc77c\ub85c \uc815\uc758\ud588\uc2b5\ub2c8\ub2e4.\n\n\ub458\uc9f8, \uc5ed\ud560\uc744 \ub098\ub204\uace0 \uac80\uc99d\uc744 \ubd99\uc600\uc2b5\ub2c8\ub2e4. \uc14b\uc9f8, \ud3c9\uac00 \ub8e8\ud504\uac00 \uc788\uc5c8\uc2b5\ub2c8\ub2e4.\n\n\uc774 \uc138 \uac00\uc9c0\uac00 \ub370\ubaa8\uc758 \uc124\ub4dd\ub825\uc744 \ub9cc\ub4e0\ub2e4\uace0 \uc0dd\uac01\ud569\ub2c8\ub2e4. \uc774\uc81c \uacfc\uc81c\ubcc4\ub85c \ub2ee\uc740 \uc0ac\ub840\ub97c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n4\ubd80, \uacfc\uc81c\ubcc4 \ub2ee\uc740 \uc0ac\ub840\uc785\ub2c8\ub2e4."
+  };
+  const deck = new SlideFramework({
+    logoSrc: "./common/pptx-theme/images/logo_dark.png",
+    
+    footer: "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.",
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

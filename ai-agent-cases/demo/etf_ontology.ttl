@@ -1,0 +1,55 @@
+@prefix ex:   <https://example.com/etf#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+# ---------- 1. 스키마 계층 (TBox): 어떤 종류의 것이 있고, 어떻게 연결되는가 ----------
+ex:ETF        a owl:Class ; rdfs:label "ETF" .
+ex:Brand      a owl:Class ; rdfs:label "브랜드" .
+ex:Manager    a owl:Class ; rdfs:label "운용사" .
+ex:AssetClass a owl:Class ; rdfs:label "자산분류" .
+ex:Region     a owl:Class ; rdfs:label "투자지역" .
+ex:Theme      a owl:Class ; rdfs:label "테마" .
+
+ex:hasBrand      a owl:ObjectProperty ; rdfs:domain ex:ETF   ; rdfs:range ex:Brand ; rdfs:label "브랜드" .
+ex:managedBy     a owl:ObjectProperty ; rdfs:domain ex:Brand ; rdfs:range ex:Manager ; rdfs:label "운용사" .
+ex:hasAssetClass a owl:ObjectProperty ; rdfs:domain ex:ETF   ; rdfs:range ex:AssetClass ; rdfs:label "자산분류" .
+ex:investsIn     a owl:ObjectProperty ; rdfs:domain ex:ETF   ; rdfs:range ex:Region ; rdfs:label "투자지역" .
+ex:hasTheme      a owl:ObjectProperty ; rdfs:domain ex:ETF   ; rdfs:range ex:Theme ; rdfs:label "테마" .
+
+# ---------- 2. 어휘 (SKOS): 사람이 쓰는 말 → DB에 실제로 있는 값 ----------
+ex:Equity      a skos:Concept, ex:AssetClass ; skos:prefLabel "주식" .
+ex:EqDomestic  a skos:Concept, ex:AssetClass ; skos:broader ex:Equity ; skos:prefLabel "국내주식" ;
+               ex:sqlFilter "ast_cls = 'EQ_DOM'" .
+ex:EqOverseas  a skos:Concept, ex:AssetClass ; skos:broader ex:Equity ; skos:prefLabel "해외주식" ;
+               ex:sqlFilter "ast_cls = 'EQ_OVS'" .
+ex:EqUS        a skos:Concept ; skos:broader ex:EqOverseas ; skos:prefLabel "미국주식" ; skos:altLabel "미국 주식" ;
+               ex:sqlFilter "ast_cls = 'EQ_OVS' AND rgn_cd = 'US'" .
+
+ex:Bond        a skos:Concept, ex:AssetClass ; skos:prefLabel "채권" .
+ex:BdDomGov    a skos:Concept, ex:AssetClass ; skos:broader ex:Bond ; skos:prefLabel "국고채" ;
+               skos:altLabel "한국국채", "국내국채" ; ex:sqlFilter "ast_cls = 'BD_DOM_GOV'" .
+ex:BdOvsGov    a skos:Concept, ex:AssetClass ; skos:broader ex:Bond ; skos:prefLabel "해외국채" .
+ex:BdUSGov     a skos:Concept ; skos:broader ex:BdOvsGov ; skos:prefLabel "미국국채" ;
+               skos:altLabel "미국채", "미 국채", "US Treasury" ;
+               ex:sqlFilter "ast_cls = 'BD_OVS_GOV' AND rgn_cd = 'US'" .
+
+ex:Commodity   a skos:Concept, ex:AssetClass ; skos:prefLabel "원자재" .
+ex:Gold        a skos:Concept, ex:AssetClass ; skos:broader ex:Commodity ; skos:prefLabel "금" ;
+               skos:altLabel "골드", "금현물" ; ex:sqlFilter "ast_cls = 'CMD_GOLD'" .
+
+ex:ThBattery   a skos:Concept, ex:Theme ; skos:prefLabel "2차전지" ;
+               skos:altLabel "이차전지", "배터리", "리튬" ; ex:sqlFilter "thm_cd = 'T_BATT'" .
+ex:ThSemi      a skos:Concept, ex:Theme ; skos:prefLabel "반도체" ; ex:sqlFilter "thm_cd = 'T_SEMI'" .
+
+# ---------- 3. 업무 상식 (Semantic Layer): 담당자는 아는데 DB에는 없는 규칙 ----------
+ex:RuleDividend a ex:SemanticRule ; ex:trigger "배당" ;
+    rdfs:comment "배당 크기는 분배율 dist_yld(%)로 비교한다. 배당 질의에 테마(thm_cd) 필터를 걸지 않는다." .
+ex:RuleMonthly  a ex:SemanticRule ; ex:trigger "월배당" ;
+    rdfs:comment "월배당은 분배주기 dist_freq = 'M' 이다." .
+ex:RuleFee      a ex:SemanticRule ; ex:trigger "보수" ;
+    rdfs:comment "fee_bp 단위는 bp(1bp = 0.01%p)다. 0.1% = 10bp." .
+ex:RuleManager  a ex:SemanticRule ; ex:trigger "운용" ;
+    rdfs:comment "운용사는 etf_mst.brnd_cd = brnd.brnd_cd, brnd.mgr_cd = mgr.mgr_cd 로 조인해 mgr_nm 으로 찾는다." .
+ex:RuleNav      a ex:SemanticRule ; ex:trigger "순자산" ;
+    rdfs:comment "순자산 nav_ek 단위는 억원이다." .

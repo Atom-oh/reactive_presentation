@@ -46,8 +46,8 @@ EKS 1.37, Karpenter v1.15 기준 (2026-10-20 확인)
 {timing: 1min}
 [요약]
 - 1, 2부(약 15분): Karpenter 제어 루프, API 구조, Auto Mode 책임 분담, 버전
-- 3부(약 18분): 프로비저닝, consolidation, 스케줄러 점수 전략, in-place resize, budget, drift와 만료, Spot, 앱 보호
-- 4부(약 33분): Auto Mode 켜기와 built-in 풀, NodeClass와 보안 기본값, Spot과 예약 용량, GPU와 EFA, ARC zonal shift, 업그레이드, 로그와 진단, 비용 귀속, 마이그레이션, 선택 체크리스트
+- 3부(약 20분): 프로비저닝, consolidation과 Balanced 점수 애니메이션, 스케줄러 점수 전략, in-place resize, budget, drift와 만료, Spot, 앱 보호
+- 4부(약 31분): Auto Mode 켜기와 built-in 풀, NodeClass와 보안 기본값, Spot과 예약 용량, GPU와 EFA, ARC zonal shift, 업그레이드, 로그와 진단, 비용 귀속, 마이그레이션, 선택 체크리스트
 - 5, 6부(약 24분): 데모 영상 4편과 마무리
 
 여섯 파트로 진행합니다. 앞의 두 파트에서 개념과 구조를 잡고, 3부에서 노드를 늘리고 줄이고 교체하는 disruption을 자세히 보고, 스케줄러 점수 전략과 in-place resize도 함께 다룹니다. 4부는 Auto Mode를 실제로 운영할 때 필요한 내용입니다. 켜는 방법과 built-in 풀, NodeClass 필드와 바꿀 수 없는 보안 기본값, Spot과 예약 용량, GPU와 EFA, AZ 장애, 업그레이드, SSH 없이 진단하는 방법, 비용, 마이그레이션, 그리고 무엇을 고를지까지 봅니다.

@@ -814,7 +814,7 @@ Canva Code가 스케일 전에 먼저 만든 것, Amazon Bedrock 기반
   </div>
   <img class="rp-fig" src="media/canva-revenue.jpg" alt="Canva Code, Canva AI 출시 이후 매출 곡선: 2026년 5월 17M MRR, 8주 구간 표시">
 </div>
-<div class="rp-src">출처: <a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS)</a>; AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
+<div class="rp-src">출처: ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS); AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
 :::
 
 :::notes
@@ -848,7 +848,7 @@ Architect(Opus)가 계획, Builder와 Editor(Haiku)가 실행
 </style>
 <div class="rp-figwrap">
   <img src="media/canva-lesson1.jpg" alt="Decompose the agent: Architect(Opus), Builder(Haiku), Editor(Haiku) 역할 분리">
-  <div class="rp-src">출처: <a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS)</a>; AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
+  <div class="rp-src">출처: ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS); AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
 </div>
 :::
 
@@ -883,7 +883,7 @@ Sonnet 주 스레드, 평균 총비용 −46%, 사용자 성공 지표 +9%
 </style>
 <div class="rp-figwrap">
   <img src="media/canva-final.jpg" alt="Smarter model routing with sub-agents: Sonnet 주 스레드, Opus와 Haiku sub-agent, 평균 총비용 -46%, 사용자 성공 지표 +9%">
-  <div class="rp-src">출처: <a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS)</a>; AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
+  <div class="rp-src">출처: ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS); AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
 </div>
 :::
 
@@ -944,7 +944,7 @@ Sonnet 주 스레드, 평균 총비용 −46%, 사용자 성공 지표 +9%
   </div>
 </div>
 <div class="callout callout-info rp-l23-foot fragment fade-up" data-fragment-index="3"><strong class="text-accent">같은 원리</strong>: 신한카드 규칙 매칭, 미래에셋 Grounding, 2부의 "규칙 강제" 자리. 지켜야 할 것은 코드로, 판단만 모델에게</div>
-<div class="rp-src">출처: <a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS)</a>; AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
+<div class="rp-src">출처: ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS); AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
 :::
 
 :::notes
@@ -993,7 +993,7 @@ AWS Prescriptive Guidance, 과제의 어느 지점에 어떤 패턴을 쓸지
     <tr><td>Coordinator-Subagent</td><td>병렬 디스패치, 겹치지 않는 영역</td><td>TASK 05, 06 지식, 코드, DB 에이전트 분리</td></tr>
   </tbody>
 </table>
-<div class="rp-src">출처: <a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS)</a>; AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
+<div class="rp-src">출처: ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS); AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
 :::
 
 :::notes
@@ -1029,7 +1029,7 @@ Agentic Loop를 먼저 제대로 만들고, 필요한 지점에만 패턴을 추
 </style>
 <div class="rp-figwrap">
   <img src="media/canva-loop.jpg" alt="Every later pattern modifies one step of the loop: 가운데 Agentic Loop와 도구 호출 지점, 결과 지점의 패턴들">
-  <div class="rp-src">출처: <a href="https://youtu.be/4EJJwXseuzw" target="_blank" rel="noopener">ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS)</a>; AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
+  <div class="rp-src">출처: ANT105 Agentic Engineering, Lessons from Canva (Bryn Price, AWS); AWS Prescriptive Guidance, Agentic Design Patterns (2026-05); <a href="https://aws.amazon.com/ko/solutions/case-studies/innovators/canva/" target="_blank" rel="noopener">Canva 고객 사례</a></div>
 </div>
 :::
 

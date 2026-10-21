@@ -552,7 +552,7 @@ ex:RuleFee  ex:trigger <span class="string">"보수"</span> ;
 :::
 
 :::notes
-{timing: 1.5min}
+{timing: 1min}
 [요약]
 - 벡터 검색: 비슷한 내용 찾기에 강하고 정확한 값, 개수, 연결에 약함
 - 지식 그래프: 여러 단계로 이어진 사실에 강함. 말이 다르면 시작점을 못 찾음
@@ -595,7 +595,7 @@ AWS에서는 무엇으로 만드는지 한 장으로 보겠습니다.
 :::
 
 :::notes
-{timing: 1.5min}
+{timing: 1min}
 [요약]
 - 파일과 코드: 개념, 별칭, 규칙을 TTL이나 YAML로, 확정 로직은 도구 함수로. PoC는 여기서 시작
 - Amazon Neptune: 속성 그래프(Gremlin, openCypher)와 RDF(SPARQL) 모두 지원
@@ -780,7 +780,86 @@ C는 단위, 계층, 별칭이 조건으로 들어가니 같은 모델이 11개�
 :::
 
 ---
-<!-- Slide 13: D2 결과 -->
+<!-- Slide 13: D2 흐름도 -->
+@type: content
+@title: D2 데모: 한 문장이 지나가는 두 길
+
+## D2 데모: 한 문장이 지나가는 두 길
+
+같은 고객 발화를 두 방식으로 분류합니다. 둘 다 에이전트 없이 모델을 바로 부르는 1회성 호출입니다.
+
+:::html
+<style>
+.rp-d2f { display: flex; flex-direction: column; gap: var(--space-3); word-break: keep-all; }
+.rp-d2f-lane { display: grid; grid-template-columns: 9rem 1fr; gap: var(--space-3); align-items: center; padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--space-2); background: var(--surface-1); }
+.rp-d2f-tag { font-weight: var(--weight-bold); font-size: var(--fs-card); color: var(--text-primary); line-height: 1.3; }
+.rp-d2f-tag small { display: block; font-weight: normal; font-size: var(--fs-caption); color: var(--on-surface-muted); }
+.rp-d2f-row { display: flex; align-items: stretch; gap: var(--space-2); }
+.rp-d2f-box { flex: 1; padding: var(--space-2) var(--space-3); border: 1px solid var(--border); border-radius: var(--space-2); background: var(--bg-card); font-size: var(--fs-caption); line-height: 1.45; }
+.rp-d2f-box b { display: block; font-size: var(--fs-card); margin-bottom: 2px; }
+.rp-d2f-box.rp-llm { border-color: var(--accent); }
+.rp-d2f-box.rp-llm b { color: var(--accent); }
+.rp-d2f-box.rp-ok { flex: .8; border-color: var(--success); background: var(--success-subtle); }
+.rp-d2f-box.rp-ng { flex: .8; border-color: var(--danger); background: var(--danger-subtle); }
+.rp-d2f-box.rp-ok b { color: var(--success); }
+.rp-d2f-box.rp-ng b { color: var(--danger); }
+.rp-d2f-ar { align-self: center; color: var(--on-surface-muted); font-size: 1.4rem; }
+.rp-d2f-three { display: flex; flex-direction: column; gap: 4px; }
+.rp-d2f-three > span { display: block; }
+.rp-d2f-box.rp-wide { flex: 1.4; }
+.rp-d2f-x { color: var(--danger); font-weight: var(--weight-bold); }
+.rp-d2f-utt { font-size: var(--fs-card); }
+.rp-d2f-utt q { font-weight: var(--weight-bold); }
+</style>
+<div class="rp-d2f">
+  <div class="rp-d2f-utt">고객 발화: <q>지난달에 쓴 카드 내역 좀 보여줘</q> (정답: 결제내역조회)</div>
+  <div class="rp-d2f-lane fragment fade-up" data-fragment-index="1">
+    <div class="rp-d2f-tag">A 직접 선택<small>LLM 1회</small></div>
+    <div class="rp-d2f-row">
+      <div class="rp-d2f-box"><b>보기 20개 보여 주기</b>인텐트 이름과 한 줄 설명을 한 번에 프롬프트에 넣음</div>
+      <div class="rp-d2f-ar">→</div>
+      <div class="rp-d2f-box rp-llm"><b>Nova Micro가 하나 고름</b>"보기 이름 하나만 출력"</div>
+      <div class="rp-d2f-ar">→</div>
+      <div class="rp-d2f-box rp-ok"><b>결제내역조회</b>정답, 0.26초</div>
+    </div>
+  </div>
+  <div class="rp-d2f-lane fragment fade-up" data-fragment-index="2">
+    <div class="rp-d2f-tag">B 3속성 + 매칭<small>LLM 3회 (+1)</small></div>
+    <div class="rp-d2f-row">
+      <div class="rp-d2f-box rp-llm rp-wide"><b>속성 3개를 따로 고름</b><span class="rp-d2f-three"><span>무엇: Domain 4개 중 <span class="rp-d2f-x">명세서</span> (정답은 결제)</span><span>행동: Action 5개 중 조회</span><span>세부: Tag 8개 중 일반</span></span></div>
+      <div class="rp-d2f-ar">→</div>
+      <div class="rp-d2f-box"><b>규칙으로 맞추기</b>(명세서, 조회, 일반) 조합인 인텐트를 표에서 찾음. LLM 없음</div>
+      <div class="rp-d2f-ar">→</div>
+      <div class="rp-d2f-box"><b>후보가 여럿일 때만</b>남은 후보끼리 LLM이 한 번 더 고름. 이번엔 후보 1개</div>
+      <div class="rp-d2f-ar">→</div>
+      <div class="rp-d2f-box rp-ng"><b>명세서조회</b>오답, 0.36초</div>
+    </div>
+  </div>
+  <div class="callout callout-info fragment fade-up" data-fragment-index="3"><strong>핵심</strong>: B는 세 속성 중 하나만 틀려도 답이 틀립니다. 대신 인텐트가 늘어도 한 번에 보는 보기 수는 훨씬 천천히 늘어납니다. 벡터 검색과 도구 호출은 두 방식 모두 쓰지 않았습니다.</div>
+</div>
+:::
+
+:::notes
+{timing: 1.5min}
+[요약]
+- D2는 에이전트가 아니라 분류 단계만 떼어 본 실험. Converse API 1회성 호출, 도구와 벡터 검색 없음
+- A: 인텐트 20개 목록(이름과 설명)을 한 번에 주고 하나를 고르게 함. LLM 1회
+- B: 신한카드식. Domain, Action, Tag를 각각 고르고(LLM 3회 병렬), 세 값 조합으로 규칙 매칭. 후보가 여럿일 때만 LLM 1회 더
+- 실제 2차 실행 예: "지난달에 쓴 카드 내역 좀 보여줘"에서 A는 결제내역조회(정답), B는 Domain을 명세서로 골라 명세서조회(오답)
+- B의 장점은 보기 수가 작게 유지된다는 것, 단점은 속성 하나만 틀려도 전체가 틀림
+
+다음 장 결과를 보기 전에, 두 방식이 어떻게 다른지 문장 하나로 따라가 보겠습니다. 먼저 말씀드릴 점은 둘 다 에이전트가 아니라는 것입니다. 모델을 한 번 부르고 끝나는 분류 호출이고, 벡터 검색도 쓰지 않았습니다.
+A는 단순합니다. 인텐트 20개를 이름과 한 줄 설명으로 전부 보여 주고, 이 중 하나만 고르라고 합니다. "지난달에 쓴 카드 내역"이면 결제내역조회를 바로 고릅니다.
+{cue: pause}
+B는 신한카드 방식입니다. 무엇에 대한 건지, 무엇을 하려는지, 세부 조건이 뭔지 세 가지를 따로 고르게 하고, 세 값의 조합으로 표에서 인텐트를 찾습니다. 그런데 이 문장에서 모델이 "무엇"을 결제가 아니라 명세서로 골랐습니다. 나머지 둘은 맞았는데도 조합이 바뀌어 명세서조회라는 다른 답이 나왔습니다.
+이것이 다음 장 결과의 이유입니다. 대신 B는 인텐트가 늘어도 한 번에 보는 보기 수가 훨씬 천천히 늘어나니, 인텐트가 많고 모델이 작을수록 유리해질 여지가 있습니다.
+근거: demo/d2_intent.py (classify_direct, classify_onto), results/d2-run2-nova-micro.json i=1
+{cue: transition}
+40문장 전체 결과를 보겠습니다.
+:::
+
+---
+<!-- Slide 14: D2 결과 -->
 @type: content
 @title: 온톨로지가 늘 이기지는 않는다
 
@@ -819,7 +898,7 @@ D2: 신한카드식 3속성 인텐트 분류를 소형 모델로 재현해 본 �
 :::
 
 :::notes
-{timing: 1.5min}
+{timing: 1min}
 [요약]
 - D2: 인텐트 20개를 Nova Micro로, 목록에서 직접 선택(A)과 Domain, Action, Tag 3속성 + 매칭(B) 비교
 - 1차(정의 초안): A 60.0%, B 57.5%. 2차(정의 수정): A 100%, B 60.0%
@@ -837,7 +916,7 @@ D2: 신한카드식 3속성 인텐트 분류를 소형 모델로 재현해 본 �
 :::
 
 ---
-<!-- Slide 14: 작게 시작하는 4단계 -->
+<!-- Slide 15: 작게 시작하는 4단계 -->
 @type: content
 @title: 온톨로지, 이렇게 작게 시작하세요
 

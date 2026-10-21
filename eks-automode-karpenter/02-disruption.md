@@ -125,7 +125,7 @@ requirements는 특정 유형을 나열하기보다 category, arch 같은 속성
 .on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
 <div class="ak2-pol" data-reveal="stagger">
-  <div class="card"><strong class="text-accent"><code>WhenEmpty</code></strong><div class="on-surface-muted">Pod가 없는 노드만 회수합니다.</div></div>
+  <div class="card"><strong class="text-accent"><code>WhenEmpty</code></strong><div class="on-surface-muted">빈 노드만 회수합니다. DaemonSet만 남은 노드도 빈 노드입니다.</div></div>
   <div class="card"><strong class="text-accent"><code>WhenEmptyOrUnderutilized</code></strong><div class="on-surface-muted">작은 절감이라도 있으면 교체합니다. upstream 기본값</div></div>
   <div class="card"><strong class="text-accent"><code>Balanced</code></strong><div class="on-surface-muted">절감 비율이 유발하는 Pod disruption 비율보다 가치 있을 때만 실행</div></div>
 </div>
@@ -140,12 +140,12 @@ requirements는 특정 유형을 나열하기보다 category, arch 같은 속성
 :::notes
 {timing: 2.5min}
 [요약]
-- 정책 3가지: WhenEmpty(빈 노드만), WhenEmptyOrUnderutilized(작은 절감에도 교체, upstream 기본), Balanced(절감이 disruption만큼 가치 있을 때만)
+- 정책 3가지: WhenEmpty(빈 노드만, DaemonSet만 있는 노드 포함), WhenEmptyOrUnderutilized(작은 절감에도 교체, upstream 기본), Balanced(절감이 disruption만큼 가치 있을 때만)
 - Balanced는 upstream v1.14.0에서 opt-in으로 추가, Auto Mode에는 2026-07-27 추가
 - EKS 1.37부터 Auto Mode에서 새로 만드는 미지정 NodePool은 Balanced, built-in pool도 Balanced이며 매시간 reconcile되어 덮어쓸 수 없음
 - 기본값은 생성 시점에만 적용되므로 GitOps에서는 값을 명시
 
-consolidation은 남는 노드를 줄이는 기능이고, 정책이 세 가지입니다. WhenEmpty는 Pod가 하나도 없는 노드만 회수합니다. WhenEmptyOrUnderutilized는 덜 쓰이는 노드까지 교체 대상으로 보고, AWS 표현으로는 시간당 0.01달러 같은 작은 절감에도 교체를 진행합니다. upstream Karpenter의 기본값은 여전히 이것입니다.
+consolidation은 남는 노드를 줄이는 기능이고, 정책이 세 가지입니다. WhenEmpty는 빈 노드만 회수합니다. 여기서 빈 노드는 DaemonSet처럼 disruption 비용이 없는 Pod만 남은 노드도 포함합니다. WhenEmptyOrUnderutilized는 덜 쓰이는 노드까지 교체 대상으로 보고, AWS 표현으로는 시간당 0.01달러 같은 작은 절감에도 교체를 진행합니다. upstream Karpenter의 기본값은 여전히 이것입니다.
 {cue: pause}
 세 번째 Balanced가 새 정책입니다. 각 consolidation 동작을 NodePool 비용 중 얼마를 줄이는지, 그리고 NodePool 전체 Pod disruption 중 얼마를 일으키는지로 점수를 매기고, 절감이 충분할 때만 실행합니다. 기본으로는 축출되는 Pod 수로 계산하고, priority가 높은 Pod는 더 큰 가중치를 받습니다. AWS는 "비슷한 비용에 더 적은 Pod eviction"이라고 설명합니다.
 아래 타임라인을 보시면, upstream에는 7월 11일 v1.14.0에서 opt-in으로 들어왔고, Auto Mode에는 7월 27일에 추가되었습니다. 그리고 10월 1일 EKS 1.37부터 Auto Mode에서 새로 만드는 NodePool 중 정책을 지정하지 않은 것은 Balanced가 기본값이 됩니다. built-in NodePool 두 개도 1.37에서 Balanced로 바뀌고, EKS가 매시간 재조정하므로 덮어쓸 수 없습니다.
@@ -431,6 +431,7 @@ Drift와 만료, 노드가 교체되는 두 가지 이유를 보겠습니다.
 <div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
   <button class="tab-btn active">Drift</button>
   <button class="tab-btn">만료와 grace period</button>
+  <button class="tab-btn">세 경로 비교</button>
 </div>
 <div class="tc">
   <div class="ak2-two">
@@ -449,9 +450,21 @@ Drift와 만료, 노드가 교체되는 두 가지 이유를 보겠습니다.
       <tr><td><code>terminationGracePeriod</code></td><td>CRD 기본값 없음 (무제한 대기)</td><td>NodeClaim에 24h 적용</td></tr>
     </tbody>
   </table>
-  <div class="callout callout-info ak2-take"><strong class="text-info">실제 최대 수명</strong>: <code>expireAfter</code> + <code>terminationGracePeriod</code>. grace period가 지나면 남은 Pod는 강제 삭제됩니다.</div>
+  <div class="callout callout-info ak2-take"><strong class="text-info">Self-managed의 실제 최대 수명</strong>: <code>expireAfter</code> + <code>terminationGracePeriod</code>. Auto Mode는 긴 drain을 더해도 21일 상한이 우선합니다.</div>
 </div>
-<div class="callout callout-danger ak2-take fragment fade-up" data-fragment-index="1"><strong class="text-danger">만료는 강제입니다</strong>: NodePool budget을 무시합니다. <code>expireAfter</code> 값을 바꾸면 기존 NodeClaim은 Drift로 교체됩니다.</div>
+<div class="tc" hidden>
+  <table class="data-table ak2-life">
+    <thead><tr><th>경로</th><th>방식</th><th>budget</th><th>대체 노드</th></tr></thead>
+    <tbody>
+      <tr><td>Drift</td><td>graceful, consolidation보다 먼저 평가</td><td>적용</td><td>필요하면 먼저 준비</td></tr>
+      <tr><td>Consolidation</td><td>graceful, requests 기준 재배치</td><td>적용</td><td>필요하면 먼저 준비</td></tr>
+      <tr><td>Expiration</td><td>forceful, 정책 나이에 도달하면 시작</td><td>무시</td><td>Ready를 기다리지 않음</td></tr>
+      <tr><td><code>kubectl delete node</code></td><td>수동 삭제, <code>-l</code>이면 일괄</td><td>무시</td><td>보장 없음</td></tr>
+    </tbody>
+  </table>
+  <div class="callout callout-warning ak2-take"><strong class="text-warning">고정된 우선순위는 없음</strong>: 5일 된 노드가 7일 만료 전에 consolidation될 수 있고, 만료된 노드는 덜 쓰이지 않아도 종료가 시작됩니다.</div>
+</div>
+<div class="callout callout-danger ak2-take fragment fade-up" data-fragment-index="1"><strong class="text-danger">만료는 강제입니다</strong>: NodePool budget을 무시하고 대체 노드 Ready를 기다리지 않습니다. <code>expireAfter</code>를 바꾸면 기존 NodeClaim은 Drift로 교체됩니다.</div>
 :::
 
 :::notes
@@ -461,17 +474,21 @@ Drift와 만료, 노드가 교체되는 두 가지 이유를 보겠습니다.
 - AMI는 al2023@v20261012처럼 alias를 pin. @latest는 새 AMI마다 모든 노드가 Drift되어 프로덕션 비권장
 - Auto Mode는 새 AMI(대략 주 1회)와 advancedCompute 변경이 Drift로 교체됨
 - 만료: expireAfter 기본 720h(upstream), 336h(Auto Mode), Auto Mode 최대 21일. terminationGracePeriod는 upstream 기본 없음, Auto Mode NodeClaim 24h
-- 만료는 budget을 무시하는 강제 교체
+- 만료는 budget을 무시하고 대체 노드 Ready를 기다리지 않는 강제 교체. Self-managed 최대 수명은 expireAfter + terminationGracePeriod, Auto Mode는 21일 상한 우선
+- 세 경로 비교: Drift와 consolidation은 graceful(Drift 먼저 평가), Expiration과 수동 kubectl delete node는 budget 무시. 고정 우선순위 없음
 
 노드가 교체되는 이유는 크게 두 가지, Drift와 만료입니다. 첫 번째 탭 Drift부터 보겠습니다. Drift는 "지금 노드가 선언된 설정과 다르다"는 뜻입니다. NodePool template이나 NodeClass spec을 바꾸면 해시를 비교해 Drift로 판단하고, requirements, subnet, security group, AMI는 실제 resolve된 결과로 비교합니다. 반대로 weight, limits, disruption 설정은 바꿔도 노드를 교체하지 않습니다.
 {cue: pause}
 AMI가 가장 흔한 Drift 원인입니다. 직접 운영할 때는 al2023@v20261012처럼 날짜 버전으로 고정하세요. @latest는 새 AMI마다 모든 노드가 Drift 대상이 되어 프로덕션에서 권장하지 않습니다. Auto Mode는 AWS가 대략 주 1회 새 AMI를 내고 그것이 Drift 신호가 되며, advancedCompute 변경도 Drift로 교체됩니다.
 {cue: demo}
-두 번째 탭이 만료입니다. expireAfter 기본값은 upstream 720시간, Auto Mode 336시간이고, Auto Mode는 최대 21일입니다. terminationGracePeriod는 upstream 기본값이 없고 Auto Mode는 24시간입니다. 실제 최대 수명은 둘을 더한 값입니다.
+두 번째 탭이 만료입니다. expireAfter 기본값은 upstream 720시간, Auto Mode 336시간이고, Auto Mode는 최대 21일입니다. terminationGracePeriod는 upstream 기본값이 없고 Auto Mode는 24시간입니다. self-managed의 실제 최대 수명은 둘을 더한 값입니다. Auto Mode는 drain을 길게 잡아도 21일 상한이 우선이니, 504시간에 grace를 더해 수명을 늘릴 수 있다고 보시면 안 됩니다.
+{cue: demo}
+세 번째 탭은 교체 경로 비교입니다. Drift와 consolidation은 graceful 경로라 budget을 따르고, 필요하면 대체 노드를 먼저 준비하며, Drift가 consolidation보다 먼저 평가됩니다. 만료는 forceful 경로라 budget을 무시하고 대체 노드가 Ready가 되기를 기다리지 않습니다. 사람이 kubectl delete node를 치는 것도 budget을 거치지 않고, label selector를 쓰면 한 번에 여러 대가 지워집니다. 이 경로들 사이에 고정된 우선순위는 없습니다.
 빨간 박스가 핵심입니다. 만료는 budget을 무시하는 강제 교체입니다. 업무 시간 보호 budget을 걸어도 만료는 진행되니, 만료 주기와 PDB를 함께 설계해야 합니다.
 
 [출처]
 - https://karpenter.sh/docs/concepts/disruption/, https://karpenter.sh/docs/tasks/managing-amis/
+- https://docs.atomai.click/kubernetes-docs/ko/eks-auto-mode/07-node-lifecycle (세 경로 비교, 21일 상한)
 - https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html, auto-security.html (21일), automode-learn-instances.html (주간 AMI)
 - SSM /aws/service/eks/optimized-ami/1.37/amazon-linux-2023/x86_64/standard/recommended/image_id (2026-10-20 조회)
 {cue: transition}
@@ -590,5 +607,5 @@ Spot 인스턴스는 회수 2분 전에 경고가 옵니다. 이 경고를 누�
 - https://karpenter.sh/docs/upgrading/upgrade-guide/#upgrading-to-1150 (disruption-cost, do-not-repair)
 - https://docs.aws.amazon.com/eks/latest/userguide/automode.html (PDB, NDB 존중과 21일)
 {cue: transition}
-여기까지가 3부 스케일링과 disruption이었습니다. 4부에서는 이 모든 것을 운영하는 관점, 업그레이드와 관측, 비용을 보겠습니다.
+여기까지가 3부 스케일링과 disruption이었습니다. 4부에서는 Auto Mode를 실제로 켜고 설정하고 진단하는 방법, 그리고 업그레이드, 비용, 마이그레이션을 보겠습니다.
 :::

@@ -16,11 +16,11 @@ EKS 1.37, Karpenter v1.15 기준 (2026-10-20 확인)
 :::notes
 {timing: 1min}
 [요약]
-- 65분 L300 세션: 플랫폼 엔지니어, SRE, 아키텍트 대상
+- 90분 L300 세션: 플랫폼 엔지니어, SRE, 아키텍트 대상
 - 노드를 누가 만들고, 언제 바꾸고, 어떻게 지키는지를 Auto Mode와 self-managed Karpenter 양쪽에서 봅니다.
 - 모든 버전과 기본값은 2026-10-20 기준으로 확인한 값입니다.
 
-안녕하세요. 오늘은 EKS Auto Mode와 Karpenter를 65분 동안 다룹니다. 두 가지는 따로 노는 기술이 아니라, 같은 Karpenter API를 누가 운영하느냐의 차이입니다. 그래서 오늘은 둘을 나란히 놓고 노드가 생기고, 바뀌고, 사라지는 과정을 따라가 보겠습니다.
+안녕하세요. 오늘은 EKS Auto Mode와 Karpenter를 90분 동안 다룹니다. 두 가지는 따로 노는 기술이 아니라, 같은 Karpenter API를 누가 운영하느냐의 차이입니다. 그래서 오늘은 둘을 나란히 놓고 노드가 생기고, 바뀌고, 사라지는 과정을 따라가 보겠습니다.
 {cue: pause}
 버전 이야기가 많이 나옵니다. EKS 1.37과 Karpenter v1.15.0이 나온 지 얼마 되지 않았고, 기본값 몇 가지가 바뀌었습니다. 오늘 숫자는 모두 2026년 10월 20일에 공식 문서와 릴리스 노트로 다시 확인한 값입니다.
 {cue: question}
@@ -38,7 +38,7 @@ EKS 1.37, Karpenter v1.15 기준 (2026-10-20 확인)
 1. 개념: 왜 노드 자동화인가
 2. 구조: NodePool, NodeClass, Auto Mode
 3. 스케일링과 disruption
-4. 운영: 업그레이드, 관측, 비용, 선택
+4. Auto Mode 심화와 운영: 설정, 용량, 진단, 비용, 마이그레이션
 5. 데모 영상 4편
 6. 마무리
 
@@ -47,10 +47,10 @@ EKS 1.37, Karpenter v1.15 기준 (2026-10-20 확인)
 [요약]
 - 1, 2부(약 15분): Karpenter 제어 루프, API 구조, Auto Mode 책임 분담, 버전
 - 3부(약 18분): 프로비저닝, consolidation, 스케줄러 점수 전략, in-place resize, budget, drift와 만료, Spot, 앱 보호
-- 4부(약 8분): 업그레이드 순서, 관측, 비용, 선택 체크리스트
+- 4부(약 33분): Auto Mode 켜기와 built-in 풀, NodeClass와 보안 기본값, Spot과 예약 용량, GPU와 EFA, ARC zonal shift, 업그레이드, 로그와 진단, 비용 귀속, 마이그레이션, 선택 체크리스트
 - 5, 6부(약 24분): 데모 영상 4편과 마무리
 
-여섯 파트로 진행합니다. 앞의 두 파트에서 개념과 구조를 잡고, 3부에서 노드를 늘리고 줄이고 교체하는 disruption을 자세히 보고, 스케줄러 점수 전략과 in-place resize도 함께 다룹니다. 4부는 운영 관점에서 업그레이드 순서, 무엇을 관측할지, 비용, 그리고 Auto Mode와 직접 운영 중 무엇을 고를지입니다.
+여섯 파트로 진행합니다. 앞의 두 파트에서 개념과 구조를 잡고, 3부에서 노드를 늘리고 줄이고 교체하는 disruption을 자세히 보고, 스케줄러 점수 전략과 in-place resize도 함께 다룹니다. 4부는 Auto Mode를 실제로 운영할 때 필요한 내용입니다. 켜는 방법과 built-in 풀, NodeClass 필드와 바꿀 수 없는 보안 기본값, Spot과 예약 용량, GPU와 EFA, AZ 장애, 업그레이드, SSH 없이 진단하는 방법, 비용, 마이그레이션, 그리고 무엇을 고를지까지 봅니다.
 {cue: pause}
 후반 24분은 데모 영상 네 편입니다. 앞에서 설명한 동작을 실제 클러스터에서 확인하는 순서로 구성했으니, 이론 파트에서 궁금한 점이 생기면 메모해 두셨다가 영상과 연결해 보셔도 좋습니다.
 {cue: transition}
@@ -251,12 +251,12 @@ Auto Mode도 루프는 같습니다. 2번과 3번을 AWS가 운영하는 관리�
 여기서 2부 구조로 넘어갑니다. Karpenter 설정은 두 객체로 나뉩니다. 첫 번째 탭 NodePool은 karpenter.sh/v1 API이고, 어떤 노드를 허용할지, 언제 회수하고 교체할지를 정합니다. 이 API는 Auto Mode와 직접 운영하는 Karpenter가 똑같이 씁니다.
 {cue: demo}
 두 번째 탭을 눌러 주세요. 직접 운영할 때의 EC2NodeClass는 karpenter.k8s.aws/v1이고, AMI를 고르는 amiSelectorTerms, subnet과 security group, IAM role, kubelet과 userData까지 사용자가 정합니다. launch template은 Karpenter가 만들어 줍니다.
-세 번째 탭이 Auto Mode의 NodeClass입니다. API 그룹이 eks.amazonaws.com/v1로 바뀌고, 가장 큰 차이는 AMI 필드가 없다는 점입니다. OS는 AWS가 고르는 Bottlerocket 변형이고 userData나 SSH, SSM 접속도 없습니다. 대신 2026년 10월 1일에 advancedCompute가 추가되어 kubelet의 maxPods, eviction, 일부 sysctl과 hugepages는 조정할 수 있습니다. 4부 선택 기준에서 다시 봅니다.
+세 번째 탭이 Auto Mode의 NodeClass입니다. API 그룹이 eks.amazonaws.com/v1로 바뀌고, 가장 큰 차이는 AMI 필드가 없다는 점입니다. OS는 AWS가 고르는 Bottlerocket 변형이고 userData나 SSH, SSM 접속도 없습니다. 대신 advancedCompute로 kubelet의 maxPods, eviction, 허용 목록에 있는 sysctl과 hugepages는 조정할 수 있습니다. 필드 전체는 4부에서 다시 봅니다.
 {cue: pause}
 마지막으로 라벨입니다. NodePool requirements에서 인스턴스 계열을 고를 때 직접 운영은 karpenter.k8s.aws/instance-category, Auto Mode는 eks.amazonaws.com/instance-category를 씁니다. 마이그레이션할 때 이 키를 바꾸지 않으면 조건이 맞지 않습니다.
 
 [출처]
-- https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html
+- https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html (advancedCompute 필드)
 - https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html
 - https://karpenter.sh/docs/concepts/nodeclasses/
 {cue: transition}

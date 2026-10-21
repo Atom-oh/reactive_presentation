@@ -1,0 +1,372 @@
+{
+ "model": "global.anthropic.claude-haiku-4-5-20251001-v1:0",
+ "run_utc": "2026-10-21T13:22:34",
+ "score": {
+  "A": 6,
+  "B": 4,
+  "C": 11
+ },
+ "n": 12,
+ "calls": [
+  {
+   "q": 1,
+   "mode": "A",
+   "ok": false,
+   "sql": "SELECT prd_nm\nFROM etf_mst\nWHERE ast_cls = '미국국채'\nORDER BY fee_bp ASC\nLIMIT 1",
+   "result": "[]",
+   "sec": 0.87,
+   "in_tokens": 411,
+   "out_tokens": 46
+  },
+  {
+   "q": 1,
+   "mode": "B",
+   "ok": false,
+   "sql": "SELECT prd_nm\nFROM etf_mst\nWHERE thm_cd IN ('미국국채', 'US Treasury', '미 국채', '미국채')\nORDER BY fee_bp ASC\nLIMIT 1",
+   "result": "[]",
+   "sec": 1.02,
+   "in_tokens": 833,
+   "out_tokens": 63
+  },
+  {
+   "q": 1,
+   "mode": "C",
+   "ok": true,
+   "sql": "SELECT isin, prd_nm, fee_bp FROM etf_mst WHERE ast_cls = 'BD_OVS_GOV' AND rgn_cd = 'US' ORDER BY fee_bp ASC LIMIT 1",
+   "result": "['KR7A00003', 'STONE 미국단기채', 5]",
+   "sec": 1.0,
+   "in_tokens": 1019,
+   "out_tokens": 59
+  },
+  {
+   "q": 2,
+   "mode": "A",
+   "ok": false,
+   "sql": "SELECT COUNT(*) FROM etf_mst WHERE thm_cd = '2차전지'",
+   "result": "[0]",
+   "sec": 0.78,
+   "in_tokens": 403,
+   "out_tokens": 30
+  },
+  {
+   "q": 2,
+   "mode": "B",
+   "ok": true,
+   "sql": "SELECT COUNT(*) FROM etf_mst WHERE thm_cd IN (SELECT thm_cd FROM etf_mst WHERE prd_nm LIKE '%2차전지%' OR prd_nm LIKE '%리튬%' OR prd_nm LIKE '%배터리%' OR prd_nm LIKE '%이차전지%')",
+   "result": "[3]",
+   "sec": 1.07,
+   "in_tokens": 825,
+   "out_tokens": 85
+  },
+  {
+   "q": 2,
+   "mode": "C",
+   "ok": true,
+   "sql": "SELECT COUNT(*) FROM etf_mst WHERE thm_cd = 'T_BATT'",
+   "result": "[3]",
+   "sec": 0.67,
+   "in_tokens": 970,
+   "out_tokens": 27
+  },
+  {
+   "q": 3,
+   "mode": "A",
+   "ok": true,
+   "sql": "SELECT isin, prd_nm, dist_yld\nFROM etf_mst\nWHERE dist_yld IS NOT NULL\nORDER BY dist_yld DESC\nLIMIT 3",
+   "result": "['KR7A00022', 'SKY 커버드콜월배당', 9.8, 'KR7A00016']",
+   "sec": 0.9,
+   "in_tokens": 407,
+   "out_tokens": 51
+  },
+  {
+   "q": 3,
+   "mode": "B",
+   "ok": true,
+   "sql": "SELECT isin, prd_nm, dist_yld FROM etf_mst WHERE dist_yld IS NOT NULL ORDER BY dist_yld DESC LIMIT 3",
+   "result": "['KR7A00022', 'SKY 커버드콜월배당', 9.8, 'KR7A00016']",
+   "sec": 0.91,
+   "in_tokens": 829,
+   "out_tokens": 42
+  },
+  {
+   "q": 3,
+   "mode": "C",
+   "ok": true,
+   "sql": "SELECT isin, prd_nm, dist_yld FROM etf_mst WHERE dist_yld IS NOT NULL ORDER BY dist_yld DESC LIMIT 3",
+   "result": "['KR7A00022', 'SKY 커버드콜월배당', 9.8, 'KR7A00016']",
+   "sec": 1.0,
+   "in_tokens": 1002,
+   "out_tokens": 42
+  },
+  {
+   "q": 4,
+   "mode": "A",
+   "ok": true,
+   "sql": "SELECT e.isin, e.prd_nm, e.nav_ek\nFROM etf_mst e\nJOIN brnd b ON e.brnd_cd = b.brnd_cd\nJOIN mgr m ON b.mgr_cd = m.mgr_cd\nWHERE m.mgr_nm = '가람자산운용'\nORDER BY e.nav_ek DESC\nLIMIT 1",
+   "result": "['KR7A00007', 'SKY 코스피200', 52000]",
+   "sec": 1.06,
+   "in_tokens": 412,
+   "out_tokens": 106
+  },
+  {
+   "q": 4,
+   "mode": "B",
+   "ok": true,
+   "sql": "SELECT prd_nm\nFROM etf_mst\nWHERE brnd_cd IN (\n  SELECT brnd_cd FROM brnd WHERE mgr_cd IN (\n    SELECT mgr_cd FROM mgr WHERE mgr_nm = '가람자산운용'\n  )\n)\nORDER BY nav_ek DESC\nLIMIT 1",
+   "result": "['SKY 코스피200']",
+   "sec": 1.34,
+   "in_tokens": 834,
+   "out_tokens": 87
+  },
+  {
+   "q": 4,
+   "mode": "C",
+   "ok": true,
+   "sql": "SELECT prd_nm FROM etf_mst e\nJOIN brnd b ON e.brnd_cd = b.brnd_cd\nJOIN mgr m ON b.mgr_cd = m.mgr_cd\nWHERE m.mgr_nm = '가람자산운용'\nORDER BY e.nav_ek DESC\nLIMIT 1",
+   "result": "['SKY 코스피200']",
+   "sec": 0.98,
+   "in_tokens": 1034,
+   "out_tokens": 86
+  },
+  {
+   "q": 5,
+   "mode": "A",
+   "ok": false,
+   "sql": "SELECT COUNT(*) FROM etf_mst WHERE fee_bp <= 10 AND ast_cls = '국내주식'",
+   "result": "[0]",
+   "sec": 0.81,
+   "in_tokens": 412,
+   "out_tokens": 37
+  },
+  {
+   "q": 5,
+   "mode": "B",
+   "ok": false,
+   "sql": "SELECT COUNT(*) \nFROM etf_mst \nWHERE fee_bp <= 10 \n  AND ast_cls = '국내주식'",
+   "result": "[0]",
+   "sec": 1.04,
+   "in_tokens": 834,
+   "out_tokens": 43
+  },
+  {
+   "q": 5,
+   "mode": "C",
+   "ok": true,
+   "sql": "SELECT COUNT(*) FROM etf_mst WHERE ast_cls = 'EQ_DOM' AND fee_bp <= 10",
+   "result": "[2]",
+   "sec": 0.76,
+   "in_tokens": 1006,
+   "out_tokens": 33
+  },
+  {
+   "q": 6,
+   "mode": "A",
+   "ok": false,
+   "sql": "SELECT prd_nm\nFROM etf_mst\nWHERE ast_cls = '금'\nORDER BY fee_bp ASC\nLIMIT 1",
+   "result": "[]",
+   "sec": 0.85,
+   "in_tokens": 408,
+   "out_tokens": 43
+  },
+  {
+   "q": 6,
+   "mode": "B",
+   "ok": false,
+   "sql": "SELECT prd_nm\nFROM etf_mst\nWHERE thm_cd = '금' OR thm_cd IN ('골드', '금현물')\nORDER BY fee_bp ASC\nLIMIT 1",
+   "result": "[]",
+   "sec": 0.98,
+   "in_tokens": 830,
+   "out_tokens": 59
+  },
+  {
+   "q": 6,
+   "mode": "C",
+   "ok": true,
+   "sql": "SELECT prd_nm FROM etf_mst WHERE ast_cls = 'CMD_GOLD' ORDER BY fee_bp ASC LIMIT 1",
+   "result": "['PINE 금현물']",
+   "sec": 0.87,
+   "in_tokens": 996,
+   "out_tokens": 38
+  },
+  {
+   "q": 7,
+   "mode": "A",
+   "ok": false,
+   "sql": "SELECT AVG(dist_yld) FROM etf_mst WHERE dist_freq = '월배당'",
+   "result": "[None]",
+   "sec": 0.75,
+   "in_tokens": 401,
+   "out_tokens": 33
+  },
+  {
+   "q": 7,
+   "mode": "B",
+   "ok": false,
+   "sql": "SELECT AVG(dist_yld) FROM etf_mst WHERE dist_freq = '월'",
+   "result": "[None]",
+   "sec": 0.84,
+   "in_tokens": 823,
+   "out_tokens": 26
+  },
+  {
+   "q": 7,
+   "mode": "C",
+   "ok": true,
+   "sql": "SELECT AVG(dist_yld) FROM etf_mst WHERE dist_freq = 'M'",
+   "result": "[5.15]",
+   "sec": 0.79,
+   "in_tokens": 1021,
+   "out_tokens": 27
+  },
+  {
+   "q": 8,
+   "mode": "A",
+   "ok": true,
+   "sql": "SELECT prd_nm FROM etf_mst WHERE prd_nm LIKE '%반도체%'",
+   "result": "['SKY 필라델피아반도체', 'STONE K반도체']",
+   "sec": 0.76,
+   "in_tokens": 403,
+   "out_tokens": 32
+  },
+  {
+   "q": 8,
+   "mode": "B",
+   "ok": false,
+   "sql": "SELECT prd_nm FROM etf_mst WHERE thm_cd = '반도체'",
+   "result": "[]",
+   "sec": 0.8,
+   "in_tokens": 825,
+   "out_tokens": 25
+  },
+  {
+   "q": 8,
+   "mode": "C",
+   "ok": true,
+   "sql": "SELECT prd_nm FROM etf_mst WHERE thm_cd = 'T_SEMI'",
+   "result": "['SKY 필라델피아반도체', 'STONE K반도체']",
+   "sec": 0.78,
+   "in_tokens": 967,
+   "out_tokens": 27
+  },
+  {
+   "q": 9,
+   "mode": "A",
+   "ok": true,
+   "sql": "SELECT SUM(nav_ek) FROM etf_mst WHERE prd_nm LIKE '%국고채%'",
+   "result": "[10400]",
+   "sec": 0.78,
+   "in_tokens": 400,
+   "out_tokens": 36
+  },
+  {
+   "q": 9,
+   "mode": "B",
+   "ok": false,
+   "sql": "SELECT SUM(nav_ek) FROM etf_mst WHERE thm_cd IN ('국고채', '국내국채', '한국국채') OR ast_cls IN ('국고채', '국내국채', '한국국채')",
+   "result": "[None]",
+   "sec": 1.06,
+   "in_tokens": 822,
+   "out_tokens": 63
+  },
+  {
+   "q": 9,
+   "mode": "C",
+   "ok": true,
+   "sql": "SELECT SUM(nav_ek) FROM etf_mst WHERE ast_cls = 'BD_DOM_GOV'",
+   "result": "[10400]",
+   "sec": 0.79,
+   "in_tokens": 981,
+   "out_tokens": 32
+  },
+  {
+   "q": 10,
+   "mode": "A",
+   "ok": false,
+   "sql": "SELECT prd_nm\nFROM etf_mst\nWHERE rgn_cd = 'US' AND ast_cls = 'STK'\nORDER BY fee_bp ASC\nLIMIT 1",
+   "result": "[]",
+   "sec": 0.85,
+   "in_tokens": 412,
+   "out_tokens": 55
+  },
+  {
+   "q": 10,
+   "mode": "B",
+   "ok": false,
+   "sql": "SELECT prd_nm\nFROM etf_mst\nWHERE ast_cls = '미국주식' AND fee_bp = (\n  SELECT MIN(fee_bp)\n  FROM etf_mst\n  WHERE ast_cls = '미국주식'\n)\nLIMIT 1",
+   "result": "[]",
+   "sec": 1.2,
+   "in_tokens": 834,
+   "out_tokens": 76
+  },
+  {
+   "q": 10,
+   "mode": "C",
+   "ok": true,
+   "sql": "SELECT isin, prd_nm, fee_bp FROM etf_mst WHERE ast_cls = 'EQ_OVS' AND rgn_cd = 'US' ORDER BY fee_bp ASC LIMIT 1",
+   "result": "['KR7A00013', 'SKY 미국S&P500', 7]",
+   "sec": 0.96,
+   "in_tokens": 1019,
+   "out_tokens": 57
+  },
+  {
+   "q": 11,
+   "mode": "A",
+   "ok": true,
+   "sql": "SELECT COUNT(*) FROM etf_mst WHERE brnd_cd = (SELECT brnd_cd FROM brnd WHERE brnd_nm = 'RIVER')",
+   "result": "[6]",
+   "sec": 0.86,
+   "in_tokens": 403,
+   "out_tokens": 44
+  },
+  {
+   "q": 11,
+   "mode": "B",
+   "ok": true,
+   "sql": "SELECT COUNT(*) FROM etf_mst WHERE brnd_cd = (SELECT brnd_cd FROM brnd WHERE brnd_nm = 'RIVER')",
+   "result": "[6]",
+   "sec": 0.86,
+   "in_tokens": 825,
+   "out_tokens": 39
+  },
+  {
+   "q": 11,
+   "mode": "C",
+   "ok": true,
+   "sql": "SELECT COUNT(*) FROM etf_mst WHERE brnd_cd = (SELECT brnd_cd FROM brnd WHERE brnd_nm = 'RIVER')",
+   "result": "[6]",
+   "sec": 0.87,
+   "in_tokens": 947,
+   "out_tokens": 39
+  },
+  {
+   "q": 12,
+   "mode": "A",
+   "ok": true,
+   "sql": "SELECT prd_nm\nFROM etf_mst\nWHERE prd_nm LIKE '%코스피200%'\nORDER BY nav_ek DESC\nLIMIT 1",
+   "result": "['RIVER 코스피200']",
+   "sec": 0.88,
+   "in_tokens": 410,
+   "out_tokens": 49
+  },
+  {
+   "q": 12,
+   "mode": "B",
+   "ok": false,
+   "sql": "SELECT isin, prd_nm, nav_ek\nFROM etf_mst\nWHERE thm_cd = '코스피200'\nORDER BY nav_ek DESC\nLIMIT 1",
+   "result": "[]",
+   "sec": 0.98,
+   "in_tokens": 832,
+   "out_tokens": 55
+  },
+  {
+   "q": 12,
+   "mode": "C",
+   "ok": false,
+   "sql": "CLARIFY: \"코스피200\"이 자산분류(ast_cls), 투자지역(rgn_cd), 또는 테마(thm_cd) 중 어느 것에 해당하는지 확인이 필요합니다.",
+   "result": "SQL 오류: near \"CLARIFY\": syntax error",
+   "sec": 1.06,
+   "in_tokens": 970,
+   "out_tokens": 72
+  }
+ ]
+}

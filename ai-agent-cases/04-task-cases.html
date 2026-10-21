@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>과제별 닮은 사례</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="04-task-cases.md">
+  <meta name="remarp-block" content="04-task-cases">
+  <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/deck-overlay.css">
+  <link rel="stylesheet" href="./common/deck-detail.css">
+  <link rel="stylesheet" href="./common/deck-nav.css">
+  <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
+  <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
+  
+  <script>window.__remarpTheme = {"colors": {"dk1": "#000000", "lt1": "#FFFFFF", "dk2": "#44546A", "lt2": "#E7E6E6", "accent1": "#4472C4", "accent2": "#ED7D31", "accent3": "#A5A5A5", "accent4": "#FFC000", "accent5": "#5B9BD5", "accent6": "#70AD47", "hlink": "#0563C1", "folHlink": "#954F72"}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}, "slideSize": {"width_emu": 12191695, "height_emu": 6858000, "width_px": 1280, "height_px": 720, "aspect_ratio": "16:9"}};</script>
+</head>
+<body>
+<div class="slide-deck">
+<div class="slide title-slide" data-remarp-id="s0" data-block="04-task-cases" data-block-title="과제별 닮은 사례">
+    <h1>과제별 닮은 사례</h1>
+  <p class="meta">6개 과제와 국내외 사례, 각 과제에 가져올 포인트</p>
+</div>
+
+<div class="slide" data-remarp-id="s1" data-block="04-task-cases" data-block-title="과제별 닮은 사례">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>6개 과제와 국내외 사례 한눈에</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <p><!-- Slide 2: 한눈에 --></p>
+<p>패턴이 같은 과제(1과 5, 2와 3, 4와 6)는 서로의 사례도 함께 보기</p>
+<style>
+.rp-map { width: 100%; font-size: var(--fs-card); word-break: keep-all; }
+.rp-map th { text-transform: none; letter-spacing: normal; font-size: var(--fs-caption); }
+.rp-map td:first-child { white-space: nowrap; }
+.rp-map td:first-child b { display: block; }
+.rp-map td:first-child span { font-size: var(--fs-caption); color: var(--accent); font-weight: var(--weight-bold); }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-2); }
+</style>
+<table class="data-table rp-map">
+  <thead><tr><th>과제</th><th>닮은 사례</th><th>가져올 포인트</th></tr></thead>
+  <tbody>
+    <tr><td><span>TASK 01</span><b>마이데이터 자산관리 상담</b></td><td>PropHero, NewDay, 신한카드</td><td>근거 기반 답변 + 대화마다 자동 채점</td></tr>
+    <tr><td><span>TASK 02</span><b>UX 디자인 기획</b></td><td>미리디(미리캔버스), 위메이드플레이, 카카오스타일, Canva</td><td>화면 자산을 구조화 스펙으로, 그 위에서 생성과 점검</td></tr>
+    <tr><td><span>TASK 03</span><b>보고서 작성(리서치)</b></td><td>LG전자, 링크알파, 서울경제신문</td><td>작성자와 검증자 분리, 인용 자동 점검</td></tr>
+    <tr><td><span>TASK 04</span><b>고객 제출서류 누락 점검</b></td><td>Rocket Close, Sun Finance, 카카오페이손해보험</td><td>문서 분류, 항목 정의서 기반 추출과 대조</td></tr>
+    <tr><td><span>TASK 05</span><b>IT 운영지식 위키</b></td><td>카카오페이증권 춘시리, A1Mobilsoft</td><td>위키 주기 동기화 + 좋은 답만 지식으로 승격</td></tr>
+    <tr><td><span>TASK 06</span><b>AI 기반 통합관제</b></td><td>GS리테일, 삼성계정, 토스뱅크 ZeroOps</td><td>로그, 지표, 변경 이력 교차 분석. 조치는 사람 승인</td></tr>
+  </tbody>
+</table>
+<div class="rp-src">사례 출처는 각 과제 장 하단에 표기</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s2" data-block="04-task-cases" data-block-title="과제별 닮은 사례">
+  <div class="slide-header" data-remarp-id="s2-header"><h2>TASK 01 마이데이터: 근거로 답하고 채점</h2></div>
+  <div class="slide-body" data-remarp-id="s2-body">
+    <p><!-- Slide 3: TASK 01 --></p>
+<p>과제 목표: 합성 고객 페르소나로 자산 현황 진단, 근거와 함께 답하는 상담 봇, 품질 평가와 코칭</p>
+<style>
+.rp-tc { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+.rp-tc .card { word-break: keep-all; display: flex; flex-direction: column; gap: var(--space-2); }
+.rp-tc .rp-k { font-size: var(--fs-caption); color: var(--on-surface-muted); }
+.rp-tc .card-title { font-size: var(--fs-subtitle); }
+.rp-ms { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: auto; }
+.rp-ms div { border-top: 1px solid var(--border); padding-top: var(--space-1); }
+.rp-ms b { display: block; font-size: 1.5rem; color: var(--accent); font-variant-numeric: tabular-nums; }
+.rp-ms span { font-size: var(--fs-caption); color: var(--on-surface-muted); }
+.rp-tc-foot { margin-top: var(--space-3); word-break: keep-all; }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-2); word-break: keep-all; }
+.text-accent { color: var(--accent); font-weight: var(--weight-bold); }
+</style>
+<div class="rp-tc fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="card"><span class="rp-k">해외 금융, 부동산 투자 자문</span><div class="card-title">PropHero</div><div class="card-desc">멀티 에이전트 상담 + Knowledge Bases 근거 답변. 대화가 저장될 때마다 LLM-as-a-Judge가 채점하고 CloudWatch 알림</div><div class="rp-ms"><div><b>90%</b><span>목표 달성 정확도</span></div><div><b>−30%</b><span>고객 상담 업무량</span></div></div></div>
+  <div class="card"><span class="rp-k">해외 금융, 영국 소비자 신용</span><div class="card-title">NewDay</div><div class="card-desc">상담원 지원(<span class="rp-tip" tabindex="0" data-tip="상담원이 통화하는 동안 AI가 관련 지식과 답변 초안을 옆에서 찾아 주는 방식">Agent Assist</span>) RAG. 100문항 이상 <span class="rp-tip" tabindex="0" data-tip="질문, 정답, 근거로 만든 평가용 기준 문제집. 배포 전후 점수를 같은 기준으로 비교">골든셋</span>으로 평가해 기준을 넘어야 배포, 운영 중엔 사용자 피드백 수집</div><div class="rp-ms"><div><b>90초 → 4초</b><span>답을 찾는 시간</span></div><div><b>90%+</b><span>정확도 (초기 60% 미만)</span></div></div></div>
+  <div class="card"><span class="rp-k">AWS 기능, 바로 실험</span><div class="card-title">User Simulation</div><div class="card-desc">합성 고객을 정의하면 LLM이 고객을 연기하며 멀티턴 대화. 예: context 40대 직장인, 은행 3곳 연동 / goal 노후 대비 상품 조합 / traits 금융 초보, 인내심 낮음</div><div class="rp-ms"><div><b>Goal success</b><span>종료 후 자동 채점</span></div><div><b>멀티턴</b><span>같은 평가기로 반복 측정</span></div></div></div>
+</div>
+<div class="callout callout-info rp-tc-foot fragment fade-up" data-fragment-index="2"><strong class="text-accent">가져올 것</strong>: 골든셋 + 합성 페르소나로 채점되는 상담봇부터. 근거와 점수가 곧 코칭 피드백입니다. 상품과 자산 용어는 2부의 어휘 사전으로 확정하세요.</div>
+<div class="rp-src">출처: AWS ML Blog, PropHero (2025.09), NewDay (2025.06); AWS 문서, AgentCore User simulation. 예시 페르소나는 발표자 작성</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s3" data-block="04-task-cases" data-block-title="과제별 닮은 사례">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>TASK 02 UX 기획: 화면 자산을 스펙으로</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body">
+    <p><!-- Slide 4: TASK 02 --></p>
+<p>과제 목표: 모바일 뱅킹 앱 화면 자산 정리, 기획 초안, 와이어프레임, 대안 시안 생성 + 디자인 규칙 점검</p>
+<style>
+.rp-tc { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+.rp-tc .card { word-break: keep-all; display: flex; flex-direction: column; gap: var(--space-2); }
+.rp-tc .rp-k { font-size: var(--fs-caption); color: var(--on-surface-muted); }
+.rp-tc .card-title { font-size: var(--fs-subtitle); }
+.rp-ms { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: auto; }
+.rp-ms div { border-top: 1px solid var(--border); padding-top: var(--space-1); }
+.rp-ms b { display: block; font-size: 1.5rem; color: var(--accent); font-variant-numeric: tabular-nums; }
+.rp-ms span { font-size: var(--fs-caption); color: var(--on-surface-muted); }
+.rp-tc-foot { margin-top: var(--space-3); word-break: keep-all; }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-2); word-break: keep-all; }
+.text-accent { color: var(--accent); font-weight: var(--weight-bold); }
+</style>
+<div class="rp-tc fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="card"><span class="rp-k">국내, 디자인 플랫폼</span><div class="card-title">미리디 (미리캔버스)</div><div class="card-desc">템플릿 썸네일을 Claude가 color, technique, target, purpose, elements JSON으로 캡셔닝, 임베딩 후 대화형 검색</div><div class="rp-ms"><div><b>5만 개+</b><span>구조화한 템플릿</span></div><div><b>8~10%</b><span>DAU 중 챗봇 이용</span></div></div></div>
+  <div class="card"><span class="rp-k">국내, 게임 UI QA</span><div class="card-title">위메이드플레이</div><div class="card-desc">화면 캡처를 Claude가 규칙(구매 팝업, 재화, 아이템 수 변화)으로 판정, 성공과 실패, 단계별 이유를 JSON으로</div><div class="rp-ms"><div><b>20분 → 5분</b><span>게임당 결제 테스트</span></div><div><b>주 300분</b><span>절감 예상치</span></div></div></div>
+  <div class="card"><span class="rp-k">국내, 패션 플랫폼</span><div class="card-title">카카오스타일</div><div class="card-desc">이미지 소재, 기획전, 상품 정보로 지면별 포맷과 여러 콘셉트 시안을 생성, 추천 문구 오탈자까지 점검</div><div class="rp-ms"><div><b>몇 주 → 몇 시간</b><span>콘텐츠 제작 시간</span></div><div><b>다중 콘셉트</b><span>지면별 시안 자동 생성</span></div></div></div>
+</div>
+<div class="callout callout-info rp-tc-foot fragment fade-up" data-fragment-index="2"><strong class="text-accent">가져올 것</strong>: 디자인 시스템을 구조화 스펙(JSON)으로 먼저. 초안 생성과 규칙 점검이 같은 데이터 위에서 돕니다. Canva의 features.json도 같은 생각입니다.</div>
+<div class="rp-src">출처: AWS 기술 블로그, 미리디 템플릿 추천 챗봇 (2024.06), 위메이드플레이 UI QA (2024.11), 카카오스타일 (2024.12)</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s4" data-block="04-task-cases" data-block-title="과제별 닮은 사례">
+  <div class="slide-header" data-remarp-id="s4-header"><h2>TASK 02 참고: 미리캔버스 추천 챗봇</h2></div>
+  <div class="slide-body" data-remarp-id="s4-body">
+    <p><!-- Slide 5: TASK 02 참고 아키텍처 --></p>
+<p>멀티모달 캡셔닝으로 화면 자산을 검색 가능한 메타데이터로</p>
+<style>
+.rp-case4 { display: grid; grid-template-columns: 1fr 1.3fr; gap: var(--space-4); align-items: center; }
+.rp-case4-l { display: flex; flex-direction: column; gap: var(--space-2); }
+.rp-case4-l .card { word-break: keep-all; padding: var(--space-2) var(--space-3); }
+.rp-case4-l .card-title { font-size: var(--fs-card); }
+.rp-case4-l .card.highlight .card-title { color: var(--accent); }
+.rp-fig4 { width: 100%; max-height: 620px; object-fit: contain; display: block; border-radius: var(--radius-md); background: var(--bg-card); }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-2); word-break: keep-all; }
+</style>
+<div class="rp-case4">
+  <div class="rp-case4-l fragment" data-reveal="stagger" data-fragment-index="1">
+    <div class="card"><div class="card-title">벡터 DB 구축 (빨간 번호)</div><div class="card-desc">템플릿 썸네일을 Claude 3 Sonnet이 묘사 텍스트로, 임베딩 후 벡터 DB 저장</div></div>
+    <div class="card"><div class="card-title">채팅 추천 (초록 번호)</div><div class="card-desc">ECS 챗봇이 RDS의 대화 이력을 보며 유형, 주제, 색상을 되물어 수집, 검색 쿼리 생성, 유사도 + 메타데이터 필터</div></div>
+    <div class="card highlight"><div class="card-title">모바일 뱅킹 앱에 적용하면</div><div class="card-desc">화면 캡처와 Figma 프레임을 같은 방식으로 캡셔닝해 화면 자산 DB를 먼저 구축</div></div>
+  </div>
+  <img class="rp-fig4" src="media/miri-arch.png" alt="미리캔버스 템플릿 추천 챗봇 아키텍처: Bedrock Claude 3 Sonnet 캡셔닝, 임베딩 모델, Vector DB, ECS, RDS">
+</div>
+<div class="rp-src">출처: AWS 기술 블로그, Amazon Bedrock 기반 미리캔버스 디자인 템플릿 추천 챗봇 구현하기 (2024-06)</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s5" data-block="04-task-cases" data-block-title="과제별 닮은 사례">
+  <div class="slide-header" data-remarp-id="s5-header"><h2>TASK 03 보고서: 쓰는 쪽과 검증하는 쪽</h2></div>
+  <div class="slide-body" data-remarp-id="s5-body">
+    <p><!-- Slide 6: TASK 03 --></p>
+<p>과제 목표: 공개 자료 조사와 구조화, 출처와 함께 보고서 초안, 품질 자동 점검</p>
+<style>
+.rp-tc { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+.rp-tc .card { word-break: keep-all; display: flex; flex-direction: column; gap: var(--space-2); }
+.rp-tc .rp-k { font-size: var(--fs-caption); color: var(--on-surface-muted); }
+.rp-tc .card-title { font-size: var(--fs-subtitle); }
+.rp-ms { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: auto; }
+.rp-ms div { border-top: 1px solid var(--border); padding-top: var(--space-1); }
+.rp-ms b { display: block; font-size: 1.5rem; color: var(--accent); font-variant-numeric: tabular-nums; }
+.rp-ms span { font-size: var(--fs-caption); color: var(--on-surface-muted); }
+.rp-tc-foot { margin-top: var(--space-3); word-break: keep-all; }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-2); word-break: keep-all; }
+.text-accent { color: var(--accent); font-weight: var(--weight-bold); }
+</style>
+<div class="rp-tc fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="card"><span class="rp-k">국내, 가전 마케팅 분석</span><div class="card-title">LG전자 Deep Insight</div><div class="card-desc">Planner 계획, Coder 실행, Validator가 원본으로 재계산, 검증된 값만 인용한 DOCX 보고서</div><div class="rp-ms"><div><b>3일 → 30분</b><span>데이터 분석 업무</span></div><div><b>공개</b><span>aws-samples 오픈소스</span></div></div></div>
+  <div class="card"><span class="rp-k">금융 리서치, AI 스타트업</span><div class="card-title">링크알파</div><div class="card-desc">뉴스, 애널리스트 리포트, 공시를 요약하고, Audit Agent가 인용 출처를 점검. 원문을 팝업으로 확인</div><div class="rp-ms"><div><b>20분 이내</b><span>종목별 기초 조사 (기존 2시간+)</span></div><div><b>약 3배</b><span>같은 시간 다루는 종목 수</span></div></div></div>
+  <div class="card"><span class="rp-k">국내, 언론</span><div class="card-title">서울경제신문</div><div class="card-desc">14개 항목 자가검증 체크리스트 + 수치는 원문과 100% 일치 규칙 + 사람 이중 검수</div><div class="rp-ms"><div><b>환각, 오보 0건</b><span>연간 2,500건 기사 기준, 자체 집계</span></div><div><b>14개 항목</b><span>자가검증 체크리스트</span></div></div></div>
+</div>
+<div class="callout callout-info rp-tc-foot fragment fade-up" data-fragment-index="2"><strong class="text-accent">가져올 것</strong>: "출처 없는 문장은 쓰지 않는다"를 규칙, 체크리스트, 검증 에이전트로 강제하세요.</div>
+<div class="rp-src">출처: AWS 기술 블로그, LG전자 (Deep Insight), 링크알파 Company Screener (2025.04), 서울경제신문 (2026.04)</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s6" data-block="04-task-cases" data-block-title="과제별 닮은 사례">
+  <div class="slide-header" data-remarp-id="s6-header"><h2>TASK 04 서류 점검: 정의서가 곧 정답지</h2></div>
+  <div class="slide-body" data-remarp-id="s6-body">
+    <p><!-- Slide 7: TASK 04 --></p>
+<p>과제 목표: 제출 문서 판독과 분류, 필수 항목과 서명 누락을 항목 정의서와 대조해 검증</p>
+<style>
+.rp-tc { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+.rp-tc .card { word-break: keep-all; display: flex; flex-direction: column; gap: var(--space-2); }
+.rp-tc .rp-k { font-size: var(--fs-caption); color: var(--on-surface-muted); }
+.rp-tc .card-title { font-size: var(--fs-subtitle); }
+.rp-ms { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: auto; }
+.rp-ms div { border-top: 1px solid var(--border); padding-top: var(--space-1); }
+.rp-ms b { display: block; font-size: 1.5rem; color: var(--accent); font-variant-numeric: tabular-nums; }
+.rp-ms span { font-size: var(--fs-caption); color: var(--on-surface-muted); }
+.rp-tc-foot { margin-top: var(--space-3); word-break: keep-all; }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-2); word-break: keep-all; }
+.text-accent { color: var(--accent); font-weight: var(--weight-bold); }
+</style>
+<div class="rp-tc fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="card"><span class="rp-k">해외 금융, 모기지 서류</span><div class="card-title">Rocket Close</div><div class="card-desc"><span class="rp-tip" tabindex="0" data-tip="Amazon Textract: 문서 이미지에서 글자, 표, 양식, 서명을 뽑는 AWS OCR 서비스">Textract</span>가 레이아웃, 표, 서명 감지, Bedrock이 60여 문서 유형 분류, 필드 정의와 데이터 사전 기반 추출, 대조 검증</div><div class="rp-ms"><div><b>15배</b><span>처리 속도 (30분에서 2분 미만)</span></div><div><b>89.71%</b><span>정확도 (4.4만+ 필드)</span></div></div></div>
+  <div class="card"><span class="rp-k">해외 금융, 온라인 대출 <span class="rp-tip" tabindex="0" data-tip="Know Your Customer: 금융 거래 전에 고객 신원을 확인하는 절차">KYC</span></span><div class="card-title">Sun Finance</div><div class="card-desc">신분증 OCR, Claude로 필드 구조화, 고객 입력값과 대조해 불일치 검출 + 위변조 탐지</div><div class="rp-ms"><div><b>90.8%</b><span>추출 정확도 (기존 79.7%)</span></div><div><b>5초 미만</b><span>처리 시간 (기존 최대 20시간)</span></div></div></div>
+  <div class="card"><span class="rp-k">국내 보험, 보험금 청구</span><div class="card-title">카카오페이손해보험</div><div class="card-desc">영수증 여부 판별, 수리처, 발행일, 결제금액 추출, 자동 지급 연결 (자체 OCR 모델 + AWS GPU 인스턴스)</div><div class="rp-ms"><div><b>10분 이내</b><span>고객 대기 시간 (기존 하루+)</span></div><div><b>3개 필수 항목</b><span>자동 추출 후 지급 연결</span></div></div></div>
+</div>
+<div class="callout callout-info rp-tc-foot fragment fade-up" data-fragment-index="2"><strong class="text-accent">가져올 것</strong>: 서류 유형별 필수 항목과 서명 위치를 표로 먼저. 이 표가 서류의 온톨로지이자 정답지입니다. 한국어 서류는 OCR 엔진의 한국어 지원부터 확인하세요.</div>
+<div class="rp-src">출처: AWS ML Blog, Rocket Close, Sun Finance (2026.04); 카카오페이 기술블로그 (if(kakao) 2024)</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s7" data-block="04-task-cases" data-block-title="과제별 닮은 사례">
+  <div class="slide-header" data-remarp-id="s7-header"><h2>TASK 05 운영 위키: 좋은 답을 지식으로</h2></div>
+  <div class="slide-body" data-remarp-id="s7-body">
+    <p><!-- Slide 8: TASK 05 --></p>
+<p>과제 목표: 운영 절차와 장애 대응 지식을 출처와 함께 답하고, 질의 이력으로 지식을 보강</p>
+<style>
+.rp-t5 { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: var(--space-3); }
+.rp-t5 .card { word-break: keep-all; display: flex; flex-direction: column; gap: var(--space-2); }
+.rp-t5 .rp-k { font-size: var(--fs-caption); color: var(--on-surface-muted); }
+.rp-t5 .card-title { font-size: var(--fs-subtitle); }
+.rp-ms { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: auto; }
+.rp-ms div { border-top: 1px solid var(--border); padding-top: var(--space-1); }
+.rp-ms b { display: block; font-size: 1.5rem; color: var(--accent); font-variant-numeric: tabular-nums; }
+.rp-ms span { font-size: var(--fs-caption); color: var(--on-surface-muted); }
+.rp-t5 ol { margin: 0; padding-left: var(--space-4); font-size: var(--fs-card); line-height: 1.7; }
+.rp-tc-foot { margin-top: var(--space-3); word-break: keep-all; }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-2); word-break: keep-all; }
+.text-accent { color: var(--accent); font-weight: var(--weight-bold); }
+</style>
+<div class="rp-t5 fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="card"><span class="rp-k">국내 증권, DevOps팀</span><div class="card-title">카카오페이증권 춘시리</div><div class="card-desc">Confluence 위키를 주기적으로 스캔해 벡터 DB 반영. 문서화 안 된 지식은 학습/ 명령으로 즉시 추가. Bedrock Guardrails</div><div class="rp-ms"><div><b>1시간</b><span>위키 동기화 주기</span></div><div><b>학습/</b><span>즉석 지식 추가</span></div></div></div>
+  <div class="card"><span class="rp-k">국내, 차량관리 솔루션</span><div class="card-title">A1Mobilsoft</div><div class="card-desc">총괄 에이전트 + 지식, 코드, DB 에이전트. 과거 해결 사례를 KB 번호로 인용. AgentCore Runtime</div><div class="rp-ms"><div><b>2초</b><span>1차 응답 중앙값 (사람 10분)</span></div><div><b>31초</b><span>원인과 해결 제시 (사람 42분)</span></div></div></div>
+  <div class="card highlight"><span class="rp-k">A1Mobilsoft의 지식 보강 루프</span><div class="card-title">쓸수록 똑똑해지는 위키</div><ol><li>질문, 출처 인용 답변</li><li>좋아요 = 도움 됐다는 명시 신호</li><li>스레드 정제, KB 동기화</li><li>다음 질문부터 반영</li></ol><div class="rp-ms"><div><b>14건</b><span>사람 답변 비교 표본 (작음)</span></div><div><b>좋아요</b><span>지식 승격 기준</span></div></div></div>
+</div>
+<div class="callout callout-info rp-tc-foot fragment fade-up" data-fragment-index="2"><strong class="text-accent">가져올 것</strong>: 위키는 정기 동기화, 빈칸은 학습하기, 좋은 답은 자동 승격. 질의 이력이 곧 지식 보강 데이터이고, 시스템명과 장애 용어는 어휘 사전으로 묶으세요.</div>
+<div class="rp-src">출처: 카카오페이 기술블로그 춘시리 (2025.01); AWS 기술 블로그, A1Mobilsoft 운영 자동화 1, 2부 (2026.07)</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s8" data-block="04-task-cases" data-block-title="과제별 닮은 사례">
+  <div class="slide-header" data-remarp-id="s8-header"><h2>TASK 06 관제: 진단은 자동, 조치는 사람</h2></div>
+  <div class="slide-body" data-remarp-id="s8-body">
+    <p><!-- Slide 9: TASK 06 --></p>
+<p>과제 목표: 사내 컨테이너 플랫폼의 로그와 지표를 AI로 진단해 이상 징후와 대응을 돕는 관제 도구</p>
+<style>
+.rp-tc { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+.rp-tc .card { word-break: keep-all; display: flex; flex-direction: column; gap: var(--space-2); }
+.rp-tc .rp-k { font-size: var(--fs-caption); color: var(--on-surface-muted); }
+.rp-tc .card-title { font-size: var(--fs-subtitle); }
+.rp-ms { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: auto; }
+.rp-ms div { border-top: 1px solid var(--border); padding-top: var(--space-1); }
+.rp-ms b { display: block; font-size: 1.5rem; color: var(--accent); font-variant-numeric: tabular-nums; }
+.rp-ms span { font-size: var(--fs-caption); color: var(--on-surface-muted); }
+.rp-tc-foot { margin-top: var(--space-3); word-break: keep-all; }
+.rp-src { font-size: var(--fs-caption); color: var(--on-surface-muted); margin-top: var(--space-2); word-break: keep-all; }
+.text-accent { color: var(--accent); font-weight: var(--weight-bold); }
+</style>
+<div class="rp-tc fragment" data-reveal="stagger" data-fragment-index="1">
+  <div class="card"><span class="rp-k">국내, 유통 클라우드인프라팀</span><div class="card-title">GS리테일</div><div class="card-desc">Bedrock + <span class="rp-tip" tabindex="0" data-tip="MCP(Model Context Protocol): 에이전트가 외부 도구와 데이터에 접속하는 표준 규약">MCP로</span> Datadog, EKS, DB 연동, 가설과 검증 루프로 <span class="rp-tip" tabindex="0" data-tip="Root Cause Analysis: 장애의 근본 원인 분석">RCA</span>, 보고서 자동 작성</div><div class="rp-ms"><div><b>198초</b><span>평균 분석 (기존 30분+)</span></div><div><b>1분 58초</b><span>EKS Pod Pending 사례</span></div></div></div>
+  <div class="card"><span class="rp-k">국내, 대규모 계정 서비스</span><div class="card-title">삼성전자 삼성계정</div><div class="card-desc">Strands Agents-as-Tools로 수집, 분석, 조치 제안 에이전트 분리. 재시작과 롤백은 범위에서 제외</div><div class="rp-ms"><div><b>3분 47초</b><span>단일 장애 전체 분석</span></div><div><b>사람</b><span>최종 실행 권한</span></div></div></div>
+  <div class="card"><span class="rp-k">국내 은행</span><div class="card-title">토스뱅크 ZeroOps</div><div class="card-desc">Bedrock 기반 에이전트가 로그, 지표, 코드 변경, 에러 정보를 조회해 원인 추정과 조치 권고</div><div class="rp-ms"><div><b>혁신금융서비스</b><span>2026.07 금융위원회 지정 (임직원용)</span></div><div><b>국내 은행</b><span>규제 틀 안의 관제 에이전트 선례</span></div></div></div>
+</div>
+<div class="callout callout-info rp-tc-foot fragment fade-up" data-fragment-index="2"><strong class="text-accent">가져올 것</strong>: 내부망 환경이라면 기존 로그와 지표 도구를 MCP로 감싸는 것부터. 실행 권한은 사람에게 둡니다.</div>
+<div class="rp-src">출처: AWS 기술 블로그, GS리테일 (2026.04), 삼성계정 Part 2 (2026.03); 한국금융신문 (2026.09); 참고 AWS DevOps Agent 고객 사례 (Banco Bmg, Commonwealth Bank)</div>
+  </div>
+</div>
+</div>
+<script src="./common/animation-utils.js"></script>
+<script src="./common/deck-overlay.js"></script>
+<script src="./common/deck-detail.js"></script>
+<script src="./common/deck-nav.js"></script>
+<script src="./common/slide-framework.js"></script>
+<script src="./common/quiz-component.js"></script>
+<script src="./common/presenter-view.js"></script>
+<script>
+(function(){
+(function () {
+  // Click-to-zoom for architecture figures: opens the image over the whole viewport.
+  if (window.__rpLightbox) return;
+  window.__rpLightbox = true;
+  var css = document.createElement('style');
+  css.textContent =
+    '.slide img.rp-zoomable { cursor: zoom-in; }' +
+    '.rp-lb { position: fixed; inset: 0; z-index: 100000; display: none; align-items: center; justify-content: center; background: color-mix(in srgb, black 95%, transparent); cursor: zoom-out; }' +
+    '.rp-lb.open { display: flex; }' +
+    '.rp-lb img { width: 96vw; height: 92vh; object-fit: contain; }' +
+    '.rp-lb span { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); color: white; font-size: 14px; opacity: .7; }';
+  document.head.appendChild(css);
+  var lb = document.createElement('div');
+  lb.className = 'rp-lb';
+  lb.innerHTML = '<img alt=""><span>클릭하거나 Esc를 누르면 닫힙니다</span>';
+  var big = lb.querySelector('img');
+  function close() { lb.classList.remove('open'); }
+  lb.addEventListener('click', close);
+  function mount() {
+    document.body.appendChild(lb);
+    document.querySelectorAll('.slide img[src^="media/"]').forEach(function (img) {
+      if (/\/ac-/.test(img.getAttribute('src'))) return;
+      img.classList.add('rp-zoomable');
+      img.title = '클릭하면 크게 보기';
+      img.addEventListener('click', function (e) {
+        e.stopPropagation();
+        big.src = img.src; big.alt = img.alt;
+        lb.classList.add('open');
+      });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+  // While open, swallow deck keys so arrows do not change slides; Esc closes.
+  document.addEventListener('keydown', function (e) {
+    if (!lb.classList.contains('open')) return;
+    e.stopPropagation(); e.preventDefault();
+    if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') close();
+  }, true);
+})();
+})();
+</script>
+<script>
+(function(){
+(function () {
+  // Hover (or focus) glossary: elements with data-tip show a one-line explanation near the term.
+  if (window.__rpTips) return;
+  window.__rpTips = true;
+  var css = document.createElement('style');
+  css.textContent =
+    '.rp-tip { border-bottom: 2px dotted var(--accent); cursor: help; }' +
+    '.rp-tipbox { position: fixed; z-index: 100001; max-width: min(38vw, 720px); padding: .6em .9em; border-radius: 8px;' +
+    ' background: var(--text-primary); color: var(--bg-primary); font-size: clamp(14px, 1.75vh, 38px); line-height: 1.45;' +
+    ' box-shadow: 0 6px 24px color-mix(in srgb, black 35%, transparent); pointer-events: none; opacity: 0; transition: opacity .12s; word-break: keep-all; }' +
+    '.rp-tipbox.on { opacity: 1; }';
+  document.head.appendChild(css);
+  var box = document.createElement('div');
+  box.className = 'rp-tipbox';
+  box.setAttribute('role', 'tooltip');
+  function show(t) {
+    box.textContent = t.getAttribute('data-tip');
+    box.classList.add('on');
+    var r = t.getBoundingClientRect(), b = box.getBoundingClientRect();
+    var x = Math.min(Math.max(8, r.left + r.width / 2 - b.width / 2), window.innerWidth - b.width - 8);
+    var y = r.top - b.height - 10;
+    if (y < 8) y = r.bottom + 10;
+    box.style.left = x + 'px'; box.style.top = y + 'px';
+  }
+  function hide() { box.classList.remove('on'); }
+  function mount() {
+    document.body.appendChild(box);
+    document.addEventListener('mouseover', function (e) { var t = e.target.closest && e.target.closest('.slide [data-tip]'); if (t) show(t); });
+    document.addEventListener('mouseout', function (e) { if (e.target.closest && e.target.closest('.slide [data-tip]')) hide(); });
+    document.addEventListener('focusin', function (e) { var t = e.target.closest && e.target.closest('.slide [data-tip]'); if (t) show(t); });
+    document.addEventListener('focusout', hide);
+    window.addEventListener('hashchange', hide);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+})();
+})();
+</script>
+<script>
+  
+  const presenterNotes = {
+    1: "[0.5min] [\uc694\uc57d]\n- 4\ubd80: \uacfc\uc81c\ubcc4\ub85c \ud55c \uc7a5\uc529 \ub2ee\uc740 \uc0ac\ub840\n- \uad6d\ub0b4 \uae08\uc735\uc0ac \uc0ac\ub840 \uc6b0\uc120, \uc5c6\uc73c\uba74 \uad6d\ub0b4 \ube44\uae08\uc735\uc774\ub098 \ud574\uc678 \uae08\uc735\uc0ac \uc0ac\ub840\n- \ubaa8\ub450 AWS \uacf5\uc2dd \ube14\ub85c\uadf8\ub098 \uace0\uac1d \ubc1c\ud45c\uc5d0\uc11c \ud655\uc778\ud55c \uc0ac\ub840, \uc218\uce58\ub294 \uc6d0\ubb38 \uadf8\ub300\ub85c\n\n\uc5ec\uae30\uc11c\ubd80\ud130\ub294 \uacfc\uc81c\ubcc4\ub85c \ud55c \uc7a5\uc529 \ub2ee\uc740 \uc0ac\ub840\ub97c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \uad6d\ub0b4 \uae08\uc735\uc0ac \uc0ac\ub840\ub97c \uc6b0\uc120 \ucc3e\uc558\uace0, \uc5c6\ub294 \uacfc\uc81c\ub294 \uad6d\ub0b4 \ube44\uae08\uc735\uc774\ub098 \ud574\uc678 \uae08\uc735\uc0ac \uc0ac\ub840\ub85c \ucc44\uc6e0\uc2b5\ub2c8\ub2e4.\n\ubaa8\ub450 AWS \uacf5\uc2dd \ube14\ub85c\uadf8\ub098 \uace0\uac1d \ubc1c\ud45c\uc5d0\uc11c \ud655\uc778\ud55c \uc0ac\ub840\uc774\uace0, \uc218\uce58\ub294 \uc6d0\ubb38 \uadf8\ub300\ub85c \uc62e\uacbc\uc2b5\ub2c8\ub2e4.\n\n\ud55c\ub208\uc5d0 \uba3c\uc800 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    2: "\u23f8\ufe0f [0.5min] [\uc694\uc57d]\n- 6\uac1c \uacfc\uc81c\ub9c8\ub2e4 \ub2ee\uc740 \uc0ac\ub840 \ub450\uc138 \uac1c(UX\ub294 \ub124 \uac1c)\uc640 \uac00\uc838\uc62c \ud3ec\uc778\ud2b8 \ud55c \uc904\n- \ud328\ud134\uc774 \uac19\uc740 \uacfc\uc81c\ub294 \uc11c\ub85c\uc758 \uc0ac\ub840\ub3c4 \ucc38\uace0: 1\uacfc 5(\uc9c0\uc2dd \uae30\ubc18 \uc751\ub2f5), 2\uc640 3(\uc870\uc0ac\uc640 \uc0dd\uc131), 4\uc640 6(\ud310\ub3c5\uacfc \uc9c4\ub2e8)\n- \uac01 \uc7a5 \ud558\ub2e8\uc5d0 \uc6d0\ubb38 \ucd9c\ucc98\n\n\ud55c \uc7a5\uc73c\ub85c \uc815\ub9ac\ud55c \ud45c\uc785\ub2c8\ub2e4. \uacfc\uc81c\ub9c8\ub2e4 \ub2ee\uc740 \uc0ac\ub840 \ub450\uc138 \uac1c\uc640 \uac00\uc838\uc62c \ud3ec\uc778\ud2b8\ub97c \ud55c \uc904\uc529 \uc801\uc5c8\uc2b5\ub2c8\ub2e4.\n\n\ud328\ud134\uc774 \uac19\uc740 \uacfc\uc81c, 1\ubc88\uacfc 5\ubc88, 2\ubc88\uacfc 3\ubc88, 4\ubc88\uacfc 6\ubc88\uc740 \uc11c\ub85c\uc758 \uc0ac\ub840\ub3c4 \uac19\uc774 \ubcf4\uc2dc\uba74 \uc88b\uc2b5\ub2c8\ub2e4. \ud558\ub098\uc529 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uacfc\uc81c 1, \ub9c8\uc774\ub370\uc774\ud130 \uc0c1\ub2f4\uc785\ub2c8\ub2e4.",
+    3: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- PropHero: \uba40\ud2f0 \uc5d0\uc774\uc804\ud2b8 \uc0c1\ub2f4 + Knowledge Bases, \ub300\ud654 \uc800\uc7a5\ub9c8\ub2e4 Lambda\uac00 LLM-as-a-Judge\ub85c \ucc44\uc810(\ubb38\ub9e5 \uad00\ub828\uc131, \uadfc\uac70 \ucda9\uc2e4\uc131, \ubaa9\ud45c \ub2ec\uc131), \ubaa9\ud45c \ub2ec\uc131 \uc815\ud655\ub3c4 90%, \uc5c5\ubb34\ub7c9 30% \uac10\uc18c\n- NewDay: Agent Assist RAG, 100\ubb38\ud56d \uc774\uc0c1 \uace8\ub4e0\uc14b\uc73c\ub85c \ubc30\ud3ec \uae30\uc900, \uc815\ud655\ub3c4 60% \ubbf8\ub9cc\uc5d0\uc11c 90% \uc774\uc0c1\n- User Simulation: \ud569\uc131 \uace0\uac1d \ud398\ub974\uc18c\ub098\ub85c \uba40\ud2f0\ud134 \ub300\ud654 \ud6c4 \uc790\ub3d9 \ucc44\uc810(\uc608\uc2dc \ud398\ub974\uc18c\ub098\ub294 \ubc1c\ud45c\uc790 \uc791\uc131)\n\n\uacfc\uc81c 1, \ub9c8\uc774\ub370\uc774\ud130 \ube44\ub300\uba74 \uc790\uc0b0\uad00\ub9ac \uc0c1\ub2f4\uc785\ub2c8\ub2e4. \uccab \ubc88\uc9f8\ub294 \ubd80\ub3d9\uc0b0 \ud22c\uc790 \uc790\ubb38 \uc11c\ube44\uc2a4 PropHero\uc785\ub2c8\ub2e4. \uba40\ud2f0 \uc5d0\uc774\uc804\ud2b8 \uc0c1\ub2f4\uc5d0 Knowledge Bases\ub85c \uadfc\uac70\ub97c \ubd99\uc600\uace0, \ub208\uc5ec\uaca8\ubcfc \uac74 \ud3c9\uac00 \ubc29\uc2dd\uc785\ub2c8\ub2e4. \ub300\ud654\uac00 \uc800\uc7a5\ub420 \ub54c\ub9c8\ub2e4 Lambda\uac00 LLM-as-a-Judge\ub85c \ubb38\ub9e5 \uad00\ub828\uc131, \uadfc\uac70 \ucda9\uc2e4\uc131, \ubaa9\ud45c \ub2ec\uc131 \uc5ec\ubd80\ub97c \ucc44\uc810\ud558\uace0 \uc54c\ub9bc\uc744 \uac81\ub2c8\ub2e4. \ubaa9\ud45c \ub2ec\uc131 \uc815\ud655\ub3c4 90%, \uc0c1\ub2f4 \uc5c5\ubb34\ub7c9 30% \uac10\uc18c\ub97c \ubcf4\uace0\ud588\uc2b5\ub2c8\ub2e4.\n\n\ub450 \ubc88\uc9f8 NewDay\ub294 \uc601\uad6d \uc18c\ube44\uc790 \uc2e0\uc6a9 \ud68c\uc0ac\ub85c, \uc0c1\ub2f4\uc6d0\uc774 \ud1b5\ud654 \uc911\uc5d0 \uc9c0\uc2dd \ubb38\uc11c\ub97c \ucc3e\ub294 \uac78 \ub3d5\ub294 RAG\ub97c \ub9cc\ub4e4\uc5c8\uc2b5\ub2c8\ub2e4. 100\ubb38\ud56d \ub118\ub294 \uace8\ub4e0\uc14b\uc744 \ub9cc\ub4e4\uc5b4 \uae30\uc900\uc744 \ub118\uc5b4\uc57c \ubc30\ud3ec\ud588\uace0, \uc815\ud655\ub3c4\ub97c 60% \ubbf8\ub9cc\uc5d0\uc11c 90% \uc774\uc0c1\uae4c\uc9c0 \uc62c\ub838\uc2b5\ub2c8\ub2e4. \uc138 \ubc88\uc9f8\ub294 1\ubd80\uc5d0\uc11c \ubcf8 User Simulation\uc785\ub2c8\ub2e4. \uc608\uc2dc \ud398\ub974\uc18c\ub098\ub294 \uc81c\uac00 \ub9cc\ub4e0 \uac83\uc785\ub2c8\ub2e4.\n\n\uacfc\uc81c 2, UX \ub514\uc790\uc778 \uae30\ud68d\uc785\ub2c8\ub2e4.",
+    4: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- \uae08\uc735\uad8c \uacf5\uac1c \uc0ac\ub840\uac00 \uc5c6\uc5b4 \uad6d\ub0b4 \ube44\uae08\uc735 \uc138 \uc0ac\ub840\n- \ubbf8\ub9ac\uce94\ubc84\uc2a4: 5\ub9cc \uac1c \ub118\ub294 \ud15c\ud50c\ub9bf\uc744 5\uac1c \ud0a4 JSON\uc73c\ub85c \ucea1\uc154\ub2dd, \uc784\ubca0\ub529, \ub300\ud654\ud615 \uac80\uc0c9\n- \uc704\uba54\uc774\ub4dc\ud50c\ub808\uc774: \ud654\uba74 \ucea1\ucc98\ub97c \uaddc\uce59\uc73c\ub85c \ud310\uc815\ud574 \uc774\uc720\ub97c JSON\uc73c\ub85c, \ub514\uc790\uc778 \uaddc\uce59 \uc810\uac80\uae30\ub85c \uc751\uc6a9 \uac00\ub2a5\n- \uce74\uce74\uc624\uc2a4\ud0c0\uc77c: \uc5ec\ub7ec \ucf58\uc149\ud2b8\uc758 \ubc30\ub108\uc640 \uce74\ud53c \uc2dc\uc548, \uc624\ud0c8\uc790 \uc810\uac80\n- \ud575\uc2ec: \ub514\uc790\uc778 \uc2dc\uc2a4\ud15c\uc744 \uba3c\uc800 \uad6c\uc870\ud654\ub41c \uc2a4\ud399\uc73c\ub85c\n\n\uacfc\uc81c 2, UX \ub514\uc790\uc778 \uae30\ud68d\uc785\ub2c8\ub2e4. \uae08\uc735\uad8c \uacf5\uac1c \uc0ac\ub840\ub294 \ucc3e\uc9c0 \ubabb\ud574\uc11c \uad6d\ub0b4 \ube44\uae08\uc735 \uc0ac\ub840 \uc138 \uac1c\ub97c \uace8\ub790\uc2b5\ub2c8\ub2e4.\n\ubbf8\ub9ac\uce94\ubc84\uc2a4\ub294 5\ub9cc \uac1c \ub118\ub294 \ud15c\ud50c\ub9bf \uc378\ub124\uc77c\uc744 Claude\uac00 \ubcf4\uace0 \uc0c9\uc0c1, \uae30\ubc95, \ub300\uc0c1, \ubaa9\uc801, \uc694\uc18c \ub2e4\uc12f \uac1c \ud0a4\uc758 JSON\uc73c\ub85c \uc124\uba85\ud558\uac8c \ud55c \ub4a4, \uc784\ubca0\ub529\ud574\uc11c \ub300\ud654\ud615\uc73c\ub85c \ucc3e\uac8c \ud588\uc2b5\ub2c8\ub2e4. \ubaa8\ubc14\uc77c \ubc45\ud0b9 \uc571 \ud654\uba74 \uc790\uc0b0\uc744 AI\uac00 \uc77d\uc744 \uc218 \uc788\uac8c \uc815\ub9ac\ud558\ub294 \uccab \ub2e8\uacc4\uc640 \uac19\uc2b5\ub2c8\ub2e4.\n\n\uc704\uba54\uc774\ub4dc\ud50c\ub808\uc774\ub294 \uac8c\uc784 \ud654\uba74 \ucea1\ucc98\ub97c Claude\uac00 \uaddc\uce59\uc5d0 \ub530\ub77c \ud310\uc815\ud574\uc11c \uc774\uc720\ub97c JSON\uc73c\ub85c \ub3cc\ub824\uc8fc\uac8c \ud588\uace0, \ub514\uc790\uc778 \uaddc\uce59 \uc810\uac80\uae30\ub85c \uadf8\ub300\ub85c \uc751\uc6a9\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \uce74\uce74\uc624\uc2a4\ud0c0\uc77c\uc740 \uae30\ud68d\uc804 \uc815\ubcf4\ub85c \uc5ec\ub7ec \ucf58\uc149\ud2b8\uc758 \ubc30\ub108\uc640 \uce74\ud53c \uc2dc\uc548\uc744 \ub9cc\ub4e4\uace0 \uc624\ud0c8\uc790\uae4c\uc9c0 \uc810\uac80\ud588\uc2b5\ub2c8\ub2e4. \ud575\uc2ec\uc740 \ub514\uc790\uc778 \uc2dc\uc2a4\ud15c\uc744 \uba3c\uc800 \uad6c\uc870\ud654\ub41c \uc2a4\ud399\uc73c\ub85c \ub9cc\ub4dc\ub294 \uac83\uc785\ub2c8\ub2e4. \uc774\uac83\ub3c4 \ub113\uac8c \ubcf4\uba74 \ud654\uba74 \uc790\uc0b0\uc758 \uc628\ud1a8\ub85c\uc9c0\uc785\ub2c8\ub2e4.\n\nUX \ud300\uc744 \uc704\ud574 \ubbf8\ub9ac\uce94\ubc84\uc2a4 \uc544\ud0a4\ud14d\ucc98\ub97c \ud55c \uc7a5 \ub354 \ub123\uc5c8\uc2b5\ub2c8\ub2e4.",
+    5: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- \ube68\uac04 \ubc88\ud638: \uc378\ub124\uc77c\uc744 Claude\uac00 \uae00\ub85c \ubb18\uc0ac, \uc784\ubca0\ub529, \uc800\uc7a5\n- \ucd08\ub85d \ubc88\ud638: \ucc57\ubd07\uc774 \ub300\ud654 \uc774\ub825\uc744 \ubcf4\uba70 \uc720\ud615, \uc0c9\uc0c1\uc744 \ub418\ubb3b\uace0 \uc815\ub9ac\ub41c \ucffc\ub9ac\ub85c \uac80\uc0c9\n- \ubaa8\ubc14\uc77c \ubc45\ud0b9 \uc571: \ud654\uba74 \ucea1\ucc98, Figma \ud504\ub808\uc784\uc744 \uac19\uc740 \ubc29\uc2dd\uc73c\ub85c \ucea1\uc154\ub2dd\ud574 \ud654\uba74 \uc790\uc0b0 DB\ubd80\ud130\n- \uc774 \uc0ac\ub840\ub294 \uc678\ubd80 \ubca1\ud130 DB \uc0ac\uc6a9, \uc740\ud589\uc5d0\uc11c\ub294 OpenSearch \uac19\uc740 AWS \ub0b4 \uc11c\ube44\uc2a4\ub85c\n\n\ube68\uac04 \ubc88\ud638\uac00 \ubca1\ud130 DB\ub97c \ub9cc\ub4dc\ub294 \ud750\ub984\uc73c\ub85c, \uc378\ub124\uc77c\uc744 Claude\uac00 \uae00\ub85c \ubb18\uc0ac\ud558\uace0 \uc784\ubca0\ub529\ud574\uc11c \uc800\uc7a5\ud569\ub2c8\ub2e4. \ucd08\ub85d \ubc88\ud638\uac00 \ucc44\ud305 \ud750\ub984\uc73c\ub85c, \ucc57\ubd07\uc774 \ub300\ud654 \uc774\ub825\uc744 \ubcf4\uba74\uc11c \uc6d0\ud558\ub294 \uc720\ud615\uacfc \uc0c9\uc0c1\uc744 \ub418\ubb3b\uace0, \uc815\ub9ac\ub41c \ucffc\ub9ac\ub85c \uac80\uc0c9\ud569\ub2c8\ub2e4.\n\n\ubaa8\ubc14\uc77c \ubc45\ud0b9 \uc571\uc774\ub77c\uba74 \ud654\uba74 \ucea1\ucc98\ub098 Figma \ud504\ub808\uc784\uc744 \uac19\uc740 \ubc29\uc2dd\uc73c\ub85c \ucea1\uc154\ub2dd\ud574\uc11c \ud654\uba74 \uc790\uc0b0 DB\ub97c \uba3c\uc800 \ub9cc\ub4dc\ub294 \ub370\uc11c \uc2dc\uc791\ud558\uc2dc\uba74 \ub429\ub2c8\ub2e4. \uc774 \uc0ac\ub840\ub294 \uc678\ubd80 \ubca1\ud130 DB\ub97c \uc37c\ub294\ub370, \uc740\ud589\uc5d0\uc11c\ub294 OpenSearch \uac19\uc740 AWS \ub0b4 \uc11c\ube44\uc2a4\ub85c \ubc14\uafb8\uc154\uc57c \ud569\ub2c8\ub2e4.\n\n\uacfc\uc81c 3, \ub9ac\uc11c\uce58 \ubcf4\uace0\uc11c\uc785\ub2c8\ub2e4.",
+    6: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- LG\uc804\uc790 Deep Insight: \uac00\uc7a5 \uac00\uae4c\uc6b4 \uc0ac\ub840, \ucf54\ub4dc\uac00 \uc624\ud508\uc18c\uc2a4\ub85c \uacf5\uac1c\ub418\uc5b4 \ucd9c\ubc1c\uc810\uc73c\ub85c \uc0ac\uc6a9 \uac00\ub2a5\n- \ub9c1\ud06c\uc54c\ud30c: \uc694\uc57d \uc5d0\uc774\uc804\ud2b8 \ub4a4\uc5d0 Audit Agent, \uc778\uc6a9 \ucd9c\ucc98\uc640 \uacfc\uc7a5 \uc810\uac80, \uc6d0\ubb38 \ud31d\uc5c5. \uc885\ubaa9\ubcc4 \uae30\ucd08 \uc870\uc0ac 2\uc2dc\uac04 \uc774\uc0c1\uc5d0\uc11c 20\ubd84 \uc774\ub0b4\n- \uc11c\uc6b8\uacbd\uc81c\uc2e0\ubb38: 14\uac1c \ud56d\ubaa9 \uc790\uac00\uac80\uc99d \uccb4\ud06c\ub9ac\uc2a4\ud2b8, \uc218\uce58 \uc6d0\ubb38 100% \uc77c\uce58 \uaddc\uce59, \uc0ac\ub78c \uc774\uc911 \uac80\uc218. \uc5f0\uac04 2,500\uac74 \uc911 \ud658\uac01\uacfc \uc624\ubcf4 0\uac74(\uc790\uccb4 \uc9d1\uacc4)\n- \uacf5\ud1b5\uc810: \uc4f0\ub294 \ucabd\uacfc \uac80\uc99d\ud558\ub294 \ucabd \ubd84\ub9ac\n\n\uacfc\uc81c 3, \ub9ac\uc11c\uce58 \ubcf4\uace0\uc11c\uc785\ub2c8\ub2e4. \uc55e\uc5d0\uc11c \ubcf8 LG\uc804\uc790 Deep Insight\uac00 \uac00\uc7a5 \uac00\uae4c\uc6b4 \uc0ac\ub840\uc774\uace0, \ucf54\ub4dc\uac00 \uc624\ud508\uc18c\uc2a4\ub85c \uacf5\uac1c\ub3fc \uc788\uc5b4 \ubc14\ub85c \ucd9c\ubc1c\uc810\uc73c\ub85c \uc4f0\uc2e4 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\ub9c1\ud06c\uc54c\ud30c\ub294 \uae08\uc735 \ub9ac\uc11c\uce58 AI \ud68c\uc0ac\ub85c, \uc694\uc57d \uc5d0\uc774\uc804\ud2b8 \ub4a4\uc5d0 Audit Agent\ub97c \ub530\ub85c \ub450\uc5b4 \uc778\uc6a9 \ucd9c\ucc98\uac00 \ub9de\ub294\uc9c0, \uacfc\uc7a5\uc774 \uc5c6\ub294\uc9c0 \uc810\uac80\ud558\uace0 \uc6d0\ubb38\uc744 \ud31d\uc5c5\uc73c\ub85c \ubcf4\uc5ec\uc90d\ub2c8\ub2e4. \uc885\ubaa9\ubcc4 \uae30\ucd08 \uc870\uc0ac\uac00 2\uc2dc\uac04 \uc774\uc0c1\uc5d0\uc11c 20\ubd84 \uc774\ub0b4\ub85c \uc904\uc5c8\ub2e4\uace0 \ud569\ub2c8\ub2e4.\n\n\uc11c\uc6b8\uacbd\uc81c\uc2e0\ubb38\uc740 14\uac1c \ud56d\ubaa9 \uc790\uac00\uac80\uc99d \uccb4\ud06c\ub9ac\uc2a4\ud2b8\uc640 \uc218\uce58\ub294 \uc6d0\ubb38\uacfc 100% \uc77c\uce58 \uac19\uc740 \uaddc\uce59, \uadf8\ub9ac\uace0 \uc0ac\ub78c\uc758 \uc774\uc911 \uac80\uc218\ub97c \ubd99\uc600\uace0, \uc5f0\uac04 2,500\uac74 \uae30\uc0ac \uc911 \ud658\uac01\uacfc \uc624\ubcf4 0\uac74\uc774\ub77c\uace0 \uc790\uccb4 \uc9d1\uacc4\ud588\uc2b5\ub2c8\ub2e4. \uacf5\ud1b5\uc810\uc740 \uc4f0\ub294 \ucabd\uacfc \uac80\uc99d\ud558\ub294 \ucabd\uc744 \ubd84\ub9ac\ud588\ub2e4\ub294 \uac83\uc785\ub2c8\ub2e4.\n\n\uacfc\uc81c 4, \uc11c\ub958 \ub204\ub77d \uc810\uac80\uc785\ub2c8\ub2e4.",
+    7: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- Rocket Close: Textract\ub85c \ub808\uc774\uc544\uc6c3, \ud45c, \uc11c\uba85 \uac10\uc9c0, Bedrock\uc774 60\uc5ec \ubb38\uc11c \uc720\ud615 \ubd84\ub958, \ud544\ub4dc \uc815\uc758\uc640 \ub370\uc774\ud130 \uc0ac\uc804\uc73c\ub85c \ucd94\ucd9c\uacfc \ub300\uc870. 30\ubd84\uc5d0\uc11c 2\ubd84 \ubbf8\ub9cc, 4.4\ub9cc+ \ud544\ub4dc \uc815\ud655\ub3c4 89.71%\n- Sun Finance: \uc2e0\ubd84\uc99d \ucd94\ucd9c\uac12\uc744 \uace0\uac1d \uc785\ub825\uac12\uacfc \ub300\uc870, \uc704\ubcc0\uc870 \ud0d0\uc9c0. \uc815\ud655\ub3c4 79.7%\uc5d0\uc11c 90.8%\n- \uce74\uce74\uc624\ud398\uc774\uc190\ud574\ubcf4\ud5d8: \uc601\uc218\uc99d \ud310\ubcc4, \ud544\uc218 \ud56d\ubaa9 3\uac1c \ucd94\ucd9c, \uc790\ub3d9 \uc9c0\uae09\n- \ud55c\uad6d\uc5b4 \uc11c\ub958: OCR \uc5d4\uc9c4\uc758 \ud55c\uad6d\uc5b4 \uc9c0\uc6d0 \ud655\uc778, \uba40\ud2f0\ubaa8\ub2ec \ubaa8\ub378 \uc9c1\uc811 \ud310\ub3c5\uacfc \ube44\uad50\n\n\uacfc\uc81c 4, \uace0\uac1d \uc81c\ucd9c\uc11c\ub958 \ub204\ub77d \uc810\uac80\uc785\ub2c8\ub2e4. \uac00\uc7a5 \uad6c\uc870\uac00 \ub2ee\uc740 \uac74 \ubbf8\uad6d \ubaa8\uae30\uc9c0 \uc11c\ub958\ub97c \ucc98\ub9ac\ud558\ub294 Rocket Close\uc785\ub2c8\ub2e4. Textract\uac00 \ub808\uc774\uc544\uc6c3, \ud45c, \uc11c\uba85\uc744 \uac10\uc9c0\ud558\uace0, Bedrock \ubaa8\ub378\uc774 60\uc5ec \uac1c \ubb38\uc11c \uc720\ud615\uc73c\ub85c \ubd84\ub958\ud55c \ub4a4, \ud544\ub4dc \uc815\uc758\uc640 \ub370\uc774\ud130 \uc0ac\uc804\uc744 \ud504\ub86c\ud504\ud2b8\uc5d0 \ub123\uc5b4 \uac12\uc744 \ubf51\uace0 \ub300\uc870\ud569\ub2c8\ub2e4. \ud328\ud0a4\uc9c0\ub2f9 \uc218\uc791\uc5c5 30\ubd84\uc774 2\ubd84 \ubbf8\ub9cc\uc73c\ub85c \uc904\uc5c8\uace0, 4.4\ub9cc \uac1c\uac00 \ub118\ub294 \ud544\ub4dc\uc5d0\uc11c \uc815\ud655\ub3c4 89.71%\ub97c \ubcf4\uace0\ud588\uc2b5\ub2c8\ub2e4.\n\nSun Finance\ub294 \uc628\ub77c\uc778 \ub300\ucd9c KYC \uc0ac\ub840\ub85c, \uc2e0\ubd84\uc99d\uc5d0\uc11c \ubf51\uc740 \uac12\uc744 \uace0\uac1d \uc785\ub825\uac12\uacfc \ub300\uc870\ud574 \ubd88\uc77c\uce58\ub97c \uc7a1\uace0 \uc704\ubcc0\uc870\ub3c4 \ud0d0\uc9c0\ud569\ub2c8\ub2e4. \uad6d\ub0b4 \uc0ac\ub840\ub85c\ub294 \uce74\uce74\uc624\ud398\uc774\uc190\ud574\ubcf4\ud5d8\uc774 \ud734\ub300\ud3f0 \uc218\ub9ac\ube44 \uc601\uc218\uc99d\uc744 \ud310\ubcc4\ud558\uace0 \ud544\uc218 \ud56d\ubaa9 \uc138 \uac1c\ub97c \ubf51\uc544 \uc790\ub3d9 \uc9c0\uae09\uc73c\ub85c \uc5f0\uacb0\ud588\uc2b5\ub2c8\ub2e4.\n\ud55c\uad6d\uc5b4 \uc11c\ub958\ub77c\uba74 \uc4f0\ub824\ub294 OCR \uc5d4\uc9c4\uc774 \ud55c\uad6d\uc5b4\ub97c \uc9c0\uc6d0\ud558\ub294\uc9c0\ubd80\ud130 \ud655\uc778\ud558\uc2dc\uace0, \uba40\ud2f0\ubaa8\ub2ec \ubaa8\ub378\ub85c \uc9c1\uc811 \ud310\ub3c5\ud558\ub294 \ubc29\ubc95\uacfc \ube44\uad50\ud574 \ubcf4\uc2dc\uae38 \uad8c\ud569\ub2c8\ub2e4.\n\n\uacfc\uc81c 5, IT \uc6b4\uc601\uc9c0\uc2dd \uc704\ud0a4\uc785\ub2c8\ub2e4.",
+    8: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- \uce74\uce74\uc624\ud398\uc774\uc99d\uad8c \ucd98\uc2dc\ub9ac: Confluence 1\uc2dc\uac04\ub9c8\ub2e4 \uc2a4\uce94\ud574 \ubca1\ud130 DB \ubc18\uc601, \"\ud559\uc2b5/\" \uba54\uc2dc\uc9c0\ub85c \uc989\uc11d \uc9c0\uc2dd \ucd94\uac00\n- A1Mobilsoft: Slack \uc6b4\uc601 \ubb38\uc758 \uba40\ud2f0 \uc5d0\uc774\uc804\ud2b8(AgentCore Runtime), 14\uac74 \ube44\uad50\uc5d0\uc11c 1\ucc28 \uc751\ub2f5 \uc911\uc559\uac12 \uc0ac\ub78c 10\ubd84, AI 2\ucd08(\ud45c\ubcf8 \uc791\uc74c)\n- \ucd94\ucc9c: \uc88b\uc544\uc694 \ubc1b\uc740 \uc2a4\ub808\ub4dc\ub9cc \uc815\uc81c\ud574 KB\uc5d0 \ub3d9\uae30\ud654\ud558\ub294 \ub8e8\ud504. \uc9c8\uc758 \uc774\ub825\uc73c\ub85c \uc9c0\uc2dd \ubcf4\uac15\uc774\ub77c\ub294 \uacfc\uc81c \ubaa9\ud45c\uc640 \uc77c\uce58\n\n\uacfc\uc81c 5, IT \uc6b4\uc601\uc9c0\uc2dd \uc704\ud0a4\uc785\ub2c8\ub2e4. \uce74\uce74\uc624\ud398\uc774\uc99d\uad8c DevOps\ud300\uc758 \ucd98\uc2dc\ub9ac\ub294 \uc0ac\ub0b4 Confluence \ubb38\uc11c\ub97c 1\uc2dc\uac04\ub9c8\ub2e4 \uc2a4\uce94\ud574\uc11c \ubca1\ud130 DB\uc5d0 \ubc18\uc601\ud558\uace0, \uc544\uc9c1 \ubb38\uc11c\ud654\ub418\uc9c0 \uc54a\uc740 \uc815\ubcf4\ub294 \ud559\uc2b5/\uc73c\ub85c \uc2dc\uc791\ud558\ub294 \uba54\uc2dc\uc9c0\ub85c \ubc14\ub85c \uac00\ub974\uce60 \uc218 \uc788\uac8c \ud588\uc2b5\ub2c8\ub2e4.\nA1Mobilsoft\ub294 Slack \uc6b4\uc601 \ubb38\uc758\uc5d0 \ub2f5\ud558\ub294 \uba40\ud2f0 \uc5d0\uc774\uc804\ud2b8\ub97c AgentCore Runtime \uc704\uc5d0 \ub9cc\ub4e4\uc5c8\uc2b5\ub2c8\ub2e4. 14\uac74\uc744 \uc0ac\ub78c \ub2f5\ubcc0\uacfc \ube44\uad50\ud588\ub354\ub2c8 1\ucc28 \uc751\ub2f5 \uc911\uc559\uac12\uc774 \uc0ac\ub78c 10\ubd84, AI 2\ucd08\uc600\uc2b5\ub2c8\ub2e4. \ud45c\ubcf8\uc774 \uc791\ub2e4\ub294 \uc810\uc740 \uac10\uc548\ud574 \uc8fc\uc138\uc694.\n\n\uc81c\uac00 \uac00\uc7a5 \ucd94\ucc9c\ud558\ub294 \uac74 \uc138 \ubc88\uc9f8 \uce78\uc758 \ub8e8\ud504\uc785\ub2c8\ub2e4. \uc88b\uc544\uc694\ub97c \ubc1b\uc740 \uc2a4\ub808\ub4dc\ub9cc \uc815\uc81c\ud574\uc11c \uc9c0\uc2dd\ubca0\uc774\uc2a4\uc5d0 \ub3d9\uae30\ud654\ud558\uae30 \ub54c\ubb38\uc5d0, \uc9c8\uc758 \uc774\ub825\uc774 \uc313\uc77c\uc218\ub85d \uc704\ud0a4\uac00 \uc88b\uc544\uc9d1\ub2c8\ub2e4. \uc9c8\uc758 \uc774\ub825\uc73c\ub85c \uc9c0\uc2dd \ubcf4\uac15\uc774\ub77c\ub294 \uacfc\uc81c \ubaa9\ud45c\uc640 \uc815\ud655\ud788 \ub9de\uc2b5\ub2c8\ub2e4. 2\ubd80 D1\uc758 \ub418\ubb3b\uae30 \ub85c\uadf8\ub3c4 \uac19\uc740 \ubc29\uc2dd\uc73c\ub85c \uc0ac\uc804 \ubcf4\uac15 \uc7ac\ub8cc\uac00 \ub429\ub2c8\ub2e4.\n\n\ub9c8\uc9c0\ub9c9 \uacfc\uc81c 6, \ud1b5\ud569\uad00\uc81c\uc785\ub2c8\ub2e4.",
+    9: "\u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- GS\ub9ac\ud14c\uc77c: Bedrock\uacfc MCP\ub85c Datadog, EKS, DB \uc5f0\ub3d9, \uac00\uc124\uacfc \uac80\uc99d \ub8e8\ud504\ub85c RCA, \ud3c9\uade0 30\ubd84 \uc774\uc0c1\uc5d0\uc11c 198\ucd08\n- \uc0bc\uc131\uacc4\uc815: Strands Agents-as-Tools\ub85c \uc218\uc9d1, \ubd84\uc11d, \uc870\uce58 \uc81c\uc548 \ubd84\ub9ac, \uc7ac\uc2dc\uc791\uacfc \ub864\ubc31\uc740 \ubc94\uc704 \uc81c\uc678, \ucd5c\uc885 \uc2e4\ud589 \uad8c\ud55c\uc740 \uc0ac\ub78c\n- \ud1a0\uc2a4\ubc45\ud06c ZeroOps: 2026\ub144 7\uc6d4 \ud601\uc2e0\uae08\uc735\uc11c\ube44\uc2a4 \uc9c0\uc815(\uc784\uc9c1\uc6d0\uc6a9)\n- \ub0b4\ubd80\ub9dd \ud658\uacbd: \uae30\uc874 \ub85c\uadf8\uc640 \uc9c0\ud45c \ub3c4\uad6c\ub97c MCP \uc11c\ubc84\ub85c \uac10\uc2f8\ub294 \ub370\uc11c \uc2dc\uc791. AWS DevOps Agent\ub294 \ub9ac\uc804 \ud655\uc778 \ud544\uc694\n\n\uacfc\uc81c 6, AI \uae30\ubc18 \ud1b5\ud569\uad00\uc81c\uc785\ub2c8\ub2e4. GS\ub9ac\ud14c\uc77c\uc740 \uc778\uc2dc\ub358\ud2b8\ub9c8\ub2e4 \uc5ec\ub7ec \ub3c4\uad6c\ub97c \uc624\uac00\uba70 \ud3c9\uade0 30\ubd84 \uc774\uc0c1 \uac78\ub9ac\ub358 \ubd84\uc11d\uc744, Bedrock\uacfc MCP\ub85c Datadog, EKS, DB\ub97c \uc5f0\ub3d9\ud55c SRE \uc5d0\uc774\uc804\ud2b8\ub85c \uc790\ub3d9\ud654\ud588\uc2b5\ub2c8\ub2e4. \uc5d0\uc774\uc804\ud2b8\uac00 \uac00\uc124\uc744 \uc138\uc6b0\uace0 \uac80\uc99d\ud558\ub294 \ub8e8\ud504\ub85c \uadfc\ubcf8 \uc6d0\uc778\uc744 \ucc3e\uace0 \ubcf4\uace0\uc11c\uae4c\uc9c0 \uc501\ub2c8\ub2e4.\n\uc0bc\uc131\uacc4\uc815 \uc0ac\ub840\ub294 Strands\uc758 Agents-as-Tools \ud328\ud134\uc73c\ub85c \uc218\uc9d1, \ubd84\uc11d, \uc870\uce58 \uc81c\uc548 \uc5d0\uc774\uc804\ud2b8\ub97c \ub098\ub234\uace0, \uc7ac\uc2dc\uc791\uc774\ub098 \ub864\ubc31\ucc98\ub7fc \uc6b4\uc601\uc5d0 \uc601\ud5a5\uc744 \uc8fc\ub294 \uc870\uce58\ub294 \uc77c\ubd80\ub7ec \ubc94\uc704\uc5d0\uc11c \ube90\uc2b5\ub2c8\ub2e4. \ucd5c\uc885 \uc2e4\ud589 \uad8c\ud55c\uc740 \ud56d\uc0c1 \uc0ac\ub78c\uc5d0\uac8c \ub454\ub2e4\uace0 \uba85\uc2dc\ud588\uace0, \uc740\ud589 \uad00\uc81c\uc5d0 \uadf8\ub300\ub85c \uac00\uc838\uc62c \uc6d0\uce59\uc785\ub2c8\ub2e4.\n\n\ud1a0\uc2a4\ubc45\ud06c ZeroOps\ub294 Bedrock \uae30\ubc18 \uc7a5\uc560 \uc6d0\uc778 \ubd84\uc11d \uc11c\ube44\uc2a4\ub85c \uc62c\ud574 7\uc6d4 \ud601\uc2e0\uae08\uc735\uc11c\ube44\uc2a4\ub85c \uc9c0\uc815\ub410\uc2b5\ub2c8\ub2e4. \ub0b4\ubd80\ub9dd \ud658\uacbd\uc774\ub77c\uba74 \uae30\uc874 \ub85c\uadf8\uc640 \uc9c0\ud45c \ub3c4\uad6c\ub97c MCP \uc11c\ubc84\ub85c \uac10\uc2f8\uc11c \uc5d0\uc774\uc804\ud2b8\uac00 \uc77d\uac8c \ud558\ub294 \ub370\uc11c \uc2dc\uc791\ud558\uc2dc\uae38 \uad8c\ud569\ub2c8\ub2e4. \ucc38\uace0\ub85c AWS DevOps Agent\ub77c\ub294 \uad00\ub9ac\ud615 \uc11c\ube44\uc2a4\ub3c4 \uc788\ub294\ub370, \uc11c\ube44\uc2a4 \uc81c\uacf5 \ub9ac\uc804\uc740 \uc0ac\uc804\uc5d0 \ud655\uc778\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.\n\n\ub9c8\uc9c0\ub9c9 5\ubd80\uc5d0\uc11c \uc628\ud1a8\ub85c\uc9c0 \uc704\uc758 \uc5d0\uc774\uc804\ud2b8 \uc571\uc744 \ud654\uba74\uc73c\ub85c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4."
+  };
+  const deck = new SlideFramework({
+    logoSrc: "./common/pptx-theme/images/logo_dark.png",
+    
+    footer: "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.",
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

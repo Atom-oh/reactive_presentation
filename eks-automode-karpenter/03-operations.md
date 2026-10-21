@@ -578,6 +578,16 @@ autoshift, 즉 AWS가 장애를 감지해 자동으로 shift하는 기능은 따
 .ak3-num { display: inline-flex; align-items: center; justify-content: center; width: 1.8em; height: 1.8em; border-radius: 50%; background: var(--accent-subtle); color: var(--accent); font-weight: var(--weight-bold); margin-bottom: var(--space-2); }
 .ak3-step strong { display: block; margin-bottom: var(--space-1); }
 .ak3-sub { color: var(--text-secondary); }
+.ak3-brk { position: relative; }
+.ak3-brk > .callout { position: static; }
+.ak3-tip { position: static; display: inline; border-bottom: 1px dotted var(--accent); cursor: help; outline: none; }
+.ak3-tip .ak3-i { color: var(--accent); font-weight: var(--weight-bold); margin-left: 0.2rem; }
+.ak3-tipbox { position: absolute; z-index: 50; left: 0; top: 0; width: 100%; box-sizing: border-box; max-height: 100%; overflow: auto; padding: var(--space-2) var(--space-3); border: 1px solid var(--accent); border-radius: var(--radius-md); background: var(--bg-primary); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); color: var(--text-primary); font-size: var(--fs-caption); line-height: 1.4; word-break: keep-all; overflow-wrap: anywhere; opacity: 0; visibility: hidden; transform: translateY(4px); transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s; pointer-events: none; }
+.ak3-tip:hover .ak3-tipbox, .ak3-tip:focus .ak3-tipbox, .ak3-tip:focus-within .ak3-tipbox { opacity: 1; visibility: visible; transform: none; }
+.ak3-tipbox ul { margin: var(--space-1) 0 0; padding-left: var(--space-4); }
+.ak3-tipbox li { margin-bottom: 0.15rem; }
+.ak3-tipbox, .ak3-tipbox code { font-size: var(--fs-caption); }
+.ak3-hint { font-size: var(--fs-caption); color: var(--text-secondary); }
 .text-accent  { color: var(--accent);  font-weight: var(--weight-bold); }
 .text-info    { color: var(--info);    font-weight: var(--weight-bold); }
 .text-warning { color: var(--warning); font-weight: var(--weight-bold); }
@@ -598,8 +608,16 @@ autoshift, 즉 AWS가 장애를 감지해 자동으로 shift하는 기능은 따
   <div class="callout callout-warning fragment fade-up" data-fragment-index="1"><strong class="text-warning">왜 Karpenter가 먼저인가</strong>: 1.37 호환 버전은 1.15.x뿐입니다. v1.14 LTS로는 1.36까지만 갈 수 있습니다.</div>
 </div>
 <div class="tc" hidden>
-  <div class="card-grid">
-    <div class="callout callout-warning"><strong class="text-warning">Node Repair가 voluntary로</strong><div class="on-surface-muted">대체 노드 선 생성, NDB reason <code>Unhealthy</code>. CRD enum이 바뀌므로 CRD를 함께 업그레이드</div></div>
+  <div class="card-grid ak3-brk">
+    <div class="callout callout-warning"><strong class="text-warning">Node Repair가 voluntary로</strong><div class="on-surface-muted">대체 노드 선 생성, <span class="ak3-tip" tabindex="0">NDB reason <code>Unhealthy</code><span class="ak3-i">ⓘ</span><span class="ak3-tipbox"><strong class="text-accent">NDB = NodePool Disruption Budget</strong> (<code>spec.disruption.budgets</code>)
+<ul>
+<li><strong>v1.15부터 graceful</strong>: 대체 노드를 먼저 띄운 뒤 PDB를 따라 drain (조건별 grace period가 상한)</li>
+<li><strong>reason <code>Unhealthy</code></strong>: <code>reasons: [Unhealthy]</code>로 repair 속도만 제한. reasons 없는 budget(기본 10%)도 적용</li>
+<li><strong>NotReady를 빼지 않음</strong>: 고장 노드가 허용량을 다 써서 repair를 막지 않게 계산</li>
+<li><strong>연쇄 고장 차단</strong>: 풀의 20% 넘게 고장이면 중단, <code>NodeRepairBlocked</code> 이벤트</li>
+<li><strong>CRD 먼저</strong>: enum에 <code>Unhealthy</code>가 추가되어 <code>karpenter-crd</code>를 같이 올려야 함</li>
+<li><strong>켜기</strong>: self-managed는 <code>NodeRepair</code> gate (alpha, 기본 off), Auto Mode는 내장</li>
+</ul></span></span>. CRD enum이 바뀌므로 CRD를 함께 업그레이드<div class="ak3-hint">ⓘ에 마우스를 올리면 설명</div></div></div>
     <div class="callout callout-warning"><strong class="text-warning">kubelet 검증이 controller로</strong><div class="on-surface-muted">apply는 성공, EC2NodeClass가 <code>Invalid<wbr>Kubelet<wbr>Configuration</code>으로 NotReady</div></div>
     <div class="callout callout-warning"><strong class="text-warning">무시되던 설정 거부</strong><div class="on-surface-muted">Bottlerocket <code>podsPerCore</code>, <code>clusterDNS</code> 2개 이상은 <code>Unsupported<wbr>Kubelet<wbr>Configuration</code></div></div>
     <div class="callout callout-warning"><strong class="text-warning">메트릭 label 변경</strong><div class="on-surface-muted"><code>reason</code> 소문자화, <code>consolidation_<wbr>type</code>은 empty, single, multi, 미분류 error는 <code>unknown</code></div></div>
@@ -617,20 +635,27 @@ autoshift, 즉 AWS가 장애를 감지해 자동으로 shift하는 기능은 따
 :::
 
 :::notes
-{timing: 2min}
+{timing: 2.5min}
 [요약]
 - self-managed 순서: Karpenter 1.15.x(CRD chart 포함, 버전 문자열은 v 없이 1.15.0), 상태 확인, 컨트롤 플레인 1.37, 노드 AMI 갱신과 Drift 롤링
+- NDB = NodePool Disruption Budget. v1.15 Node Repair는 graceful(대체 노드 선 생성, PDB 존중, 조건별 grace period 상한), budget reason Unhealthy로 속도 제한, reasons 없는 budget도 적용, Unhealthy 계산은 NotReady 노드를 빼지 않음, 20% 초과 고장이면 중단(NodeRepairBlocked)
+- self-managed NodeRepair gate는 alpha 기본 off, legacy는 --legacy-node-repair(강제 교체). Auto Mode는 auto repair 내장
 - v1.15.0 breaking: Node Repair voluntary화와 Unhealthy enum(CRD 동시 업그레이드), kubelet 검증의 controller 이동, Bottlerocket podsPerCore와 다중 clusterDNS 거부, 메트릭 label 변경
 - Auto Mode: 구성 요소는 AWS가 업데이트, 사용자는 1.37 변경(SELinuxMount)과 NodePool 정책을 점검, 노드는 Drift로 교체
 
 1.37로 올릴 때 self-managed의 순서는 Karpenter가 먼저입니다. 1.37을 지원하는 Karpenter는 1.15.x뿐이라서, 컨트롤 플레인을 먼저 올리면 지원 범위를 벗어난 상태가 됩니다. Helm으로 올릴 때는 CRD chart인 karpenter-crd와 controller chart를 같이 올리고, 버전 문자열은 v 없이 1.15.0입니다. v1.15.0이라고 쓰면 not found가 납니다.
 {cue: demo}
-두 번째 탭은 v1.15.0의 breaking change 네 가지입니다. Node Repair가 voluntary disruption이 되어 budget reason Unhealthy를 따르므로 CRD를 함께 올립니다. kubelet 검증이 controller로 옮겨져, 잘못된 값도 apply는 성공하고 EC2NodeClass가 NotReady가 됩니다. 무시되던 Bottlerocket 설정은 이제 거부되고, 메트릭 label이 바뀌어 대시보드 쿼리를 손봐야 합니다.
+두 번째 탭은 v1.15.0의 breaking change 네 가지입니다. 첫째 카드의 NDB reason Unhealthy에 마우스를 올리면 설명이 펼쳐집니다. NDB는 NodePool Disruption Budget, 즉 NodePool의 spec.disruption.budgets입니다. v1.15부터 Node Repair가 graceful disruption이 되어, 고장 노드를 고칠 때 대체 노드를 먼저 띄우고 Ready가 되면 PDB를 따라 drain한 뒤 종료합니다. 대신 budget을 따르게 되어 reason에 Unhealthy가 추가됐고, reasons: [Unhealthy]로 repair 속도만 따로 제한할 수 있습니다. reasons를 비워 둔 budget, 예를 들어 기본 10%는 repair에도 적용됩니다.
+{cue: pause}
+Unhealthy 계산은 다른 reason과 다릅니다. 보통은 NotReady 노드를 허용량에서 빼는데, Unhealthy는 빼지 않습니다. 고장 노드가 budget을 다 써 버려서 정작 고치는 작업이 막히면 안 되기 때문입니다. 풀의 20%를 넘는 노드가 동시에 고장이면 AMI나 AZ 문제일 가능성이 커서 repair를 멈추고 NodeRepairBlocked 이벤트를 냅니다. 그리고 CRD enum에 Unhealthy가 새로 들어갔으니 karpenter-crd chart를 함께 올려야 합니다. 참고로 self-managed는 NodeRepair feature gate가 아직 alpha라 기본으로 꺼져 있고, Auto Mode는 auto repair가 내장입니다.
+나머지 세 가지입니다. kubelet 검증이 controller로 옮겨져, 잘못된 값도 apply는 성공하고 EC2NodeClass가 NotReady가 됩니다. 무시되던 Bottlerocket 설정은 이제 거부되고, 메트릭 label이 바뀌어 대시보드 쿼리를 손봐야 합니다.
 {cue: pause}
 세 번째 탭 Auto Mode는 단계가 짧습니다. 관리형 구성 요소는 AWS가 업데이트하고, 사용자는 1.37의 SELinuxMount 기본 활성화를 확인합니다. 같은 볼륨을 다른 SELinux 라벨로 공유하는 Pod는 ContainerCreating에 머물 수 있습니다. 그리고 3부에서 본 Balanced 기본값을 반영할지 NodePool에 명시해 두고, 노드는 Drift로 교체되니 PDB가 막고 있지 않은지 봅니다.
 
 [출처]
 - https://karpenter.sh/docs/upgrading/upgrade-guide/#upgrading-to-1150, https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0
+- https://karpenter.sh/docs/concepts/disruption/#node-auto-repair, #nodepool-disruption-budgets (Unhealthy reason, NotReady 계산, 20% 차단)
+- kubernetes-sigs/karpenter v1.15.0 pkg/operator/options/options.go (NodeRepair gate Alpha, Default false), pkg/apis/v1/nodepool.go (reason enum)
 - helm show chart oci://public.ecr.aws/karpenter/karpenter --version 1.15.0 (2026-10-20 실행)
 - https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html#kubernetes-1-37
 {cue: transition}
@@ -817,7 +842,15 @@ Auto Mode에서는 어떨까요. 관리형 controller의 karpenter 메트릭을 
 
 :::html
 <style>
-.ak3-cost { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); align-items: start; }
+.ak3-cost { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); align-items: start; position: relative; }
+.ak3-cost .callout, .ak3-cost .ak3-stack { position: static; }
+.ak3-tip { position: static; display: inline; border-bottom: 1px dotted var(--accent); cursor: help; outline: none; }
+.ak3-tip .ak3-i { color: var(--accent); font-weight: var(--weight-bold); margin-left: 0.2rem; }
+.ak3-tipbox { position: absolute; z-index: 50; left: 0; top: 0; width: 100%; box-sizing: border-box; max-height: 100%; overflow: auto; padding: var(--space-2) var(--space-3); border: 1px solid var(--accent); border-radius: var(--radius-md); background: var(--bg-primary); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); color: var(--text-primary); font-size: var(--fs-caption); font-weight: normal; line-height: 1.4; word-break: keep-all; overflow-wrap: anywhere; opacity: 0; visibility: hidden; transform: translateY(4px); transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s; pointer-events: none; }
+.ak3-cost:has(.ak3-tip:hover) > .ak3-tipbox, .ak3-cost:has(.ak3-tip:focus) > .ak3-tipbox { opacity: 1; visibility: visible; transform: none; }
+.ak3-tipbox, .ak3-tipbox code { font-size: var(--fs-caption); }
+.ak3-tipbox table { width: 100%; margin-top: var(--space-2); }
+.ak3-tipbox td, .ak3-tipbox th { padding: 0.15rem 0.5rem; text-align: left; }
 .ak3-calc { display: flex; flex-direction: column; gap: var(--space-2); }
 .ak3-row { display: grid; grid-template-columns: 7rem 1fr; align-items: center; gap: var(--space-3); font-size: var(--fs-card); }
 .ak3-row label { color: var(--text-secondary); }
@@ -834,6 +867,14 @@ Auto Mode에서는 어떨까요. 관리형 controller의 karpenter 메트릭을 
 .on-surface-muted { color: var(--text-secondary); font-size: var(--fs-card); margin-top: var(--space-2); word-break: keep-all; overflow-wrap: anywhere; }
 </style>
 <div class="ak3-cost">
+  <div class="ak3-tipbox"><strong class="text-accent">Spot이어도 관리비는 On-Demand 기준 금액 그대로</strong><br>관리비는 인스턴스 유형별 시간당 고정 금액입니다. 12%는 On-Demand 가격과 나눈 계산값이고, Spot 가격과 나누면 비율이 훨씬 커집니다.
+<table class="data-table">
+<thead><tr><th>서울, 시간당</th><th>관리비</th><th>On-Demand</th><th>Spot (AZ별)</th><th>관리비 비율</th></tr></thead>
+<tbody>
+<tr><td>m5.large</td><td>$0.01416</td><td>$0.118</td><td>$0.0195 ~ 0.0250</td><td>OD의 12%, Spot의 57 ~ 73%</td></tr>
+<tr><td>m7g.large</td><td>$0.01204</td><td>$0.1003</td><td>$0.0194 ~ 0.0324</td><td>OD의 12%, Spot의 37 ~ 62%</td></tr>
+</tbody></table>
+<div>그래도 합계는 Spot이 쌉니다: m5.large Spot + 관리비 $0.034 ~ 0.039 vs On-Demand + 관리비 $0.132. Spot 가격은 2026-10-21 조회값이며 수시로 바뀝니다.</div></div>
   <div class="ak3-calc card">
     <div class="ak3-pick" id="ak3-pick">
       <button class="btn btn-sm active" data-t="m5">m5.large</button>
@@ -849,7 +890,7 @@ Auto Mode에서는 어떨까요. 관리형 controller의 karpenter 메트릭을 
   </div>
   <div class="ak3-stack">
     <div class="callout callout-info fragment fade-left" data-fragment-index="1"><strong class="text-info">인스턴스 유형과 시간 기준</strong><div class="on-surface-muted">EC2 요금과 별도로 부과, 초 단위 과금, 최소 1분</div></div>
-    <div class="callout callout-warning fragment fade-left" data-fragment-index="2"><strong class="text-warning">구매 옵션과 독립</strong><div class="on-surface-muted">Spot, RI, Savings Plans 할인이 관리비를 줄이지 않습니다. Spot일수록 비율이 커집니다.</div></div>
+    <div class="callout callout-warning fragment fade-left" data-fragment-index="2"><strong class="text-warning"><span class="ak3-tip" tabindex="0">구매 옵션과 독립<span class="ak3-i">ⓘ</span></span></strong><div class="on-surface-muted">Spot, RI, Savings Plans 할인이 관리비를 줄이지 않습니다. Spot일수록 비율이 커집니다.</div></div>
     <div class="callout callout-info fragment fade-left" data-fragment-index="3"><strong class="text-info">GPU 계열 인하 (2026-07-01)</strong><div class="on-surface-muted">G 계열 35%, P 계열과 Trainium 60% 인하. 조직 150노드 초과는 별도 문의</div></div>
   </div>
 </div>
@@ -886,6 +927,7 @@ Auto Mode에서는 어떨까요. 관리형 controller의 karpenter 메트릭을 
 [요약]
 - Auto Mode 관리비는 EC2 요금과 별도, 관리하는 인스턴스의 유형과 시간 기준, 초 단위 과금(최소 1분)
 - 구매 옵션과 독립: Spot, RI, Savings Plans 할인이 관리비를 줄이지 않음
+- hover: Spot이어도 관리비 금액은 같음. m5.large 관리비 $0.01416 = OD $0.118의 12%, 서울 Spot $0.0195~0.0250의 57~73%(2026-10-21 AZ별). m7g.large는 Spot $0.0194~0.0324의 37~62%. 합계는 Spot+관리비 $0.034~0.039 vs OD+관리비 $0.132
 - 서울 m5.large 관리비 $0.01416/h vs OD $0.118/h, m7g.large $0.01204/h vs $0.1003/h, 둘 다 OD의 약 12%(계산값)
 - 2026-07-01 GPU 관리비 인하: G 35%, P와 Trainium 60%. 조직 150노드 초과는 별도 문의
 
@@ -893,12 +935,13 @@ Auto Mode의 비용 구조는 단순합니다. EC2 요금은 그대로 내고, A
 {cue: demo}
 왼쪽 계산기로 보겠습니다. 서울 리전 m5.large 20대를 한 달 730시간 돌리면 관리비가 이 정도이고, On-Demand EC2 요금은 이 정도입니다. 아래 줄의 비율을 보시면 약 12%입니다. m7g.large로 바꿔도 비율은 비슷합니다. 다만 이 12%는 AWS가 공시한 퍼센트가 아니라, Price List API의 두 단가를 나눠 제가 계산한 값입니다. AWS는 인스턴스 유형별 단가로만 공시합니다.
 {cue: pause}
-중요한 것은 오른쪽 노란 박스입니다. 관리비는 EC2 구매 옵션과 독립입니다. Spot이나 Savings Plans로 EC2 비용을 줄여도 관리비는 그대로이니, Spot 비중이 높을수록 EC2 비용 대비 관리비 비율이 커집니다. self-managed는 이 관리비가 없는 대신 Karpenter controller를 돌릴 노드 비용과, 무엇보다 운영 인력의 시간이 듭니다.
+중요한 것은 오른쪽 노란 박스입니다. 관리비는 EC2 구매 옵션과 독립입니다. Spot이나 Savings Plans로 EC2 비용을 줄여도 관리비는 그대로이니, Spot 비중이 높을수록 EC2 비용 대비 관리비 비율이 커집니다. 노란 박스 제목에 마우스를 올리면 숫자가 나옵니다. m5.large 관리비 $0.01416은 On-Demand $0.118의 12%이지만, 오늘 서울 Spot 가격 $0.0195에서 $0.0250과 비교하면 57%에서 73%입니다. 그래도 Spot에 관리비를 더한 시간당 $0.034에서 $0.039가 On-Demand에 관리비를 더한 $0.132보다 훨씬 쌉니다. 비율이 커질 뿐 Spot이 손해라는 뜻은 아닙니다. self-managed는 이 관리비가 없는 대신 Karpenter controller를 돌릴 노드 비용과, 무엇보다 운영 인력의 시간이 듭니다.
 GPU는 7월 1일부터 관리비가 G 계열 35%, P 계열과 Trainium 60% 인하되었습니다. 조직 전체로 150노드를 넘으면 별도 가격 문의 안내가 있습니다.
 
 [출처]
 - https://aws.amazon.com/eks/pricing/
 - aws pricing get-products --service-code AmazonEKS, AmazonEC2 (regionCode ap-northeast-2, 2026-10-20 조회)
+- aws ec2 describe-spot-price-history --region ap-northeast-2 --instance-types m5.large m7g.large --product-descriptions Linux/UNIX (2026-10-21 06:00 UTC 조회)
 - https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-auto-mode-gpu-price/
 {cue: transition}
 그럼 Savings Plans와 Spot은 어디까지 할인되고, 비용은 어떻게 나눠 볼까요.
@@ -1158,7 +1201,7 @@ Load Balancer도 마찬가지로 인수되지 않습니다. 새 LB를 만들어 
 :::
 
 :::notes
-{timing: 2min}
+{timing: 1.5min}
 [요약]
 - 직접 운영 신호: custom AMI, userData, SSH/SSM, advancedCompute 범위를 넘는 kubelet과 sysctl, Windows, DRA, 대체 CNI, SG per Pod, feature gate, FIS EC2 action
 - Auto Mode 신호: Karpenter minor 추적 인력 부족(v1.15는 LTS 아님), 관리형 CNI, CoreDNS, EBS CSI, LBC 선호, 주간 AMI와 21일 상한 수용, 관리비 대비 운영 절감

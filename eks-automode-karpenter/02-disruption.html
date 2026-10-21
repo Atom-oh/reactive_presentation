@@ -547,7 +547,8 @@
         var pos = Math.min(c.score, 2) / 2 * 100;
         $('akb-nd').style.left = 'calc(' + pos + '% - ' + (pos / 100 * 1.1) + 'rem)';
         $('akb-scv').textContent = c.score.toFixed(2);
-        $('akb-fx').textContent = '$' + c.savings.toFixed(2) + ' / $' + c.totalCost.toFixed(2) + ' = ' + pct(c.sf) + ',  ' + c.moveDis + ' / ' + c.totalDis + ' = ' + pct(c.df) + (c.score > 2 ? ',  게이지는 2에서 자름' : '');
+        var pw = c.w > 1 ? ' x ' + c.w : '';
+        $('akb-fx').innerHTML = '① 절감 $' + c.savings.toFixed(2) + ' ÷ 풀 $' + c.totalCost.toFixed(2) + ' = ' + pct(c.sf) + '<br>② 중단 (노드 1 + Pod ' + SC[cur].pods[SC[cur].cand] + pw + ') = ' + c.moveDis + ' ÷ 풀 ' + c.totalDis + ' = ' + pct(c.df) + (c.score > 2 ? '<br>2 이상은 게이지 끝에 표시' : '');
       },
       function () {
         var ok = c.score >= 0.5, v = $('akb-vd');

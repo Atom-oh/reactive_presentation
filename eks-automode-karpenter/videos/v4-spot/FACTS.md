@@ -33,7 +33,7 @@
 
 ## 예시 표기와 압축
 
-- PDB, 여러 인스턴스 유형 허용 카드는 BRIEF의 정리 항목입니다. 수치는 없고, "이번 Spot 중단은 Forceful Termination"과 "m7i.xlarge 대신 c7i-flex.xlarge"만 녹화 값입니다. PDB가 자발적 중단(consolidation, drift)의 동시 축출을 제한한다는 문장은 일반 Kubernetes/Karpenter 동작 설명입니다.
+- PDB, 여러 인스턴스 유형 허용 카드는 BRIEF의 정리 항목입니다. 수치는 없고, "이번 Spot 중단은 Forceful Termination"과 "m7i.xlarge 대신 c7i-flex.xlarge"만 녹화 값입니다. PDB 카드는 Karpenter 문서(https://karpenter.sh/docs/concepts/disruption/ "Automated Forceful Methods": interruption은 NodePool budget으로 늦출 수 없지만 drain은 Eviction API라 PDB로 애플리케이션 중단 속도를 제한할 수 있음) 근거입니다. 이번 시험에는 PDB를 두지 않았습니다(2026-10-21 수정, 이전 문구 "자발적 중단만"은 부정확).
 - 공백 장면의 막대 길이와 노드 그림은 시간 축이 비례하지 않는 재구성입니다. 화면의 시각(14:23:29, 14:23:33, 14:24:00)만 실측입니다.
 - 원본 녹화는 1 fps mp4(agg 변환, 2초 넘는 무출력 구간은 2초로 줄임)입니다. 1 fps 원본은 seek 때 프레임이 어긋나므로 `ffmpeg -vf fps=30 -c:v libx264 -crf 14 -g 30`으로 만든 `assets/d4-spot-30fps.mp4`(내용 동일, 프레임만 복제, .gitignore 예외로 커밋)를 0.6배속으로 재생합니다. 녹화 A는 media 2.05 to 14.95초, 녹화 B는 15.05 to 31.95초. 녹화 A에서 `aws events list-rules` 줄이 창 아래로 내려가는 시점(41.9초)에 창을 326px 위로 옮깁니다.
 - 녹화 화면의 `SQS msgs 0`, `tainted node ... at +17s`는 화면에 보이지만 영상 텍스트로 인용하지 않습니다.

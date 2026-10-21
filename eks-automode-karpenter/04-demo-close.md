@@ -449,7 +449,7 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 </div>
 <div class="card-grid fragment" data-reveal="stagger" data-fragment-index="2">
   <div class="callout callout-warning"><strong class="text-warning">약 30초 동안 Running 0개</strong><div class="ak4-muted">replica 3개가 모두 중단된 노드 한 대에 있었습니다. 대체 노드가 Ready가 될 때까지 서비스가 비었습니다.</div></div>
-  <div class="callout callout-info"><strong class="text-info">대책: 분산과 여유</strong><div class="ak4-muted">topology spread로 replica를 여러 노드와 zone에 나누고, 여러 인스턴스 유형을 허용해 대체 용량을 넓힙니다. 이번 축출은 Forceful Termination이라 PDB로는 막지 못했습니다.</div></div>
+  <div class="callout callout-info"><strong class="text-info">대책: 분산과 여유</strong><div class="ak4-muted">topology spread로 replica를 여러 노드와 zone에 나누고, 여러 인스턴스 유형을 허용해 대체 용량을 넓힙니다. PDB는 중단 drain에도 적용되지만 2분 뒤 회수는 막지 못합니다(이번 시험에는 PDB 없음).</div></div>
 </div>
 :::
 
@@ -458,13 +458,13 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 [요약]
 - 경고 직후(14:23:29) Pod를 비우고 대체 NodeClaim을 지명, 6초 뒤 기존 인스턴스 종료 시작
 - 대체 노드 Ready 14:24:00. 그 사이 약 30초 동안 Running Pod 0개
-- 원인은 replica가 한 노드에 몰린 배치. 분산과 넓은 인스턴스 선택으로 대비 (Forceful Termination이라 PDB로는 막지 못함)
+- 원인은 replica가 한 노드에 몰린 배치. 분산과 넓은 인스턴스 선택으로 대비. PDB는 interruption drain에도 적용되지만 회수 자체는 못 막음(이번 시험에는 PDB 없음)
 
 많은 분들이 "2분 여유가 있으니 그 사이에 옮기겠지"라고 생각하시는데, Karpenter는 경고를 받자마자 노드를 비웁니다. 기다리지 않고 바로 대체 노드를 요청하고 기존 노드는 6초 뒤에 직접 종료했습니다.
 {cue: pause}
 문제는 배치였습니다. 이 데모에서는 Pod 세 개가 모두 그 노드 하나에 있었기 때문에, 새 노드가 준비되기까지 30초 정도 Running Pod가 하나도 없었습니다.
-그래서 Spot을 쓰는 워크로드는 replica를 여러 노드와 zone에 나누고, NodePool에 여러 인스턴스 유형을 허용해 대체 용량을 찾기 쉽게 해 두셔야 합니다. 이벤트에 보이듯 이번 축출은 Forceful Termination이어서 PDB가 막아 주지 못했습니다. PDB는 consolidation이나 drift 같은 자발적 교체에서 효과가 있습니다. Auto Mode에서는 이 처리를 AWS가 하지만, 배치 설계는 똑같이 팀의 몫입니다.
-근거: RECORDINGS.md D4(이벤트 시각 원문), FACTS.md(Auto Mode FIS 미지원, interruption queue)
+그래서 Spot을 쓰는 워크로드는 replica를 여러 노드와 zone에 나누고, NodePool에 여러 인스턴스 유형을 허용해 대체 용량을 찾기 쉽게 해 두셔야 합니다. 이번 시험에는 PDB를 두지 않았습니다. Karpenter 문서에 따르면 interruption 같은 강제 방식은 NodePool budget으로 늦출 수 없지만, drain은 Eviction API를 쓰므로 PDB로 애플리케이션 중단 속도는 제한할 수 있습니다. 다만 2분 뒤 EC2가 인스턴스를 회수하는 것은 막지 못하니, 기본 대책은 분산입니다. Auto Mode에서는 이 처리를 AWS가 하지만, 배치 설계는 똑같이 팀의 몫입니다.
+근거: RECORDINGS.md D4(이벤트 시각 원문), FACTS.md(Auto Mode FIS 미지원, interruption queue), https://karpenter.sh/docs/concepts/disruption/ (Automated Forceful Methods, Interruption)
 {cue: transition}
 이제 오늘 내용을 정리하겠습니다.
 :::

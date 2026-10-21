@@ -47,3 +47,10 @@
 - 이벤트: 14:23:28 `SpotRebalanceRecommendation` → 14:23:29 `SpotInterrupted`, `TerminatingOnInterruption`, Pod 3개 `Evicted: Forceful Termination`, 대체 NodeClaim `spot-cx877` 지명 → 14:23:33 Launched → 14:23:35 기존 인스턴스 `InstanceTerminating` → 14:24:00 대체 노드(c7i-flex.xlarge spot) Ready.
 - Karpenter는 2분을 기다리지 않고 경고 직후 기존 노드를 비우고 종료했습니다. Pod 3개가 한 노드에 있었으므로 **약 30초 동안 Running 0개**(Evicted 14:23:29 → 대체 노드 Ready 14:24:00). 녹화 driver 기준 대상 노드 삭제와 3/3 Running 회복 +65초(FIS 시작 기준).
 - 교훈: replica를 여러 노드에 분산(topology spread)해야 Spot 중단 때 서비스 공백이 줄어듭니다.
+
+## 구성 중 관찰 (2026-10-20, 녹화 전)
+- fsi-demo-vpc 기존 private 서브넷 남은 IP: PrivateSubnet1 80개, PrivateSubnet2 146개(`aws ec2 describe-subnets` AvailableIpAddressCount). 데모 전용 `/20` 서브넷 2개 추가.
+- Auto Mode 커스텀 NodeClass에 `tags`를 넣으면 condition `ValidationSucceeded=False`, reason `CreateLaunchTemplateAuthCheckFailed`, message `Controller isn't authorized to call ec2:CreateLaunchTemplate`. tags 제거 후 Ready.
+- Auto Mode NodePool에 `disruption.budgets`만 넣으면 `The NodePool "demo" is invalid: spec.disruption.consolidateAfter: Required value`. `consolidateAfter: 30s` 추가로 해결(정책은 미지정 유지).
+- zone topology spread(`maxSkew: 1`, `DoNotSchedule`)만으로는 Pod 6개가 2b 노드 1대에 배치됨. `minDomains: 2` 추가 후 2a, 2b 노드 2대.
+- D4 시험에는 PodDisruptionBudget을 두지 않았음.

@@ -370,7 +370,7 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 - Karpenter 새 노드 AMI v20261012 확인. Auto Mode 새 노드 capacity.pods 56 (설정 64보다 작음)
 - EC2NodeClass를 공유한 spot NodePool도 함께 교체됨
 
-표의 시각을 보시면 두 클러스터 모두 띄우고, 지우고, 띄우고, 지우는 순서입니다. budget을 한 대로 둔 효과입니다. 새 노드가 준비된 뒤에 기존 노드를 비우므로 Pod가 갈 곳이 없어지는 순간이 없습니다.
+표의 시각을 보시면 두 클러스터 모두 띄우고, 지우고, 띄우고, 지우는 순서입니다. budget을 한 대로 둔 효과입니다. Drift는 graceful 경로라 필요하면 새 노드를 먼저 띄우고, budget 1이라 한 번에 한 대씩입니다. 그래서 이 데모에서는 Pod가 갈 곳이 없어지는 순간이 없었습니다. 만료는 이 순서를 보장하지 않는다는 점은 3부에서 본 그대로입니다.
 {cue: pause}
 두 가지를 짚겠습니다. 첫째, maxPods를 64로 넣었는데 실제 노드에는 56이 잡혔습니다. 설정값은 상한이고, 인스턴스가 가질 수 있는 IP 수가 더 작으면 그 값이 적용됩니다.
 둘째, Karpenter 쪽에서 AMI를 바꾸자 같은 EC2NodeClass를 쓰던 spot 풀 노드까지 같이 교체됐습니다. 운영에서는 NodeClass를 바꿀 때 어떤 NodePool이 그 NodeClass를 쓰는지 먼저 확인하세요.
@@ -532,8 +532,9 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
   <div class="ak4-col">
     <div class="ak4-label">다음 단계</div>
     <div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="text-info">관측성과 리소스 최적화까지</strong><div class="ak4-muted"><a href="../eks-observability-ops/index.html" target="_blank" rel="noopener">EKS Auto Mode &amp; Karpenter 운영</a>: 노드 라이프사이클 모니터링, Grafana 상관분석, VPA와 KEDA</div></div>
-    <div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">데모 스크립트</strong><div class="ak4-muted">오늘 영상의 클러스터 구성, NodePool, 녹화 driver, 정리 스크립트는 요청 시 공유합니다.</div></div>
-    <div class="callout callout-info fragment fade-up" data-fragment-index="3"><strong class="text-accent">Q&amp;A</strong><div class="ak4-muted">버전과 기본값은 2026-10-20 기준입니다. 적용 전에 최신 문서를 확인하세요.</div></div>
+    <div class="callout callout-info fragment fade-up" data-fragment-index="2"><strong class="text-info">Auto Mode 운영 가이드</strong><div class="ak4-muted"><a href="https://docs.atomai.click/kubernetes-docs/ko/eks-auto-mode/" target="_blank" rel="noopener">kubernetes-docs: EKS Auto Mode 운영 가이드</a>: 시작하기, NodePool, 스케일링, Spot, 운영, 비용, 수명, 워크로드, 마이그레이션 9개 장</div></div>
+    <div class="callout callout-info fragment fade-up" data-fragment-index="3"><strong class="text-info">데모 스크립트</strong><div class="ak4-muted">오늘 영상의 클러스터 구성, NodePool, 녹화 driver, 정리 스크립트는 요청 시 공유합니다.</div></div>
+    <div class="callout callout-info fragment fade-up" data-fragment-index="4"><strong class="text-accent">Q&amp;A</strong><div class="ak4-muted">버전과 기본값은 2026-10-20 기준입니다. 적용 전에 최신 문서를 확인하세요.</div></div>
   </div>
   <div class="ak4-col">
     <div class="ak4-label">공식 문서</div>
@@ -541,6 +542,8 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
       <li><a href="https://docs.aws.amazon.com/eks/latest/userguide/automode.html" target="_blank" rel="noopener">EKS Auto Mode</a></li>
       <li><a href="https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html" target="_blank" rel="noopener">Auto Mode NodeClass</a></li>
       <li><a href="https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html" target="_blank" rel="noopener">Auto Mode NodePool</a></li>
+      <li><a href="https://docs.aws.amazon.com/eks/latest/userguide/auto-get-logs.html" target="_blank" rel="noopener">Auto Mode 노드 로그 수집</a></li>
+      <li><a href="https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html" target="_blank" rel="noopener">Auto Mode로 마이그레이션</a></li>
       <li><a href="https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html" target="_blank" rel="noopener">EKS Kubernetes 버전</a></li>
       <li><a href="https://karpenter.sh/docs/concepts/disruption/" target="_blank" rel="noopener">Karpenter Disruption</a></li>
       <li><a href="https://karpenter.sh/docs/upgrading/compatibility/" target="_blank" rel="noopener">Karpenter 호환성</a></li>
@@ -555,9 +558,10 @@ Play를 누르고 장면마다 짧게 설명합니다. 영상은 무음입니다
 [요약]
 - 안내 1분, 이어서 Q&A 2.5분
 - 관측성, VPA, KEDA는 "EKS Auto Mode & Karpenter 운영" 덱
-- 공식 문서 7개: Auto Mode, NodeClass, NodePool, EKS 버전, Karpenter Disruption, 호환성, v1.15.0 릴리스
+- Auto Mode 운영 가이드(kubernetes-docs, 9개 장): 4부 내용의 원문과 예제
+- 공식 문서 9개: Auto Mode, NodeClass, NodePool, 노드 로그 수집, 마이그레이션, EKS 버전, Karpenter Disruption, 호환성, v1.15.0 릴리스
 
-오늘은 노드 자동화 자체에 집중했습니다. 노드 라이프사이클 모니터링, 로그와 메트릭 상관분석, VPA와 KEDA를 이용한 리소스 최적화는 운영 덱에서 이어서 보실 수 있습니다.
+오늘은 노드 자동화 자체에 집중했습니다. 노드 라이프사이클 모니터링, 로그와 메트릭 상관분석, VPA와 KEDA를 이용한 리소스 최적화는 운영 덱에서 이어서 보실 수 있습니다. 4부에서 다룬 Auto Mode 설정, Spot, 진단, 비용, 마이그레이션의 원문과 전체 예제는 kubernetes-docs의 Auto Mode 운영 가이드 9개 장에 있습니다.
 데모 스크립트는 요청하시면 공유해 드립니다. 클러스터 두 개를 만들고 지우는 정리 스크립트까지 들어 있으니, 직접 돌려 보신 뒤에는 꼭 정리해 비용을 멈추세요.
 {cue: pause}
 버전과 기본값은 오늘 날짜 기준입니다. 특히 Auto Mode 기본값과 Karpenter 호환성 표는 자주 바뀌니 적용 전에 오른쪽 문서를 다시 확인해 주세요.

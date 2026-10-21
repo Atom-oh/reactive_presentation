@@ -31,11 +31,11 @@ blocks:
     duration: 19
   - name: 03-cases
     title: "대표 사례 4선: LG전자, 신한카드, 미래에셋증권, Canva"
-    duration: 25
+    duration: 23
   - name: 04-task-cases
     title: "과제별 닮은 사례"
     duration: 11
   - name: 05-demo-close
     title: "온톨로지 앱 데모, PoC 실행 팁"
-    duration: 9
+    duration: 11
 ---

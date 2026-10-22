@@ -550,22 +550,14 @@ ${styleSheets}
       this.updatePresenterView();
     };
 
+    // Hand navigation keys to the deck's own handler so the presenter window behaves exactly
+    // like the audience window: fragments, ArrowUp/ArrowDown slide actions, Home and End.
+    const NAV_ACTIONS = ['next', 'prev', 'down', 'up', 'first', 'last'];
     doc.addEventListener('keydown', (e) => {
-      switch (e.key) {
-        case 'ArrowRight':
-        case ' ':
-          e.preventDefault();
-          this.framework.next();
-          this.broadcastSlideChange(this.framework.currentSlide);
-          this.updatePresenterView();
-          break;
-        case 'ArrowLeft':
-          e.preventDefault();
-          this.framework.prev();
-          this.broadcastSlideChange(this.framework.currentSlide);
-          this.updatePresenterView();
-          break;
-      }
+      if (!NAV_ACTIONS.includes(this.framework.getKeyAction(e.key))) return;
+      e.preventDefault();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: e.key, bubbles: true, cancelable: true }));
+      this.updatePresenterView();
     });
 
     doc.getElementById('p-title').textContent = document.title;

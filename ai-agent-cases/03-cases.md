@@ -358,11 +358,10 @@ Deep Insight에서 바로 가져갈 만한 설계 패턴 여섯 가지입니다.
 .rp-int-steps .card { word-break: keep-all; padding: var(--space-2) var(--space-3); }
 .rp-int-steps .card-title { font-size: var(--fs-card); }
 .rp-int img { width: 100%; max-height: 220px; object-fit: contain; border-radius: var(--radius-md); background: var(--bg-card); }
-.rp-acc { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
-.rp-acc .metric-card { padding: var(--space-2); }
-.rp-acc .rp-v { font-size: 1.6rem; font-weight: var(--weight-bold); font-variant-numeric: tabular-nums; }
-.rp-acc .rp-v.up { color: var(--accent); }
-.rp-acc small { display: block; font-size: var(--fs-caption); color: var(--on-surface-muted); }
+.rp-acc2 { width: 100%; font-size: var(--fs-card); }
+.rp-acc2 th { text-transform: none; letter-spacing: normal; font-size: var(--fs-caption); }
+.rp-acc2 td.n { font-variant-numeric: tabular-nums; font-weight: var(--weight-bold); }
+.rp-acc2 td.up { color: var(--accent); }
 .rp-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-top: var(--space-2); }
 .rp-meta div { font-size: var(--fs-caption); color: var(--on-surface-muted); text-align: center; }
 .rp-meta b { display: block; font-size: var(--fs-card); color: var(--text-primary); }
@@ -377,14 +376,15 @@ Deep Insight에서 바로 가져갈 만한 설계 패턴 여섯 가지입니다.
     <img src="media/shc-ontology-map.png" alt="신한카드 인텐트 온톨로지 맵 일부: Intent, Domain, Action, Tag 노드">
   </div>
   <div class="fragment fade-up" data-fragment-index="2">
-    <div class="rp-acc">
-      <div class="metric-card"><small>Qwen3 32B 기존</small><span class="rp-v">84.2%</span></div>
-      <div class="metric-card"><small>Qwen3 32B 온톨로지</small><span class="rp-v up">91.0%</span></div>
-      <div class="metric-card"><small><span class="rp-tip" tabindex="0" data-tip="전체 235B 파라미터 중 토큰마다 22B만 쓰는 MoE(전문가 혼합) 모델">Qwen3 235B A22B 기존</span></small><span class="rp-v">77.4%</span></div>
-      <div class="metric-card"><small>Qwen3 235B A22B 온톨로지</small><span class="rp-v up">88.7%</span></div>
-    </div>
+    <table class="data-table rp-acc2">
+      <thead><tr><th>카드 한도 관리 시나리오</th><th>기존</th><th>온톨로지</th><th>향상</th></tr></thead>
+      <tbody>
+        <tr><td>Qwen3 32B</td><td class="n">84.2%</td><td class="n up">91.0%</td><td class="n">+6.8%p</td></tr>
+        <tr><td><span class="rp-tip" tabindex="0" data-tip="전체 235B 파라미터 중 토큰마다 22B만 쓰는 MoE(전문가 혼합) 모델. 실제로 계산에 쓰는 크기는 32B보다 작음">Qwen3 235B A22B</span></td><td class="n">77.4%</td><td class="n up">88.7%</td><td class="n">+11.3%p</td></tr>
+      </tbody>
+    </table>
     <div class="rp-meta"><div><b>5초 이내</b>요청당 응답</div><div><b>약 18배</b>비용 절감 (Opus 4.5 대비)</div><div><b>~98%</b><span class="rp-tip" tabindex="0" data-tip="대화 중에 사용자가 다른 주제로 넘어가는 것">topic switching</span> 감지</div></div>
-    <div class="callout callout-info rp-callnote">작은 32B 모델이 약 7배 큰 235B 모델보다 2.3%p 높음. 측정 조건 비공개 수치이므로 참고용. 2부 D2처럼 조건(51개, 유사 의도, sLLM)이 효과를 만든다는 점도 함께</div>
+    <div class="callout callout-info rp-callnote"><strong>읽는 법</strong>: 32B는 온톨로지 전에도 235B보다 높았습니다. 온톨로지는 두 모델을 모두 올렸고 격차를 6.8%p에서 2.3%p로 줄였습니다. 235B가 낮은 이유와 측정 조건(문항 수 등)은 원문에 없습니다.</div>
   </div>
 </div>
 <div class="rp-src">출처: AWS 기술 블로그, <a href="https://aws.amazon.com/ko/blogs/tech/shinhan-card-ontology-based-decentralized-agentic-ai-chatbot/" target="_blank" rel="noopener">신한카드 온톨로지 기반 분산형 Agentic AI 챗봇 (2026-06)</a></div>
@@ -395,12 +395,18 @@ Deep Insight에서 바로 가져갈 만한 설계 패턴 여섯 가지입니다.
 [요약]
 - 모델에게 51개 중 하나를 고르게 하지 않음: 인텐트를 Domain, Action, Tag로 분해한 온톨로지 맵
 - sLLM이 세 속성을 병렬로 고르고, 규칙 기반 그래프 매칭으로 후보 축소, 남은 후보만 LLM 비교
-- 32B 정확도 84.2%에서 91.0%, 약 7배 큰 235B(88.7%)보다 높음 (원문 표기는 약 8배, 235/32 = 7.3)
+- 카드 한도 관리 시나리오 기준: 32B 84.2%에서 91.0%(+6.8%p), 235B A22B 77.4%에서 88.7%(+11.3%p)
+- 235B는 온톨로지 전에도 32B보다 낮았음. 온톨로지가 순위를 바꾼 게 아니라 둘 다 올리고 격차를 6.8%p에서 2.3%p로 줄임
+- 235B가 낮은 이유는 원문에 없음. 질문이 나오면 추정으로만: MoE라 토큰당 활성 파라미터 약 22B(32B dense보다 작음), 운영 대상인 32B에 맞춰 프롬프트와 정의를 다듬었을 가능성, 한 시나리오에서 잰 값
+- 원문 표기 "파라미터 수 8배"는 총 파라미터 기준(235/32 = 7.3)
 - 5초 이내, Opus 4.5 대비 약 18배 비용 절감(측정 조건 비공개, 참고만)
 
 해법은 모델에게 51개 중 하나를 고르게 하지 않는 것이었습니다. 모든 인텐트를 도메인, 액션, 태그 세 속성으로 분해한 온톨로지 맵을 만들고, 소형 모델은 세 속성만 병렬로 고르게 한 뒤, 규칙 기반 그래프 매칭으로 후보를 좁혔습니다. 왼쪽 아래가 그 온톨로지 맵의 일부입니다.
 {cue: pause}
-결과적으로 32B 모델 정확도가 84.2%에서 91.0%로 올라, 약 7배 큰 235B 모델보다 높아졌습니다. 원문에는 약 8배로 적혀 있는데, 235를 32로 나누면 7.3이라 저는 약 7배로 말씀드립니다. 응답은 5초 이내, Opus 4.5 대비 약 18배 비용 절감이라고 밝혔습니다. 측정 조건이 공개되지 않은 수치라 인용하실 때 참고만 해 주세요.
+결과는 난도가 가장 높았던 카드 한도 관리 시나리오 기준입니다. 32B는 84.2%에서 91.0%로, 235B는 77.4%에서 88.7%로 올랐습니다.
+여기서 "작은 모델이 큰 모델을 이겼다"로 읽으시면 안 됩니다. 표의 기존 열을 보시면 235B는 온톨로지를 쓰기 전에도 32B보다 낮았습니다. 온톨로지가 순위를 뒤집은 게 아니라 두 모델을 모두 올렸고, 큰 모델이 더 많이 올라 격차가 6.8%p에서 2.3%p로 줄었습니다. 메시지는 "온톨로지를 쓰면 소형 모델로도 운영 가능한 수준이 된다"입니다.
+{cue: pause}
+그럼 235B는 왜 낮았을까요. 원문에는 이유가 없습니다. 제 추정으로는, 235B A22B는 MoE라서 토큰마다 실제로 쓰는 파라미터가 22B 정도로 32B보다 작고, 운영 대상이 32B였으니 프롬프트와 정의도 32B에 맞춰 다듬어졌을 수 있습니다. 어디까지나 추정이라는 점을 밝혀 두겠습니다. 응답은 5초 이내, Opus 4.5 대비 약 18배 비용 절감이라고 밝혔습니다. 측정 조건이 공개되지 않은 수치라 인용하실 때 참고만 해 주세요.
 2부 D2에서 보셨듯이, 이 효과는 51개로 잘게 나뉜 의도와 소형 모델이라는 조건에서 나온다는 점도 같이 기억해 주세요.
 {cue: transition}
 두 번째 혁신, 분산형 구조입니다.

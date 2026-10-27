@@ -358,49 +358,60 @@ Landing Zone은 한 문장으로, 안전한 멀티 어카운트 환경의 기본
 ---
 <!-- Slide 9: 망분리 -->
 @type: content
-@title: 망분리, 형식적 분리에서 실질 통제로
+@title: 망분리, 3호망은 열리고 5호망은 그대로
 
-## 망분리, 형식적 분리에서 실질 통제로
+## 망분리, 3호망은 열리고 5호망은 그대로
 
 :::html
 <div class="lz-tl">
-  <div class="lz-tl-item"><div class="lz-tl-date">2024.8</div><strong>망분리 개선 로드맵</strong><div class="lz-muted">단계적 규제 개선 방향 제시. 혁신금융서비스를 통한 SaaS, 생성형 AI 활용</div></div>
-  <div class="lz-tl-item"><div class="lz-tl-date">2026.1</div><strong>시행세칙 개정 예고</strong><div class="lz-muted">SaaS를 망분리 예외로 명시. 별표7 대체 정보보호통제 준수 의무화</div></div>
-  <div class="lz-tl-item"><div class="lz-tl-date">2026.4.20</div><strong>개정 시행</strong><div class="lz-muted">혁신금융서비스 심사 없이 내부 업무망에서 SaaS 이용</div></div>
-  <div class="lz-tl-item lz-key"><div class="lz-tl-date">Landing Zone</div><strong>시사점</strong><div class="lz-muted">통제 결과를 증명하는 구조. 계정, VPC 단위 경계와 로그 증적 확보가 핵심</div></div>
+  <div class="lz-tl-item"><div class="lz-tl-date">2024.8</div><strong>망분리 개선 로드맵</strong><div class="lz-muted">혁신금융서비스로 SaaS, 생성형 AI 허용</div></div>
+  <div class="lz-tl-item"><div class="lz-tl-date">2026.1</div><strong>시행세칙 개정 예고</strong><div class="lz-muted">SaaS를 망분리 예외 사유로 명시</div></div>
+  <div class="lz-tl-item lz-key"><div class="lz-tl-date">2026.4.20</div><strong>개정 시행</strong><div class="lz-muted">3호망 SaaS는 혁신금융서비스 지정 없이 이용</div></div>
+  <div class="lz-tl-item"><div class="lz-tl-date">추진 중</div><strong>생성형 AI 예외</strong><div class="lz-muted">당국이 별도 예외를 추진 예정. 현재는 혁신금융서비스</div></div>
 </div>
 <div class="lz-grid-2 lz-gap-top fragment fade-up" data-fragment-index="1">
   <div class="lz-card lz-scope ok">
-    <div class="lz-row"><span class="lz-pill ok">이번 예외 대상</span></div>
-    <h4>내부업무용 단말의 SaaS 이용</h4>
-    <div class="lz-flowline"><span class="lz-acct">내부업무 단말</span><span class="lz-link"></span><span class="lz-acct">SaaS</span></div>
-    <div class="lz-muted">금융보안원 등 평가를 거친 SaaS, 단말 보호대책, 반기 1회 평가와 정보보호위원회 보고. 고유식별정보, 개인신용정보 처리는 제외</div>
+    <div class="lz-row"><span class="lz-pill ok">SaaS 예외 적용</span><span class="lz-pill">감독규정 제15조제1항제3호</span></div>
+    <h4>3호망: 내부 업무망</h4>
+    <div class="lz-flowline"><span class="lz-acct">내부업무 단말</span><span class="lz-link"></span><span class="lz-acct">평가 충족 SaaS</span></div>
+    <div class="lz-muted">조건(시행세칙 별표7): 금융보안원 등 평가 충족 SaaS, 단말 보호대책, 허용 SaaS 외 인터넷 차단, 로그 수집, 반기 1회 자체평가 후 정보보호위원회 보고</div>
   </div>
   <div class="lz-card lz-scope keep">
-    <div class="lz-row"><span class="lz-pill no">계속 필요</span></div>
-    <h4>클라우드 정보처리시스템</h4>
-    <div class="lz-flowline"><span class="lz-acct">업무계 VPC</span><span class="lz-link cut"></span><span class="lz-acct">인터넷</span></div>
-    <div class="lz-muted">망분리 요건 검토와 대체 통제 설계가 계속 필요. Landing Zone 네트워크 설계가 담당</div>
+    <div class="lz-row"><span class="lz-pill no">예외 아님, 물리적 분리 유지</span><span class="lz-pill">감독규정 제15조제1항제5호</span></div>
+    <h4>5호망: 전산실 정보처리시스템</h4>
+    <div class="lz-flowline"><span class="lz-acct">운영, 개발, 보안 단말</span><span class="lz-link cut"></span><span class="lz-acct">인터넷</span></div>
+    <div class="lz-muted">전산실 시스템과 이를 직접 운영, 개발하는 단말은 이번 개정과 무관. 클라우드 업무계도 분리와 대체 통제 설계가 필요(해석, 준법감시 확인). Landing Zone 네트워크가 담당</div>
   </div>
 </div>
-<div class="lz-cap">근거: 2026.1.19 금융위원회 보도자료(개정 예고, 예고기간 1.20 ~ 2.9), 2026.4 금융위원회 보도자료(4.20 시행)</div>
+<div class="callout callout-warning lz-gap-top fragment fade-up" data-fragment-index="2"><strong class="lz-t-warning">3호망이어도 SaaS 예외로 끝나지 않는 경우</strong>
+  <div class="lz-grid-4">
+    <div><strong>가명정보 활용</strong><div class="lz-muted">혁신금융서비스 지정 필요</div></div>
+    <div><strong>고유식별, 개인신용정보 처리</strong><div class="lz-muted">예외 미적용, 망분리 그대로</div></div>
+    <div><strong>내부 단말의 생성형 AI</strong><div class="lz-muted">예: Claude Code로 Bedrock 호출. SaaS 예외와 별개, 현재 혁신금융서비스</div></div>
+    <div><strong>SaaS 통한 외부 확장</strong><div class="lz-muted">웹 검색, 외부 SaaS 연동은 계속 제한</div></div>
+  </div>
+</div>
+<div class="lz-cap">근거: 2026.1.19 금융위원회 보도자료(개정 예고), 2026.4 금융위원회 보도자료(4.20 시행), 시행세칙 제2조의3 제1항 제3호, 제4항, 별표7</div>
 :::
 
 
 :::notes
 {timing: 3min}
 [요약]
-- 2024.8 금융위원회 망분리 개선 로드맵: 단계적 완화, 혁신금융서비스로 SaaS와 생성형 AI 활용
-- 2026.1.19 보도자료: SaaS를 전자금융거래법 제21조, 감독규정 제15조 망분리 예외로 명시하는 시행세칙 개정 예고(예고기간 1.20~2.9), 별표7 대체 통제 의무화
-- 2026.4.20 개정 시행: 혁신금융서비스 심사 없이 내부 업무망에서 SaaS 이용 가능
-- 조건: 금융보안원 등 평가를 거친 SaaS, 접속 단말 보호대책, 반기 1회 평가와 정보보호위원회 보고. 고유식별정보, 개인신용정보 처리는 제외
-- 이번 예외는 내부업무용 단말의 SaaS 이용 대상
-- 클라우드 정보처리시스템 설계는 기존 망분리 요건 검토 지속 필요
-- 시사점: 통제 결과를 증명하는 구조, 계정과 VPC 경계, 로그 증적
+- 2024.8 망분리 개선 로드맵 이후 2026.1 개정 예고, 2026.4.20 시행
+- 이번 SaaS 예외는 감독규정 제15조제1항제3호, 즉 3호망(내부 업무망)에 대한 예외. 근거는 시행세칙 제2조의3 제1항 제3호 신설
+- 조건: 금융보안원 등 평가 충족 SaaS, 접속 단말 보호대책, 허용 SaaS 외 인터넷 차단, 로그 수집, 반기 1회 자체평가 후 정보보호위원회 보고(별표7, 제2조의3 제4항)
+- 5호망(전산실 정보처리시스템과 운영, 개발, 보안 목적 직접 접속 단말)의 물리적 분리는 그대로. 클라우드 업무계 설계는 분리와 대체 통제 검토 필요(해석)
+- 여전히 혁신금융서비스가 필요한 경우: 가명정보 활용 SaaS, 내부 단말의 생성형 AI 이용(별도 예외 추진 중)
+- 예외 미적용: 고유식별정보, 개인신용정보 처리. 계속 제한: SaaS를 통한 웹 검색, 외부 SaaS 연동
+- 제14조의2 클라우드 이용 보고 의무는 별개로 유지
 
-망분리 규제는 형식적인 물리 분리에서 실질적인 통제로 방향이 바뀌고 있습니다. 2024년 8월 금융위원회의 망분리 개선 로드맵 이후, 올해 1월에 SaaS를 망분리 예외로 명시하는 시행세칙 개정이 예고됐고, 4월 20일부터 시행되고 있습니다. 이제 금융보안원 등의 평가를 거친 SaaS라면 혁신금융서비스 심사 없이 내부 업무망에서 쓸 수 있습니다. 대신 단말 보호대책을 세우고, 반기마다 통제 이행을 평가해 정보보호위원회에 보고해야 합니다. 고유식별정보나 개인신용정보를 처리하는 경우는 여전히 예외가 아닙니다.
+망분리 규제는 형식적인 물리 분리에서 실질적인 통제로 방향이 바뀌고 있습니다. 2024년 8월 망분리 개선 로드맵 이후, 올해 1월에 시행세칙 개정이 예고됐고 4월 20일부터 시행되고 있습니다.
 {cue: click}
-여기서 주의할 점이 있습니다. 이번 예외는 왼쪽, 내부업무용 단말에서 SaaS를 쓰는 경우입니다. 오른쪽처럼 클라우드에 올리는 정보처리시스템 자체는 여전히 망분리 요건과 대체 통제 설계가 필요합니다.
+핵심은 어느 망에 대한 예외인지입니다. 이번 예외는 감독규정 제15조 제1항 제3호, 흔히 3호망이라고 부르는 내부 업무망에 대한 것입니다. 금융보안원 등의 평가를 충족한 SaaS라면 혁신금융서비스 지정 없이 내부 업무 단말에서 쓸 수 있습니다. 대신 단말 보호대책, 허용된 SaaS 외 인터넷 차단, 로그 수집 같은 별표7 통제를 지키고, 반기마다 자체평가해서 정보보호위원회에 보고해야 합니다.
+오른쪽 5호망, 즉 전산실 정보처리시스템과 이를 직접 운영하고 개발하는 단말의 물리적 분리는 이번 개정과 관계가 없습니다. 클라우드에 올리는 업무계 시스템도 같은 관점에서 분리와 대체 통제 설계가 필요하다고 보고 있고, 이 부분은 준법감시 부서와 해석을 맞춰야 합니다.
+{cue: click}
+3호망이라도 예외로 끝나지 않는 경우가 있습니다. 가명정보를 활용하면 지금처럼 혁신금융서비스 지정이 필요하고, 고유식별정보나 개인신용정보를 처리하면 예외가 적용되지 않습니다. 내부 업무 단말에서 생성형 AI를 쓰는 경우는 SaaS 예외와 별개 트랙이고, 당국이 별도 예외를 추진 중이라 현재는 혁신금융서비스로 이용합니다. 뒤에서 볼 Claude Code로 Bedrock을 호출하는 구성도 이 기준으로 검토해야 합니다.
 {cue: pause}
 그래서 Landing Zone 관점의 시사점은, 분리했다는 사실보다 통제 결과를 증명할 수 있는 구조가 중요하다는 것입니다. 계정과 VPC 단위의 경계, 그리고 로그 증적이 그 증명 수단입니다.
 {cue: transition}

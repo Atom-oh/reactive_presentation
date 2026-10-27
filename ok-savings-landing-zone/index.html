@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS Landing Zone: OK저축은행을 위한 금융 규제 준수형 멀티 어카운트 기반 설계</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="index">
+  <meta name="remarp-block" content="merged">
+  <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/deck-overlay.css">
+  <link rel="stylesheet" href="./common/deck-detail.css">
+  <link rel="stylesheet" href="./common/deck-nav.css">
+  <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
+  <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
+  
+  <script>window.__remarpTheme = {"colors": {}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}};</script>
+</head>
+<body>
+<div class="slide-deck">
+<div class="slide theme-dark" data-remarp-id="s0" data-block="01-why-regulation" data-block-title="AWS Landing Zone" style="background:linear-gradient(135deg, #16212f 0%, #0f1b2a 55%, #14243a 100%); padding:0; overflow:hidden;">
+  <div style="position:absolute; top:-20%; right:-10%; width:60%; height:80%; background:radial-gradient(ellipse, rgba(255,153,0,0.10) 0%, transparent 70%); pointer-events:none;"></div>
+  <div style="position:absolute; left:5%; top:42%; width:80px; height:3px; background:linear-gradient(90deg, var(--accent, #ff9900), rgba(255,153,0,0.25)); border-radius:2px;"></div>
+  <h1 style="position:absolute; left:5%; top:45%; font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:60%; margin:0;">AWS Landing Zone</h1>
+  <p style="position:absolute; left:5%; top:60%; font-size:1.3rem; color:rgba(255,255,255,0.7); width:60%; margin:0;">OK저축은행을 위한 금융 규제 준수형 멀티 어카운트 기반 설계</p>
+  <div style="position:absolute; left:5%; top:75%;">
+    <p style="font-size:1.05rem; color:#fff; font-weight:600; margin:0;">2026. 10. 27, 오준석, Senior Solutions Architect, AWS Korea</p>
+    <p style="font-size:0.9rem; color:rgba(255,255,255,0.6); margin:6px 0 0 0;"></p>
+    <p style="font-size:0.9rem; color:rgba(255,255,255,0.6); margin:2px 0 0 0;"></p>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s1" data-block="01-why-regulation" data-block-title="AWS Landing Zone">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>오늘 세션 구성</h2></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <div class="agenda-timeline">
+            <div class="agenda-step active">
+          <div class="agenda-dot">1</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>왜 Landing Zone인가</strong>
+            <span>6분</span>
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">2</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>금융 규제와 클라우드</strong>
+            <span>10분</span>
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">3</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>멀티 어카운트와 Control Tower</strong>
+            <span>12분</span>
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">4</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>네트워크 아키텍처</strong>
+            <span>8분</span>
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">5</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>보안과 감사</strong>
+            <span>8분</span>
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">6</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>구축 접근 방식과 의사결정 항목</strong>
+            <span>7분</span>
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">7</div>
+          
+          <div class="agenda-label">
+            <strong>Q&A (약 8분)</strong>
+            
+          </div>
+        </div>
+    </div>
+    
+  </div>
+  
+<script>(function() {
+  const slide = document.currentScript.closest('.slide');
+  if (!slide) return;
+  const steps = slide.querySelectorAll('.agenda-step:not(.break)');
+  const connectors = slide.querySelectorAll('.agenda-connector');
+  let current = 0;
+  function update() {
+    steps.forEach((s, i) => {
+      s.classList.remove('active', 'done');
+      if (i < current) s.classList.add('done');
+      else if (i === current) s.classList.add('active');
+    });
+    connectors.forEach((c, i) => {
+      c.classList.toggle('done', i < current);
+    });
+  }
+  update();
+  slide.__canvasStep = function(dir) {
+    if (dir === 'next' && current < steps.length - 1) current++;
+    else if (dir === 'prev' && current > 0) current--;
+    else return false;
+    update();
+    return current;
+  };
+  slide.dataset.slideAction = 'canvas-step';
+  slide.dataset.canvasMaxStep = String(steps.length - 1);
+})();</script>
+</div>
+
+<div class="slide title-slide" data-remarp-id="s2" data-block="01-why-regulation" data-block-title="AWS Landing Zone">
+    <h1>01 왜 Landing Zone인가</h1>
+  <p class="meta">클라우드 도입 첫 단계에서 거버넌스 기반을 먼저 설계하는 이유</p>
+</div>
+
+<div class="slide" data-remarp-id="s3" data-block="01-why-regulation" data-block-title="AWS Landing Zone">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>나중에 바꾸기 가장 어려운 세 가지</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body">
+    <p><!-- Slide 4: Landing Zone 정의 --></p>
+<div class="lz-grid-2">
+  <div class="lz-stack">
+    <div class="lz-card">
+      <h4>Landing Zone: 안전한 멀티 어카운트 환경의 기본 골격</h4>
+      <div class="lz-muted">계정, 권한, 네트워크, 로그를 처음부터 표준화해 이후 모든 워크로드가 같은 통제 위에서 동작합니다.</div>
+    </div>
+    <div class="lz-card">
+      <div class="lz-cap">첫 워크로드 이후 변경 비용 (개념도)</div>
+      <svg viewBox="0 0 520 210" width="100%" role="img" aria-label="시간이 지날수록 계정 구조, IP 대역, 권한 모델의 변경 비용이 급격히 커지는 곡선">
+        <line class="lz-axis" x1="40" y1="180" x2="510" y2="180"/>
+        <line class="lz-axis" x1="40" y1="20" x2="40" y2="180"/>
+        <line class="lz-mark" x1="150" y1="20" x2="150" y2="180"/>
+        <text class="lz-svg-cap" x="156" y="34">첫 워크로드</text>
+        <path class="lz-curve" d="M40,172 C150,168 230,150 300,115 C370,80 430,45 505,24"/>
+        <circle class="lz-dot-ok" cx="95" cy="171" r="8"/>
+        <text class="lz-svg-cap" x="62" y="200">지금 결정</text>
+        <circle class="lz-dot-bad" cx="440" cy="44" r="8"/>
+        <text class="lz-svg-cap" x="240" y="64">운영 후 재설계</text>
+        <text class="lz-svg-cap" x="440" y="200">시간</text>
+        <text class="lz-svg-cap" x="46" y="16">변경 비용</text>
+      </svg>
+      <div class="lz-row">
+        <span class="lz-pill no">계정 구조</span><span class="lz-pill no">IP 대역</span><span class="lz-pill no">권한 모델</span>
+      </div>
+    </div>
+  </div>
+  <div class="lz-stack">
+    <div class="lz-cap lz-t-info">WHY: 세 가지 압력</div>
+    <div class="lz-grid-3 fragment fade-up" data-fragment-index="1">
+      <div class="lz-panel"><strong class="lz-t-danger">계정 확장 속도</strong><div class="lz-muted">업무와 환경이 늘수록 계정과 권한이 빠르게 분산</div></div>
+      <div class="lz-panel"><strong class="lz-t-danger">규제 증적 요구</strong><div class="lz-muted">감독기관 점검 시 통제와 로그 증적을 즉시 제시</div></div>
+      <div class="lz-panel"><strong class="lz-t-danger">재작업 비용</strong><div class="lz-muted">운영 후 구조 변경은 네트워크, 권한 전면 재설계</div></div>
+    </div>
+    <div class="lz-cap lz-t-success">WHAT: 세 가지 기반</div>
+    <div class="lz-stack fragment fade-up" data-fragment-index="2">
+      <div class="lz-card lz-row"><img class="lz-icon" src="common/aws-icons/services/Arch_AWS-Organizations_48.svg" alt=""><div><strong>계정 격리</strong><div class="lz-muted">업무, 환경 단위 계정 분리로 장애와 침해 영향 범위 축소. 계정이 곧 보안 경계</div></div></div>
+      <div class="lz-card lz-row"><img class="lz-icon" src="common/aws-icons/services/Arch_AWS-Control-Tower_48.svg" alt=""><div><strong>중앙 거버넌스</strong><div class="lz-muted">OU별 예방, 탐지 통제와 조직 전체 로그 중앙 보관. 규제 통제를 일관되게 적용</div></div></div>
+      <div class="lz-card lz-row"><img class="lz-icon" src="common/aws-icons/resources/Res_AWS-Organizations_Account_48.svg" alt=""><div><strong>표준 자동화</strong><div class="lz-muted">Account Factory로 표준 계정 즉시 발급. 신규 환경도 처음부터 준수</div></div></div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s4" data-block="01-why-regulation" data-block-title="AWS Landing Zone">
+  <div class="slide-header" data-remarp-id="s4-header"><h2>계정 분리가 통제와 감사의 출발점</h2></div>
+  <div class="slide-body" data-remarp-id="s4-body">
+    <p><!-- Slide 5: 단일 vs 멀티 --></p>
+<div class="lz-vs">
+  <div class="lz-card">
+    <div class="lz-row"><span class="lz-pill no">단일 계정 또는 소수 계정</span></div>
+    <div class="lz-single">
+      <div class="lz-blast">
+        <span class="lz-acct">업무계 운영</span><span class="lz-acct">채널계 운영</span><span class="lz-acct">개발, 테스트</span>
+        <span class="lz-acct">보안 도구</span><span class="lz-acct">로그</span><span class="lz-acct">PoC</span>
+      </div>
+      <div class="lz-cap lz-t-danger">하나의 장애, 하나의 침해가 전체로 번지는 영향 범위</div>
+    </div>
+  </div>
+  <div class="lz-card">
+    <div class="lz-row"><span class="lz-pill ok">멀티 어카운트 Landing Zone</span></div>
+    <div class="lz-multi">
+      <div class="lz-ou"><b>Security</b><span class="lz-acct">Log Archive</span><span class="lz-acct">Audit</span></div>
+      <div class="lz-ou"><b>Prod</b><span class="lz-acct">업무계</span><span class="lz-acct">채널계</span></div>
+      <div class="lz-ou"><b>NonProd</b><span class="lz-acct">Dev</span><span class="lz-acct">Stg</span></div>
+      <div class="lz-ou"><b>Sandbox</b><span class="lz-acct lz-hot">PoC</span></div>
+    </div>
+    <div class="lz-cap lz-t-success">계정 단위 격리: 사고의 영향을 그 계정 안으로 한정</div>
+  </div>
+</div>
+<div class="lz-grid-3 lz-gap-top fragment fade-up" data-fragment-index="1">
+  <div class="lz-panel"><strong>권한 관리</strong><div class="lz-muted"><span class="lz-t-danger">단일</span> IAM 예외 누적 <br><span class="lz-t-success">멀티</span> OU별 SCP(서비스 제어 정책) 상한, Identity Center SSO</div></div>
+  <div class="lz-panel"><strong>감사 대응</strong><div class="lz-muted"><span class="lz-t-danger">단일</span> 분산 로그, 수작업 증적 <br><span class="lz-t-success">멀티</span> 조직 CloudTrail, Log Archive 중앙 보관</div></div>
+  <div class="lz-panel"><strong>비용 배분</strong><div class="lz-muted"><span class="lz-t-danger">단일</span> 태그 누락 시 배분 불가 <br><span class="lz-t-success">멀티</span> 계정 단위 자동 분리</div></div>
+  <div class="lz-panel"><strong>환경 분리</strong><div class="lz-muted"><span class="lz-t-danger">단일</span> 개발과 운영 리소스 혼재 <br><span class="lz-t-success">멀티</span> Prod, NonProd OU와 네트워크 격리</div></div>
+  <div class="lz-panel"><strong>신규 환경</strong><div class="lz-muted"><span class="lz-t-danger">단일</span> 수작업, 환경 간 편차 <br><span class="lz-t-success">멀티</span> Account Factory 표준 발급</div></div>
+  <div class="lz-panel"><strong>AWS 권장</strong><div class="lz-muted">워크로드와 환경 단위로 계정을 나누고, 보안과 로그는 전용 계정으로 분리</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide title-slide" data-remarp-id="s5" data-block="01-why-regulation" data-block-title="AWS Landing Zone">
+    <h1>02 금융 규제와 클라우드</h1>
+  <p class="meta">전자금융감독규정이 요구하는 절차와 통제를 Landing Zone에 매핑</p>
+</div>
+
+<div class="slide" data-remarp-id="s6" data-block="01-why-regulation" data-block-title="AWS Landing Zone">
+  <div class="slide-header" data-remarp-id="s6-header"><h2>제14조의2, 네 단계 중 3단계가 핵심</h2></div>
+  <div class="slide-body" data-remarp-id="s6-body">
+    <p><!-- Slide 7: 제14조의2 절차 --></p>
+<div class="lz-steps" id="lzProc">
+  <div class="lz-step" data-i="0"><h4>업무 중요도 평가</h4><div class="lz-muted">이용 대상 업무와 정보의 중요도 평가, 중요업무 여부 판단</div></div>
+  <div class="lz-step" data-i="1"><h4>CSP(클라우드 제공자) 평가</h4><div class="lz-muted">건전성, 안전성 평가. 비중요업무는 필수항목만</div><span class="lz-pill ok">AWS 지원</span></div>
+  <div class="lz-step lz-key lz-sel" data-i="2"><h4>BCP(업무연속성), 안전성 조치</h4><div class="lz-muted">재해복구, 출구전략 수립과 암호화, 접근통제, 백업</div><span class="lz-pill ok">Landing Zone 영역</span></div>
+  <div class="lz-step" data-i="3"><h4>위원회 심의, 보고</h4><div class="lz-muted">심의 의결 후 이용 개시, 이용 후 3개월 이내 금융감독원 보고</div></div>
+</div>
+<div class="lz-panel lz-gap-top" id="lzProcDetail"></div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="lz-t-info">Landing Zone의 역할</strong>: 3단계 안전성 확보조치의 기술 통제를 표준화해, 심의와 보고 증적을 반복 가능하게 만듭니다.</div>
+<div class="lz-cap">세부 절차는 금융분야 클라우드 이용 가이드 참조. 각 단계를 클릭하면 설명이 바뀝니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s7" data-block="01-why-regulation" data-block-title="AWS Landing Zone">
+  <div class="slide-header" data-remarp-id="s7-header"><h2>규제 요건을 통제 계층에 매핑</h2></div>
+  <div class="slide-body" data-remarp-id="s7-body">
+    <p><!-- Slide 8: 규제 매핑 --></p>
+<div class="lz-map">
+  <div class="lz-stack" id="lzReqs">
+    <div class="lz-req lz-sel" data-l="0,1" data-ch="03장"><span>클라우드 이용 절차<small>표준 계정과 통제 구성을 심의 자료로 재사용</small></span><span class="lz-reg">감독규정 제14조의2</span></div>
+    <div class="lz-req" data-l="2" data-ch="04장"><span>망분리와 대체 통제<small>Egress 중앙화, 업무계 VPC 인터넷 차단, Inspection VPC</small></span><span class="lz-reg">제15조, 시행세칙 별표7</span></div>
+    <div class="lz-req" data-l="1" data-ch="03장"><span>접근통제, 권한 분리<small>사내 IdP 연동 Identity Center, MFA, OU별 SCP 상한</small></span><span class="lz-reg">감독규정</span></div>
+    <div class="lz-req" data-l="1,3" data-ch="03장, 05장"><span>암호화<small>KMS 기본 암호화, Config 탐지와 SCP 차단</small></span><span class="lz-reg">감독규정</span></div>
+    <div class="lz-req" data-l="3" data-ch="05장"><span>로그 보존과 무결성<small>Organization Trail, Log Archive, S3 Object Lock</small></span><span class="lz-reg">전자금융거래법, 감독규정</span></div>
+    <div class="lz-req" data-l="4" data-ch="05장"><span>침해사고 탐지와 보고<small>GuardDuty, Security Hub, EventBridge 알림</small></span><span class="lz-reg">감독규정</span></div>
+    <div class="lz-req" data-l="4,0" data-ch="04장 DX 이중화, 06장 DR 전략"><span>업무연속성, 출구전략<small>AWS Backup, 멀티 AZ 표준, IaC 재구축</small></span><span class="lz-reg">감독규정 별표 2의3</span></div>
+  </div>
+  <div class="lz-stack">
+    <div class="lz-layers" id="lzLayers">
+      <div class="lz-layer"><b>계정 구조</b><div class="lz-row"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Organizations_48.svg" alt=""><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Control-Tower_48.svg" alt=""><span class="lz-muted">Organizations, OU, Account Factory</span></div></div>
+      <div class="lz-layer"><b>신원과 권한</b><div class="lz-row"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-IAM-Identity-Center_48.svg" alt=""><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Key-Management-Service_48.svg" alt=""><span class="lz-muted">Identity Center, MFA, SCP, RCP(리소스 제어 정책), KMS</span></div></div>
+      <div class="lz-layer"><b>네트워크</b><div class="lz-row"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Transit-Gateway_48.svg" alt=""><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Network-Firewall_48.svg" alt=""><span class="lz-muted">TGW(Transit Gateway), Inspection VPC, Egress 중앙화</span></div></div>
+      <div class="lz-layer"><b>데이터와 로그</b><div class="lz-row"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-CloudTrail_48.svg" alt=""><img class="lz-icon-sm" src="common/aws-icons/resources/Res_Amazon-Simple-Storage-Service_S3-Object-Lock_48.svg" alt=""><span class="lz-muted">Organization Trail, Log Archive, Object Lock</span></div></div>
+      <div class="lz-layer"><b>탐지와 복구</b><div class="lz-row"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-GuardDuty_48.svg" alt=""><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Security-Hub_48.svg" alt=""><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Backup_48.svg" alt=""><span class="lz-muted">GuardDuty, Security Hub, Config, Backup</span></div></div>
+    </div>
+    <div class="callout callout-info" id="lzMapOut"></div>
+  </div>
+</div>
+<div class="lz-cap">조항별 세부 해석과 적용 범위는 OK저축은행 준법감시, 정보보호 부서와 확인 필요. 왼쪽 요건을 클릭하면 해당 계층과 구현 방식이 표시됩니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s8" data-block="01-why-regulation" data-block-title="AWS Landing Zone">
+  <div class="slide-header" data-remarp-id="s8-header"><h2>망분리, 형식적 분리에서 실질 통제로</h2></div>
+  <div class="slide-body" data-remarp-id="s8-body">
+    <p><!-- Slide 9: 망분리 --></p>
+<div class="lz-tl">
+  <div class="lz-tl-item"><div class="lz-tl-date">2024.8</div><strong>망분리 개선 로드맵</strong><div class="lz-muted">단계적 규제 개선 방향 제시. 혁신금융서비스를 통한 SaaS, 생성형 AI 활용</div></div>
+  <div class="lz-tl-item"><div class="lz-tl-date">2026.1</div><strong>시행세칙 개정 예고</strong><div class="lz-muted">SaaS를 망분리 예외로 명시. 별표7 대체 정보보호통제 준수 의무화</div></div>
+  <div class="lz-tl-item lz-key"><div class="lz-tl-date">Landing Zone</div><strong>시사점</strong><div class="lz-muted">통제 결과를 증명하는 구조. 계정, VPC 단위 경계와 로그 증적 확보가 핵심</div></div>
+</div>
+<div class="lz-grid-2 lz-gap-top fragment fade-up" data-fragment-index="1">
+  <div class="lz-card lz-scope ok">
+    <div class="lz-row"><span class="lz-pill ok">이번 예외 대상</span></div>
+    <h4>내부업무용 단말의 SaaS 이용</h4>
+    <div class="lz-flowline"><span class="lz-acct">내부업무 단말</span><span class="lz-link"></span><span class="lz-acct">SaaS</span></div>
+    <div class="lz-muted">별표7 대체 정보보호통제를 전제로 망분리 예외 명시</div>
+  </div>
+  <div class="lz-card lz-scope keep">
+    <div class="lz-row"><span class="lz-pill no">계속 필요</span></div>
+    <h4>클라우드 정보처리시스템</h4>
+    <div class="lz-flowline"><span class="lz-acct">업무계 VPC</span><span class="lz-link cut"></span><span class="lz-acct">인터넷</span></div>
+    <div class="lz-muted">망분리 요건 검토와 대체 통제 설계가 계속 필요. Landing Zone 네트워크 설계가 담당</div>
+  </div>
+</div>
+<div class="lz-cap">근거: 2026.1.19 금융위원회 보도자료, 시행세칙 개정 예고(예고기간 1.20 ~ 2.9)</div>
+  </div>
+</div>
+
+<div class="slide title-slide" data-remarp-id="s9" data-block="02-controltower-network" data-block-title="03 멀티 어카운트와 Control Tower">
+    <h1>03 멀티 어카운트와 Control Tower</h1>
+  <p class="meta">OU 구조, 통제, 계정 발급 자동화</p>
+</div>
+
+<div class="slide" data-remarp-id="s10" data-block="02-controltower-network" data-block-title="03 멀티 어카운트와 Control Tower">
+  <div class="slide-header" data-remarp-id="s10-header"><h2>OU마다 다른 통제를 건다</h2></div>
+  <div class="slide-body" data-remarp-id="s10-body">
+    <p><!-- Slide 2: OU 구조 --></p>
+<div class="lz-outree">
+  <div class="lz-mgmt" data-n="mgmt">
+    <img class="lz-icon" src="common/aws-icons/resources/Res_AWS-Organizations_Management-Account_48.svg" alt="">
+    <div><strong>Management Account</strong><div class="lz-cap">Organizations, Control Tower, 결제 통합. 워크로드와 보안 도구는 두지 않음</div></div>
+  </div>
+  <div class="lz-oucols" id="lzOus">
+    <div class="lz-ou lz-sel" data-i="0"><b>Security OU</b><span class="lz-acct">Log Archive</span><span class="lz-acct">Audit</span><span class="lz-scp">로그 삭제, 변경 차단</span></div>
+    <div class="lz-ou" data-i="1"><b>Infrastructure OU</b><span class="lz-acct">Network Hub</span><span class="lz-acct">Shared Services</span><span class="lz-scp">네트워크 변경 권한 분리</span></div>
+    <div class="lz-ou" data-i="2"><b>Workloads Prod OU</b><span class="lz-acct">업무계 Prod</span><span class="lz-acct">채널계 Prod</span><span class="lz-scp">서울 리전 외 차단, 암호화 강제</span></div>
+    <div class="lz-ou" data-i="3"><b>Workloads NonProd OU</b><span class="lz-acct">업무계 Dev</span><span class="lz-acct">업무계 Stg</span><span class="lz-scp">운영 데이터 접근 차단</span></div>
+    <div class="lz-ou" data-i="4"><b>Sandbox OU</b><span class="lz-acct">개발자 Sandbox</span><span class="lz-acct">PoC Sandbox</span><span class="lz-scp">예산 한도, 사내망 연결 차단</span></div>
+    <div class="lz-ou" data-i="5"><b>Policy Staging, Suspended</b><span class="lz-acct">통제 검증용</span><span class="lz-acct">폐기 대기</span><span class="lz-scp">신규 통제 사전 검증, 모든 작업 거부</span></div>
+  </div>
+  <div class="lz-grid-2">
+    <div class="lz-panel" id="lzOuOut"></div>
+    <div class="callout callout-warning fragment fade-up" data-fragment-index="1"><strong class="lz-t-warning">관리 계정에는 SCP가 적용되지 않습니다</strong><div class="lz-muted">그래서 관리 계정에는 워크로드를 두지 않고, 접근 인원을 최소화합니다.</div></div>
+  </div>
+</div>
+<div class="lz-cap">업무계, 채널계 명칭은 예시이며 실제 분류는 OK저축은행 시스템 구성에 맞춰 조정. OU를 클릭하면 통제 예시가 표시됩니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s11" data-block="02-controltower-network" data-block-title="03 멀티 어카운트와 Control Tower">
+  <div class="slide-header" data-remarp-id="s11-header"><h2>Control Tower, 네 가지 구성 요소</h2></div>
+  <div class="slide-body" data-remarp-id="s11-body">
+    <p><!-- Slide 3: Control Tower 구성 요소 --></p>
+<div class="lz-ct">
+  <div class="lz-grid-4" id="lzCt">
+    <div class="lz-card lz-ctc lz-sel" data-i="0"><img class="lz-icon" src="common/aws-icons/services/Arch_AWS-Control-Tower_48.svg" alt=""><h4>Landing Zone</h4><div class="lz-muted">관리, 로그, 감사 계정과 OU 기본 구조를 자동 구성</div></div>
+    <div class="lz-card lz-ctc" data-i="1"><img class="lz-icon" src="common/aws-icons/services/Arch_AWS-Config_48.svg" alt=""><h4>Controls</h4><div class="lz-muted">예방, 탐지, 사전 통제를 OU 단위로 적용</div></div>
+    <div class="lz-card lz-ctc" data-i="2"><img class="lz-icon" src="common/aws-icons/resources/Res_AWS-Organizations_Account_48.svg" alt=""><h4>Account Factory</h4><div class="lz-muted">표준 기준선이 적용된 신규 계정을 자동 발급</div></div>
+    <div class="lz-card lz-ctc" data-i="3"><img class="lz-icon" src="common/aws-icons/services/Arch_Amazon-EventBridge_48.svg" alt=""><h4>Dashboard, Drift</h4><div class="lz-muted">OU, 계정별 준수 현황과 기준선 이탈 탐지</div></div>
+  </div>
+  <div class="lz-base ct"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Control-Tower_48.svg" alt=""><strong>AWS Control Tower</strong><span class="lz-cap">Landing Zone 구성, 통제 적용, 계정 발급을 자동화하는 관리형 서비스</span></div>
+  <div class="lz-base org"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Organizations_48.svg" alt=""><strong>AWS Organizations</strong><span class="lz-cap">계정, OU, SCP, RCP, 통합 결제의 기반</span></div>
+  <div class="lz-panel" id="lzCtOut"></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s12" data-block="02-controltower-network" data-block-title="03 멀티 어카운트와 Control Tower">
+  <div class="slide-header" data-remarp-id="s12-header"><h2>같은 요건을 세 겹으로 막는다</h2></div>
+  <div class="slide-body" data-remarp-id="s12-body">
+    <p><!-- Slide 4: 통제 유형 --></p>
+<div class="lz-btns" id="lzCtlBtns">
+  <button class="lz-btn on" data-k="0">암호화</button>
+  <button class="lz-btn" data-k="1">퍼블릭 노출</button>
+  <button class="lz-btn" data-k="2">리전, 감사 추적</button>
+</div>
+<div class="lz-lane"><div>배포 전</div><div>API 호출 시</div><div>배포 후 지속</div></div>
+<div class="lz-grid-3 lz-ctl" id="lzCtl">
+  <div class="lz-card"><div class="lz-row"><img class="lz-icon" src="common/aws-icons/services/Arch_AWS-CloudFormation_48.svg" alt=""><div><strong class="lz-t-info">사전적 Proactive</strong><div class="lz-cap">CloudFormation Hooks</div></div></div><div class="lz-ctl-ex"></div></div>
+  <div class="lz-card"><div class="lz-row"><img class="lz-icon" src="common/aws-icons/services/Arch_AWS-Organizations_48.svg" alt=""><div><strong class="lz-t-info">예방적 Preventive</strong><div class="lz-cap">SCP, RCP, Declarative Policy</div></div></div><div class="lz-ctl-ex"></div></div>
+  <div class="lz-card"><div class="lz-row"><img class="lz-icon" src="common/aws-icons/services/Arch_AWS-Config_48.svg" alt=""><div><strong class="lz-t-info">탐지적 Detective</strong><div class="lz-cap">AWS Config Rules</div></div></div><div class="lz-ctl-ex"></div></div>
+</div>
+<div class="lz-promote fragment fade-up" data-fragment-index="1">
+  <span class="lz-acct">신규 통제 작성</span><span class="lz-link"></span>
+  <span class="lz-acct">Policy Staging OU 검증</span><span class="lz-link"></span>
+  <span class="lz-acct">운영 OU로 승격</span>
+  <span class="lz-muted">서비스 영향 없이 통제를 늘리는 순서</span>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s13" data-block="02-controltower-network" data-block-title="03 멀티 어카운트와 Control Tower">
+  <div class="slide-header" data-remarp-id="s13-header"><h2>Landing Zone 4.0, 필요한 것만 고른다</h2></div>
+  <div class="slide-body" data-remarp-id="s13-body">
+    <p><!-- Slide 5: Landing Zone 4.0 --></p>
+<div class="lz-grid-2">
+  <div class="lz-stack">
+    <div class="lz-cap">2025년 11월 출시, 주요 변경 사항 (항목을 누르면 이전과 비교)</div>
+    <div class="lz-stack" id="lz40">
+      <div class="lz-req lz-sel" data-i="0"><span><strong>서비스 통합</strong></span><span class="lz-pill ok">선택 적용</span></div>
+      <div class="lz-req" data-i="1"><span><strong>OU 구조</strong></span><span class="lz-pill ok">고객 정의</span></div>
+      <div class="lz-req" data-i="2"><span><strong>리소스 분리</strong></span><span class="lz-pill ok">전용 버킷, 토픽</span></div>
+      <div class="lz-req" data-i="3"><span><strong>도입 방식</strong></span><span class="lz-pill ok">통제만 먼저</span></div>
+      <div class="lz-req" data-i="4"><span><strong>준수 데이터 집계</strong></span><span class="lz-pill ok">Service-linked</span></div>
+    </div>
+    <div class="lz-vs" id="lz40Out">
+      <div class="lz-panel"><div class="lz-cap">이전 (3.x)</div><div class="lz-muted" data-k="a"></div></div>
+      <div class="lz-panel lz-new"><div class="lz-cap">Landing Zone 4.0</div><div class="lz-muted" data-k="b"></div></div>
+    </div>
+  </div>
+  <div class="lz-card fragment fade-up" data-fragment-index="1">
+    <h4>기존 계정이 있다면, 현실적인 도입 경로</h4>
+    <div class="lz-path">
+      <div class="lz-path-s"><span class="lz-num">1</span><div><strong>기존 Organizations 유지</strong><div class="lz-muted">현재 계정과 결제 구조 그대로</div></div></div>
+      <div class="lz-path-s"><span class="lz-num">2</span><div><strong>예방, 사전 통제부터 적용</strong><div class="lz-muted">Landing Zone 전체 구성 없이 Controls만 먼저</div></div></div>
+      <div class="lz-path-s"><span class="lz-num">3</span><div><strong>Config 통합으로 확장</strong><div class="lz-muted">탐지 통제, Account Factory, Backup을 쓰려면 Config 통합 활성화</div></div></div>
+    </div>
+    <div class="callout callout-warning"><strong class="lz-t-warning">Config 통합 없이 쓸 수 있는 것</strong><div class="lz-muted">예방, 사전 통제만 가능<br>탐지 통제, Account Factory, AFT, Identity Center 연동, Backup은 Config 통합과 OU별 Config 기준선 필요</div></div>
+    <div class="callout callout-info"><strong class="lz-t-info">권장</strong>: 신규 구성은 처음부터 4.0으로 하되, 금융 규제상 Config와 CloudTrail 통합은 켜 둡니다.</div>
+  </div>
+</div>
+<div class="lz-cap">출처: AWS Control Tower User Guide, Landing Zone v4.0 migration guide</div>
+  </div>
+</div>
+
+<div class="slide title-slide" data-remarp-id="s14" data-block="02-controltower-network" data-block-title="03 멀티 어카운트와 Control Tower">
+    <h1>04 네트워크 아키텍처</h1>
+  <p class="meta">온프레미스 연동과 중앙 집중형 트래픽 통제</p>
+</div>
+
+<div class="slide" data-remarp-id="s15" data-block="02-controltower-network" data-block-title="03 멀티 어카운트와 Control Tower">
+  <div class="slide-header" data-remarp-id="s15-header"><h2>모든 길은 Network 계정을 지난다</h2></div>
+  <div class="slide-body" data-remarp-id="s15-body">
+    <p><!-- Slide 7: Hub and Spoke --></p>
+<div class="lz-btns" id="lzNetBtns">
+  <button class="lz-btn on" data-k="0">IDC에서 업무계 Prod</button>
+  <button class="lz-btn" data-k="1">DX 장애 시 VPN</button>
+  <button class="lz-btn" data-k="2">Prod에서 인터넷</button>
+  <button class="lz-btn" data-k="3">NonProd에서 Prod</button>
+</div>
+<div class="lz-arch lz-net" id="lzNet">
+  <div class="lz-zone">
+    <div class="lz-zone-label">OK저축은행 IDC</div>
+    <div class="lz-node" data-n="idc"><div>업무계 시스템<small>사내 DNS</small></div></div>
+    <div class="lz-node" data-n="siem"><div>보안관제, SIEM</div></div>
+  </div>
+  <div class="lz-zone cloud lz-net-hub">
+    <div class="lz-zone-label">Network Account (서울 리전)</div>
+    <div class="lz-net-grid">
+      <div class="lz-node" data-n="dx"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Direct-Connect_48.svg" alt=""><div>Direct Connect<small>2회선 이중화</small></div></div>
+      <div class="lz-node" data-n="inet"><div>인터넷</div></div>
+      <div class="lz-node" data-n="vpn"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Site-to-Site-VPN_48.svg" alt=""><div>Site-to-Site VPN<small>백업 경로</small></div></div>
+      <div class="lz-node" data-n="egress"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-Virtual-Private-Cloud_48.svg" alt=""><div>Egress VPC<small>NAT Gateway</small></div></div>
+      <div class="lz-node lz-tgw" data-n="tgw"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Transit-Gateway_48.svg" alt=""><div>Transit Gateway<small>RT 분리: Prod, NonProd, Shared</small></div></div>
+      <div class="lz-node" data-n="insp"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Network-Firewall_48.svg" alt=""><div>Inspection VPC<small>Network Firewall</small></div></div>
+      <div class="lz-node" data-n="r53"><img class="lz-icon-sm" src="common/aws-icons/resources/Res_Amazon-Route-53_Resolver_48.svg" alt=""><div>Route 53 Resolver<small>인바운드, 아웃바운드</small></div></div>
+    </div>
+  </div>
+  <div class="lz-zone">
+    <div class="lz-zone-label">Workload Accounts</div>
+    <div class="lz-node" data-n="prod"><img class="lz-icon-sm" src="common/aws-icons/resources/Res_Amazon-VPC_Virtual-private-cloud-VPC_48.svg" alt=""><div>Prod VPC<small>업무계: IGW 없음<br>채널계</small></div></div>
+    <div class="lz-node" data-n="shared"><img class="lz-icon-sm" src="common/aws-icons/resources/Res_Amazon-VPC_Virtual-private-cloud-VPC_48.svg" alt=""><div>Shared Services VPC</div></div>
+    <div class="lz-node" data-n="nonprod"><img class="lz-icon-sm" src="common/aws-icons/resources/Res_Amazon-VPC_Virtual-private-cloud-VPC_48.svg" alt=""><div>NonProd VPC<small>Dev, Stg</small></div></div>
+  </div>
+</div>
+<div class="callout callout-info lz-flow-msg" id="lzNetMsg"></div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s16" data-block="02-controltower-network" data-block-title="03 멀티 어카운트와 Control Tower">
+  <div class="slide-header" data-remarp-id="s16-header"><h2>IP 대역은 가장 먼저, 가장 넓게</h2></div>
+  <div class="slide-body" data-remarp-id="s16-body">
+    <p><!-- Slide 8: 네트워크 설계 포인트 --></p>
+<div class="lz-card">
+  <div class="lz-row"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-Virtual-Private-Cloud_48.svg" alt=""><strong>IP 대역 계획 (개념도, 칸 너비는 실제 크기와 무관)</strong><span class="lz-cap">사내 IPAM 현황 확인 후 AWS VPC IPAM으로 할당 관리</span></div>
+  <div class="lz-cidr">
+    <div class="lz-cidr-s onp">사내 기존 대역<small>중복 금지</small></div>
+    <div class="lz-cidr-s prod">AWS Prod</div>
+    <div class="lz-cidr-s non">AWS NonProd</div>
+    <div class="lz-cidr-s shr">Shared, Network</div>
+    <div class="lz-cidr-s rsv">향후 계정 확장 예약</div>
+  </div>
+</div>
+<div class="lz-grid-3 lz-gap-top fragment fade-up" data-fragment-index="1">
+  <div class="lz-panel lz-row"><img class="lz-icon" src="common/aws-icons/services/Arch_AWS-Direct-Connect_48.svg" alt=""><div><strong>온프레미스 연결</strong><div class="lz-muted">DX 2회선, 서로 다른 로케이션, VPN 백업. 절체 시험 정례화</div></div></div>
+  <div class="lz-panel lz-row"><img class="lz-icon" src="common/aws-icons/services/Arch_AWS-Transit-Gateway_48.svg" alt=""><div><strong>라우팅 분리</strong><div class="lz-muted">TGW RT를 Prod, NonProd, Shared로 분리. 운영과 개발 간 직접 통신 차단</div></div></div>
+  <div class="lz-panel lz-row"><img class="lz-icon" src="common/aws-icons/services/Arch_AWS-Network-Firewall_48.svg" alt=""><div><strong>트래픽 검사</strong><div class="lz-muted">Inspection VPC에 Network Firewall 집중. 동서, 남북 트래픽 검사 증적</div></div></div>
+  <div class="lz-panel lz-row"><img class="lz-icon" src="common/aws-icons/services/Arch_Amazon-Virtual-Private-Cloud_48.svg" alt=""><div><strong>인터넷 경로</strong><div class="lz-muted">Egress VPC 중앙화, 업무계 IGW 금지. SCP 차단이 망분리 대체 통제 근거</div></div></div>
+  <div class="lz-panel lz-row"><img class="lz-icon" src="common/aws-icons/services/Arch_AWS-PrivateLink_48.svg" alt=""><div><strong>AWS 서비스 접근</strong><div class="lz-muted">VPC Endpoint, PrivateLink로 인터넷 없이 S3, KMS 등에 접근</div></div></div>
+  <div class="lz-panel lz-row"><img class="lz-icon" src="common/aws-icons/services/Arch_Amazon-Route-53_48.svg" alt=""><div><strong>DNS</strong><div class="lz-muted">Route 53 Resolver로 사내 DNS와 양방향 조회</div></div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide title-slide" data-remarp-id="s17" data-block="03-security-build" data-block-title="05 보안과 감사">
+    <h1>05 보안과 감사</h1>
+  <p class="meta">위임 관리자 모델, 로그 아카이빙, 침해사고 대응</p>
+</div>
+
+<div class="slide" data-remarp-id="s18" data-block="03-security-build" data-block-title="05 보안과 감사">
+  <div class="slide-header" data-remarp-id="s18-header"><h2>탐지는 Audit에, 로그는 Log Archive에</h2></div>
+  <div class="slide-body" data-remarp-id="s18-body">
+    <p><!-- Slide 2: 위임 관리자 --></p>
+<div class="lz-btns" id="lzSecBtns">
+  <button class="lz-btn on" data-k="0">로그 흐름</button>
+  <button class="lz-btn" data-k="1">Findings 흐름</button>
+</div>
+<div class="lz-arch lz-sec" id="lzSec">
+  <div class="lz-zone">
+    <div class="lz-zone-label">모든 멤버 계정</div>
+    <div class="lz-node" data-n="ct"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-CloudTrail_48.svg" alt=""><div>CloudTrail<small>Organization Trail</small></div></div>
+    <div class="lz-node" data-n="cfg"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Config_48.svg" alt=""><div>AWS Config<small>구성 변경 기록</small></div></div>
+    <div class="lz-node" data-n="flow"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-Virtual-Private-Cloud_48.svg" alt=""><div>VPC Flow Logs</div></div>
+    <div class="lz-node" data-n="gd"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-GuardDuty_48.svg" alt=""><div>GuardDuty<small>위협 탐지</small></div></div>
+    <div class="lz-node" data-n="insp"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-Inspector_48.svg" alt=""><div>Inspector<small>취약점 스캔</small></div></div>
+  </div>
+  <div class="lz-stack lz-sec-mid">
+    <div class="lz-zone net">
+      <div class="lz-zone-label">Log Archive Account</div>
+      <div class="lz-node" data-n="s3"><img class="lz-icon-sm" src="common/aws-icons/resources/Res_Amazon-Simple-Storage-Service_S3-Object-Lock_48.svg" alt=""><div>S3 로그 버킷<small>Object Lock, SSE-KMS</small></div></div>
+      <div class="lz-node" data-n="lake"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-Security-Lake_48.svg" alt=""><div>Security Lake<small>OCSF(공통 보안 스키마) 정규화</small></div></div>
+    </div>
+    <div class="lz-zone cloud">
+      <div class="lz-zone-label">Audit Account (위임 관리자)</div>
+      <div class="lz-node" data-n="hub"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Security-Hub_48.svg" alt=""><div>Security Hub<small>통합 Findings, CSPM 표준 점검</small></div></div>
+      <div class="lz-sec-row">
+        <div class="lz-node" data-n="gdadm"><div>GuardDuty, Inspector<small>조직 단위 관리</small></div></div>
+        <div class="lz-node" data-n="det"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-Detective_48.svg" alt=""><div>Detective</div></div>
+        <div class="lz-node" data-n="mac"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-Macie_48.svg" alt=""><div>Macie</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="lz-zone">
+    <div class="lz-zone-label">대응, 관제 연동</div>
+    <div class="lz-node" data-n="eb"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-EventBridge_48.svg" alt=""><div>EventBridge<small>자동 대응 트리거</small></div></div>
+    <div class="lz-node" data-n="siem"><div>사내 SIEM, 보안관제</div></div>
+  </div>
+</div>
+<div class="callout callout-info lz-flow-msg" id="lzSecMsg"></div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s19" data-block="03-security-build" data-block-title="05 보안과 감사">
+  <div class="slide-header" data-remarp-id="s19-header"><h2>로그는 만든 계정에 두지 않는다</h2></div>
+  <div class="slide-body" data-remarp-id="s19-body">
+    <p><!-- Slide 3: 로그 아카이빙 --></p>
+<div class="lz-logs">
+  <div class="lz-loghead"><span>로그</span><span>수집</span><span>저장 위치</span><span>보존과 보호</span></div>
+  <div class="lz-logrow fragment fade-up" data-fragment-index="1"><span><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-CloudTrail_48.svg" alt=""><b>CloudTrail 관리 이벤트</b></span><span>Organization Trail, 전 계정 자동</span><span class="lz-pill">Log Archive S3</span><span><span class="lz-pill ok">Object Lock</span><span class="lz-pill ok">KMS</span><span class="lz-pill ok">삭제 차단 SCP</span></span></div>
+  <div class="lz-logrow fragment fade-up" data-fragment-index="1"><span><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-CloudTrail_48.svg" alt=""><b>CloudTrail 데이터 이벤트</b></span><span>중요 S3, Lambda 선별 수집</span><span class="lz-pill">Log Archive S3</span><span><span class="lz-pill">비용 고려해 대상 선정</span></span></div>
+  <div class="lz-logrow fragment fade-up" data-fragment-index="2"><span><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Config_48.svg" alt=""><b>AWS Config</b></span><span>Control Tower 기준선</span><span class="lz-pill">Log Archive S3, Aggregator</span><span><span class="lz-pill">구성 변경 이력 보존</span></span></div>
+  <div class="lz-logrow fragment fade-up" data-fragment-index="2"><span><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-Virtual-Private-Cloud_48.svg" alt=""><b>VPC Flow Logs</b></span><span>계정별 표준 배포</span><span class="lz-pill">Log Archive S3</span><span><span class="lz-pill">네트워크 접속 증적</span></span></div>
+  <div class="lz-logrow fragment fade-up" data-fragment-index="2"><span><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Security-Hub_48.svg" alt=""><b>보안 Findings</b></span><span>GuardDuty, Inspector, Macie, CSPM 점검</span><span class="lz-pill">Security Hub (Audit)</span><span><span class="lz-pill">SIEM 연동, 조치 이력 관리</span></span></div>
+</div>
+<div class="lz-card lz-gap-top fragment fade-up" data-fragment-index="3">
+  <div class="lz-row"><img class="lz-icon" src="common/aws-icons/resources/Res_Amazon-Simple-Storage-Service_S3-Object-Lock_48.svg" alt=""><strong>보존 수명주기</strong><span class="lz-cap">기간은 로그와 기록 유형별 법정 보존기간을 준법감시 확인 후 확정</span></div>
+  <div class="lz-life">
+    <div class="hot">S3 Standard<small>최근 로그 조회, 분석</small></div>
+    <div class="cold">S3 Glacier 계층<small>장기 보관 비용 절감</small></div>
+    <div class="end">보존 만료<small>확정된 기간 이후</small></div>
+  </div>
+  <div class="lz-lock">Object Lock Compliance 모드: 보존 기간 동안 루트 사용자도 삭제 불가</div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s20" data-block="03-security-build" data-block-title="05 보안과 감사">
+  <div class="slide-header" data-remarp-id="s20-header"><h2>자동화는 알림부터 격리까지 단계적으로</h2></div>
+  <div class="slide-body" data-remarp-id="s20-body">
+    <p><!-- Slide 4: 침해사고 대응 --></p>
+<div class="lz-btns" id="lzIrBtns">
+  <button class="lz-btn on" data-k="0">1단계: 알림 중심</button>
+  <button class="lz-btn" data-k="1">2단계: 승인 후 조치</button>
+  <button class="lz-btn" data-k="2">3단계: 검증된 시나리오 자동 격리</button>
+</div>
+<div class="lz-steps" id="lzIr">
+  <div class="lz-step"><h4>탐지</h4><div class="lz-row"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-GuardDuty_48.svg" alt=""><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-Inspector_48.svg" alt=""></div><div class="lz-muted">GuardDuty, Inspector로 이상 행위와 취약점 지속 탐지</div><span class="lz-pill lz-mode"></span></div>
+  <div class="lz-step"><h4>집계와 분류</h4><div class="lz-row"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Security-Hub_48.svg" alt=""></div><div class="lz-muted">Security Hub 통합, 심각도 기준 자동 분류</div><span class="lz-pill lz-mode"></span></div>
+  <div class="lz-step"><h4>대응</h4><div class="lz-row"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-EventBridge_48.svg" alt=""><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Lambda_48.svg" alt=""></div><div class="lz-muted">EventBridge, Lambda로 인스턴스 격리, 자격증명 비활성화</div><span class="lz-pill lz-mode"></span></div>
+  <div class="lz-step"><h4>통보와 보고</h4><div class="lz-row"><span class="lz-pill">관제</span><span class="lz-pill">CISO</span></div><div class="lz-muted">즉시 통보, 감독기관 보고 절차와 연계</div><span class="lz-pill lz-mode"></span></div>
+</div>
+<div class="lz-grid-2 lz-gap-top">
+  <div class="lz-panel"><div class="lz-cap">자동화 범위 (개념도, 상대 비교)</div><div class="lz-bar"><i id="lzIrBar"></i></div><div class="lz-muted" id="lzIrMsg"></div></div>
+  <div class="callout callout-warning fragment fade-up" data-fragment-index="1"><strong class="lz-t-warning">Prod에 바로 자동 격리를 걸지 않습니다</strong><div class="lz-muted">알림 중심으로 시작하고, 검증된 시나리오부터 격리 자동화로 확대합니다.</div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide title-slide" data-remarp-id="s21" data-block="03-security-build" data-block-title="05 보안과 감사">
+    <h1>06 구축 접근 방식</h1>
+  <p class="meta">구축 옵션, Bedrock과 Claude Code 활용 사례, 로드맵</p>
+</div>
+
+<div class="slide" data-remarp-id="s22" data-block="03-security-build" data-block-title="05 보안과 감사">
+  <div class="slide-header" data-remarp-id="s22-header"><h2>무엇으로 만들지는 IaC 역량이 정한다</h2></div>
+  <div class="slide-body" data-remarp-id="s22-body">
+    <p><!-- Slide 6: 구축 옵션 --></p>
+<div class="lz-grid-2 lz-q">
+  <div class="lz-panel"><strong>Q1. 인프라 표준 도구가 Terraform인가요?</strong><div class="lz-btns" id="lzQ1"><button class="lz-btn" data-v="1">예</button><button class="lz-btn on" data-v="0">아니오, 미정</button></div></div>
+  <div class="lz-panel"><strong>Q2. 규제 기준선 전체를 코드로 관리해 감사 증적으로 쓰려 하나요?</strong><div class="lz-btns" id="lzQ2"><button class="lz-btn" data-v="1">예</button><button class="lz-btn on" data-v="0">아니오, 우선 빠른 시작</button></div></div>
+</div>
+<div class="lz-grid-3 lz-gap-top" id="lzOpts">
+  <div class="lz-card"><div class="lz-row"><img class="lz-icon" src="common/aws-icons/services/Arch_AWS-Control-Tower_48.svg" alt=""><h4>Control Tower 기본</h4></div>
+    <div class="lz-muted">콘솔 중심 설정, Blueprint 수준 커스터마이징</div>
+    <div class="lz-meter"><span>운영 부담</span><div class="lz-bar success"><i class="w30"></i></div></div>
+    <div class="lz-row"><span class="lz-pill">빠른 시작, 소규모</span><span class="lz-pill">PoC, 초기 도입</span></div></div>
+  <div class="lz-card"><div class="lz-row"><img class="lz-icon" src="common/aws-icons/resources/Res_AWS-Organizations_Account_48.svg" alt=""><h4>Control Tower + AFT</h4></div>
+    <div class="lz-muted">Terraform 기반 GitOps 계정 발급, 계정별 커스터마이징</div>
+    <div class="lz-meter"><span>운영 부담</span><div class="lz-bar warning"><i class="w60"></i></div></div>
+    <div class="lz-row"><span class="lz-pill">Terraform 표준 조직</span><span class="lz-pill">계정 발급 자동화 우선</span></div></div>
+  <div class="lz-card"><div class="lz-row"><img class="lz-icon" src="common/aws-icons/services/Arch_AWS-CloudFormation_48.svg" alt=""><h4>Control Tower + LZA</h4></div>
+    <div class="lz-muted">YAML 설정 파일로 네트워크, 보안 서비스까지 선언, CDK 파이프라인 배포</div>
+    <div class="lz-meter"><span>운영 부담</span><div class="lz-bar warning"><i class="w60"></i></div></div>
+    <div class="lz-row"><span class="lz-pill">규제 산업, 대규모 표준화</span><span class="lz-pill">기준선을 코드로</span></div></div>
+</div>
+<div class="callout callout-info lz-gap-top" id="lzOptMsg"></div>
+<div class="lz-cap">AFT: Account Factory for Terraform, LZA: Landing Zone Accelerator on AWS. 운영 부담 막대는 상대 비교(낮음, 중간)입니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s23" data-block="03-security-build" data-block-title="05 보안과 감사">
+  <div class="slide-header" data-remarp-id="s23-header"><h2>AI 워크로드도 같은 통제를 상속</h2></div>
+  <div class="slide-body" data-remarp-id="s23-body">
+    <p><!-- Slide 7: Bedrock --></p>
+<div class="lz-ai">
+  <div class="lz-zone cloud lz-ai-arch">
+    <div class="lz-zone-label">AWS Cloud, 서울 리전</div>
+    <div class="lz-ai-row">
+      <div class="lz-zone">
+        <div class="lz-zone-label">AI Workload Account (Prod OU)</div>
+        <div class="lz-node"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-Elastic-Container-Service_48.svg" alt=""><div>업무 애플리케이션<small>ECS, Lambda</small></div></div>
+        <div class="lz-node"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-PrivateLink_48.svg" alt=""><div>VPC Endpoint (PrivateLink)<small>bedrock-runtime, KB용 bedrock-agent-runtime</small></div></div>
+        <div class="lz-node"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-CloudTrail_48.svg" alt=""><div>호출 기록<small>CloudTrail API 기록, 호출 로그(S3, CloudWatch)를 Log Archive로 복제</small></div></div>
+        <div class="lz-cap lz-t-danger">인터넷 경로 없음, SCP로 엔드포인트 외 호출 제한</div>
+      </div>
+      <div class="lz-pipe"></div>
+      <div class="lz-zone">
+        <div class="lz-zone-label">Amazon Bedrock</div>
+        <div class="lz-node"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt=""><div>Guardrails<small>PII 마스킹, 주제 제한</small></div></div>
+        <div class="lz-node"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt=""><div>Claude 모델<small>추론 API</small></div></div>
+        <div class="lz-node"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-Simple-Storage-Service_48.svg" alt=""><div>Knowledge Bases<small>S3 문서 RAG</small></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="lz-stack">
+    <div class="tab-set" onclick="(function(e){var b=e.target.closest('.tab-btn');if(!b)return;var bar=b.parentNode,p=bar.parentNode,i=[].indexOf.call(bar.children,b);bar.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});b.classList.add('active');p.querySelectorAll('.tc').forEach(function(c,j){c.hidden=j!==i})})(event)">
+      <button class="tab-btn active">규정 Q&amp;A</button><button class="tab-btn">상담 요약</button><button class="tab-btn">보안 요약</button>
+    </div>
+    <div class="tc lz-card"><h4>사내 규정, 상품 문서 Q&amp;A</h4><div class="lz-muted">여신 업무 매뉴얼, 상품 설명서, 내규를 Knowledge Bases로 색인해 직원 질의응답 지원</div><div class="lz-row lz-gap-top"><span class="lz-pill">예시: 중도상환수수료 면제 조건 조회</span></div></div>
+    <div class="tc lz-card" hidden><h4>상담 기록 요약과 민원 분류</h4><div class="lz-muted">상담 기록 요약, 민원 유형 자동 분류로 후처리 시간 단축과 VOC 분석</div><div class="lz-row lz-gap-top"><span class="lz-pill">예시: 통화 후 요약, 민원 유형 태깅</span></div></div>
+    <div class="tc lz-card" hidden><h4>보안 Findings 요약</h4><div class="lz-muted">Security Hub Findings를 요약하고 조치 가이드를 생성해 관제 담당자 대응 지원</div><div class="lz-row lz-gap-top"><span class="lz-pill">예시: GuardDuty 탐지 건별 영향도 설명</span></div></div>
+    <div class="callout callout-warning fragment fade-up" data-fragment-index="1"><strong class="lz-t-warning">확인 필요</strong><div class="lz-muted">개인신용정보 처리 여부, Cross-Region Inference 사용 시 데이터 처리 리전, 모델별 서울 리전 제공 여부<br>서울 외 리전 차단 SCP는 APAC, Global 추론 프로파일 호출도 막으므로 대상 리전 허용이나 bedrock:InferenceProfileArn 예외 필요</div></div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s24" data-block="03-security-build" data-block-title="05 보안과 감사">
+  <div class="slide-header" data-remarp-id="s24-header"><h2>Claude Code로 Landing Zone 운영</h2></div>
+  <div class="slide-body" data-remarp-id="s24-body">
+    <p><!-- Slide 8: Claude Code --></p>
+<div class="lz-cc">
+  <div class="lz-cc-arch lz-arch" id="lzCc">
+    <div class="lz-zone">
+      <div class="lz-zone-label">OK저축은행 사내망</div>
+      <div class="lz-node" data-n="ms"><div>Managed Settings<small>허용 도구, 모델 정책</small></div></div>
+      <div class="lz-node" data-n="pc"><div>개발자 단말<small>Claude Code CLI</small></div></div>
+    </div>
+    <div class="lz-cc-link"><span>DX</span></div>
+    <div class="lz-zone cloud">
+      <div class="lz-zone-label">Shared Services Account</div>
+      <div class="lz-node" data-n="sso"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-IAM-Identity-Center_48.svg" alt=""><div>IAM Identity Center<small>SSO, 임시 자격증명</small></div></div>
+      <div class="lz-node" data-n="vpce"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-PrivateLink_48.svg" alt=""><div>VPC Endpoint<small>bedrock-runtime</small></div></div>
+      <div class="lz-node" data-n="br"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-Bedrock_48.svg" alt=""><div>Amazon Bedrock<small>Claude 모델</small></div></div>
+      <div class="lz-node" data-n="otel"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-CloudWatch_48.svg" alt=""><div>OTel 텔레메트리<small>사용량, 비용, 감사 추적</small></div></div>
+    </div>
+  </div>
+  <div class="lz-stack">
+    <div class="lz-card lz-row fragment fade-up" data-fragment-index="1"><span class="lz-num">1</span><div><strong>IaC 작성과 리뷰</strong><div class="lz-muted">LZA 설정 YAML, Terraform 변경안 작성과 PR 단위 기준선 위반 사전 점검</div><span class="lz-pill">예시: 신규 계정 추가 설정과 영향 범위 리뷰</span></div></div>
+    <div class="lz-card lz-row fragment fade-up" data-fragment-index="2"><span class="lz-num">2</span><div><strong>통제 정책 초안 작성</strong><div class="lz-muted">규제 요건을 SCP, Config Rule 초안으로 변환 후 Policy Staging OU에서 검증</div><span class="lz-pill">예시: Prod OU 서울 외 리전 차단 SCP (Bedrock 추론 프로파일 예외 포함)</span></div></div>
+    <div class="lz-card lz-row fragment fade-up" data-fragment-index="3"><span class="lz-num">3</span><div><strong>운영 이슈 분석</strong><div class="lz-muted">Config 위반, CloudTrail 이벤트를 분석해 원인과 수정 IaC 제안</div><span class="lz-pill">예시: 미암호화 EBS 탐지 건 수정 PR</span></div></div>
+    <div class="callout callout-warning fragment fade-up" data-fragment-index="4"><strong class="lz-t-warning">확인 필요</strong><div class="lz-muted">개발 단말 망분리 환경의 Bedrock 연결 경로, 소스 코드의 모델 전송 범위와 내부 승인 절차</div></div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s25" data-block="03-security-build" data-block-title="05 보안과 감사">
+  <div class="slide-header" data-remarp-id="s25-header"><h2>1단계 산출물이 심의 자료가 된다</h2></div>
+  <div class="slide-body" data-remarp-id="s25-body">
+    <p><!-- Slide 9: 로드맵 --></p>
+<div class="lz-road">
+  <div class="lz-road-s key fragment fade-up" data-fragment-index="1"><div class="lz-road-h"><span class="lz-num">1</span><strong>설계</strong></div>
+    <div class="lz-muted">규제 요건 매핑, OU, 계정, IP 대역 설계, 통제 목록 확정</div>
+    <div class="lz-out"><span class="lz-cap">산출물</span><span class="lz-pill">규제 매핑표</span><span class="lz-pill">OU 설계서</span><span class="lz-pill">IP 계획</span></div></div>
+  <div class="lz-road-s fragment fade-up" data-fragment-index="2"><div class="lz-road-h"><span class="lz-num">2</span><strong>기반 구축</strong></div>
+    <div class="lz-muted">Control Tower 활성화, 핵심 계정, Identity Center, 기준 통제 적용</div>
+    <div class="lz-out"><span class="lz-cap">산출물</span><span class="lz-pill">관리, 로그, 감사 계정</span><span class="lz-pill">SSO 연동</span></div></div>
+  <div class="lz-road-s fragment fade-up" data-fragment-index="3"><div class="lz-road-h"><span class="lz-num">3</span><strong>네트워크, 보안</strong></div>
+    <div class="lz-muted">DX, TGW, Inspection VPC, 보안 서비스 위임 관리, 로그 보존 정책</div>
+    <div class="lz-out"><span class="lz-cap">산출물</span><span class="lz-pill">Hub and Spoke</span><span class="lz-pill">탐지, 로그 체계</span></div></div>
+  <div class="lz-road-s fragment fade-up" data-fragment-index="4"><div class="lz-road-h"><span class="lz-num">4</span><strong>워크로드 온보딩</strong></div>
+    <div class="lz-muted">Account Factory 발급, 파일럿 워크로드 이전, 운영 이관과 교육</div>
+    <div class="lz-out"><span class="lz-cap">산출물</span><span class="lz-pill">파일럿 운영</span><span class="lz-pill">운영 가이드</span></div></div>
+</div>
+<div class="lz-feed fragment fade-up" data-fragment-index="5">
+  <span class="lz-pill ok">1단계 산출물</span><span class="lz-link"></span><span class="lz-pill">정보보호위원회 심의 자료의 기반</span><span class="lz-cap">단계별 기간은 범위와 기존 환경 확인 후 협의</span>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s26" data-block="03-security-build" data-block-title="05 보안과 감사">
+  <div class="slide-header" data-remarp-id="s26-header"><h2>착수 전에 함께 정할 일곱 가지</h2></div>
+  <div class="slide-body" data-remarp-id="s26-body">
+    <p><!-- Slide 10: 의사결정 항목 --></p>
+<div class="lz-grid-2 lz-dec" id="lzDec">
+  <div class="lz-check fragment fade-up" data-fragment-index="1"><span class="box"></span><div><strong>클라우드 이용 대상 업무</strong><div class="lz-muted">비중요업무 우선 vs 중요업무 포함</div><span class="lz-pill">정보보호위원회, 준법감시</span></div></div>
+  <div class="lz-check fragment fade-up" data-fragment-index="1"><span class="box"></span><div><strong>기존 AWS 계정 처리</strong><div class="lz-muted">신규 구축 vs 통제 우선 적용 후 확장</div><span class="lz-pill">인프라팀</span></div></div>
+  <div class="lz-check fragment fade-up" data-fragment-index="1"><span class="box"></span><div><strong>자동화 도구</strong><div class="lz-muted">Control Tower 기본, AFT, LZA</div><span class="lz-pill">인프라, DevOps</span></div></div>
+  <div class="lz-check fragment fade-up" data-fragment-index="1"><span class="box"></span><div><strong>인증 연동</strong><div class="lz-muted">사내 IdP 연동 방식, MFA 정책</div><span class="lz-pill">정보보호팀</span></div></div>
+  <div class="lz-check fragment fade-up" data-fragment-index="2"><span class="box"></span><div><strong>온프레미스 연결</strong><div class="lz-muted">DX 회선 수, 로케이션, 대역폭</div><span class="lz-pill">네트워크팀</span></div></div>
+  <div class="lz-check fragment fade-up" data-fragment-index="2"><span class="box"></span><div><strong>로그 보존, SIEM</strong><div class="lz-muted">보존 기간, 기존 관제 연동 방식</div><span class="lz-pill">보안관제</span></div></div>
+  <div class="lz-check fragment fade-up" data-fragment-index="2"><span class="box"></span><div><strong>DR 전략</strong><div class="lz-muted">서울 리전 멀티 AZ, 온프레미스 DR, 타 리전</div><span class="lz-pill">업무연속성 담당</span></div></div>
+  <div class="lz-panel fragment fade-up" data-fragment-index="2"><strong class="lz-t-accent">오늘의 목표</strong><div class="lz-muted">확정이 아니라 항목별 담당자 지정과 후속 미팅 일정 합의. 항목을 클릭해 담당자 지정 여부를 표시합니다.</div><div class="lz-cap" id="lzDecCnt"></div></div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s27" data-block="03-security-build" data-block-title="05 보안과 감사">
+  <div class="slide-header" data-remarp-id="s27-header"><h2>오늘의 결론, 네 줄</h2></div>
+  <div class="slide-body" data-remarp-id="s27-body">
+    <p><!-- Slide 11: Key Takeaways --></p>
+<div class="lz-grid-2">
+  <div class="lz-card fragment fade-up" data-fragment-index="1"><div class="lz-row"><img class="lz-icon" src="common/aws-icons/services/Arch_AWS-Organizations_48.svg" alt=""><strong class="lz-t-accent">구조를 먼저 정한다</strong></div><div class="lz-muted">계정 구조, IP 대역, 권한 모델은 첫 워크로드 전에. 나중에 바꾸면 전면 재설계</div></div>
+  <div class="lz-card fragment fade-up" data-fragment-index="2"><div class="lz-row"><span class="lz-reg">감독규정 제14조의2</span><strong class="lz-t-accent">규제는 통제 계층으로 번역한다</strong></div><div class="lz-muted">요건 하나가 계정, 권한, 네트워크, 로그, 탐지 계층의 기술 통제로 이어짐</div></div>
+  <div class="lz-card fragment fade-up" data-fragment-index="3"><div class="lz-row"><img class="lz-icon" src="common/aws-icons/services/Arch_AWS-Control-Tower_48.svg" alt=""><strong class="lz-t-accent">통제는 겹으로, 시험 후 승격</strong></div><div class="lz-muted">사전, 예방, 탐지 세 겹과 Policy Staging OU. 4.0으로 예방 통제부터 도입하고, 탐지는 Config 통합으로</div></div>
+  <div class="lz-card fragment fade-up" data-fragment-index="4"><div class="lz-row"><img class="lz-icon" src="common/aws-icons/services/Arch_AWS-CloudTrail_48.svg" alt=""><strong class="lz-t-accent">증적은 따로, 지울 수 없게</strong></div><div class="lz-muted">Log Archive와 Object Lock, Audit 위임 관리자. 통제 결과를 증명하는 구조</div></div>
+</div>
+<div class="callout callout-info lz-gap-top fragment fade-up" data-fragment-index="5"><strong class="lz-t-info">다음 단계 제안</strong>: 일곱 가지 의사결정 항목 담당자 지정, 1단계 설계 범위 협의, 기존 AWS 계정 현황 공유</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s28" data-block="03-security-build" data-block-title="05 보안과 감사">
+  <div class="center-content" style="height:100%; gap:1.5rem;">
+    <h1 style="font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:3rem; color:var(--text-primary);">Thank You</h1>
+    <p style="color:var(--text-secondary); font-size:1.1rem;">AWS Landing Zone, 감사합니다</p>
+    <p style="color:var(--text-muted); font-size:1rem; margin-top:0.5rem;">수고하셨습니다!</p>
+    <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+            <a href="toc.html" class="btn btn-primary btn-sm" style="text-decoration:none;">← 목차로 돌아가기</a>
+    </div>
+  </div>
+</div>
+</div>
+<script src="./common/animation-utils.js"></script>
+<script src="./common/deck-overlay.js"></script>
+<script src="./common/deck-detail.js"></script>
+<script src="./common/deck-nav.js"></script>
+<script src="./common/slide-framework.js"></script>
+<script src="./common/quiz-component.js"></script>
+<script src="./common/presenter-view.js"></script>
+<script>
+(function(){
+(function () {
+  var root = document.getElementById('lzProc'), out = document.getElementById('lzProcDetail');
+  if (!root || !out) return;
+  var D = [
+    '<div class="lz-grid-2"><div><strong class="lz-t-info">중요업무 여부가 이후 범위를 정합니다</strong><div class="lz-muted">이용 대상 업무와 처리 정보의 중요도를 먼저 평가합니다.</div></div><div class="lz-row"><span class="lz-pill">중요업무: 전체 평가 항목</span><span class="lz-pill">비중요업무: 필수항목 위주</span></div></div>',
+    '<div class="lz-grid-2"><div><strong class="lz-t-info">CSP 평가 부담을 줄일 수 있습니다</strong><div class="lz-muted">AWS는 금융보안원 CSP 안전성 평가 결과를 제공하므로 이를 평가 자료로 활용합니다.</div></div><div class="lz-row"><span class="lz-pill">금융보안원 평가 결과 활용</span><span class="lz-muted">고객은 이용 업무에 대한 평가와 판단에 집중</span></div></div>',
+    '<div class="lz-grid-2"><div><strong class="lz-t-accent">기술 통제를 코드와 표준으로</strong><div class="lz-muted">암호화, 접근통제, 백업, 재해복구 구성을 모든 계정에 같은 방식으로 적용합니다.</div></div><div class="lz-row"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Key-Management-Service_48.svg" alt=""><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-IAM-Identity-Center_48.svg" alt=""><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Backup_48.svg" alt=""><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-CloudFormation_48.svg" alt=""><span class="lz-muted">KMS, Identity Center, Backup, IaC</span></div></div>',
+    '<div class="lz-grid-2"><div><strong class="lz-t-info">같은 자료를 매번 다시 쓸 수 있게</strong><div class="lz-muted">표준 계정과 통제 구성이 정해져 있으면 정보보호위원회 심의 자료와 보고 증적을 재사용합니다.</div></div><div class="lz-row"><span class="lz-pill">심의 의결</span><span class="lz-pill">이용 개시</span><span class="lz-pill">3개월 이내 보고</span></div></div>'
+  ];
+  function pick(i) {
+    root.querySelectorAll('.lz-step').forEach(function (s, j) { s.classList.toggle('lz-sel', j === i); });
+    out.innerHTML = D[i];
+  }
+  root.addEventListener('click', function (e) { var s = e.target.closest('.lz-step'); if (s) pick(+s.dataset.i); });
+  pick(2);
+})();
+})();
+</script>
+<script>
+(function(){
+(function () {
+  var reqs = document.getElementById('lzReqs'), layers = document.getElementById('lzLayers'), out = document.getElementById('lzMapOut');
+  if (!reqs || !layers || !out) return;
+  var IMPL = [
+    '표준 계정과 통제 구성을 정보보호위원회 심의 자료로 재사용',
+    'Egress 중앙화, 업무계 VPC 인터넷 경로 차단, Inspection VPC',
+    'Identity Center와 사내 IdP 연동, MFA 강제, OU별 SCP 권한 상한',
+    'KMS 기본 암호화, 미암호화 리소스 Config 탐지와 SCP 차단',
+    'Organization CloudTrail, Log Archive 계정, S3 Object Lock',
+    'GuardDuty, Security Hub 통합 탐지, EventBridge 알림 자동화',
+    'AWS Backup 정책, 멀티 AZ 표준, IaC 기반 재구축'
+  ];
+  function pick(el) {
+    var items = [].slice.call(reqs.children), i = items.indexOf(el), on = el.dataset.l.split(',').map(Number);
+    items.forEach(function (r) { r.classList.toggle('lz-sel', r === el); });
+    [].forEach.call(layers.children, function (L, j) { var hit = on.indexOf(j) >= 0; L.classList.toggle('lz-sel', hit); L.classList.toggle('lz-dim', !hit); });
+    out.innerHTML = '<strong class="lz-t-info">구현 방식</strong>: ' + IMPL[i] + ' <span class="lz-pill">상세: ' + el.dataset.ch + '</span>';
+  }
+  reqs.addEventListener('click', function (e) { var r = e.target.closest('.lz-req'); if (r) pick(r); });
+  pick(reqs.children[0]);
+})();
+})();
+</script>
+<script>
+(function(){
+(function () {
+  var ous = document.getElementById('lzOus'), out = document.getElementById('lzOuOut');
+  if (!ous || !out) return;
+  var D = [
+    ['Security OU', '탐지와 로그를 관리 계정 밖으로', 'Log Archive S3 버킷 삭제, 수명주기 변경 거부 SCP', 'CloudTrail, Config 중지 거부'],
+    ['Infrastructure OU', '네트워크 변경은 네트워크팀만', 'TGW, DX, 라우팅 변경은 지정 역할만 허용', 'Shared Services는 배포 파이프라인 전용'],
+    ['Workloads Prod OU', '운영은 가장 강한 상한', 'ap-northeast-2 외 리전 리소스 생성 거부 (글로벌 서비스 예외)', '미암호화 리소스 생성 거부, 업무계 IGW(인터넷 게이트웨이) 생성 거부'],
+    ['Workloads NonProd OU', '개발과 운영을 섞지 않는다', 'Prod 계정 리소스 접근 거부 SCP (aws:ResourceAccount 조건)', 'Prod와 직접 라우팅 없음. 외부 계정 접근 상한은 Prod OU의 RCP로'],
+    ['Sandbox OU', '실험은 자유롭게, 경계는 확실하게', 'Budgets 한도와 알림', 'TGW 연결 금지로 사내망 차단'],
+    ['Policy Staging, Suspended', '통제를 먼저 시험하는 곳', '신규 SCP를 이 OU에서 먼저 적용하고 영향 확인 후 승격', 'Suspended: 모든 작업 거부 후 폐기 대기']
+  ];
+  function pick(i) {
+    [].forEach.call(ous.children, function (o, j) { o.classList.toggle('lz-sel', j === i); });
+    var d = D[i];
+    out.innerHTML = '<strong class="lz-t-accent">' + d[0] + ': ' + d[1] + '</strong><div class="lz-muted">SCP, RCP 예시</div><div class="lz-row"><span class="lz-pill no">' + d[2] + '</span></div><div class="lz-row"><span class="lz-pill no">' + d[3] + '</span></div>';
+  }
+  ous.addEventListener('click', function (e) { var o = e.target.closest('.lz-ou'); if (o) pick(+o.dataset.i); });
+  pick(2);
+})();
+})();
+</script>
+<script>
+(function(){
+(function () {
+  var g = document.getElementById('lzCt'), out = document.getElementById('lzCtOut');
+  if (!g || !out) return;
+  var D = [
+    '<strong class="lz-t-accent">Landing Zone</strong><div class="lz-muted">관리, Log Archive, Audit 계정과 기본 OU를 만들고 IAM Identity Center를 연동합니다. 4.0부터 Config, CloudTrail, Backup, SecurityRoles 통합을 선택해 켤 수 있습니다.</div>',
+    '<strong class="lz-t-accent">Controls</strong><div class="lz-muted">Controls Catalog에서 예방(SCP, RCP, 선언적 정책), 탐지(Config Rules), 사전(CloudFormation Hooks) 통제를 OU에 적용합니다. 산업별 프레임워크 매핑을 지원합니다.</div>',
+    '<strong class="lz-t-accent">Account Factory</strong><div class="lz-muted">계정 요청 한 번으로 표준 OU, 기준선, 네트워크 설정이 적용된 계정을 발급합니다. AFT(Account Factory for Terraform)로 GitOps 방식 확장이 가능합니다.</div>',
+    '<strong class="lz-t-accent">Dashboard, Drift</strong><div class="lz-muted">OU와 계정별 통제 준수 현황을 보고, 콘솔 수동 변경 같은 기준선 이탈(Drift)을 탐지해 EventBridge로 알립니다.</div>'
+  ];
+  function pick(i) { [].forEach.call(g.children, function (c, j) { c.classList.toggle('lz-sel', j === i); }); out.innerHTML = D[i]; }
+  g.addEventListener('click', function (e) { var c = e.target.closest('.lz-ctc'); if (c) pick(+c.dataset.i); });
+  pick(1);
+})();
+})();
+</script>
+<script>
+(function(){
+(function () {
+  var btns = document.getElementById('lzCtlBtns'), g = document.getElementById('lzCtl');
+  if (!btns || !g) return;
+  var S = [
+    [['암호화 미설정 리소스가 포함된 템플릿 배포 거부'], ['미암호화 리소스 생성 차단 (SCP)'], ['미암호화 EBS 볼륨 탐지']],
+    [['퍼블릭 접근 허용 리소스가 포함된 템플릿 배포 거부'], ['업무계 IGW 생성 차단'], ['퍼블릭 S3 버킷 탐지', '0.0.0.0/0 허용 보안그룹 탐지']],
+    [[], ['서울 리전 외 리소스 생성 차단', 'CloudTrail 중지 차단', 'Root 사용자 사용 차단'], ['MFA 미설정 사용자 탐지']]
+  ];
+  function pick(k) {
+    [].forEach.call(btns.children, function (b, j) { b.classList.toggle('on', j === k); });
+    [].forEach.call(g.querySelectorAll('.lz-ctl-ex'), function (ex, j) {
+      var items = S[k][j];
+      ex.innerHTML = items.length ? items.map(function (t) { return '<span class="lz-pill no">' + t + '</span>'; }).join('') : '<span class="lz-cap">이 시나리오에서는 다른 두 겹이 담당</span>';
+    });
+  }
+  btns.addEventListener('click', function (e) { var b = e.target.closest('.lz-btn'); if (b) pick(+b.dataset.k); });
+  pick(0);
+})();
+})();
+</script>
+<script>
+(function(){
+(function () {
+  var L = document.getElementById('lz40'), O = document.getElementById('lz40Out');
+  if (!L || !O) return;
+  var D = [
+    ['Config, CloudTrail 통합 필수', 'Config, CloudTrail, Backup, SecurityRoles를 선택해 켜고 끔'],
+    ['Security OU 등 정해진 구조 필수', '고객이 OU 구조를 정의. 허브 계정들은 같은 OU에만 있으면 됨'],
+    ['공용 로깅 리소스 사용', 'Config, CloudTrail 전용 S3 버킷과 서비스별 SNS 토픽으로 분리'],
+    ['전체 Landing Zone 구성 필요', '기존 Organizations에 통제만 먼저 적용 가능'],
+    ['기존 조직, 계정 Aggregator 방식', 'Config 허브 계정의 Service-linked Config Aggregator']
+  ];
+  function pick(i) {
+    [].forEach.call(L.children, function (r, j) { r.classList.toggle('lz-sel', j === i); });
+    O.querySelector('[data-k="a"]').textContent = D[i][0];
+    O.querySelector('[data-k="b"]').textContent = D[i][1];
+  }
+  L.addEventListener('click', function (e) { var r = e.target.closest('.lz-req'); if (r) pick(+r.dataset.i); });
+  pick(0);
+})();
+})();
+</script>
+<script>
+(function(){
+// lzFlow: SVG connectors between DOM nodes ([data-n]) inside a root, with packets that travel along them.
+// Coordinates are measured in the root's own CSS pixels, so deck scaling and fit zoom do not skew the lines.
+window.lzFlow = window.lzFlow || (function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function box(root, el) {
+    var R = root.getBoundingClientRect(), r = el.getBoundingClientRect(), k = root.offsetWidth / (R.width || 1);
+    return { x: (r.left - R.left) * k, y: (r.top - R.top) * k, w: r.width * k, h: r.height * k };
+  }
+  function route(a, b, via) {
+    var ax = a.x + a.w / 2, ay = a.y + a.h / 2, bx = b.x + b.w / 2, by = b.y + b.h / 2;
+    if (via === 'r') {
+      var X = Math.max(a.x + a.w, b.x + b.w) + 28;
+      return 'M' + (a.x + a.w) + ',' + ay + ' H' + X + ' V' + by + ' H' + (b.x + b.w);
+    }
+    if (via === 'v') {
+      var sy = by > ay ? a.y + a.h : a.y, ey = by > ay ? b.y : b.y + b.h, my = (sy + ey) / 2;
+      return 'M' + ax + ',' + sy + ' V' + my + ' H' + bx + ' V' + ey;
+    }
+    var sx = bx > ax ? a.x + a.w : a.x, ex = bx > ax ? b.x : b.x + b.w, mx = (sx + ex) / 2;
+    return 'M' + sx + ',' + ay + ' H' + mx + ' V' + by + ' H' + ex;
+  }
+  return function (root, edges) {
+    var svg = document.createElementNS(NS, 'svg'), P = {}, gen = 0, active = false, hooks = {};
+    svg.setAttribute('class', 'lz-flow-svg'); svg.setAttribute('aria-hidden', 'true');
+    root.appendChild(svg);
+    edges.forEach(function (e) {
+      var p = document.createElementNS(NS, 'path'); p.setAttribute('class', 'lz-edge'); svg.appendChild(p); P[e.id] = { el: p, e: e };
+    });
+    function node(id) { return root.querySelector('[data-n="' + id + '"]'); }
+    function layout() {
+      svg.setAttribute('viewBox', '0 0 ' + root.offsetWidth + ' ' + root.offsetHeight);
+      Object.keys(P).forEach(function (k) {
+        var a = node(P[k].e.from), b = node(P[k].e.to);
+        P[k].el.setAttribute('d', a && b && a.offsetParent && b.offsetParent ? route(box(root, a), box(root, b), P[k].e.via) : '');
+      });
+    }
+    function clear() {
+      gen++;
+      svg.querySelectorAll('.lz-pkt, .lz-x').forEach(function (n) { n.remove(); });
+      Object.keys(P).forEach(function (k) { P[k].el.setAttribute('class', 'lz-edge'); });
+      root.querySelectorAll('.lz-hit, .lz-blocked').forEach(function (n) { n.classList.remove('lz-hit', 'lz-blocked'); });
+    }
+    function packet(id, cls, my) {
+      var E = P[id]; if (!E) return Promise.resolve();
+      var path = E.el, len = path.getTotalLength ? path.getTotalLength() : 0, bad = cls === 'bad';
+      path.setAttribute('class', 'lz-edge on' + (cls ? ' ' + cls : ''));
+      var c = document.createElementNS(NS, 'circle'); c.setAttribute('r', '9'); c.setAttribute('class', 'lz-pkt' + (cls ? ' ' + cls : '')); svg.appendChild(c);
+      var stop = bad ? 0.5 : 1, dur = reduce ? 1 : 900 * stop, t0 = null;
+      return new Promise(function (done) {
+        function frame(ts) {
+          if (my !== gen) { c.remove(); return done(); }
+          if (t0 === null) t0 = ts;
+          var f = Math.min(1, (ts - t0) / dur), q = f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+          var pt = len ? path.getPointAtLength(q * len * stop) : { x: 0, y: 0 };
+          c.setAttribute('cx', pt.x); c.setAttribute('cy', pt.y);
+          if (f < 1) return requestAnimationFrame(frame);
+          var to = node(E.e.to);
+          if (bad) {
+            var x = document.createElementNS(NS, 'path'); x.setAttribute('class', 'lz-x');
+            x.setAttribute('d', 'M' + (pt.x - 11) + ',' + (pt.y - 11) + ' l22,22 M' + (pt.x + 11) + ',' + (pt.y - 11) + ' l-22,22'); svg.appendChild(x);
+            if (to) to.classList.add('lz-blocked');
+          } else if (to) to.classList.add('lz-hit');
+          setTimeout(function () { c.remove(); done(); }, 180);
+        }
+        requestAnimationFrame(frame);
+      });
+    }
+    // seq: [[edgeId, cls], ...] played one after another.
+    function play(seq) {
+      clear(); var my = gen;
+      return seq.reduce(function (pr, s) { return pr.then(function () { if (my === gen) return packet(s[0], s[1], my); }); }, Promise.resolve());
+    }
+    function sync() {
+      var s = root.closest('.slide'), now = !!(s && s.classList.contains('active'));
+      if (now && !active) { active = true; requestAnimationFrame(function () { layout(); if (hooks.enter) hooks.enter(); }); }
+      else if (!now && active) { active = false; clear(); }
+    }
+    var sl = root.closest('.slide');
+    if (sl && window.MutationObserver) new MutationObserver(sync).observe(sl, { attributes: true, attributeFilter: ['class'] });
+    if (window.ResizeObserver) new ResizeObserver(function () { if (active) layout(); }).observe(root);
+    setTimeout(sync, 300);
+    return { layout: layout, play: play, clear: clear, on: function (k, f) { hooks[k] = f; } };
+  };
+})();
+(function () {
+  var root = document.getElementById('lzNet'), btns = document.getElementById('lzNetBtns'), msg = document.getElementById('lzNetMsg');
+  if (!root || !btns || !window.lzFlow) return;
+  var f = window.lzFlow(root, [
+    { id: 'idc-dx', from: 'idc', to: 'dx' }, { id: 'idc-vpn', from: 'idc', to: 'vpn' },
+    { id: 'dx-tgw', from: 'dx', to: 'tgw' }, { id: 'vpn-tgw', from: 'vpn', to: 'tgw' },
+    { id: 'tgw-insp', from: 'tgw', to: 'insp' }, { id: 'insp-prod', from: 'insp', to: 'prod' },
+    { id: 'tgw-egress', from: 'tgw', to: 'egress', via: 'v' }, { id: 'insp-egress', from: 'insp', to: 'egress', via: 'v' },
+    { id: 'egress-inet', from: 'egress', to: 'inet' }, { id: 'prod-tgw', from: 'prod', to: 'tgw' },
+    { id: 'non-prod', from: 'nonprod', to: 'prod', via: 'r' }, { id: 'tgw-shared', from: 'tgw', to: 'shared' }, { id: 'tgw-r53', from: 'tgw', to: 'r53', via: 'v' }
+  ]);
+  var S = [
+    { seq: [['idc-dx', 'ok'], ['dx-tgw', 'ok'], ['tgw-insp', 'ok'], ['insp-prod', 'ok']], m: '<strong class="lz-t-success">주 경로</strong>: IDC에서 Direct Connect, Transit Gateway, Inspection VPC 검사를 거쳐 Prod VPC로. 업무계 트래픽은 전용선 경유' },
+    { seq: [['idc-vpn', 'info'], ['vpn-tgw', 'info'], ['tgw-insp', 'info'], ['insp-prod', 'info']], m: '<strong class="lz-t-info">백업 경로</strong>: DX 장애 시 Site-to-Site VPN으로 절체. 서로 다른 로케이션 DX 2회선 권장, 회선 절체 시험은 정례화' },
+    { seq: [['prod-tgw', 'ok'], ['tgw-insp', 'ok'], ['insp-egress', 'ok'], ['egress-inet', 'ok']], m: '<strong class="lz-t-success">인터넷 향 트래픽</strong>: 업무계 VPC는 IGW 없이 검사 후 Egress VPC로만 나감(SCP로 IGW 생성 차단). 고객 대면 채널계의 인바운드 경로는 별도 설계' },
+    { seq: [['non-prod', 'bad']], m: '<strong class="lz-t-danger">차단</strong>: Prod와 NonProd 사이에는 TGW 라우팅 테이블 분리로 직접 경로가 없음. 운영과 개발 간 통신 차단' }
+  ];
+  var cur = 0;
+  function run(k) { cur = k; [].forEach.call(btns.children, function (b, j) { b.classList.toggle('on', j === k); }); msg.innerHTML = S[k].m; f.layout(); f.play(S[k].seq); }
+  btns.addEventListener('click', function (e) { var b = e.target.closest('.lz-btn'); if (b) run(+b.dataset.k); });
+  f.on('enter', function () { run(cur); });
+  msg.innerHTML = S[0].m;
+})();
+})();
+</script>
+<script>
+(function(){
+// lzFlow: SVG connectors between DOM nodes ([data-n]) inside a root, with packets that travel along them.
+// Coordinates are measured in the root's own CSS pixels, so deck scaling and fit zoom do not skew the lines.
+window.lzFlow = window.lzFlow || (function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function box(root, el) {
+    var R = root.getBoundingClientRect(), r = el.getBoundingClientRect(), k = root.offsetWidth / (R.width || 1);
+    return { x: (r.left - R.left) * k, y: (r.top - R.top) * k, w: r.width * k, h: r.height * k };
+  }
+  function route(a, b, via) {
+    var ax = a.x + a.w / 2, ay = a.y + a.h / 2, bx = b.x + b.w / 2, by = b.y + b.h / 2;
+    if (via === 'r') {
+      var X = Math.max(a.x + a.w, b.x + b.w) + 28;
+      return 'M' + (a.x + a.w) + ',' + ay + ' H' + X + ' V' + by + ' H' + (b.x + b.w);
+    }
+    if (via === 'v') {
+      var sy = by > ay ? a.y + a.h : a.y, ey = by > ay ? b.y : b.y + b.h, my = (sy + ey) / 2;
+      return 'M' + ax + ',' + sy + ' V' + my + ' H' + bx + ' V' + ey;
+    }
+    var sx = bx > ax ? a.x + a.w : a.x, ex = bx > ax ? b.x : b.x + b.w, mx = (sx + ex) / 2;
+    return 'M' + sx + ',' + ay + ' H' + mx + ' V' + by + ' H' + ex;
+  }
+  return function (root, edges) {
+    var svg = document.createElementNS(NS, 'svg'), P = {}, gen = 0, active = false, hooks = {};
+    svg.setAttribute('class', 'lz-flow-svg'); svg.setAttribute('aria-hidden', 'true');
+    root.appendChild(svg);
+    edges.forEach(function (e) {
+      var p = document.createElementNS(NS, 'path'); p.setAttribute('class', 'lz-edge'); svg.appendChild(p); P[e.id] = { el: p, e: e };
+    });
+    function node(id) { return root.querySelector('[data-n="' + id + '"]'); }
+    function layout() {
+      svg.setAttribute('viewBox', '0 0 ' + root.offsetWidth + ' ' + root.offsetHeight);
+      Object.keys(P).forEach(function (k) {
+        var a = node(P[k].e.from), b = node(P[k].e.to);
+        P[k].el.setAttribute('d', a && b && a.offsetParent && b.offsetParent ? route(box(root, a), box(root, b), P[k].e.via) : '');
+      });
+    }
+    function clear() {
+      gen++;
+      svg.querySelectorAll('.lz-pkt, .lz-x').forEach(function (n) { n.remove(); });
+      Object.keys(P).forEach(function (k) { P[k].el.setAttribute('class', 'lz-edge'); });
+      root.querySelectorAll('.lz-hit, .lz-blocked').forEach(function (n) { n.classList.remove('lz-hit', 'lz-blocked'); });
+    }
+    function packet(id, cls, my) {
+      var E = P[id]; if (!E) return Promise.resolve();
+      var path = E.el, len = path.getTotalLength ? path.getTotalLength() : 0, bad = cls === 'bad';
+      path.setAttribute('class', 'lz-edge on' + (cls ? ' ' + cls : ''));
+      var c = document.createElementNS(NS, 'circle'); c.setAttribute('r', '9'); c.setAttribute('class', 'lz-pkt' + (cls ? ' ' + cls : '')); svg.appendChild(c);
+      var stop = bad ? 0.5 : 1, dur = reduce ? 1 : 900 * stop, t0 = null;
+      return new Promise(function (done) {
+        function frame(ts) {
+          if (my !== gen) { c.remove(); return done(); }
+          if (t0 === null) t0 = ts;
+          var f = Math.min(1, (ts - t0) / dur), q = f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+          var pt = len ? path.getPointAtLength(q * len * stop) : { x: 0, y: 0 };
+          c.setAttribute('cx', pt.x); c.setAttribute('cy', pt.y);
+          if (f < 1) return requestAnimationFrame(frame);
+          var to = node(E.e.to);
+          if (bad) {
+            var x = document.createElementNS(NS, 'path'); x.setAttribute('class', 'lz-x');
+            x.setAttribute('d', 'M' + (pt.x - 11) + ',' + (pt.y - 11) + ' l22,22 M' + (pt.x + 11) + ',' + (pt.y - 11) + ' l-22,22'); svg.appendChild(x);
+            if (to) to.classList.add('lz-blocked');
+          } else if (to) to.classList.add('lz-hit');
+          setTimeout(function () { c.remove(); done(); }, 180);
+        }
+        requestAnimationFrame(frame);
+      });
+    }
+    // seq: [[edgeId, cls], ...] played one after another.
+    function play(seq) {
+      clear(); var my = gen;
+      return seq.reduce(function (pr, s) { return pr.then(function () { if (my === gen) return packet(s[0], s[1], my); }); }, Promise.resolve());
+    }
+    function sync() {
+      var s = root.closest('.slide'), now = !!(s && s.classList.contains('active'));
+      if (now && !active) { active = true; requestAnimationFrame(function () { layout(); if (hooks.enter) hooks.enter(); }); }
+      else if (!now && active) { active = false; clear(); }
+    }
+    var sl = root.closest('.slide');
+    if (sl && window.MutationObserver) new MutationObserver(sync).observe(sl, { attributes: true, attributeFilter: ['class'] });
+    if (window.ResizeObserver) new ResizeObserver(function () { if (active) layout(); }).observe(root);
+    setTimeout(sync, 300);
+    return { layout: layout, play: play, clear: clear, on: function (k, f) { hooks[k] = f; } };
+  };
+})();
+(function () {
+  var root = document.getElementById('lzSec'), btns = document.getElementById('lzSecBtns'), msg = document.getElementById('lzSecMsg');
+  if (!root || !btns || !window.lzFlow) return;
+  var f = window.lzFlow(root, [
+    { id: 'ct-s3', from: 'ct', to: 's3' }, { id: 'cfg-s3', from: 'cfg', to: 's3' }, { id: 'flow-s3', from: 'flow', to: 's3' },
+    { id: 'lake-siem', from: 'lake', to: 'siem' },
+    { id: 'gd-hub', from: 'gd', to: 'hub' }, { id: 'insp-hub', from: 'insp', to: 'hub' },
+    { id: 'hub-eb', from: 'hub', to: 'eb' }, { id: 'eb-siem', from: 'eb', to: 'siem', via: 'v' }
+  ]);
+  var S = [
+    { seq: [['ct-s3', 'info'], ['cfg-s3', 'info'], ['flow-s3', 'info'], ['lake-siem', 'info']], m: '<strong class="lz-t-info">로그</strong>: 모든 계정의 CloudTrail, Config, Flow Logs가 Log Archive 계정 S3로 모이고, Security Lake가 OCSF로 정규화해 사내 SIEM과 연동' },
+    { seq: [['gd-hub', 'ok'], ['insp-hub', 'ok'], ['hub-eb', 'ok'], ['eb-siem', 'ok']], m: '<strong class="lz-t-success">Findings</strong>: GuardDuty, Inspector 탐지 결과가 Audit 계정 Security Hub로 모이고, EventBridge가 관제와 자동 대응으로 전달' }
+  ];
+  var cur = 0;
+  function run(k) { cur = k; [].forEach.call(btns.children, function (b, j) { b.classList.toggle('on', j === k); }); msg.innerHTML = S[k].m; f.layout(); f.play(S[k].seq); }
+  btns.addEventListener('click', function (e) { var b = e.target.closest('.lz-btn'); if (b) run(+b.dataset.k); });
+  f.on('enter', function () { run(cur); });
+  msg.innerHTML = S[0].m;
+})();
+})();
+</script>
+<script>
+(function(){
+(function () {
+  var btns = document.getElementById('lzIrBtns'), g = document.getElementById('lzIr'), bar = document.getElementById('lzIrBar'), msg = document.getElementById('lzIrMsg');
+  if (!btns || !g) return;
+  var M = [
+    { s: [['자동', 'ok'], ['자동', 'ok'], ['담당자 수동', 'no'], ['자동 알림', 'ok']], w: '35%', m: '탐지와 분류, 알림은 자동. 조치는 관제 담당자가 판단해 수동 실행' },
+    { s: [['자동', 'ok'], ['자동', 'ok'], ['승인 후 실행', ''], ['자동 알림', 'ok']], w: '65%', m: '대응 Runbook을 준비해 두고, 담당자 승인 한 번으로 격리와 자격증명 비활성화 실행' },
+    { s: [['자동', 'ok'], ['자동', 'ok'], ['자동 격리', 'ok'], ['자동 알림, 보고 초안', 'ok']], w: '90%', m: 'NonProd에서 검증한 시나리오만 Prod 자동 격리로 승격. 나머지는 2단계 유지' }
+  ];
+  function pick(k) {
+    [].forEach.call(btns.children, function (b, j) { b.classList.toggle('on', j === k); });
+    g.querySelectorAll('.lz-mode').forEach(function (p, j) { p.textContent = M[k].s[j][0]; p.className = 'lz-pill lz-mode' + (M[k].s[j][1] ? ' ' + M[k].s[j][1] : ''); });
+    bar.style.width = M[k].w; msg.textContent = M[k].m;
+  }
+  btns.addEventListener('click', function (e) { var b = e.target.closest('.lz-btn'); if (b) pick(+b.dataset.k); });
+  pick(0);
+})();
+})();
+</script>
+<script>
+(function(){
+(function () {
+  var q1 = document.getElementById('lzQ1'), q2 = document.getElementById('lzQ2'), opts = document.getElementById('lzOpts'), msg = document.getElementById('lzOptMsg');
+  if (!q1 || !q2 || !opts) return;
+  function val(g) { var b = g.querySelector('.on'); return b ? +b.dataset.v : 0; }
+  function update() {
+    var a = val(q1), b = val(q2), pick = b ? 2 : (a ? 1 : 0);
+    var why = ['빠르게 시작하고, 운영하면서 AFT나 LZA로 확장하는 경로', '이미 쓰는 Terraform 파이프라인으로 계정 발급을 자동화', '네트워크와 보안 기준선까지 YAML로 선언해 감사 시 그대로 증적으로 제시'];
+    [].forEach.call(opts.children, function (c, j) { c.classList.toggle('lz-sel', j === pick); c.classList.toggle('lz-dim', j !== pick); });
+    msg.innerHTML = '<strong class="lz-t-info">추천: ' + opts.children[pick].querySelector('h4').textContent + '</strong>, ' + why[pick] + (a && b ? '. Terraform 조직이라도 기준선 코드 관리가 목적이면 LZA가 유리' : '');
+  }
+  [q1, q2].forEach(function (g) { g.addEventListener('click', function (e) { var t = e.target.closest('.lz-btn'); if (!t) return; [].forEach.call(g.children, function (x) { x.classList.toggle('on', x === t); }); update(); }); });
+  update();
+})();
+})();
+</script>
+<script>
+(function(){
+(function () {
+  var root = document.getElementById('lzCc');
+  if (!root || !window.lzFlow) return;
+  var f = window.lzFlow(root, [
+    { id: 'ms-pc', from: 'ms', to: 'pc', via: 'v' }, { id: 'pc-sso', from: 'pc', to: 'sso' },
+    { id: 'pc-vpce', from: 'pc', to: 'vpce' }, { id: 'vpce-br', from: 'vpce', to: 'br', via: 'v' }, { id: 'pc-otel', from: 'pc', to: 'otel' }
+  ]);
+  f.on('enter', function () { f.play([['ms-pc', 'info'], ['pc-sso', 'info'], ['pc-vpce', 'ok'], ['vpce-br', 'ok'], ['pc-otel', 'info']]); });
+})();
+})();
+</script>
+<script>
+(function(){
+(function () {
+  var g = document.getElementById('lzDec'), cnt = document.getElementById('lzDecCnt');
+  if (!g) return;
+  function count() { cnt.textContent = '담당자 지정 ' + g.querySelectorAll('.lz-check.done').length + ' / 7'; }
+  g.addEventListener('click', function (e) { var c = e.target.closest('.lz-check'); if (!c) return; c.classList.toggle('done'); count(); });
+  count();
+})();
+})();
+</script>
+<script>
+  
+  const presenterNotes = {
+    1: "\u23f8\ufe0f [0.5min] [\uc694\uc57d]\n- \uc138\uc158 \ubaa9\uc801: Landing Zone\uc774 \ubb34\uc5c7\uc774\uace0 \uae08\uc735 \uaddc\uc81c\uc640 \uc5b4\ub5bb\uac8c \uc5f0\uacb0\ub418\ub294\uc9c0 \uacf5\uc720\n- OK\uc800\ucd95\uc740\ud589 \ud658\uacbd\uc5d0\uc11c \uc124\uacc4 \ucc29\uc218 \uc804\uc5d0 \ud544\uc694\ud55c \uc758\uc0ac\uacb0\uc815 \ud56d\ubaa9\uc744 \ud568\uaed8 \uc815\ub9ac\n- \ucd1d 60\ubd84, \ubcf8\ub860 \uc57d 50\ubd84\uacfc \ub9c8\uc9c0\ub9c9 \uc57d 8\ubd84 Q&A\n\n\uc548\ub155\ud558\uc138\uc694, AWS Korea \uc624\uc900\uc11d\uc785\ub2c8\ub2e4. \uc624\ub298\uc740 Landing Zone\uc774 \ubb34\uc5c7\uc778\uc9c0, \uadf8\ub9ac\uace0 \uc804\uc790\uae08\uc735\uac10\ub3c5\uaddc\uc815 \uac19\uc740 \uae08\uc735 \uaddc\uc81c\uc640 \uc5b4\ub5bb\uac8c \uc5f0\uacb0\ub418\ub294\uc9c0\ub97c OK\uc800\ucd95\uc740\ud589 \ud658\uacbd\uc5d0 \ub9de\ucdb0 \uc124\uba85\ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.\n\n\ub9c8\uc9c0\ub9c9\uc5d0\ub294 \uc124\uacc4 \ub2e8\uacc4\uc5d0 \ub4e4\uc5b4\uac00\uae30 \uc804\uc5d0 \ud568\uaed8 \uc815\ud574\uc57c \ud560 \uc758\uc0ac\uacb0\uc815 \ud56d\ubaa9\uc744 \ud55c \uc7a5\uc5d0 \uc815\ub9ac\ud574 \ub450\uc5c8\uc2b5\ub2c8\ub2e4. \uadf8 \ubd80\ubd84\uc740 \uc911\uac04\uc911\uac04 \uc9c8\ubb38 \uc8fc\uc2dc\uba74 \ubc14\ub85c \uac19\uc774 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uba3c\uc800 \uc624\ub298 \uc21c\uc11c\uc785\ub2c8\ub2e4.",
+    2: "\u23f8\ufe0f [0.5min] [\uc694\uc57d]\n- \uc5ec\uc12f \ucc55\ud130, \uc2dc\uac04 \ubc30\ubd84\uc740 01 6\ubd84, 02 10\ubd84, 03 12\ubd84, 04 8\ubd84, 05 8\ubd84, 06 7\ubd84, \uc774\ud6c4 Q&A \uc57d 8\ubd84\n- 02\uc7a5\uc758 \uaddc\uc81c \ub9e4\ud551\ud45c\uac00 \uc138\uc158\uc758 \uc5f0\uacb0\uace0\ub9ac\uc774\uace0, 03\uc7a5\ubd80\ud130 05\uc7a5\uc740 \uadf8 \ud45c\uc758 \uc624\ub978\ucabd \uc5f4\uc744 \uc0c1\uc138\ud788 \ud478\ub294 \uad6c\uc870\n- 06\uc7a5 \ub9c8\uc9c0\ub9c9 \uc758\uc0ac\uacb0\uc815 \ud56d\ubaa9\uc740 \uc624\ub298 \ud655\uc815\uc774 \uc544\ub2c8\ub77c \ub2f4\ub2f9\uc790 \uc9c0\uc815\uc774 \ubaa9\ud45c\n\n\uc5ec\uc12f \ucc55\ud130\ub85c \uc9c4\ud589\ud569\ub2c8\ub2e4. 1\uc7a5\uc5d0\uc11c Landing Zone\uc774 \uc65c \ud544\uc694\ud55c\uc9c0 \ubcf4\uace0, 2\uc7a5\uc5d0\uc11c \uc804\uc790\uae08\uc735\uac10\ub3c5\uaddc\uc815\uc774 \uc694\uad6c\ud558\ub294 \uc808\ucc28\uc640 \ud1b5\uc81c\ub97c Landing Zone\uc5d0 \ub9e4\ud551\ud569\ub2c8\ub2e4.\n\n3\uc7a5\ubd80\ud130 5\uc7a5\uc740 \uadf8 \ub9e4\ud551\ud45c\uc758 \uc624\ub978\ucabd \uc5f4, \uc989 \uae30\uc220 \ud1b5\uc81c\ub97c \uacc4\uc815, \ub124\ud2b8\uc6cc\ud06c, \ubcf4\uc548 \uc21c\uc11c\ub85c \ud480\uc5b4 \uac00\ub294 \uad6c\uc870\uc785\ub2c8\ub2e4. \ub9c8\uc9c0\ub9c9 6\uc7a5\uc5d0\uc11c \uad6c\ucd95 \ubc29\ubc95\uacfc \ub85c\ub4dc\ub9f5, \uadf8\ub9ac\uace0 \ud568\uaed8 \uc815\ud574\uc57c \ud560 \ud56d\ubaa9\uc744 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n1\uc7a5\ubd80\ud130 \uc2dc\uc791\ud558\uaca0\uc2b5\ub2c8\ub2e4.",
+    3: "[0.5min] [\uc694\uc57d]\n- 1\uc7a5 \uc9c8\ubb38: \uccab \uc6cc\ud06c\ub85c\ub4dc\ub97c \uc62c\ub9ac\uae30 \uc804\uc5d0 \ubb34\uc5c7\uc744 \uba3c\uc800 \uc815\ud574\uc57c \ud558\ub294\uac00\n- \uc815\uc758, \uadf8\ub9ac\uace0 \ub2e8\uc77c \uacc4\uc815\uacfc \uba40\ud2f0 \uc5b4\uce74\uc6b4\ud2b8 \ube44\uad50\n\n1\uc7a5\uc740 \ud558\ub098\uc758 \uc9c8\ubb38\uc5d0\uc11c \uc2dc\uc791\ud569\ub2c8\ub2e4. \uccab \uc6cc\ud06c\ub85c\ub4dc\ub97c \uc62c\ub9ac\uae30 \uc804\uc5d0 \ubb34\uc5c7\uc744 \uba3c\uc800 \uc815\ud574\uc57c \ud558\ub290\ub0d0\uc785\ub2c8\ub2e4.\n\nLanding Zone\uc758 \uc815\uc758\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    4: "\u23f8\ufe0f [2.5min] [\uc694\uc57d]\n- Landing Zone \uc815\uc758: \uacc4\uc815, \uad8c\ud55c, \ub124\ud2b8\uc6cc\ud06c, \ub85c\uadf8\ub97c \ucc98\uc74c\ubd80\ud130 \ud45c\uc900\ud654\ud55c \uba40\ud2f0 \uc5b4\uce74\uc6b4\ud2b8 \uace8\uaca9\n- \ud575\uc2ec \uba54\uc2dc\uc9c0: \ub098\uc911\uc5d0 \ubc14\uafb8\uae30 \uac00\uc7a5 \uc5b4\ub824\uc6b4 \uac83\uc774 \uacc4\uc815 \uad6c\uc870, IP \ub300\uc5ed, \uad8c\ud55c \ubaa8\ub378\n- \uadf8\ub798\uc11c \uccab \uc6cc\ud06c\ub85c\ub4dc \uc804\uc5d0 \uacb0\uc815\ud574\uc57c \ud568 (\uace1\uc120\uc740 \uac1c\ub150\ub3c4, \uc218\uce58 \uc544\ub2d8)\n- WHY \uc138 \uac00\uc9c0 \uc555\ub825, WHAT \uc138 \uac00\uc9c0 \uae30\ubc18\n\nLanding Zone\uc740 \ud55c \ubb38\uc7a5\uc73c\ub85c, \uc548\uc804\ud55c \uba40\ud2f0 \uc5b4\uce74\uc6b4\ud2b8 \ud658\uacbd\uc758 \uae30\ubcf8 \uace8\uaca9\uc785\ub2c8\ub2e4. \uacc4\uc815, \uad8c\ud55c, \ub124\ud2b8\uc6cc\ud06c, \ub85c\uadf8\ub97c \ucc98\uc74c\ubd80\ud130 \ud45c\uc900\ud654\ud574\uc11c \uadf8 \uc704\uc5d0 \uc62c\ub77c\uac00\ub294 \ubaa8\ub4e0 \uc6cc\ud06c\ub85c\ub4dc\uac00 \uac19\uc740 \ud1b5\uc81c\ub97c \ubc1b\uac8c \ub9cc\ub4dc\ub294 \uac83\uc785\ub2c8\ub2e4.\n\n\uc67c\ucabd \uace1\uc120\uc774 \uc624\ub298 \uac00\uc7a5 \ub4dc\ub9ac\uace0 \uc2f6\uc740 \uba54\uc2dc\uc9c0\uc785\ub2c8\ub2e4. \uacc4\uc815 \uad6c\uc870, IP \ub300\uc5ed, \uad8c\ud55c \ubaa8\ub378 \uc774 \uc138 \uac00\uc9c0\ub294 \uccab \uc6cc\ud06c\ub85c\ub4dc\uac00 \uc62c\ub77c\uac04 \ub4a4\uc5d0 \ubc14\uafb8\ub824\uba74 \ub124\ud2b8\uc6cc\ud06c\uc640 \uad8c\ud55c\uc744 \uc804\uba74 \uc7ac\uc124\uacc4\ud574\uc57c \ud569\ub2c8\ub2e4. \uc774 \uace1\uc120\uc740 \uac1c\ub150\ub3c4\uc774\uace0 \uc218\uce58\ub294 \uc544\ub2d9\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd \uc704\ub294 \uc65c \uc9c0\uae08 \ud544\uc694\ud55c\uc9c0, \uc138 \uac00\uc9c0 \uc555\ub825\uc785\ub2c8\ub2e4. \uacc4\uc815\uc740 \ube60\ub974\uac8c \ub298\uace0, \uac10\ub3c5\uae30\uad00\uc740 \uc99d\uc801\uc744 \uc989\uc2dc \uc694\uad6c\ud558\uace0, \ub098\uc911\uc5d0 \uace0\uce58\uba74 \ube44\uc309\ub2c8\ub2e4.\n\n\uadf8\ub798\uc11c Landing Zone\uc774 \uc8fc\ub294 \uc138 \uac00\uc9c0 \uae30\ubc18\uc774 \uacc4\uc815 \uaca9\ub9ac, \uc911\uc559 \uac70\ubc84\ub10c\uc2a4, \ud45c\uc900 \uc790\ub3d9\ud654\uc785\ub2c8\ub2e4.\n\n\uadf8\ub7fc \uacc4\uc815\uc744 \ub098\ub204\uba74 \uc2e4\uc81c\ub85c \ubb34\uc5c7\uc774 \ub2ec\ub77c\uc9c0\ub294\uc9c0 \ube44\uad50\ud574 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    5: "\u2753 \u23f8\ufe0f [3min] [\uc694\uc57d]\n- \uc67c\ucabd: \ubaa8\ub4e0 \uc6cc\ud06c\ub85c\ub4dc\uac00 \ud55c \uacc4\uc815\uc5d0 \ubaa8\uc774\uba74 \uc7a5\uc560\uc640 \uce68\ud574 \uc601\ud5a5 \ubc94\uc704\uac00 \uacc4\uc815 \uc804\uccb4\n- \uc624\ub978\ucabd: OU\uc640 \uacc4\uc815\uc73c\ub85c \ub098\ub204\uba74 PoC \uacc4\uc815 \uc0ac\uace0\uc758 \uc601\ud5a5 \ubc94\uc704(Blast radius)\ub97c \uadf8 \uacc4\uc815\uc73c\ub85c \ud55c\uc815\n- \ube44\uad50 \ub2e4\uc12f \ucd95: \uad8c\ud55c, \uac10\uc0ac, \ube44\uc6a9, \ud658\uacbd \ubd84\ub9ac, \uc2e0\uaddc \ud658\uacbd\n- \uc9c8\ubb38: OK\uc800\ucd95\uc740\ud589\uc758 \uae30\uc874 AWS \uacc4\uc815 \uc720\ubb34\uc640 \uacc4\uc815 \uc218\n\n\uae08\uc735\uad8c\uc5d0\uc11c \uacc4\uc815 \ubd84\ub9ac\ub294 \uc120\ud0dd\uc774\ub77c\uae30\ubcf4\ub2e4 \ud1b5\uc81c\uc640 \uac10\uc0ac \ub300\uc751\uc758 \ucd9c\ubc1c\uc810\uc785\ub2c8\ub2e4. \uc67c\ucabd\ucc98\ub7fc \uc6b4\uc601, \uac1c\ubc1c, \ubcf4\uc548 \ub3c4\uad6c, \ub85c\uadf8\uac00 \ud55c \uacc4\uc815\uc5d0 \uc788\uc73c\uba74 \ud55c \ubc88\uc758 \uc2e4\uc218\ub098 \uce68\ud574\uac00 \uc804\uccb4\uc5d0 \uc601\ud5a5\uc744 \uc90d\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd\uc740 \uac19\uc740 \uc2dc\uc2a4\ud15c\uc744 OU\uc640 \uacc4\uc815\uc73c\ub85c \ub098\ub208 \ubaa8\uc2b5\uc785\ub2c8\ub2e4. \uc608\ub97c \ub4e4\uc5b4 Sandbox\uc758 PoC \uacc4\uc815\uc5d0\uc11c \ubb38\uc81c\uac00 \uc0dd\uaca8\ub3c4 \uc601\ud5a5\uc774 \uadf8 \uacc4\uc815 \uc548\uc73c\ub85c \ud55c\uc815\ub429\ub2c8\ub2e4. \uacc4\uc815 \uacbd\uacc4\uac00 \uadf8\ub300\ub85c \ubcf4\uc548 \uacbd\uacc4\uac00 \ub418\ub294 \uac83\uc785\ub2c8\ub2e4.\n\n\uc544\ub798\ub294 \ub2e4\uc12f \uac00\uc9c0 \ucd95\uc73c\ub85c \ubcf8 \ucc28\uc774\uc785\ub2c8\ub2e4. \ud2b9\ud788 \uac10\uc0ac \ub300\uc751\uc5d0\uc11c, \ub85c\uadf8\uac00 Log Archive \uacc4\uc815 \ud55c \uacf3\uc5d0 \ubaa8\uc774\uba74 \uc99d\uc801 \uc218\uc9d1\uc774 \uc218\uc791\uc5c5\uc5d0\uc11c \uc870\ud68c\ub85c \ubc14\ub01d\ub2c8\ub2e4.\n\n\ud639\uc2dc \uc9c0\uae08 OK\uc800\ucd95\uc740\ud589\uc5d0\uc11c \uc0ac\uc6a9 \uc911\uc778 AWS \uacc4\uc815\uc774 \uc788\uc73c\uc2e0\uc9c0, \uc788\ub2e4\uba74 \uba87 \uac1c \uc815\ub3c4\uc778\uc9c0 \uc5ec\ucb64\ubd10\ub3c4 \ub420\uae4c\uc694? \ub4a4\uc5d0\uc11c \uae30\uc874 \uacc4\uc815 \ucc98\ub9ac \ubc29\uc2dd\uc744 \uace0\ub97c \ub54c \ud544\uc694\ud569\ub2c8\ub2e4.\n\n\uc774\uc81c 2\uc7a5, \uae08\uc735 \uaddc\uc81c\ub85c \ub118\uc5b4\uac00\uaca0\uc2b5\ub2c8\ub2e4.",
+    6: "[0.5min] [\uc694\uc57d]\n- 2\uc7a5: \uc81c14\uc870\uc7582 \uc774\uc6a9 \uc808\ucc28, \uaddc\uc81c \uc694\uac74\uacfc Landing Zone \ud1b5\uc81c \ub9e4\ud551, \ub9dd\ubd84\ub9ac \uaddc\uc81c \ubcc0\ud654\n- \uc774 \uc7a5\uc758 \ub9e4\ud551\ud45c\uac00 \uc138\uc158 \uc804\uccb4\uc758 \uc5f0\uacb0\uace0\ub9ac\n\n2\uc7a5\uc740 \uaddc\uc81c \uc774\uc57c\uae30\uc785\ub2c8\ub2e4. \uc774\uc6a9 \uc808\ucc28, \uc694\uac74\uacfc \ud1b5\uc81c\uc758 \ub9e4\ud551, \uadf8\ub9ac\uace0 \ucd5c\uadfc \ub9dd\ubd84\ub9ac \uaddc\uc81c \ubcc0\ud654\ub97c \ucc28\ub840\ub85c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uba3c\uc800 \uc81c14\uc870\uc7582 \uc808\ucc28\uc785\ub2c8\ub2e4.",
+    7: "\u23f8\ufe0f [3min] [\uc694\uc57d]\n- \uc81c14\uc870\uc7582 \ub124 \ub2e8\uacc4: \uc5c5\ubb34 \uc911\uc694\ub3c4 \ud3c9\uac00, CSP \ud3c9\uac00, BCP\uc640 \uc548\uc804\uc131 \uc870\uce58, \uc704\uc6d0\ud68c \uc2ec\uc758\uc640 \ubcf4\uace0\n- 1\ub2e8\uacc4 \uacb0\uacfc(\uc911\uc694\uc5c5\ubb34 \uc5ec\ubd80)\uac00 \uc774\ud6c4 \uc808\ucc28 \ubc94\uc704\ub97c \uacb0\uc815\n- 2\ub2e8\uacc4: AWS\uac00 \uae08\uc735\ubcf4\uc548\uc6d0 CSP \uc548\uc804\uc131 \ud3c9\uac00 \uacb0\uacfc\ub97c \uc81c\uacf5\ud574 \ubd80\ub2f4 \uac10\uc18c\n- 3\ub2e8\uacc4 \uae30\uc220 \ud1b5\uc81c\ub97c \ud45c\uc900\ud654\ud558\ub294 \uac83\uc774 Landing Zone\uc758 \uc5ed\ud560\n- \uc138\ubd80 \uc808\ucc28\ub294 \uae08\uc735\ubd84\uc57c \ud074\ub77c\uc6b0\ub4dc \uc774\uc6a9 \uac00\uc774\ub4dc \ucc38\uc870\n\n\uc804\uc790\uae08\uc735\uac10\ub3c5\uaddc\uc815 \uc81c14\uc870\uc7582\ub294 \ud074\ub77c\uc6b0\ub4dc \uc774\uc6a9 \uc808\ucc28\ub97c \ub124 \ub2e8\uacc4\ub85c \uc815\ud558\uace0 \uc788\uc2b5\ub2c8\ub2e4. \uc5c5\ubb34 \uc911\uc694\ub3c4 \ud3c9\uac00, CSP \ud3c9\uac00, BCP\uc640 \uc548\uc804\uc131 \ud655\ubcf4\uc870\uce58, \uadf8\ub9ac\uace0 \uc815\ubcf4\ubcf4\ud638\uc704\uc6d0\ud68c \uc2ec\uc758\uc640 \ubcf4\uace0\uc785\ub2c8\ub2e4.\n\n\uccab \ub2e8\uacc4\uc5d0\uc11c \uc911\uc694\uc5c5\ubb34\uc778\uc9c0 \uc544\ub2cc\uc9c0\uac00 \uc815\ud574\uc9c0\uba74 \uadf8 \ub4a4 \uc808\ucc28\uc758 \ubc94\uc704\uac00 \ub2ec\ub77c\uc9d1\ub2c8\ub2e4. 2\ub2e8\uacc4 CSP \ud3c9\uac00\ub294 AWS\uac00 \uae08\uc735\ubcf4\uc548\uc6d0 \uc548\uc804\uc131 \ud3c9\uac00 \uacb0\uacfc\ub97c \uc81c\uacf5\ud558\uae30 \ub54c\ubb38\uc5d0 \ubd80\ub2f4\uc774 \ub9ce\uc774 \uc904\uc5b4\ub4ed\ub2c8\ub2e4.\n\n\uc624\ub298 \uc774\uc57c\uae30\uc758 \ub300\ubd80\ubd84\uc740 3\ub2e8\uacc4\uc785\ub2c8\ub2e4. \uc554\ud638\ud654, \uc811\uadfc\ud1b5\uc81c, \ubc31\uc5c5, \uc7ac\ud574\ubcf5\uad6c \uac19\uc740 \uae30\uc220 \ud1b5\uc81c\ub97c \uacc4\uc815\ub9c8\ub2e4 \uac19\uc740 \ubc29\uc2dd\uc73c\ub85c \uc801\uc6a9\ud558\ub294 \uac83, \uadf8\uac8c Landing Zone\uc774 \ud558\ub294 \uc77c\uc785\ub2c8\ub2e4. \uadf8\ub7ec\uba74 4\ub2e8\uacc4 \uc2ec\uc758 \uc790\ub8cc\uc640 \ubcf4\uace0 \uc99d\uc801\ub3c4 \ub9e4\ubc88 \uc0c8\ub85c \ub9cc\ub4e4 \ud544\uc694 \uc5c6\uc774 \uc7ac\uc0ac\uc6a9\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\n\uadf8\ub7fc \uad6c\uccb4\uc801\uc73c\ub85c \uc5b4\ub5a4 \uc694\uac74\uc774 \uc5b4\ub5a4 \ud1b5\uc81c\ub85c \uc774\uc5b4\uc9c0\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    8: "\u23f8\ufe0f \ud83c\udfac [3.5min] [\uc694\uc57d]\n- \uc138\uc158\uc758 \ud575\uc2ec \uc5f0\uacb0\uace0\ub9ac: \uaddc\uc815\uc774 \uc694\uad6c\ud558\ub294 \uacb0\uacfc\ub97c \uacc4\uc815, \uad8c\ud55c, \ub124\ud2b8\uc6cc\ud06c, \ub85c\uadf8, \ud0d0\uc9c0 \uacc4\uce35\uc758 \uae30\uc220 \ud1b5\uc81c\ub85c \uad6c\ud604\n- \uc77c\uacf1 \uc694\uac74 \uac01\uac01\uc758 \uad6c\ud604 \ubc29\uc2dd\uc740 \ud589 \uc544\ub798\uc5d0 \ud45c\uc2dc, \ud074\ub9ad\ud558\uba74 \ud574\ub2f9 \uacc4\uce35\uc774 \uac15\uc870\ub428 (\ub9dd\ubd84\ub9ac, \ub85c\uadf8 \ubcf4\uc874, \uce68\ud574\uc0ac\uace0 \uc21c\uc11c\ub85c \uc2dc\uc5f0 \uad8c\uc7a5)\n- 03\uc7a5\ubd80\ud130 05\uc7a5\uc740 \uc774 \ud45c\uc758 \uad6c\ud604 \ubc29\uc2dd \uc5f4\uc744 \uc0c1\uc138\ud788 \uc124\uba85\n- \uc870\ud56d\ubcc4 \ud574\uc11d\uc740 \uc900\ubc95\uac10\uc2dc, \uc815\ubcf4\ubcf4\ud638 \ubd80\uc11c\uc640 \ud655\uc778 \ud544\uc694\n\n\uc774 \uc2ac\ub77c\uc774\ub4dc\uac00 \uc624\ub298 \uc138\uc158\uc758 \uc5f0\uacb0\uace0\ub9ac\uc785\ub2c8\ub2e4. \uc67c\ucabd\uc740 \uaddc\uc81c\uac00 \uc694\uad6c\ud558\ub294 \uacb0\uacfc\uc640 \uadf8 \uad6c\ud604 \ubc29\uc2dd, \uc624\ub978\ucabd\uc740 \uad6c\ud604\uc774 \uc18d\ud558\ub294 Landing Zone\uc758 \ub2e4\uc12f \uacc4\uce35\uc785\ub2c8\ub2e4.\n\n\ub9dd\ubd84\ub9ac\uc640 \ub300\uccb4 \ud1b5\uc81c\ub97c \ub20c\ub7ec \ubcf4\uba74 \ub124\ud2b8\uc6cc\ud06c \uacc4\uce35\uc774 \ucf1c\uc9c0\uace0, Egress \uc911\uc559\ud654\uc640 \uc5c5\ubb34\uacc4 VPC \uc778\ud130\ub137 \uacbd\ub85c \ucc28\ub2e8\uc774 \uad6c\ud604 \ubc29\uc2dd\uc73c\ub85c \ub098\uc635\ub2c8\ub2e4. \ub85c\uadf8 \ubcf4\uc874\uacfc \ubb34\uacb0\uc131\uc740 \ub370\uc774\ud130\uc640 \ub85c\uadf8 \uacc4\uce35, Organization CloudTrail\uacfc Object Lock\uc785\ub2c8\ub2e4.\n\n\uc774\ub807\uac8c \uc694\uac74 \ud558\ub098\uac00 \uacc4\uce35 \ud55c\ub450 \uac1c\ub85c \uc774\uc5b4\uc9c0\uace0, \ub4a4\uc758 3\uc7a5\ubd80\ud130 5\uc7a5\uc774 \uac01 \uacc4\uce35\uc744 \ud558\ub098\uc529 \uc790\uc138\ud788 \ubcf4\ub294 \uad6c\uc870\uc785\ub2c8\ub2e4. \uc870\ud56d\ubcc4 \uc138\ubd80 \ud574\uc11d\uacfc \uc801\uc6a9 \ubc94\uc704\ub294 \uc900\ubc95\uac10\uc2dc, \uc815\ubcf4\ubcf4\ud638 \ubd80\uc11c\uc640 \ud568\uaed8 \ud655\uc778\ud574\uc57c \ud569\ub2c8\ub2e4.\n\n\ub2e4\uc74c\uc740 \ucd5c\uadfc \uac00\uc7a5 \ub9ce\uc774 \ubc1b\ub294 \uc9c8\ubb38, \ub9dd\ubd84\ub9ac \uaddc\uc81c \ubcc0\ud654\uc785\ub2c8\ub2e4.",
+    9: "\u23f8\ufe0f [3min] [\uc694\uc57d]\n- 2024.8 \uae08\uc735\uc704\uc6d0\ud68c \ub9dd\ubd84\ub9ac \uac1c\uc120 \ub85c\ub4dc\ub9f5: \ub2e8\uacc4\uc801 \uc644\ud654, \ud601\uc2e0\uae08\uc735\uc11c\ube44\uc2a4\ub85c SaaS\uc640 \uc0dd\uc131\ud615 AI \ud65c\uc6a9\n- 2026.1.19 \ubcf4\ub3c4\uc790\ub8cc: SaaS\ub97c \uc804\uc790\uae08\uc735\uac70\ub798\ubc95 \uc81c21\uc870, \uac10\ub3c5\uaddc\uc815 \uc81c15\uc870 \ub9dd\ubd84\ub9ac \uc608\uc678\ub85c \uba85\uc2dc\ud558\ub294 \uc2dc\ud589\uc138\uce59 \uac1c\uc815 \uc608\uace0(\uc608\uace0\uae30\uac04 1.20~2.9), \ubcc4\ud45c7 \ub300\uccb4 \ud1b5\uc81c \uc758\ubb34\ud654\n- \uc774\ubc88 \uc608\uc678\ub294 \ub0b4\ubd80\uc5c5\ubb34\uc6a9 \ub2e8\ub9d0\uc758 SaaS \uc774\uc6a9 \ub300\uc0c1\n- \ud074\ub77c\uc6b0\ub4dc \uc815\ubcf4\ucc98\ub9ac\uc2dc\uc2a4\ud15c \uc124\uacc4\ub294 \uae30\uc874 \ub9dd\ubd84\ub9ac \uc694\uac74 \uac80\ud1a0 \uc9c0\uc18d \ud544\uc694\n- \uc2dc\uc0ac\uc810: \ud1b5\uc81c \uacb0\uacfc\ub97c \uc99d\uba85\ud558\ub294 \uad6c\uc870, \uacc4\uc815\uacfc VPC \uacbd\uacc4, \ub85c\uadf8 \uc99d\uc801\n\n\ub9dd\ubd84\ub9ac \uaddc\uc81c\ub294 \ud615\uc2dd\uc801\uc778 \ubb3c\ub9ac \ubd84\ub9ac\uc5d0\uc11c \uc2e4\uc9c8\uc801\uc778 \ud1b5\uc81c\ub85c \ubc29\ud5a5\uc774 \ubc14\ub00c\uace0 \uc788\uc2b5\ub2c8\ub2e4. 2024\ub144 8\uc6d4 \uae08\uc735\uc704\uc6d0\ud68c\uc758 \ub9dd\ubd84\ub9ac \uac1c\uc120 \ub85c\ub4dc\ub9f5 \uc774\ud6c4, \uc62c\ud574 1\uc6d4\uc5d0\ub294 SaaS\ub97c \ub9dd\ubd84\ub9ac \uc608\uc678\ub85c \uba85\uc2dc\ud558\ub294 \uc2dc\ud589\uc138\uce59 \uac1c\uc815\uc774 \uc608\uace0\ub410\uc2b5\ub2c8\ub2e4.\n\n\uc5ec\uae30\uc11c \uc8fc\uc758\ud560 \uc810\uc774 \uc788\uc2b5\ub2c8\ub2e4. \uc774\ubc88 \uc608\uc678\ub294 \uc67c\ucabd, \ub0b4\ubd80\uc5c5\ubb34\uc6a9 \ub2e8\ub9d0\uc5d0\uc11c SaaS\ub97c \uc4f0\ub294 \uacbd\uc6b0\uc785\ub2c8\ub2e4. \uc624\ub978\ucabd\ucc98\ub7fc \ud074\ub77c\uc6b0\ub4dc\uc5d0 \uc62c\ub9ac\ub294 \uc815\ubcf4\ucc98\ub9ac\uc2dc\uc2a4\ud15c \uc790\uccb4\ub294 \uc5ec\uc804\ud788 \ub9dd\ubd84\ub9ac \uc694\uac74\uacfc \ub300\uccb4 \ud1b5\uc81c \uc124\uacc4\uac00 \ud544\uc694\ud569\ub2c8\ub2e4.\n\n\uadf8\ub798\uc11c Landing Zone \uad00\uc810\uc758 \uc2dc\uc0ac\uc810\uc740, \ubd84\ub9ac\ud588\ub2e4\ub294 \uc0ac\uc2e4\ubcf4\ub2e4 \ud1b5\uc81c \uacb0\uacfc\ub97c \uc99d\uba85\ud560 \uc218 \uc788\ub294 \uad6c\uc870\uac00 \uc911\uc694\ud558\ub2e4\ub294 \uac83\uc785\ub2c8\ub2e4. \uacc4\uc815\uacfc VPC \ub2e8\uc704\uc758 \uacbd\uacc4, \uadf8\ub9ac\uace0 \ub85c\uadf8 \uc99d\uc801\uc774 \uadf8 \uc99d\uba85 \uc218\ub2e8\uc785\ub2c8\ub2e4.\n\n\uadf8 \uacbd\uacc4\ub97c \ub9cc\ub4dc\ub294 \uacc4\uc815 \uad6c\uc870\ubd80\ud130, 3\uc7a5\uc5d0\uc11c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    10: "[0.5min] [\uc694\uc57d]\n- 3\uc7a5: \uad8c\uc7a5 OU\uc640 \uacc4\uc815 \uad6c\uc870, Control Tower \uad6c\uc131 \uc694\uc18c, \ud1b5\uc81c \uc720\ud615, Landing Zone 4.0\n- \ub9e4\ud551\ud45c\uc758 \uacc4\uc815 \uad6c\uc870, \uc2e0\uc6d0\uacfc \uad8c\ud55c \uacc4\uce35\uc744 \uad6c\uccb4\ud654\n\n3\uc7a5\uc740 \ub9e4\ud551\ud45c\uc758 \uc704\ucabd \ub450 \uacc4\uce35, \uacc4\uc815 \uad6c\uc870\uc640 \uad8c\ud55c\uc744 \uad6c\uccb4\uc801\uc73c\ub85c \ubcf4\ub294 \uc7a5\uc785\ub2c8\ub2e4.\n\n\uad8c\uc7a5 OU \uad6c\uc870\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    11: "\u23f8\ufe0f \ud83c\udfac [3.5min] [\uc694\uc57d]\n- AWS \uad8c\uc7a5 Organizational Unit \ubaa8\ub378 \uae30\ubc18: Security, Infrastructure, Workloads Prod, NonProd, Sandbox, Policy Staging, Suspended\n- OU\ubcc4\ub85c \uc11c\ub85c \ub2e4\ub978 SCP, RCP \uc0c1\ud55c\uc744 \uc801\uc6a9 (\ud074\ub9ad\ud574 \uc608\uc2dc \ud655\uc778, Prod\ubd80\ud130)\n- Prod\uc640 NonProd \ubd84\ub9ac\uac00 \ub9dd\ubd84\ub9ac, \uac1c\ubc1c\uacfc \uc6b4\uc601 \ubd84\ub9ac \uc694\uac74 \ub300\uc751\uc758 \ucd9c\ubc1c\uc810\n- SCP\ub294 \uad00\ub9ac \uacc4\uc815\uc5d0 \uc801\uc6a9\ub418\uc9c0 \uc54a\uc73c\ubbc0\ub85c \uad00\ub9ac \uacc4\uc815\uc5d0\ub294 \uc6cc\ud06c\ub85c\ub4dc\ub97c \ub450\uc9c0 \uc54a\uc74c\n- \uc5c5\ubb34\uacc4, \ucc44\ub110\uacc4 \uba85\uce6d\uc740 \uc608\uc2dc\n\nAWS\uac00 \uad8c\uc7a5\ud558\ub294 OU \ubaa8\ub378\uc744 OK\uc800\ucd95\uc740\ud589 \ud658\uacbd\uc5d0 \ub9de\ucdb0 \uadf8\ub824 \ubcf8 \uad6c\uc870\uc785\ub2c8\ub2e4. \ub9e8 \uc704 \uad00\ub9ac \uacc4\uc815 \uc544\ub798\uc5d0 \uc5ec\uc12f \ubb36\uc74c\uc758 OU\uac00 \uc788\uace0, \ud575\uc2ec\uc740 OU\ub9c8\ub2e4 \uc11c\ub85c \ub2e4\ub978 \ud1b5\uc81c\ub97c \uac74\ub2e4\ub294 \uc810\uc785\ub2c8\ub2e4.\n\nWorkloads Prod OU\ub97c \ubcf4\uba74 \uc11c\uc6b8 \ub9ac\uc804 \uc678 \ub9ac\uc18c\uc2a4 \uc0dd\uc131\uc744 \ub9c9\uace0, \uc554\ud638\ud654\ub418\uc9c0 \uc54a\uc740 \ub9ac\uc18c\uc2a4\uc640 \uc5c5\ubb34\uacc4 IGW \uc0dd\uc131\uc744 \ub9c9\uc2b5\ub2c8\ub2e4. NonProd\ub294 SCP\ub85c Prod \uacc4\uc815 \ub9ac\uc18c\uc2a4 \uc811\uadfc\uc744 \ub9c9\uace0, Sandbox\ub294 \uc608\uc0b0 \ud55c\ub3c4\uc640 \uc0ac\ub0b4\ub9dd \uc5f0\uacb0 \ucc28\ub2e8\uc785\ub2c8\ub2e4. \uc678\ubd80 \uacc4\uc815\uc774 \uc6b0\ub9ac \ub9ac\uc18c\uc2a4\uc5d0 \uc811\uadfc\ud558\ub294 \uac83\uc744 \ub9c9\ub294 RCP\ub294 \ubcf4\ud638 \ub300\uc0c1\uc778 Prod OU \ucabd\uc5d0 \uac81\ub2c8\ub2e4.\n\nProd\uc640 NonProd\ub97c OU\ubd80\ud130 \ub098\ub204\ub294 \uac83\uc774 \ub9dd\ubd84\ub9ac, \uac1c\ubc1c\uacfc \uc6b4\uc601 \ubd84\ub9ac \uc694\uac74\uc5d0 \ub300\uc751\ud558\ub294 \ucd9c\ubc1c\uc810\uc785\ub2c8\ub2e4. \uc5c5\ubb34\uacc4, \ucc44\ub110\uacc4\ub77c\ub294 \uc774\ub984\uc740 \uc608\uc2dc\uc774\uace0 \uc2e4\uc81c \ubd84\ub958\ub294 \uc2dc\uc2a4\ud15c \uad6c\uc131\uc5d0 \ub9de\ucdb0 \uc870\uc815\ud558\uba74 \ub429\ub2c8\ub2e4.\n\n\ud55c \uac00\uc9c0 \uaf2d \uae30\uc5b5\ud558\uc2e4 \uc810\uc740, SCP\ub294 \uad00\ub9ac \uacc4\uc815\uc5d0\ub294 \uc801\uc6a9\ub418\uc9c0 \uc54a\ub294\ub2e4\ub294 \uac83\uc785\ub2c8\ub2e4. \uadf8\ub798\uc11c \uad00\ub9ac \uacc4\uc815\uc5d0\ub294 \uc6cc\ud06c\ub85c\ub4dc\ub098 \ubcf4\uc548 \ub3c4\uad6c\ub97c \ub450\uc9c0 \uc54a\uace0 \uc811\uadfc \uc778\uc6d0\uc744 \ucd5c\uc18c\ud654\ud569\ub2c8\ub2e4.\n\n\uc774 \uad6c\uc870\ub97c \uc2e4\uc81c\ub85c \ub9cc\ub4e4\uc5b4 \uc8fc\ub294 \uc11c\ube44\uc2a4\uac00 Control Tower\uc785\ub2c8\ub2e4.",
+    12: "\u23f8\ufe0f \ud83c\udfac [2.5min] [\uc694\uc57d]\n- Control Tower\ub294 Organizations \uc704\uc5d0\uc11c \ub3d9\uc791\ud558\ub294 \uad00\ub9ac\ud615 \uc11c\ube44\uc2a4\n- \ub124 \uad6c\uc131 \uc694\uc18c: Landing Zone, Controls, Account Factory, Dashboard\uc640 Drift\n- Controls Catalog\ub294 2025\ub144 \uc774\ud6c4 Config \uae30\ubc18 \ud1b5\uc81c\uac00 \ud06c\uac8c \ub298\uc5c8\uace0 \uc0b0\uc5c5 \ud504\ub808\uc784\uc6cc\ud06c \ub9e4\ud551 \uc9c0\uc6d0\n- Landing Zone 4.0: \uc11c\ube44\uc2a4 \ud1b5\ud569 \uc120\ud0dd \uc801\uc6a9, \uae30\uc874 Organizations\uc5d0 \ud1b5\uc81c\ub9cc \uba3c\uc800 \ub3c4\uc785 \uac00\ub2a5\n\nControl Tower\ub294 Organizations \uc704\uc5d0 \uc5b9\ud600 \ub3d9\uc791\ud558\ub294 \uad00\ub9ac\ud615 \uc11c\ube44\uc2a4\uc785\ub2c8\ub2e4. \uc544\ub798 \ub450 \uce35\uc774 \uae30\ubc18\uc774\uace0, \uc704\uc758 \ub124 \uad6c\uc131 \uc694\uc18c\uac00 \uc2e4\uc81c\ub85c \uc4f0\ub294 \uae30\ub2a5\uc785\ub2c8\ub2e4.\n\nLanding Zone\uc740 \ud575\uc2ec \uacc4\uc815\uacfc OU\ub97c \uc790\ub3d9\uc73c\ub85c \ub9cc\ub4e4\uace0, Controls\ub294 \ud1b5\uc81c\ub97c OU \ub2e8\uc704\ub85c \uac81\ub2c8\ub2e4. Account Factory\ub294 \ud45c\uc900 \uacc4\uc815\uc744 \ucc0d\uc5b4 \ub0b4\uace0, Dashboard\uc640 Drift\ub294 \ub204\uac00 \uae30\uc900\uc120\uc5d0\uc11c \ubc97\uc5b4\ub0ac\ub294\uc9c0 \ubcf4\uc5ec \uc90d\ub2c8\ub2e4.\n\nControls Catalog\ub294 2025\ub144 \uc774\ud6c4 Config \uae30\ubc18 \ud1b5\uc81c\uac00 \ud06c\uac8c \ub298\uc5c8\uace0, \uc0b0\uc5c5\ubcc4 \ud504\ub808\uc784\uc6cc\ud06c\uc640 \ub9e4\ud551\ub3c4 \uc9c0\uc6d0\ud569\ub2c8\ub2e4.\n\n\uadf8 \ud1b5\uc81c\uac00 \uc5b4\ub5a4 \uc885\ub958\ub85c \ub098\ub258\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    13: "\u23f8\ufe0f \ud83c\udfac [3.5min] [\uc694\uc57d]\n- \ud1b5\uc81c \uc138 \uc720\ud615: \uc0ac\uc804\uc801(\ubc30\ud3ec \uc804, CloudFormation Hooks), \uc608\ubc29\uc801(API \ud638\ucd9c \uc2dc, SCP, RCP, \uc120\uc5b8\uc801 \uc815\ucc45), \ud0d0\uc9c0\uc801(\ubc30\ud3ec \ud6c4, Config Rules)\n- \uac19\uc740 \uc694\uac74\uc744 \uacb9\uacb9\uc774 \uc801\uc6a9\ud574 \uc6b0\ud68c \uacbd\ub85c\ub97c \uc904\uc784: \uc554\ud638\ud654, \ud37c\ube14\ub9ad \ub178\ucd9c, \ub9ac\uc804\uacfc \uac10\uc0ac \ucd94\uc801 \uc138 \uc2dc\ub098\ub9ac\uc624\ub85c \uc2dc\uc5f0\n- \ub9ac\uc804 \ucc28\ub2e8 \uc2dc IAM, Organizations \ub4f1 \uae00\ub85c\ubc8c \uc11c\ube44\uc2a4\uc640 us-east-1 \uc758\uc874 \uc11c\ube44\uc2a4\ub294 Region deny \ud1b5\uc81c\uc758 \uc608\uc678 \ubaa9\ub85d\uc73c\ub85c \ucc98\ub9ac\n- RCP\ub294 \ub9ac\uc18c\uc2a4 \uce21 \uc0c1\ud55c(\uc678\ubd80 \uacc4\uc815 \uc811\uadfc \ucc28\ub2e8 \ub4f1)\n- \uc2e0\uaddc \ud1b5\uc81c\ub294 Policy Staging OU \uac80\uc99d \ud6c4 \uc6b4\uc601 OU\ub85c \uc2b9\uaca9\n\nControl Tower\uc758 \ud1b5\uc81c\ub294 \ub3d9\uc791 \uc2dc\uc810\uc5d0 \ub530\ub77c \uc138 \uac00\uc9c0\uc785\ub2c8\ub2e4. \ubc30\ud3ec \uc804\uc5d0 \ud15c\ud50c\ub9bf\uc744 \uac80\uc0ac\ud558\ub294 \uc0ac\uc804\uc801 \ud1b5\uc81c, API \ud638\ucd9c \uc21c\uac04\uc5d0 \ub9c9\ub294 \uc608\ubc29\uc801 \ud1b5\uc81c, \ubc30\ud3ec \ud6c4 \uacc4\uc18d \ud3c9\uac00\ud558\ub294 \ud0d0\uc9c0\uc801 \ud1b5\uc81c\uc785\ub2c8\ub2e4.\n\n\uc554\ud638\ud654\ub97c \uc608\ub85c \ub4e4\uba74, \ud15c\ud50c\ub9bf \ub2e8\uacc4\uc5d0\uc11c \uc554\ud638\ud654\uac00 \ube60\uc9c4 \ub9ac\uc18c\uc2a4\ub97c \uac70\ubd80\ud558\uace0, API \ud638\ucd9c \ub2e8\uacc4\uc5d0\uc11c \ubbf8\uc554\ud638\ud654 \ub9ac\uc18c\uc2a4 \uc0dd\uc131\uc744 \ub9c9\uace0, \uadf8\ub798\ub3c4 \uc0dd\uae34 \ubbf8\uc554\ud638\ud654 EBS\ub294 Config\uac00 \ucc3e\uc544\ub0c5\ub2c8\ub2e4. \ud37c\ube14\ub9ad \ub178\ucd9c \ubc84\ud2bc\uc744 \ub204\ub974\uba74 \uac19\uc740 \ubc29\uc2dd\uc73c\ub85c \uc138 \uacb9\uc774 \ubcf4\uc785\ub2c8\ub2e4.\n\n\ub9ac\uc804 \ucc28\ub2e8\uc744 \uac78 \ub54c\ub294 IAM\uc774\ub098 Organizations \uac19\uc740 \uae00\ub85c\ubc8c \uc11c\ube44\uc2a4, us-east-1\uc5d0 \uc758\uc874\ud558\ub294 \uc11c\ube44\uc2a4\ub294 Control Tower Region deny \ud1b5\uc81c\uc758 \uc608\uc678 \ubaa9\ub85d\uc73c\ub85c \ucc98\ub9ac\ub41c\ub2e4\ub294 \uc810\uc744 \uac19\uc774 \uae30\uc5b5\ud574 \uc8fc\uc138\uc694. RCP\ub294 \ub9ac\uc18c\uc2a4 \ucabd \uc0c1\ud55c\uc73c\ub85c, \uc678\ubd80 \uacc4\uc815\uc774 \uc6b0\ub9ac \ub9ac\uc18c\uc2a4\uc5d0 \uc811\uadfc\ud558\ub294 \uac83\uc744 \ub9c9\ub294 \uc6a9\ub3c4\uc785\ub2c8\ub2e4.\n\n\uadf8\ub9ac\uace0 \uc0c8 \ud1b5\uc81c\ub294 \ubc14\ub85c \uc6b4\uc601\uc5d0 \uac78\uc9c0 \uc54a\uace0, Policy Staging OU\uc5d0\uc11c \uba3c\uc800 \uac80\uc99d\ud55c \ub4a4 \uc6b4\uc601 OU\ub85c \uc2b9\uaca9\ud569\ub2c8\ub2e4.\n\n\ub2e4\uc74c\uc740 \uc791\ub144 11\uc6d4\uc5d0 \ub098\uc628 Landing Zone 4.0\uc785\ub2c8\ub2e4.",
+    14: "\ud83c\udfac [2min] [\uc694\uc57d]\n- Landing Zone 4.0: 2025\ub144 11\uc6d4 17\uc77c \ucd9c\uc2dc, \ud544\uc694\ud55c \uae30\ub2a5\ub9cc \uc120\ud0dd\ud574 \uad6c\uc131\n- \ub2e4\uc12f \uac00\uc9c0 \ubcc0\uacbd: \uc11c\ube44\uc2a4 \ud1b5\ud569 \uc120\ud0dd, \uace0\uac1d \uc815\uc758 OU, \uc804\uc6a9 \ub9ac\uc18c\uc2a4, \ud1b5\uc81c\ub9cc \uba3c\uc800 \ub3c4\uc785, Service-linked Config Aggregator\n- \uae30\uc874 3.x \uc0ac\uc6a9\uc790\ub294 4.0 \uc5c5\ub370\uc774\ud2b8 \ud544\uc694\n- \uc2e0\uaddc \uace0\uac1d\uc740 \ucc98\uc74c\ubd80\ud130 4.0, \ub2e8 Config\uc640 CloudTrail\uc740 \uae08\uc735 \uaddc\uc81c\uc0c1 \ud65c\uc131\ud654 \uad8c\uc7a5\n- \uae30\uc874 \uacc4\uc815\uc774 \uc788\uc73c\uba74 \ud1b5\uc81c\ubd80\ud130 \uc801\uc6a9\ud558\uace0 \ub2e8\uacc4\uc801\uc73c\ub85c \ud655\uc7a5\ud558\ub294 \uacbd\ub85c\uac00 \ud604\uc2e4\uc801\n- \ub2e8 Config \ud1b5\ud569 \uc5c6\uc774\ub294 \uc608\ubc29, \uc0ac\uc804 \ud1b5\uc81c\ub9cc \uac00\ub2a5. \ud0d0\uc9c0 \ud1b5\uc81c, Account Factory, AFT, Identity Center \uc5f0\ub3d9, Backup\uc740 Config \ud1b5\ud569\uacfc OU\ubcc4 Config \uae30\uc900\uc120 \ud544\uc694\n\nLanding Zone 4.0\uc740 \uc791\ub144 11\uc6d4\uc5d0 \ub098\uc628 \ud070 \ubcc0\uacbd\uc785\ub2c8\ub2e4. \ud55c\ub9c8\ub514\ub85c \ud544\uc694\ud55c \uac83\ub9cc \uace8\ub77c \uc4f0\ub294 Landing Zone\uc774 \ub410\uc2b5\ub2c8\ub2e4.\n\n\uc67c\ucabd \ud56d\ubaa9\uc744 \ub20c\ub7ec \ubcf4\uba74 \uc774\uc804\uacfc \ucc28\uc774\uac00 \ubcf4\uc785\ub2c8\ub2e4. Config\ub098 CloudTrail \ud1b5\ud569\uc774 \ud544\uc218\uc600\ub358 \uac83\uc774 \uc120\ud0dd\uc774 \ub410\uace0, Security OU \uac19\uc740 \uace0\uc815 \uad6c\uc870 \ub300\uc2e0 OU\ub97c \uc9c1\uc811 \uc815\uc758\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \uac00\uc7a5 \uc758\ubbf8 \uc788\ub294 \ubcc0\ud654\ub294 \uae30\uc874 Organizations\uc5d0 \ud1b5\uc81c\ub9cc \uba3c\uc800 \uc801\uc6a9\ud560 \uc218 \uc788\ub2e4\ub294 \uc810\uc785\ub2c8\ub2e4.\n\n\uadf8\ub798\uc11c \uc9c0\uae08 AWS \uacc4\uc815\uc744 \uc6b4\uc601 \uc911\uc774\ub77c\uba74 \uc624\ub978\ucabd \uc21c\uc11c\uac00 \ud604\uc2e4\uc801\uc785\ub2c8\ub2e4. \uae30\uc874 \uc870\uc9c1\uc740 \uadf8\ub300\ub85c \ub450\uace0 \uc608\ubc29, \uc0ac\uc804 \ud1b5\uc81c\ubd80\ud130 \uc801\uc6a9\ud55c \ub4a4 \ud1b5\ud569\uc744 \ub2e8\uacc4\uc801\uc73c\ub85c \ucf2d\ub2c8\ub2e4. \uadf8\ub9ac\uace0 Config \ud1b5\ud569\uc774 \uc5c6\uc73c\uba74 \ud0d0\uc9c0 \ud1b5\uc81c, Account Factory, Identity Center \uc5f0\ub3d9, Backup\uc740 \uc4f8 \uc218 \uc5c6\ub2e4\ub294 \uc810\uc744 \uac19\uc774 \uacc4\ud68d\ud574\uc57c \ud569\ub2c8\ub2e4. \ub2e4\ub9cc \uae08\uc735 \uaddc\uc81c\ub97c \uc0dd\uac01\ud558\uba74 Config\uc640 CloudTrail \ud1b5\ud569\uc740 \ucf1c \ub450\uc2dc\uae38 \uad8c\ud569\ub2c8\ub2e4. \uae30\uc874 3.x\ub97c \uc4f0\uace0 \uc788\ub2e4\uba74 4.0\uc73c\ub85c \uc5c5\ub370\uc774\ud2b8\uac00 \ud544\uc694\ud569\ub2c8\ub2e4.\n\n\uc5ec\uae30\uae4c\uc9c0\uac00 \uacc4\uc815\uacfc \ud1b5\uc81c\uc600\uace0, 4\uc7a5 \ub124\ud2b8\uc6cc\ud06c\ub85c \ub118\uc5b4\uac00\uaca0\uc2b5\ub2c8\ub2e4.",
+    15: "[0.5min] [\uc694\uc57d]\n- 4\uc7a5: Hub and Spoke \uad6c\uc870, \ub124\ud2b8\uc6cc\ud06c \uc124\uacc4 \ud3ec\uc778\ud2b8\n- \ub9e4\ud551\ud45c\uc758 \ub9dd\ubd84\ub9ac\uc640 \ub300\uccb4 \ud1b5\uc81c \ud589\uc744 \uad6c\uccb4\ud654\n\n4\uc7a5\uc740 \ub9e4\ud551\ud45c\uc5d0\uc11c \ub9dd\ubd84\ub9ac\uc640 \ub300\uccb4 \ud1b5\uc81c \ud589\uc744 \uad6c\uccb4\ud654\ud558\ub294 \uc7a5\uc785\ub2c8\ub2e4.\n\n\uc804\uccb4 \uad6c\uc870\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    16: "\u23f8\ufe0f \u23f8\ufe0f \ud83c\udfac [4.5min] [\uc694\uc57d]\n- Network \uacc4\uc815\uc5d0 \uc5f0\uacb0, \uac80\uc0ac, \uc778\ud130\ub137 \uacbd\ub85c\ub97c \uc9d1\uc911\ud558\uace0 \uc6cc\ud06c\ub85c\ub4dc VPC\ub294 Transit Gateway\ub85c\ub9cc \ud1b5\uc2e0\n- \uc8fc \uacbd\ub85c: IDC, DX, TGW, Inspection VPC, \uc6cc\ud06c\ub85c\ub4dc VPC (\ubc84\ud2bc\uc73c\ub85c \uacbd\ub85c \uc560\ub2c8\uba54\uc774\uc158)\n- DX\ub294 \uc11c\ub85c \ub2e4\ub978 \ub85c\ucf00\uc774\uc158 2\ud68c\uc120, VPN\uc740 \ubc31\uc5c5\n- \uc778\ud130\ub137 \ud5a5 \ud2b8\ub798\ud53d\uc740 Egress VPC\ub85c\ub9cc, \uc5c5\ubb34\uacc4 VPC\uc5d0\ub294 IGW \uc5c6\uc74c. \uace0\uac1d \ub300\uba74 \ucc44\ub110\uacc4 \uc778\ubc14\uc6b4\ub4dc \uacbd\ub85c\ub294 \ubcc4\ub3c4 \uc124\uacc4\n- Prod\uc640 NonProd \uac04 \uc9c1\uc811 \ub77c\uc6b0\ud305 \uc5c6\uc74c, DNS\ub294 Route 53 Resolver \uc778\ubc14\uc6b4\ub4dc, \uc544\uc6c3\ubc14\uc6b4\ub4dc \uc5d4\ub4dc\ud3ec\uc778\ud2b8\ub85c \uc0ac\ub0b4 DNS\uc640 \uc591\ubc29\ud5a5 \uc870\ud68c\n\n\ub124\ud2b8\uc6cc\ud06c\ub294 Hub and Spoke \uad6c\uc870\uc785\ub2c8\ub2e4. \uac00\uc6b4\ub370 Network \uacc4\uc815\uc5d0 \uc628\ud504\ub808\ubbf8\uc2a4 \uc5f0\uacb0, \ud2b8\ub798\ud53d \uac80\uc0ac, \uc778\ud130\ub137 \ucd9c\uad6c\ub97c \ubaa8\ub450 \ubaa8\uc73c\uace0, \uc624\ub978\ucabd \uc6cc\ud06c\ub85c\ub4dc VPC\ub294 Transit Gateway\ub85c\ub9cc \ud1b5\uc2e0\ud569\ub2c8\ub2e4.\n\n\uccab \ubc88\uc9f8 \ubc84\ud2bc\uc774 \uc8fc \uacbd\ub85c\uc785\ub2c8\ub2e4. IDC\uc5d0\uc11c Direct Connect\ub85c \ub4e4\uc5b4\uc640 Transit Gateway\ub97c \uc9c0\ub098 Inspection VPC\uc758 Network Firewall\uc5d0\uc11c \uac80\uc0ac\ub97c \ubc1b\uace0 Prod VPC\ub85c \uac11\ub2c8\ub2e4. \ub450 \ubc88\uc9f8\ub294 DX \uc7a5\uc560 \uc2dc VPN\uc73c\ub85c \ub118\uc5b4\uac00\ub294 \ubc31\uc5c5 \uacbd\ub85c\uc785\ub2c8\ub2e4. DX\ub294 \uc11c\ub85c \ub2e4\ub978 \ub85c\ucf00\uc774\uc158\uc5d0 2\ud68c\uc120\uc744 \uad8c\uc7a5\ud569\ub2c8\ub2e4.\n\n\uc138 \ubc88\uc9f8, \uc5c5\ubb34\uacc4 VPC\uc5d0\ub294 IGW\uac00 \uc5c6\uae30 \ub54c\ubb38\uc5d0 \uc778\ud130\ub137\uc73c\ub85c \ub098\uac08 \ub54c \ubc18\ub4dc\uc2dc \uac80\uc0ac\ub97c \uac70\uccd0 Egress VPC\ub85c\ub9cc \ub098\uac11\ub2c8\ub2e4. \uace0\uac1d\uc774 \ub4e4\uc5b4\uc624\ub294 \ucc44\ub110\uacc4\ub294 \uc778\ubc14\uc6b4\ub4dc \uacbd\ub85c\uac00 \ud544\uc694\ud558\ub2c8 \ub530\ub85c \uc124\uacc4\ud569\ub2c8\ub2e4. \ub124 \ubc88\uc9f8\ub294 \ub9c9\ud788\ub294 \uacbd\ub85c\uc785\ub2c8\ub2e4. NonProd\uc5d0\uc11c Prod\ub85c\ub294 TGW \ub77c\uc6b0\ud305 \ud14c\uc774\ube14\uc774 \ubd84\ub9ac\ub3fc \uc788\uc5b4 \uc9c1\uc811 \uac08 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.\n\nDNS\ub294 Route 53 Resolver\uc758 \uc778\ubc14\uc6b4\ub4dc, \uc544\uc6c3\ubc14\uc6b4\ub4dc \uc5d4\ub4dc\ud3ec\uc778\ud2b8\ub85c \uc0ac\ub0b4 DNS\uc640 \uc591\ubc29\ud5a5 \uc870\ud68c\ub97c \uad6c\uc131\ud569\ub2c8\ub2e4.\n\n\uc774 \uad6c\uc870\ub97c \ub9cc\ub4e4 \ub54c \ubbf8\ub9ac \uc815\ud574\uc57c \ud560 \uc124\uacc4 \ud3ec\uc778\ud2b8\ub97c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    17: "\u2753 [3min] [\uc694\uc57d]\n- IP \ub300\uc5ed\uacfc \uc5f0\uacb0 \uad6c\uc870\ub294 \uc6b4\uc601 \uc774\ud6c4 \ubcc0\uacbd \ube44\uc6a9\uc774 \uac00\uc7a5 \ud070 \uc601\uc5ed, \uac00\uc7a5 \uba3c\uc800 \ud544\uc694\ud55c \uc758\uc0ac\uacb0\uc815\n- \uc0ac\ub0b4\uc640 \uc911\ubcf5 \uc5c6\ub294 \ub300\uc5ed\uc744 \uc0ac\uc804 \ud560\ub2f9\ud558\uace0 \ud5a5\ud6c4 \uacc4\uc815 \ud655\uc7a5 \ub300\uc5ed\uae4c\uc9c0 \uc608\uc57d (\uadf8\ub9bc\uc740 \uac1c\ub150\ub3c4)\n- \uc0ac\ub0b4 IPAM \ud604\ud669 \ud655\uc778 \uc694\uccad, AWS VPC IPAM\uc73c\ub85c \ud560\ub2f9 \uad00\ub9ac\n- \uc124\uacc4 \ud3ec\uc778\ud2b8 \uc5ec\uc12f: \uc628\ud504\ub808\ubbf8\uc2a4 \uc5f0\uacb0, \ub77c\uc6b0\ud305 \ubd84\ub9ac, \ud2b8\ub798\ud53d \uac80\uc0ac, \uc778\ud130\ub137 \uacbd\ub85c, AWS \uc11c\ube44\uc2a4 \uc811\uadfc, DNS\n\n\ub124\ud2b8\uc6cc\ud06c\uc5d0\uc11c \uac00\uc7a5 \uba3c\uc800 \ud544\uc694\ud55c \uc758\uc0ac\uacb0\uc815\uc740 IP \ub300\uc5ed\uc785\ub2c8\ub2e4. \uc704 \ub9c9\ub300\ub294 \uac1c\ub150\ub3c4\uc778\ub370, \uc0ac\ub0b4\uc5d0\uc11c \uc774\ubbf8 \uc4f0\ub294 \ub300\uc5ed\uacfc \uacb9\uce58\uc9c0 \uc54a\uac8c AWS \ub300\uc5ed\uc744 \uc815\ud558\uace0, \uc55e\uc73c\ub85c \uacc4\uc815\uc774 \ub298\uc5b4\ub0a0 \uac83\uc744 \uc0dd\uac01\ud574 \ub113\uac8c \uc608\uc57d\ud574 \ub450\ub294 \uac83\uc774 \ud575\uc2ec\uc785\ub2c8\ub2e4.\n\n\uc0ac\ub0b4 IP \uad00\ub9ac \ud604\ud669, IPAM \uac19\uc740 \ub3c4\uad6c\ub97c \uc4f0\uace0 \uacc4\uc2e0\uc9c0 \ud655\uc778 \ubd80\ud0c1\ub4dc\ub9bd\ub2c8\ub2e4. AWS \ucabd\uc740 VPC IPAM\uc73c\ub85c \ud560\ub2f9\uc744 \uad00\ub9ac\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\n\uc544\ub798 \uc5ec\uc12f \uac00\uc9c0\ub294 \uc55e \uc2ac\ub77c\uc774\ub4dc \uad6c\uc870\uc758 \uc124\uacc4 \ud3ec\uc778\ud2b8\uc785\ub2c8\ub2e4. \ud2b9\ud788 \uc778\ud130\ub137 \uacbd\ub85c\uc5d0\uc11c \uc5c5\ubb34\uacc4 IGW\ub97c SCP\ub85c \ub9c9\uc544 \ub450\ub294 \uac83\uc774 \ub9dd\ubd84\ub9ac \ub300\uccb4 \ud1b5\uc81c\uc758 \uadfc\uac70\uac00 \ub418\uace0, AWS \uc11c\ube44\uc2a4 \uc811\uadfc\uc740 VPC Endpoint\ub85c \uc778\ud130\ub137\uc744 \uac70\uce58\uc9c0 \uc54a\uac8c \ud569\ub2c8\ub2e4.\n\n\uc774\uc81c 5\uc7a5, \ubcf4\uc548\uacfc \uac10\uc0ac\ub85c \ub118\uc5b4\uac00\uaca0\uc2b5\ub2c8\ub2e4.",
+    18: "[0.5min] [\uc694\uc57d]\n- 5\uc7a5: \ubcf4\uc548 \uc11c\ube44\uc2a4 \uc704\uc784 \uad00\ub9ac\uc790 \uad6c\uc870, \ub85c\uadf8 \uc544\uce74\uc774\ube59\uacfc \ubcf4\uc874, \uce68\ud574\uc0ac\uace0 \ub300\uc751 \ud750\ub984\n- \ub9e4\ud551\ud45c\uc758 \ub85c\uadf8 \ubcf4\uc874\uacfc \ubb34\uacb0\uc131, \uce68\ud574\uc0ac\uace0 \ud0d0\uc9c0\uc640 \ubcf4\uace0 \ud589\uc744 \uad6c\uccb4\ud654\n\n5\uc7a5\uc740 \ub9e4\ud551\ud45c \uc544\ub798\ucabd, \ub85c\uadf8\uc640 \ud0d0\uc9c0 \uacc4\uce35\uc785\ub2c8\ub2e4.\n\n\ubcf4\uc548 \uc11c\ube44\uc2a4\ub97c \uc5b4\ub290 \uacc4\uc815\uc5d0\uc11c \uc6b4\uc601\ud558\ub294\uc9c0\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    19: "\ud83c\udfac \ud83c\udfac [3min] [\uc694\uc57d]\n- \uc6d0\uce59: \uad00\ub9ac \uacc4\uc815\uc5d0\uc11c\ub294 \ubcf4\uc548 \ub3c4\uad6c\ub97c \uc9c1\uc811 \uc6b4\uc601\ud558\uc9c0 \uc54a\uc74c, Audit \uacc4\uc815\uc744 \uc704\uc784 \uad00\ub9ac\uc790\ub85c \uc9c0\uc815\n- \ub85c\uadf8 \ud750\ub984: \ubaa8\ub4e0 \uacc4\uc815\uc758 CloudTrail, Config, Flow Logs\uac00 Log Archive S3\ub85c, Security Lake\uac00 OCSF\ub85c \uc815\uaddc\ud654\ud574 SIEM \uc5f0\ub3d9\n- Findings \ud750\ub984: GuardDuty, Inspector \uacb0\uacfc\uac00 Audit \uacc4\uc815 Security Hub\ub85c \ud1b5\ud569, EventBridge\ub85c \ub300\uc751 \ud2b8\ub9ac\uac70\n- AWS Foundational Security Best Practices, CIS \ub4f1 \ud45c\uc900 \uc810\uac80\uc740 Security Hub CSPM\uc774 \uc81c\uacf5 (2025\ub144 \uba85\uce6d \ubcc0\uacbd \uc774\ud6c4 Security Hub\ub294 \ud1b5\ud569 \ubcf4\uc548 \uc81c\ud488)\n\n\ubcf4\uc548 \uc11c\ube44\uc2a4\ub294 \ub450 \uacc4\uc815\uc5d0 \ub098\ub220 \ubaa8\uc74d\ub2c8\ub2e4. \ud0d0\uc9c0\ub294 Audit \uacc4\uc815, \ub85c\uadf8\ub294 Log Archive \uacc4\uc815\uc785\ub2c8\ub2e4. \uad00\ub9ac \uacc4\uc815\uc5d0\uc11c \ubcf4\uc548 \ub3c4\uad6c\ub97c \uc9c1\uc811 \uc6b4\uc601\ud558\uc9c0 \uc54a\ub294 \uac83\uc774 \uc6d0\uce59\uc774\uace0, Audit \uacc4\uc815\uc744 \uac01 \uc11c\ube44\uc2a4\uc758 \uc704\uc784 \uad00\ub9ac\uc790\ub85c \uc9c0\uc815\ud569\ub2c8\ub2e4.\n\n\ub85c\uadf8 \ud750\ub984\uc744 \ubcf4\uba74, \ubaa8\ub4e0 \uba64\ubc84 \uacc4\uc815\uc758 CloudTrail, Config, Flow Logs\uac00 Log Archive \uacc4\uc815 S3 \ubc84\ud0b7\uc73c\ub85c \ubaa8\uc785\ub2c8\ub2e4. Security Lake\ub294 \uc774\uac83\uc744 OCSF \ud615\uc2dd\uc73c\ub85c \uc815\uaddc\ud654\ud574 \uc0ac\ub0b4 SIEM\uacfc \uc5f0\ub3d9\ud558\uae30 \uc88b\uac8c \ub9cc\ub4ed\ub2c8\ub2e4.\n\nFindings \ud750\ub984 \ubc84\ud2bc\uc744 \ub204\ub974\uba74, GuardDuty\uc640 Inspector\uc758 \ud0d0\uc9c0 \uacb0\uacfc\uac00 Audit \uacc4\uc815 Security Hub\ub85c \ubaa8\uc774\uace0, EventBridge\uac00 \uad00\uc81c\uc640 \uc790\ub3d9 \ub300\uc751\uc73c\ub85c \ub118\uae41\ub2c8\ub2e4. AWS Foundational Security Best Practices\uc640 CIS \uac19\uc740 \ud45c\uc900 \uc810\uac80\uc740 Security Hub CSPM \uae30\ub2a5\uc73c\ub85c \uc81c\uacf5\ub429\ub2c8\ub2e4.\n\n\uadf8\ub7fc \ub85c\uadf8\ub294 \uc5b4\ub5bb\uac8c \ubcf4\uc874\ud558\uace0 \ubcf4\ud638\ud558\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    20: "[2.5min] [\uc694\uc57d]\n- \ub85c\uadf8\ub294 \uc0dd\uc131 \uacc4\uc815\uc774 \uc544\ub2cc Log Archive \uacc4\uc815\uc5d0 \uc800\uc7a5\ud574 \ubcc0\uc870\uc640 \uc0ad\uc81c\ub97c \ucc28\ub2e8\n- \ub2e4\uc12f \uc885\ub958: CloudTrail \uad00\ub9ac \uc774\ubca4\ud2b8, \ub370\uc774\ud130 \uc774\ubca4\ud2b8(\uc120\ubcc4), Config, VPC Flow Logs, \ubcf4\uc548 Findings\n- Object Lock Compliance \ubaa8\ub4dc\ub294 \ub8e8\ud2b8 \uc0ac\uc6a9\uc790\ub3c4 \uc0ad\uc81c \ubd88\uac00\ud558\ubbc0\ub85c \ubcf4\uc874\uae30\uac04 \ud655\uc815 \ud6c4 \uc801\uc6a9\n- Glacier \uacc4\uce35 \uc804\ud658\uc73c\ub85c \uc7a5\uae30 \ubcf4\uad00 \ube44\uc6a9 \uc808\uac10\n- \ubc95\uc815 \ubcf4\uc874\uae30\uac04\uc740 \ub85c\uadf8\uc640 \uae30\ub85d \uc720\ud615\ubcc4\ub85c \uc0c1\uc774, \uc900\ubc95\uac10\uc2dc \ud655\uc778 \ud6c4 \ud655\uc815\n\n\ub85c\uadf8\uc758 \uc6d0\uce59\uc740 \ud558\ub098\uc785\ub2c8\ub2e4. \ub85c\uadf8\ub97c \ub9cc\ub4e0 \uacc4\uc815\uc5d0 \ub450\uc9c0 \uc54a\ub294\ub2e4\ub294 \uac83\uc785\ub2c8\ub2e4. \uc6cc\ud06c\ub85c\ub4dc \uacc4\uc815 \uad00\ub9ac\uc790\uac00 \uc790\uae30 \ud754\uc801\uc744 \uc9c0\uc6b8 \uc218 \uc5c6\uac8c Log Archive \uacc4\uc815\uc5d0 \uc800\uc7a5\ud569\ub2c8\ub2e4.\n\nCloudTrail \uad00\ub9ac \uc774\ubca4\ud2b8\ub294 Organization Trail\ub85c \ubaa8\ub4e0 \uacc4\uc815\uc5d0\uc11c \uc790\ub3d9 \uc218\uc9d1\ud558\uace0, Object Lock, KMS, \uc0ad\uc81c \ucc28\ub2e8 SCP\ub85c \ubcf4\ud638\ud569\ub2c8\ub2e4. \ub370\uc774\ud130 \uc774\ubca4\ud2b8\ub294 \ube44\uc6a9\uc774 \ud06c\uae30 \ub54c\ubb38\uc5d0 \uc911\uc694\ud55c S3\uc640 Lambda\ub9cc \uace8\ub77c\uc11c \uc218\uc9d1\ud569\ub2c8\ub2e4.\n\nConfig, Flow Logs, \ubcf4\uc548 Findings\ub3c4 \uac19\uc740 \uc6d0\uce59\uc73c\ub85c \ubaa8\uc74d\ub2c8\ub2e4.\n\n\ubcf4\uc874\uc740 \ucd5c\uadfc \ub85c\uadf8\ub294 Standard\uc5d0 \ub450\uace0 \uc624\ub798\ub41c \uac83\uc740 Glacier \uacc4\uce35\uc73c\ub85c \uc62e\uaca8 \ube44\uc6a9\uc744 \uc904\uc785\ub2c8\ub2e4. \uc8fc\uc758\ud560 \uc810\uc740 Object Lock Compliance \ubaa8\ub4dc\uc785\ub2c8\ub2e4. \ub8e8\ud2b8 \uc0ac\uc6a9\uc790\ub3c4 \uc9c0\uc6b8 \uc218 \uc5c6\uae30 \ub54c\ubb38\uc5d0, \ubcf4\uc874\uae30\uac04\uc744 \uc900\ubc95\uac10\uc2dc\uc640 \uba3c\uc800 \ud655\uc815\ud55c \ub4a4\uc5d0 \uc801\uc6a9\ud574\uc57c \ud569\ub2c8\ub2e4.\n\n\uc774\ub807\uac8c \ubaa8\uc740 \ud0d0\uc9c0 \uacb0\uacfc\ub85c \uce68\ud574\uc0ac\uace0\uc5d0 \uc5b4\ub5bb\uac8c \ub300\uc751\ud558\ub294\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    21: "\u23f8\ufe0f \ud83c\udfac [2min] [\uc694\uc57d]\n- \ud0d0\uc9c0, \ubd84\ub958, \ub300\uc751, \ubcf4\uace0 \ub124 \ub2e8\uacc4\uc758 \ub9ac\ub4dc\ud0c0\uc784\uc744 \uc790\ub3d9\ud654\ub85c \ub2e8\ucd95\n- \uc790\ub3d9\ud654\ub294 \uc138 \ub2e8\uacc4\ub85c \ud655\ub300: \uc54c\ub9bc \uc911\uc2ec, \uc2b9\uc778 \ud6c4 \uc870\uce58, \uac80\uc99d\ub41c \uc2dc\ub098\ub9ac\uc624 \uc790\ub3d9 \uaca9\ub9ac (\ubc84\ud2bc\uc73c\ub85c \ube44\uad50)\n- Prod\uc5d0 \ubc14\ub85c \uc790\ub3d9 \uaca9\ub9ac\ub97c \uc801\uc6a9\ud558\uc9c0 \ub9d0 \uac83\n- 2025\ub144 \uac10\ub3c5\uaddc\uc815 \uac1c\uc815\uc73c\ub85c \uce68\ud574\uc0ac\uace0 \uc778\uc9c0 \uc2dc \uc2e0\uc18d \ubcf4\uace0 \uc758\ubb34\uac00 \uac15\ud654\ub41c \uac83\uc73c\ub85c \uc548\ub0b4\ub418\ub098, \uc138\ubd80 \uc694\uac74(\ubcf4\uace0 \uae30\ud55c \ub4f1)\uc740 \uc815\ubcf4\ubcf4\ud638 \ubd80\uc11c \ud655\uc778 \uad8c\uc7a5\n\n\uce68\ud574\uc0ac\uace0 \ub300\uc751\uc740 \ud0d0\uc9c0, \uc9d1\uacc4\uc640 \ubd84\ub958, \ub300\uc751, \ud1b5\ubcf4\uc640 \ubcf4\uace0 \ub124 \ub2e8\uacc4\uc785\ub2c8\ub2e4. Landing Zone\uc744 \uac16\ucd94\uba74 \uc774 \ub2e8\uacc4 \uc0ac\uc774\uc758 \uc2dc\uac04\uc744 \uc790\ub3d9\ud654\ub85c \uc904\uc77c \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\n\ub2e4\ub9cc \uc790\ub3d9\ud654\ub294 \ub2e8\uacc4\uc801\uc73c\ub85c \ub298\ub9bd\ub2c8\ub2e4. 1\ub2e8\uacc4\ub294 \ud0d0\uc9c0\uc640 \ubd84\ub958, \uc54c\ub9bc\uae4c\uc9c0\ub9cc \uc790\ub3d9\uc774\uace0 \uc870\uce58\ub294 \uc0ac\ub78c\uc774 \ud569\ub2c8\ub2e4. 2\ub2e8\uacc4\ub294 Runbook\uc744 \uc900\ube44\ud574 \ub450\uace0 \uc2b9\uc778 \ud55c \ubc88\uc73c\ub85c \uaca9\ub9ac\ub97c \uc2e4\ud589\ud569\ub2c8\ub2e4. 3\ub2e8\uacc4\uc5d0\uc11c NonProd\uc5d0\uc11c \uac80\uc99d\ud55c \uc2dc\ub098\ub9ac\uc624\ub9cc Prod \uc790\ub3d9 \uaca9\ub9ac\ub85c \uc62c\ub9bd\ub2c8\ub2e4.\n\n\ucc98\uc74c\ubd80\ud130 Prod\uc5d0 \uc790\ub3d9 \uaca9\ub9ac\ub97c \uac78\uba74 \uc624\ud0d0 \ud558\ub098\ub85c \uc11c\ube44\uc2a4\uac00 \uba48\ucd9c \uc218 \uc788\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4.\n\n\ubcf4\uace0\uc640 \uad00\ub828\ud574\uc11c\ub294, 2025\ub144 \uac10\ub3c5\uaddc\uc815 \uac1c\uc815\uc73c\ub85c \uce68\ud574\uc0ac\uace0 \uc778\uc9c0 \uc2dc \uc2e0\uc18d \ubcf4\uace0 \uc758\ubb34\uac00 \uac15\ud654\ub41c \uac83\uc73c\ub85c \uc548\ub0b4\ub418\uace0 \uc788\ub294\ub370, \uc815\ud655\ud55c \uae30\ud55c\uacfc \uc694\uac74\uc740 \uc815\ubcf4\ubcf4\ud638 \ubd80\uc11c\uc640 \ud655\uc778\uc744 \ubd80\ud0c1\ub4dc\ub9bd\ub2c8\ub2e4.\n\n\ub9c8\uc9c0\ub9c9 6\uc7a5, \uad6c\ucd95 \uc811\uadfc \ubc29\uc2dd\uc785\ub2c8\ub2e4.",
+    22: "[0.5min] [\uc694\uc57d]\n- 6\uc7a5: \uad6c\ucd95 \uc635\uc158 \ube44\uad50, Landing Zone \uc704\uc758 Bedrock\uacfc Claude Code, \ub85c\ub4dc\ub9f5, \uc758\uc0ac\uacb0\uc815 \ud56d\ubaa9\n\n6\uc7a5\uc740 \ubb34\uc5c7\uc73c\ub85c \ub9cc\ub4e4\uc9c0, \uadf8 \uc704\uc5d0\uc11c \ubb34\uc5c7\uc744 \ud560 \uc218 \uc788\ub294\uc9c0, \uadf8\ub9ac\uace0 \uc5b4\ub5a4 \uc21c\uc11c\ub85c \uac08\uc9c0\ub97c \ubd05\ub2c8\ub2e4.\n\n\uad6c\ucd95 \uc635\uc158\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    23: "\u23f8\ufe0f \ud83c\udfac \u2753 [1.5min] [\uc694\uc57d]\n- \uc138 \uac00\uc9c0 \uc635\uc158: Control Tower \uae30\ubcf8, Control Tower\uc640 AFT, Control Tower\uc640 LZA\n- \uc120\ud0dd \uae30\uc900\uc740 \uc870\uc9c1\uc758 IaC \uc5ed\ub7c9\uacfc \uaddc\uc81c \uae30\uc900\uc120 \uad00\ub9ac \ubc29\uc2dd (\ub450 \uc9c8\ubb38 \ud1a0\uae00\ub85c \uc2dc\uc5f0)\n- \uc9c8\ubb38: OK\uc800\ucd95\uc740\ud589 \uc778\ud504\ub77c\ud300\uc758 IaC \ub3c4\uad6c\uac00 Terraform\uc778\uc9c0\n- \uaddc\uc81c \uae30\uc900\uc120\uc744 \ucf54\ub4dc\ub85c \uad00\ub9ac\ud574 \uac10\uc0ac \uc99d\uc801\uc73c\ub85c \uc4f0\ub824\uba74 LZA\uac00 \uc720\ub9ac\n\n\uad6c\ucd95 \ubc29\ubc95\uc740 \uc138 \uac00\uc9c0\uac00 \uc788\uace0, \uace0\ub974\ub294 \uae30\uc900\uc740 \ub450 \uac00\uc9c0 \uc9c8\ubb38\uc785\ub2c8\ub2e4.\n\n\uba3c\uc800 \uc5ec\ucb64\ubcf4\uace0 \uc2f6\uc740 \uac83\uc774, \uc778\ud504\ub77c\ud300\uc5d0\uc11c \ud45c\uc900\uc73c\ub85c \uc4f0\ub294 IaC \ub3c4\uad6c\uac00 Terraform\uc778\uc9c0\uc785\ub2c8\ub2e4.\n\nTerraform\uc774 \ud45c\uc900\uc774\uba74 AFT\ub85c \uacc4\uc815 \ubc1c\uae09\uc744 \uae30\uc874 \ud30c\uc774\ud504\ub77c\uc778\uc5d0 \ubd99\uc774\ub294 \uac83\uc774 \uc790\uc5f0\uc2a4\ub7fd\uc2b5\ub2c8\ub2e4. \ub450 \ubc88\uc9f8 \uc9c8\ubb38, \uaddc\uc81c \uae30\uc900\uc120 \uc804\uccb4\ub97c \ucf54\ub4dc\ub85c \uad00\ub9ac\ud574\uc11c \uac10\uc0ac \ub54c \uadf8\ub300\ub85c \uc99d\uc801\uc73c\ub85c \uc4f0\uace0 \uc2f6\ub2e4\uba74 LZA\uac00 \uc720\ub9ac\ud569\ub2c8\ub2e4. \ub124\ud2b8\uc6cc\ud06c\uc640 \ubcf4\uc548 \uc11c\ube44\uc2a4\uae4c\uc9c0 YAML \uc124\uc815\uc73c\ub85c \uc120\uc5b8\ud558\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4.\n\n\ub458 \ub2e4 \uc544\ub2c8\ub77c\uba74 Control Tower \uae30\ubcf8\uc73c\ub85c \ube60\ub974\uac8c \uc2dc\uc791\ud558\uace0, \uc6b4\uc601\ud558\uba74\uc11c \ud655\uc7a5\ud574\ub3c4 \ub429\ub2c8\ub2e4.\n\n\ub2e4\uc74c\uc740 \uc774 Landing Zone \uc704\uc5d0\uc11c \uc0dd\uc131\ud615 AI\ub97c \uc5b4\ub5bb\uac8c \uc4f0\ub294\uc9c0\uc785\ub2c8\ub2e4.",
+    24: "\ud83c\udfac \u23f8\ufe0f [1.5min] [\uc694\uc57d]\n- Bedrock\uc740 \ubcc4\ub3c4 AI \uc6cc\ud06c\ub85c\ub4dc \uacc4\uc815(Prod OU)\uc5d0 \ub450\uc5b4 \uae30\uc874 SCP, \ub85c\uadf8, \ub124\ud2b8\uc6cc\ud06c \ud1b5\uc81c\ub97c \uadf8\ub300\ub85c \uc0c1\uc18d\n- bedrock-runtime VPC \uc5d4\ub4dc\ud3ec\uc778\ud2b8\ub85c \uc778\ud130\ub137 \uc5c6\uc774 \ud638\ucd9c, Knowledge Bases(Retrieve, RetrieveAndGenerate)\ub294 bedrock-agent-runtime \uc5d4\ub4dc\ud3ec\uc778\ud2b8\ub3c4 \ud544\uc694, SCP\ub85c \uc5d4\ub4dc\ud3ec\uc778\ud2b8 \uc678 \ud638\ucd9c \uc81c\ud55c\n- \ud638\ucd9c \uae30\ub85d: CloudTrail\uc740 API \ud638\ucd9c\ub9cc \uae30\ub85d(\ud504\ub86c\ud504\ud2b8, \uc751\ub2f5 \uc81c\uc678). \ubaa8\ub378 \ud638\ucd9c \ub85c\uae45\uc740 \uac19\uc740 \uacc4\uc815 S3\ub098 CloudWatch Logs\ub85c \uae30\ub85d\ub418\ubbc0\ub85c Log Archive\ub85c \ubcf5\uc81c\n- \uc8fc\uc758: Prod OU\uc758 \uc11c\uc6b8 \uc678 \ub9ac\uc804 \ucc28\ub2e8 SCP\ub294 APAC, Global \ucd94\ub860 \ud504\ub85c\ud30c\uc77c \ud638\ucd9c\uc744 \ub9c9\uc74c. \ub300\uc0c1 \ub9ac\uc804 \ud5c8\uc6a9\uc774\ub098 bedrock:InferenceProfileArn \uc870\uac74 \uc608\uc678 \ud544\uc694\n- \uc0ac\ub840 \uc138 \uac00\uc9c0(\uc800\ucd95\uc740\ud589 \uc5c5\ubb34 \uae30\uc900 \uc608\uc2dc): \uc0ac\ub0b4 \uaddc\uc815 Q&A, \uc0c1\ub2f4 \uc694\uc57d\uacfc \ubbfc\uc6d0 \ubd84\ub958, \ubcf4\uc548 Findings \uc694\uc57d\n- \ucd5c\uc2e0 Claude \ubaa8\ub378\uc740 \uc11c\uc6b8 \ub9ac\uc804 \ub2e8\ub3c5\uc774 \uc544\ub2cc APAC \ub610\ub294 Global \ucd94\ub860 \ud504\ub85c\ud30c\uc77c\ub85c \uc81c\uacf5\ub418\ub294 \uacbd\uc6b0\uac00 \uc788\uc5b4 \ub370\uc774\ud130 \ucc98\ub9ac \ub9ac\uc804\uc774 \uad6d\uc678\ub85c \ud655\uc7a5\ub420 \uc218 \uc788\uc74c\n- \uc911\uc694\uc5c5\ubb34, \uac1c\uc778\uc2e0\uc6a9\uc815\ubcf4 \ucc98\ub9ac \uc2dc \uc900\ubc95\uac10\uc2dc \ud655\uc778 \ud544\uc218\n\nLanding Zone\uc758 \uc7a5\uc810\uc740 \uc0c8 \uc6cc\ud06c\ub85c\ub4dc\ub3c4 \uac19\uc740 \ud1b5\uc81c\ub97c \uc790\ub3d9\uc73c\ub85c \ubc1b\ub294\ub2e4\ub294 \uac83\uc785\ub2c8\ub2e4. \uc0dd\uc131\ud615 AI\ub3c4 \ub9c8\ucc2c\uac00\uc9c0\uc785\ub2c8\ub2e4. Bedrock\uc744 \uc4f0\ub294 \uc560\ud50c\ub9ac\ucf00\uc774\uc158\uc744 Prod OU \uc544\ub798 \ubcc4\ub3c4 AI \uc6cc\ud06c\ub85c\ub4dc \uacc4\uc815\uc5d0 \ub450\uba74, SCP, \ub85c\uadf8, \ub124\ud2b8\uc6cc\ud06c \ud1b5\uc81c\ub97c \uadf8\ub300\ub85c \uc0c1\uc18d\ud569\ub2c8\ub2e4.\n\n\ud638\ucd9c\uc740 bedrock-runtime VPC \uc5d4\ub4dc\ud3ec\uc778\ud2b8\ub85c \ud558\uae30 \ub54c\ubb38\uc5d0 \uc778\ud130\ub137\uc744 \uac70\uce58\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. Knowledge Bases\ub97c \uc4f0\ub824\uba74 bedrock-agent-runtime \uc5d4\ub4dc\ud3ec\uc778\ud2b8\ub3c4 \ud568\uaed8 \ub461\ub2c8\ub2e4. CloudTrail\uc5d0\ub294 API \ud638\ucd9c\uc774 \ub0a8\uace0, \ud504\ub86c\ud504\ud2b8\uc640 \uc751\ub2f5\uae4c\uc9c0 \ub0a8\uae30\ub294 \ubaa8\ub378 \ud638\ucd9c \ub85c\uae45\uc740 \uac19\uc740 \uacc4\uc815\uc758 S3\ub098 CloudWatch Logs\uc5d0 \uc313\uc774\ub2c8 Log Archive\ub85c \ubcf5\uc81c\ud569\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd \ud0ed\uc740 \uc800\ucd95\uc740\ud589 \uc5c5\ubb34 \uae30\uc900\uc758 \uc0ac\ub840 \uc608\uc2dc\uc785\ub2c8\ub2e4. \uc0ac\ub0b4 \uaddc\uc815 Q&A, \uc0c1\ub2f4 \uc694\uc57d\uacfc \ubbfc\uc6d0 \ubd84\ub958, \uadf8\ub9ac\uace0 \uc55e\uc5d0\uc11c \ubcf8 \ubcf4\uc548 Findings\ub97c \uc694\uc57d\ud574 \uc8fc\ub294 \uc6a9\ub3c4\uc785\ub2c8\ub2e4.\n\n\uaf2d \ud655\uc778\ud560 \uac83\uc774 \uc788\uc2b5\ub2c8\ub2e4. \ucd5c\uc2e0 Claude \ubaa8\ub378\uc740 \uc11c\uc6b8 \ub9ac\uc804 \ub2e8\ub3c5\uc774 \uc544\ub2c8\ub77c APAC\uc774\ub098 Global \ucd94\ub860 \ud504\ub85c\ud30c\uc77c\ub85c \uc81c\uacf5\ub418\ub294 \uacbd\uc6b0\uac00 \uc788\uc5b4, \ub370\uc774\ud130 \ucc98\ub9ac \ub9ac\uc804\uc774 \uad6d\uc678\ub85c \ub113\uc5b4\uc9c8 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \uac1c\uc778\uc2e0\uc6a9\uc815\ubcf4\ub098 \uc911\uc694\uc5c5\ubb34\uc5d0 \uc4f8 \ub54c\ub294 \uc900\ubc95\uac10\uc2dc \ud655\uc778\uc774 \uaf2d \ud544\uc694\ud569\ub2c8\ub2e4. \uadf8\ub9ac\uace0 \uc55e\uc5d0\uc11c \ubcf8 \uc11c\uc6b8 \uc678 \ub9ac\uc804 \ucc28\ub2e8 SCP\uac00 \uc774\ub7f0 \ucd94\ub860 \ud504\ub85c\ud30c\uc77c \ud638\ucd9c\ub3c4 \ub9c9\uae30 \ub54c\ubb38\uc5d0, \ub300\uc0c1 \ub9ac\uc804\uc744 \ud5c8\uc6a9\ud558\uac70\ub098 \ucd94\ub860 \ud504\ub85c\ud30c\uc77c \uc870\uac74\uc73c\ub85c \uc608\uc678\ub97c \ub46c\uc57c \ud569\ub2c8\ub2e4.\n\nAI\ub294 Landing Zone \uc6b4\uc601 \uc790\uccb4\uc5d0\ub3c4 \uc4f8 \uc218 \uc788\uc2b5\ub2c8\ub2e4.",
+    25: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- \uac1c\ubc1c\uc790 \ub2e8\ub9d0\uc758 Claude Code\uac00 \uc0ac\ub0b4\ub9dd\uacfc DX\ub97c \uac70\uccd0 Shared Services \uacc4\uc815\uc758 Bedrock\uc744 \ud638\ucd9c\n- CLAUDE_CODE_USE_BEDROCK=1\ub85c Bedrock \uacbd\uc720, \uc778\uc99d\uc740 Identity Center SSO \uc784\uc2dc \uc790\uaca9\uc99d\uba85\n- Managed settings\ub85c \ud5c8\uc6a9 \ub3c4\uad6c, \ubaa8\ub378, \uad8c\ud55c \ubaa8\ub4dc\ub97c \uc911\uc559 \ubc30\ud3ec, OTel \uba54\ud2b8\ub9ad\uc73c\ub85c \ud300\ubcc4 \uc0ac\uc6a9\ub7c9\uacfc \ube44\uc6a9 \ucd94\uc801\n- \uc0ac\ub840: IaC \uc791\uc131\uacfc \ub9ac\ubdf0, \ud1b5\uc81c \uc815\ucc45 \ucd08\uc548, \uc6b4\uc601 \uc774\uc288 \ubd84\uc11d\n- \ub2e8\ub9d0 \ub9dd\ubd84\ub9ac \ud658\uacbd\uc774\uba74 Bedrock \uc5d4\ub4dc\ud3ec\uc778\ud2b8 \uc811\uadfc \uacbd\ub85c\uc640 \uc18c\uc2a4 \ucf54\ub4dc \ubc18\ucd9c \uc815\ucc45\uc774 \uc120\uacb0 \uacfc\uc81c\n\nLanding Zone\uc744 \uc6b4\uc601\ud558\ub294 \uc77c \uc790\uccb4\uc5d0\ub3c4 AI\ub97c \uc4f8 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \ud654\uba74\uc758 \uc120\uc774 \uc21c\uc11c\ub300\ub85c \ubcf4\uc5ec \uc8fc\ub4ef, \uad00\ub9ac \uc124\uc815\uc774 \ub2e8\ub9d0\uc5d0 \ubc30\ud3ec\ub418\uace0, \ub2e8\ub9d0\uc740 Identity Center\ub85c \uc784\uc2dc \uc790\uaca9\uc99d\uba85\uc744 \ubc1b\uc544 DX\uc640 VPC \uc5d4\ub4dc\ud3ec\uc778\ud2b8\ub97c \uac70\uccd0 Bedrock\uc744 \ud638\ucd9c\ud558\uba70, \uc0ac\uc6a9\ub7c9\uc740 OTel \ud154\ub808\uba54\ud2b8\ub9ac\ub85c \ubcf4\ub0c5\ub2c8\ub2e4.\n\nClaude Code\ub294 CLAUDE_CODE_USE_BEDROCK \ud658\uacbd \ubcc0\uc218\ub85c Bedrock\uc744 \uc4f0\uac8c \ud558\uace0, \uc778\uc99d\uc740 Identity Center SSO\uc758 \uc784\uc2dc \uc790\uaca9\uc99d\uba85\uc744 \uc501\ub2c8\ub2e4. \ud5c8\uc6a9 \ub3c4\uad6c\uc640 \ubaa8\ub378, \uad8c\ud55c \ubaa8\ub4dc\ub294 Managed settings\ub85c \uc911\uc559\uc5d0\uc11c \ubc30\ud3ec\ud558\uace0, OTel \uba54\ud2b8\ub9ad\uc73c\ub85c \ud300\ubcc4 \uc0ac\uc6a9\ub7c9\uacfc \ube44\uc6a9\uc744 \ubd05\ub2c8\ub2e4.\n\n\uc0ac\ub840\ub294 \uc138 \uac00\uc9c0\uc785\ub2c8\ub2e4. LZA \uc124\uc815\uc774\ub098 Terraform \ubcc0\uacbd\uc548\uc744 \uc4f0\uace0 \ub9ac\ubdf0\ud558\ub294 \uac83,\n\n\uaddc\uc81c \uc694\uac74\uc744 SCP\ub098 Config Rule \ucd08\uc548\uc73c\ub85c \ubc14\uafb8\uace0 Policy Staging OU\uc5d0\uc11c \uac80\uc99d\ud558\ub294 \uac83,\n\n\uadf8\ub9ac\uace0 Config \uc704\ubc18\uc774\ub098 CloudTrail \uc774\ubca4\ud2b8\ub97c \ubd84\uc11d\ud574\uc11c \uc218\uc815 PR\uae4c\uc9c0 \uc81c\uc548\ud558\ub294 \uac83\uc785\ub2c8\ub2e4.\n\n\ub2e8\ub9d0\uc774 \ub9dd\ubd84\ub9ac\ub41c \ud658\uacbd\uc774\ub77c\uba74, \ub0b4\ubd80\ub9dd \ub2e8\ub9d0\uc5d0\uc11c Bedrock \uc5d4\ub4dc\ud3ec\uc778\ud2b8\ub85c \uac00\ub294 \uacbd\ub85c\uc640 \uc18c\uc2a4 \ucf54\ub4dc \ubc18\ucd9c \uc815\ucc45\uc744 \uba3c\uc800 \uc815\ud574\uc57c \ud569\ub2c8\ub2e4.\n\n\uadf8\ub7fc \uc804\uccb4\ub97c \uc5b4\ub5a4 \uc21c\uc11c\ub85c \uad6c\ucd95\ud560\uc9c0 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    26: "[0.5min] [\uc694\uc57d]\n- \ub124 \ub2e8\uacc4: \uc124\uacc4, \uae30\ubc18 \uad6c\ucd95, \ub124\ud2b8\uc6cc\ud06c\uc640 \ubcf4\uc548, \uc6cc\ud06c\ub85c\ub4dc \uc628\ubcf4\ub529\n- 1\ub2e8\uacc4 \uc0b0\ucd9c\ubb3c(\uaddc\uc81c \ub9e4\ud551\ud45c, OU \uc124\uacc4\uc11c, IP \uacc4\ud68d)\uc774 \uc815\ubcf4\ubcf4\ud638\uc704\uc6d0\ud68c \uc2ec\uc758 \uc790\ub8cc\uc758 \uae30\ubc18\n- \ub2e8\uacc4\ubcc4 \uae30\uac04\uc740 \ubc94\uc704\uc640 \uae30\uc874 \ud658\uacbd \ud655\uc778 \ud6c4 \ud611\uc758\n\n\uad6c\ucd95\uc740 \ub124 \ub2e8\uacc4\ub85c \uac11\ub2c8\ub2e4. \uc124\uacc4, \uae30\ubc18 \uad6c\ucd95, \ub124\ud2b8\uc6cc\ud06c\uc640 \ubcf4\uc548, \uadf8\ub9ac\uace0 \uc6cc\ud06c\ub85c\ub4dc \uc628\ubcf4\ub529\uc785\ub2c8\ub2e4.\n\n\uac00\uc7a5 \uc911\uc694\ud55c \uac83\uc740 1\ub2e8\uacc4\uc785\ub2c8\ub2e4. \uaddc\uc81c \ub9e4\ud551\ud45c, OU \uc124\uacc4\uc11c, IP \uacc4\ud68d\uc774 \uc5ec\uae30\uc11c \ub098\uc624\ub294\ub370,\n\n2\ub2e8\uacc4\uc5d0\uc11c Control Tower\uc640 \ud575\uc2ec \uacc4\uc815, Identity Center\ub97c \uc138\uc6b0\uace0,\n\n3\ub2e8\uacc4\uc5d0\uc11c \ub124\ud2b8\uc6cc\ud06c\uc640 \ubcf4\uc548 \uccb4\uacc4\ub97c,\n\n4\ub2e8\uacc4\uc5d0\uc11c Account Factory\ub85c \uacc4\uc815\uc744 \ubc1c\uae09\ud574 \ud30c\uc77c\ub7ff \uc6cc\ud06c\ub85c\ub4dc\ub97c \uc62e\uae41\ub2c8\ub2e4.\n\n\ub2e4\uc2dc 1\ub2e8\uacc4\ub85c \ub3cc\uc544\uac00\uba74, \uadf8 \uc0b0\ucd9c\ubb3c\uc774 \uadf8\ub300\ub85c \uc815\ubcf4\ubcf4\ud638\uc704\uc6d0\ud68c \uc2ec\uc758 \uc790\ub8cc\uc758 \uae30\ubc18\uc774 \ub429\ub2c8\ub2e4. \ub2e8\uacc4\ubcc4 \uae30\uac04\uc740 \ubc94\uc704\uc640 \uae30\uc874 \ud658\uacbd\uc744 \ud655\uc778\ud55c \ub4a4 \ud611\uc758\ud558\uaca0\uc2b5\ub2c8\ub2e4.\n\n\ub9c8\uc9c0\ub9c9\uc73c\ub85c, \uc124\uacc4 \ucc29\uc218 \uc804\uc5d0 \ud568\uaed8 \uc815\ud560 \ud56d\ubaa9\uc785\ub2c8\ub2e4.",
+    27: "\u2753 [1min] [\uc694\uc57d]\n- \uc124\uacc4 \ucc29\uc218 \uc804\uc5d0 OK\uc800\ucd95\uc740\ud589\uacfc \ud568\uaed8 \ud655\uc815\ud560 \uc77c\uacf1 \ud56d\ubaa9\uacfc \ud611\uc758 \ub300\uc0c1\n- \uc774\uc6a9 \ub300\uc0c1 \uc5c5\ubb34, \uae30\uc874 \uacc4\uc815 \ucc98\ub9ac, \uc790\ub3d9\ud654 \ub3c4\uad6c, \uc778\uc99d \uc5f0\ub3d9, \uc628\ud504\ub808\ubbf8\uc2a4 \uc5f0\uacb0, \ub85c\uadf8 \ubcf4\uc874\uacfc SIEM, DR \uc804\ub7b5\n- \uc624\ub298 \ubaa9\ud45c\ub294 \ud655\uc815\uc774 \uc544\ub2c8\ub77c \ub2f4\ub2f9\uc790 \uc9c0\uc815\uacfc \ud6c4\uc18d \ubbf8\ud305 \uc77c\uc815 \ud569\uc758 (\ud56d\ubaa9 \ud074\ub9ad\uc73c\ub85c \ud45c\uc2dc)\n- \uc774\ud6c4 Q&A \uc57d 8\ubd84\n\n\ub9c8\uc9c0\ub9c9\uc73c\ub85c \uc124\uacc4 \ub2e8\uacc4\uc5d0 \ub4e4\uc5b4\uac00\uae30 \uc804\uc5d0 \ud568\uaed8 \uc815\ud574\uc57c \ud560 \uc77c\uacf1 \uac00\uc9c0\uc785\ub2c8\ub2e4. \uac01 \ud56d\ubaa9\uc5d0 \ud611\uc758\ud560 \ubd80\uc11c\ub97c \uac19\uc774 \uc801\uc5b4 \ub450\uc5c8\uc2b5\ub2c8\ub2e4.\n\n\uc774\uc6a9 \ub300\uc0c1 \uc5c5\ubb34\ub97c \ube44\uc911\uc694\uc5c5\ubb34\ubd80\ud130 \ud560\uc9c0, \uae30\uc874 \uacc4\uc815\uc744 \uc5b4\ub5bb\uac8c \ud560\uc9c0, \uc790\ub3d9\ud654 \ub3c4\uad6c\uc640 \uc778\uc99d \uc5f0\ub3d9 \ubc29\uc2dd\uc785\ub2c8\ub2e4.\n\n\uadf8\ub9ac\uace0 DX \ud68c\uc120 \uad6c\uc131, \ub85c\uadf8 \ubcf4\uc874\uacfc \uad00\uc81c \uc5f0\ub3d9, DR \uc804\ub7b5\uc785\ub2c8\ub2e4.\n\n\uc624\ub298 \uc774\uac78 \ub2e4 \uc815\ud558\uc790\ub294 \uac83\uc740 \uc544\ub2c8\uace0, \ud56d\ubaa9\ubcc4\ub85c \uc5b4\ub290 \ubd84\uc774 \ub2f4\ub2f9\ud558\uc2e4\uc9c0\uc640 \ub2e4\uc74c \ubbf8\ud305 \uc77c\uc815\uc744 \ub9de\ucd94\ub294 \uac83\uc774 \ubaa9\ud45c\uc785\ub2c8\ub2e4. \uc9c0\uae08 \ubc14\ub85c \uc815\ud574\uc9c0\ub294 \ud56d\ubaa9\uc774 \uc788\uc73c\uba74 \ud074\ub9ad\ud574\uc11c \ud45c\uc2dc\ud574 \ub450\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uc624\ub298 \ub0b4\uc6a9\uc744 \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.",
+    28: "\u2753 [1min] [\uc694\uc57d]\n- \uacb0\ub860 \ub124 \uc904: \uad6c\uc870\ub97c \uba3c\uc800, \uaddc\uc81c\ub97c \ud1b5\uc81c \uacc4\uce35\uc73c\ub85c, \ud1b5\uc81c\ub294 \uacb9\uc73c\ub85c \uc2dc\ud5d8 \ud6c4 \uc2b9\uaca9, \uc99d\uc801\uc740 \ub530\ub85c \uc9c0\uc6b8 \uc218 \uc5c6\uac8c\n- \ub2e4\uc74c \ub2e8\uacc4: \uc758\uc0ac\uacb0\uc815 \ud56d\ubaa9 \ub2f4\ub2f9\uc790 \uc9c0\uc815, 1\ub2e8\uacc4 \uc124\uacc4 \ubc94\uc704 \ud611\uc758, \uae30\uc874 \uacc4\uc815 \ud604\ud669 \uacf5\uc720\n- \uc774\ud6c4 Q&A \uc57d 8\ubd84\n\n\uc624\ub298 \ub0b4\uc6a9\uc744 \ub124 \uc904\ub85c \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uccab\uc9f8, \uad6c\uc870\ub97c \uba3c\uc800 \uc815\ud569\ub2c8\ub2e4. \uacc4\uc815, IP \ub300\uc5ed, \uad8c\ud55c\uc740 \uccab \uc6cc\ud06c\ub85c\ub4dc \uc804\uc5d0 \uacb0\uc815\ud569\ub2c8\ub2e4.\n\n\ub458\uc9f8, \uaddc\uc81c \uc694\uac74\uc740 \ud1b5\uc81c \uacc4\uce35\uc73c\ub85c \ubc88\uc5ed\ud569\ub2c8\ub2e4.\n\n\uc14b\uc9f8, \ud1b5\uc81c\ub294 \uc138 \uacb9\uc73c\ub85c \uac78\uace0, \uc2dc\ud5d8\ud55c \ub4a4 \uc2b9\uaca9\ud569\ub2c8\ub2e4.\n\n\ub137\uc9f8, \uc99d\uc801\uc740 \ubcc4\ub3c4 \uacc4\uc815\uc5d0, \uc9c0\uc6b8 \uc218 \uc5c6\uac8c \ubcf4\uad00\ud569\ub2c8\ub2e4.\n\n\ub2e4\uc74c \ub2e8\uacc4\ub85c\ub294 \uc758\uc0ac\uacb0\uc815 \ud56d\ubaa9 \ub2f4\ub2f9\uc790 \uc9c0\uc815\uacfc 1\ub2e8\uacc4 \uc124\uacc4 \ubc94\uc704 \ud611\uc758\ub97c \uc81c\uc548\ub4dc\ub9bd\ub2c8\ub2e4.\n\n\uad81\uae08\ud558\uc2e0 \uc810 \ud3b8\ud558\uac8c \ub9d0\uc500\ud574 \uc8fc\uc138\uc694.",
+    29: "[0.5min] [\uc694\uc57d]\n- \uc138\uc158 \ub9c8\ubb34\ub9ac, Q&A \uacc4\uc18d\n\n\ub4e4\uc5b4 \uc8fc\uc154\uc11c \uac10\uc0ac\ud569\ub2c8\ub2e4. \ub0a8\uc740 \uc9c8\ubb38\uacfc \uc758\uc0ac\uacb0\uc815 \ud56d\ubaa9\uc740 \ud6c4\uc18d \ubbf8\ud305\uc5d0\uc11c \uc774\uc5b4\uc11c \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4."
+  };
+  const deck = new SlideFramework({
+    logoSrc: "./common/pptx-theme/images/logo_dark.png",
+    logoDarkSrc: "./common/pptx-theme/images/logo_1.png",
+    footer: "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.",
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

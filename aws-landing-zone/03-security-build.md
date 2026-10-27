@@ -375,7 +375,7 @@ Config, Flow Logs, 보안 Findings도 같은 원칙으로 모읍니다.
 [요약]
 - 세 가지 옵션: Control Tower 기본, Control Tower와 AFT, Control Tower와 LZA
 - 선택 기준은 조직의 IaC 역량과 규제 기준선 관리 방식 (두 질문 토글로 시연)
-- 질문: OK저축은행 인프라팀의 IaC 도구가 Terraform인지
+- 질문: 인프라팀의 IaC 도구가 Terraform인지
 - 규제 기준선을 코드로 관리해 감사 증적으로 쓰려면 LZA가 유리
 
 구축 방법은 세 가지가 있고, 고르는 기준은 두 가지 질문입니다.
@@ -437,7 +437,7 @@ Terraform이 표준이면 AFT로 계정 발급을 기존 파이프라인에 붙�
 - bedrock-runtime VPC 엔드포인트로 인터넷 없이 호출, Knowledge Bases(Retrieve, RetrieveAndGenerate)는 bedrock-agent-runtime 엔드포인트도 필요, SCP로 엔드포인트 외 호출 제한
 - 호출 기록: CloudTrail은 API 호출만 기록(프롬프트, 응답 제외). 모델 호출 로깅은 같은 계정 S3나 CloudWatch Logs로 기록되므로 Log Archive로 복제
 - 주의: Prod OU의 서울 외 리전 차단 SCP는 APAC, Global 추론 프로파일 호출을 막음. 대상 리전 허용이나 bedrock:InferenceProfileArn 조건 예외 필요
-- 사례 세 가지(저축은행 업무 기준 예시): 사내 규정 Q&A, 상담 요약과 민원 분류, 보안 Findings 요약
+- 사례 세 가지(금융회사 업무 기준 예시): 사내 규정 Q&A, 상담 요약과 민원 분류, 보안 Findings 요약
 - 최신 Claude 모델은 서울 리전 단독이 아닌 APAC 또는 Global 추론 프로파일로 제공되는 경우가 있어 데이터 처리 리전이 국외로 확장될 수 있음
 - 중요업무, 개인신용정보 처리 시 준법감시 확인 필수
 
@@ -445,7 +445,7 @@ Landing Zone의 장점은 새 워크로드도 같은 통제를 자동으로 받�
 {cue: pause}
 호출은 bedrock-runtime VPC 엔드포인트로 하기 때문에 인터넷을 거치지 않습니다. Knowledge Bases를 쓰려면 bedrock-agent-runtime 엔드포인트도 함께 둡니다. CloudTrail에는 API 호출이 남고, 프롬프트와 응답까지 남기는 모델 호출 로깅은 같은 계정의 S3나 CloudWatch Logs에 쌓이니 Log Archive로 복제합니다.
 {cue: demo}
-오른쪽 탭은 저축은행 업무 기준의 사례 예시입니다. 사내 규정 Q&A, 상담 요약과 민원 분류, 그리고 앞에서 본 보안 Findings를 요약해 주는 용도입니다.
+오른쪽 탭은 금융회사 업무 기준의 사례 예시입니다. 사내 규정 Q&A, 상담 요약과 민원 분류, 그리고 앞에서 본 보안 Findings를 요약해 주는 용도입니다.
 {cue: click}
 꼭 확인할 것이 있습니다. 최신 Claude 모델은 서울 리전 단독이 아니라 APAC이나 Global 추론 프로파일로 제공되는 경우가 있어, 데이터 처리 리전이 국외로 넓어질 수 있습니다. 개인신용정보나 중요업무에 쓸 때는 준법감시 확인이 꼭 필요합니다. 그리고 앞에서 본 서울 외 리전 차단 SCP가 이런 추론 프로파일 호출도 막기 때문에, 대상 리전을 허용하거나 추론 프로파일 조건으로 예외를 둬야 합니다.
 {cue: transition}
@@ -463,7 +463,7 @@ AI는 Landing Zone 운영 자체에도 쓸 수 있습니다.
 <div class="lz-cc">
   <div class="lz-cc-arch lz-arch" id="lzCc">
     <div class="lz-zone">
-      <div class="lz-zone-label">OK저축은행 사내망</div>
+      <div class="lz-zone-label">사내망</div>
       <div class="lz-node" data-n="ms"><div>Managed Settings<small>허용 도구, 모델 정책</small></div></div>
       <div class="lz-node" data-n="pc"><div>개발자 단말<small>Claude Code CLI</small></div></div>
     </div>
@@ -606,7 +606,7 @@ Claude Code는 CLAUDE_CODE_USE_BEDROCK 환경 변수로 Bedrock을 쓰게 하고
 :::notes
 {timing: 1min}
 [요약]
-- 설계 착수 전에 OK저축은행과 함께 확정할 일곱 항목과 협의 대상
+- 설계 착수 전에 함께 확정할 일곱 항목과 협의 대상
 - 이용 대상 업무, 기존 계정 처리, 자동화 도구, 인증 연동, 온프레미스 연결, 로그 보존과 SIEM, DR 전략
 - 오늘 목표는 확정이 아니라 담당자 지정과 후속 미팅 일정 합의 (항목 클릭으로 표시)
 - 이후 Q&A 약 8분

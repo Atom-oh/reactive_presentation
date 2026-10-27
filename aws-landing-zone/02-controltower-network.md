@@ -48,7 +48,7 @@ OU 구조, 통제, 계정 발급 자동화
     <div class="callout callout-warning fragment fade-up" data-fragment-index="1"><strong class="lz-t-warning">관리 계정에는 SCP가 적용되지 않습니다</strong><div class="lz-muted">그래서 관리 계정에는 워크로드를 두지 않고, 접근 인원을 최소화합니다.</div></div>
   </div>
 </div>
-<div class="lz-cap">업무계, 채널계 명칭은 예시이며 실제 분류는 OK저축은행 시스템 구성에 맞춰 조정. OU를 클릭하면 통제 예시가 표시됩니다.</div>
+<div class="lz-cap">업무계, 채널계 명칭은 예시이며 실제 분류는 시스템 구성에 맞춰 조정. OU를 클릭하면 통제 예시가 표시됩니다.</div>
 :::
 
 
@@ -83,7 +83,7 @@ OU 구조, 통제, 계정 발급 자동화
 - SCP는 관리 계정에 적용되지 않으므로 관리 계정에는 워크로드를 두지 않음
 - 업무계, 채널계 명칭은 예시
 
-AWS가 권장하는 OU 모델을 OK저축은행 환경에 맞춰 그려 본 구조입니다. 맨 위 관리 계정 아래에 여섯 묶음의 OU가 있고, 핵심은 OU마다 서로 다른 통제를 건다는 점입니다.
+AWS가 권장하는 OU 모델을 금융회사 환경에 맞춰 그려 본 구조입니다. 맨 위 관리 계정 아래에 여섯 묶음의 OU가 있고, 핵심은 OU마다 서로 다른 통제를 건다는 점입니다.
 {cue: demo}
 Workloads Prod OU를 보면 서울 리전 외 리소스 생성을 막고, 암호화되지 않은 리소스와 업무계 IGW 생성을 막습니다. NonProd는 SCP로 Prod 계정 리소스 접근을 막고, Sandbox는 예산 한도와 사내망 연결 차단입니다. 외부 계정이 우리 리소스에 접근하는 것을 막는 RCP는 보호 대상인 Prod OU 쪽에 겁니다.
 {cue: pause}
@@ -331,7 +331,7 @@ Landing Zone 4.0은 작년 11월에 나온 큰 변경입니다. 한마디로 필
 </div>
 <div class="lz-arch lz-net" id="lzNet">
   <div class="lz-zone">
-    <div class="lz-zone-label">OK저축은행 IDC</div>
+    <div class="lz-zone-label">사내 IDC</div>
     <div class="lz-node" data-n="idc"><div>업무계 시스템<small>사내 DNS</small></div></div>
     <div class="lz-node" data-n="siem"><div>보안관제, SIEM</div></div>
   </div>

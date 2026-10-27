@@ -480,7 +480,7 @@ AI는 Landing Zone 운영 자체에도 쓸 수 있습니다.
     <div class="lz-card lz-row fragment fade-up" data-fragment-index="1"><span class="lz-num">1</span><div><strong>IaC 작성과 리뷰</strong><div class="lz-muted">LZA 설정 YAML, Terraform 변경안 작성과 PR 단위 기준선 위반 사전 점검</div><span class="lz-pill">예시: 신규 계정 추가 설정과 영향 범위 리뷰</span></div></div>
     <div class="lz-card lz-row fragment fade-up" data-fragment-index="2"><span class="lz-num">2</span><div><strong>통제 정책 초안 작성</strong><div class="lz-muted">규제 요건을 SCP, Config Rule 초안으로 변환 후 Policy Staging OU에서 검증</div><span class="lz-pill">예시: Prod OU 서울 외 리전 차단 SCP (Bedrock 추론 프로파일 예외 포함)</span></div></div>
     <div class="lz-card lz-row fragment fade-up" data-fragment-index="3"><span class="lz-num">3</span><div><strong>운영 이슈 분석</strong><div class="lz-muted">Config 위반, CloudTrail 이벤트를 분석해 원인과 수정 IaC 제안</div><span class="lz-pill">예시: 미암호화 EBS 탐지 건 수정 PR</span></div></div>
-    <div class="callout callout-warning fragment fade-up" data-fragment-index="4"><strong class="lz-t-warning">확인 필요</strong><div class="lz-muted">개발 단말 망분리 환경의 Bedrock 연결 경로, 소스 코드의 모델 전송 범위와 내부 승인 절차</div></div>
+    <div class="callout callout-warning fragment fade-up" data-fragment-index="4"><strong class="lz-t-warning">확인 필요</strong><div class="lz-muted">내부 단말의 생성형 AI 이용은 SaaS 망분리 예외와 별개(현재 혁신금융서비스, 당국 예외 추진 중)<br>개발 단말의 Bedrock 연결 경로, 소스 코드 전송 범위와 내부 승인 절차</div></div>
   </div>
 </div>
 :::
@@ -517,7 +517,7 @@ Claude Code는 CLAUDE_CODE_USE_BEDROCK 환경 변수로 Bedrock을 쓰게 하고
 {cue: click}
 그리고 Config 위반이나 CloudTrail 이벤트를 분석해서 수정 PR까지 제안하는 것입니다.
 {cue: click}
-단말이 망분리된 환경이라면, 내부망 단말에서 Bedrock 엔드포인트로 가는 경로와 소스 코드 반출 정책을 먼저 정해야 합니다.
+단말이 망분리된 환경이라면, 내부망 단말에서 Bedrock 엔드포인트로 가는 경로와 소스 코드 반출 정책을 먼저 정해야 합니다. 그리고 앞에서 본 SaaS 망분리 예외는 생성형 AI에 그대로 적용되지 않습니다. "이제 내부망에서 Claude Code를 쓸 수 있나" 하는 질문에는 SaaS 예외와 별개이고 생성형 AI 예외는 아직 추진 중이라고 답하시면 됩니다.
 {cue: transition}
 그럼 전체를 어떤 순서로 구축할지 보겠습니다.
 :::

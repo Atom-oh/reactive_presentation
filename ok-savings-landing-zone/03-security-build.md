@@ -54,8 +54,8 @@ block: 03-security-build
       <div class="lz-node" data-n="hub"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Security-Hub_48.svg" alt=""><div>Security Hub<small>통합 Findings, CSPM 표준 점검</small></div></div>
       <div class="lz-sec-row">
         <div class="lz-node" data-n="gdadm"><div>GuardDuty, Inspector<small>조직 단위 관리</small></div></div>
-        <div class="lz-node" data-n="det"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-Detective_48.svg" alt=""><div>Detective</div></div>
-        <div class="lz-node" data-n="mac"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-Macie_48.svg" alt=""><div>Macie</div></div>
+        <div class="lz-node" data-n="det"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-Detective_48.svg" alt=""><div>Detective<small>조사, 상관 분석</small></div></div>
+        <div class="lz-node" data-n="mac"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_Amazon-Macie_48.svg" alt=""><div>Macie<small>민감정보 탐지</small></div></div>
       </div>
     </div>
   </div>

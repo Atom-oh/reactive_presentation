@@ -248,7 +248,7 @@ Control Tower의 통제는 동작 시점에 따라 세 가지입니다. 배포 �
       <div class="lz-path-s"><span class="lz-num">2</span><div><strong>예방, 사전 통제부터 적용</strong><div class="lz-muted">Landing Zone 전체 구성 없이 Controls만 먼저</div></div></div>
       <div class="lz-path-s"><span class="lz-num">3</span><div><strong>Config 통합으로 확장</strong><div class="lz-muted">탐지 통제, Account Factory, Backup을 쓰려면 Config 통합 활성화</div></div></div>
     </div>
-    <div class="callout callout-warning"><strong class="lz-t-warning">Config 통합 없이 쓸 수 있는 것</strong><div class="lz-muted">예방, 사전 통제만 가능<br>탐지 통제, Account Factory, AFT, Identity Center 연동, Backup은 Config 통합과 OU별 Config 기준선 필요</div></div>
+    <div class="callout callout-warning"><strong class="lz-t-warning">Config 통합 없이 쓸 수 있는 것</strong><div class="lz-muted">예방, 사전 통제, CloudTrail 통합, OU 단위 Region Deny<br>탐지 통제, Account Factory, AFT, CfCT, Identity Center 연동, Backup은 Config 통합 필요</div></div>
     <div class="callout callout-info"><strong class="lz-t-info">권장</strong>: 신규 구성은 처음부터 4.0으로 하되, 금융 규제상 Config와 CloudTrail 통합은 켜 둡니다.</div>
   </div>
 </div>
@@ -285,13 +285,13 @@ Control Tower의 통제는 동작 시점에 따라 세 가지입니다. 배포 �
 - 기존 3.x 사용자는 4.0 업데이트 필요
 - 신규 고객은 처음부터 4.0, 단 Config와 CloudTrail은 금융 규제상 활성화 권장
 - 기존 계정이 있으면 통제부터 적용하고 단계적으로 확장하는 경로가 현실적
-- 단 Config 통합 없이는 예방, 사전 통제만 가능. 탐지 통제, Account Factory, AFT, Identity Center 연동, Backup은 Config 통합과 OU별 Config 기준선 필요
+- Config 통합 없이 가능: 예방, 사전 통제, CloudTrail 통합, OU 단위 Region Deny. 탐지 통제, Account Factory, AFT, CfCT, Identity Center 연동, Backup은 Config 통합 필요
 
 Landing Zone 4.0은 작년 11월에 나온 큰 변경입니다. 한마디로 필요한 것만 골라 쓰는 Landing Zone이 됐습니다.
 {cue: demo}
 왼쪽 항목을 눌러 보면 이전과 차이가 보입니다. Config나 CloudTrail 통합이 필수였던 것이 선택이 됐고, Security OU 같은 고정 구조 대신 OU를 직접 정의할 수 있습니다. 가장 의미 있는 변화는 기존 Organizations에 통제만 먼저 적용할 수 있다는 점입니다.
 {cue: click}
-그래서 지금 AWS 계정을 운영 중이라면 오른쪽 순서가 현실적입니다. 기존 조직은 그대로 두고 예방, 사전 통제부터 적용한 뒤 통합을 단계적으로 켭니다. 그리고 Config 통합이 없으면 탐지 통제, Account Factory, Identity Center 연동, Backup은 쓸 수 없다는 점을 같이 계획해야 합니다. 다만 금융 규제를 생각하면 Config와 CloudTrail 통합은 켜 두시길 권합니다. 기존 3.x를 쓰고 있다면 4.0으로 업데이트가 필요합니다.
+그래서 지금 AWS 계정을 운영 중이라면 오른쪽 순서가 현실적입니다. 기존 조직은 그대로 두고 예방, 사전 통제부터 적용한 뒤 통합을 단계적으로 켭니다. Config 통합 없이도 예방, 사전 통제와 CloudTrail 통합, OU 단위 Region Deny는 쓸 수 있지만, 탐지 통제, Account Factory, Identity Center 연동, Backup은 Config 통합이 있어야 한다는 점을 같이 계획해야 합니다. 다만 금융 규제를 생각하면 Config와 CloudTrail 통합은 켜 두시길 권합니다. 기존 3.x를 쓰고 있다면 4.0으로 업데이트가 필요합니다.
 {cue: transition}
 여기까지가 계정과 통제였고, 4장 네트워크로 넘어가겠습니다.
 :::

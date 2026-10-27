@@ -237,7 +237,7 @@ Landing Zone은 한 문장으로, 안전한 멀티 어카운트 환경의 기본
   <div class="lz-step" data-i="0"><h4>업무 중요도 평가</h4><div class="lz-muted">이용 대상 업무와 정보의 중요도 평가, 중요업무 여부 판단</div></div>
   <div class="lz-step" data-i="1"><h4>CSP(클라우드 제공자) 평가</h4><div class="lz-muted">건전성, 안전성 평가. 비중요업무는 필수항목만</div><span class="lz-pill ok">AWS 지원</span></div>
   <div class="lz-step lz-key lz-sel" data-i="2"><h4>BCP(업무연속성), 안전성 조치</h4><div class="lz-muted">재해복구, 출구전략 수립과 암호화, 접근통제, 백업</div><span class="lz-pill ok">Landing Zone 영역</span></div>
-  <div class="lz-step" data-i="3"><h4>위원회 심의, 보고</h4><div class="lz-muted">심의 의결 후 이용 개시, 이용 후 3개월 이내 금융감독원 보고</div></div>
+  <div class="lz-step" data-i="3"><h4>위원회 심의, 보고</h4><div class="lz-muted">심의 의결 후 이용 개시, 중요업무는 이용 후 3개월 이내 금융감독원 보고</div></div>
 </div>
 <div class="lz-panel lz-gap-top" id="lzProcDetail"></div>
 <div class="callout callout-info fragment fade-up" data-fragment-index="1"><strong class="lz-t-info">Landing Zone의 역할</strong>: 3단계 안전성 확보조치의 기술 통제를 표준화해, 심의와 보고 증적을 반복 가능하게 만듭니다.</div>
@@ -252,7 +252,7 @@ Landing Zone은 한 문장으로, 안전한 멀티 어카운트 환경의 기본
     '<div class="lz-grid-2"><div><strong class="lz-t-info">중요업무 여부가 이후 범위를 정합니다</strong><div class="lz-muted">이용 대상 업무와 처리 정보의 중요도를 먼저 평가합니다.</div></div><div class="lz-row"><span class="lz-pill">중요업무: 전체 평가 항목</span><span class="lz-pill">비중요업무: 필수항목 위주</span></div></div>',
     '<div class="lz-grid-2"><div><strong class="lz-t-info">CSP 평가 부담을 줄일 수 있습니다</strong><div class="lz-muted">AWS는 금융보안원 CSP 안전성 평가 결과를 제공하므로 이를 평가 자료로 활용합니다.</div></div><div class="lz-row"><span class="lz-pill">금융보안원 평가 결과 활용</span><span class="lz-muted">고객은 이용 업무에 대한 평가와 판단에 집중</span></div></div>',
     '<div class="lz-grid-2"><div><strong class="lz-t-accent">기술 통제를 코드와 표준으로</strong><div class="lz-muted">암호화, 접근통제, 백업, 재해복구 구성을 모든 계정에 같은 방식으로 적용합니다.</div></div><div class="lz-row"><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Key-Management-Service_48.svg" alt=""><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-IAM-Identity-Center_48.svg" alt=""><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-Backup_48.svg" alt=""><img class="lz-icon-sm" src="common/aws-icons/services/Arch_AWS-CloudFormation_48.svg" alt=""><span class="lz-muted">KMS, Identity Center, Backup, IaC</span></div></div>',
-    '<div class="lz-grid-2"><div><strong class="lz-t-info">같은 자료를 매번 다시 쓸 수 있게</strong><div class="lz-muted">표준 계정과 통제 구성이 정해져 있으면 정보보호위원회 심의 자료와 보고 증적을 재사용합니다.</div></div><div class="lz-row"><span class="lz-pill">심의 의결</span><span class="lz-pill">이용 개시</span><span class="lz-pill">3개월 이내 보고</span></div></div>'
+    '<div class="lz-grid-2"><div><strong class="lz-t-info">같은 자료를 매번 다시 쓸 수 있게</strong><div class="lz-muted">표준 계정과 통제 구성이 정해져 있으면 정보보호위원회 심의 자료와 보고 증적을 재사용합니다.</div></div><div class="lz-row"><span class="lz-pill">심의 의결</span><span class="lz-pill">이용 개시</span><span class="lz-pill">중요업무: 3개월 이내 보고</span></div></div>'
   ];
   function pick(i) {
     root.querySelectorAll('.lz-step').forEach(function (s, j) { s.classList.toggle('lz-sel', j === i); });
@@ -366,6 +366,7 @@ Landing Zone은 한 문장으로, 안전한 멀티 어카운트 환경의 기본
 <div class="lz-tl">
   <div class="lz-tl-item"><div class="lz-tl-date">2024.8</div><strong>망분리 개선 로드맵</strong><div class="lz-muted">단계적 규제 개선 방향 제시. 혁신금융서비스를 통한 SaaS, 생성형 AI 활용</div></div>
   <div class="lz-tl-item"><div class="lz-tl-date">2026.1</div><strong>시행세칙 개정 예고</strong><div class="lz-muted">SaaS를 망분리 예외로 명시. 별표7 대체 정보보호통제 준수 의무화</div></div>
+  <div class="lz-tl-item"><div class="lz-tl-date">2026.4.20</div><strong>개정 시행</strong><div class="lz-muted">혁신금융서비스 심사 없이 내부 업무망에서 SaaS 이용</div></div>
   <div class="lz-tl-item lz-key"><div class="lz-tl-date">Landing Zone</div><strong>시사점</strong><div class="lz-muted">통제 결과를 증명하는 구조. 계정, VPC 단위 경계와 로그 증적 확보가 핵심</div></div>
 </div>
 <div class="lz-grid-2 lz-gap-top fragment fade-up" data-fragment-index="1">
@@ -373,7 +374,7 @@ Landing Zone은 한 문장으로, 안전한 멀티 어카운트 환경의 기본
     <div class="lz-row"><span class="lz-pill ok">이번 예외 대상</span></div>
     <h4>내부업무용 단말의 SaaS 이용</h4>
     <div class="lz-flowline"><span class="lz-acct">내부업무 단말</span><span class="lz-link"></span><span class="lz-acct">SaaS</span></div>
-    <div class="lz-muted">별표7 대체 정보보호통제를 전제로 망분리 예외 명시</div>
+    <div class="lz-muted">금융보안원 등 평가를 거친 SaaS, 단말 보호대책, 반기 1회 평가와 정보보호위원회 보고. 고유식별정보, 개인신용정보 처리는 제외</div>
   </div>
   <div class="lz-card lz-scope keep">
     <div class="lz-row"><span class="lz-pill no">계속 필요</span></div>
@@ -382,7 +383,7 @@ Landing Zone은 한 문장으로, 안전한 멀티 어카운트 환경의 기본
     <div class="lz-muted">망분리 요건 검토와 대체 통제 설계가 계속 필요. Landing Zone 네트워크 설계가 담당</div>
   </div>
 </div>
-<div class="lz-cap">근거: 2026.1.19 금융위원회 보도자료, 시행세칙 개정 예고(예고기간 1.20 ~ 2.9)</div>
+<div class="lz-cap">근거: 2026.1.19 금융위원회 보도자료(개정 예고, 예고기간 1.20 ~ 2.9), 2026.4 금융위원회 보도자료(4.20 시행)</div>
 :::
 
 
@@ -391,11 +392,13 @@ Landing Zone은 한 문장으로, 안전한 멀티 어카운트 환경의 기본
 [요약]
 - 2024.8 금융위원회 망분리 개선 로드맵: 단계적 완화, 혁신금융서비스로 SaaS와 생성형 AI 활용
 - 2026.1.19 보도자료: SaaS를 전자금융거래법 제21조, 감독규정 제15조 망분리 예외로 명시하는 시행세칙 개정 예고(예고기간 1.20~2.9), 별표7 대체 통제 의무화
+- 2026.4.20 개정 시행: 혁신금융서비스 심사 없이 내부 업무망에서 SaaS 이용 가능
+- 조건: 금융보안원 등 평가를 거친 SaaS, 접속 단말 보호대책, 반기 1회 평가와 정보보호위원회 보고. 고유식별정보, 개인신용정보 처리는 제외
 - 이번 예외는 내부업무용 단말의 SaaS 이용 대상
 - 클라우드 정보처리시스템 설계는 기존 망분리 요건 검토 지속 필요
 - 시사점: 통제 결과를 증명하는 구조, 계정과 VPC 경계, 로그 증적
 
-망분리 규제는 형식적인 물리 분리에서 실질적인 통제로 방향이 바뀌고 있습니다. 2024년 8월 금융위원회의 망분리 개선 로드맵 이후, 올해 1월에는 SaaS를 망분리 예외로 명시하는 시행세칙 개정이 예고됐습니다.
+망분리 규제는 형식적인 물리 분리에서 실질적인 통제로 방향이 바뀌고 있습니다. 2024년 8월 금융위원회의 망분리 개선 로드맵 이후, 올해 1월에 SaaS를 망분리 예외로 명시하는 시행세칙 개정이 예고됐고, 4월 20일부터 시행되고 있습니다. 이제 금융보안원 등의 평가를 거친 SaaS라면 혁신금융서비스 심사 없이 내부 업무망에서 쓸 수 있습니다. 대신 단말 보호대책을 세우고, 반기마다 통제 이행을 평가해 정보보호위원회에 보고해야 합니다. 고유식별정보나 개인신용정보를 처리하는 경우는 여전히 예외가 아닙니다.
 {cue: click}
 여기서 주의할 점이 있습니다. 이번 예외는 왼쪽, 내부업무용 단말에서 SaaS를 쓰는 경우입니다. 오른쪽처럼 클라우드에 올리는 정보처리시스템 자체는 여전히 망분리 요건과 대체 통제 설계가 필요합니다.
 {cue: pause}

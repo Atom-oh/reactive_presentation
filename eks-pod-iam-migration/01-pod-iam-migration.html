@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>노드 Role에서 IRSA·Pod Identity로</title>
+  <link rel="stylesheet" href="common/theme.css">
+  <link rel="stylesheet" href="common/pptx-theme/theme-override.css">
+  <style>
+    :root { --slide-ratio-w: 16; --slide-ratio-h: 9; }
+    .pi-grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .pi-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .pi-card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; background: var(--bg-card); }
+    .pi-card h4 { margin: 0 0 8px; font-size: 1.02rem; }
+    .pi-card ul { margin: 0; padding-left: 18px; font-size: .9rem; color: var(--text-secondary); word-break: keep-all; }
+    .pi-card li { margin-bottom: 4px; }
+    .pi-node  { border-color: var(--red); }
+    .pi-irsa  { border-color: var(--accent); }
+    .pi-podid { border-color: var(--green); }
+    .t-red { color: var(--red); font-weight: 700; }
+    .t-acc { color: var(--accent); font-weight: 700; }
+    .t-grn { color: var(--green); font-weight: 700; }
+    .t-yel { color: var(--yellow); font-weight: 700; }
+    .muted, .slide-body p.muted { color: var(--text-secondary); font-size: .88rem; word-break: keep-all; }
+    pre.ascii { font-family: 'JetBrains Mono', Consolas, monospace; font-size: .74rem; line-height: 1.25; margin: 0;
+                background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+                color: var(--text-primary); white-space: pre; overflow: hidden; }
+    .pi-caption { min-height: 2.6em; margin-top: 8px; font-size: .92rem; color: var(--text-primary); word-break: keep-all; }
+    .pi-caption b { color: var(--accent); }
+    .pi-btn { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-tertiary);
+              color: var(--text-primary); cursor: pointer; font-size: .85rem; }
+    .pi-btn:hover { border-color: var(--accent); }
+    .pi-btn.on { background: var(--accent); color: #0f1b2a; border-color: var(--accent); font-weight: 700; }
+    .pi-btn.on-red { background: var(--red); color: #0f1b2a; border-color: var(--red); font-weight: 700; }
+    .pi-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .pi-sim { display: grid; grid-template-columns: 1.35fr 1fr; gap: 14px; align-items: start; }
+    table.pi-tbl { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    table.pi-tbl th, table.pi-tbl td { border-bottom: 1px solid var(--border); padding: 5px 6px; text-align: left; vertical-align: top; }
+    table.pi-tbl th { color: var(--text-secondary); font-weight: 600; }
+    table.pi-tbl tr.sel td { background: var(--accent-subtle, rgba(65,179,255,.12)); }
+    table.pi-tbl tr { cursor: pointer; }
+    .ok { color: var(--green); font-weight: 700; } .ng { color: var(--red); font-weight: 700; }
+    .pi-chain { display: flex; flex-direction: column; gap: 6px; }
+    .pi-chain div { border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; font-size: .92rem; background: var(--bg-card); }
+    .pi-chain div.hit { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+    .pi-chain div.skip { opacity: .4; }
+    .pi-cmp td:first-child { color: var(--text-secondary); white-space: nowrap; }
+    .code-block { font-size: .8rem; }
+  </style>
+</head>
+<body>
+<div class="slide-deck theme-dark">
+
+  <!-- 1 -->
+  <div class="slide title-slide">
+    <h1>노드 Role에서 IRSA·EKS Pod Identity로</h1>
+    <p>동작 원리, 실제 배포 비교 데모, 무중단 마이그레이션 절차</p>
+    <p class="muted">Amazon EKS · EC2 Linux 노드 · 2026년 11월 기준</p>
+  </div>
+
+  <!-- 2 -->
+  <div class="slide">
+    <div class="slide-header"><h2>출발점: 노드 Role은 "노드에 있는 모두"의 Role</h2></div>
+    <div class="slide-body">
+      <div class="pi-grid2" style="grid-template-columns:1.3fr 1fr;">
+        <pre class="ascii" style="font-size:.8rem;">        EC2 Worker Node  (instance profile = NodeRole)
+ ┌──────────────────────────────────────────────────┐
+ │ ┌──────────────┐ ┌──────────────┐ ┌────────────┐ │
+ │ │ payments-api │ │  batch-job   │ │ compromised│ │
+ │ │  needs S3    │ │  needs SQS   │ │ needs none │ │
+ │ └──────┬───────┘ └──────┬───────┘ └─────┬──────┘ │
+ │        └────────────────┼───────────────┘        │
+ │                         ▼  SDK chain: last step  │
+ │        ┌───────────────────────────────────┐     │
+ │        │ IMDS  169.254.169.254             │     │
+ │        │ /iam/security-credentials/NodeRole│     │
+ │        └────────────────┬──────────────────┘     │
+ └─────────────────────────┼────────────────────────┘
+                           ▼
+   all pods → assumed-role/NodeRole/i-0abc…
+            = S3 + SQS + ECR + ENI (union)</pre>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="pi-card pi-node fragment"><h4 class="t-red">권한 합집합</h4><ul><li>노드에 뜰 수 있는 모든 워크로드의 권한이 노드 Role에 모임</li></ul></div>
+          <div class="pi-card pi-node fragment"><h4 class="t-red">폭발 반경</h4><ul><li>권한이 필요 없는 Pod 하나만 뚫려도 노드 Role 전체 노출</li></ul></div>
+          <div class="pi-card pi-node fragment"><h4 class="t-red">감사 불가</h4><ul><li>CloudTrail에는 <code>NodeRole/i-xxx</code>만 남음: 어느 Pod인지 모름</li></ul></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="slide" id="s-chain">
+    <div class="slide-header"><h2>SDK는 자격 증명을 어디서 찾나: default credential chain</h2></div>
+    <div class="slide-body">
+      <div class="pi-grid2">
+        <div>
+          <div class="pi-row" style="margin-bottom:10px;">
+            <button class="pi-btn on" data-chain="node">아무것도 없음</button>
+            <button class="pi-btn" data-chain="irsa">IRSA</button>
+            <button class="pi-btn" data-chain="podid">Pod Identity</button>
+            <button class="pi-btn" data-chain="both">둘 다 설정</button>
+          </div>
+          <div class="pi-chain" id="chain-list">
+            <div data-k="1">1. 환경 변수 정적 키 <span class="muted">AWS_ACCESS_KEY_ID</span></div>
+            <div data-k="2">2. 공유 config / profile <span class="muted">~/.aws</span></div>
+            <div data-k="3">3. Web identity (IRSA) <span class="muted">AWS_WEB_IDENTITY_TOKEN_FILE</span></div>
+            <div data-k="4">4. Container credentials (Pod Identity) <span class="muted">AWS_CONTAINER_CREDENTIALS_FULL_URI</span></div>
+            <div data-k="5">5. IMDS <span class="muted">169.254.169.254 → 노드 Role</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="pi-card" id="chain-explain" style="min-height:220px;"></div>
+          <p class="muted" style="margin-top:8px;">순서는 AWS SDK 표준 credential provider 기준이며 언어별 SDK 문서로 확인합니다. Webhook은 env를 <b>Pod 생성 시</b> 주입하므로 설정을 바꾸면 재시작이 필요합니다.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="slide" id="s-hop">
+    <div class="slide-header"><h2>IMDSv2 hop limit: Pod 네트워크까지 응답이 닿는가</h2></div>
+    <div class="slide-body">
+      <div class="canvas-container"><canvas id="cv-hop"></canvas></div>
+      <div class="canvas-controls pi-row">
+        <button class="pi-btn on" data-hop="2">hop limit 2</button>
+        <button class="pi-btn" data-hop="1">hop limit 1</button>
+        <button class="pi-btn" id="hop-play">▶ Play</button>
+        <button class="pi-btn" id="hop-reset">Reset</button>
+      </div>
+      <div class="pi-caption" id="hop-cap"></div>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="slide" id="s-irsa">
+    <div class="slide-header"><h2>IRSA 동작 원리: OIDC 신뢰 + AssumeRoleWithWebIdentity</h2></div>
+    <div class="slide-body">
+      <div class="canvas-container"><canvas id="cv-irsa"></canvas></div>
+      <div class="canvas-controls pi-row">
+        <button class="pi-btn" id="irsa-play">▶ Play</button>
+        <button class="pi-btn" id="irsa-next">Next ▸</button>
+        <button class="pi-btn" id="irsa-reset">Reset</button>
+      </div>
+      <div class="pi-caption" id="irsa-cap"></div>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="slide" id="s-podid">
+    <div class="slide-header"><h2>Pod Identity 동작 원리: Agent + EKS Auth API</h2></div>
+    <div class="slide-body">
+      <div class="canvas-container"><canvas id="cv-podid"></canvas></div>
+      <div class="canvas-controls pi-row">
+        <button class="pi-btn" id="podid-play">▶ Play</button>
+        <button class="pi-btn" id="podid-next">Next ▸</button>
+        <button class="pi-btn" id="podid-reset">Reset</button>
+      </div>
+      <div class="pi-caption" id="podid-cap"></div>
+    </div>
+  </div>
+
+  <!-- 7 -->
+  <div class="slide">
+    <div class="slide-header"><h2>설정 비교: trust policy와 매핑 위치</h2></div>
+    <div class="slide-body">
+      <div class="pi-grid2">
+        <div>
+          <h4 class="t-acc" style="margin:0 0 6px;">IRSA: 클러스터별 OIDC provider를 신뢰</h4>
+<div class="code-block"><pre>{
+  <span class="key">"Principal"</span>: { <span class="key">"Federated"</span>: <span class="string">"arn:aws:iam::111122223333:
+      oidc-provider/oidc.eks.&lt;region&gt;.amazonaws.com/id/&lt;ID&gt;"</span> },
+  <span class="key">"Action"</span>: <span class="string">"sts:AssumeRoleWithWebIdentity"</span>,
+  <span class="key">"Condition"</span>: { <span class="key">"StringEquals"</span>: {
+    <span class="string">"…/id/&lt;ID&gt;:sub"</span>: <span class="value">"system:serviceaccount:demo-irsa:s3-reader"</span>,
+    <span class="string">"…/id/&lt;ID&gt;:aud"</span>: <span class="value">"sts.amazonaws.com"</span> } }
+}</pre></div>
+<div class="code-block"><pre><span class="comment"># 매핑 = SA annotation</span>
+kubectl -n demo-irsa annotate sa s3-reader \
+  eks.amazonaws.com/role-arn=arn:aws:iam::…:role/irsa-s3-reader</pre></div>
+        </div>
+        <div>
+          <h4 class="t-grn" style="margin:0 0 6px;">Pod Identity: 공통 서비스 principal을 신뢰</h4>
+<div class="code-block"><pre>{
+  <span class="key">"Principal"</span>: { <span class="key">"Service"</span>: <span class="string">"pods.eks.amazonaws.com"</span> },
+  <span class="key">"Action"</span>: [<span class="string">"sts:AssumeRole"</span>, <span class="string">"sts:TagSession"</span>]
+}
+<span class="comment">// 클러스터 정보 없음 → 여러 클러스터에서 그대로 재사용</span></pre></div>
+<div class="code-block"><pre><span class="comment"># 매핑 = EKS API association (SA 객체는 그대로)</span>
+aws eks create-pod-identity-association \
+  --cluster-name pod-iam-demo --namespace demo-podid \
+  --service-account s3-reader --role-arn arn:aws:iam::…:role/podid-s3-reader</pre></div>
+          <p class="muted">Session tags <code>kubernetes-namespace</code>, <code>kubernetes-service-account</code>, <code>eks-cluster-name</code> 등으로 ABAC: <code>${aws:PrincipalTag/kubernetes-namespace}/*</code></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8 -->
+  <div class="slide" id="s-sim">
+    <div class="slide-header"><h2>비교 데모 시뮬레이터: 같은 워크로드, 세 가지 신원</h2></div>
+    <div class="slide-body">
+      <div class="pi-row" style="margin-bottom:8px;">
+        <span class="muted">마이그레이션 단계:</span>
+        <button class="pi-btn" data-sim="irsa">02 IRSA 적용 (demo-irsa)</button>
+        <button class="pi-btn" data-sim="podid">03 Pod Identity 적용 (demo-podid)</button>
+        <button class="pi-btn" data-sim="both">demo-irsa에 association도 추가</button>
+        <button class="pi-btn" data-sim="lock">05 노드 Role 잠금</button>
+      </div>
+      <div class="pi-sim">
+        <div>
+          <div class="canvas-container" style="margin:0;"><canvas id="cv-sim"></canvas></div>
+          <div class="pi-caption" id="sim-cap"></div>
+        </div>
+        <div>
+          <table class="pi-tbl" id="sim-tbl">
+            <thead><tr><th>Pod</th><th>메커니즘</th><th>sts get-caller-identity</th><th>s3 ls</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <p class="muted" style="margin-top:8px;">행을 클릭하면 그 Pod의 자격 증명 경로를 재생합니다. 실제 결과는 <code>examples/security/pod-iam-migration/04-verify.sh</code>로 확인합니다.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9 -->
+  <div class="slide">
+    <div class="slide-header"><h2>세 방식 한눈에 비교</h2></div>
+    <div class="slide-body">
+      <table class="pi-tbl pi-cmp" style="font-size:.86rem;">
+        <thead><tr><th>항목</th><th class="t-red">Node instance profile</th><th class="t-acc">IRSA</th><th class="t-grn">EKS Pod Identity</th></tr></thead>
+        <tbody>
+          <tr><td>권한 단위</td><td>노드 (모든 Pod 공유)</td><td>ServiceAccount</td><td>ServiceAccount</td></tr>
+          <tr><td>매핑 위치</td><td>instance profile</td><td>SA annotation + trust policy</td><td>EKS API association</td></tr>
+          <tr><td>IAM 신뢰 대상</td><td>ec2.amazonaws.com</td><td>클러스터별 OIDC provider</td><td>pods.eks.amazonaws.com</td></tr>
+          <tr><td>계정·클러스터 사전 작업</td><td>없음</td><td>OIDC provider 등록</td><td>Agent add-on 설치</td></tr>
+          <tr><td>여러 클러스터에서 Role 재사용</td><td>—</td><td>trust statement 추가, 크기 한도</td><td>trust 변경 없음</td></tr>
+          <tr><td>자격 증명 경로</td><td>Pod → IMDS</td><td>Pod → STS</td><td>Pod → Agent → EKS Auth → STS</td></tr>
+          <tr><td>CloudTrail 주체</td><td>NodeRole/i-xxx</td><td>Role/세션</td><td>Role/eks-&lt;cluster&gt;-&lt;pod&gt;… + session tags</td></tr>
+          <tr><td>ABAC</td><td>불가</td><td>제한적</td><td>namespace·SA·pod 태그</td></tr>
+          <tr><td>Fargate · EKS 밖 클러스터</td><td>—</td><td>지원</td><td>미지원 (EKS on EC2)</td></tr>
+        </tbody>
+      </table>
+      <p class="muted" style="margin-top:10px;"><b>기본값</b>: EKS on EC2의 새 권한은 Pod Identity, Fargate·비 EKS는 IRSA. 한 클러스터에 공존 가능.</p>
+    </div>
+  </div>
+
+  <!-- 10 -->
+  <div class="slide">
+    <div class="slide-header"><h2>마이그레이션 runbook: 새 경로를 먼저, 옛 경로는 나중에</h2></div>
+    <div class="slide-body">
+      <div class="timeline">
+        <div class="timeline-step fragment"><div class="timeline-dot">0</div><div><b>인벤토리</b><p class="muted">노드 Role 정책 목록, CloudTrail·Access Advisor로 실제 호출, 정적 키 Secret, hostNetwork Pod</p></div></div>
+        <div class="timeline-step fragment"><div class="timeline-dot">1</div><div><b>Role 설계</b><p class="muted">워크로드별 전용 SA + 최소 권한 Role (Access Analyzer 정책 생성)</p></div></div>
+        <div class="timeline-step fragment"><div class="timeline-dot">2</div><div><b>전환</b><p class="muted">annotation 또는 association → rollout restart. 노드 Role 권한은 아직 유지</p></div></div>
+        <div class="timeline-step fragment"><div class="timeline-dot">3</div><div><b>검증·bake</b><p class="muted">env가 아니라 <b>CloudTrail 주체</b>가 새 Role로 바뀌었는지 확인</p></div></div>
+        <div class="timeline-step fragment"><div class="timeline-dot">4</div><div><b>노드 Role 잠금</b><p class="muted">앱 정책 제거, launch template에 IMDSv2 + hop limit 1, 노드 롤링</p></div></div>
+      </div>
+      <div class="callout callout-warning fragment" style="margin-top:14px;">오래된 SDK는 Pod Identity env를 무시하고 <b>조용히 IMDS로 떨어져</b> 노드 Role을 씁니다. Phase 4 전에 CloudTrail에서 노드 Role 호출이 0인지 확인하세요. IMDS로 region·VPC ID를 찾던 컨트롤러(예: AWS Load Balancer Controller)는 값을 명시합니다.</div>
+    </div>
+  </div>
+
+  <!-- 11 -->
+  <div class="slide">
+    <div class="slide-header"><h2>실제 배포: 데모 스크립트</h2></div>
+    <div class="slide-body">
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="t1">01 baseline</button>
+        <button class="tab-btn" data-tab="t2">02 IRSA</button>
+        <button class="tab-btn" data-tab="t3">03 Pod Identity</button>
+        <button class="tab-btn" data-tab="t5">05 lockdown</button>
+        <button class="tab-btn" data-tab="t4">04 verify</button>
+      </div>
+      <div class="tab-content active" id="t1"><div class="code-block"><pre><span class="comment"># 레거시 재현: 노드 Role에 S3 권한, 같은 앱을 3개 namespace + 이웃 Pod</span>
+NODE_ROLE=$(aws eks describe-nodegroup --cluster-name $CLUSTER_NAME \
+  --nodegroup-name $NODEGROUP_NAME --query nodegroup.nodeRole --output text | awk -F/ '{print $NF}')
+aws iam put-role-policy --role-name $NODE_ROLE --policy-name legacy-node-s3-read \
+  --policy-document "$(render policies/s3-read.json.tpl)"
+<span class="keyword">for</span> ns <span class="keyword">in</span> demo-node demo-irsa demo-podid; <span class="keyword">do</span>
+  render manifests/workload.yaml.tpl | sed "s/NAMESPACE/$ns/g" | kubectl apply -f -
+<span class="keyword">done</span>
+render manifests/neighbor.yaml.tpl | kubectl apply -f -</pre></div></div>
+      <div class="tab-content" id="t2"><div class="code-block"><pre>eksctl utils associate-iam-oidc-provider --cluster $CLUSTER_NAME --approve
+aws iam create-role --role-name $IRSA_ROLE_NAME --assume-role-policy-document "$TRUST"
+aws iam put-role-policy --role-name $IRSA_ROLE_NAME --policy-name s3-read --policy-document ...
+kubectl -n demo-irsa annotate sa s3-reader eks.amazonaws.com/role-arn=$IRSA_ROLE_ARN
+kubectl -n demo-irsa rollout restart deploy/whoami
+<span class="comment"># 주입 확인</span>
+kubectl -n demo-irsa exec deploy/whoami -- env | grep ^AWS_
+<span class="value">AWS_ROLE_ARN=arn:aws:iam::111122223333:role/pod-iam-demo-irsa-s3-reader
+AWS_WEB_IDENTITY_TOKEN_FILE=/var/run/secrets/eks.amazonaws.com/serviceaccount/token</span></pre></div></div>
+      <div class="tab-content" id="t3"><div class="code-block"><pre>aws eks create-addon --cluster-name $CLUSTER_NAME --addon-name eks-pod-identity-agent
+aws iam create-role --role-name $PODID_ROLE_NAME \
+  --assume-role-policy-document file://policies/podid-trust.json
+aws eks create-pod-identity-association --cluster-name $CLUSTER_NAME \
+  --namespace demo-podid --service-account s3-reader --role-arn $PODID_ROLE_ARN
+kubectl -n demo-podid rollout restart deploy/whoami
+kubectl -n demo-podid exec deploy/whoami -- env | grep ^AWS_CONTAINER
+<span class="value">AWS_CONTAINER_CREDENTIALS_FULL_URI=http://169.254.170.23/v1/credentials
+AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE=/var/run/secrets/pods.eks.amazonaws.com/serviceaccount/eks-pod-identity-token</span></pre></div></div>
+      <div class="tab-content" id="t5"><div class="code-block"><pre>aws iam delete-role-policy --role-name $NODE_ROLE --policy-name legacy-node-s3-read
+<span class="comment"># 데모용: 실행 중인 인스턴스만 변경. 운영은 launch template + 노드 그룹 롤링</span>
+aws ec2 modify-instance-metadata-options --instance-id $ID \
+  --http-tokens required --http-put-response-hop-limit 1
+<span class="comment"># eksctl:  disableIMDSv1: true / disablePodIMDS: true</span></pre></div></div>
+      <div class="tab-content" id="t4"><div class="code-block"><pre><span class="comment"># 05 이후 기대 출력 (형식 예시)</span>
+=== demo-node    mechanism: IMDS / node role   s3 ls: <span class="keyword">DENIED</span>   IMDS: BLOCKED
+=== demo-irsa    mechanism: IRSA               s3 ls: <span class="value">ALLOWED</span>
+    identity: assumed-role/pod-iam-demo-irsa-s3-reader/botocore-session-…
+=== demo-podid   mechanism: Pod Identity       s3 ls: <span class="value">ALLOWED</span>
+    identity: assumed-role/pod-iam-demo-podid-s3-reader/eks-pod-iam-…
+=== neighbor     mechanism: IMDS / node role   s3 ls: <span class="keyword">DENIED</span>   IMDS: BLOCKED</pre></div></div>
+      <p class="muted" style="margin-top:8px;">전체 스크립트: kubernetes-docs <code>examples/security/pod-iam-migration/</code>. 샌드박스 계정에서 먼저 실행하세요.</p>
+    </div>
+  </div>
+
+  <!-- 12 -->
+  <div class="slide">
+    <div class="slide-header"><h2>IRSA → Pod Identity 무중단 전환</h2></div>
+    <div class="slide-body">
+      <table class="pi-tbl" style="font-size:.9rem;">
+        <thead><tr><th>시점</th><th>작업</th><th>Role trust policy</th><th>SA / association</th><th>Pod가 받는 env</th></tr></thead>
+        <tbody>
+          <tr><td><b>t0</b></td><td>IRSA만</td><td>[OIDC]</td><td>annotation</td><td>WEB_IDENTITY</td></tr>
+          <tr><td><b>t1</b></td><td>이중 신뢰</td><td>[OIDC, pods.eks]</td><td>annotation</td><td>변화 없음</td></tr>
+          <tr><td><b>t2</b></td><td>association 생성</td><td>[OIDC, pods.eks]</td><td>annotation + association</td><td>변화 없음 <span class="t-yel">(IRSA가 우선)</span></td></tr>
+          <tr class="sel"><td><b>t3</b></td><td>annotation 제거 + rollout restart</td><td>[OIDC, pods.eks]</td><td>association</td><td><span class="t-grn">CONTAINER_CREDENTIALS ◀ 실제 전환</span></td></tr>
+          <tr><td><b>t4</b></td><td>bake 후 정리</td><td>[pods.eks]</td><td>association</td><td>OIDC statement 삭제 → 미사용 OIDC provider 정리</td></tr>
+        </tbody>
+      </table>
+      <div class="pi-grid3" style="margin-top:14px;">
+        <div class="pi-card fragment"><h4>왜 t2에서 안 바뀌나</h4><ul><li>SDK chain에서 web identity(3번)가 container credentials(4번)보다 먼저</li></ul></div>
+        <div class="pi-card fragment"><h4>롤백</h4><ul><li>t3 이후 문제 시 annotation 재부착 + 재시작. trust에 OIDC가 남아 있어 즉시 복구</li></ul></div>
+        <div class="pi-card fragment"><h4>데모</h4><ul><li><code>06-irsa-to-pod-identity.sh</code>가 이 순서를 그대로 수행</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 13 -->
+  <div class="slide">
+    <div class="slide-header"><h2>확인 퀴즈</h2></div>
+    <div class="slide-body">
+      <div class="pi-grid3">
+        <div class="quiz" data-quiz="q1">
+          <div class="quiz-question">IRSA와 Pod Identity를 적용했는데도 권한 없는 이웃 Pod가 S3를 읽는다. 이유는?</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-correct="false">A) Webhook이 이웃 Pod에도 env를 주입해서</button>
+            <button class="quiz-option" data-correct="true">B) 노드 Role에 권한이 남아 있고 IMDS에 닿을 수 있어서</button>
+            <button class="quiz-option" data-correct="false">C) Pod Identity Agent가 모든 Pod에 자격 증명을 줘서</button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz" data-quiz="q2">
+          <div class="quiz-question">IRSA annotation과 Pod Identity association이 동시에 있을 때 SDK가 쓰는 것은?</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-correct="false">A) Pod Identity</button>
+            <button class="quiz-option" data-correct="true">B) IRSA (web identity가 chain에서 먼저)</button>
+            <button class="quiz-option" data-correct="false">C) 노드 Role</button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz" data-quiz="q3">
+          <div class="quiz-question">Pod Identity 자격 증명을 실제로 발급받기 위해 Agent가 호출하는 API는?</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-correct="false">A) sts:AssumeRoleWithWebIdentity</button>
+            <button class="quiz-option" data-correct="false">B) IMDS /iam/security-credentials</button>
+            <button class="quiz-option" data-correct="true">C) eks-auth:AssumeRoleForPodIdentity</button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 14 -->
+  <div class="slide">
+    <div class="slide-header"><h2>정리</h2></div>
+    <div class="slide-body">
+      <div class="pi-grid3">
+        <div class="pi-card pi-node"><h4 class="t-red">노드 Role</h4><ul><li>kubelet·ECR pull·(CNI) 같은 <b>노드 기능</b>만</li><li>앱 권한은 0</li><li>IMDSv2 + hop limit 1</li></ul></div>
+        <div class="pi-card pi-irsa"><h4 class="t-acc">IRSA</h4><ul><li>Fargate, EKS 밖 클러스터</li><li>sub·aud를 StringEquals로 고정</li><li>클러스터마다 OIDC provider</li></ul></div>
+        <div class="pi-card pi-podid"><h4 class="t-grn">Pod Identity</h4><ul><li>EKS on EC2 신규 기본값</li><li>trust 재사용, association으로 매핑</li><li>session tag ABAC</li></ul></div>
+      </div>
+      <ul class="checklist" style="margin-top:14px;">
+        <li>CloudTrail로 노드 Role 사용처 인벤토리</li>
+        <li>워크로드별 전용 SA + 최소 권한 Role</li>
+        <li>전환 후 CloudTrail 주체 확인 → 노드 Role 정리 → IMDS 차단</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<script src="common/animation-utils.js"></script>
+<script src="common/slide-framework.js"></script>
+<script src="common/quiz-component.js"></script>
+<script src="common/presenter-view.js"></script>
+<script>
+(function () {
+  const ROOT = document.querySelector('.slide-deck');
+  /* ---------- shared helpers ---------- */
+  function C(k, fb) { return (typeof Colors !== 'undefined' && Colors[k]) || fb; }
+  function A(color, a) { return (typeof withAlpha === 'function') ? withAlpha(color, a) : color; }
+  function box(ctx, b, color, opts) {
+    opts = opts || {};
+    drawRoundRect(ctx, b.x, b.y, b.w, b.h, 8, A(color, opts.fillA || 0.14), color);
+    drawText(ctx, b.label, b.x + b.w / 2, b.y + b.h / 2 - (b.sub ? 8 : 0), { weight: '700', size: 14, color: C('textPri', '#e9ebed') });
+    if (b.sub) drawText(ctx, b.sub, b.x + b.w / 2, b.y + b.h / 2 + 11, { size: 11, color: C('textSec', '#9fb0c1') });
+  }
+  function group(ctx, g) {
+    ctx.save(); ctx.setLineDash([5, 4]);
+    drawRoundRect(ctx, g.x, g.y, g.w, g.h, 12, null, C('border', '#2e425a'));
+    ctx.restore();
+    drawText(ctx, g.label, g.x + 12, g.y + 14, { align: 'left', size: 12, weight: '600', color: C('textSec', '#9fb0c1') });
+  }
+  function edge(b, tx, ty) { // point on box b's border toward (tx,ty)
+    const cx = b.x + b.w / 2, cy = b.y + b.h / 2, dx = tx - cx, dy = ty - cy;
+    if (!dx && !dy) return { x: cx, y: cy };
+    const s = Math.min(Math.abs((b.w / 2) / (dx || 1e-9)), Math.abs((b.h / 2) / (dy || 1e-9)));
+    return { x: cx + dx * s, y: cy + dy * s };
+  }
+  function seg(nodes, from, to, off) {
+    const a = nodes[from], b = nodes[to];
+    const ac = { x: a.x + a.w / 2, y: a.y + a.h / 2 }, bc = { x: b.x + b.w / 2, y: b.y + b.h / 2 };
+    const p1 = edge(a, bc.x, bc.y), p2 = edge(b, ac.x, ac.y);
+    off = off || 0; // perpendicular offset so request/response arrows don't overlap
+    const len = Math.hypot(p2.x - p1.x, p2.y - p1.y) || 1, nx = -(p2.y - p1.y) / len * off, ny = (p2.x - p1.x) / len * off;
+    return { x1: p1.x + nx, y1: p1.y + ny, x2: p2.x + nx, y2: p2.y + ny };
+  }
+  function cross(ctx, x, y, color) {
+    ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(x - 10, y - 10); ctx.lineTo(x + 10, y + 10); ctx.moveTo(x + 10, y - 10); ctx.lineTo(x - 10, y + 10); ctx.stroke();
+    ctx.restore();
+  }
+
+  /* Generic step-through flow animator.
+     scene = { W, H, groups:[], nodes:{id:box}, colorOf:{id:colorKey} }
+     steps = [{ from, to, label, color, off, fail }] */
+  function Flow(canvasId, capId, scene) {
+    const S = scene.S || 1.75;
+    const cv = setupCanvas(canvasId, scene.W * S, scene.H * S);
+    cv.ctx.scale(S, S);
+    const cap = document.getElementById(capId);
+    let steps = [], cur = -1, t0 = 0, auto = false, raf = null;
+    const DUR = 0.9;
+    function colorFor(k) { return C(k, '#41B3FF'); }
+    function draw(now) {
+      const ctx = cv.ctx; ctx.clearRect(0, 0, cv.width, cv.height);
+      (scene.groups || []).forEach(g => group(ctx, g));
+      Object.keys(scene.nodes).forEach(id => box(ctx, scene.nodes[id], colorFor((scene.colorOf || {})[id] || 'accent')));
+      if (scene.extra) scene.extra(ctx);
+      let p = 1;
+      if (cur >= 0) p = Math.min(1, ((now || performance.now()) - t0) / 1000 / DUR);
+      for (let i = 0; i <= cur && i < steps.length; i++) {
+        const s = steps[i], col = colorFor(s.color || 'accent');
+        const g = seg(scene.nodes, s.from, s.to, s.off);
+        const k = (i === cur) ? p : 1;
+        const ex = g.x1 + (g.x2 - g.x1) * k, ey = g.y1 + (g.y2 - g.y1) * k;
+        drawArrow(ctx, g.x1, g.y1, ex, ey, col, !!s.dashed, k >= 1 && !s.fail);
+        if (i === cur && k < 1) drawCircle(ctx, ex, ey, 6, col);
+        if (k >= 1 && s.fail) cross(ctx, ex, ey, C('red', '#FF5C85'));
+        const f = s.off > 0 ? 0.62 : (s.off < 0 ? 0.38 : 0.5);
+        const mx = g.x1 + (g.x2 - g.x1) * f, my = g.y1 + (g.y2 - g.y1) * f;
+        drawCircle(ctx, mx, my, 10, C('bg', '#0f1b2a'), col);
+        drawText(ctx, String(i + 1), mx, my, { size: 11, weight: '700', color: col });
+      }
+      if (cur >= 0 && cur < steps.length) cap.innerHTML = '<b>' + (cur + 1) + '/' + steps.length + '</b> ' + steps[cur].label;
+      if (cur >= 0 && p < 1) { raf = requestAnimationFrame(draw); }
+      else if (auto && cur < steps.length - 1) { setTimeout(() => { if (auto) next(); }, 600); }
+      else { auto = false; }
+    }
+    function next() { if (cur >= steps.length - 1) return false; cur++; t0 = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(draw); return true; }
+    function reset(hint) { auto = false; cancelAnimationFrame(raf); cur = -1; draw(); cap.innerHTML = hint || scene.hint || '▶ Play 또는 Next로 단계를 진행합니다.'; }
+    function play() { if (cur >= steps.length - 1) reset(); auto = true; next(); }
+    return {
+      setSteps(s, hint) { steps = s; reset(hint); }, next, reset, play,
+      redraw() { cancelAnimationFrame(raf); draw(); }
+    };
+  }
+  function bindBtns(prefix, flow) {
+    const g = id => document.getElementById(prefix + '-' + id);
+    if (g('play'))  g('play').onclick  = () => flow.play();
+    if (g('next'))  g('next').onclick  = () => flow.next();
+    if (g('reset')) g('reset').onclick = () => flow.reset();
+  }
+
+  /* ---------- slide 3: credential chain ---------- */
+  const chainInfo = {
+    node:  { hit: 5, skip: [1, 2, 3, 4], html: '<h4 class="t-red">IMDS → 노드 Role</h4><p class="muted">주입된 env가 없으므로 1~4를 모두 건너뛰고 IMDS에서 노드 Role 자격 증명을 받습니다. 권한 없는 Pod도 똑같습니다.</p>' },
+    irsa:  { hit: 3, skip: [1, 2], html: '<h4 class="t-acc">3번에서 멈춤: IRSA</h4><p class="muted">Webhook이 <code>AWS_ROLE_ARN</code>, <code>AWS_WEB_IDENTITY_TOKEN_FILE</code>을 주입했습니다. SDK가 토큰 파일을 읽어 STS <code>AssumeRoleWithWebIdentity</code>를 호출합니다.</p>' },
+    podid: { hit: 4, skip: [1, 2, 3], html: '<h4 class="t-grn">4번에서 멈춤: Pod Identity</h4><p class="muted">Webhook이 <code>AWS_CONTAINER_CREDENTIALS_FULL_URI=http://169.254.170.23/v1/credentials</code>와 토큰 파일 경로를 주입했습니다. SDK는 Agent에 HTTP GET을 보냅니다.</p>' },
+    both:  { hit: 3, skip: [1, 2], html: '<h4 class="t-yel">둘 다 있으면 IRSA가 이김</h4><p class="muted">annotation과 association이 함께 있으면 web identity(3번)가 먼저 평가됩니다. IRSA → Pod Identity 전환은 <b>annotation 제거 + 재시작</b>이 실제 전환 시점입니다. 1번 정적 키 Secret이 있으면 둘 다 무시됩니다.</p>' }
+  };
+  function setChain(k) {
+    ROOT.querySelectorAll('[data-chain]').forEach(b => b.classList.toggle('on', b.dataset.chain === k));
+    const info = chainInfo[k];
+    ROOT.querySelectorAll('#chain-list > div').forEach(d => {
+      const n = +d.dataset.k;
+      d.classList.toggle('hit', n === info.hit);
+      d.classList.toggle('skip', info.skip.indexOf(n) >= 0);
+    });
+    document.getElementById('chain-explain').innerHTML = info.html;
+  }
+  ROOT.querySelectorAll('[data-chain]').forEach(b => b.onclick = () => setChain(b.dataset.chain));
+  setChain('node');
+
+  /* ---------- slide 4: hop limit ---------- */
+  const hopCv = setupCanvas('cv-hop', 1750, 525); hopCv.ctx.scale(1.75, 1.75);
+  let hop = 2, hopT0 = 0, hopRaf = null;
+  const hopCap = document.getElementById('hop-cap');
+  function hopDraw(now) {
+    const ctx = hopCv.ctx; ctx.clearRect(0, 0, 1000, 300);
+    group(ctx, { x: 20, y: 20, w: 960, h: 260, label: 'EC2 Worker Node' });
+    group(ctx, { x: 50, y: 60, w: 300, h: 190, label: 'Pod network namespace' });
+    const pod = { x: 90, y: 120, w: 220, h: 70, label: 'Pod (SDK)', sub: 'PUT /latest/api/token' };
+    const veth = { x: 420, y: 120, w: 180, h: 70, label: '노드 network ns', sub: 'veth / 라우팅 (+1 hop)' };
+    const imds = { x: 700, y: 120, w: 240, h: 70, label: 'IMDS', sub: '169.254.169.254' };
+    box(ctx, pod, C('accent', '#41B3FF')); box(ctx, veth, C('textSec', '#9fb0c1')); box(ctx, imds, C('orange', '#FF693C'));
+    drawArrow(ctx, 310, 140, 420, 140, C('textSec', '#9fb0c1')); drawArrow(ctx, 600, 140, 700, 140, C('textSec', '#9fb0c1'));
+    drawText(ctx, '요청 →', 650, 128, { size: 11, color: C('textSec', '#9fb0c1') });
+    if (!hopT0) { hopCap.innerHTML = '응답 패킷의 IP TTL = hop limit. 노드 ns를 지날 때 1 감소합니다. ▶ Play'; return; }
+    const t = Math.min(1, ((now || performance.now()) - hopT0) / 2200);
+    // response travels imds(700) -> veth(600..420) -> pod(310)
+    const startX = 700, stopX = hop >= 2 ? 310 : 600 - 20;
+    const x = startX - (startX - stopX) * t;
+    const ttl = (x < 420) ? hop - 1 : hop;
+    const col = hop >= 2 ? C('red', '#FF5C85') : C('green', '#00E500');
+    ctx.save(); ctx.setLineDash([4, 4]); drawArrow(ctx, startX, 172, x, 172, col, false, false); ctx.restore();
+    drawCircle(ctx, x, 172, 9, col);
+    drawText(ctx, 'TTL ' + ttl, x, 150 + 52, { size: 12, weight: '700', color: col });
+    if (t >= 1) {
+      if (hop >= 2) hopCap.innerHTML = '<b>hop limit 2</b>: 토큰 응답이 Pod까지 도달 → Pod가 노드 Role 자격 증명을 받을 수 있음 <span class="t-red">(노출)</span>';
+      else { cross(ctx, 520, 172, C('red', '#FF5C85')); hopCap.innerHTML = '<b>hop limit 1</b>: 노드 ns를 지나며 TTL 0 → 폐기. 자체 network ns의 Pod는 IMDS 응답을 못 받음 <span class="t-grn">(차단)</span>. hostNetwork Pod는 예외'; }
+    } else hopRaf = requestAnimationFrame(hopDraw);
+  }
+  ROOT.querySelectorAll('[data-hop]').forEach(b => b.onclick = () => {
+    hop = +b.dataset.hop; ROOT.querySelectorAll('[data-hop]').forEach(x => x.classList.toggle('on', x === b));
+    hopT0 = 0; cancelAnimationFrame(hopRaf); hopDraw();
+  });
+  document.getElementById('hop-play').onclick = () => { cancelAnimationFrame(hopRaf); hopT0 = performance.now(); hopDraw(); };
+  document.getElementById('hop-reset').onclick = () => { cancelAnimationFrame(hopRaf); hopT0 = 0; hopDraw(); };
+  hopDraw();
+
+  /* ---------- slide 5: IRSA ---------- */
+  const irsa = Flow('cv-irsa', 'irsa-cap', {
+    W: 1000, H: 360,
+    groups: [{ x: 20, y: 20, w: 470, h: 150, label: 'EKS Control Plane' }, { x: 20, y: 200, w: 470, h: 140, label: 'Worker Node' }, { x: 560, y: 20, w: 420, h: 320, label: 'AWS' }],
+    nodes: {
+      api:   { x: 45,  y: 60,  w: 190, h: 70, label: 'kube-apiserver', sub: '+ Pod Identity Webhook' },
+      oidc:  { x: 280, y: 60,  w: 190, h: 70, label: 'OIDC issuer', sub: '/.well-known, JWKS' },
+      pod:   { x: 45,  y: 245, w: 190, h: 70, label: 'Pod (SDK)', sub: 'SA: s3-reader + annotation' },
+      kubelet: { x: 280, y: 245, w: 190, h: 70, label: 'kubelet', sub: 'projected token 회전' },
+      sts:   { x: 600, y: 60,  w: 170, h: 70, label: 'AWS STS', sub: 'AssumeRoleWithWebIdentity' },
+      iam:   { x: 795, y: 60,  w: 165, h: 70, label: 'IAM', sub: 'OIDC provider + trust' },
+      s3:    { x: 700, y: 245, w: 170, h: 70, label: 'Amazon S3', sub: 'demo bucket' }
+    },
+    colorOf: { api: 'textSec', oidc: 'accent', pod: 'accent', kubelet: 'textSec', sts: 'orange', iam: 'orange', s3: 'green' },
+    hint: '▶ Play: Pod 생성부터 S3 호출까지 IRSA의 6단계를 재생합니다.'
+  });
+  irsa.setSteps([
+    { from: 'api', to: 'pod', color: 'accent', label: 'Pod 생성 시 Webhook이 SA의 <code>eks.amazonaws.com/role-arn</code>을 보고 <code>AWS_ROLE_ARN</code>, <code>AWS_WEB_IDENTITY_TOKEN_FILE</code>, projected token volume(aud=sts.amazonaws.com)을 주입' },
+    { from: 'kubelet', to: 'pod', color: 'textSec', label: 'kubelet이 API server에 SA 토큰(JWT)을 요청해 파일로 마운트하고 만료 전에 회전' },
+    { from: 'pod', to: 'sts', color: 'accent', label: 'SDK가 web identity provider로 <code>sts:AssumeRoleWithWebIdentity(RoleArn, JWT)</code> 호출. Pod에서 STS로 직접 나감 (private 클러스터는 STS VPC endpoint)' },
+    { from: 'sts', to: 'oidc', color: 'orange', dashed: true, off: -8, label: 'STS가 JWT의 iss를 계정의 IAM OIDC provider와 대조하고 JWKS 공개키로 서명·만료 검증' },
+    { from: 'sts', to: 'iam', color: 'orange', label: 'Role trust policy 평가: <code>sub = system:serviceaccount:demo-irsa:s3-reader</code>, <code>aud = sts.amazonaws.com</code>' },
+    { from: 'sts', to: 'pod', color: 'green', off: 16, label: '임시 자격 증명 반환 → SDK가 캐시·자동 갱신. CloudTrail 주체 = <code>assumed-role/irsa-s3-reader/…</code>' },
+    { from: 'pod', to: 's3', color: 'green', label: 'Pod 전용 Role로 S3 호출. 같은 노드의 다른 Pod는 이 Role을 받지 못함' }
+  ]);
+  bindBtns('irsa', irsa);
+
+  /* ---------- slide 6: Pod Identity ---------- */
+  const podid = Flow('cv-podid', 'podid-cap', {
+    W: 1000, H: 360,
+    groups: [{ x: 20, y: 20, w: 470, h: 130, label: 'EKS Control Plane' }, { x: 20, y: 180, w: 470, h: 160, label: 'Worker Node' }, { x: 560, y: 20, w: 420, h: 320, label: 'AWS' }],
+    nodes: {
+      api:   { x: 45,  y: 55,  w: 200, h: 70, label: 'kube-apiserver', sub: '+ Pod Identity Webhook' },
+      assoc: { x: 270, y: 55,  w: 200, h: 70, label: 'Association', sub: '(ns, sa) → Role' },
+      pod:   { x: 45,  y: 230, w: 190, h: 70, label: 'Pod (SDK)', sub: 'container credentials' },
+      agent: { x: 280, y: 230, w: 190, h: 70, label: 'Pod Identity Agent', sub: '169.254.170.23 (hostNetwork)' },
+      auth:  { x: 600, y: 55,  w: 175, h: 70, label: 'EKS Auth API', sub: 'AssumeRoleForPodIdentity' },
+      sts:   { x: 795, y: 55,  w: 165, h: 70, label: 'AWS STS', sub: 'AssumeRole + TagSession' },
+      s3:    { x: 700, y: 245, w: 170, h: 70, label: 'Amazon S3', sub: 'demo bucket' }
+    },
+    colorOf: { api: 'textSec', assoc: 'green', pod: 'green', agent: 'green', auth: 'orange', sts: 'orange', s3: 'green' },
+    hint: '▶ Play: association부터 S3 호출까지 Pod Identity의 단계를 재생합니다.'
+  });
+  podid.setSteps([
+    { from: 'assoc', to: 'api', color: 'green', label: '<code>create-pod-identity-association</code>으로 (demo-podid, s3-reader) → Role 매핑을 EKS API에 저장. SA 객체는 변경하지 않음' },
+    { from: 'api', to: 'pod', color: 'green', label: 'Webhook이 <code>AWS_CONTAINER_CREDENTIALS_FULL_URI</code>, <code>AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE</code>, projected token(aud=pods.eks.amazonaws.com) 주입' },
+    { from: 'pod', to: 'agent', color: 'green', label: 'SDK가 링크 로컬 Agent에 <code>GET /v1/credentials</code>, Authorization 헤더에 SA 토큰' },
+    { from: 'agent', to: 'auth', color: 'orange', label: 'Agent가 <b>노드 Role</b>로 <code>eks-auth:AssumeRoleForPodIdentity</code> 호출 (노드 Role은 중개 권한만)' },
+    { from: 'auth', to: 'sts', color: 'orange', label: 'EKS Auth가 토큰 검증 → association 조회 → Role을 AssumeRole하며 session tags(cluster, namespace, SA, pod) 부착' },
+    { from: 'auth', to: 'agent', color: 'green', off: 16, label: '임시 자격 증명을 Agent에 반환' },
+    { from: 'agent', to: 'pod', color: 'green', off: 16, label: 'Agent → Pod로 자격 증명 전달. Pod는 STS·IMDS에 직접 가지 않음' },
+    { from: 'pod', to: 's3', color: 'green', label: 'Pod 전용 Role로 S3 호출. CloudTrail에 session tags가 남아 Pod 단위 추적·ABAC 가능' }
+  ]);
+  bindBtns('podid', podid);
+
+  /* ---------- slide 8: simulator ---------- */
+  const sim = { irsa: false, podid: false, both: false, lock: false, sel: 'demo-node' };
+  const PODS = ['demo-node', 'demo-irsa', 'demo-podid', 'neighbor'];
+  const simScene = {
+    W: 640, H: 340, S: 1.6,
+    groups: [{ x: 10, y: 10, w: 330, h: 320, label: 'Worker Node' }, { x: 360, y: 10, w: 270, h: 320, label: 'AWS' }],
+    nodes: {
+      pod:   { x: 25,  y: 140, w: 130, h: 64, label: 'Pod', sub: '' },
+      imds:  { x: 200, y: 30,  w: 130, h: 60, label: 'IMDS', sub: '169.254.169.254' },
+      agent: { x: 200, y: 255, w: 130, h: 60, label: 'PodID Agent', sub: '169.254.170.23' },
+      sts:   { x: 380, y: 45,  w: 110, h: 60, label: 'STS', sub: '' },
+      auth:  { x: 380, y: 235, w: 110, h: 60, label: 'EKS Auth', sub: '' },
+      s3:    { x: 510, y: 135, w: 105, h: 64, label: 'S3', sub: '' }
+    },
+    colorOf: { pod: 'accent', imds: 'orange', agent: 'green', sts: 'orange', auth: 'orange', s3: 'green' },
+    hint: ''
+  };
+  const simFlow = Flow('cv-sim', 'sim-cap', simScene);
+  function mechOf(p) {
+    if (p === 'demo-irsa' && sim.irsa) return 'irsa';
+    if (p === 'demo-podid' && sim.podid) return 'podid';
+    return 'node';
+  }
+  function resultOf(p) {
+    const m = mechOf(p);
+    if (m === 'irsa')  return { m: 'IRSA' + (sim.both ? ' (association 무시됨)' : ''), id: 'role/pod-iam-demo-irsa-s3-reader', ok: true };
+    if (m === 'podid') return { m: 'Pod Identity', id: 'role/pod-iam-demo-podid-s3-reader', ok: true };
+    if (sim.lock) return { m: 'IMDS (차단됨)', id: 'Unable to locate credentials', ok: false };
+    return { m: 'IMDS → 노드 Role', id: 'role/NodeInstanceRole/i-0abc…', ok: true };
+  }
+  function stepsOf(p) {
+    const m = mechOf(p);
+    if (m === 'irsa') return [
+      { from: 'pod', to: 'sts', color: 'accent', label: p + ': web identity 토큰으로 STS <code>AssumeRoleWithWebIdentity</code>' + (sim.both ? ' (association이 있어도 chain에서 IRSA가 먼저)' : '') },
+      { from: 'sts', to: 'pod', color: 'green', off: 16, label: 'IRSA Role 임시 자격 증명' },
+      { from: 'pod', to: 's3', color: 'green', label: 's3 ls → <span class="ok">ALLOWED</span> (IRSA Role)' }];
+    if (m === 'podid') return [
+      { from: 'pod', to: 'agent', color: 'green', label: p + ': container credentials → Agent <code>GET /v1/credentials</code>' },
+      { from: 'agent', to: 'auth', color: 'orange', label: 'Agent → EKS Auth <code>AssumeRoleForPodIdentity</code>' },
+      { from: 'auth', to: 'agent', color: 'green', off: 16, label: 'Pod Identity Role 자격 증명 (+ session tags)' },
+      { from: 'agent', to: 'pod', color: 'green', off: 16, label: 'Agent → Pod' },
+      { from: 'pod', to: 's3', color: 'green', label: 's3 ls → <span class="ok">ALLOWED</span> (Pod Identity Role)' }];
+    if (sim.lock) return [
+      { from: 'pod', to: 'imds', color: 'red', fail: true, label: p + ': 주입된 env 없음 → IMDS 시도, hop limit 1로 응답이 Pod에 닿지 않음 → <span class="ng">자격 증명 없음</span>' }];
+    return [
+      { from: 'pod', to: 'imds', color: 'orange', label: p + ': 주입된 env 없음 → SDK chain 마지막 단계 IMDS' },
+      { from: 'imds', to: 'pod', color: 'red', off: 16, label: '노드 Role 자격 증명 반환' + (p === 'neighbor' ? ' <span class="ng">(권한을 받은 적 없는 Pod인데도!)</span>' : '') },
+      { from: 'pod', to: 's3', color: 'red', label: 's3 ls → ALLOWED <span class="ng">(노드 Role, Pod 구분 불가)</span>' }];
+  }
+  function renderSim() {
+    ROOT.querySelectorAll('[data-sim]').forEach(b => {
+      const on = sim[b.dataset.sim]; b.classList.toggle('on', on && b.dataset.sim !== 'lock'); b.classList.toggle('on-red', on && b.dataset.sim === 'lock');
+    });
+    const tb = ROOT.querySelector('#sim-tbl tbody'); tb.innerHTML = '';
+    PODS.forEach(p => {
+      const r = resultOf(p), tr = document.createElement('tr');
+      if (p === sim.sel) tr.className = 'sel';
+      tr.innerHTML = '<td><b>' + (p === 'neighbor' ? 'default/neighbor' : p) + '</b></td><td>' + r.m + '</td><td><code style="font-size:.72rem">' + r.id + '</code></td><td class="' + (r.ok ? 'ok">ALLOWED' : 'ng">DENIED') + '</td>';
+      tr.onclick = () => { sim.sel = p; renderSim(); simFlow.play(); };
+      tb.appendChild(tr);
+    });
+    scenePodLabel(sim.sel);
+    simFlow.setSteps(stepsOf(sim.sel), '행을 클릭하거나 단계 버튼을 눌러 경로를 재생합니다. 선택: <b>' + sim.sel + '</b>');
+  }
+  function scenePodLabel(p) { simScene.nodes.pod.sub = (p === 'neighbor') ? 'default/neighbor' : p; }
+  ROOT.querySelectorAll('[data-sim]').forEach(b => b.onclick = () => {
+    const k = b.dataset.sim;
+    sim[k] = !sim[k];
+    if (k === 'both') { if (sim.both) sim.irsa = true; }
+    if (k === 'irsa' && !sim.irsa) sim.both = false;
+    if (k === 'irsa' || k === 'both') sim.sel = 'demo-irsa';
+    if (k === 'podid') sim.sel = 'demo-podid';
+    if (k === 'lock') sim.sel = 'neighbor';
+    renderSim(); simFlow.play();
+  });
+  renderSim();
+
+  document.addEventListener('remarp:theme-colors', () => { irsa.redraw(); podid.redraw(); simFlow.redraw(); hopDraw(); });
+
+  /* ---------- deck ---------- */
+  window.deck = new SlideFramework({
+    footer: 'EKS Pod IAM Migration',
+    logoSrc: 'common/pptx-theme/images/logo_1.png',
+    pagination: true,
+    presenterNotes: {
+      0: '노드 Role 기반 권한에서 Pod 단위 권한으로 옮기는 이유, 두 방식의 동작 원리, 실제 데모와 runbook 순서로 진행합니다.',
+      1: '세 Pod 모두 같은 노드 Role을 받습니다. 침해된 Pod가 권한 합집합을 가져가는 것이 핵심 위험입니다.',
+      2: '버튼으로 상황별로 chain의 어느 단계에서 멈추는지 보여 줍니다. 둘 다 설정 시 IRSA가 이긴다는 점을 강조합니다.',
+      3: 'hop limit 2와 1을 번갈아 재생합니다. hostNetwork Pod는 노드 ns에 있으므로 hop limit으로 막히지 않습니다.',
+      4: 'Next로 한 단계씩 진행합니다. STS가 OIDC JWKS로 서명을 검증하는 부분과 trust policy의 sub·aud 조건을 설명합니다.',
+      5: 'Pod는 STS에 직접 가지 않고 Agent를 거칩니다. 노드 Role은 eks-auth 중개 권한만 갖습니다.',
+      6: 'trust policy에 클러스터 정보가 있느냐 없느냐가 운영 차이의 근원입니다.',
+      7: '순서: IRSA 적용 → Pod Identity 적용 → 아직 neighbor가 ALLOWED임을 보여 줌 → 노드 Role 잠금. association 추가 버튼으로 우선순위도 시연합니다.',
+      8: '선택 기준: EC2면 Pod Identity, Fargate·비 EKS면 IRSA.',
+      9: 'Phase 2에서 노드 Role 권한을 유지하는 이유는 롤백 안전망입니다. 판단은 CloudTrail 주체로 합니다.',
+      10: '실제 계정에서는 01 → 04 → 02 → 03 → 04 → 05 → 04 순으로 실행해 표의 변화를 확인합니다.',
+      11: 'association만 만들고 annotation을 남기면 아무것도 바뀌지 않는다는 점이 가장 흔한 실수입니다.',
+      12: '퀴즈 후 정리로 넘어갑니다.',
+      13: '노드 Role은 노드 기능만, 앱 권한은 SA 단위로.'
+    }
+  });
+})();
+</script>
+</body>
+</html>

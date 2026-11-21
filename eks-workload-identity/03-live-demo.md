@@ -228,7 +228,7 @@ orders-podid 행이 Pod Identity, wid-<run>-podid로 바뀝니다. 리허설 2�
     <tr><td>주입된 env</td><td><code>AWS_ROLE_ARN</code>, <code>AWS_WEB_IDENTITY_TOKEN_FILE</code>, <code>AWS_STS_REGIONAL_ENDPOINTS</code></td><td><code>AWS_CONTAINER_CREDENTIALS_FULL_URI</code>, <code>AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE</code>, <code>AWS_STS_REGIONAL_ENDPOINTS</code></td></tr>
     <tr><td>토큰 aud</td><td><code>sts.amazonaws.com</code></td><td><code>pods.eks.amazonaws.com</code></td></tr>
     <tr><td>토큰 sub</td><td><code>system:serviceaccount:wid-&lt;run&gt;:orders-irsa</code></td><td><code>system:serviceaccount:wid-&lt;run&gt;:orders-podid</code></td></tr>
-    <tr><td>토큰 iss, 수명</td><td colspan="2">같은 클러스터 issuer <code>https://oidc.eks.ap-northeast-2.amazonaws.com/id/&lt;OIDC_ID&gt;</code>. IRSA 86,400초(24시간), Pod Identity 약 24시간</td></tr>
+    <tr><td>토큰 iss, 수명</td><td colspan="2">같은 클러스터 issuer <code>https://oidc.eks.ap-northeast-2.amazonaws.com/id/&lt;OIDC_ID&gt;</code>. IRSA 86,400초(24시간), Pod Identity 약 22~24시간(웹훅이 무작위 편차를 줌)</td></tr>
     <tr><td>역할 신뢰 principal</td><td><code>Federated</code>: OIDC provider, 조건 aud와 sub</td><td><code>Service</code>: <code>pods.eks.amazonaws.com</code>, 요청 태그 조건 3개</td></tr>
   </tbody>
 </table>
@@ -241,7 +241,7 @@ orders-podid 행이 Pod Identity, wid-<run>-podid로 바뀝니다. 리허설 2�
 [요약]
 - 명령: ./demo.sh diff "$RUN_ID"
 - env: IRSA는 AWS_ROLE_ARN, AWS_WEB_IDENTITY_TOKEN_FILE, Pod Identity는 AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE (둘 다 AWS_STS_REGIONAL_ENDPOINTS)
-- 토큰: 같은 클러스터 issuer가 서명, aud만 다름(sts.amazonaws.com 대 pods.eks.amazonaws.com), 수명 약 24시간
+- 토큰: 같은 클러스터 issuer가 서명, aud만 다름(sts.amazonaws.com 대 pods.eks.amazonaws.com), 수명 IRSA 24시간, Pod Identity 약 22~24시간
 - 신뢰: Federated OIDC provider와 aud, sub 조건 대 Service pods.eks.amazonaws.com과 요청 태그 3개
 
 ./demo.sh diff "$RUN_ID"를 실행합니다. 두 Pod에 무엇이 들어갔는지 다섯 항목으로 나란히 찍습니다.

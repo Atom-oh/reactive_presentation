@@ -12,6 +12,7 @@ PPT 대신 HTML/CSS/JS로 16:9 슬라이드를 구성하며, Canvas 애니메이
 | 슬라이드 | 주제 | 시간 | 슬라이드 수 | 인터랙티브 |
 |---------|------|------|-----------|-----------|
 | [EKS Auto Mode & Karpenter 운영](eks-observability-ops/) | Auto Mode와 직접 설치 Karpenter 비교, 노드 라이프사이클, Grafana 상관분석, VPA와 KEDA 최적화 | 2h | 62장 | 10 Canvas, 9 퀴즈 |
+| [EKS 워크로드 IAM 이전](eks-workload-identity/) | 노드 역할의 앱 권한을 IRSA와 EKS Pod Identity로 이전, 자격 증명 체인, 단계별 동작 비교, 운영 이전 순서, 라이브 데모 | 50분 | 34장 | 3 Canvas, 6 퀴즈 |
 
 EKS Auto Mode·Karpenter [버전 검토 및 공식 출처](eks-observability-ops/version-update.md) (2026-10-15): EKS **1.37**, 직접 설치한 Karpenter **v1.15.0** (Kubernetes 1.37은 공식 호환성 표 기준 **1.15.x** 필요, Auto Mode는 AWS가 관리해 버전을 지정하지 않음). Auto Mode의 관리형 업데이트와 직접 설치한 Karpenter의 호환성·업그레이드 절차를 구분합니다.
 

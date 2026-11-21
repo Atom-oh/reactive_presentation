@@ -1,0 +1,79 @@
+/*
+ * EKS 워크로드 IAM 이전 deck: shared components.
+ * Only role tokens from design-tokens.css / theme.css are used, so light and dark themes both work.
+ * Signature element: the path chip (.wid-chip) that labels every credential path the same way the
+ * live demo's watch screen does: node (IMDS), IRSA (STS), Pod Identity.
+ */
+
+/* Path colours: node role = warning, IRSA = info, Pod Identity = pink. Used for chips, card edges, canvas. */
+.wid-node { --wid-path: var(--warning); }
+.wid-irsa { --wid-path: var(--info); }
+.wid-podid { --wid-path: var(--pink); }
+
+.wid-chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-3); border-radius: 999px; border: 2px solid var(--wid-path, var(--border)); color: color-mix(in srgb, var(--wid-path, var(--on-surface)) 75%, var(--on-surface)); background: color-mix(in srgb, var(--wid-path, var(--surface-2)) 10%, transparent); font-family: var(--font-mono, monospace); font-size: var(--fs-caption); font-weight: var(--weight-bold); white-space: nowrap; }
+
+/* Text helpers */
+.wid-muted { color: var(--on-surface-muted); font-size: var(--fs-card); line-height: var(--leading-body); word-break: keep-all; overflow-wrap: anywhere; }
+.wid-cap { color: var(--on-surface-muted); font-size: var(--fs-caption); word-break: keep-all; }
+.wid-src { color: var(--on-surface-muted); font-size: var(--fs-caption); margin-top: var(--space-3); word-break: keep-all; }
+.wid-src a { color: inherit; }
+.wid-mono, .wid-term, .wid-chip, .wid-table code { font-variant-ligatures: none; }
+.wid-mono { font-family: var(--font-mono, monospace); font-size: var(--fs-caption); overflow-wrap: anywhere; }
+.wid-t-accent { color: color-mix(in srgb, var(--accent) 75%, var(--on-surface)); font-weight: var(--weight-bold); }
+.wid-t-info { color: var(--info); font-weight: var(--weight-bold); }
+.wid-t-success { color: var(--success); font-weight: var(--weight-bold); }
+.wid-t-warning { color: color-mix(in srgb, var(--warning) 70%, var(--on-surface)); font-weight: var(--weight-bold); }
+.wid-t-danger { color: var(--danger); font-weight: var(--weight-bold); }
+.wid-t-path { color: color-mix(in srgb, var(--wid-path) 75%, var(--on-surface)); font-weight: var(--weight-bold); }
+.wid-big { font-size: var(--text-3xl); font-weight: var(--weight-bold); line-height: 1.1; font-variant-numeric: tabular-nums; }
+
+/* Layout */
+.wid-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.wid-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); }
+.wid-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); }
+.wid-grid-21 { display: grid; grid-template-columns: 3fr 2fr; gap: var(--space-4); align-items: start; }
+.wid-stack { display: flex; flex-direction: column; gap: var(--space-3); }
+.wid-row { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; }
+.wid-gap-top { margin-top: var(--space-4); }
+
+/* Cards */
+.wid-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-4); box-shadow: var(--shadow-1); word-break: keep-all; }
+.wid-card h4 { margin: 0 0 var(--space-2); font-size: var(--fs-body); }
+.wid-card.wid-edge { border-left: 6px solid var(--wid-path, var(--border)); }
+.wid-panel { background: var(--surface-2); border-radius: var(--radius-md); padding: var(--space-4); word-break: keep-all; }
+
+/* Figure frame for the line-art SVG animations (they carry their own paper background) */
+.wid-fig { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); margin: 0; min-height: 0; }
+.wid-fig img { display: block; max-width: 100%; max-height: 720px; width: auto; height: auto; border-radius: var(--radius-md); border: 1px solid var(--border); }
+.wid-fig figcaption { color: var(--on-surface-muted); font-size: var(--fs-caption); text-align: center; word-break: keep-all; }
+.wid-fig-row { display: grid; grid-template-columns: minmax(0, 1fr) 22rem; gap: var(--space-4); align-items: center; }
+.wid-fig-row .wid-card { padding: var(--space-3); }
+.wid-fig-row .wid-muted { font-size: var(--fs-caption); margin-top: var(--space-1); }
+
+/* Canvas frame: the container needs a real height for the proportional scaling pattern */
+.wid-canvas-box { width: 100%; height: 600px; display: flex; align-items: center; justify-content: center; }
+.wid-canvas-box canvas { display: block; }
+.wid-canvas-bar { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-2); }
+.wid-canvas-bar .wid-step { font-family: var(--font-mono, monospace); font-size: var(--fs-caption); color: var(--on-surface-muted); min-width: 4em; }
+.wid-canvas-cap { flex: 1; color: var(--on-surface); font-size: var(--fs-card); word-break: keep-all; }
+
+/* Tables */
+.wid-table { width: 100%; font-size: var(--fs-card); word-break: keep-all; }
+.wid-table code { font-size: var(--fs-caption); overflow-wrap: anywhere; }
+.wid-table td.wid-num { font-variant-numeric: tabular-nums; font-weight: var(--weight-bold); white-space: nowrap; }
+.data-table.wid-table th { text-transform: none; letter-spacing: normal; font-size: var(--fs-card); }
+
+/* Terminal-style block for demo commands and the watch screen */
+.wid-term { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-family: var(--font-mono, monospace); font-size: var(--fs-caption); line-height: 1.6; white-space: pre; overflow-x: auto; color: var(--on-surface); margin: 0; }
+.wid-term .wid-ok { color: var(--success); font-weight: var(--weight-bold); }
+.wid-term .wid-no { color: var(--danger); font-weight: var(--weight-bold); }
+.wid-term .wid-dim { color: var(--on-surface-muted); }
+.wid-term .wid-hl { background: color-mix(in srgb, var(--accent) 16%, transparent); border-radius: 4px; }
+
+/* Demo step header: step badge + command */
+.wid-stepbadge { display: inline-flex; align-items: center; justify-content: center; min-width: 2.2em; height: 2.2em; border-radius: 999px; background: var(--accent); color: var(--surface-1); font-weight: var(--weight-bold); font-size: var(--fs-card); }
+.wid-tag-opt { display: inline-block; padding: 0 var(--space-2); border: 1px solid var(--warning); border-radius: 4px; color: color-mix(in srgb, var(--warning) 70%, var(--on-surface)); font-size: var(--fs-caption); font-weight: var(--weight-bold); }
+
+/* Quiz: two-column options so three questions fit one slide */
+.slide .quiz .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.slide .quiz .quiz-options .quiz-option { margin: 0; }

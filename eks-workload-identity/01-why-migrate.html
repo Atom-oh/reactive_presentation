@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>왜 옮기나, 자격 증명 체인</title>
+  <meta name="generator" content="remarp">
+  <meta name="remarp-version" content="1">
+  <meta name="remarp-source" content="01-why-migrate.md">
+  <meta name="remarp-block" content="01-why-migrate">
+  <link rel="stylesheet" href="./common/theme.css">
+  <link rel="stylesheet" href="./common/deck-overlay.css">
+  <link rel="stylesheet" href="./common/deck-detail.css">
+  <link rel="stylesheet" href="./common/deck-nav.css">
+  <link rel="stylesheet" href="./common/deck-pen.css">
+  <link rel="stylesheet" href="./common/pptx-theme/theme-override.css">
+  <style>:root { --slide-ratio-w: 16; --slide-ratio-h: 9; } :root { --slide-width: 960px; --slide-height: 540px; }</style>
+  
+  <script>window.__remarpTheme = {"colors": {}, "footer": "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.", "pagination": true, "fonts": {}};</script>
+</head>
+<body>
+<div class="slide-deck">
+<div class="slide theme-dark" data-remarp-id="s0" data-block="01-why-migrate" data-block-title="EKS 워크로드 IAM 이전" style="background:linear-gradient(135deg, #16212f 0%, #0f1b2a 55%, #14243a 100%); padding:0; overflow:hidden;">
+  <div style="position:absolute; top:-20%; right:-10%; width:60%; height:80%; background:radial-gradient(ellipse, rgba(255,153,0,0.10) 0%, transparent 70%); pointer-events:none;"></div>
+  <div style="position:absolute; left:5%; top:42%; width:80px; height:3px; background:linear-gradient(90deg, var(--accent, #ff9900), rgba(255,153,0,0.25)); border-radius:2px;"></div>
+  <h1 style="position:absolute; left:5%; top:45%; font-family:var(--font-display); letter-spacing:var(--tracking-tight, -0.02em); font-size:2.8rem; color:#fff; font-weight:300; line-height:1.2; width:60%; margin:0;">EKS 워크로드 IAM 이전</h1>
+  <p style="position:absolute; left:5%; top:60%; font-size:1.3rem; color:rgba(255,255,255,0.7); width:60%; margin:0;">노드 인스턴스 프로파일에서 IRSA와 EKS Pod Identity로, 라이브 데모 포함</p>
+  <div style="position:absolute; left:5%; top:75%;">
+    <p style="font-size:1.05rem; color:#fff; font-weight:600; margin:0;">2026. 11. 24, 오준석, Senior Solutions Architect, AWS Korea</p>
+    <p style="font-size:0.9rem; color:rgba(255,255,255,0.6); margin:6px 0 0 0;"></p>
+    <p style="font-size:0.9rem; color:rgba(255,255,255,0.6); margin:2px 0 0 0;"></p>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s1" data-block="01-why-migrate" data-block-title="EKS 워크로드 IAM 이전">
+  <div class="slide-header" data-remarp-id="s1-header"><h2>오늘 세션 구성</h2><p class="subtitle">총 50min 세션</p></div>
+  <div class="slide-body" data-remarp-id="s1-body">
+    <div class="agenda-timeline">
+            <div class="agenda-step active">
+          <div class="agenda-dot">1</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>왜 옮기나, 자격 증명 체인</strong>
+            <span>13분</span>
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">2</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>IRSA와 Pod Identity의 동작 원리</strong>
+            <span>9분</span>
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">3</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>비교, 선택 기준, 운영 이전 순서</strong>
+            <span>11분</span>
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">4</div>
+          <div class="agenda-connector"></div>
+          <div class="agenda-label">
+            <strong>라이브 데모</strong>
+            <span>12분</span>
+          </div>
+        </div>
+      <div class="agenda-step">
+          <div class="agenda-dot">5</div>
+          
+          <div class="agenda-label">
+            <strong>문제 해결, 퀴즈, Q&A</strong>
+            <span>5분</span>
+          </div>
+        </div>
+    </div>
+    <div class="callout callout-info" style="margin-top: 1.5rem;">데모가 막히면 슬라이드에 같은 단계의 실측 화면이 있습니다.</div>
+  </div>
+  
+<script>(function() {
+  const slide = document.currentScript.closest('.slide');
+  if (!slide) return;
+  const steps = slide.querySelectorAll('.agenda-step:not(.break)');
+  const connectors = slide.querySelectorAll('.agenda-connector');
+  let current = 0;
+  function update() {
+    steps.forEach((s, i) => {
+      s.classList.remove('active', 'done');
+      if (i < current) s.classList.add('done');
+      else if (i === current) s.classList.add('active');
+    });
+    connectors.forEach((c, i) => {
+      c.classList.toggle('done', i < current);
+    });
+  }
+  update();
+  slide.__canvasStep = function(dir) {
+    if (dir === 'next' && current < steps.length - 1) current++;
+    else if (dir === 'prev' && current > 0) current--;
+    else return false;
+    update();
+    return current;
+  };
+  slide.dataset.slideAction = 'canvas-step';
+  slide.dataset.canvasMaxStep = String(steps.length - 1);
+})();</script>
+</div>
+
+<div class="slide" data-remarp-id="s2" data-block="01-why-migrate" data-block-title="EKS 워크로드 IAM 이전">
+  <div class="slide-header" data-remarp-id="s2-header"><h2>결제 Pod에 준 권한이 옆 Pod에도 열린다</h2></div>
+  <div class="slide-body" data-remarp-id="s2-body">
+    <p><!-- Slide 3: 노드 역할 공유 --></p>
+<div class="wid-grid-21">
+  <div class="wid-card wid-node wid-edge fragment fade-up" data-fragment-index="1">
+    <h4>워커 노드 한 대 (EC2)</h4>
+    <div class="wid-stack">
+      <div class="wid-row"><strong>결제 API Pod</strong><span class="wid-chip wid-node">node (IMDS)</span></div>
+      <div class="wid-row"><strong>로그 수집기 Pod</strong><span class="wid-chip wid-node">node (IMDS)</span></div>
+      <div class="wid-row"><strong>배치 Job Pod</strong><span class="wid-chip wid-node">node (IMDS)</span></div>
+    </div>
+    <div class="wid-muted wid-gap-top">세 Pod 모두 <span class="rp-detail" data-tip="EC2 인스턴스 메타데이터 서비스. 노드 안에서 169.254.169.254로 부르면 인스턴스 프로파일 역할의 임시 자격 증명을 줍니다." data-detail="imds">IMDS</span>(Instance Metadata Service)에서 같은 자격 증명을 받습니다.</div>
+  </div>
+  <div class="wid-stack">
+    <div class="wid-card fragment fade-up" data-fragment-index="2">
+      <h4>노드 IAM 역할 (인스턴스 프로파일)</h4>
+      <div class="wid-mono">AmazonEKSWorkerNodePolicy</div>
+      <div class="wid-mono">AmazonEC2ContainerRegistryPullOnly</div>
+      <div class="wid-mono wid-t-danger">+ s3:GetObject (결제 앱 권한)</div>
+    </div>
+    <div class="wid-card fragment fade-up" data-fragment-index="3">
+      <h4>CloudTrail에 남는 호출자</h4>
+      <div class="wid-mono">assumed-role/&lt;node-role&gt;/i-&lt;instance-id&gt;</div>
+      <div class="wid-muted">세 Pod의 호출이 같은 노드 세션으로 보입니다.</div>
+    </div>
+  </div>
+</div>
+  </div>
+<div class="rp-detail-store" hidden><section data-detail-id="imds" data-title="IMDS와 인스턴스 프로파일" data-text="EC2 인스턴스 프로파일은 노드 IAM 역할을 인스턴스에 전달합니다. 인스턴스 안에서 IMDS(169.254.169.254)를 호출하면 그 역할의 임시 자격 증명을 받습니다. IMDSv2는 먼저 PUT으로 세션 토큰을 받은 뒤 그 토큰으로 자격 증명을 조회합니다.
+Pod가 이 경로에 닿을 수 있으면, SDK는 다른 공급자를 찾지 못했을 때 IMDS까지 내려가 노드 역할을 씁니다."><p>EC2 인스턴스 프로파일은 노드 IAM 역할을 인스턴스에 전달합니다. 인스턴스 안에서 IMDS(<code>169.254.169.254</code>)를 호출하면 그 역할의 임시 자격 증명을 받습니다. IMDSv2는 먼저 PUT으로 세션 토큰을 받은 뒤 그 토큰으로 자격 증명을 조회합니다.</p>
+<p>Pod가 이 경로에 닿을 수 있으면, SDK는 다른 공급자를 찾지 못했을 때 IMDS까지 내려가 노드 역할을 씁니다.</p></section></div>
+</div>
+
+<div class="slide" data-remarp-id="s3" data-block="01-why-migrate" data-block-title="EKS 워크로드 IAM 이전">
+  <div class="slide-header" data-remarp-id="s3-header"><h2>노드 역할 공유의 세 가지 위험</h2></div>
+  <div class="slide-body" data-remarp-id="s3-body">
+    <p><!-- Slide 4: 세 가지 위험 --></p>
+<div class="wid-grid-3">
+  <div class="wid-card fragment fade-up" data-fragment-index="1">
+    <h4 class="wid-t-danger">권한 범위가 노드 단위</h4>
+    <div class="wid-muted">한 앱에 필요한 권한이 그 노드에 스케줄되는 모든 Pod의 권한이 됩니다.</div>
+    <div class="wid-cap wid-gap-top"><span class="rp-detail" data-detail="blast">어떤 Pod가 영향을 받나</span></div>
+  </div>
+  <div class="wid-card fragment fade-up" data-fragment-index="2">
+    <h4 class="wid-t-danger">감사 로그로 구분 불가</h4>
+    <div class="wid-muted">CloudTrail 호출자는 노드 역할 세션 하나입니다. 워크로드별 추적과 회수가 어렵습니다.</div>
+    <div class="wid-cap wid-gap-top"><span class="rp-detail" data-detail="trail">CloudTrail에서 무엇이 보이나</span></div>
+  </div>
+  <div class="wid-card fragment fade-up" data-fragment-index="3">
+    <h4 class="wid-t-danger">hop limit 2면 일반 Pod도 IMDS에 닿음</h4>
+    <div class="wid-muted">hostNetwork가 아닌 Pod도 IMDSv2 토큰을 받아 노드 역할을 가져갑니다.</div>
+    <div class="wid-cap wid-gap-top"><span class="rp-detail" data-detail="hop">hop limit이란</span></div>
+  </div>
+</div>
+<div class="callout callout-info wid-gap-top fragment fade-up" data-fragment-index="4"><strong class="wid-t-info">목표</strong>: 앱 권한은 워크로드 전용 역할로 옮기고, 노드 역할에는 노드 운영에 필요한 권한만 남긴 뒤 Pod의 IMDS 경로를 닫습니다.</div>
+  </div>
+<div class="rp-detail-store" hidden><section data-detail-id="blast" data-title="권한 범위가 노드 단위가 되는 이유" data-text="노드 역할은 노드 하나에 하나입니다. 스케줄러는 권한을 보고 Pod를 배치하지 않으므로, 앱 권한을 노드 역할에 붙이면 그 노드 그룹에 뜨는 모든 Pod가 같은 권한을 갖게 됩니다. 결제 Pod를 위한 S3 읽기가 로그 수집기와 배치 Job에도 열립니다."><p>노드 역할은 노드 하나에 하나입니다. 스케줄러는 권한을 보고 Pod를 배치하지 않으므로, 앱 권한을 노드 역할에 붙이면 그 노드 그룹에 뜨는 모든 Pod가 같은 권한을 갖게 됩니다. 결제 Pod를 위한 S3 읽기가 로그 수집기와 배치 Job에도 열립니다.</p></section><section data-detail-id="trail" data-title="CloudTrail의 호출자" data-text="EC2 인스턴스 프로파일로 받은 자격 증명의 세션은 노드 역할과 인스턴스 ID로 기록됩니다. 같은 노드의 Pod가 모두 같은 세션을 쓰므로 어느 워크로드가 호출했는지 로그만으로 구분하기 어렵습니다. S3 객체 접근을 CloudTrail에서 보려면 버킷의 데이터 이벤트도 켜야 합니다."><p>EC2 인스턴스 프로파일로 받은 자격 증명의 세션은 노드 역할과 인스턴스 ID로 기록됩니다. 같은 노드의 Pod가 모두 같은 세션을 쓰므로 어느 워크로드가 호출했는지 로그만으로 구분하기 어렵습니다. S3 객체 접근을 CloudTrail에서 보려면 버킷의 데이터 이벤트도 켜야 합니다.</p></section><section data-detail-id="hop" data-title="IMDS hop limit (HttpPutResponseHopLimit)" data-text="IMDSv2는 PUT 요청으로 세션 토큰을 먼저 받습니다. hop limit은 이 토큰 응답이 지날 수 있는 홉 수입니다. 일반 Pod는 노드와 다른 네트워크 namespace에 있어 한 홉이 더 필요하므로, 값이 2 이상이면 Pod도 토큰을 받습니다.
+관리형 노드 그룹의 launch template이 이 값을 2로 두는 경우가 많습니다. 이전을 마친 뒤 1로 내려 일반 Pod의 경로를 닫습니다. hostNetwork Pod는 노드 네트워크를 그대로 쓰므로 hop limit과 관계없이 IMDS에 닿습니다."><p>IMDSv2는 PUT 요청으로 세션 토큰을 먼저 받습니다. hop limit은 이 토큰 응답이 지날 수 있는 홉 수입니다. 일반 Pod는 노드와 다른 네트워크 namespace에 있어 한 홉이 더 필요하므로, 값이 2 이상이면 Pod도 토큰을 받습니다.</p>
+<p>관리형 노드 그룹의 launch template이 이 값을 2로 두는 경우가 많습니다. 이전을 마친 뒤 1로 내려 일반 Pod의 경로를 닫습니다. <code>hostNetwork</code> Pod는 노드 네트워크를 그대로 쓰므로 hop limit과 관계없이 IMDS에 닿습니다.</p></section></div>
+</div>
+
+<div class="slide" data-remarp-id="s4" data-fit="off" data-block="01-why-migrate" data-block-title="EKS 워크로드 IAM 이전">
+  <div class="slide-header" data-remarp-id="s4-header"><h2>Pod의 자격 증명은 세 곳에서 온다</h2></div>
+  <div class="slide-body" data-remarp-id="s4-body">
+    <p><!-- Slide 5: 세 갈래 경로 --></p>
+<div class="wid-fig-row">
+  <figure class="wid-fig">
+    <img src="images/ko-security-17-eks-workload-identity-migration-anim-0.svg" alt="세 Pod가 자격 증명을 받는 경로. 노드 역할 Pod는 IMDSv2에서, IRSA Pod는 STS AssumeRoleWithWebIdentity에서, Pod Identity Pod는 같은 노드의 Pod Identity Agent와 EKS Auth를 거쳐 임시 자격 증명을 받고, 각자 받은 자격 증명으로 S3 요청에 서명한다.">
+    <figcaption>파란 봉투는 자격 증명 요청, 초록 열쇠는 돌려받은 임시 자격 증명 (18초 반복)</figcaption>
+  </figure>
+  <div class="wid-stack fragment fade-up" data-fragment-index="1">
+    <div class="wid-card wid-node wid-edge"><span class="wid-chip wid-node">node (IMDS)</span><div class="wid-muted">IMDSv2에서 노드 역할</div></div>
+    <div class="wid-card wid-irsa wid-edge"><span class="wid-chip wid-irsa">IRSA (STS)</span><div class="wid-muted">IAM Roles for Service Accounts. Pod가 리전 STS(Security Token Service)를 직접 호출</div></div>
+    <div class="wid-card wid-podid wid-edge"><span class="wid-chip wid-podid">Pod Identity</span><div class="wid-muted">같은 노드의 Agent가 EKS Auth 호출</div></div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s5" data-block="01-why-migrate" data-block-title="EKS 워크로드 IAM 이전">
+  <div class="slide-header" data-remarp-id="s5-header"><h2>SDK는 위에서부터 찾고, 처음 것을 쓴다</h2></div>
+  <div class="slide-body" data-remarp-id="s5-body">
+    <p><!-- Slide 6: 자격 증명 체인 캔버스 --></p>
+<div class="wid-canvas-box"><canvas id="wid-chain-canvas" role="img" aria-label="SDK 기본 자격 증명 체인. 1 환경 변수의 정적 키, 2 웹 ID 토큰(IRSA), 3 컨테이너 공급자(Pod Identity), 4 EC2 IMDS(노드 역할) 순서로 확인하고 처음 찾은 단계의 자격 증명을 쓴다. 아무것도 주입되지 않은 Pod는 IMDS까지 내려간다. IRSA 주석과 association이 모두 있는 ServiceAccount의 새 Pod에는 EKS 웹훅이 Pod Identity 변수만 넣으므로 3단계에서 멈춘다."></canvas></div>
+<div class="wid-canvas-bar">
+  <button class="btn btn-primary btn-sm" data-wid-play="wid-chain-canvas">Play</button>
+  <button class="btn btn-sm" data-wid-reset="wid-chain-canvas">Reset</button>
+  <span class="wid-step" data-wid-step="wid-chain-canvas">0 / 4</span>
+  <span class="wid-canvas-cap" data-wid-cap="wid-chain-canvas" aria-live="polite">오른쪽 Pod를 바꿔 가며 SDK가 어느 단계에서 멈추는지 봅니다.</span>
+</div>
+<div class="wid-src">출처: <a href="https://docs.aws.amazon.com/sdkref/latest/guide/standardized-credentials.html">AWS SDKs and Tools, standardized credential providers</a>. 공유 config 파일 같은 나머지 단계는 생략했습니다.</div>
+  </div>
+</div>
+
+<div class="slide" data-remarp-id="s6" data-block="01-why-migrate" data-block-title="EKS 워크로드 IAM 이전">
+  <div class="slide-header" data-remarp-id="s6-header"><h2>바뀌는 것은 코드가 아니라 주입된 변수</h2></div>
+  <div class="slide-body" data-remarp-id="s6-body">
+    <p><!-- Slide 7: 주입되는 것 --></p>
+<table class="data-table wid-table fragment fade-up" data-fragment-index="1">
+  <thead><tr><th>경로</th><th>Pod에 주입되는 것</th><th>SDK가 호출하는 곳</th><th>결과 역할</th></tr></thead>
+  <tbody>
+    <tr><td><span class="wid-chip wid-node">node (IMDS)</span></td><td>없음</td><td>IMDSv2 <code>169.254.169.254</code></td><td>노드 IAM 역할 (노드의 모든 Pod가 공유)</td></tr>
+    <tr><td><span class="wid-chip wid-irsa">IRSA (STS)</span></td><td><code>AWS_ROLE_ARN</code>, <code>AWS_WEB_IDENTITY_TOKEN_FILE</code>, 토큰 볼륨</td><td>리전 STS <code>AssumeRoleWithWebIdentity</code></td><td>ServiceAccount 주석의 역할</td></tr>
+    <tr><td><span class="wid-chip wid-podid">Pod Identity</span></td><td><code>AWS_CONTAINER_CREDENTIALS_FULL_URI</code>, <code>AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE</code>, 토큰 볼륨</td><td>같은 노드의 Agent <code>169.254.170.23</code></td><td>association에 지정한 역할</td></tr>
+  </tbody>
+</table>
+<div class="wid-grid-2 wid-gap-top">
+  <div class="callout callout-warning fragment fade-up" data-fragment-index="2"><strong class="wid-t-warning">주입은 Pod 생성 시점에만</strong>: 이미 실행 중인 Pod는 바뀌지 않으므로 설정 후 rollout으로 Pod를 새로 만듭니다.</div>
+  <div class="callout callout-info fragment fade-up" data-fragment-index="3"><strong class="wid-t-info">확인은 호출자 ARN으로</strong>: 호출 성공만으로는 부족합니다. 노드 역할로 성공했을 수도 있습니다.</div>
+</div>
+  </div>
+</div>
+</div>
+<script src="./common/animation-utils.js"></script>
+<script src="./common/deck-overlay.js"></script>
+<script src="./common/deck-detail.js"></script>
+<script src="./common/deck-nav.js"></script>
+<script src="./common/deck-pen.js"></script>
+<script src="./common/slide-framework.js"></script>
+<script src="./common/quiz-component.js"></script>
+<script src="./common/presenter-view.js"></script>
+<script>
+(function(){
+  var CANVAS_ID = 'wid-chain-canvas', BASE_W = 960, BASE_H = 360, MAX_STEP = 4, STEP_DUR = 3.2;
+  var CAPS = [
+    '오른쪽 Pod를 바꿔 가며 SDK가 어느 단계에서 멈추는지 봅니다. 아래 방향키나 Play로 진행합니다.',
+    '아무것도 주입되지 않은 Pod: 1~3단계에 해당 변수가 없어 마지막 IMDS까지 내려가 노드 역할을 받습니다.',
+    'IRSA Pod: 웹 ID 토큰 변수가 있으니 2단계에서 멈춥니다. 코드는 그대로이고 주입된 변수만 다릅니다.',
+    'Pod Identity Pod: 컨테이너 공급자 변수가 있으니 3단계에서 멈추고 IMDS까지 가지 않습니다.',
+    '주석과 association이 모두 있는 SA의 새 Pod: EKS 웹훅이 Pod Identity 변수만 넣어 3단계에서 멈춥니다. 결정은 체인 순서가 아니라 주입 단계에서 납니다.'
+  ];
+  var ROWS = [
+    { n: '1', t: '환경 변수의 정적 키', v: 'AWS_ACCESS_KEY_ID', c: 'textMuted' },
+    { n: '2', t: '웹 ID 토큰 (IRSA)', v: 'AWS_WEB_IDENTITY_TOKEN_FILE', c: 'blue' },
+    { n: '3', t: '컨테이너 공급자 (Pod Identity)', v: 'AWS_CONTAINER_CREDENTIALS_FULL_URI', c: 'pink' },
+    { n: '4', t: 'EC2 IMDS (노드 역할)', v: '169.254.169.254', c: 'yellow' }
+  ];
+  var SC = [null,
+    { pod: 'orders-legacy', env: [], hit: 3, res: '노드 역할', role: 'wid-<run>-node', note: '노드의 모든 Pod가 같은 역할', c: 'yellow' },
+    { pod: 'orders-irsa', env: ['AWS_ROLE_ARN', 'AWS_WEB_IDENTITY_TOKEN_FILE'], hit: 1, res: 'IRSA 역할', role: 'wid-<run>-irsa', note: 'ServiceAccount 주석에 적힌 역할', c: 'blue' },
+    { pod: 'orders-podid', env: ['AWS_CONTAINER_CREDENTIALS_FULL_URI', 'AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE'], hit: 2, res: 'Pod Identity 역할', role: 'wid-<run>-podid', note: 'association에 지정한 역할', c: 'pink' },
+    { pod: '주석 + association (새 Pod)', env: ['AWS_CONTAINER_CREDENTIALS_FULL_URI', 'AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE', { t: 'IRSA 변수는 주입되지 않음', warn: true }], hit: 2, res: 'Pod Identity 역할', role: 'wid-<run>-podid', note: '기존 Pod는 재생성 전까지 IRSA', c: 'pink', warn: true }
+  ];
+  var RX = 40, RW = 440, RH = 56, RY = [56, 128, 200, 272];
+  function cy(i) { return RY[i] + RH / 2; }
+
+  function render() {
+    var sc = SC[step];
+    txt('SDK 기본 자격 증명 체인 (Pod에서 의미 있는 단계만)', RX, 30, { weight: '700', size: 14, color: Colors.textSec });
+    var CHECK = 0.62, per = sc ? CHECK / (sc.hit + 1) : 0;
+    ROWS.forEach(function (r, i) {
+      var col = Colors[r.c], state = 1, tag = '';
+      if (sc) {
+        var done = prog >= (i + 1) * per, active = prog >= i * per && !done;
+        if (i < sc.hit && done) { state = 0; tag = '변수 없음, 다음 단계'; }
+        else if (i === sc.hit && done) { state = 2; tag = '여기서 결정'; }
+        else if (i > sc.hit) { state = 0; tag = '확인하지 않음'; }
+        else if (active) { state = 1; tag = '확인 중'; }
+      }
+      card(RX, RY[i], RW, RH, r.n + '.  ' + r.t, [{ t: r.v, mono: true }], col, state);
+      if (tag) txt(tag, RX + RW - 12, RY[i] + 20, { size: 12, weight: '700', align: 'right', color: state === 2 ? col : Colors.textMuted });
+    });
+    // probe
+    if (sc && prog < CHECK) {
+      var k = Math.floor(prog / per), local = (prog - k * per) / per;
+      var y = k === 0 ? cy(0) : lerp(cy(k - 1), cy(k), clamp(local / 0.35, 0, 1));
+      drawCircle(ctx, RX + RW + 22, y, 8, Colors[sc.c], null);
+    }
+    // Pod card
+    var px = 600, pw = 320;
+    var podLines = !sc ? [{ t: 'Pod를 고르면 SDK가 위에서부터' }, { t: '차례로 확인합니다.' }]
+      : (sc.env.length ? [{ t: '주입된 환경 변수', weight: '600' }].concat(sc.env.map(function (e) { return typeof e === 'string' ? { t: e, mono: true } : { t: e.t, color: Colors.red, weight: '700' }; })) : [{ t: '주입된 환경 변수', weight: '600' }, { t: '(없음)', mono: true }]);
+    card(px, 56, pw, 140, sc ? 'Pod: ' + sc.pod : 'Pod', podLines, sc ? Colors[sc.c] : Colors.textMuted, 1);
+    // result
+    if (sc) {
+      var rt = seg(CHECK, 0.85);
+      var p = [{ x: RX + RW, y: cy(sc.hit) }, { x: 545, y: cy(sc.hit) }, { x: 545, y: 282 }, { x: px, y: 282 }];
+      wire(p, Colors[sc.c], rt, false);
+      if (prog >= 0.85) {
+        card(px, 236, pw, 96, '결과: ' + sc.res, [{ t: sc.role, mono: true }, { t: sc.note, color: sc.warn ? Colors.red : Colors.textSec, weight: sc.warn ? '700' : '400' }], Colors[sc.c], 2);
+      }
+    } else {
+      card(px, 236, pw, 96, '결과: 어떤 역할?', [{ t: '처음 성공한 단계의 자격 증명을 씁니다.' }], Colors.textMuted, 0);
+    }
+  }
+  // Shared canvas helpers (copied into each canvas script so every block HTML stands alone).
+  // Proportional scaling: draw in BASE_W x BASE_H, scale by the container (ResizeObserver).
+  var canvas = document.getElementById(CANVAS_ID);
+  if (!canvas) return;
+  var slide = canvas.closest('.slide');
+  var box = canvas.parentElement;
+  var ctx = canvas.getContext('2d');
+  var capEl = slide.querySelector('[data-wid-cap="' + CANVAS_ID + '"]');
+  var stepEl = slide.querySelector('[data-wid-step="' + CANVAS_ID + '"]');
+  var step = 0, prog = 1, auto = false, lastKey = '';
+  var SANS = 'Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif';
+  var MONO = '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
+  if (!box.clientWidth) setupCanvas(CANVAS_ID, BASE_W, BASE_H);
+
+  function fit() {
+    var pw = box.clientWidth, ph = box.clientHeight;
+    if (pw <= 0 || ph <= 0) return false;
+    var dpr = window.devicePixelRatio || 1;
+    var s = Math.min(pw / BASE_W, ph / BASE_H);
+    var key = pw + 'x' + ph + '@' + dpr;
+    if (key !== lastKey) {
+      lastKey = key;
+      canvas.width = Math.round(BASE_W * s * dpr);
+      canvas.height = Math.round(BASE_H * s * dpr);
+      canvas.style.width = Math.round(BASE_W * s) + 'px';
+      canvas.style.height = Math.round(BASE_H * s) + 'px';
+      canvas.style.maxWidth = 'none';
+      canvas.style.aspectRatio = 'auto';
+    }
+    ctx.setTransform(s * dpr, 0, 0, s * dpr, 0, 0);
+    return true;
+  }
+  function seg(a, b) { return clamp((prog - a) / (b - a), 0, 1); }
+  function rr(x, y, w, h, fill, stroke, lw, dash) {
+    ctx.save();
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y, w, h, 8); else ctx.rect(x, y, w, h);
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+    if (stroke) { ctx.setLineDash(dash || []); ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1.5; ctx.stroke(); }
+    ctx.restore();
+  }
+  function txt(s, x, y, o) {
+    o = o || {};
+    ctx.fillStyle = o.color || Colors.textPri;
+    ctx.font = (o.weight || '400') + ' ' + (o.size || 13) + 'px ' + (o.mono ? MONO : SANS);
+    ctx.textAlign = o.align || 'left';
+    ctx.textBaseline = 'middle';
+    if ('letterSpacing' in ctx) ctx.letterSpacing = o.mono ? '0.3px' : '0px'; // non-zero spacing turns off mono ligatures such as -< and >-
+    ctx.fillText(s, x, y);
+  }
+  // state: 0 = waiting (faded), 1 = shown, 2 = active step
+  function card(x, y, w, h, title, lines, col, state) {
+    var a = state === 0 ? 0.45 : 1;
+    ctx.save();
+    ctx.globalAlpha = a;
+    rr(x, y, w, h, state === 2 ? withAlpha(col, 0.16) : withAlpha(col, 0.06), state === 2 ? col : withAlpha(col, 0.7), state === 2 ? 3 : 1.5);
+    txt(title, x + 12, y + 20, { weight: '700', size: 15 });
+    (lines || []).forEach(function (l, i) {
+      var o = typeof l === 'string' ? { t: l } : l;
+      txt(o.t, x + 12, y + 44 + i * 19, { size: o.mono ? 12 : 12.5, mono: !!o.mono, color: o.color || Colors.textSec, weight: o.weight });
+    });
+    ctx.restore();
+  }
+  function group(x, y, w, h, label) {
+    rr(x, y, w, h, null, Colors.textMuted, 1.2, [6, 5]);
+    txt(label, x + 12, y + 12, { size: 12, color: Colors.textMuted, weight: '600' });
+  }
+  function plen(p) { var L = 0; for (var i = 1; i < p.length; i++) L += Math.hypot(p[i].x - p[i - 1].x, p[i].y - p[i - 1].y); return L; }
+  function at(p, t) {
+    var L = plen(p) * clamp(t, 0, 1);
+    for (var i = 1; i < p.length; i++) {
+      var d = Math.hypot(p[i].x - p[i - 1].x, p[i].y - p[i - 1].y);
+      if (L <= d || i === p.length - 1) { var k = d ? Math.min(1, L / d) : 0; return { x: lerp(p[i - 1].x, p[i].x, k), y: lerp(p[i - 1].y, p[i].y, k) }; }
+      L -= d;
+    }
+    return p[p.length - 1];
+  }
+  // Draws a polyline up to fraction t; adds the arrow head once complete.
+  function wire(p, col, t, dashed) {
+    if (t <= 0) return;
+    var end = at(p, t), L = plen(p) * t, acc = 0;
+    ctx.save();
+    ctx.strokeStyle = col; ctx.lineWidth = 2.2; ctx.setLineDash(dashed ? [7, 5] : []);
+    ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y);
+    for (var i = 1; i < p.length; i++) {
+      var d = Math.hypot(p[i].x - p[i - 1].x, p[i].y - p[i - 1].y);
+      if (acc + d >= L) { ctx.lineTo(end.x, end.y); break; }
+      ctx.lineTo(p[i].x, p[i].y); acc += d;
+    }
+    ctx.stroke();
+    ctx.restore();
+    if (t >= 1) {
+      var a = p[p.length - 2], b = p[p.length - 1], ang = Math.atan2(b.y - a.y, b.x - a.x);
+      ctx.beginPath(); ctx.fillStyle = col;
+      ctx.moveTo(b.x, b.y);
+      ctx.lineTo(b.x - 11 * Math.cos(ang - 0.45), b.y - 11 * Math.sin(ang - 0.45));
+      ctx.lineTo(b.x - 11 * Math.cos(ang + 0.45), b.y - 11 * Math.sin(ang + 0.45));
+      ctx.closePath(); ctx.fill();
+    }
+  }
+  function pill(x, y, s, col, mono) {
+    ctx.save();
+    ctx.font = '700 12px ' + (mono ? MONO : SANS);
+    var w = ctx.measureText(s).width + 18;
+    rr(x - w / 2, y - 12, w, 24, Colors.surface, col, 2);
+    ctx.restore();
+    txt(s, x, y, { size: 12, weight: '700', color: col, align: 'center', mono: mono });
+  }
+  // Packet travelling along a wire during [a, b] of the step progress.
+  function packet(p, a, b, label, col) {
+    var t = seg(a, b);
+    wire(p, col, t, false);
+    if (t > 0 && t < 1) { var q = at(p, t); pill(q.x, q.y, label, col); }
+    return t >= 1;
+  }
+  function draw() {
+    if (!fit()) return;
+    ctx.clearRect(0, 0, BASE_W, BASE_H);
+    render();
+    if (capEl) capEl.textContent = CAPS[step];
+    if (stepEl) stepEl.textContent = step + ' / ' + MAX_STEP;
+  }
+  var loop = new AnimationLoop(function (t) {
+    prog = Math.min(1, t / STEP_DUR);
+    if (prog >= 1) {
+      if (auto && step < MAX_STEP) { step += 1; prog = 0; loop.startTime = performance.now(); }
+      else { auto = false; loop.stop(); }
+    }
+    draw();
+  });
+  function show(n, animate) {
+    loop.stop();
+    step = n; prog = animate ? 0 : 1;
+    draw();
+    if (animate) loop.start();
+  }
+  slide.querySelectorAll('[data-wid-play="' + CANVAS_ID + '"]').forEach(function (b) {
+    b.addEventListener('click', function () { show(1, true); auto = true; });
+  });
+  slide.querySelectorAll('[data-wid-reset="' + CANVAS_ID + '"]').forEach(function (b) {
+    b.addEventListener('click', function () { auto = false; show(0, false); });
+  });
+  // Up/Down arrow keys step through the animation (framework contract: return false to let the deck move on).
+  slide.__canvasStep = function (dir) {
+    var n = step + (dir === 'next' ? 1 : -1);
+    if (n < 0 || n > MAX_STEP) return false;
+    auto = false;
+    show(n, dir === 'next');
+    return true;
+  };
+  document.addEventListener('rp:slidechange', function (e) {
+    var idx = Array.prototype.indexOf.call(document.querySelectorAll('.slide'), slide);
+    if (e.detail && e.detail.index !== idx && (loop.running || step !== 0)) { auto = false; show(0, false); }
+  });
+  document.addEventListener('rp:themechange', function () { refreshThemeColors(); });
+  document.addEventListener('remarp:theme-colors', function () { draw(); });
+  new ResizeObserver(function () { draw(); }).observe(box);
+  draw();
+})();
+</script>
+<script>
+  
+  const presenterNotes = {
+    1: "[0.5min] [\uc694\uc57d]\n- \uc8fc\uc81c: \uc571\uc758 AWS \uad8c\ud55c\uc744 \ub178\ub4dc \uc5ed\ud560\uc5d0\uc11c \uc6cc\ud06c\ub85c\ub4dc \ub2e8\uc704 \uc5ed\ud560\ub85c \uc62e\uae30\uae30\n- \ub450 \ubc29\uc2dd(IRSA, EKS Pod Identity)\uc774 \uc5b4\ub5bb\uac8c \ub3d9\uc791\ud558\uace0 \uc5b4\ub5bb\uac8c \ub2e4\ub978\uc9c0\n- \ub9c8\uc9c0\ub9c9\uc5d0 \uc2e4\uc81c EKS \ud074\ub7ec\uc2a4\ud130\uc5d0\uc11c \uc774\uc804 \uacfc\uc815\uc744 \ub77c\uc774\ube0c\ub85c \uc2e4\ud589\n\n\uc548\ub155\ud558\uc138\uc694, AWS Korea \uc624\uc900\uc11d\uc785\ub2c8\ub2e4. \uc624\ub298\uc740 EKS\uc5d0\uc11c \uc560\ud50c\ub9ac\ucf00\uc774\uc158\uc758 AWS \uad8c\ud55c\uc744 \ub178\ub4dc \uc5ed\ud560\uc5d0\uc11c \ub5bc\uc5b4 \ub0b4 \uc6cc\ud06c\ub85c\ub4dc\ub9c8\ub2e4 \uc8fc\ub294 \ubc29\ubc95\uc744 \ub2e4\ub8f9\ub2c8\ub2e4.\nIRSA\uc640 EKS Pod Identity\uac00 \uac01\uac01 \ub0b4\ubd80\uc5d0\uc11c \uc5b4\ub5bb\uac8c \uc790\uaca9 \uc99d\uba85\uc744 \ub9cc\ub4e4\uc5b4 \ub0b4\ub294\uc9c0 \ubcf4\uace0, \uadf8 \ucc28\uc774\ub97c \uc815\ub9ac\ud55c \ub2e4\uc74c, \uc2e4\uc81c \ud074\ub7ec\uc2a4\ud130\uc5d0\uc11c \uac19\uc740 \uc571 \uc138 \ubc8c\uc744 \uc62e\uae30\ub294 \uacfc\uc815\uc744 \ub77c\uc774\ube0c\ub85c \ubcf4\uc5ec \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uba3c\uc800 \uc624\ub298 \uc21c\uc11c\uc785\ub2c8\ub2e4.",
+    2: "\u23f8\ufe0f [1min] [\uc694\uc57d]\n- \ub2e4\uc12f \ubd80\ubd84: \ubb38\uc81c\uc640 \uccb4\uc778 13\ubd84, \ub3d9\uc791 \uc6d0\ub9ac 9\ubd84, \ube44\uad50\uc640 \uc774\uc804 \uc21c\uc11c 11\ubd84, \ub370\ubaa8 12\ubd84, \ub9c8\ubb34\ub9ac 5\ubd84\n- \uc55e 30\ubd84\uc774 \uc6d0\ub9ac, \ub4a4 12\ubd84\uc774 \uadf8 \uc6d0\ub9ac\ub97c \ub208\uc73c\ub85c \ud655\uc778\ud558\ub294 \ub370\ubaa8\n- \ub370\ubaa8 \ub2e8\uacc4\ub9c8\ub2e4 \uc2e4\uce21 \uacb0\uacfc \uc2ac\ub77c\uc774\ub4dc\uac00 \uc788\uc5b4 \ub124\ud2b8\uc6cc\ud06c \ubb38\uc81c\uac00 \uc0dd\uaca8\ub3c4 \uc774\uc5b4 \uac08 \uc218 \uc788\uc74c\n\n\uc21c\uc11c\ub294 \uc774\ub807\uc2b5\ub2c8\ub2e4. \uba3c\uc800 \ub178\ub4dc \uc5ed\ud560\uc5d0 \uc571 \uad8c\ud55c\uc744 \ubd99\uc600\uc744 \ub54c \uc0dd\uae30\ub294 \ubb38\uc81c\uc640, SDK\uac00 \uc790\uaca9 \uc99d\uba85\uc744 \ucc3e\ub294 \uc21c\uc11c\ub97c \ubd05\ub2c8\ub2e4. \uadf8\ub2e4\uc74c IRSA\uc640 Pod Identity\ub97c \ud55c \ub2e8\uacc4\uc529 \ub72f\uc5b4 \ubcf4\uace0 \ube44\uad50\ud569\ub2c8\ub2e4.\n\n\ub4a4\uc758 12\ubd84\uc740 \ub77c\uc774\ube0c \ub370\ubaa8\uc785\ub2c8\ub2e4. \uc55e\uc5d0\uc11c \uc124\uba85\ud55c \ub3d9\uc791\uc774 \uc2e4\uc81c Pod\uc5d0\uc11c \uadf8\ub300\ub85c \ubcf4\uc774\ub294\uc9c0 \ud655\uc778\ud558\ub294 \uc2dc\uac04\uc774\uace0, \ub2e8\uacc4\ub9c8\ub2e4 \uc9c0\ub09c \ub9ac\ud5c8\uc124 \uc2e4\uce21 \ud654\uba74\uc744 \uc2ac\ub77c\uc774\ub4dc\ub85c \uc900\ube44\ud574 \ub450\uc5c8\uc2b5\ub2c8\ub2e4.\n\n\ubb38\uc81c\ubd80\ud130 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.",
+    3: "[2min] [\uc694\uc57d]\n- \uc571\uc758 S3 \uad8c\ud55c\uc744 \ub178\ub4dc \uc5ed\ud560\uc5d0 \ubd99\uc774\uba74 IMDS\uc5d0 \ub2ff\ub294 \uadf8 \ub178\ub4dc\uc758 \ubaa8\ub4e0 Pod\uac00 \uac19\uc740 \uad8c\ud55c\uc744 \uc500\n- \uacb0\uc81c Pod \ud558\ub098\ub97c \uc704\ud574 \ucd94\uac00\ud55c \uad8c\ud55c\uc774 \ub85c\uadf8 \uc218\uc9d1\uae30\uc640 \ubc30\uce58 Job\uc5d0\ub3c4 \uc5f4\ub9bc\n- CloudTrail\uc5d0\ub294 \ub178\ub4dc \uc778\uc2a4\ud134\uc2a4 ID \uc138\uc158\uc73c\ub85c\ub9cc \ub0a8\uc544 \uc6cc\ud06c\ub85c\ub4dc\ub97c \uad6c\ubd84\ud558\uae30 \uc5b4\ub824\uc6c0\n\n\uac00\uc7a5 \ud754\ud55c \uc2dc\uc791\uc810\uc785\ub2c8\ub2e4. \uacb0\uc81c \uc571\uc774 S3 \ubc84\ud0b7\uc744 \uc77d\uc5b4\uc57c \ud574\uc11c \ub178\ub4dc IAM \uc5ed\ud560\uc5d0 s3:GetObject\ub97c \ucd94\uac00\ud569\ub2c8\ub2e4. \ub2f9\uc7a5\uc740 \uc798 \ub3d9\uc791\ud569\ub2c8\ub2e4.\n\n\uadf8\ub7f0\ub370 \uac19\uc740 \ub178\ub4dc\uc5d0\ub294 \ub85c\uadf8 \uc218\uc9d1\uae30\ub3c4, \ubc30\uce58 Job\ub3c4 \ub739\ub2c8\ub2e4. \uc774 Pod\ub4e4\ub3c4 IMDS\uc5d0\uc11c \uac19\uc740 \ub178\ub4dc \uc5ed\ud560 \uc790\uaca9 \uc99d\uba85\uc744 \ubc1b\uc73c\ub2c8 \uacb0\uc81c \ubc84\ud0b7\uc744 \uc77d\uc744 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\n\n\uac10\uc0ac \ucabd\uc5d0\uc11c \ubcf4\uba74 \ub354 \uace4\ub780\ud569\ub2c8\ub2e4. CloudTrail\uc758 \ud638\ucd9c\uc790\ub294 \ub178\ub4dc \uc5ed\ud560\uc5d0 \uc778\uc2a4\ud134\uc2a4 ID\uac00 \ubd99\uc740 \uc138\uc158\uc774\ub77c, \uc5b4\ub290 Pod\uac00 \ud638\ucd9c\ud588\ub294\uc9c0 \ub85c\uadf8\ub9cc\uc73c\ub85c\ub294 \uc54c\uae30 \uc5b4\ub835\uc2b5\ub2c8\ub2e4.\n\n\uc774 \uad6c\uc870\uc758 \uc704\ud5d8\uc744 \uc138 \uac00\uc9c0\ub85c \uc815\ub9ac\ud558\uaca0\uc2b5\ub2c8\ub2e4.",
+    4: "[2.5min] [\uc694\uc57d]\n- \uc704\ud5d8 1: \uad8c\ud55c \ubc94\uc704\uac00 Pod\uac00 \uc544\ub2c8\ub77c \ub178\ub4dc \ub2e8\uc704\n- \uc704\ud5d8 2: CloudTrail\uc5d0\uc11c \uc6cc\ud06c\ub85c\ub4dc\ub97c \uad6c\ubd84\ud560 \uc218 \uc5c6\uc5b4 \ucd94\uc801\uacfc \ud68c\uc218\uac00 \uc5b4\ub824\uc6c0\n- \uc704\ud5d8 3: hop limit 2(\uad00\ub9ac\ud615 \ub178\ub4dc \uadf8\ub8f9\uc5d0\uc11c \ud754\ud55c \uac12)\uba74 hostNetwork\uac00 \uc544\ub2cc \uc77c\ubc18 Pod\ub3c4 IMDS\uc5d0\uc11c \ub178\ub4dc \uc5ed\ud560\uc744 \ubc1b\uc74c\n- \ubaa9\ud45c: \uc571 \uad8c\ud55c\uc744 \uc6cc\ud06c\ub85c\ub4dc \uc5ed\ud560\ub85c, \ub178\ub4dc \uc5ed\ud560\uc5d0\ub294 \ub178\ub4dc \uc6b4\uc601 \uad8c\ud55c\ub9cc, \ub9c8\uc9c0\ub9c9\uc5d0 IMDS \uacbd\ub85c \ucc28\ub2e8\n\n\n\uccab\uc9f8, \uad8c\ud55c \ubc94\uc704\uac00 \ub178\ub4dc \ub2e8\uc704\uc785\ub2c8\ub2e4. \uc2a4\ucf00\uc904\ub7ec\ub294 \uad8c\ud55c\uc744 \ubcf4\uace0 Pod\ub97c \ubc30\uce58\ud558\uc9c0 \uc54a\uc73c\ub2c8, \ub178\ub4dc \uc5ed\ud560\uc5d0 \ubd99\uc778 \uad8c\ud55c\uc740 \uadf8 \ub178\ub4dc\uc5d0 \ub728\ub294 \ubaa8\ub4e0 Pod\uc758 \uad8c\ud55c\uc785\ub2c8\ub2e4.\n\n\ub458\uc9f8, \uac10\uc0ac\uc785\ub2c8\ub2e4. \ud638\ucd9c\uc790\uac00 \ub178\ub4dc \uc5ed\ud560 \uc138\uc158 \ud558\ub098\ub85c \ubcf4\uc5ec\uc11c \uc5b4\ub290 \uc571\uc774 \ubb34\uc5c7\uc744 \ud638\ucd9c\ud588\ub294\uc9c0, \ubb34\uc5c7\uc744 \ud68c\uc218\ud574\ub3c4 \ub418\ub294\uc9c0 \ud310\ub2e8\ud558\uae30 \uc5b4\ub835\uc2b5\ub2c8\ub2e4.\n\n\uc14b\uc9f8\uac00 hop limit\uc785\ub2c8\ub2e4. IMDSv2 \ud1a0\ud070 \uc751\ub2f5\uc774 \ub118\uc744 \uc218 \uc788\ub294 \ud649 \uc218\uc778\ub370, \uad00\ub9ac\ud615 \ub178\ub4dc \uadf8\ub8f9 launch template\uc5d0\uc11c 2\ub85c \ub450\ub294 \uacbd\uc6b0\uac00 \ub9ce\uc2b5\ub2c8\ub2e4. 2\uba74 hostNetwork\ub97c \uc4f0\uc9c0 \uc54a\ub294 \ud3c9\ubc94\ud55c Pod\ub3c4 \ud1a0\ud070\uc744 \ubc1b\uc544 \ub178\ub4dc \uc5ed\ud560\uc744 \uac00\uc838\uac11\ub2c8\ub2e4. \uc624\ub298 \ub370\ubaa8\uc758 \ub808\uac70\uc2dc Pod\ub3c4 \ubc14\ub85c \uc774 \ud3c9\ubc94\ud55c Pod\uc785\ub2c8\ub2e4.\n\n\uadf8\ub798\uc11c \ubaa9\ud45c\ub294 \uc138 \ub2e8\uacc4\uc785\ub2c8\ub2e4. \uc571 \uad8c\ud55c\uc744 \uc6cc\ud06c\ub85c\ub4dc \uc5ed\ud560\ub85c \uc62e\uae30\uace0, \ub178\ub4dc \uc5ed\ud560\uc5d0\ub294 \ub178\ub4dc \uc6b4\uc601 \uad8c\ud55c\ub9cc \ub0a8\uae30\uace0, \ub9c8\uc9c0\ub9c9\uc5d0 Pod\uc758 IMDS \uacbd\ub85c\ub97c \ub2eb\uc2b5\ub2c8\ub2e4.\n\n\uc62e\uae38 \uacf3\uc774 \uc5b4\ub514\uc778\uc9c0, \uc790\uaca9 \uc99d\uba85\uc774 \uc624\ub294 \uc138 \uacbd\ub85c\ub97c \uba3c\uc800 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n[\uc57d\uc5b4]\n- IMDS: Instance Metadata Service, EC2 \uc778\uc2a4\ud134\uc2a4 \uba54\ud0c0\ub370\uc774\ud130 \uc11c\ube44\uc2a4",
+    5: "[2min] [\uc694\uc57d]\n- \uacbd\ub85c 1: IMDSv2\uc5d0\uc11c \ub178\ub4dc \uc5ed\ud560 (\uc624\ub298 \uc62e\uae38 \ub300\uc0c1)\n- \uacbd\ub85c 2: IRSA, Pod\uac00 \ub9ac\uc804 STS AssumeRoleWithWebIdentity\ub97c \uc9c1\uc811 \ud638\ucd9c\n- \uacbd\ub85c 3: Pod Identity, \uac19\uc740 \ub178\ub4dc\uc758 Agent\uac00 EKS Auth\ub97c \ud638\ucd9c\n- \uc138 \uacbd\ub85c \ubaa8\ub450 \uacb0\uacfc\ub294 \uc784\uc2dc \uc790\uaca9 \uc99d\uba85\uc774\uace0, Pod\ub294 \uadf8\uac83\uc73c\ub85c S3 \uc694\uccad\uc5d0 \uc11c\uba85\n\n\uc560\ub2c8\uba54\uc774\uc158\uc774 \uc138 \uc904\uc744 \ucc28\ub840\ub85c \ubcf4\uc5ec \uc90d\ub2c8\ub2e4. \uc704 \uc904\uc774 \uc9c0\uae08 \uc0c1\ud0dc, IMDS\uc5d0\uc11c \ub178\ub4dc \uc5ed\ud560\uc744 \ubc1b\ub294 \uacbd\ub85c\uc785\ub2c8\ub2e4.\n\uac00\uc6b4\ub370\uac00 IRSA\uc785\ub2c8\ub2e4. Pod\uac00 \uc790\uae30 \ud1a0\ud070\uc744 \ub4e4\uace0 \ub9ac\uc804 STS\uc5d0 \uc9c1\uc811 \uac00\uc11c \uc5ed\ud560\uc744 \ub9e1\uc2b5\ub2c8\ub2e4. \uc544\ub798\uac00 Pod Identity\ub85c, Pod\ub294 \uac19\uc740 \ub178\ub4dc\uc758 Agent\uc5d0\ub9cc \ub9d0\uc744 \uac78\uace0 Agent\uac00 EKS Auth\ub97c \ubd80\ub985\ub2c8\ub2e4.\n\n\uc624\ub978\ucabd \uc138 \uce69\uc758 \uc0c9\uacfc \uc774\ub984\uc740 \ub370\ubaa8\uc758 watch \ud654\uba74 \ud45c\uae30\uc640 \uac19\uc2b5\ub2c8\ub2e4. \uc624\ub298 \ub0b4\ub0b4 \ub178\ub4dc\ub294 \ub178\ub780\uc0c9, IRSA\ub294 \ud30c\ub780\uc0c9, Pod Identity\ub294 \ubd84\ud64d\uc0c9\uc73c\ub85c \ubcf4\uaca0\uc2b5\ub2c8\ub2e4.\n\n\uadf8\ub7ec\uba74 \uac19\uc740 \ucf54\ub4dc\uac00 \uc5b4\ub5bb\uac8c \uc774 \uc14b \uc911 \ud558\ub098\ub97c \uace0\ub97c\uae4c\uc694. SDK\uc758 \uc790\uaca9 \uc99d\uba85 \uccb4\uc778\uc785\ub2c8\ub2e4.",
+    6: "[3min] [\uc694\uc57d]\n- \uae30\ubcf8 \uccb4\uc778 \uc21c\uc11c(Pod \uad00\uc810): \ud658\uacbd \ubcc0\uc218 \uc815\uc801 \ud0a4, \uc6f9 ID \ud1a0\ud070(IRSA), \ucee8\ud14c\uc774\ub108 \uacf5\uae09\uc790(Pod Identity), IMDS\n- \ucc98\uc74c \ucc3e\uc740 \ub2e8\uacc4\uc5d0\uc11c \uba48\ucda4. \uadf8\ub798\uc11c EKS\uac00 \ubcc0\uc218\ub9cc \uc8fc\uc785\ud558\uba74 \ucf54\ub4dc \ubcc0\uacbd \uc5c6\uc774 \ucd9c\ucc98\uac00 \ubc14\ub01c\n- \uc544\ubb34\uac83\ub3c4 \uc5c6\uc73c\uba74 IMDS\uae4c\uc9c0 \ub0b4\ub824\uac00 \ub178\ub4dc \uc5ed\ud560\n- \uc8fc\uc11d\uacfc association\uc774 \ubaa8\ub450 \uc788\uc73c\uba74 \uc0c8 Pod\uc5d0\ub294 EKS \uc6f9\ud6c5\uc774 Pod Identity \ubcc0\uc218\ub9cc \ub123\uc74c(association\uc774 \uc774\uae40). \uccb4\uc778 \uc21c\uc11c\uc640 \ud63c\ub3d9 \uae08\uc9c0\n- association \uc804\uc5d0 \ub9cc\ub4e0 Pod\ub294 IRSA \ubcc0\uc218\ub97c \uadf8\ub300\ub85c \uac16\uace0 \uc7ac\uc0dd\uc131 \uc804\uae4c\uc9c0 IRSA\n\n\uc544\ub798 \ubc29\ud5a5\ud0a4\ub97c \ud55c \ubc88\uc529 \ub204\ub974\uba74\uc11c Pod\ub97c \ubc14\uafd4 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. \uc67c\ucabd \ub124 \uce78\uc774 SDK\uac00 \ud655\uc778\ud558\ub294 \uc21c\uc11c\uc785\ub2c8\ub2e4.\n(\uc544\ub798 \ubc29\ud5a5\ud0a4)\n\uccab \ubc88\uc9f8\ub294 \uc544\ubb34\uac83\ub3c4 \uc8fc\uc785\ub418\uc9c0 \uc54a\uc740 \ub808\uac70\uc2dc Pod\uc785\ub2c8\ub2e4. 1, 2, 3\ub2e8\uacc4\uc5d0 \ubcc0\uc218\uac00 \uc5c6\uc73c\ub2c8 \ub9e8 \uc544\ub798 IMDS\uae4c\uc9c0 \ub0b4\ub824\uac00\uc11c \ub178\ub4dc \uc5ed\ud560\uc744 \ubc1b\uc2b5\ub2c8\ub2e4.\n(\uc544\ub798 \ubc29\ud5a5\ud0a4)\nIRSA Pod\uc5d0\ub294 \uc6f9 ID \ud1a0\ud070 \ubcc0\uc218\uac00 \uc788\uc5b4\uc11c 2\ub2e8\uacc4\uc5d0\uc11c \uba48\ucda5\ub2c8\ub2e4. \uc571 \ucf54\ub4dc\ub294 \ub611\uac19\uace0, \ubc14\ub010 \uac74 EKS\uac00 \ub123\uc5b4 \uc900 \ud658\uacbd \ubcc0\uc218\ubfd0\uc785\ub2c8\ub2e4.\n(\uc544\ub798 \ubc29\ud5a5\ud0a4)\nPod Identity Pod\ub294 3\ub2e8\uacc4, \ucee8\ud14c\uc774\ub108 \uacf5\uae09\uc790\uc5d0\uc11c \uba48\ucda5\ub2c8\ub2e4.\n(\uc544\ub798 \ubc29\ud5a5\ud0a4)\n\ub9c8\uc9c0\ub9c9\uc740 \ud5f7\uac08\ub9ac\uae30 \uc26c\uc6b4 \uacbd\uc6b0\uc785\ub2c8\ub2e4. \uccb4\uc778\ub9cc \ubcf4\uba74 IRSA\uac00 \uc55e\uc774\ub2c8 \ub458 \ub2e4 \uac78\uba74 IRSA\uac00 \uc774\uae38 \uac83 \uac19\uc9c0\ub9cc, \uc2e4\uc81c\ub85c\ub294 \uadf8 \uc804 \ub2e8\uacc4\uc5d0\uc11c \uac08\ub9bd\ub2c8\ub2e4. \uc8fc\uc11d\uacfc association\uc774 \ubaa8\ub450 \uc788\ub294 ServiceAccount\ub85c \uc0c8 Pod\ub97c \ub9cc\ub4e4\uba74 EKS \uc6f9\ud6c5\uc774 Pod Identity \ubcc0\uc218\ub9cc \ub123\uace0 IRSA \ubcc0\uc218\ub294 \ub123\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uadf8\ub798\uc11c \uc0c8 Pod\ub294 3\ub2e8\uacc4\uc5d0\uc11c \uba48\ucda5\ub2c8\ub2e4.\n\ub2e4\ub9cc association\uc744 \ub9cc\ub4e4\uae30 \uc804\uc5d0 \ub5a0 \uc788\ub358 Pod\ub294 IRSA \ubcc0\uc218\ub97c \uadf8\ub300\ub85c \uac16\uace0 \uc788\uc5b4\uc11c, \ub2e4\uc2dc \ub9cc\ub4e4\uae30 \uc804\uae4c\uc9c0\ub294 IRSA\ub97c \uc501\ub2c8\ub2e4.\n\n\uc774 \uccb4\uc778 \ub355\ubd84\uc5d0 \uc774\uc804\uc740 \uacb0\uad6d \"\ubb34\uc5c7\uc744 \uc8fc\uc785\ud558\ub290\ub0d0\"\uc758 \ubb38\uc81c\uac00 \ub429\ub2c8\ub2e4.",
+    7: "[2min] [\uc694\uc57d]\n- \ub178\ub4dc \uacbd\ub85c: \uc8fc\uc785 \uc5c6\uc74c, IMDS\uc5d0\uc11c \ub178\ub4dc \uc5ed\ud560\n- IRSA: AWS_ROLE_ARN, AWS_WEB_IDENTITY_TOKEN_FILE, \ud1a0\ud070 \ubcfc\ub968\n- Pod Identity: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE, \ud1a0\ud070 \ubcfc\ub968\n- \uc8fc\uc785\uc740 Pod \uc0dd\uc131 \ub54c\ub9cc \uc77c\uc5b4\ub098\ubbc0\ub85c rollout \ud544\uc694, \uac80\uc99d\uc740 \ud638\ucd9c\uc790 ARN\uc73c\ub85c\n\n\n\ud45c\ub85c \uc815\ub9ac\ud558\uba74 \uc774\ub807\uc2b5\ub2c8\ub2e4. \ub178\ub4dc \uacbd\ub85c\ub294 \uc544\ubb34\uac83\ub3c4 \uc8fc\uc785\ub418\uc9c0 \uc54a\uace0, IRSA\uc640 Pod Identity\ub294 \uc11c\ub85c \ub2e4\ub978 \ud658\uacbd \ubcc0\uc218 \ub450 \uac1c\uc640 \ud1a0\ud070 \ubcfc\ub968\uc774 \ub4e4\uc5b4\uac11\ub2c8\ub2e4. \ub370\ubaa8\uc758 diff \ub2e8\uacc4\uc5d0\uc11c \uc774 \ubcc0\uc218 \uc774\ub984\uc744 \uc2e4\uc81c Pod\uc5d0\uc11c \uadf8\ub300\ub85c \ud655\uc778\ud569\ub2c8\ub2e4.\n\n\uc911\uc694\ud55c \uc810\uc740 \uc8fc\uc785\uc774 Pod\ub97c \ub9cc\ub4e4 \ub54c\ub9cc \uc77c\uc5b4\ub09c\ub2e4\ub294 \uac81\ub2c8\ub2e4. \uc8fc\uc11d\uc744 \ub2ec\uac70\ub098 association\uc744 \ub9cc\ub4e4\uc5b4\ub3c4 \uc774\ubbf8 \ub5a0 \uc788\ub294 Pod\ub294 \uadf8\ub300\ub85c\ub77c rollout\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.\n\n\uadf8\ub9ac\uace0 \ud655\uc778\ud560 \ub54c\ub294 API \ud638\ucd9c\uc774 \uc131\uacf5\ud588\ub294\uc9c0\uac00 \uc544\ub2c8\ub77c \ud638\ucd9c\uc790 ARN\uc774 \ubb34\uc5c7\uc778\uc9c0 \ubd10\uc57c \ud569\ub2c8\ub2e4. \ub178\ub4dc \uc5ed\ud560\uc5d0 \uad8c\ud55c\uc774 \ub0a8\uc544 \uc788\uc73c\uba74 \uc774\uc804\uc774 \uc548 \ub410\uc5b4\ub3c4 \uc131\uacf5\ud558\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4.\n\n\uc774\uc81c \ub450 \ubc29\uc2dd\uc758 \ub0b4\ubd80\ub97c \ud55c \ub2e8\uacc4\uc529 \ubcf4\uaca0\uc2b5\ub2c8\ub2e4. IRSA\ubd80\ud130\uc785\ub2c8\ub2e4."
+  };
+  const deck = new SlideFramework({
+    logoSrc: "./common/pptx-theme/images/logo_dark.png",
+    logoDarkSrc: "./common/pptx-theme/images/logo_1.png",
+    footer: "\u00a9 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved.",
+    
+    pagination: true,
+    sidebar: true,
+    presenterNotes: presenterNotes,
+    onSlideChange: (index, slide) => {}
+  });
+</script>
+</body>
+</html>

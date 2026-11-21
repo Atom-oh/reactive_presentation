@@ -406,7 +406,7 @@ Pod가 이 경로에 닿을 수 있으면, SDK는 다른 공급자를 찾지 못
 <div class="tab-content" data-tab="cmp-tags">
   <div class="wid-grid-2">
     <div class="wid-card wid-irsa wid-edge"><span class="wid-chip wid-irsa">IRSA</span><h4 class="wid-gap-top">역할 세션 이름만</h4><div class="wid-muted">세션 태그가 없습니다.</div></div>
-    <div class="wid-card wid-podid wid-edge"><span class="wid-chip wid-podid">Pod Identity</span><h4 class="wid-gap-top">세션 태그 6개</h4><div class="wid-row wid-mono"><code>eks-cluster-arn</code><code>eks-cluster-name</code><code>kubernetes-namespace</code><code>kubernetes-service-account</code><code>kubernetes-pod-name</code><code>kubernetes-pod-uid</code></div><div class="wid-cap">신뢰 조건에는 보통 앞의 3개(클러스터 ARN, namespace, SA)를 씁니다.</div><div class="wid-muted">태그로 리소스 접근을 거는 <span class="rp-detail" data-detail="abac">ABAC(attribute-based access control)</span>이 가능합니다.</div></div>
+    <div class="wid-card wid-podid wid-edge"><span class="wid-chip wid-podid">Pod Identity</span><h4 class="wid-gap-top">세션 태그 6개</h4><div class="wid-row wid-mono"><code>eks-cluster-arn</code><code>eks-cluster-name</code><code>kubernetes-namespace</code><code>kubernetes-service-account</code><code>kubernetes-pod-name</code><code>kubernetes-pod-uid</code></div><div class="wid-cap">신뢰 조건에는 보통 <code>eks-cluster-arn</code>, <code>kubernetes-namespace</code>, <code>kubernetes-service-account</code> 3개를 씁니다.</div><div class="wid-muted">태그로 리소스 접근을 거는 <span class="rp-detail" data-detail="abac">ABAC(attribute-based access control)</span>이 가능합니다.</div></div>
   </div>
 </div>
 <div class="tab-content" data-tab="cmp-scale">

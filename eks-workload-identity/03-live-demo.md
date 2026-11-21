@@ -56,6 +56,7 @@ export AWS_REGION=ap-northeast-2  RUN_ID=d1124
 <pre class="wid-term"><span class="wid-dim"># 두 번째 터미널: 2초마다 갱신되는 표</span>
 ./demo.sh watch "$RUN_ID"</pre>
 </div>
+<div class="wid-card wid-gap-top fragment fade-up" data-fragment-index="5"><strong>청중용 실시간 화면 (읽기 전용):</strong> <code>https://wid-demo.atomai.click/</code> <span class="wid-cap">CloudFront → VPC origin → internal ALB → 대시보드 Pod. <code>./demo.sh page-up "$RUN_ID"</code>로 발표 전에 띄움. 발표 중에만 열려 있음</span></div>
 <div class="wid-src">데모 코드와 런북: github.com/Atom-oh/kubernetes-docs, examples/security/eks-workload-identity</div>
 :::
 
@@ -65,7 +66,7 @@ export AWS_REGION=ap-northeast-2  RUN_ID=d1124
 - 기존 EKS 1.36 클러스터에 전용 관리형 노드 그룹 한 대(t3.medium, Private 서브넷, taint)를 붙임
 - 출발점: IMDSv2 필수, hop limit 2, 노드 역할에 앱의 s3:GetObject. 레거시 Pod도 hostNetwork 없는 일반 Pod
 - orders 앱 세 벌(legacy, irsa, podid)이 3초마다 GetCallerIdentity와 GetObject, JSON 한 줄 출력
-- up은 발표 전에 실행(약 5분), watch는 두 번째 터미널
+- up과 page-up은 발표 전에 실행(약 5분, 약 10분), watch는 두 번째 터미널, 청중은 공개 읽기 전용 페이지
 
 데모 환경입니다. 이미 있는 EKS 1.36 클러스터에 이 데모만 쓰는 노드 그룹 한 대를 붙였고, 그 위에 같은 orders 앱을 세 벌 띄웠습니다. 출발점은 흔한 운영 상태 그대로, hop limit 2에 노드 역할이 앱의 S3 권한을 갖고 있습니다.
 {cue: click}
@@ -74,6 +75,8 @@ export AWS_REGION=ap-northeast-2  RUN_ID=d1124
 {cue: click}
 {cue: click}
 up은 발표 전에 돌려 두었고, 왼쪽 터미널에서 watch가 2초마다 세 벌의 상태를 보여 줍니다.
+{cue: click}
+여러분도 휴대폰이나 노트북으로 이 주소를 열어 보세요. 같은 상태를 카드로 보여 주는 읽기 전용 페이지입니다. CloudFront에서 VPC origin을 거쳐 internal ALB로만 들어오고, 대시보드 Pod에는 AWS 권한이 없습니다. 페이지가 안 열리면 터미널 watch로 진행합니다.
 {cue: demo}
 화면을 터미널로 전환합니다. watch가 떠 있지 않으면 ./demo.sh watch "$RUN_ID"를 먼저 실행합니다.
 발표자 참고: 클리커의 오른쪽, Space, PageDown 키는 캔버스, 탭, 타임라인의 단계를 건너뛰고 다음 슬라이드로 넘어갑니다. 단계는 아래 방향키나 Play로 넘깁니다.

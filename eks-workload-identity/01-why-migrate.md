@@ -99,7 +99,7 @@ Pod가 이 경로에 닿을 수 있으면, SDK는 다른 공급자를 찾지 못
 :::
 
 :::notes
-{timing: 2min}
+{timing: 1.5min}
 [요약]
 - 앱의 S3 권한을 노드 역할에 붙이면 IMDS에 닿는 그 노드의 모든 Pod가 같은 권한을 씀
 - 결제 Pod 하나를 위해 추가한 권한이 로그 수집기와 배치 Job에도 열림
@@ -164,7 +164,7 @@ IMDSv2는 PUT 요청으로 세션 토큰을 먼저 받습니다. hop limit은 �
 :::
 
 :::notes
-{timing: 2.5min}
+{timing: 2min}
 [요약]
 - 위험 1: 권한 범위가 Pod가 아니라 노드 단위
 - 위험 2: CloudTrail에서 워크로드를 구분할 수 없어 추적과 회수가 어려움
@@ -466,7 +466,7 @@ IMDSv2는 PUT 요청으로 세션 토큰을 먼저 받습니다. hop limit은 �
 :::
 
 :::notes
-{timing: 3min}
+{timing: 2.5min}
 [요약]
 - 기본 체인 순서(Pod 관점): 환경 변수 정적 키, 웹 ID 토큰(IRSA), 컨테이너 공급자(Pod Identity), IMDS
 - 처음 찾은 단계에서 멈춤. 그래서 EKS가 변수만 주입하면 코드 변경 없이 출처가 바뀜
@@ -511,7 +511,7 @@ Pod Identity Pod는 3단계, 컨테이너 공급자에서 멈춥니다.
 :::
 
 :::notes
-{timing: 2min}
+{timing: 1.5min}
 [요약]
 - 노드 경로: 주입 없음, IMDS에서 노드 역할
 - IRSA: AWS_ROLE_ARN, AWS_WEB_IDENTITY_TOKEN_FILE, 토큰 볼륨
@@ -524,6 +524,68 @@ Pod Identity Pod는 3단계, 컨테이너 공급자에서 멈춥니다.
 중요한 점은 주입이 Pod를 만들 때만 일어난다는 겁니다. 주석을 달거나 association을 만들어도 이미 떠 있는 Pod는 그대로라 rollout이 필요합니다.
 {cue: click}
 그리고 확인할 때는 API 호출이 성공했는지가 아니라 호출자 ARN이 무엇인지 봐야 합니다. 노드 역할에 권한이 남아 있으면 이전이 안 됐어도 성공하기 때문입니다.
+{cue: transition}
+그럼 이 변수를 누가, 언제 넣는지 보겠습니다.
+:::
+
+---
+<!-- Slide 8: 누가 언제 주입하나 -->
+@type: content
+@title: 변수는 누가, 언제 넣나: API 서버의 mutating 웹훅
+
+## 변수는 누가, 언제 넣나: API 서버의 mutating 웹훅
+
+:::html
+<div class="wid-grid-2">
+<div>
+<ol class="wid-flow">
+  <li class="fragment fade-up" data-fragment-index="1"><strong>Pod 생성 요청</strong> <span class="wid-muted">rollout → ReplicaSet 컨트롤러가 API 서버에 Pod CREATE</span></li>
+  <li class="fragment fade-up" data-fragment-index="1"><strong>인증·인가</strong> <span class="wid-muted">API 서버가 요청자를 확인</span></li>
+  <li class="fragment fade-up wid-hl" data-fragment-index="2"><strong>Mutating admission: <code>iam-for-pods.amazonaws.com</code></strong><br><span class="wid-muted">EKS가 컨트롤 플레인에서 운영하는 웹훅(amazon-eks-pod-identity-webhook)이 Pod의 ServiceAccount를 봅니다.</span>
+    <div class="wid-cap">association 있음 → <code>AWS_CONTAINER_*</code> 두 개 + 토큰 볼륨(aud <code>pods.eks.amazonaws.com</code>)<br>주석만 있음 → <code>AWS_ROLE_ARN</code>, <code>AWS_WEB_IDENTITY_TOKEN_FILE</code> + 토큰 볼륨(aud <code>sts.amazonaws.com</code>)<br>둘 다 있음 → Pod Identity만 · 아무것도 없음 → 그대로</div></li>
+  <li class="fragment fade-up" data-fragment-index="3"><strong>Validating admission → etcd 저장</strong> <span class="wid-muted">Pod Security 등 검사 후 저장. 이때 Pod 스펙은 이미 바뀌어 있음</span></li>
+  <li class="fragment fade-up" data-fragment-index="3"><strong>kubelet</strong> <span class="wid-muted">projected 토큰을 해당 audience로 발급받아 파일로 마운트하고 만료 전에 갱신</span></li>
+  <li class="fragment fade-up" data-fragment-index="3"><strong>컨테이너 시작</strong> <span class="wid-muted">SDK가 환경 변수를 읽고 앞 슬라이드의 체인을 탑니다</span></li>
+</ol>
+</div>
+<div>
+<pre class="wid-term fragment fade-up" data-fragment-index="4"><span class="wid-dim"># 데모 클러스터에서 확인한 웹훅 설정</span>
+$ kubectl get mutatingwebhookconfiguration \
+    pod-identity-webhook -o yaml
+name: iam-for-pods.amazonaws.com
+clientConfig.url: https://127.0.0.1:23443/mutate
+rules: CREATE pods
+failurePolicy: Ignore
+objectSelector: eks.amazonaws.com/skip-pod-identity-webhook 없음</pre>
+<div class="callout callout-warning fragment fade-up" data-fragment-index="5"><strong class="wid-t-warning">CREATE에서만 동작</strong>: 실행 중인 Pod는 바뀌지 않습니다. 설정 뒤에는 rollout.</div>
+<div class="callout callout-danger fragment fade-up" data-fragment-index="5"><strong>failurePolicy: Ignore</strong>: 웹훅이 응답하지 못하면 변수 없이 Pod가 만들어져 조용히 노드 역할로 동작합니다. 그래서 호출자 ARN으로 확인합니다.</div>
+<div class="callout callout-info fragment fade-up" data-fragment-index="6"><strong class="wid-t-info">미리 확인</strong>: <code>kubectl create --dry-run=server</code>로 Pod 템플릿을 보내면 웹훅을 거친 결과를 Pod를 만들지 않고 볼 수 있습니다.</div>
+</div>
+</div>
+<div class="wid-src">출처: 데모 클러스터(EKS 1.36)의 MutatingWebhookConfiguration, <a href="https://github.com/aws/amazon-eks-pod-identity-webhook">amazon-eks-pod-identity-webhook</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-id-how-it-works.html">Understand how EKS Pod Identity works</a></div>
+:::
+
+:::notes
+{timing: 2min}
+[요약]
+- 변수를 넣는 주체: API 서버의 mutating admission 단계에서 EKS가 컨트롤 플레인에 운영하는 웹훅(iam-for-pods.amazonaws.com, amazon-eks-pod-identity-webhook). 노드에는 웹훅 Pod가 없음
+- 시점: Pod CREATE 때만. ServiceAccount의 주석(IRSA)과 association(Pod Identity)을 보고 env와 토큰 볼륨을 패치
+- 둘 다 있으면 Pod Identity만. kubelet은 토큰을 audience별로 발급·갱신
+- failurePolicy Ignore라 웹훅 실패 시 변수 없이 생성 → 노드 역할. 호출자 ARN과 dry-run으로 확인
+
+그럼 이 변수는 누가 언제 넣을까요?
+{cue: click}
+Pod를 만들면 요청이 API 서버로 갑니다. rollout이면 ReplicaSet 컨트롤러가 Pod CREATE를 보냅니다. API 서버는 먼저 인증과 인가를 합니다.
+{cue: click}
+그다음이 핵심인 mutating admission 단계입니다. EKS가 컨트롤 플레인 안에서 운영하는 웹훅이 있고, 이름이 iam-for-pods.amazonaws.com입니다. 이 웹훅이 Pod의 ServiceAccount를 보고, association이 있으면 Pod Identity 변수 두 개와 토큰 볼륨을, 주석만 있으면 IRSA 변수와 토큰 볼륨을 Pod 스펙에 끼워 넣습니다. 둘 다 있으면 Pod Identity만 넣습니다.
+{cue: click}
+그 뒤 검증을 거쳐 저장되고, kubelet이 Pod를 띄우면서 토큰을 해당 audience로 발급받아 파일로 마운트합니다. 컨테이너가 시작되면 SDK가 그 변수를 읽고 앞에서 본 체인을 탑니다.
+{cue: click}
+실제 데모 클러스터에서 웹훅 설정을 꺼내 보면 주소가 127.0.0.1, 즉 컨트롤 플레인 안입니다. 그래서 노드에서 kubectl get pods로 찾아도 보이지 않습니다.
+{cue: click}
+여기서 두 가지를 기억하면 됩니다. 규칙이 Pod CREATE뿐이라 이미 떠 있는 Pod는 rollout 전까지 바뀌지 않습니다. 그리고 failurePolicy가 Ignore라서, 웹훅이 응답하지 못하면 Pod는 변수 없이 그냥 만들어지고 조용히 노드 역할을 씁니다. 그래서 확인은 항상 호출자 ARN으로 합니다.
+{cue: click}
+미리 확인하고 싶으면 kubectl create --dry-run=server로 Pod 템플릿을 보내 보세요. 웹훅을 거친 결과가 돌아오니 Pod를 만들지 않고도 무엇이 주입될지 볼 수 있습니다. 데모 스크립트도 이 방법으로 association 반영을 기다립니다.
 {cue: transition}
 이제 두 방식의 내부를 한 단계씩 보겠습니다. IRSA부터입니다.
 :::

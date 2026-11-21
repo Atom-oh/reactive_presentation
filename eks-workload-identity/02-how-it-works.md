@@ -784,7 +784,7 @@ Agent는 애드온 하나입니다. 노드 네트워크에서 링크 로컬 주�
 <div class="tab-content" data-tab="cmp-env">
   <div class="wid-grid-2">
     <div class="wid-card wid-irsa wid-edge"><span class="wid-chip wid-irsa">IRSA</span><h4 class="wid-gap-top">EKS 밖에서도 같은 방식</h4><div class="wid-muted">EKS의 EC2와 Fargate, EKS Anywhere, ROSA(Red Hat OpenShift Service on AWS), EC2의 자체 관리 Kubernetes</div></div>
-    <div class="wid-card wid-podid wid-edge"><span class="wid-chip wid-podid">Pod Identity</span><h4 class="wid-gap-top">EKS의 Linux EC2 노드만</h4><div class="wid-muted">Fargate, Windows, Outposts, EKS Anywhere는 지원하지 않습니다.</div></div>
+    <div class="wid-card wid-podid wid-edge"><span class="wid-chip wid-podid">Pod Identity</span><h4 class="wid-gap-top">EKS Linux EC2 노드 + Hybrid Nodes</h4><div class="wid-muted">Hybrid Nodes는 IMDS가 없어 Agent의 하이브리드 DaemonSet과 노드 자격 증명 파일(<code>enableCredentialsFile</code>)이 필요합니다. Fargate, Windows, Outposts, EKS Anywhere는 지원하지 않습니다.</div></div>
   </div>
 </div>
 <div class="tab-content" data-tab="cmp-xacct">
@@ -793,7 +793,7 @@ Agent는 애드온 하나입니다. 노드 네트워크에서 링크 로컬 주�
     <div class="wid-card wid-podid wid-edge"><span class="wid-chip wid-podid">Pod Identity</span><h4 class="wid-gap-top">association 역할은 같은 계정</h4><div class="wid-muted">대상 역할을 지정하거나 역할 체이닝으로 위임합니다.</div></div>
   </div>
 </div>
-<div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html">Amazon EKS User Guide, IRSA와 Pod Identity 비교</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html">EKS Pod Identity considerations</a></div>
+<div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html">Amazon EKS User Guide, IRSA와 Pod Identity 비교</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html">EKS Pod Identity considerations</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html">Configure add-ons for hybrid nodes</a></div>
 :::
 
 :::detail abac "ABAC (Attribute-based access control)"
@@ -808,7 +808,7 @@ IAM 정책 조건에서 `aws:PrincipalTag/kubernetes-namespace` 같은 세션 �
 - 경로: IRSA는 Pod에서 리전 STS(Pod가 STS 할당량 사용), Pod Identity는 Agent에서 EKS Auth
 - 세션 태그: IRSA 없음, Pod Identity는 6개(클러스터 ARN과 이름, namespace, SA, Pod 이름과 UID)로 ABAC 가능
 - 한도: OIDC provider 계정당 기본 100개, 신뢰 정책 2,048자(역할당 4개 안팎) 대 association 클러스터당 5,000개
-- 실행 환경: IRSA는 Fargate, EKS Anywhere, ROSA, 자체 관리 Kubernetes까지, Pod Identity는 EKS Linux EC2만
+- 실행 환경: IRSA는 Fargate, EKS Anywhere, ROSA, 자체 관리 Kubernetes까지, Pod Identity는 EKS Linux EC2와 Hybrid Nodes(추가 설정 필요)
 - 교차 계정: IRSA는 대상 계정이 provider 신뢰, Pod Identity는 같은 계정 역할에서 대상 역할 지정 또는 체이닝
 
 이 장은 다섯 탭입니다. 첫째 경로, IRSA는 Pod가 STS를 직접 부르고 Pod Identity는 Agent를 거칩니다. 프라이빗 클러스터라면 필요한 엔드포인트가 다릅니다.
@@ -817,7 +817,7 @@ IAM 정책 조건에서 `aws:PrincipalTag/kubernetes-namespace` 같은 세션 �
 (아래 방향키)
 셋째 한도입니다. OIDC provider는 계정당 기본 100개, 신뢰 정책은 기본 2,048자라 역할 하나에 클러스터 네 개 정도면 찹니다. 클러스터가 많은 조직이라면 이 숫자가 결정적입니다.
 (아래 방향키)
-넷째 실행 환경은 IRSA가 넓습니다. Fargate나 Windows 노드, EKS 밖의 Kubernetes라면 IRSA입니다.
+넷째 실행 환경은 IRSA가 넓습니다. Fargate나 Windows 노드, EKS 밖의 Kubernetes라면 IRSA입니다. EKS Hybrid Nodes에서는 둘 다 됩니다. 다만 Pod Identity Agent는 원래 IMDS에서 노드 자격 증명을 받는데 온프레미스 노드에는 IMDS가 없어서, 노드 쪽에 자격 증명 파일을 만들고 Agent의 하이브리드 DaemonSet을 켜야 합니다.
 (아래 방향키)
 마지막 교차 계정은 둘 다 가능하지만 방식이 다릅니다.
 {cue: transition}
@@ -839,7 +839,7 @@ IAM 정책 조건에서 `aws:PrincipalTag/kubernetes-namespace` 같은 세션 �
 <div class="wid-grid-3">
   <div class="wid-card wid-podid wid-edge fragment fade-up" data-fragment-index="1">
     <span class="wid-chip wid-podid">Pod Identity</span>
-    <h4 class="wid-gap-top">신규 EKS Linux EC2 워크로드</h4>
+    <h4 class="wid-gap-top">신규 EKS Linux EC2·Hybrid Nodes 워크로드</h4>
     <div class="wid-muted">여러 클러스터에서 같은 역할, 세션 태그 ABAC, 팀 간 책임 분리</div>
   </div>
   <div class="wid-card wid-irsa wid-edge fragment fade-up" data-fragment-index="2">

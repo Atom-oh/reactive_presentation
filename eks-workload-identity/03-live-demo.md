@@ -535,12 +535,12 @@ orders-podid    Pod Identity   wid-d1124-podid                <span class="wid-o
 {timing: 1min}
 [요약]
 - Q4 정답: eks-auth:AssumeRoleForPodIdentity (AmazonEKSWorkerNodePolicy에 포함), 업무 권한은 Pod Identity 역할
-- Q5 정답: Fargate. Pod Identity는 EKS Linux EC2 노드만
+- Q5 정답: Fargate. Pod Identity는 EKS Linux EC2 노드와 Hybrid Nodes(추가 설정)에서만
 - Q6 정답: hostNetwork Pod. 노드 네트워크를 그대로 써서 hop limit과 무관
 
 운영 문제입니다.
 {cue: pause}
-네 번째는 eks-auth 권한입니다. Agent가 EKS Auth를 부르는 창구 권한이고, 앱 권한은 노드 역할에 남기지 않습니다. 다섯 번째는 Fargate로, Pod Identity는 EKS의 Linux EC2 노드에서만 됩니다. 여섯 번째는 hostNetwork Pod라서 따로 통제해야 합니다.
+네 번째는 eks-auth 권한입니다. Agent가 EKS Auth를 부르는 창구 권한이고, 앱 권한은 노드 역할에 남기지 않습니다. 다섯 번째는 Fargate로, Pod Identity는 EKS의 Linux EC2 노드와 추가 설정을 한 Hybrid Nodes에서만 됩니다. 여섯 번째는 hostNetwork Pod라서 따로 통제해야 합니다.
 {cue: transition}
 오늘 내용을 정리하겠습니다.
 :::

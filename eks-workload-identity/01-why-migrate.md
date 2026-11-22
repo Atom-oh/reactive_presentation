@@ -187,7 +187,7 @@ IMDSv2는 PUT 요청으로 세션 토큰을 먼저 받습니다. hop limit은 �
 :::
 
 ---
-<!-- Slide 5: 세 갈래 경로 -->
+<!-- Slide 5: 세 갈래 경로 (단계별 장면) -->
 @type: content
 @fit: off
 @title: Pod의 자격 증명은 세 곳에서 온다
@@ -195,17 +195,104 @@ IMDSv2는 PUT 요청으로 세션 토큰을 먼저 받습니다. hop limit은 �
 ## Pod의 자격 증명은 세 곳에서 온다
 
 :::html
-<div class="wid-fig-row">
-  <figure class="wid-fig">
-    <img src="images/ko-security-17-eks-workload-identity-migration-anim-0.svg" alt="세 Pod가 자격 증명을 받는 경로. 노드 역할 Pod는 IMDSv2에서, IRSA Pod는 STS AssumeRoleWithWebIdentity에서, Pod Identity Pod는 같은 노드의 Pod Identity Agent와 EKS Auth를 거쳐 임시 자격 증명을 받고, 각자 받은 자격 증명으로 S3 요청에 서명한다.">
-    <figcaption>파란 봉투는 자격 증명 요청, 초록 열쇠는 돌려받은 임시 자격 증명 (18초 반복)</figcaption>
-  </figure>
-  <div class="wid-stack fragment fade-up" data-fragment-index="1">
-    <div class="wid-card wid-node wid-edge"><span class="wid-chip wid-node">node (IMDS)</span><div class="wid-muted">IMDSv2에서 노드 역할</div></div>
-    <div class="wid-card wid-irsa wid-edge"><span class="wid-chip wid-irsa">IRSA (STS)</span><div class="wid-muted">IAM Roles for Service Accounts. Pod가 리전 STS(Security Token Service)를 직접 호출</div></div>
-    <div class="wid-card wid-podid wid-edge"><span class="wid-chip wid-podid">Pod Identity</span><div class="wid-muted">같은 노드의 Agent가 EKS Auth 호출</div></div>
-  </div>
+
+<div id="wid-paths">
+<p>같은 노드의 orders 앱 세 벌이 서로 다른 곳에서 임시 자격 증명을 받고, 결국 같은 방식으로 S3 요청에 서명한다.</p>
+<ol>
+<li>노드 역할: 주입된 변수가 없는 Pod는 IMDSv2에서 노드 역할을 받는다</li>
+<li>IRSA: Pod가 projected 토큰으로 리전 STS AssumeRoleWithWebIdentity를 호출한다</li>
+<li>Pod Identity (1): Pod는 같은 노드의 Pod Identity Agent에만 묻는다</li>
+<li>Pod Identity (2): Agent가 EKS Auth AssumeRoleForPodIdentity를 호출해 받아 온다</li>
+<li>결과: 세 Pod 모두 받은 임시 자격 증명으로 S3 요청에 서명한다</li>
+</ol>
 </div>
+:::
+
+:::script
+import('./common/line-art-scene/flowscene.js').then(function (m) {
+  m.mount('#wid-paths', {
+    aria: '같은 노드의 orders 앱 세 벌 중 노드 역할 Pod는 IMDSv2에서, IRSA Pod는 리전 STS에서, Pod Identity Pod는 같은 노드의 Agent와 EKS Auth를 거쳐 임시 자격 증명을 받고, 세 Pod 모두 그것으로 S3 요청에 서명하는 흐름',
+    W: 900, H: 590,
+    zones: [
+      { box: [0, 0, 0, 17.2, 3.6, 0.4], label: '워커 노드 (EC2, 인스턴스 프로파일)', labelAt: [0.2, 0, -1.0],
+        icon: './common/aws-icons/groups/EC2-instance-contents_32.svg' },
+      { box: [18.4, 0, 0, 13.6, 3.6, 0.4], label: 'AWS 리전 (ap-northeast-2)', labelAt: [18.6, 0, -1.0],
+        icon: './common/aws-icons/groups/Region_32.svg' }
+    ],
+    parts: {
+      imds:    { boxes: [[0.5, 1.2, 0.4, 3.0, 1.8, 1.2]] },
+      legacy:  { boxes: [[4.3, 1.2, 0.4, 2.4, 1.8, 1.4]] },
+      irsa:    { boxes: [[7.3, 1.2, 0.4, 2.4, 1.8, 1.4]] },
+      podid:   { boxes: [[10.3, 1.2, 0.4, 2.4, 1.8, 1.4]] },
+      agent:   { boxes: [[13.5, 1.2, 0.4, 3.0, 1.8, 1.6]] },
+      sts:     { boxes: [[19.6, 1.2, 0.4, 3.0, 1.8, 1.8]] },
+      eksauth: { boxes: [[24.0, 1.2, 0.4, 3.0, 1.8, 1.8]] },
+      s3:      { boxes: [[28.2, 1.2, 0.4, 3.0, 1.8, 2.2]] }
+    },
+    icons: [
+      { part: 'imds',    at: [2.0, 2.1, 1.6],  src: './common/aws-icons/services/Arch_Amazon-EC2_48.svg', size: 26 },
+      { part: 'agent',   at: [15.0, 2.1, 2.0], src: './common/aws-icons/services/Arch_Amazon-Elastic-Kubernetes-Service_48.svg', size: 26 },
+      { part: 'sts',     at: [21.1, 2.1, 2.2], src: './common/aws-icons/services/Arch_AWS-Identity-and-Access-Management_48.svg' },
+      { part: 'eksauth', at: [25.5, 2.1, 2.2], src: './common/aws-icons/services/Arch_Amazon-Elastic-Kubernetes-Service_48.svg' },
+      { part: 's3',      at: [29.7, 2.1, 2.6], src: './common/aws-icons/services/Arch_Amazon-Simple-Storage-Service_48.svg', size: 34 }
+    ],
+    wires: {
+      imds: { pts: [[5.5, 2.1, 1.8], [5.5, 2.1, 2.5], [2.0, 2.1, 2.5], [2.0, 2.1, 1.6]] },
+      sts:  { pts: [[8.5, 2.1, 1.8], [8.5, 2.1, 3.3], [21.1, 2.1, 3.3], [21.1, 2.1, 2.2]] },
+      pid:  { pts: [[11.5, 2.1, 1.8], [11.5, 2.1, 2.6], [15.0, 2.1, 2.6], [15.0, 2.1, 2.0], [15.0, 2.1, 4.3], [25.5, 2.1, 4.3], [25.5, 2.1, 2.2]] },
+      s3:   { pts: [[5.5, 1.2, 0.7], [5.5, 0.5, 0.45], [8.5, 0.5, 0.45], [8.5, 1.2, 0.7], [8.5, 0.5, 0.45], [11.5, 0.5, 0.45], [11.5, 1.2, 0.7], [11.5, 0.5, 0.45], [29.0, 0.5, 0.45], [29.7, 1.2, 1.0]] }
+    },
+    tags: [
+      { id: 'n-legacy', at: [5.5, 1.2, 1.0],  text: 'orders-legacy', cls: 'fs-sub', show: ['node', 'irsa', 'agent', 'eksauth', 's3'] },
+      { id: 'n-irsa',   at: [8.5, 1.2, 1.0],  text: 'orders-irsa',   cls: 'fs-sub', show: ['node', 'irsa', 'agent', 'eksauth', 's3'] },
+      { id: 'n-podid',  at: [11.5, 1.2, 1.0], text: 'orders-podid',  cls: 'fs-sub', show: ['node', 'irsa', 'agent', 'eksauth', 's3'] },
+      { id: 'ip-imds',  at: [2.0, 1.2, 0.9],  text: '169.254.169.254', cls: 'fs-sub', show: ['node', 'irsa', 'agent', 'eksauth', 's3'] },
+      { id: 'ip-agent', at: [15.0, 1.2, 1.0], text: '169.254.170.23',  cls: 'fs-sub', show: ['node', 'irsa', 'agent', 'eksauth', 's3'] },
+      { id: 'aud-sts',  at: [14.6, 2.1, 3.55], text: 'token aud: sts.amazonaws.com', show: ['irsa'], overview: false },
+      { id: 'aud-pods', at: [20.3, 2.1, 4.55], text: 'token aud: pods.eks.amazonaws.com', show: ['eksauth'], overview: false }
+    ],
+    callouts: [
+      { id: 'imds',    n: 1, anchor: [2.0, 2.1, 1.6],  at: [20, 150],  title: 'IMDSv2', sub: '노드 역할을 준다', charW: 9 },
+      { id: 'sts',     n: 2, anchor: [21.1, 2.1, 2.2], at: [610, 165], title: 'AWS STS', sub: 'AssumeRoleWithWebIdentity', charW: 9 },
+      { id: 'agent',   n: 3, anchor: [15.0, 2.1, 2.0], at: [380, 95],  title: 'Pod Identity Agent', sub: '노드마다 DaemonSet, hostNetwork', charW: 8.5 },
+      { id: 'eksauth', n: 4, anchor: [25.5, 2.1, 2.2], at: [790, 95],  title: 'EKS Auth', sub: 'AssumeRoleForPodIdentity', charW: 9 },
+      { id: 's3',      n: 5, anchor: [29.7, 1.2, 0.8], at: [850, 470], title: 'Amazon S3', sub: '받은 자격 증명으로 서명', charW: 9 }
+    ],
+    code: [
+      'PUT 169.254.169.254/latest/api/token',
+      'GET .../iam/security-credentials/역할',
+      'sts:AssumeRoleWithWebIdentity',
+      'GET 169.254.170.23/v1/credentials',
+      'eks-auth:AssumeRoleForPodIdentity',
+      's3:GetObject   (SigV4 서명)'
+    ],
+    hint: '장면을 누르거나 ↓ 키로 다음 단계, ↑ 키로 이전 단계',
+    overview: { label: '전체 그림', title: '같은 코드, 세 갈래 경로',
+      say: '한 노드에 같은 orders 앱이 세 벌 있습니다. 노드 안에는 <b>IMDS</b>와 <b>Agent</b>, 오른쪽에는 리전 서비스가 있습니다. 한 번에 한 경로씩 따라갑니다.' },
+    phases: [
+      { key: 'node', d: 3.2, focus: ['imds', 'legacy'], badge: 'imds', lines: [1, 2],
+        packet: { wire: 'imds', mode: 'pingpong', colour: 'var(--warning)' },
+        label: '1  노드 역할 (IMDS)', title: '주입된 변수가 없으면 IMDS까지 간다',
+        say: '<b>orders-legacy</b>에는 AWS 변수가 없어서, SDK 체인의 끝인 <b>IMDSv2</b>가 노드 인스턴스 프로파일의 역할을 줍니다. 이 노드의 모든 Pod가 같은 권한입니다.' },
+      { key: 'irsa', d: 4.2, focus: ['sts', 'irsa'], badge: 'sts', lines: [3],
+        packet: { wire: 'sts', mode: 'pingpong', colour: 'var(--info)' },
+        label: '2  IRSA (STS)', title: 'Pod가 토큰을 들고 STS로 간다',
+        say: '<b>orders-irsa</b>는 projected 토큰(aud <b>sts.amazonaws.com</b>)을 들고 리전 <b>STS</b>에 AssumeRoleWithWebIdentity를 직접 호출합니다. 노드 역할은 쓰지 않습니다.' },
+      { key: 'agent', d: 3.0, focus: ['agent', 'podid'], badge: 'agent', lines: [4],
+        packet: { wire: 'pid', span: [0, 2], colour: 'var(--pink)' },
+        label: '3  Pod Identity (Agent)', title: 'Pod는 같은 노드의 Agent에만 묻는다',
+        say: '<b>orders-podid</b>는 링크 로컬 주소 <b>169.254.170.23</b>의 Pod Identity Agent에 자기 토큰을 건넵니다. 자격 증명을 얻으려고 Pod가 AWS API를 직접 부르지는 않습니다.' },
+      { key: 'eksauth', d: 4.4, focus: ['eksauth', 'agent', 'podid'], badge: 'eksauth', lines: [5],
+        packet: { wire: 'pid', span: [2, 6], mode: 'pingpong', colour: 'var(--pink)' },
+        label: '4  Pod Identity (EKS Auth)', title: 'Agent가 EKS Auth에서 받아 온다',
+        say: 'Agent가 토큰(aud <b>pods.eks.amazonaws.com</b>)으로 <b>EKS Auth</b>에 AssumeRoleForPodIdentity를 호출하고, 받은 자격 증명을 Pod에 돌려줍니다.' },
+      { key: 's3', d: 3.6, focus: ['s3', 'legacy', 'irsa', 'podid'], badge: 's3', lines: [6],
+        packet: { wire: 's3' },
+        label: '5  결과', title: '세 경로 모두 임시 자격 증명으로 서명',
+        say: '어디서 받든 결과는 <b>임시 자격 증명</b>이고, 세 Pod는 같은 코드로 S3 요청에 서명합니다. 다른 것은 <b>어느 역할</b>이냐 하나입니다.' }
+    ]
+  });
+});
 :::
 
 :::notes
@@ -213,13 +300,15 @@ IMDSv2는 PUT 요청으로 세션 토큰을 먼저 받습니다. hop limit은 �
 [요약]
 - 경로 1: IMDSv2에서 노드 역할 (오늘 옮길 대상)
 - 경로 2: IRSA, Pod가 리전 STS AssumeRoleWithWebIdentity를 직접 호출
-- 경로 3: Pod Identity, 같은 노드의 Agent가 EKS Auth를 호출
+- 경로 3: Pod Identity, Pod는 같은 노드의 Agent에만 묻고 Agent가 EKS Auth를 호출
 - 세 경로 모두 결과는 임시 자격 증명이고, Pod는 그것으로 S3 요청에 서명
 
-애니메이션이 세 줄을 차례로 보여 줍니다. 위 줄이 지금 상태, IMDS에서 노드 역할을 받는 경로입니다.
-가운데가 IRSA입니다. Pod가 자기 토큰을 들고 리전 STS에 직접 가서 역할을 맡습니다. 아래가 Pod Identity로, Pod는 같은 노드의 Agent에만 말을 걸고 Agent가 EKS Auth를 부릅니다.
-{cue: click}
-오른쪽 세 칩의 색과 이름은 데모의 watch 화면 표기와 같습니다. 오늘 내내 노드는 노란색, IRSA는 파란색, Pod Identity는 분홍색으로 보겠습니다.
+한 노드에 같은 orders 앱이 세 벌 떠 있습니다. 오늘 데모에 그대로 나오는 세 벌입니다. 한 경로씩 따라가 보겠습니다.
+먼저 지금 상태입니다. orders-legacy에는 AWS 변수가 하나도 없어서, SDK가 체인 끝의 IMDS까지 내려가 노드 역할을 받습니다.↓
+두 번째가 IRSA입니다. Pod가 자기 토큰을 들고 리전 STS에 직접 가서 역할을 맡습니다.↓
+세 번째 Pod Identity는 두 단계로 봅니다. Pod는 같은 노드의 Agent에만 말을 겁니다.↓
+그리고 Agent가 EKS Auth를 불러 자격 증명을 받아 와서 Pod에 돌려줍니다.↓
+마지막으로, 어디서 받았든 결과는 같은 임시 자격 증명이고 세 Pod 모두 같은 코드로 S3에 서명합니다. 슬라이드 내내 노드는 노란색, IRSA는 파란색, Pod Identity는 분홍색으로 보겠습니다.↓
 {cue: transition}
 그러면 같은 코드가 어떻게 이 셋 중 하나를 고를까요. SDK의 자격 증명 체인입니다.
 :::

@@ -27,739 +27,422 @@ if (!window.__widNotesLoader) {
 {timing: 0.5min}
 [요약]
 - 주제: 앱의 AWS 권한을 노드 역할에서 워크로드 단위 역할로 옮기기
-- 두 방식(IRSA, EKS Pod Identity)이 어떻게 동작하고 어떻게 다른지
-- 마지막에 실제 EKS 클러스터에서 이전 과정을 라이브로 실행
+- 두 방식(IRSA, EKS Pod Identity)의 차이와 장단점, 보안과 운영 비용에서 얻는 것
+- 방식별 이전 절차, 마지막에 실제 EKS 클러스터에서 라이브로 실행
 
 안녕하세요, AWS Korea 오준석입니다. 오늘은 EKS에서 애플리케이션의 AWS 권한을 노드 역할에서 떼어 내 워크로드마다 주는 방법을 다룹니다.
-IRSA와 EKS Pod Identity가 각각 내부에서 어떻게 자격 증명을 만들어 내는지 보고, 그 차이를 정리한 다음, 실제 클러스터에서 같은 앱 세 벌을 옮기는 과정을 라이브로 보여 드리겠습니다.
+노드 역할의 문제는 다들 알고 계시니 짧게 넘기고, IRSA와 EKS Pod Identity가 무엇이 다르고 각각 어떻게 옮기는지에 집중하겠습니다. 마지막에는 실제 클러스터에서 같은 앱 세 벌을 옮기는 과정을 라이브로 보여 드리겠습니다.
 {cue: transition}
 먼저 오늘 순서입니다.
 :::
 
 ---
 <!-- Slide 2: 아젠다 -->
-@type: agenda
+@type: content
 @timing: 50min
 @title: 오늘 세션 구성
 
 ## 오늘 세션 구성
 
-1. 왜 옮기나, 자격 증명 체인 (14분)
-2. IRSA와 Pod Identity의 동작 원리 (9분)
-3. 비교, 선택 기준, 운영 이전 순서 (11분)
-4. 라이브 데모 (12분)
-5. 문제 해결, 퀴즈, Q&A (5분)
-
-> 데모가 막히면 슬라이드에 같은 단계의 실측 화면이 있습니다.
+:::html
+<div class="wid-grid-4">
+  <div class="wid-card"><span class="wid-chip">1부, 13분</span><h4 class="wid-gap-top">차이와 선택</h4><div class="wid-muted">출발점, 두 방식의 차이와 장단점, 보안과 운영 비용, 선택 기준</div></div>
+  <div class="wid-card"><span class="wid-chip">2부, 11분</span><h4 class="wid-gap-top">이전 절차</h4><div class="wid-muted">공통 다섯 단계, IRSA와 Pod Identity 명령, 공존, IMDS 차단</div></div>
+  <div class="wid-card"><span class="wid-chip">3부, 13분</span><h4 class="wid-gap-top">라이브 데모</h4><div class="wid-muted">같은 앱 세 벌을 옮기고 노드 역할 권한을 회수</div></div>
+  <div class="wid-card"><span class="wid-chip">마무리, 4분</span><h4 class="wid-gap-top">문제 해결, 퀴즈</h4><div class="wid-muted">막혔을 때 보는 순서와 정리</div></div>
+</div>
+<div class="wid-grid-2 wid-gap-top">
+  <div class="wid-panel"><strong>Q&amp;A, 9분</strong> <span class="wid-muted">남는 시간은 질문으로</span></div>
+  <div class="wid-panel"><strong>부록: 동작 원리</strong> <span class="wid-muted">자격 증명 경로, SDK 체인, 주입, 두 방식의 단계별 흐름. 질문이 나오면 사용</span></div>
+</div>
+<div class="callout callout-info wid-gap-top">데모가 막히면 슬라이드에 같은 단계의 실측 화면이 있습니다.</div>
+:::
 
 :::notes
 {timing: 1min}
 [요약]
-- 다섯 부분: 문제와 체인 14분, 동작 원리 9분, 비교와 이전 순서 11분, 데모 12분, 마무리 5분
-- 앞 30분이 원리, 뒤 12분이 그 원리를 눈으로 확인하는 데모
-- 데모 단계마다 실측 결과 슬라이드가 있어 네트워크 문제가 생겨도 이어 갈 수 있음
+- 1부 13분: 출발점 한 장, 두 방식의 차이, 장단점, 보안과 운영 비용 이점, 선택 기준
+- 2부 11분: 공통 다섯 단계, IRSA와 Pod Identity의 이전 명령, 공존, IMDS 차단
+- 3부 데모 13분과 마무리 4분, 남는 시간은 Q&A. 동작 원리는 부록에 있어 질문이 나오면 사용
 
-순서는 이렇습니다. 먼저 노드 역할에 앱 권한을 붙였을 때 생기는 문제와, SDK가 자격 증명을 찾는 순서를 봅니다. 그다음 IRSA와 Pod Identity를 한 단계씩 뜯어 보고 비교합니다.
+순서는 이렇습니다. 노드 역할의 문제는 한 장으로 짚고, 바로 IRSA와 Pod Identity의 차이와 장단점, 그리고 옮기면 보안과 운영 비용에서 무엇이 좋아지는지 봅니다.
 {cue: pause}
-뒤의 12분은 라이브 데모입니다. 앞에서 설명한 동작이 실제 Pod에서 그대로 보이는지 확인하는 시간이고, 단계마다 지난 리허설 실측 화면을 슬라이드로 준비해 두었습니다.
+2부는 실제로 옮기는 절차입니다. 공통 순서와 방식별 명령을 보고, 3부에서 그 절차를 라이브로 실행합니다. 내부 동작 원리는 부록에 두었으니, 질문이 나오면 그 장을 열겠습니다.
 {cue: transition}
-문제부터 보겠습니다.
+출발점부터 보겠습니다.
 :::
 
 ---
-<!-- Slide 3: 노드 역할 공유 -->
+<!-- Slide 3: 출발점과 목표 -->
 @type: content
-@title: 결제 Pod에 준 권한이 옆 Pod에도 열린다
+@title: 출발점은 알고 있다, 오늘은 옮기는 법
 
-## 결제 Pod에 준 권한이 옆 Pod에도 열린다
+## 출발점은 알고 있다, 오늘은 옮기는 법
 
 :::html
-<div class="wid-grid-21">
-  <div class="wid-card wid-node wid-edge fragment fade-up" data-fragment-index="1">
-    <h4>워커 노드 한 대 (EC2)</h4>
-    <div class="wid-stack">
-      <div class="wid-row"><strong>결제 API Pod</strong><span class="wid-chip wid-node">node (IMDS)</span></div>
-      <div class="wid-row"><strong>로그 수집기 Pod</strong><span class="wid-chip wid-node">node (IMDS)</span></div>
-      <div class="wid-row"><strong>배치 Job Pod</strong><span class="wid-chip wid-node">node (IMDS)</span></div>
-    </div>
-    <div class="wid-muted wid-gap-top">세 Pod 모두 <span class="rp-detail" data-tip="EC2 인스턴스 메타데이터 서비스. 노드 안에서 169.254.169.254로 부르면 인스턴스 프로파일 역할의 임시 자격 증명을 줍니다." data-detail="imds">IMDS</span>(Instance Metadata Service)에서 같은 자격 증명을 받습니다.</div>
+<div class="wid-grid-2">
+  <div class="wid-card wid-node wid-edge">
+    <span class="wid-chip wid-node">지금: 앱 권한이 노드 역할에</span>
+    <ul class="wid-gap-top">
+      <li>같은 노드의 모든 Pod가 같은 권한을 씁니다.</li>
+      <li>CloudTrail 호출자가 노드 세션이라 워크로드를 구분하기 어렵습니다.</li>
+      <li>hop limit 2면 일반 Pod도 IMDS에서 노드 역할을 받습니다.</li>
+    </ul>
   </div>
-  <div class="wid-stack">
-    <div class="wid-card fragment fade-up" data-fragment-index="2">
-      <h4>노드 IAM 역할 (인스턴스 프로파일)</h4>
-      <div class="wid-mono">AmazonEKSWorkerNodePolicy</div>
-      <div class="wid-mono">AmazonEC2ContainerRegistryPullOnly</div>
-      <div class="wid-mono wid-t-danger">+ s3:GetObject (결제 앱 권한)</div>
-    </div>
-    <div class="wid-card fragment fade-up" data-fragment-index="3">
-      <h4>CloudTrail에 남는 호출자</h4>
-      <div class="wid-mono">assumed-role/&lt;node-role&gt;/i-&lt;instance-id&gt;</div>
-      <div class="wid-muted">세 Pod의 호출이 같은 노드 세션으로 보입니다.</div>
-    </div>
+  <div class="wid-card">
+    <span class="wid-chip">목표: 세 단계</span>
+    <ol class="wid-gap-top">
+      <li>앱 권한을 워크로드 역할로 옮긴다 (IRSA 또는 Pod Identity)</li>
+      <li>노드 역할에서 앱 정책만 회수한다</li>
+      <li>Pod의 IMDS 경로를 닫는다 (IMDSv2, hop limit 1)</li>
+    </ol>
   </div>
 </div>
-:::
-
-:::detail imds "IMDS와 인스턴스 프로파일"
-tip: EC2 인스턴스 메타데이터 서비스: 노드 역할의 임시 자격 증명을 주는 링크 로컬 엔드포인트
-
-EC2 인스턴스 프로파일은 노드 IAM 역할을 인스턴스에 전달합니다. 인스턴스 안에서 IMDS(`169.254.169.254`)를 호출하면 그 역할의 임시 자격 증명을 받습니다. IMDSv2는 먼저 PUT으로 세션 토큰을 받은 뒤 그 토큰으로 자격 증명을 조회합니다.
-
-Pod가 이 경로에 닿을 수 있으면, SDK는 다른 공급자를 찾지 못했을 때 IMDS까지 내려가 노드 역할을 씁니다.
+<div class="callout callout-info wid-gap-top"><strong class="wid-t-info">오늘 답할 질문</strong>: 둘 중 무엇으로, 어떤 순서로 옮기고, 옮기면 무엇이 좋아지는가</div>
 :::
 
 :::notes
 {timing: 1.5min}
 [요약]
-- 앱의 S3 권한을 노드 역할에 붙이면 IMDS에 닿는 그 노드의 모든 Pod가 같은 권한을 씀
-- 결제 Pod 하나를 위해 추가한 권한이 로그 수집기와 배치 Job에도 열림
-- CloudTrail에는 노드 인스턴스 ID 세션으로만 남아 워크로드를 구분하기 어려움
+- 노드 역할 공유의 문제(권한 범위, 감사, hop limit 2)는 이미 아는 내용이라 한 장으로 정리
+- 목표 세 단계: 워크로드 역할로 이전, 노드 역할에서 앱 정책 회수, Pod의 IMDS 경로 차단
+- 오늘의 질문: 어느 방식으로, 어떤 순서로, 무엇이 좋아지는가
 
-가장 흔한 시작점입니다. 결제 앱이 S3 버킷을 읽어야 해서 노드 IAM 역할에 s3:GetObject를 추가합니다. 당장은 잘 동작합니다.
-{cue: click}
-그런데 같은 노드에는 로그 수집기도, 배치 Job도 뜹니다. 이 Pod들도 IMDS에서 같은 노드 역할 자격 증명을 받으니 결제 버킷을 읽을 수 있습니다.
-{cue: click}
-{cue: click}
-감사 쪽에서 보면 더 곤란합니다. CloudTrail의 호출자는 노드 역할에 인스턴스 ID가 붙은 세션이라, 어느 Pod가 호출했는지 로그만으로는 알기 어렵습니다.
+출발점은 다들 알고 계신 상태입니다. 앱이 쓰는 S3 같은 권한이 노드 역할에 붙어 있어서 같은 노드의 Pod가 모두 같은 권한을 씁니다. CloudTrail에도 노드 세션으로만 남고, hop limit이 2면 평범한 Pod도 IMDS에서 노드 역할을 받아 갑니다.
+그래서 목표는 세 단계입니다. 앱 권한을 워크로드 역할로 옮기고, 노드 역할에서 앱 정책만 회수하고, 마지막에 Pod의 IMDS 경로를 닫습니다.
+오늘은 이 가운데 "어떻게 옮기나"에 집중합니다. 두 방식이 어떻게 다르고, 무엇을 고르고, 어떤 순서로 옮기는지입니다.
 {cue: transition}
-이 구조의 위험을 세 가지로 정리하겠습니다.
-:::
-
----
-<!-- Slide 4: 세 가지 위험 -->
-@type: content
-@title: 노드 역할 공유의 세 가지 위험
-
-## 노드 역할 공유의 세 가지 위험
-
-:::html
-<div class="wid-grid-3">
-  <div class="wid-card fragment fade-up" data-fragment-index="1">
-    <h4 class="wid-t-danger">권한 범위가 노드 단위</h4>
-    <div class="wid-muted">한 앱에 필요한 권한이 그 노드에 스케줄되는 모든 Pod의 권한이 됩니다.</div>
-    <div class="wid-cap wid-gap-top"><span class="rp-detail" data-detail="blast">어떤 Pod가 영향을 받나</span></div>
-  </div>
-  <div class="wid-card fragment fade-up" data-fragment-index="2">
-    <h4 class="wid-t-danger">감사 로그로 구분 불가</h4>
-    <div class="wid-muted">CloudTrail 호출자는 노드 역할 세션 하나입니다. 워크로드별 추적과 회수가 어렵습니다.</div>
-    <div class="wid-cap wid-gap-top"><span class="rp-detail" data-detail="trail">CloudTrail에서 무엇이 보이나</span></div>
-  </div>
-  <div class="wid-card fragment fade-up" data-fragment-index="3">
-    <h4 class="wid-t-danger">hop limit 2면 일반 Pod도 IMDS에 닿음</h4>
-    <div class="wid-muted">hostNetwork가 아닌 Pod도 IMDSv2 토큰을 받아 노드 역할을 가져갑니다.</div>
-    <div class="wid-cap wid-gap-top"><span class="rp-detail" data-detail="hop">hop limit이란</span></div>
-  </div>
-</div>
-<div class="callout callout-info wid-gap-top fragment fade-up" data-fragment-index="4"><strong class="wid-t-info">목표</strong>: 앱 권한은 워크로드 전용 역할로 옮기고, 노드 역할에는 노드 운영에 필요한 권한만 남긴 뒤 Pod의 IMDS 경로를 닫습니다.</div>
-:::
-
-:::detail blast "권한 범위가 노드 단위가 되는 이유"
-tip: 같은 노드에 스케줄되는 모든 Pod가 노드 역할 자격 증명을 받을 수 있습니다.
-
-노드 역할은 노드 하나에 하나입니다. 스케줄러는 권한을 보고 Pod를 배치하지 않으므로, 앱 권한을 노드 역할에 붙이면 그 노드 그룹에 뜨는 모든 Pod가 같은 권한을 갖게 됩니다. 결제 Pod를 위한 S3 읽기가 로그 수집기와 배치 Job에도 열립니다.
-:::
-
-:::detail trail "CloudTrail의 호출자"
-tip: 호출자는 노드 역할 세션(인스턴스 ID)으로만 보입니다.
-
-EC2 인스턴스 프로파일로 받은 자격 증명의 세션은 노드 역할과 인스턴스 ID로 기록됩니다. 같은 노드의 Pod가 모두 같은 세션을 쓰므로 어느 워크로드가 호출했는지 로그만으로 구분하기 어렵습니다. S3 객체 접근을 CloudTrail에서 보려면 버킷의 데이터 이벤트도 켜야 합니다.
-:::
-
-:::detail hop "IMDS hop limit (HttpPutResponseHopLimit)"
-tip: IMDSv2 토큰 응답이 넘을 수 있는 네트워크 홉 수
-
-IMDSv2는 PUT 요청으로 세션 토큰을 먼저 받습니다. hop limit은 이 토큰 응답이 지날 수 있는 홉 수입니다. 일반 Pod는 노드와 다른 네트워크 namespace에 있어 한 홉이 더 필요하므로, 값이 2 이상이면 Pod도 토큰을 받습니다.
-
-관리형 노드 그룹의 launch template이 이 값을 2로 두는 경우가 많습니다. 이전을 마친 뒤 1로 내려 일반 Pod의 경로를 닫습니다. `hostNetwork` Pod는 노드 네트워크를 그대로 쓰므로 hop limit과 관계없이 IMDS에 닿습니다.
-:::
-
-:::notes
-{timing: 2min}
-[요약]
-- 위험 1: 권한 범위가 Pod가 아니라 노드 단위
-- 위험 2: CloudTrail에서 워크로드를 구분할 수 없어 추적과 회수가 어려움
-- 위험 3: hop limit 2(관리형 노드 그룹에서 흔한 값)면 hostNetwork가 아닌 일반 Pod도 IMDS에서 노드 역할을 받음
-- 목표: 앱 권한을 워크로드 역할로, 노드 역할에는 노드 운영 권한만, 마지막에 IMDS 경로 차단
-
-{cue: click}
-첫째, 권한 범위가 노드 단위입니다. 스케줄러는 권한을 보고 Pod를 배치하지 않으니, 노드 역할에 붙인 권한은 그 노드에 뜨는 모든 Pod의 권한입니다.
-{cue: click}
-둘째, 감사입니다. 호출자가 노드 역할 세션 하나로 보여서 어느 앱이 무엇을 호출했는지, 무엇을 회수해도 되는지 판단하기 어렵습니다.
-{cue: click}
-셋째가 hop limit입니다. IMDSv2 토큰 응답이 넘을 수 있는 홉 수인데, 관리형 노드 그룹 launch template에서 2로 두는 경우가 많습니다. 2면 hostNetwork를 쓰지 않는 평범한 Pod도 토큰을 받아 노드 역할을 가져갑니다. 오늘 데모의 레거시 Pod도 바로 이 평범한 Pod입니다.
-{cue: click}
-그래서 목표는 세 단계입니다. 앱 권한을 워크로드 역할로 옮기고, 노드 역할에는 노드 운영 권한만 남기고, 마지막에 Pod의 IMDS 경로를 닫습니다.
-{cue: transition}
-옮길 곳을 보기 전에, EKS에서 IAM이 쓰이는 길부터 나눠 보겠습니다.
+먼저 두 방식이 설정을 어디에 거는지부터 보겠습니다.
 
 [약어]
 - IMDS: Instance Metadata Service, EC2 인스턴스 메타데이터 서비스
 :::
 
 ---
-<!-- Slide 5: IAM이 쓰이는 두 길 -->
+<!-- Slide 4: 비교 1, 연결 방식 -->
 @type: content
-@title: IAM이 쓰이는 길은 둘, 오늘은 Pod 쪽
+@title: 비교 1: 신뢰와 연결을 거는 위치
 
-## IAM이 쓰이는 길은 둘, 오늘은 Pod 쪽
+## 비교 1: 신뢰와 연결을 거는 위치
 
 :::html
-<div class="wid-grid-2">
-  <div class="wid-card fragment fade-up" data-fragment-index="1">
-    <span class="wid-chip">클러스터 API</span>
-    <h4 class="wid-gap-top">사람과 노드가 Kubernetes API로</h4>
-    <div class="wid-muted">kubectl, kubelet이 클러스터에 들어갈 때</div>
-    <div class="wid-stack wid-gap-top">
-      <div class="wid-row"><strong>토큰</strong><span class="wid-mono"><span class="rp-detail" data-detail="gettoken" data-tip="STS GetCallerIdentity를 미리 서명한 URL을 base64로 담은 bearer 토큰입니다.">aws eks get-token</span></span></div>
-      <div class="wid-row"><strong>검증</strong><span>control plane의 IAM Authenticator가 STS로 호출자 확인</span></div>
-      <div class="wid-row"><strong>매핑</strong><span>access entry (기존 aws-auth ConfigMap은 이전 권고)</span></div>
-      <div class="wid-row"><strong>권한</strong><span>access policy + Kubernetes RBAC</span></div>
-    </div>
-  </div>
-  <div class="wid-card fragment fade-up" data-fragment-index="2">
-    <span class="wid-chip">오늘 주제</span>
-    <h4 class="wid-gap-top">Pod가 AWS API로</h4>
-    <div class="wid-muted">앱이 S3 같은 AWS 서비스를 부를 때</div>
-    <div class="wid-stack wid-gap-top">
-      <div class="wid-row"><span class="wid-chip wid-irsa">IRSA</span><span>OIDC 토큰 → STS AssumeRoleWithWebIdentity</span></div>
-      <div class="wid-row"><span class="wid-chip wid-podid">Pod Identity</span><span>Agent → EKS Auth AssumeRoleForPodIdentity</span></div>
-      <div class="wid-row"><strong>연결</strong><span>ServiceAccount 주석 또는 association</span></div>
-      <div class="wid-row"><strong>access entry</strong><span>관여하지 않음</span></div>
-    </div>
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="cmp-setup">준비와 연결 위치</button>
+  <button class="tab-btn" data-tab="cmp-trust">신뢰 정책 JSON</button>
+  <button class="tab-btn" data-tab="cmp-duty">권한 분리</button>
+</div>
+<div class="tab-content active" data-tab="cmp-setup">
+  <div class="wid-grid-2">
+    <div class="wid-card wid-irsa wid-edge"><span class="wid-chip wid-irsa">IRSA</span>
+      <div class="wid-muted wid-gap-top"><strong>클러스터 준비</strong>: 클러스터마다 IAM OIDC provider 등록</div>
+      <div class="wid-muted"><strong>연결 위치</strong>: Kubernetes ServiceAccount 주석</div>
+      <div class="wid-mono wid-gap-top">eks.amazonaws.com/role-arn: arn:aws:iam::&lt;ACCOUNT_ID&gt;:role/wid-&lt;run&gt;-irsa</div></div>
+    <div class="wid-card wid-podid wid-edge"><span class="wid-chip wid-podid">Pod Identity</span>
+      <div class="wid-muted wid-gap-top"><strong>클러스터 준비</strong>: 클러스터마다 Agent 애드온 (Auto Mode는 내장)</div>
+      <div class="wid-muted"><strong>연결 위치</strong>: EKS API association, Kubernetes 객체 변경 없음</div>
+      <div class="wid-mono wid-gap-top">aws eks create-pod-identity-association --namespace wid-&lt;run&gt; --service-account orders-podid --role-arn ...</div></div>
   </div>
 </div>
-<div class="callout callout-info wid-gap-top fragment fade-up" data-fragment-index="3"><span class="wid-chip wid-node">노드 역할</span> 두 길에 모두 나옵니다. access entry(<span class="wid-mono">EC2_LINUX</span>, Hybrid Nodes는 <span class="wid-mono">HYBRID_LINUX</span>)로 노드가 클러스터에 가입하고, 같은 역할로 Pod Identity Agent가 EKS Auth를 부릅니다. 그래서 이전 마지막에 지우는 것은 앱 권한뿐이고, 노드 역할과 access entry는 그대로 둡니다.</div>
-<div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/grant-k8s-access.html">Amazon EKS User Guide, Grant IAM users and roles access to Kubernetes APIs</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/creating-access-entries.html">Create access entries</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/migrating-access-entries.html">Migrating aws-auth entries to access entries</a>, <a href="https://docs.aws.amazon.com/eks/latest/best-practices/identity-and-access-management.html">EKS Best Practices, Identity and Access Management</a></div>
-:::
-
-:::detail gettoken "kubectl이 보내는 토큰"
-tip: STS GetCallerIdentity를 미리 서명한 URL을 base64로 담은 bearer 토큰
-
-kubeconfig의 exec 설정이 요청 때 `aws eks get-token`을 불러 토큰을 받습니다. 토큰은 `k8s-aws-v1.` 뒤에 STS `GetCallerIdentity` presigned URL을 base64로 붙인 값입니다. control plane의 AWS IAM Authenticator for Kubernetes가 이 URL로 STS에 호출자를 확인하고, 그 IAM ARN을 access entry(또는 aws-auth ConfigMap)로 Kubernetes 사용자와 그룹에 매핑합니다.
-
-같은 IAM 역할이 양쪽에 매핑되어 있으면 access entry가 우선합니다. kubectl에서 `Unauthorized`가 나오면 Pod 자격 증명이 아니라 이 매핑을 먼저 봅니다.
-:::
-
-:::notes
-{timing: 1min}
-[요약]
-- EKS에서 IAM이 쓰이는 길은 둘: 사람과 노드가 Kubernetes API로 들어가는 길, Pod가 AWS API를 부르는 길
-- 클러스터 API: aws eks get-token 토큰(STS presigned URL) → IAM Authenticator가 STS로 확인 → access entry 또는 aws-auth로 매핑 → access policy와 RBAC
-- Pod 쪽: IRSA와 Pod Identity. access entry와 무관
-- 노드 역할은 양쪽에 다 나옴: access entry로 노드 가입, Agent가 같은 역할로 EKS Auth 호출. 그래서 지우는 건 앱 권한뿐
-
-그 전에 범위를 한 번 나누겠습니다. EKS에서 IAM이 쓰이는 길은 두 개입니다.
-{cue: click}
-하나는 사람과 노드가 Kubernetes API로 들어가는 길입니다. kubectl이 aws eks get-token으로 STS 서명 토큰을 만들고, control plane이 STS로 누구인지 확인한 다음 access entry로 Kubernetes 사용자와 그룹에 매핑합니다. 권한은 access policy와 RBAC이 정합니다.
-{cue: click}
-오늘 다루는 건 다른 하나, Pod가 S3 같은 AWS API를 부를 때입니다. IRSA와 Pod Identity가 여기 속하고, access entry는 관여하지 않습니다. 그래서 Pod 권한 문제를 access entry에서 찾으면 안 되고, 반대로 kubectl Unauthorized는 Pod 자격 증명이 아니라 매핑을 봐야 합니다.
-{cue: click}
-헷갈리는 지점이 노드 역할입니다. 노드는 이 역할로 access entry를 통해 클러스터에 가입하고, Pod Identity Agent도 같은 역할로 EKS Auth를 부릅니다. 그래서 이전 마지막에 노드 역할 자체를 지우는 게 아니라, 거기 붙어 있던 앱 권한만 지웁니다.
-{cue: transition}
-이제 Pod 쪽, 자격 증명이 오는 세 경로를 보겠습니다.
-
-[약어]
-- RBAC: Role-Based Access Control
-- STS: AWS Security Token Service
-:::
-
----
-<!-- Slide 6: 세 갈래 경로 (단계별 장면) -->
-@type: content
-@fit: off
-@title: Pod의 자격 증명은 세 곳에서 온다
-
-## Pod의 자격 증명은 세 곳에서 온다
-
-:::html
-
-<div id="wid-paths">
-<p>같은 노드의 orders 앱 세 벌이 서로 다른 곳에서 임시 자격 증명을 받고, 결국 같은 방식으로 S3 요청에 서명한다.</p>
-<ol>
-<li>노드 역할: 주입된 변수가 없는 Pod는 IMDSv2에서 노드 역할을 받는다</li>
-<li>IRSA(IAM Roles for Service Accounts): Pod가 projected 토큰으로 리전 STS(Security Token Service) AssumeRoleWithWebIdentity를 호출한다</li>
-<li>Pod Identity (1): Pod는 같은 노드의 Pod Identity Agent에만 묻는다</li>
-<li>Pod Identity (2): Agent가 EKS Auth AssumeRoleForPodIdentity를 호출해 받아 온다</li>
-<li>결과: 세 Pod 모두 받은 임시 자격 증명으로 S3 요청에 서명한다</li>
-</ol>
+<div class="tab-content" data-tab="cmp-trust">
+  <div class="wid-grid-2">
+    <div><span class="wid-chip wid-irsa">IRSA: Federated + aud, sub</span>
+<pre class="wid-term">{
+  "Effect": "Allow",
+  "Principal": {"Federated":
+    "arn:aws:iam::&lt;ACCOUNT_ID&gt;:oidc-provider/&lt;OIDC_ISSUER&gt;"},
+  "Action": "sts:AssumeRoleWithWebIdentity",
+  "Condition": {"StringEquals": {
+    "&lt;OIDC_ISSUER&gt;:aud": "sts.amazonaws.com",
+    "&lt;OIDC_ISSUER&gt;:sub":
+      "system:serviceaccount:&lt;NAMESPACE&gt;:&lt;IRSA_SA&gt;"
+  }}
+}</pre>
+      <div class="wid-cap">클러스터가 늘 때마다 이 문장을 추가합니다.</div></div>
+    <div><span class="wid-chip wid-podid">Pod Identity: 서비스 principal 하나</span>
+<pre class="wid-term">{
+  "Effect": "Allow",
+  "Principal": {"Service": "pods.eks.amazonaws.com"},
+  "Action": ["sts:AssumeRole", "sts:TagSession"],
+  "Condition": {"StringEquals": {
+    "aws:RequestTag/eks-cluster-arn": "&lt;CLUSTER_ARN&gt;",
+    "aws:RequestTag/kubernetes-namespace": "&lt;NAMESPACE&gt;",
+    "aws:RequestTag/kubernetes-service-account":
+      "&lt;POD_IDENTITY_SA&gt;"
+  }}
+}</pre>
+      <div class="wid-cap">조건은 선택입니다. 쓰려면 association의 세션 태그를 켠 상태로 둡니다.</div></div>
+  </div>
 </div>
-:::
-
-:::script
-import('./common/line-art-scene/flowscene.js').then(function (m) {
-  m.mount('#wid-paths', {
-    aria: '같은 노드의 orders 앱 세 벌 중 노드 역할 Pod는 IMDSv2에서, IRSA Pod는 리전 STS에서, Pod Identity Pod는 같은 노드의 Agent와 EKS Auth를 거쳐 임시 자격 증명을 받고, 세 Pod 모두 그것으로 S3 요청에 서명하는 흐름',
-    W: 900, H: 590,
-    zones: [
-      { box: [0, 0, 0, 17.2, 3.6, 0.4], label: '워커 노드 (EC2, 인스턴스 프로파일)', labelAt: [0.2, 0, -0.3],
-        icon: './common/aws-icons/groups/EC2-instance-contents_32.svg' },
-      { box: [18.4, 0, 0, 13.6, 3.6, 0.4], label: 'AWS 리전 (ap-northeast-2)', labelAt: [18.6, 0, -0.3],
-        icon: './common/aws-icons/groups/Region_32.svg' }
-    ],
-    parts: {
-      imds:    { boxes: [[0.5, 1.2, 0.4, 3.0, 1.8, 1.2]] },
-      legacy:  { boxes: [[4.3, 1.2, 0.4, 2.4, 1.8, 1.4]] },
-      irsa:    { boxes: [[7.3, 1.2, 0.4, 2.4, 1.8, 1.4]] },
-      podid:   { boxes: [[10.3, 1.2, 0.4, 2.4, 1.8, 1.4]] },
-      agent:   { boxes: [[13.5, 1.2, 0.4, 3.0, 1.8, 1.6]] },
-      sts:     { boxes: [[19.6, 1.2, 0.4, 3.0, 1.8, 1.8]] },
-      eksauth: { boxes: [[24.0, 1.2, 0.4, 3.0, 1.8, 1.8]] },
-      s3:      { boxes: [[28.2, 1.2, 0.4, 3.0, 1.8, 2.2]] }
-    },
-    icons: [
-      { part: 'imds',    at: [2.0, 2.1, 1.6],  src: './common/aws-icons/services/Arch_Amazon-EC2_48.svg', size: 26 },
-      { part: 'agent',   at: [15.0, 2.1, 2.0], src: './common/aws-icons/services/Arch_Amazon-Elastic-Kubernetes-Service_48.svg', size: 26 },
-      { part: 'sts',     at: [21.1, 2.1, 2.2], src: './common/aws-icons/services/Arch_AWS-Identity-and-Access-Management_48.svg' },
-      { part: 'eksauth', at: [25.5, 2.1, 2.2], src: './common/aws-icons/services/Arch_Amazon-Elastic-Kubernetes-Service_48.svg' },
-      { part: 's3',      at: [29.7, 2.1, 2.6], src: './common/aws-icons/services/Arch_Amazon-Simple-Storage-Service_48.svg', size: 34 }
-    ],
-    wires: {
-      imds: { pts: [[5.5, 2.1, 1.8], [5.5, 2.1, 2.5], [2.0, 2.1, 2.5], [2.0, 2.1, 1.6]] },
-      sts:  { pts: [[8.5, 2.1, 1.8], [8.5, 2.1, 3.3], [21.1, 2.1, 3.3], [21.1, 2.1, 2.2]] },
-      pid:  { pts: [[11.5, 2.1, 1.8], [11.5, 2.1, 2.6], [15.0, 2.1, 2.6], [15.0, 2.1, 2.0], [15.0, 2.1, 4.3], [25.5, 2.1, 4.3], [25.5, 2.1, 2.2]] },
-      pidA: { pts: [[11.5, 2.1, 1.8], [11.5, 2.1, 2.6], [15.0, 2.1, 2.6], [15.0, 2.1, 2.0]] },
-      s3:   { pts: [[5.5, 1.2, 0.7], [5.5, 0.5, 0.45], [8.5, 0.5, 0.45], [8.5, 1.2, 0.7], [8.5, 0.5, 0.45], [11.5, 0.5, 0.45], [11.5, 1.2, 0.7], [11.5, 0.5, 0.45], [29.0, 0.5, 0.45], [29.7, 1.2, 1.0]] }
-    },
-    tags: [
-      { id: 'n-legacy', at: [5.5, 1.2, 1.0],  text: 'orders-legacy', cls: 'fs-sub', show: ['node', 'irsa', 'agent', 'eksauth', 's3'] },
-      { id: 'n-irsa',   at: [8.5, 1.2, 1.0],  text: 'orders-irsa',   cls: 'fs-sub', show: ['node', 'irsa', 'agent', 'eksauth', 's3'] },
-      { id: 'n-podid',  at: [11.5, 1.2, 1.0], text: 'orders-podid',  cls: 'fs-sub', show: ['node', 'irsa', 'agent', 'eksauth', 's3'] },
-      { id: 'ip-imds',  at: [2.0, 1.2, 0.9],  text: '169.254.169.254', cls: 'fs-sub', show: ['node', 'irsa', 'agent', 'eksauth', 's3'] },
-      { id: 'ip-agent', at: [15.0, 1.2, 1.0], text: '169.254.170.23',  cls: 'fs-sub', show: ['node', 'irsa', 'agent', 'eksauth', 's3'] },
-      { id: 'aud-sts',  at: [14.6, 2.1, 3.55], text: 'token aud: sts.amazonaws.com', show: ['irsa'], overview: false },
-      { id: 'aud-pods', at: [20.3, 2.1, 4.55], text: 'token aud: pods.eks.amazonaws.com', show: ['eksauth'], overview: false }
-    ],
-    callouts: [
-      { id: 'imds',    n: 1, anchor: [2.0, 2.1, 1.6],  at: [20, 150],  title: 'IMDSv2', sub: '노드 역할을 준다', charW: 9, subW: 11 },
-      { id: 'sts',     n: 2, anchor: [21.1, 2.1, 2.2], at: [610, 165], title: 'AWS STS', sub: 'AssumeRoleWithWebIdentity', charW: 9 },
-      { id: 'agent',   n: 3, anchor: [15.0, 2.1, 2.0], at: [380, 95],  title: 'Pod Identity Agent', sub: '노드마다 DaemonSet, hostNetwork', charW: 8.5 },
-      { id: 'eksauth', n: 4, anchor: [25.5, 2.1, 2.2], at: [790, 95],  title: 'EKS Auth', sub: 'AssumeRoleForPodIdentity', charW: 9 },
-      { id: 's3',      n: 5, anchor: [29.7, 1.2, 0.8], at: [850, 470], title: 'Amazon S3', sub: '받은 자격 증명으로 서명', charW: 9, subW: 11 }
-    ],
-    code: [
-      'PUT 169.254.169.254/latest/api/token',
-      'GET .../security-credentials/<역할 이름>',
-      'sts:AssumeRoleWithWebIdentity',
-      'GET 169.254.170.23/v1/credentials',
-      'eks-auth:AssumeRoleForPodIdentity',
-      's3:GetObject   (SigV4 서명)'
-    ],
-    hint: '장면을 누르거나 ↓ 키로 다음 단계, ↑ 키로 이전 단계',
-    overview: { label: '전체 그림', title: '같은 코드, 세 갈래 경로',
-      say: '한 노드에 같은 orders 앱이 세 벌 있습니다. 노드 안에는 <b>IMDS</b>와 <b>Agent</b>, 오른쪽에는 리전 서비스가 있습니다. 노란 선이 노드 역할, 파란 선이 IRSA, 분홍 선이 Pod Identity입니다.' },
-    phases: [
-      { key: 'node', d: 3.2, focus: ['imds', 'legacy'], badge: 'imds', lines: [1, 2],
-        packet: { wire: 'imds', mode: 'pingpong', colour: 'var(--warning)' },
-        label: '1  노드 역할 (IMDS)', title: '주입된 변수가 없으면 IMDS까지 간다',
-        say: '<b>orders-legacy</b>에는 AWS 변수가 없어서, SDK 체인의 끝인 <b>IMDSv2</b>가 노드 인스턴스 프로파일의 역할을 줍니다. 이 노드의 Pod는 누구나 IMDS에서 같은 노드 역할을 받을 수 있습니다.' },
-      { key: 'irsa', d: 4.2, focus: ['sts', 'irsa'], badge: 'sts', lines: [3],
-        packet: { wire: 'sts', mode: 'pingpong', colour: 'var(--info)' },
-        label: '2  IRSA (STS)', title: 'Pod가 토큰을 들고 STS로 간다',
-        say: 'IRSA(IAM Roles for Service Accounts)에서 <b>orders-irsa</b>는 projected 토큰(aud <b>sts.amazonaws.com</b>)을 들고 리전 <b>STS</b>(Security Token Service)에 AssumeRoleWithWebIdentity를 직접 호출합니다. 노드 역할은 쓰지 않습니다.' },
-      { key: 'agent', d: 3.0, focus: ['agent', 'podid'], badge: 'agent', lines: [4],
-        packet: { wire: 'pidA', colour: 'var(--pink)' },
-        label: '3  Pod Identity (Agent)', title: 'Pod는 같은 노드의 Agent에만 묻는다',
-        say: '<b>orders-podid</b>는 링크 로컬 주소 <b>169.254.170.23</b>의 Pod Identity Agent에 자기 토큰을 건넵니다. 자격 증명을 얻으려고 Pod가 AWS API를 직접 부르지는 않습니다.' },
-      { key: 'eksauth', d: 4.4, focus: ['eksauth', 'agent', 'podid'], badge: 'eksauth', lines: [5],
-        packet: { wire: 'pid', span: [0, 6], mode: 'pingpong', colour: 'var(--pink)' },
-        label: '4  Pod Identity (EKS Auth)', title: 'Agent가 EKS Auth에서 받아 온다',
-        say: 'Agent가 토큰(aud <b>pods.eks.amazonaws.com</b>)으로 <b>EKS Auth</b>에 AssumeRoleForPodIdentity를 호출하고, 받은 자격 증명을 Pod에 돌려줍니다.' },
-      { key: 's3', d: 3.6, focus: ['s3', 'legacy', 'irsa', 'podid'], badge: 's3', lines: [6],
-        packet: { wire: 's3' },
-        label: '5  결과', title: '세 경로 모두 임시 자격 증명으로 서명',
-        say: '어디서 받든 결과는 <b>임시 자격 증명</b>이고, 세 Pod는 같은 코드로 S3 요청에 서명합니다. 다른 것은 <b>어느 역할</b>이냐 하나입니다.' }
-    ],
-    frame: function (c) {
-      var path = { imds: 'var(--warning)', sts: 'var(--info)', pid: 'var(--pink)', pidA: 'var(--pink)' };
-      for (var id in c.wires) {
-        var lit = c.all || (c.ph.packet && c.ph.packet.wire === id);
-        c.wires[id].node.style.stroke = lit && path[id] ? path[id] : '';
-      }
-    }
-  });
-});
+<div class="tab-content" data-tab="cmp-duty">
+  <div class="wid-grid-2">
+    <div class="wid-card wid-irsa wid-edge"><span class="wid-chip wid-irsa">IRSA</span>
+      <div class="wid-muted wid-gap-top">OIDC provider 생성과 신뢰 정책은 IAM 관리자, 주석은 클러스터 운영자</div>
+      <div class="wid-cap wid-gap-top">신뢰 정책에 클러스터 issuer가 들어가 두 팀이 함께 바꿔야 합니다.</div></div>
+    <div class="wid-card wid-podid wid-edge"><span class="wid-chip wid-podid">Pod Identity</span>
+      <div class="wid-muted wid-gap-top">IAM은 역할만, 연결은 EKS API에서</div>
+      <div class="wid-cap wid-gap-top">팀 간 책임 경계가 명확합니다.</div></div>
+  </div>
+</div>
+<div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html">Amazon EKS User Guide, Grant Kubernetes workloads access to AWS (IRSA와 Pod Identity 비교)</a></div>
 :::
 
 :::notes
 {timing: 2min}
 [요약]
-- 경로 1: IMDSv2에서 노드 역할 (오늘 옮길 대상)
-- 경로 2: IRSA, Pod가 리전 STS AssumeRoleWithWebIdentity를 직접 호출
-- 경로 3: Pod Identity, Pod는 같은 노드의 Agent에만 묻고 Agent가 EKS Auth를 호출
-- 세 경로 모두 결과는 임시 자격 증명이고, Pod는 그것으로 S3 요청에 서명
+- 준비: IRSA는 클러스터마다 IAM OIDC provider, Pod Identity는 클러스터마다 Agent 애드온(Auto Mode 내장)
+- 연결: IRSA는 ServiceAccount 주석, Pod Identity는 EKS API association
+- 신뢰 정책: IRSA는 Federated provider와 aud, sub 조건으로 클러스터마다 문장 추가, Pod Identity는 pods.eks.amazonaws.com 하나
+- 권한 분리: Pod Identity는 IAM(역할)과 EKS API(연결)로 책임이 나뉨
 
-한 노드에 같은 orders 앱이 세 벌 떠 있습니다. 오늘 데모에 그대로 나오는 세 벌입니다. 오늘 발표 내내 노드 역할은 노란색, IRSA는 파란색, Pod Identity는 분홍색으로 보겠습니다. 한 경로씩 따라가 보겠습니다.
-먼저 지금 상태입니다. orders-legacy에는 AWS 변수가 하나도 없어서, SDK가 체인 끝의 IMDS까지 내려가 노드 역할을 받습니다.↓
-두 번째가 IRSA, IAM Roles for Service Accounts입니다. Pod가 자기 토큰을 들고 리전 STS에 직접 가서 역할을 맡습니다.↓
-세 번째 Pod Identity는 두 단계로 봅니다. Pod는 같은 노드의 Agent에만 말을 겁니다.↓
-그리고 Agent가 EKS Auth를 불러 자격 증명을 받아 와서 Pod에 돌려줍니다.↓
-마지막으로, 어디서 받았든 결과는 같은 임시 자격 증명이고 세 Pod 모두 같은 코드로 S3에 서명합니다.↓
+비교는 두 장으로 나눴습니다. 이 장은 "어디에 무엇을 거느냐"입니다. 위아래 방향키로 탭을 넘기겠습니다.
+첫 탭, IRSA는 연결 정보가 ServiceAccount 주석, 즉 Kubernetes 안에 있고, Pod Identity는 EKS API에 있습니다.
+(아래 방향키)
+두 번째 탭이 신뢰 정책입니다. IRSA는 클러스터의 issuer가 정책 안에 박혀 있어서 클러스터가 늘 때마다 문장을 추가합니다. Pod Identity는 서비스 principal 하나라 새 클러스터에서도 고칠 게 없고, 요청 태그 조건으로 범위를 좁힙니다.
+(아래 방향키)
+세 번째, 그래서 조직 측면에서는 Pod Identity가 IAM 팀과 클러스터 팀의 경계를 더 깔끔하게 나눕니다.
 {cue: transition}
-그러면 같은 코드가 어떻게 이 셋 중 하나를 고를까요. SDK의 자격 증명 체인입니다.
+두 번째 비교는 실행 경로와 한도입니다.
+
+[약어]
+- OIDC: OpenID Connect
 :::
 
 ---
-<!-- Slide 7: 자격 증명 체인 캔버스 -->
+<!-- Slide 5: 비교 2, 경로와 한도 -->
 @type: content
-@title: SDK는 위에서부터 찾고, 처음 것을 쓴다
+@title: 비교 2: 경로, 태그, 한도, 실행 환경
 
-## SDK는 위에서부터 찾고, 처음 것을 쓴다
+## 비교 2: 경로, 태그, 한도, 실행 환경
 
 :::html
-<div class="wid-canvas-box"><canvas id="wid-chain-canvas" role="img" aria-label="SDK 기본 자격 증명 체인. 1 환경 변수의 정적 키, 2 웹 ID 토큰(IRSA), 3 컨테이너 공급자(Pod Identity), 4 EC2 IMDS(노드 역할) 순서로 확인하고 처음 찾은 단계의 자격 증명을 쓴다. 아무것도 주입되지 않은 Pod는 IMDS까지 내려간다. IRSA 주석과 association이 모두 있는 ServiceAccount의 새 Pod에는 EKS 웹훅이 Pod Identity 변수만 넣으므로 3단계에서 멈춘다."></canvas></div>
-<div class="wid-canvas-bar">
-  <button class="btn btn-primary btn-sm" data-wid-play="wid-chain-canvas">Play</button>
-  <button class="btn btn-sm" data-wid-reset="wid-chain-canvas">Reset</button>
-  <span class="wid-step" data-wid-step="wid-chain-canvas">0 / 4</span>
-  <span class="wid-canvas-cap" data-wid-cap="wid-chain-canvas" aria-live="polite">오른쪽 Pod를 바꿔 가며 SDK가 어느 단계에서 멈추는지 봅니다.</span>
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="cmp-path">자격 증명 경로</button>
+  <button class="tab-btn" data-tab="cmp-tags">세션 태그</button>
+  <button class="tab-btn" data-tab="cmp-scale">확장 한도</button>
+  <button class="tab-btn" data-tab="cmp-env">실행 환경</button>
+  <button class="tab-btn" data-tab="cmp-xacct">교차 계정</button>
 </div>
-<div class="wid-src">출처: <a href="https://docs.aws.amazon.com/sdkref/latest/guide/standardized-credentials.html">AWS SDKs and Tools, standardized credential providers</a>. 공유 config 파일 같은 나머지 단계는 생략했습니다.</div>
+<div class="tab-content active" data-tab="cmp-path">
+  <div class="wid-grid-2">
+    <div class="wid-card wid-irsa wid-edge"><span class="wid-chip wid-irsa">IRSA</span><h4 class="wid-gap-top">Pod에서 리전 STS로</h4><div class="wid-muted">Pod가 STS API 할당량을 씁니다. Pod에서 STS로 가는 경로가 필요합니다.</div></div>
+    <div class="wid-card wid-podid wid-edge"><span class="wid-chip wid-podid">Pod Identity</span><h4 class="wid-gap-top">Pod, 노드 Agent, EKS Auth</h4><div class="wid-muted">Pod는 STS를 직접 호출하지 않습니다. Agent에서 EKS Auth로 가는 경로가 필요합니다.</div></div>
+  </div>
+</div>
+<div class="tab-content" data-tab="cmp-tags">
+  <div class="wid-grid-2">
+    <div class="wid-card wid-irsa wid-edge"><span class="wid-chip wid-irsa">IRSA</span><h4 class="wid-gap-top">역할 세션 이름만</h4><div class="wid-muted">세션 태그가 없습니다.</div></div>
+    <div class="wid-card wid-podid wid-edge"><span class="wid-chip wid-podid">Pod Identity</span><h4 class="wid-gap-top">세션 태그 6개</h4><div class="wid-row wid-mono"><code>eks-cluster-arn</code><code>eks-cluster-name</code><code>kubernetes-namespace</code><code>kubernetes-service-account</code><code>kubernetes-pod-name</code><code>kubernetes-pod-uid</code></div><div class="wid-cap">신뢰 조건에는 보통 <code>eks-cluster-arn</code>, <code>kubernetes-namespace</code>, <code>kubernetes-service-account</code> 3개를 씁니다.</div><div class="wid-muted">태그로 리소스 접근을 거는 <span class="rp-detail" data-detail="abac">ABAC(attribute-based access control)</span>이 가능합니다.</div></div>
+  </div>
+</div>
+<div class="tab-content" data-tab="cmp-scale">
+  <div class="wid-grid-2">
+    <div class="wid-card wid-irsa wid-edge"><span class="wid-chip wid-irsa">IRSA</span><div class="wid-big wid-gap-top">100</div><div class="wid-muted">계정당 OIDC provider 기본 한도</div><div class="wid-muted wid-gap-top">신뢰 정책 기본 2,048자, 보통 역할당 4개 안팎의 연결</div></div>
+    <div class="wid-card wid-podid wid-edge"><span class="wid-chip wid-podid">Pod Identity</span><div class="wid-big wid-gap-top">5,000</div><div class="wid-muted">클러스터당 association</div><div class="wid-muted wid-gap-top">역할의 신뢰 정책은 클러스터가 늘어도 그대로</div></div>
+  </div>
+</div>
+<div class="tab-content" data-tab="cmp-env">
+  <div class="wid-grid-2">
+    <div class="wid-card wid-irsa wid-edge"><span class="wid-chip wid-irsa">IRSA</span><h4 class="wid-gap-top">EKS 밖에서도 같은 방식</h4><div class="wid-muted">EKS의 EC2와 Fargate, EKS Anywhere, ROSA(Red Hat OpenShift Service on AWS), EC2의 자체 관리 Kubernetes</div></div>
+    <div class="wid-card wid-podid wid-edge"><span class="wid-chip wid-podid">Pod Identity</span><h4 class="wid-gap-top">EKS Linux EC2 노드 + Hybrid Nodes</h4><div class="wid-muted">Hybrid Nodes는 IMDS가 없어 Agent의 하이브리드 DaemonSet과 노드 자격 증명 파일(<code>enableCredentialsFile</code>)이 필요합니다. Fargate, Windows, Outposts, EKS Anywhere는 지원하지 않습니다.</div></div>
+  </div>
+</div>
+<div class="tab-content" data-tab="cmp-xacct">
+  <div class="wid-grid-2">
+    <div class="wid-card wid-irsa wid-edge"><span class="wid-chip wid-irsa">IRSA</span><h4 class="wid-gap-top">대상 계정 역할이 OIDC provider를 신뢰</h4><div class="wid-muted">대상 계정에 이 클러스터의 provider를 등록합니다.</div></div>
+    <div class="wid-card wid-podid wid-edge"><span class="wid-chip wid-podid">Pod Identity</span><h4 class="wid-gap-top">association 역할은 같은 계정</h4><div class="wid-muted">대상 역할을 지정하거나 역할 체이닝으로 위임합니다.</div></div>
+  </div>
+</div>
+<div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html">Amazon EKS User Guide, IRSA와 Pod Identity 비교</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html">EKS Pod Identity considerations</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html">Configure add-ons for hybrid nodes</a></div>
 :::
 
-:::script
-  var CANVAS_ID = 'wid-chain-canvas', BASE_W = 960, BASE_H = 360, MAX_STEP = 4, STEP_DUR = 3.2;
-  var CAPS = [
-    '오른쪽 Pod를 바꿔 가며 SDK가 어느 단계에서 멈추는지 봅니다. 아래 방향키나 Play로 진행합니다.',
-    '아무것도 주입되지 않은 Pod: 1~3단계에 해당 변수가 없어 마지막 IMDS까지 내려가 노드 역할을 받습니다.',
-    'IRSA Pod: 웹 ID 토큰 변수가 있으니 2단계에서 멈춥니다. 코드는 그대로이고 주입된 변수만 다릅니다.',
-    'Pod Identity Pod: 컨테이너 공급자 변수가 있으니 3단계에서 멈추고 IMDS까지 가지 않습니다.',
-    '주석과 association이 모두 있는 SA의 새 Pod: EKS 웹훅이 Pod Identity 변수만 넣어 3단계에서 멈춥니다. 결정은 체인 순서가 아니라 주입 단계에서 납니다.'
-  ];
-  var ROWS = [
-    { n: '1', t: '환경 변수의 정적 키', v: 'AWS_ACCESS_KEY_ID', c: 'textMuted' },
-    { n: '2', t: '웹 ID 토큰 (IRSA)', v: 'AWS_WEB_IDENTITY_TOKEN_FILE', c: 'blue' },
-    { n: '3', t: '컨테이너 공급자 (Pod Identity)', v: 'AWS_CONTAINER_CREDENTIALS_FULL_URI', c: 'pink' },
-    { n: '4', t: 'EC2 IMDS (노드 역할)', v: '169.254.169.254', c: 'yellow' }
-  ];
-  var SC = [null,
-    { pod: 'orders-legacy', env: [], hit: 3, res: '노드 역할', role: 'wid-<run>-node', note: '노드의 모든 Pod가 같은 역할', c: 'yellow' },
-    { pod: 'orders-irsa', env: ['AWS_ROLE_ARN', 'AWS_WEB_IDENTITY_TOKEN_FILE'], hit: 1, res: 'IRSA 역할', role: 'wid-<run>-irsa', note: 'ServiceAccount 주석에 적힌 역할', c: 'blue' },
-    { pod: 'orders-podid', env: ['AWS_CONTAINER_CREDENTIALS_FULL_URI', 'AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE'], hit: 2, res: 'Pod Identity 역할', role: 'wid-<run>-podid', note: 'association에 지정한 역할', c: 'pink' },
-    { pod: '주석 + association (새 Pod)', env: ['AWS_CONTAINER_CREDENTIALS_FULL_URI', 'AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE', { t: 'IRSA 변수는 주입되지 않음', warn: true }], hit: 2, res: 'Pod Identity 역할', role: 'wid-<run>-podid', note: '기존 Pod는 재생성 전까지 IRSA', c: 'pink', warn: true }
-  ];
-  var RX = 40, RW = 440, RH = 56, RY = [56, 128, 200, 272];
-  function cy(i) { return RY[i] + RH / 2; }
+:::detail abac "ABAC (Attribute-based access control)"
+tip: 역할 대신 태그 같은 속성으로 권한을 거는 방식
 
-  function render() {
-    var sc = SC[step];
-    txt('SDK 기본 자격 증명 체인 (Pod에서 의미 있는 단계만)', RX, 30, { weight: '700', size: 14, color: Colors.textSec });
-    var CHECK = 0.62, per = sc ? CHECK / (sc.hit + 1) : 0;
-    ROWS.forEach(function (r, i) {
-      var col = Colors[r.c], state = 1, tag = '';
-      if (sc) {
-        var done = prog >= (i + 1) * per, active = prog >= i * per && !done;
-        if (i < sc.hit && done) { state = 0; tag = '변수 없음, 다음 단계'; }
-        else if (i === sc.hit && done) { state = 2; tag = '여기서 결정'; }
-        else if (i > sc.hit) { state = 0; tag = '확인하지 않음'; }
-        else if (active) { state = 1; tag = '확인 중'; }
-      }
-      card(RX, RY[i], RW, RH, r.n + '.  ' + r.t, [{ t: r.v, mono: true }], col, state);
-      if (tag) txt(tag, RX + RW - 12, RY[i] + 20, { size: 12, weight: '700', align: 'right', color: state === 2 ? col : Colors.textMuted });
-    });
-    // probe
-    if (sc && prog < CHECK) {
-      var k = Math.floor(prog / per), local = (prog - k * per) / per;
-      var y = k === 0 ? cy(0) : lerp(cy(k - 1), cy(k), clamp(local / 0.35, 0, 1));
-      drawCircle(ctx, RX + RW + 22, y, 8, Colors[sc.c], null);
-    }
-    // Pod card
-    var px = 600, pw = 320;
-    var podLines = !sc ? [{ t: 'Pod를 고르면 SDK가 위에서부터' }, { t: '차례로 확인합니다.' }]
-      : (sc.env.length ? [{ t: '주입된 환경 변수', weight: '600' }].concat(sc.env.map(function (e) { return typeof e === 'string' ? { t: e, mono: true } : { t: e.t, color: Colors.red, weight: '700' }; })) : [{ t: '주입된 환경 변수', weight: '600' }, { t: '(없음)', mono: true }]);
-    card(px, 56, pw, 140, sc ? 'Pod: ' + sc.pod : 'Pod', podLines, sc ? Colors[sc.c] : Colors.textMuted, 1);
-    // result
-    if (sc) {
-      var rt = seg(CHECK, 0.85);
-      var p = [{ x: RX + RW, y: cy(sc.hit) }, { x: 545, y: cy(sc.hit) }, { x: 545, y: 282 }, { x: px, y: 282 }];
-      wire(p, Colors[sc.c], rt, false);
-      if (prog >= 0.85) {
-        card(px, 236, pw, 96, '결과: ' + sc.res, [{ t: sc.role, mono: true }, { t: sc.note, color: sc.warn ? Colors.red : Colors.textSec, weight: sc.warn ? '700' : '400' }], Colors[sc.c], 2);
-      }
-    } else {
-      card(px, 236, pw, 96, '결과: 어떤 역할?', [{ t: '처음 성공한 단계의 자격 증명을 씁니다.' }], Colors.textMuted, 0);
-    }
-  }
-  // Shared canvas helpers (copied into each canvas script so every block HTML stands alone).
-  // Proportional scaling: draw in BASE_W x BASE_H, scale by the container (ResizeObserver).
-  var canvas = document.getElementById(CANVAS_ID);
-  if (!canvas) return;
-  var slide = canvas.closest('.slide');
-  var box = canvas.parentElement;
-  var ctx = canvas.getContext('2d');
-  var capEl = slide.querySelector('[data-wid-cap="' + CANVAS_ID + '"]');
-  var stepEl = slide.querySelector('[data-wid-step="' + CANVAS_ID + '"]');
-  var step = 0, prog = 1, auto = false, lastKey = '';
-  var SANS = 'Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif';
-  var MONO = '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
-  if (!box.clientWidth) setupCanvas(CANVAS_ID, BASE_W, BASE_H);
+IAM 정책 조건에서 `aws:PrincipalTag/kubernetes-namespace` 같은 세션 태그를 비교해 접근을 허용하는 방식입니다. Pod Identity는 클러스터, namespace, ServiceAccount, Pod 이름과 UID를 담은 세션 태그 6개를 붙이므로, 역할 하나를 여러 워크로드가 쓰더라도 태그로 리소스 범위를 나눌 수 있습니다.
+:::
 
-  function fit() {
-    var pw = box.clientWidth, ph = box.clientHeight;
-    if (pw <= 0 || ph <= 0) return false;
-    var dpr = window.devicePixelRatio || 1;
-    var s = Math.min(pw / BASE_W, ph / BASE_H);
-    var key = pw + 'x' + ph + '@' + dpr;
-    if (key !== lastKey) {
-      lastKey = key;
-      canvas.width = Math.round(BASE_W * s * dpr);
-      canvas.height = Math.round(BASE_H * s * dpr);
-      canvas.style.width = Math.round(BASE_W * s) + 'px';
-      canvas.style.height = Math.round(BASE_H * s) + 'px';
-      canvas.style.maxWidth = 'none';
-      canvas.style.aspectRatio = 'auto';
-    }
-    ctx.setTransform(s * dpr, 0, 0, s * dpr, 0, 0);
-    return true;
-  }
-  function seg(a, b) { return clamp((prog - a) / (b - a), 0, 1); }
-  function rr(x, y, w, h, fill, stroke, lw, dash) {
-    ctx.save();
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(x, y, w, h, 8); else ctx.rect(x, y, w, h);
-    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
-    if (stroke) { ctx.setLineDash(dash || []); ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1.5; ctx.stroke(); }
-    ctx.restore();
-  }
-  function txt(s, x, y, o) {
-    o = o || {};
-    ctx.fillStyle = o.color || Colors.textPri;
-    ctx.font = (o.weight || '400') + ' ' + (o.size || 13) + 'px ' + (o.mono ? MONO : SANS);
-    ctx.textAlign = o.align || 'left';
-    ctx.textBaseline = 'middle';
-    if ('letterSpacing' in ctx) ctx.letterSpacing = o.mono ? '0.3px' : '0px'; // non-zero spacing turns off mono ligatures such as -< and >-
-    ctx.fillText(s, x, y);
-  }
-  // state: 0 = waiting (faded), 1 = shown, 2 = active step
-  function card(x, y, w, h, title, lines, col, state) {
-    var a = state === 0 ? 0.45 : 1;
-    ctx.save();
-    ctx.globalAlpha = a;
-    rr(x, y, w, h, state === 2 ? withAlpha(col, 0.16) : withAlpha(col, 0.06), state === 2 ? col : withAlpha(col, 0.7), state === 2 ? 3 : 1.5);
-    txt(title, x + 12, y + 20, { weight: '700', size: 15 });
-    (lines || []).forEach(function (l, i) {
-      var o = typeof l === 'string' ? { t: l } : l;
-      txt(o.t, x + 12, y + 44 + i * 19, { size: o.mono ? 12 : 12.5, mono: !!o.mono, color: o.color || Colors.textSec, weight: o.weight });
-    });
-    ctx.restore();
-  }
-  function group(x, y, w, h, label) {
-    rr(x, y, w, h, null, Colors.textMuted, 1.2, [6, 5]);
-    txt(label, x + 12, y + 12, { size: 12, color: Colors.textMuted, weight: '600' });
-  }
-  function plen(p) { var L = 0; for (var i = 1; i < p.length; i++) L += Math.hypot(p[i].x - p[i - 1].x, p[i].y - p[i - 1].y); return L; }
-  function at(p, t) {
-    var L = plen(p) * clamp(t, 0, 1);
-    for (var i = 1; i < p.length; i++) {
-      var d = Math.hypot(p[i].x - p[i - 1].x, p[i].y - p[i - 1].y);
-      if (L <= d || i === p.length - 1) { var k = d ? Math.min(1, L / d) : 0; return { x: lerp(p[i - 1].x, p[i].x, k), y: lerp(p[i - 1].y, p[i].y, k) }; }
-      L -= d;
-    }
-    return p[p.length - 1];
-  }
-  // Draws a polyline up to fraction t; adds the arrow head once complete.
-  function wire(p, col, t, dashed) {
-    if (t <= 0) return;
-    var end = at(p, t), L = plen(p) * t, acc = 0;
-    ctx.save();
-    ctx.strokeStyle = col; ctx.lineWidth = 2.2; ctx.setLineDash(dashed ? [7, 5] : []);
-    ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y);
-    for (var i = 1; i < p.length; i++) {
-      var d = Math.hypot(p[i].x - p[i - 1].x, p[i].y - p[i - 1].y);
-      if (acc + d >= L) { ctx.lineTo(end.x, end.y); break; }
-      ctx.lineTo(p[i].x, p[i].y); acc += d;
-    }
-    ctx.stroke();
-    ctx.restore();
-    if (t >= 1) {
-      var a = p[p.length - 2], b = p[p.length - 1], ang = Math.atan2(b.y - a.y, b.x - a.x);
-      ctx.beginPath(); ctx.fillStyle = col;
-      ctx.moveTo(b.x, b.y);
-      ctx.lineTo(b.x - 11 * Math.cos(ang - 0.45), b.y - 11 * Math.sin(ang - 0.45));
-      ctx.lineTo(b.x - 11 * Math.cos(ang + 0.45), b.y - 11 * Math.sin(ang + 0.45));
-      ctx.closePath(); ctx.fill();
-    }
-  }
-  function pill(x, y, s, col, mono) {
-    ctx.save();
-    ctx.font = '700 12px ' + (mono ? MONO : SANS);
-    var w = ctx.measureText(s).width + 18;
-    rr(x - w / 2, y - 12, w, 24, Colors.surface, col, 2);
-    ctx.restore();
-    txt(s, x, y, { size: 12, weight: '700', color: col, align: 'center', mono: mono });
-  }
-  // Packet travelling along a wire during [a, b] of the step progress.
-  function packet(p, a, b, label, col) {
-    var t = seg(a, b);
-    wire(p, col, t, false);
-    if (t > 0 && t < 1) { var q = at(p, t); pill(q.x, q.y, label, col); }
-    return t >= 1;
-  }
-  function draw() {
-    if (!fit()) return;
-    ctx.clearRect(0, 0, BASE_W, BASE_H);
-    render();
-    if (capEl) capEl.textContent = CAPS[step];
-    if (stepEl) stepEl.textContent = step + ' / ' + MAX_STEP;
-  }
-  var loop = new AnimationLoop(function (t) {
-    prog = Math.min(1, t / STEP_DUR);
-    if (prog >= 1) {
-      if (auto && step < MAX_STEP) { step += 1; prog = 0; loop.startTime = performance.now(); }
-      else { auto = false; loop.stop(); }
-    }
-    draw();
-  });
-  function show(n, animate) {
-    loop.stop();
-    step = n; prog = animate ? 0 : 1;
-    draw();
-    if (animate) loop.start();
-  }
-  slide.querySelectorAll('[data-wid-play="' + CANVAS_ID + '"]').forEach(function (b) {
-    b.addEventListener('click', function () { show(1, true); auto = true; });
-  });
-  slide.querySelectorAll('[data-wid-reset="' + CANVAS_ID + '"]').forEach(function (b) {
-    b.addEventListener('click', function () { auto = false; show(0, false); });
-  });
-  // Up/Down arrow keys step through the animation (framework contract: return false to let the deck move on).
-  slide.__canvasStep = function (dir) {
-    var n = step + (dir === 'next' ? 1 : -1);
-    if (n < 0 || n > MAX_STEP) return false;
-    auto = false;
-    show(n, dir === 'next');
-    return true;
-  };
-  document.addEventListener('rp:slidechange', function (e) {
-    var idx = Array.prototype.indexOf.call(document.querySelectorAll('.slide'), slide);
-    if (e.detail && e.detail.index !== idx && (loop.running || step !== 0)) { auto = false; show(0, false); }
-  });
-  document.addEventListener('rp:themechange', function () { refreshThemeColors(); });
-  document.addEventListener('remarp:theme-colors', function () { draw(); });
-  new ResizeObserver(function () { draw(); }).observe(box);
-  draw();
+:::notes
+{timing: 2min}
+[요약]
+- 경로: IRSA는 Pod에서 리전 STS(Pod가 STS 할당량 사용), Pod Identity는 Agent에서 EKS Auth
+- 세션 태그: IRSA 없음, Pod Identity는 6개(클러스터 ARN과 이름, namespace, SA, Pod 이름과 UID)로 ABAC 가능
+- 한도: OIDC provider 계정당 기본 100개, 신뢰 정책 2,048자(역할당 4개 안팎) 대 association 클러스터당 5,000개
+- 실행 환경: IRSA는 Fargate, EKS Anywhere, ROSA, 자체 관리 Kubernetes까지, Pod Identity는 EKS Linux EC2와 Hybrid Nodes(추가 설정 필요)
+- 교차 계정: IRSA는 대상 계정이 provider 신뢰, Pod Identity는 같은 계정 역할에서 대상 역할 지정 또는 체이닝
+
+이 장은 다섯 탭입니다. 첫째 경로, IRSA는 Pod가 STS를 직접 부르고 Pod Identity는 Agent를 거칩니다. 프라이빗 클러스터라면 필요한 엔드포인트가 다릅니다.
+(아래 방향키)
+둘째 세션 태그입니다. Pod Identity는 클러스터 ARN과 이름, namespace, ServiceAccount, Pod 이름과 UID까지 태그 여섯 개가 붙어서, 정책 조건으로 태그를 비교하는 ABAC이 됩니다.
+(아래 방향키)
+셋째 한도입니다. OIDC provider는 계정당 기본 100개, 신뢰 정책은 기본 2,048자라 역할 하나에 클러스터 네 개 정도면 찹니다. 클러스터가 많은 조직이라면 이 숫자가 결정적입니다.
+(아래 방향키)
+넷째 실행 환경은 IRSA가 넓습니다. Fargate나 Windows 노드, EKS 밖의 Kubernetes라면 IRSA입니다. EKS Hybrid Nodes에서는 둘 다 됩니다. 다만 Pod Identity Agent는 원래 IMDS에서 노드 자격 증명을 받는데 온프레미스 노드에는 IMDS가 없어서, 노드 쪽에 자격 증명 파일을 만들고 Agent의 하이브리드 DaemonSet을 켜야 합니다.
+(아래 방향키)
+마지막 교차 계정은 둘 다 가능하지만 방식이 다릅니다.
+{cue: transition}
+이 차이를 장점과 단점으로 한 번에 정리하겠습니다.
+
+[약어]
+- ABAC: Attribute-based access control
+- ROSA: Red Hat OpenShift Service on AWS
+:::
+
+---
+<!-- Slide 6: 장단점 -->
+@type: content
+@title: 장단점: IRSA와 Pod Identity
+
+## 장단점: IRSA와 Pod Identity
+
+:::html
+<div class="wid-grid-2">
+  <div class="wid-card wid-irsa wid-edge">
+    <span class="wid-chip wid-irsa">IRSA</span>
+    <h4 class="wid-gap-top wid-t-success">장점</h4>
+    <ul>
+      <li>Fargate, Windows, EKS 밖(EKS Anywhere, ROSA, 자체 관리)에서도 같은 방식</li>
+      <li>애드온 없이 IAM OIDC provider와 STS만으로 동작</li>
+      <li>교차 계정: 대상 계정 역할이 이 클러스터의 provider를 직접 신뢰</li>
+    </ul>
+    <h4 class="wid-gap-top wid-t-danger">단점</h4>
+    <ul>
+      <li>클러스터마다 OIDC provider 등록 (계정당 기본 100개)</li>
+      <li>새 클러스터마다 신뢰 정책 수정, 기본 2,048자라 역할당 보통 4개 안팎</li>
+      <li>세션 태그 없음, Pod가 STS를 직접 호출해 STS 할당량 사용</li>
+    </ul>
+  </div>
+  <div class="wid-card wid-podid wid-edge">
+    <span class="wid-chip wid-podid">Pod Identity</span>
+    <h4 class="wid-gap-top wid-t-success">장점</h4>
+    <ul>
+      <li>신뢰 정책은 서비스 principal 하나, 클러스터가 늘어도 그대로</li>
+      <li>세션 태그로 ABAC: 한 역할을 여러 ServiceAccount에</li>
+      <li>연결은 EKS API, 권한은 IAM: 팀 간 책임 분리</li>
+    </ul>
+    <h4 class="wid-gap-top wid-t-danger">단점</h4>
+    <ul>
+      <li>Agent 애드온과 노드 역할의 <code>eks-auth:AssumeRoleForPodIdentity</code> 필요 (Auto Mode는 내장)</li>
+      <li>EKS Linux EC2와 Hybrid Nodes만: Fargate, Windows는 지원하지 않음</li>
+      <li>지원 SDK 최소 버전 확인, 교차 계정은 대상 역할 지정이나 체이닝</li>
+    </ul>
+  </div>
+</div>
+<div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html">Amazon EKS User Guide, Comparing EKS Pod Identity and IRSA</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html">Learn how EKS Pod Identity grants pods access</a></div>
 :::
 
 :::notes
 {timing: 2.5min}
 [요약]
-- 기본 체인 순서(Pod 관점): 환경 변수 정적 키, 웹 ID 토큰(IRSA), 컨테이너 공급자(Pod Identity), IMDS
-- 처음 찾은 단계에서 멈춤. 그래서 EKS가 변수만 주입하면 코드 변경 없이 출처가 바뀜
-- 아무것도 없으면 IMDS까지 내려가 노드 역할
-- 주석과 association이 모두 있으면 새 Pod에는 EKS 웹훅이 Pod Identity 변수만 넣음(association이 이김). 체인 순서와 혼동 금지
-- association 전에 만든 Pod는 IRSA 변수를 그대로 갖고 재생성 전까지 IRSA
+- IRSA 장점: 실행 환경이 넓음(Fargate, Windows, EKS 밖), 애드온 불필요, 교차 계정이 단순
+- IRSA 단점: 클러스터마다 OIDC provider(계정당 100), 새 클러스터마다 신뢰 정책 수정(역할당 4개 안팎), 세션 태그 없음, Pod가 STS 직접 호출
+- Pod Identity 장점: 신뢰 정책 고정, 세션 태그 ABAC, EKS와 IAM의 책임 분리
+- Pod Identity 단점: Agent 애드온과 노드 역할 권한, EKS Linux EC2와 Hybrid Nodes만, SDK 최소 버전
 
-아래 방향키를 한 번씩 누르면서 Pod를 바꿔 보겠습니다. 왼쪽 네 칸이 SDK가 확인하는 순서입니다.
-(아래 방향키)
-첫 번째는 아무것도 주입되지 않은 레거시 Pod입니다. 1, 2, 3단계에 변수가 없으니 맨 아래 IMDS까지 내려가서 노드 역할을 받습니다.
-(아래 방향키)
-IRSA Pod에는 웹 ID 토큰 변수가 있어서 2단계에서 멈춥니다. 앱 코드는 똑같고, 바뀐 건 EKS가 넣어 준 환경 변수뿐입니다.
-(아래 방향키)
-Pod Identity Pod는 3단계, 컨테이너 공급자에서 멈춥니다.
-(아래 방향키)
-마지막은 헷갈리기 쉬운 경우입니다. 체인만 보면 IRSA가 앞이니 둘 다 걸면 IRSA가 이길 것 같지만, 실제로는 그 전 단계에서 갈립니다. 주석과 association이 모두 있는 ServiceAccount로 새 Pod를 만들면 EKS 웹훅이 Pod Identity 변수만 넣고 IRSA 변수는 넣지 않습니다. 그래서 새 Pod는 3단계에서 멈춥니다.
-다만 association을 만들기 전에 떠 있던 Pod는 IRSA 변수를 그대로 갖고 있어서, 다시 만들기 전까지는 IRSA를 씁니다.
+IRSA부터입니다. 가장 큰 장점은 범용성입니다. Fargate, Windows 노드, EKS Anywhere나 ROSA 같은 EKS 밖의 Kubernetes에서도 같은 방식으로 씁니다. 애드온 없이 IAM의 OIDC provider와 STS만으로 동작합니다.
+단점은 클러스터 수에 비례해 커집니다. 클러스터마다 OIDC provider를 등록해야 하고, 계정당 기본 한도가 100개입니다. 역할을 새 클러스터에서 쓰려면 신뢰 정책에 문장을 추가해야 하는데, 기본 2,048자라 보통 네 개 안팎이면 찹니다. 세션 태그가 없고, Pod가 STS를 직접 부르니 STS 할당량도 씁니다.
+Pod Identity는 정반대입니다. 신뢰 정책은 서비스 principal 하나라 클러스터가 늘어도 고칠 게 없고, 세션 태그가 붙어 한 역할을 태그 조건으로 여러 ServiceAccount에 나눠 쓸 수 있습니다. 연결은 EKS API, 권한은 IAM이라 플랫폼 팀과 보안 팀의 경계도 깔끔합니다.
+대신 Agent 애드온이 필요하고, 노드 역할에 EKS Auth 호출 권한이 있어야 합니다. 관리형 정책 AmazonEKSWorkerNodePolicy를 쓰면 들어 있고, Auto Mode는 Agent가 내장입니다. 실행 환경은 EKS Linux EC2와 Hybrid Nodes만이라 Fargate와 Windows는 IRSA로 남습니다.
 {cue: transition}
-이 체인 덕분에 이전은 결국 "무엇을 주입하느냐"의 문제가 됩니다.
+그럼 옮기고 나면 보안과 비용 측면에서 무엇이 좋아지는지 보겠습니다.
+
+[약어]
+- ABAC: Attribute-based access control
+- ROSA: Red Hat OpenShift Service on AWS
+- STS: AWS Security Token Service
 :::
 
 ---
-<!-- Slide 8: 주입되는 것 -->
+<!-- Slide 7: 보안과 운영 비용 -->
 @type: content
-@title: 바뀌는 것은 코드가 아니라 주입된 변수
+@title: 옮기면 얻는 것: 보안과 운영 비용
 
-## 바뀌는 것은 코드가 아니라 주입된 변수
-
-:::html
-<table class="data-table wid-table fragment fade-up" data-fragment-index="1">
-  <thead><tr><th>경로</th><th>Pod에 주입되는 것</th><th>SDK가 호출하는 곳</th><th>결과 역할</th></tr></thead>
-  <tbody>
-    <tr><td><span class="wid-chip wid-node">node (IMDS)</span></td><td>없음</td><td>IMDSv2 <code>169.254.169.254</code></td><td>노드 IAM 역할 (노드의 모든 Pod가 공유)</td></tr>
-    <tr><td><span class="wid-chip wid-irsa">IRSA (STS)</span></td><td><code>AWS_ROLE_ARN</code>, <code>AWS_WEB_IDENTITY_TOKEN_FILE</code>, 토큰 볼륨</td><td>리전 STS <code>AssumeRoleWithWebIdentity</code></td><td>ServiceAccount 주석의 역할</td></tr>
-    <tr><td><span class="wid-chip wid-podid">Pod Identity</span></td><td><code>AWS_CONTAINER_CREDENTIALS_FULL_URI</code>, <code>AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE</code>, 토큰 볼륨</td><td>같은 노드의 Agent <code>169.254.170.23</code></td><td>association에 지정한 역할</td></tr>
-  </tbody>
-</table>
-<div class="wid-grid-2 wid-gap-top">
-  <div class="callout callout-warning fragment fade-up" data-fragment-index="2"><strong class="wid-t-warning">주입은 Pod 생성 시점에만</strong>: 이미 실행 중인 Pod는 바뀌지 않으므로 설정 후 rollout으로 Pod를 새로 만듭니다.</div>
-  <div class="callout callout-info fragment fade-up" data-fragment-index="3"><strong class="wid-t-info">확인은 호출자 ARN으로</strong>: 호출 성공만으로는 부족합니다. 노드 역할로 성공했을 수도 있습니다.</div>
-</div>
-:::
-
-:::notes
-{timing: 1.5min}
-[요약]
-- 노드 경로: 주입 없음, IMDS에서 노드 역할
-- IRSA: AWS_ROLE_ARN, AWS_WEB_IDENTITY_TOKEN_FILE, 토큰 볼륨
-- Pod Identity: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE, 토큰 볼륨
-- 주입은 Pod 생성 때만 일어나므로 rollout 필요, 검증은 호출자 ARN으로
-
-{cue: click}
-표로 정리하면 이렇습니다. 노드 경로는 아무것도 주입되지 않고, IRSA와 Pod Identity는 서로 다른 환경 변수 두 개와 토큰 볼륨이 들어갑니다. 데모의 diff 단계에서 이 변수 이름을 실제 Pod에서 그대로 확인합니다.
-{cue: click}
-중요한 점은 주입이 Pod를 만들 때만 일어난다는 겁니다. 주석을 달거나 association을 만들어도 이미 떠 있는 Pod는 그대로라 rollout이 필요합니다.
-{cue: click}
-그리고 확인할 때는 API 호출이 성공했는지가 아니라 호출자 ARN이 무엇인지 봐야 합니다. 노드 역할에 권한이 남아 있으면 이전이 안 됐어도 성공하기 때문입니다.
-{cue: transition}
-그럼 이 변수를 누가, 언제 넣는지 보겠습니다.
-:::
-
----
-<!-- Slide 9: 누가 언제 주입하나 -->
-@type: content
-@title: 변수는 누가, 언제 넣나: API 서버의 mutating 웹훅
-
-## 변수는 누가, 언제 넣나: API 서버의 mutating 웹훅
+## 옮기면 얻는 것: 보안과 운영 비용
 
 :::html
 <div class="wid-grid-2">
-<div>
-<ol class="wid-flow">
-  <li class="fragment fade-up" data-fragment-index="1"><strong>Pod 생성 요청</strong> <span class="wid-muted">rollout → ReplicaSet 컨트롤러가 API 서버에 Pod CREATE</span></li>
-  <li class="fragment fade-up" data-fragment-index="1"><strong>인증·인가</strong> <span class="wid-muted">API 서버가 요청자를 확인</span></li>
-  <li class="fragment fade-up wid-hl" data-fragment-index="2"><strong>Mutating admission: <code>iam-for-pods.amazonaws.com</code></strong><br><span class="wid-muted">EKS가 컨트롤 플레인에서 운영하는 웹훅(amazon-eks-pod-identity-webhook)이 Pod의 ServiceAccount를 봅니다.</span>
-    <div class="wid-cap">association 있음 → <code>AWS_CONTAINER_*</code> 두 개 + 토큰 볼륨(aud <code>pods.eks.amazonaws.com</code>)<br>주석만 있음 → <code>AWS_ROLE_ARN</code>, <code>AWS_WEB_IDENTITY_TOKEN_FILE</code> + 토큰 볼륨(aud <code>sts.amazonaws.com</code>)<br>둘 다 있음 → Pod Identity만 · 아무것도 없음 → 그대로</div></li>
-  <li class="fragment fade-up" data-fragment-index="3"><strong>Validating admission → etcd 저장</strong> <span class="wid-muted">Pod Security 등 검사 후 저장. 이때 Pod 스펙은 이미 바뀌어 있음</span></li>
-  <li class="fragment fade-up" data-fragment-index="3"><strong>kubelet</strong> <span class="wid-muted">projected 토큰을 해당 audience로 발급받아 파일로 마운트하고 만료 전에 갱신</span></li>
-  <li class="fragment fade-up" data-fragment-index="3"><strong>컨테이너 시작</strong> <span class="wid-muted">SDK가 환경 변수를 읽고 앞 슬라이드의 체인을 탑니다</span></li>
-</ol>
+  <div class="wid-card">
+    <span class="wid-chip">보안 (두 방식 공통)</span>
+    <ul class="wid-gap-top">
+      <li>권한 범위가 노드에서 ServiceAccount로: 그 SA를 쓰는 Pod만 권한을 받음</li>
+      <li>노드 역할 회수와 IMDS 차단 뒤에는 다른 Pod의 역할에 닿지 않음</li>
+      <li>CloudTrail에 워크로드 역할 세션으로 남아 추적과 회수 범위가 좁아짐</li>
+      <li>임시 자격 증명과 자동 갱신은 그대로, 단위만 노드에서 워크로드로</li>
+    </ul>
+    <div class="wid-cap wid-gap-top"><span class="wid-chip wid-podid">Pod Identity</span> 세션 태그로 클러스터, namespace, ServiceAccount 조건을 정책에 걸 수 있음</div>
+  </div>
+  <div class="wid-card">
+    <span class="wid-chip">운영 비용 (클러스터가 늘수록 차이가 큼)</span>
+    <table class="data-table wid-table wid-gap-top">
+      <thead><tr><th>작업</th><th>IRSA</th><th>Pod Identity</th></tr></thead>
+      <tbody>
+        <tr><td>클러스터 추가, blue/green 교체</td><td>provider 등록, 역할마다 신뢰 정책 수정</td><td>association만 다시 생성</td></tr>
+        <tr><td>역할 수</td><td>권한 조합마다 역할</td><td>태그 조건으로 역할 재사용</td></tr>
+        <tr><td>한도</td><td>provider 100개, 역할당 연결 4개 안팎(상향 시 8개)</td><td>클러스터당 association 5,000개</td></tr>
+        <tr><td>STS 호출</td><td>Pod마다, STS 할당량 사용</td><td>노드마다 한 번, Pod는 STS를 부르지 않음</td></tr>
+      </tbody>
+    </table>
+  </div>
 </div>
-<div>
-<pre class="wid-term fragment fade-up" data-fragment-index="4"><span class="wid-dim"># 데모 클러스터에서 확인한 웹훅 설정</span>
-$ kubectl get mutatingwebhookconfiguration \
-    pod-identity-webhook -o yaml
-name: iam-for-pods.amazonaws.com
-clientConfig.url: https://127.0.0.1:23443/mutate
-rules: CREATE pods
-failurePolicy: Ignore
-objectSelector: eks.amazonaws.com/skip-pod-identity-webhook 없음</pre>
-<div class="callout callout-warning fragment fade-up" data-fragment-index="5"><strong class="wid-t-warning">CREATE에서만 동작</strong>: 실행 중인 Pod는 바뀌지 않습니다. 설정 뒤에는 rollout.</div>
-<div class="callout callout-danger fragment fade-up" data-fragment-index="5"><strong>failurePolicy: Ignore</strong>: 웹훅이 응답하지 못하면 변수 없이 Pod가 만들어져 조용히 노드 역할로 동작합니다. 그래서 호출자 ARN으로 확인합니다.</div>
-<div class="callout callout-info fragment fade-up" data-fragment-index="6"><strong class="wid-t-info">미리 확인</strong>: <code>kubectl create --dry-run=server</code>로 Pod 템플릿을 보내면 웹훅을 거친 결과를 Pod를 만들지 않고 볼 수 있습니다.</div>
-</div>
-</div>
-<div class="wid-src">출처: 데모 클러스터(EKS 1.36)의 MutatingWebhookConfiguration, <a href="https://github.com/aws/amazon-eks-pod-identity-webhook">amazon-eks-pod-identity-webhook</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-id-how-it-works.html">Understand how EKS Pod Identity works</a></div>
+<div class="callout callout-info wid-gap-top"><strong class="wid-t-info">따져 볼 비용</strong>: Pod Identity는 노드마다 Agent Pod가 하나씩 돕니다(DaemonSet). 클러스터가 하나뿐이고 교체가 드물면 운영 비용 차이는 작습니다.</div>
+<div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html">EKS Pod Identity benefits</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html">Comparing EKS Pod Identity and IRSA</a></div>
 :::
 
 :::notes
 {timing: 2min}
 [요약]
-- 변수를 넣는 주체: API 서버의 mutating admission 단계에서 EKS가 컨트롤 플레인에 운영하는 웹훅(iam-for-pods.amazonaws.com, amazon-eks-pod-identity-webhook). 노드에는 웹훅 Pod가 없음
-- 시점: Pod CREATE 때만. ServiceAccount의 주석(IRSA)과 association(Pod Identity)을 보고 env와 토큰 볼륨을 패치
-- 둘 다 있으면 Pod Identity만. kubelet은 토큰을 audience별로 발급·갱신
-- failurePolicy Ignore라 웹훅 실패 시 변수 없이 생성 → 노드 역할. 호출자 ARN과 dry-run으로 확인
+- 보안(공통): SA 단위 최소 권한, 회수와 IMDS 차단 뒤 자격 증명 격리, CloudTrail에서 워크로드 식별, 정적 키 없음
+- Pod Identity는 세션 태그로 클러스터, namespace, SA 조건까지
+- 운영 비용: 클러스터 추가와 교체 때 IRSA는 provider 등록과 신뢰 정책 수정, Pod Identity는 association만. 역할 재사용, 한도, STS 호출 횟수에서도 차이
+- 따져 볼 것: 노드마다 Agent DaemonSet. 클러스터가 적으면 차이가 작음
 
-그럼 이 변수는 누가 언제 넣을까요?
-{cue: click}
-Pod를 만들면 요청이 API 서버로 갑니다. rollout이면 ReplicaSet 컨트롤러가 Pod CREATE를 보냅니다. API 서버는 먼저 인증과 인가를 합니다.
-{cue: click}
-그다음이 핵심인 mutating admission 단계입니다. EKS가 컨트롤 플레인 안에서 운영하는 웹훅이 있고, 이름이 iam-for-pods.amazonaws.com입니다. 이 웹훅이 Pod의 ServiceAccount를 보고, association이 있으면 Pod Identity 변수 두 개와 토큰 볼륨을, 주석만 있으면 IRSA 변수와 토큰 볼륨을 Pod 스펙에 끼워 넣습니다. 둘 다 있으면 Pod Identity만 넣습니다.
-{cue: click}
-그 뒤 검증을 거쳐 저장되고, kubelet이 Pod를 띄우면서 토큰을 해당 audience로 발급받아 파일로 마운트합니다. 컨테이너가 시작되면 SDK가 그 변수를 읽고 앞에서 본 체인을 탑니다.
-{cue: click}
-실제 데모 클러스터에서 웹훅 설정을 꺼내 보면 주소가 127.0.0.1, 즉 컨트롤 플레인 안입니다. 그래서 노드에서 kubectl get pods로 찾아도 보이지 않습니다.
-{cue: click}
-여기서 두 가지를 기억하면 됩니다. 규칙이 Pod CREATE뿐이라 이미 떠 있는 Pod는 rollout 전까지 바뀌지 않습니다. 그리고 failurePolicy가 Ignore라서, 웹훅이 응답하지 못하면 Pod는 변수 없이 그냥 만들어지고 조용히 노드 역할을 씁니다. 그래서 확인은 항상 호출자 ARN으로 합니다.
-{cue: click}
-미리 확인하고 싶으면 kubectl create --dry-run=server로 Pod 템플릿을 보내 보세요. 웹훅을 거친 결과가 돌아오니 Pod를 만들지 않고도 무엇이 주입될지 볼 수 있습니다. 데모 스크립트도 이 방법으로 association 반영을 기다립니다.
+보안 쪽은 두 방식 모두 같은 걸 얻습니다. 권한이 노드가 아니라 ServiceAccount 단위가 되고, 노드 역할을 회수하고 IMDS를 닫으면 다른 Pod의 역할에 닿을 길이 없어집니다. CloudTrail에도 워크로드 역할 세션으로 남으니, 사고가 났을 때 무엇을 회수할지 바로 보입니다. Pod Identity는 여기에 세션 태그가 더해져서 namespace나 ServiceAccount를 정책 조건으로 쓸 수 있습니다.
+경제적인 차이는 요금보다 운영 작업량에서 납니다. 클러스터를 추가하거나 blue/green으로 교체할 때 IRSA는 새 클러스터의 OIDC provider를 등록하고 그 클러스터를 쓰는 역할마다 신뢰 정책을 고칩니다. Pod Identity는 association만 다시 만들면 됩니다. 역할도 태그 조건으로 재사용할 수 있고, 한도와 STS 호출 횟수에서도 여유가 있습니다.
+반대로 따져 볼 것도 있습니다. Pod Identity는 노드마다 Agent가 하나씩 돕니다. 클러스터가 하나뿐이고 교체도 드물다면 이 차이는 크지 않습니다.
 {cue: transition}
-이제 두 방식의 내부를 한 단계씩 보겠습니다. IRSA부터입니다.
+그래서 고르는 기준은 이렇게 정리됩니다.
+:::
+
+---
+<!-- Slide 8: 선택 기준 -->
+@type: content
+@title: 기본은 Pod Identity, 예외는 IRSA
+
+## 기본은 Pod Identity, 예외는 IRSA
+
+:::html
+<div class="wid-grid-3">
+  <div class="wid-card wid-podid wid-edge">
+    <span class="wid-chip wid-podid">Pod Identity</span>
+    <h4 class="wid-gap-top">신규 EKS Linux EC2, Hybrid Nodes 워크로드</h4>
+    <div class="wid-muted">여러 클러스터에서 같은 역할, 세션 태그 ABAC, 팀 간 책임 분리</div>
+  </div>
+  <div class="wid-card wid-irsa wid-edge">
+    <span class="wid-chip wid-irsa">IRSA</span>
+    <h4 class="wid-gap-top">Pod Identity가 닿지 않는 곳</h4>
+    <div class="wid-muted">Fargate, Windows 노드, EKS 밖의 Kubernetes와 구성을 공유하는 워크로드</div>
+  </div>
+  <div class="wid-card">
+    <span class="wid-chip">함께 쓰기</span>
+    <h4 class="wid-gap-top">한 클러스터에 공존 가능</h4>
+    <div class="wid-muted">워크로드마다 고르고, 전환이 끝난 SA에는 한 방식만 남깁니다.</div>
+  </div>
+</div>
+<div class="callout callout-info wid-gap-top"><strong class="wid-t-info">AWS 권장</strong>: 가능한 경우 EKS Pod Identity를 씁니다. 실행 환경과 조직 구조에 따라 IRSA가 맞는 경우가 있습니다.</div>
+<div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html">Amazon EKS User Guide, Grant Kubernetes workloads access to AWS</a></div>
+:::
+
+:::notes
+{timing: 1.5min}
+[요약]
+- 신규 EKS Linux EC2 워크로드: Pod Identity가 단순하고 확장에 유리
+- Fargate, Windows, EKS 밖 Kubernetes와 구성 공유: IRSA
+- 두 방식은 한 클러스터에서 공존 가능, 전환이 끝나면 한 ServiceAccount에는 한 방식만
+- AWS는 가능한 경우 Pod Identity를 권장
+
+기본값은 Pod Identity입니다. 클러스터가 늘어도 신뢰 정책을 건드리지 않고, 세션 태그가 붙고, 팀 경계가 깔끔합니다.
+IRSA는 Pod Identity가 지원하지 않는 곳에서 씁니다. Fargate, Windows 노드, 그리고 EKS 밖의 Kubernetes와 같은 매니페스트를 공유해야 하는 경우입니다.
+둘은 한 클러스터에서 같이 써도 됩니다. 한 ServiceAccount에 둘을 함께 걸면 어떻게 되는지는 2부 이전 절차에서 보겠습니다.
+AWS 문서도 가능한 경우 Pod Identity를 권장하고, 환경에 따라 IRSA가 맞을 수 있다고 적고 있습니다.
+{cue: transition}
+이제 2부, 실제로 옮기는 절차입니다.
 :::

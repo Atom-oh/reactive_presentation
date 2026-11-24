@@ -27,11 +27,11 @@ blocks:
     duration: 13
   - name: 02-how-it-works
     title: "방식별 이전 절차와 IMDS 차단"
-    duration: 11
+    duration: 12
   - name: 03-live-demo
     title: "라이브 데모와 마무리"
     duration: 17
   - name: 04-appendix
     title: "부록: 동작 원리"
-    duration: 9
+    duration: 8
 ---

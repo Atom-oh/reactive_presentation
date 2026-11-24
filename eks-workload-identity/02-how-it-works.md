@@ -9,7 +9,7 @@ block: 02-how-it-works
 
 # 2부: 실제로 옮기는 절차
 
-공통 다섯 단계, 방식별 명령, 공존, 그리고 IMDS 차단
+공통 다섯 단계, 방식별 명령, 교차 계정, 공존, 그리고 IMDS 차단
 
 :::script
 // 발표자 창 노트 순서: 대본 먼저, [요약]/[출처]/[약어]는 아래 (assets/presenter-notes.js)
@@ -25,7 +25,7 @@ if (!window.__widNotesLoader) {
 {timing: 0.5min}
 [요약]
 - 2부: 운영 클러스터에서 옮기는 순서와 방식별 명령
-- 공통 다섯 단계, IRSA 절차, Pod Identity 절차(IRSA에서 옮기는 경우 포함), 공존, IMDS 차단 순서
+- 공통 다섯 단계, IRSA 절차, Pod Identity 절차(IRSA에서 옮기는 경우 포함), 교차 계정, 공존, IMDS 차단 순서
 
 2부는 실제로 옮기는 절차입니다. 어느 방식을 고르든 공통 순서가 있고, 방식마다 명령이 조금 다릅니다.
 {cue: transition}
@@ -172,11 +172,56 @@ Pod Identity는 클러스터마다 Agent 애드온 하나를 깝니다. Auto Mod
 워크로드 쪽은 EKS API 호출 하나, association입니다. Kubernetes 객체는 건드리지 않습니다. 나머지는 IRSA와 같습니다. rollout으로 Pod를 새로 만들고, 컨테이너 자격 증명 변수와 호출자 ARN을 확인한 뒤 노드 역할에서 정책 문장을 뺍니다.
 이미 IRSA를 쓰고 있다면 신뢰 정책에 서비스 principal을 추가한 다음 association을 만들고 rollout합니다. 확인이 끝나면 OIDC 쪽 신뢰와 주석을 정리합니다. eksctl utils migrate-to-pod-identity는 Agent 설치, 신뢰 정책 추가, association 생성을 클러스터 전체에 한 번에 해 줍니다. rollout, 확인, 주석 정리는 직접 해야 하고, OIDC 신뢰는 --remove-oidc-provider-trust-relationship을 줄 때만 지웁니다. 애드온 역할은 항상 지웁니다. --approve 없이 돌리면 계획만 보여 주니 계획부터 보시길 권합니다.
 {cue: transition}
-옮기는 도중에 주석과 association이 함께 걸려 있으면 어떻게 되는지 보겠습니다.
+다른 계정의 리소스에 접근해야 할 때는 어떻게 다른지 보겠습니다.
 :::
 
 ---
-<!-- Slide 5: 공존과 프라이빗 경로 -->
+<!-- Slide 5: 교차 계정 -->
+@type: content
+@title: 교차 계정: IRSA와 Pod Identity
+
+## 교차 계정: IRSA와 Pod Identity
+
+:::html
+<table class="data-table wid-table">
+  <thead><tr><th>A 계정 클러스터의 Pod가 B 계정 리소스로</th><th><span class="wid-chip wid-irsa">IRSA</span></th><th><span class="wid-chip wid-podid">Pod Identity (대상 역할)</span></th></tr></thead>
+  <tbody>
+    <tr><td>B 계정에서 할 일</td><td>A 클러스터의 OIDC issuer를 B 계정 IAM provider로 등록, B 역할에 Federated 신뢰와 sub, aud 조건</td><td>B 역할이 A 역할을 신뢰, External ID 조건 권장</td></tr>
+    <tr><td>클러스터가 늘면</td><td>B 계정마다 provider 등록과 신뢰 정책 수정. 클러스터 수 × 계정 수만큼 provider</td><td>B 쪽은 그대로, A 쪽에 association만 추가</td></tr>
+    <tr><td>역할 홉</td><td>Pod가 B 역할을 바로 맡음 (1홉)</td><td>A 역할을 거쳐 B 역할로, EKS가 대신 체이닝</td></tr>
+    <tr><td>앱 변경</td><td>없음, SA 주석에 B 역할 ARN</td><td>없음, association에 두 역할</td></tr>
+  </tbody>
+</table>
+<div class="wid-grid-21 wid-gap-top">
+<pre class="wid-term">aws eks create-pod-identity-association \
+  --cluster-name $CLUSTER --namespace orders --service-account orders \
+  --role-arn        arn:aws:iam::&lt;ACCOUNT_A&gt;:role/account-a-role \
+  --target-role-arn arn:aws:iam::&lt;ACCOUNT_B&gt;:role/account-b-role</pre>
+  <div class="wid-panel"><strong>External ID</strong> <span class="wid-muted">EKS가 <code>리전/A계정/클러스터/namespace/SA</code>로 자동으로 넣습니다. B 역할 신뢰 정책의 <code>sts:ExternalId</code> 조건에 이 값을 겁니다.</span></div>
+</div>
+<div class="wid-src">출처: <a href="https://aws.amazon.com/blogs/containers/amazon-eks-pod-identity-streamlines-cross-account-access/">AWS Containers Blog, EKS Pod Identity streamlines cross account access</a>, <a href="https://docs.aws.amazon.com/eks/latest/best-practices/multi-account-strategy.html">EKS Best Practices, Multi Account Strategy</a></div>
+:::
+
+:::notes
+{timing: 1min}
+[요약]
+- IRSA: B 계정마다 A 클러스터의 OIDC provider를 등록하고 B 역할에 Federated 신뢰. 클러스터 수 × 계정 수만큼 provider가 늘어 한도(계정당 기본 100)에 닿기 쉬움
+- Pod Identity: association에 A 역할(--role-arn)과 B 역할(--target-role-arn)을 함께 지정, EKS가 역할 체이닝. B 쪽 설정은 클러스터가 늘어도 그대로
+- A 역할 권한: B 역할에 sts:AssumeRole, sts:TagSession. B 역할 신뢰: A 역할 + sts:ExternalId 조건(TagSession은 별도 문장)
+- 주의: 세션 태그로 PackedPolicyTooLarge가 나면 --disable-session-tags (그러면 태그 조건은 못 씀)
+
+교차 계정은 질문이 많이 나오는 부분이라 따로 정리했습니다. IRSA는 B 계정 역할을 Pod가 바로 맡으니 단순해 보이지만, 그러려면 B 계정 IAM에 A 클러스터의 OIDC provider를 등록해야 합니다. 클러스터가 늘 때마다 B 계정마다 등록과 신뢰 정책 수정이 반복됩니다.
+Pod Identity는 association에 역할을 두 개 넣습니다. 클러스터 계정의 A 역할과 리소스 계정의 B 역할입니다. EKS가 A 역할로 B 역할을 대신 맡아서 Pod에는 B 역할 자격 증명이 들어갑니다. B 계정은 A 역할만 신뢰하면 되니 클러스터가 늘어도 손댈 게 없습니다.
+B 역할 신뢰 정책에는 External ID 조건을 거는 걸 권장합니다. EKS가 리전, A 계정, 클러스터, namespace, ServiceAccount를 이어 붙인 값을 자동으로 넣어 줍니다.
+{cue: transition}
+옮기는 도중에 주석과 association이 함께 걸려 있으면 어떻게 되는지 보겠습니다.
+
+[약어]
+- External ID: AssumeRole 요청에 붙는 식별 값, confused deputy 방지용
+:::
+
+---
+<!-- Slide 6: 공존과 프라이빗 경로 -->
 @type: content
 @title: 주석이 남아도 새 Pod는 Pod Identity
 
@@ -227,7 +272,7 @@ SDK 자격 증명 체인은 웹 ID 토큰을 먼저 보니 IRSA가 이길 것 �
 :::
 
 ---
-<!-- Slide 6: IMDS 차단 -->
+<!-- Slide 7: IMDS 차단 -->
 @type: content
 @title: 마지막에 Pod의 IMDS 길을 닫는다
 

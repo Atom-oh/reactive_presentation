@@ -47,12 +47,12 @@ if (!window.__widNotesLoader) {
 :::html
 <div class="wid-grid-4">
   <div class="wid-card"><span class="wid-chip">1부, 13분</span><h4 class="wid-gap-top">차이와 선택</h4><div class="wid-muted">출발점, 두 방식의 차이와 장단점, 보안과 운영 비용, 선택 기준</div></div>
-  <div class="wid-card"><span class="wid-chip">2부, 11분</span><h4 class="wid-gap-top">이전 절차</h4><div class="wid-muted">공통 다섯 단계, IRSA와 Pod Identity 명령, 공존, IMDS 차단</div></div>
+  <div class="wid-card"><span class="wid-chip">2부, 12분</span><h4 class="wid-gap-top">이전 절차</h4><div class="wid-muted">공통 다섯 단계, IRSA와 Pod Identity 명령, 교차 계정, 공존, IMDS 차단</div></div>
   <div class="wid-card"><span class="wid-chip">3부, 13분</span><h4 class="wid-gap-top">라이브 데모</h4><div class="wid-muted">같은 앱 세 벌을 옮기고 노드 역할 권한을 회수</div></div>
   <div class="wid-card"><span class="wid-chip">마무리, 4분</span><h4 class="wid-gap-top">문제 해결, 퀴즈</h4><div class="wid-muted">막혔을 때 보는 순서와 정리</div></div>
 </div>
 <div class="wid-grid-2 wid-gap-top">
-  <div class="wid-panel"><strong>Q&amp;A, 9분</strong> <span class="wid-muted">남는 시간은 질문으로</span></div>
+  <div class="wid-panel"><strong>Q&amp;A, 8분</strong> <span class="wid-muted">남는 시간은 질문으로</span></div>
   <div class="wid-panel"><strong>부록: 동작 원리</strong> <span class="wid-muted">자격 증명 경로, SDK 체인, 주입, 두 방식의 단계별 흐름. 질문이 나오면 사용</span></div>
 </div>
 <div class="callout callout-info wid-gap-top">데모가 막히면 슬라이드에 같은 단계의 실측 화면이 있습니다.</div>
@@ -62,7 +62,7 @@ if (!window.__widNotesLoader) {
 {timing: 1min}
 [요약]
 - 1부 13분: 출발점 한 장, 두 방식의 차이, 장단점, 보안과 운영 비용 이점, 선택 기준
-- 2부 11분: 공통 다섯 단계, IRSA와 Pod Identity의 이전 명령, 공존, IMDS 차단
+- 2부 12분: 공통 다섯 단계, IRSA와 Pod Identity의 이전 명령, 교차 계정, 공존, IMDS 차단
 - 3부 데모 13분과 마무리 4분, 남는 시간은 Q&A. 동작 원리는 부록에 있어 질문이 나오면 사용
 
 순서는 이렇습니다. 노드 역할의 문제는 한 장으로 짚고, 바로 IRSA와 Pod Identity의 차이와 장단점, 그리고 옮기면 보안과 운영 비용에서 무엇이 좋아지는지 봅니다.

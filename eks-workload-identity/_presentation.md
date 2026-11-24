@@ -7,7 +7,7 @@ date: 2026-11-24
 lang: ko
 level: 300
 audience: "EKS 운영자, 플랫폼 엔지니어"
-quiz: true
+quiz: false
 duration: 50
 
 speaker:
@@ -30,8 +30,8 @@ blocks:
     duration: 12
   - name: 03-live-demo
     title: "라이브 데모와 마무리"
-    duration: 17
+    duration: 15
   - name: 04-appendix
     title: "부록: 동작 원리"
-    duration: 6
+    duration: 8
 ---

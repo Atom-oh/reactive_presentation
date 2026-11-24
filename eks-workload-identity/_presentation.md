@@ -8,7 +8,7 @@ lang: ko
 level: 300
 audience: "EKS 운영자, 플랫폼 엔지니어"
 quiz: true
-duration: 50
+duration: 51
 
 speaker:
   name: "오준석"
@@ -24,7 +24,7 @@ theme:
 blocks:
   - name: 01-why-migrate
     title: "왜 옮기나, 자격 증명 체인"
-    duration: 13
+    duration: 14
   - name: 02-how-it-works
     title: "IRSA와 Pod Identity의 동작 원리와 비교"
     duration: 20

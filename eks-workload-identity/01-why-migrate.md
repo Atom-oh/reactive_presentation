@@ -13,6 +13,16 @@ block: 01-why-migrate
 
 2026. 11. 24, 오준석, Senior Solutions Architect, AWS Korea
 
+:::script
+// 발표자 창 노트 순서: 대본 먼저, [요약]/[출처]/[약어]는 아래 (assets/presenter-notes.js)
+if (!window.__widNotesLoader) {
+  window.__widNotesLoader = true;
+  var s = document.createElement('script');
+  s.src = './assets/presenter-notes.js';
+  document.head.appendChild(s);
+}
+:::
+
 :::notes
 {timing: 0.5min}
 [요약]

@@ -25,7 +25,7 @@ if (!window.__widNotesLoader) {
 {timing: 0.5min}
 [요약]
 - 본편에서 뺀 동작 원리 장표. 질문이 나오거나 시간이 남을 때 사용
-- 순서: IAM이 쓰이는 두 길, 세 갈래 경로, SDK 체인, 주입 변수, 웹훅, IRSA 흐름과 단계, Pod Identity 흐름과 단계, Agent
+- 순서: IAM이 쓰이는 두 길, 세 갈래 경로, SDK 체인, 웹훅, IRSA 흐름과 단계, Pod Identity 흐름과 단계, Agent
 
 여기부터는 부록입니다. 본편에서 결론만 말씀드린 동작 원리를 장표로 남겨 두었습니다.
 질문에 맞는 장으로 바로 넘어가겠습니다.
@@ -497,44 +497,7 @@ Pod Identity Pod는 3단계, 컨테이너 공급자에서 멈춥니다.
 :::
 
 ---
-<!-- Slide 5: 주입되는 것 -->
-@type: content
-@title: 바뀌는 것은 코드가 아니라 주입된 변수
-
-## 바뀌는 것은 코드가 아니라 주입된 변수
-
-:::html
-<table class="data-table wid-table">
-  <thead><tr><th>경로</th><th>Pod에 주입되는 것</th><th>SDK가 호출하는 곳</th><th>결과 역할</th></tr></thead>
-  <tbody>
-    <tr><td><span class="wid-chip wid-node">node (IMDS)</span></td><td>없음</td><td>IMDSv2 <code>169.254.169.254</code></td><td>노드 IAM 역할 (노드의 모든 Pod가 공유)</td></tr>
-    <tr><td><span class="wid-chip wid-irsa">IRSA (STS)</span></td><td><code>AWS_ROLE_ARN</code>, <code>AWS_WEB_IDENTITY_TOKEN_FILE</code>, 토큰 볼륨</td><td>리전 STS <code>AssumeRoleWithWebIdentity</code></td><td>ServiceAccount 주석의 역할</td></tr>
-    <tr><td><span class="wid-chip wid-podid">Pod Identity</span></td><td><code>AWS_CONTAINER_CREDENTIALS_FULL_URI</code>, <code>AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE</code>, 토큰 볼륨</td><td>같은 노드의 Agent <code>169.254.170.23</code></td><td>association에 지정한 역할</td></tr>
-  </tbody>
-</table>
-<div class="wid-grid-2 wid-gap-top">
-  <div class="callout callout-warning"><strong class="wid-t-warning">주입은 Pod 생성 시점에만</strong>: 이미 실행 중인 Pod는 바뀌지 않으므로 설정 후 rollout으로 Pod를 새로 만듭니다.</div>
-  <div class="callout callout-info"><strong class="wid-t-info">확인은 호출자 ARN으로</strong>: 호출 성공만으로는 부족합니다. 노드 역할로 성공했을 수도 있습니다.</div>
-</div>
-:::
-
-:::notes
-{timing: 1.5min}
-[요약]
-- 노드 경로: 주입 없음, IMDS에서 노드 역할
-- IRSA: AWS_ROLE_ARN, AWS_WEB_IDENTITY_TOKEN_FILE, 토큰 볼륨
-- Pod Identity: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE, 토큰 볼륨
-- 주입은 Pod 생성 때만 일어나므로 rollout 필요, 검증은 호출자 ARN으로
-
-표로 정리하면 이렇습니다. 노드 경로는 아무것도 주입되지 않고, IRSA와 Pod Identity는 서로 다른 환경 변수 두 개와 토큰 볼륨이 들어갑니다. 데모의 diff 단계에서 이 변수 이름을 실제 Pod에서 그대로 확인합니다.
-중요한 점은 주입이 Pod를 만들 때만 일어난다는 겁니다. 주석을 달거나 association을 만들어도 이미 떠 있는 Pod는 그대로라 rollout이 필요합니다.
-그리고 확인할 때는 API 호출이 성공했는지가 아니라 호출자 ARN이 무엇인지 봐야 합니다. 노드 역할에 권한이 남아 있으면 이전이 안 됐어도 성공하기 때문입니다.
-{cue: transition}
-그럼 이 변수를 누가, 언제 넣는지 보겠습니다.
-:::
-
----
-<!-- Slide 6: 누가 언제 주입하나 -->
+<!-- Slide 5: 누가 언제 주입하나 -->
 @type: content
 @title: 변수는 누가, 언제 넣나: API 서버의 mutating 웹훅
 
@@ -590,7 +553,7 @@ Pod를 만들면 요청이 API 서버로 갑니다. rollout이면 ReplicaSet 컨
 :::
 
 ---
-<!-- Slide 7: IRSA 흐름 -->
+<!-- Slide 6: IRSA 흐름 -->
 @type: content
 @fit: off
 @title: IRSA: Pod가 토큰을 들고 STS로 간다
@@ -639,7 +602,7 @@ EKS 클러스터마다 OIDC issuer URL이 있습니다. 이 issuer를 계정의 
 :::
 
 ---
-<!-- Slide 8: IRSA 단계별 캔버스 -->
+<!-- Slide 7: IRSA 단계별 캔버스 -->
 @type: content
 @title: IRSA 다섯 단계, aud와 sub가 열쇠
 
@@ -887,7 +850,7 @@ STS는 토큰의 issuer가 계정에 등록된 OIDC provider인지 보고, 그 i
 :::
 
 ---
-<!-- Slide 9: Pod Identity 흐름 -->
+<!-- Slide 8: Pod Identity 흐름 -->
 @type: content
 @fit: off
 @title: Pod Identity: Agent가 대신 묻는다
@@ -931,7 +894,7 @@ Agent가 EKS Auth를 부르고, EKS가 세션 태그를 붙여 역할을 맡은 
 :::
 
 ---
-<!-- Slide 10: Pod Identity 단계별 캔버스 -->
+<!-- Slide 9: Pod Identity 단계별 캔버스 -->
 @type: content
 @title: Pod Identity 다섯 단계, 노드는 창구
 
@@ -1175,7 +1138,7 @@ EKS Auth가 토큰과 association을 확인하고, 세션 태그 6개를 붙여 
 :::
 
 ---
-<!-- Slide 11: Agent와 노드 역할 -->
+<!-- Slide 10: Agent와 노드 역할 -->
 @type: content
 @title: Agent는 노드마다, 권한은 노드 역할에
 

@@ -46,13 +46,13 @@ if (!window.__widNotesLoader) {
 
 :::html
 <div class="wid-grid-4">
-  <div class="wid-card"><span class="wid-chip">1부, 13분</span><h4 class="wid-gap-top">차이와 선택</h4><div class="wid-muted">출발점, 두 방식의 차이와 장단점, 보안과 운영 비용, 선택 기준</div></div>
-  <div class="wid-card"><span class="wid-chip">2부, 12분</span><h4 class="wid-gap-top">이전 절차</h4><div class="wid-muted">공통 다섯 단계, IRSA와 Pod Identity 명령, 교차 계정, 공존, IMDS 차단</div></div>
+  <div class="wid-card"><span class="wid-chip">1부, 14분</span><h4 class="wid-gap-top">차이와 선택</h4><div class="wid-muted">출발점, 두 방식의 차이와 장단점, 보안과 운영 비용, 선택 기준</div></div>
+  <div class="wid-card"><span class="wid-chip">2부, 13분</span><h4 class="wid-gap-top">이전 절차</h4><div class="wid-muted">공통 다섯 단계, IRSA와 Pod Identity 명령, 교차 계정, 공존, hop limit과 IMDS 차단</div></div>
   <div class="wid-card"><span class="wid-chip">3부, 13분</span><h4 class="wid-gap-top">라이브 데모</h4><div class="wid-muted">같은 앱 세 벌을 옮기고 노드 역할 권한을 회수</div></div>
   <div class="wid-card"><span class="wid-chip">마무리, 4분</span><h4 class="wid-gap-top">문제 해결, 퀴즈</h4><div class="wid-muted">막혔을 때 보는 순서와 정리</div></div>
 </div>
 <div class="wid-grid-2 wid-gap-top">
-  <div class="wid-panel"><strong>Q&amp;A, 8분</strong> <span class="wid-muted">남는 시간은 질문으로</span></div>
+  <div class="wid-panel"><strong>Q&amp;A, 6분</strong> <span class="wid-muted">남는 시간은 질문으로</span></div>
   <div class="wid-panel"><strong>부록: 동작 원리</strong> <span class="wid-muted">자격 증명 경로, SDK 체인, 주입, 두 방식의 단계별 흐름. 질문이 나오면 사용</span></div>
 </div>
 <div class="callout callout-info wid-gap-top">데모가 막히면 슬라이드에 같은 단계의 실측 화면이 있습니다.</div>
@@ -61,8 +61,8 @@ if (!window.__widNotesLoader) {
 :::notes
 {timing: 1min}
 [요약]
-- 1부 13분: 출발점 한 장, 두 방식의 차이, 장단점, 보안과 운영 비용 이점, 선택 기준
-- 2부 12분: 공통 다섯 단계, IRSA와 Pod Identity의 이전 명령, 교차 계정, 공존, IMDS 차단
+- 1부 14분: 출발점 한 장, 두 방식의 차이, 주입 변수와 SDK, 장단점, 보안과 운영 비용 이점, 선택 기준
+- 2부 13분: 공통 다섯 단계, IRSA와 Pod Identity의 이전 명령, 교차 계정, 공존, hop limit 원리와 IMDS 차단
 - 3부 데모 13분과 마무리 4분, 남는 시간은 Q&A. 동작 원리는 부록에 있어 질문이 나오면 사용
 
 순서는 이렇습니다. 노드 역할의 문제는 한 장으로 짚고, 바로 IRSA와 Pod Identity의 차이와 장단점, 그리고 옮기면 보안과 운영 비용에서 무엇이 좋아지는지 봅니다.
@@ -86,7 +86,7 @@ if (!window.__widNotesLoader) {
     <ul class="wid-gap-top">
       <li>같은 노드의 모든 Pod가 같은 권한을 씁니다.</li>
       <li>CloudTrail 호출자가 노드 세션이라 워크로드를 구분하기 어렵습니다.</li>
-      <li>hop limit 2면 일반 Pod도 IMDS에서 노드 역할을 받습니다.</li>
+      <li>hop limit 2면 일반 Pod도 IMDS에서 노드 역할을 받습니다 (원리는 2부).</li>
     </ul>
   </div>
   <div class="wid-card">
@@ -280,7 +280,7 @@ IAM 정책 조건에서 `aws:PrincipalTag/kubernetes-namespace` 같은 세션 �
 (아래 방향키)
 마지막 교차 계정은 둘 다 가능하지만 방식이 다릅니다.
 {cue: transition}
-이 차이를 장점과 단점으로 한 번에 정리하겠습니다.
+그럼 실제 Pod에는 무엇이 들어가고, 누가 그걸 읽는지 보겠습니다.
 
 [약어]
 - ABAC: Attribute-based access control
@@ -288,7 +288,50 @@ IAM 정책 조건에서 `aws:PrincipalTag/kubernetes-namespace` 같은 세션 �
 :::
 
 ---
-<!-- Slide 6: 장단점 -->
+<!-- Slide 6: 주입되는 것 -->
+@type: content
+@title: Pod에 주입되는 변수, 읽는 건 앱의 SDK
+
+## Pod에 주입되는 변수, 읽는 건 앱의 SDK
+
+:::html
+<table class="data-table wid-table">
+  <thead><tr><th>경로</th><th>Pod에 주입되는 것</th><th>SDK가 호출하는 곳</th><th>결과 역할</th></tr></thead>
+  <tbody>
+    <tr><td><span class="wid-chip wid-node">node (IMDS)</span></td><td>없음</td><td>IMDSv2 <code>169.254.169.254</code></td><td>노드 IAM 역할 (노드의 모든 Pod가 공유)</td></tr>
+    <tr><td><span class="wid-chip wid-irsa">IRSA (STS)</span></td><td><code>AWS_ROLE_ARN</code>, <code>AWS_WEB_IDENTITY_TOKEN_FILE</code>, 토큰 볼륨</td><td>리전 STS <code>AssumeRoleWithWebIdentity</code></td><td>ServiceAccount 주석의 역할</td></tr>
+    <tr><td><span class="wid-chip wid-podid">Pod Identity</span></td><td><code>AWS_CONTAINER_CREDENTIALS_FULL_URI</code>, <code>AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE</code>, 토큰 볼륨</td><td>같은 노드의 Agent <code>169.254.170.23</code></td><td>association에 지정한 역할</td></tr>
+  </tbody>
+</table>
+<div class="wid-grid-3 wid-gap-top">
+  <div class="callout callout-info"><strong class="wid-t-info">받으러 가는 건 앱의 SDK</strong>: EKS는 변수와 토큰 파일만 넣습니다. 앱 안의 SDK가 이 변수를 읽고 STS나 Agent에 직접 요청합니다.</div>
+  <div class="callout callout-warning"><strong class="wid-t-warning">변수를 모르는 SDK는 IMDS로</strong>: 오래된 SDK는 변수를 무시하고 체인 끝 IMDS에서 노드 역할을 씁니다. 오류 없이 지나가니 최소 버전을 확인합니다.</div>
+  <div class="callout callout-warning"><strong class="wid-t-warning">주입은 Pod 생성 시점에만</strong>: 이미 떠 있는 Pod는 그대로라 rollout이 필요하고, 확인은 호출자 ARN으로 합니다.</div>
+</div>
+<div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-id-minimum-sdk.html">EKS User Guide, Use pod identity with the AWS SDK</a>, <a href="https://docs.aws.amazon.com/sdkref/latest/guide/standardized-credentials.html">AWS SDKs and Tools, standardized credential providers</a></div>
+:::
+
+:::notes
+{timing: 1.5min}
+[요약]
+- 노드 경로: 주입 없음, IMDS에서 노드 역할
+- IRSA: AWS_ROLE_ARN, AWS_WEB_IDENTITY_TOKEN_FILE, 토큰 볼륨
+- Pod Identity: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE, 토큰 볼륨
+- EKS가 넣는 건 변수와 토큰 파일뿐. 자격 증명은 앱 프로세스 안의 SDK가 이 변수를 읽고 직접 받으러 감(IRSA는 STS, Pod Identity는 노드의 Agent)
+- 변수를 모르는 오래된 SDK는 무시하고 체인 끝 IMDS로 내려가 노드 역할 사용. 오류가 없어 놓치기 쉬움. Pod Identity의 토큰 파일 변수와 169.254.170.23 주소는 비교적 최근에 SDK에 들어감
+- 주입은 Pod 생성 때만 일어나므로 rollout 필요, 검증은 호출자 ARN으로
+
+표로 정리하면 이렇습니다. 노드 경로는 아무것도 주입되지 않고, IRSA와 Pod Identity는 서로 다른 환경 변수 두 개와 토큰 볼륨이 들어갑니다. 데모의 diff 단계에서 이 변수 이름을 실제 Pod에서 그대로 확인합니다.
+여기서 꼭 짚을 점이 있습니다. EKS가 Pod에 넣어 주는 건 이 변수와 토큰 파일뿐이고, 자격 증명 자체는 아닙니다. 앱 프로세스 안의 SDK가 이 변수를 읽고, IRSA라면 STS에, Pod Identity라면 같은 노드의 Agent 주소로 직접 요청해서 자격 증명을 받아 옵니다. 노드의 Agent나 EKS Auth는 그 요청이 와야 움직입니다.
+그래서 SDK가 이 변수를 모르면 아무 일도 일어나지 않습니다. 오래된 SDK는 변수를 무시하고 체인 끝의 IMDS로 내려가 노드 역할을 씁니다. 오류가 나지 않으니 노드 역할에 권한이 남아 있는 동안에는 이전이 된 것처럼 보입니다. 특히 Pod Identity의 토큰 파일 변수와 Agent 주소는 비교적 최근에 SDK에 들어갔기 때문에 최소 버전을 꼭 확인합니다.
+또 하나, 주입은 Pod를 만들 때만 일어납니다. 주석을 달거나 association을 만들어도 이미 떠 있는 Pod는 그대로라 rollout이 필요합니다.
+그리고 확인할 때는 API 호출이 성공했는지가 아니라 호출자 ARN이 무엇인지 봐야 합니다. 노드 역할에 권한이 남아 있으면 이전이 안 됐어도 성공하기 때문입니다.
+{cue: transition}
+이 차이를 장점과 단점으로 정리하겠습니다.
+:::
+
+---
+<!-- Slide 7: 장단점 -->
 @type: content
 @title: 장단점: IRSA와 Pod Identity
 
@@ -331,7 +374,7 @@ IAM 정책 조건에서 `aws:PrincipalTag/kubernetes-namespace` 같은 세션 �
 :::
 
 :::notes
-{timing: 2.5min}
+{timing: 2min}
 [요약]
 - IRSA 장점: 실행 환경이 넓음(Fargate, Windows, EKS 밖), 애드온 불필요, 교차 계정이 단순
 - IRSA 단점: 클러스터마다 OIDC provider(계정당 100), 새 클러스터마다 신뢰 정책 수정(역할당 4개 안팎), 세션 태그 없음, Pod가 STS 직접 호출
@@ -352,7 +395,7 @@ Pod Identity는 정반대입니다. 신뢰 정책은 서비스 principal 하나�
 :::
 
 ---
-<!-- Slide 7: 보안과 운영 비용 -->
+<!-- Slide 8: 보안과 운영 비용 -->
 @type: content
 @title: 옮기면 얻는 것: 보안과 운영 비용
 
@@ -394,16 +437,18 @@ Pod Identity는 정반대입니다. 신뢰 정책은 서비스 principal 하나�
 - Pod Identity는 세션 태그로 클러스터, namespace, SA 조건까지
 - 운영 비용: 클러스터 추가와 교체 때 IRSA는 provider 등록과 신뢰 정책 수정, Pod Identity는 association만. 역할 재사용, 한도, STS 호출 횟수에서도 차이
 - 따져 볼 것: 노드마다 Agent DaemonSet. 클러스터가 적으면 차이가 작음
+- Agent 리소스(실측, 2026-11-24, 데모 클러스터 15노드): Pod당 CPU 1m, 메모리 10~14Mi. 기본 requests/limits 없음, 애드온 설정값 resources로 지정 가능(v1.4.0 스키마)
 
 보안 쪽은 두 방식 모두 같은 걸 얻습니다. 권한이 노드가 아니라 ServiceAccount 단위가 되고, 노드 역할을 회수하고 IMDS를 닫으면 다른 Pod의 역할에 닿을 길이 없어집니다. CloudTrail에도 워크로드 역할 세션으로 남으니, 사고가 났을 때 무엇을 회수할지 바로 보입니다. Pod Identity는 여기에 세션 태그가 더해져서 namespace나 ServiceAccount를 정책 조건으로 쓸 수 있습니다.
 경제적인 차이는 요금보다 운영 작업량에서 납니다. 클러스터를 추가하거나 blue/green으로 교체할 때 IRSA는 새 클러스터의 OIDC provider를 등록하고 그 클러스터를 쓰는 역할마다 신뢰 정책을 고칩니다. Pod Identity는 association만 다시 만들면 됩니다. 역할도 태그 조건으로 재사용할 수 있고, 한도와 STS 호출 횟수에서도 여유가 있습니다.
 반대로 따져 볼 것도 있습니다. Pod Identity는 노드마다 Agent가 하나씩 돕니다. 클러스터가 하나뿐이고 교체도 드물다면 이 차이는 크지 않습니다.
+(예상 질문, Agent 리소스) 데모 클러스터의 노드 15대에서 재 보면 Agent Pod 하나가 CPU 1m, 메모리 10~14Mi 정도입니다. 애드온 기본값에는 requests와 limits가 없고, 필요하면 애드온 설정값의 resources로 지정합니다. hostNetwork에 system-node-critical 우선순위로 돕니다.
 {cue: transition}
 그래서 고르는 기준은 이렇게 정리됩니다.
 :::
 
 ---
-<!-- Slide 8: 선택 기준 -->
+<!-- Slide 9: 선택 기준 -->
 @type: content
 @title: 기본은 Pod Identity, 예외는 IRSA
 
@@ -443,7 +488,7 @@ Pod Identity는 정반대입니다. 신뢰 정책은 서비스 principal 하나�
 - AWS는 가능한 경우 Pod Identity를 권장
 
 기본값은 Pod Identity입니다. 클러스터가 늘어도 신뢰 정책을 건드리지 않고, 세션 태그가 붙고, 팀 경계가 깔끔합니다.
-IRSA가 맞는 경우는 두 갈래입니다. 먼저 실행 환경입니다. Fargate로 돌리는 배치 Job, Windows 노드의 .NET 앱, Outposts나 EKS Anywhere처럼 Pod Identity가 지원하지 않는 곳입니다. EKS와 ROSA, 자체 관리 Kubernetes에 같은 매니페스트를 배포하는 경우나, 벤더 이미지처럼 SDK를 올릴 수 없는 앱도 IRSA가 편합니다.
+IRSA가 맞는 경우는 두 갈래입니다. 먼저 실행 환경입니다. Fargate로 돌리는 배치 Job, Windows 노드의 .NET 앱, Outposts나 EKS Anywhere처럼 Pod Identity가 지원하지 않는 곳입니다. EKS와 ROSA, 자체 관리 Kubernetes에 같은 매니페스트를 배포하는 경우나, 벤더 이미지처럼 SDK를 올릴 수 없는 앱도 IRSA가 편합니다. 앞에서 본 것처럼 변수를 읽는 건 앱의 SDK라서, 오래된 SDK도 아는 웹 ID 토큰 방식이 동작할 가능성이 높기 때문입니다.
 다음은 조직입니다. IRSA는 어느 클러스터의 어느 ServiceAccount가 역할을 쓰는지가 신뢰 정책 안에 들어 있어서, IAM 팀이 정책만 보고 승인하고 감사할 수 있습니다. Pod Identity에서는 association을 만드는 플랫폼 팀이 그 연결을 정합니다. 이 권한을 넘기고 싶지 않은 조직이라면 IRSA가 맞습니다. 클러스터가 한두 개로 고정되어 있고 IRSA 자동화가 이미 정착된 팀도 굳이 옮길 이유가 크지 않습니다.
 둘은 한 클러스터에서 같이 써도 됩니다. 한 ServiceAccount에 둘을 함께 걸면 어떻게 되는지는 2부 이전 절차에서 보겠습니다.
 AWS 문서도 가능한 경우 Pod Identity를 권장하고, 환경에 따라 IRSA가 맞을 수 있다고 적고 있습니다.

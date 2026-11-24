@@ -9,7 +9,7 @@ block: 02-how-it-works
 
 # 2부: 실제로 옮기는 절차
 
-공통 다섯 단계, 방식별 명령, 교차 계정, 공존, 그리고 IMDS 차단
+공통 다섯 단계, 방식별 명령, 교차 계정, 공존, hop limit과 IMDS 차단
 
 :::script
 // 발표자 창 노트 순서: 대본 먼저, [요약]/[출처]/[약어]는 아래 (assets/presenter-notes.js)
@@ -25,7 +25,7 @@ if (!window.__widNotesLoader) {
 {timing: 0.5min}
 [요약]
 - 2부: 운영 클러스터에서 옮기는 순서와 방식별 명령
-- 공통 다섯 단계, IRSA 절차, Pod Identity 절차(IRSA에서 옮기는 경우 포함), 교차 계정, 공존, IMDS 차단 순서
+- 공통 다섯 단계, IRSA 절차, Pod Identity 절차(IRSA에서 옮기는 경우 포함), 교차 계정, 공존, hop limit 원리, IMDS 차단 순서
 
 2부는 실제로 옮기는 절차입니다. 어느 방식을 고르든 공통 순서가 있고, 방식마다 명령이 조금 다릅니다.
 {cue: transition}
@@ -272,7 +272,54 @@ SDK 자격 증명 체인은 웹 ID 토큰을 먼저 보니 IRSA가 이길 것 �
 :::
 
 ---
-<!-- Slide 7: IMDS 차단 -->
+<!-- Slide 7: hop limit 원리 -->
+@type: content
+@title: hop limit 1이 일반 Pod만 막는 이유
+
+## hop limit 1이 일반 Pod만 막는 이유
+
+:::html
+<div class="wid-grid-21">
+  <div>
+    <table class="data-table wid-table">
+      <thead><tr><th>IMDSv2 토큰 응답이 닿는 곳</th><th>hop limit 2 (흔한 설정)</th><th>hop limit 1</th></tr></thead>
+      <tbody>
+        <tr><td><span class="wid-chip wid-node">노드 네트워크</span><div class="wid-cap">hostNetwork Pod, Pod Identity Agent</div></td><td>토큰 받음</td><td>토큰 받음</td></tr>
+        <tr><td><span class="wid-chip">일반 Pod</span><div class="wid-cap">자기 네트워크 namespace, 노드가 한 번 더 전달</div></td><td>토큰 받음, 노드 역할 사용</td><td><strong class="wid-t-danger">응답이 Pod까지 못 옴</strong></td></tr>
+        <tr><td><span class="wid-chip wid-irsa">IRSA</span> <span class="wid-chip wid-podid">Pod Identity</span><div class="wid-cap">옮긴 Pod</div></td><td colspan="2">IMDS를 쓰지 않으므로 영향 없음 (STS, 같은 노드의 Agent)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="wid-stack">
+    <div class="wid-panel"><strong>hop limit이란</strong> <span class="wid-muted">IMDSv2 토큰을 주는 PUT 응답의 IP TTL입니다. 노드에서 Pod의 네트워크 namespace로 넘어갈 때 한 홉이 줄어서, 1이면 Pod에 닿기 전에 버려집니다.</span></div>
+    <div class="callout callout-warning"><strong class="wid-t-warning">HttpTokens=required와 함께</strong>: hop limit은 토큰 응답에만 걸립니다. IMDSv1(토큰 없는 GET)이 열려 있으면 hop limit과 관계없이 Pod가 노드 역할을 읽습니다.</div>
+    <div class="wid-cap">왜 2가 흔한가: 컨테이너 안의 SDK가 IMDS를 쓰도록 호환성을 맞추려고 올려 둔 경우가 많습니다.</div>
+  </div>
+</div>
+<div class="wid-src">출처: <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html">Amazon EC2 User Guide, How IMDSv2 works</a>, <a href="https://docs.aws.amazon.com/eks/latest/best-practices/identity-and-access-management.html">EKS Best Practices, Restrict access to the instance profile</a></div>
+:::
+
+:::notes
+{timing: 1min}
+[요약]
+- hop limit은 IMDSv2 토큰(PUT) 응답의 IP TTL. EC2 기본은 1, 컨테이너 호환 때문에 2로 올린 노드 그룹이 많음
+- 일반 Pod는 자기 네트워크 namespace에 있어 노드가 한 번 더 전달하므로 한 홉이 더 필요. 1이면 토큰 응답이 Pod에 닿기 전에 버려짐
+- hostNetwork Pod와 Pod Identity Agent는 노드 네트워크라 1이어도 토큰을 받음. 옮긴 Pod는 IMDS를 안 쓰니 영향 없음
+- hop limit은 토큰 응답에만 걸리므로 HttpTokens=required(IMDSv1 차단)와 반드시 같이
+
+hop limit은 IMDSv2가 토큰을 돌려줄 때 그 응답 패킷의 TTL입니다. EC2 기본값은 1인데, 컨테이너 안의 SDK가 IMDS를 쓰게 하려고 2로 올려 둔 노드 그룹이 많습니다.
+일반 Pod는 노드와 다른 자기 네트워크 namespace에 있어서, 응답이 노드를 거쳐 Pod로 한 번 더 넘어갑니다. 그 한 번이 한 홉입니다. 그래서 1이면 응답이 Pod에 닿기 전에 버려지고, 2면 Pod까지 와서 노드 역할을 가져갑니다.
+노드 네트워크를 그대로 쓰는 hostNetwork Pod와 Pod Identity Agent는 1이어도 토큰을 받습니다. 그리고 IRSA나 Pod Identity로 옮긴 Pod는 IMDS를 쓰지 않으니 아무 영향이 없습니다.
+하나 꼭 같이 챙길 게 있습니다. hop limit은 토큰 응답에만 걸리는 제한입니다. IMDSv1이 열려 있으면 토큰 없이 GET 한 번으로 노드 역할을 읽을 수 있으니, HttpTokens를 required로 두는 것과 반드시 함께 적용합니다.
+{cue: transition}
+노드 종류별로 이 값을 어디서 바꾸는지 보겠습니다.
+
+[약어]
+- TTL: Time To Live, 패킷이 지날 수 있는 홉 수
+:::
+
+---
+<!-- Slide 8: IMDS 차단 -->
 @type: content
 @title: 마지막에 Pod의 IMDS 길을 닫는다
 
@@ -317,7 +364,7 @@ HttpPutResponseHopLimit=1</pre>
 - hop limit 1로 일반 Pod의 경로만 닫고 IMDS 자체는 켜 둠. Agent가 hostNetwork에서 IMDS로 노드 역할을 받기 때문(HttpEndpoint=disabled면 Pod Identity 중단)
 - 호환성을 검증한 노드 그룹부터 적용
 
-관리형 노드 그룹은 launch template 새 버전을 만들고 롤링 교체합니다. 노드가 바뀌어야 적용되니 시간이 걸립니다. 리허설에서는 노드 한 대 교체에 878초, 15분 가까이 걸렸습니다.
+관리형 노드 그룹은 launch template 새 버전에 HttpTokens required와 hop limit 1을 넣고 롤링 교체합니다. 노드가 바뀌어야 적용되니 시간이 걸립니다. 리허설에서는 노드 한 대 교체에 878초, 15분 가까이 걸렸습니다.
 Karpenter는 EC2NodeClass의 metadataOptions에서 정하는데, 기본값이 이미 httpTokens required, hop limit 1입니다. 2로 바꿔 둔 NodeClass가 있는지만 확인해서 되돌리면 됩니다.
 Auto Mode는 이미 IMDSv2와 hop limit 1이 기본입니다.
 예외가 하나 있습니다. hostNetwork Pod는 노드 네트워크를 그대로 쓰니 hop limit을 1로 내려도 IMDS에 닿습니다. 이런 Pod는 별도로 관리해야 합니다.

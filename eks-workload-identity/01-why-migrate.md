@@ -34,7 +34,7 @@ IRSA와 EKS Pod Identity가 각각 내부에서 어떻게 자격 증명을 만�
 
 ## 오늘 세션 구성
 
-1. 왜 옮기나, 자격 증명 체인 (13분)
+1. 왜 옮기나, 자격 증명 체인 (14분)
 2. IRSA와 Pod Identity의 동작 원리 (9분)
 3. 비교, 선택 기준, 운영 이전 순서 (11분)
 4. 라이브 데모 (12분)
@@ -45,7 +45,7 @@ IRSA와 EKS Pod Identity가 각각 내부에서 어떻게 자격 증명을 만�
 :::notes
 {timing: 1min}
 [요약]
-- 다섯 부분: 문제와 체인 13분, 동작 원리 9분, 비교와 이전 순서 11분, 데모 12분, 마무리 5분
+- 다섯 부분: 문제와 체인 14분, 동작 원리 9분, 비교와 이전 순서 11분, 데모 12분, 마무리 5분
 - 앞 30분이 원리, 뒤 12분이 그 원리를 눈으로 확인하는 데모
 - 데모 단계마다 실측 결과 슬라이드가 있어 네트워크 문제가 생겨도 이어 갈 수 있음
 
@@ -180,14 +180,81 @@ IMDSv2는 PUT 요청으로 세션 토큰을 먼저 받습니다. hop limit은 �
 {cue: click}
 그래서 목표는 세 단계입니다. 앱 권한을 워크로드 역할로 옮기고, 노드 역할에는 노드 운영 권한만 남기고, 마지막에 Pod의 IMDS 경로를 닫습니다.
 {cue: transition}
-옮길 곳이 어디인지, 자격 증명이 오는 세 경로를 먼저 보겠습니다.
+옮길 곳을 보기 전에, EKS에서 IAM이 쓰이는 길부터 나눠 보겠습니다.
 
 [약어]
 - IMDS: Instance Metadata Service, EC2 인스턴스 메타데이터 서비스
 :::
 
 ---
-<!-- Slide 5: 세 갈래 경로 (단계별 장면) -->
+<!-- Slide 5: IAM이 쓰이는 두 길 -->
+@type: content
+@title: IAM이 쓰이는 길은 둘, 오늘은 Pod 쪽
+
+## IAM이 쓰이는 길은 둘, 오늘은 Pod 쪽
+
+:::html
+<div class="wid-grid-2">
+  <div class="wid-card fragment fade-up" data-fragment-index="1">
+    <span class="wid-chip">클러스터 API</span>
+    <h4 class="wid-gap-top">사람과 노드가 Kubernetes API로</h4>
+    <div class="wid-muted">kubectl, kubelet이 클러스터에 들어갈 때</div>
+    <div class="wid-stack wid-gap-top">
+      <div class="wid-row"><strong>토큰</strong><span class="wid-mono"><span class="rp-detail" data-detail="gettoken" data-tip="STS GetCallerIdentity를 미리 서명한 URL을 base64로 담은 bearer 토큰입니다.">aws eks get-token</span></span></div>
+      <div class="wid-row"><strong>검증</strong><span>control plane의 IAM Authenticator가 STS로 호출자 확인</span></div>
+      <div class="wid-row"><strong>매핑</strong><span>access entry (기존 aws-auth ConfigMap은 이전 권고)</span></div>
+      <div class="wid-row"><strong>권한</strong><span>access policy + Kubernetes RBAC</span></div>
+    </div>
+  </div>
+  <div class="wid-card fragment fade-up" data-fragment-index="2">
+    <span class="wid-chip">오늘 주제</span>
+    <h4 class="wid-gap-top">Pod가 AWS API로</h4>
+    <div class="wid-muted">앱이 S3 같은 AWS 서비스를 부를 때</div>
+    <div class="wid-stack wid-gap-top">
+      <div class="wid-row"><span class="wid-chip wid-irsa">IRSA</span><span>OIDC 토큰 → STS AssumeRoleWithWebIdentity</span></div>
+      <div class="wid-row"><span class="wid-chip wid-podid">Pod Identity</span><span>Agent → EKS Auth AssumeRoleForPodIdentity</span></div>
+      <div class="wid-row"><strong>연결</strong><span>ServiceAccount 주석 또는 association</span></div>
+      <div class="wid-row"><strong>access entry</strong><span>관여하지 않음</span></div>
+    </div>
+  </div>
+</div>
+<div class="callout callout-info wid-gap-top fragment fade-up" data-fragment-index="3"><span class="wid-chip wid-node">노드 역할</span> 두 길에 모두 나옵니다. access entry(<span class="wid-mono">EC2_LINUX</span>, Hybrid Nodes는 <span class="wid-mono">HYBRID_LINUX</span>)로 노드가 클러스터에 가입하고, 같은 역할로 Pod Identity Agent가 EKS Auth를 부릅니다. 그래서 이전 마지막에 지우는 것은 앱 권한뿐이고, 노드 역할과 access entry는 그대로 둡니다.</div>
+<div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/grant-k8s-access.html">Amazon EKS User Guide, Grant IAM users and roles access to Kubernetes APIs</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/creating-access-entries.html">Create access entries</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/migrating-access-entries.html">Migrating aws-auth entries to access entries</a>, <a href="https://docs.aws.amazon.com/eks/latest/best-practices/identity-and-access-management.html">EKS Best Practices, Identity and Access Management</a></div>
+:::
+
+:::detail gettoken "kubectl이 보내는 토큰"
+tip: STS GetCallerIdentity를 미리 서명한 URL을 base64로 담은 bearer 토큰
+
+kubeconfig의 exec 설정이 요청 때 `aws eks get-token`을 불러 토큰을 받습니다. 토큰은 `k8s-aws-v1.` 뒤에 STS `GetCallerIdentity` presigned URL을 base64로 붙인 값입니다. control plane의 AWS IAM Authenticator for Kubernetes가 이 URL로 STS에 호출자를 확인하고, 그 IAM ARN을 access entry(또는 aws-auth ConfigMap)로 Kubernetes 사용자와 그룹에 매핑합니다.
+
+같은 IAM 역할이 양쪽에 매핑되어 있으면 access entry가 우선합니다. kubectl에서 `Unauthorized`가 나오면 Pod 자격 증명이 아니라 이 매핑을 먼저 봅니다.
+:::
+
+:::notes
+{timing: 1min}
+[요약]
+- EKS에서 IAM이 쓰이는 길은 둘: 사람과 노드가 Kubernetes API로 들어가는 길, Pod가 AWS API를 부르는 길
+- 클러스터 API: aws eks get-token 토큰(STS presigned URL) → IAM Authenticator가 STS로 확인 → access entry 또는 aws-auth로 매핑 → access policy와 RBAC
+- Pod 쪽: IRSA와 Pod Identity. access entry와 무관
+- 노드 역할은 양쪽에 다 나옴: access entry로 노드 가입, Agent가 같은 역할로 EKS Auth 호출. 그래서 지우는 건 앱 권한뿐
+
+그 전에 범위를 한 번 나누겠습니다. EKS에서 IAM이 쓰이는 길은 두 개입니다.
+{cue: click}
+하나는 사람과 노드가 Kubernetes API로 들어가는 길입니다. kubectl이 aws eks get-token으로 STS 서명 토큰을 만들고, control plane이 STS로 누구인지 확인한 다음 access entry로 Kubernetes 사용자와 그룹에 매핑합니다. 권한은 access policy와 RBAC이 정합니다.
+{cue: click}
+오늘 다루는 건 다른 하나, Pod가 S3 같은 AWS API를 부를 때입니다. IRSA와 Pod Identity가 여기 속하고, access entry는 관여하지 않습니다. 그래서 Pod 권한 문제를 access entry에서 찾으면 안 되고, 반대로 kubectl Unauthorized는 Pod 자격 증명이 아니라 매핑을 봐야 합니다.
+{cue: click}
+헷갈리는 지점이 노드 역할입니다. 노드는 이 역할로 access entry를 통해 클러스터에 가입하고, Pod Identity Agent도 같은 역할로 EKS Auth를 부릅니다. 그래서 이전 마지막에 노드 역할 자체를 지우는 게 아니라, 거기 붙어 있던 앱 권한만 지웁니다.
+{cue: transition}
+이제 Pod 쪽, 자격 증명이 오는 세 경로를 보겠습니다.
+
+[약어]
+- RBAC: Role-Based Access Control
+- STS: AWS Security Token Service
+:::
+
+---
+<!-- Slide 6: 세 갈래 경로 (단계별 장면) -->
 @type: content
 @fit: off
 @title: Pod의 자격 증명은 세 곳에서 온다
@@ -322,7 +389,7 @@ import('./common/line-art-scene/flowscene.js').then(function (m) {
 :::
 
 ---
-<!-- Slide 6: 자격 증명 체인 캔버스 -->
+<!-- Slide 7: 자격 증명 체인 캔버스 -->
 @type: content
 @title: SDK는 위에서부터 찾고, 처음 것을 쓴다
 
@@ -586,7 +653,7 @@ Pod Identity Pod는 3단계, 컨테이너 공급자에서 멈춥니다.
 :::
 
 ---
-<!-- Slide 7: 주입되는 것 -->
+<!-- Slide 8: 주입되는 것 -->
 @type: content
 @title: 바뀌는 것은 코드가 아니라 주입된 변수
 
@@ -626,7 +693,7 @@ Pod Identity Pod는 3단계, 컨테이너 공급자에서 멈춥니다.
 :::
 
 ---
-<!-- Slide 8: 누가 언제 주입하나 -->
+<!-- Slide 9: 누가 언제 주입하나 -->
 @type: content
 @title: 변수는 누가, 언제 넣나: API 서버의 mutating 웹훅
 

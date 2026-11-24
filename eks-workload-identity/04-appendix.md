@@ -9,15 +9,21 @@ block: 04-appendix
 
 # 부록: 동작 원리
 
-질문이 나오면 여기서: 자격 증명 경로, SDK 체인, 주입, 두 방식의 단계별 흐름
+질문이 나오면 여기서: 자격 증명 경로, SDK 체인, 두 방식의 단계별 흐름
+
+:::html
+<div class="wid-applinks"><a class="wid-applink" data-wid-goto="04-appendix:2" href="./04-appendix.html#2">2. IAM이 쓰이는 두 길</a><a class="wid-applink" data-wid-goto="04-appendix:3" href="./04-appendix.html#3">3. 세 갈래 경로</a><a class="wid-applink" data-wid-goto="04-appendix:4" href="./04-appendix.html#4">4. SDK 자격 증명 체인</a><a class="wid-applink" data-wid-goto="04-appendix:5" href="./04-appendix.html#5">5. IRSA 흐름</a><a class="wid-applink" data-wid-goto="04-appendix:6" href="./04-appendix.html#6">6. IRSA 다섯 단계</a><a class="wid-applink" data-wid-goto="04-appendix:7" href="./04-appendix.html#7">7. Pod Identity 흐름</a><a class="wid-applink" data-wid-goto="04-appendix:8" href="./04-appendix.html#8">8. Pod Identity 다섯 단계</a><a class="wid-applink" data-wid-goto="04-appendix:9" href="./04-appendix.html#9">9. Agent와 노드 역할</a><a class="wid-applink" data-wid-goto="04-appendix:10" href="./04-appendix.html#10">10. 노드 종류별 IMDS 설정</a></div>
+:::
 
 :::script
 // 발표자 창 노트 순서: 대본 먼저, [요약]/[출처]/[약어]는 아래 (assets/presenter-notes.js)
 if (!window.__widNotesLoader) {
   window.__widNotesLoader = true;
-  var s = document.createElement('script');
-  s.src = './assets/presenter-notes.js';
-  document.head.appendChild(s);
+  ['./assets/presenter-notes.js', './assets/appendix-links.js'].forEach(function (src) {
+    var s = document.createElement('script');
+    s.src = src;
+    document.head.appendChild(s);
+  });
 }
 :::
 
@@ -25,7 +31,7 @@ if (!window.__widNotesLoader) {
 {timing: 0.5min}
 [요약]
 - 본편에서 뺀 동작 원리 장표. 질문이 나오거나 시간이 남을 때 사용
-- 순서: IAM이 쓰이는 두 길, 세 갈래 경로, SDK 체인, 웹훅, IRSA 흐름과 단계, Pod Identity 흐름과 단계, Agent
+- 순서: IAM이 쓰이는 두 길, 세 갈래 경로, SDK 체인, IRSA 흐름과 단계, Pod Identity 흐름과 단계, Agent, 노드 종류별 IMDS 설정
 
 여기부터는 부록입니다. 본편에서 결론만 말씀드린 동작 원리를 장표로 남겨 두었습니다.
 질문에 맞는 장으로 바로 넘어가겠습니다.
@@ -122,6 +128,7 @@ EKS에서 IAM이 쓰이는 길은 두 개입니다.
 :::script
 import('./common/line-art-scene/flowscene.js').then(function (m) {
   m.mount('#wid-paths', {
+    camera: false,
     aria: '같은 노드의 orders 앱 세 벌 중 노드 역할 Pod는 IMDSv2에서, IRSA Pod는 리전 STS에서, Pod Identity Pod는 같은 노드의 Agent와 EKS Auth를 거쳐 임시 자격 증명을 받고, 세 Pod 모두 그것으로 S3 요청에 서명하는 흐름',
     W: 900, H: 590,
     zones: [
@@ -493,67 +500,11 @@ Pod Identity Pod는 3단계, 컨테이너 공급자에서 멈춥니다.
 마지막은 헷갈리기 쉬운 경우입니다. 체인만 보면 IRSA가 앞이니 둘 다 걸면 IRSA가 이길 것 같지만, 실제로는 그 전 단계에서 갈립니다. 주석과 association이 모두 있는 ServiceAccount로 새 Pod를 만들면 EKS 웹훅이 Pod Identity 변수만 넣고 IRSA 변수는 넣지 않습니다. 그래서 새 Pod는 3단계에서 멈춥니다.
 다만 association을 만들기 전에 떠 있던 Pod는 IRSA 변수를 그대로 갖고 있어서, 다시 만들기 전까지는 IRSA를 씁니다.
 {cue: transition}
-이 체인 덕분에 이전은 결국 "무엇을 주입하느냐"의 문제가 됩니다.
+이 체인 덕분에 이전은 결국 "무엇을 주입하느냐"의 문제가 되고, 그 주입은 1부에서 본 웹훅이 합니다.
 :::
 
 ---
-<!-- Slide 5: 누가 언제 주입하나 -->
-@type: content
-@title: 변수는 누가, 언제 넣나: API 서버의 mutating 웹훅
-
-## 변수는 누가, 언제 넣나: API 서버의 mutating 웹훅
-
-:::html
-<div class="wid-grid-2">
-<div>
-<ol class="wid-flow">
-  <li><strong>Pod 생성 요청</strong> <span class="wid-muted">rollout → ReplicaSet 컨트롤러가 API 서버에 Pod CREATE</span></li>
-  <li><strong>인증과 인가</strong> <span class="wid-muted">API 서버가 요청자를 확인</span></li>
-  <li class="wid-hl"><strong>Mutating admission: <code>iam-for-pods.amazonaws.com</code></strong><br><span class="wid-muted">EKS가 컨트롤 플레인에서 운영하는 웹훅(amazon-eks-pod-identity-webhook)이 Pod의 ServiceAccount를 봅니다.</span>
-    <div class="wid-cap">association 있음 → <code>AWS_CONTAINER_*</code> 두 개 + 토큰 볼륨(aud <code>pods.eks.amazonaws.com</code>)<br>주석만 있음 → <code>AWS_ROLE_ARN</code>, <code>AWS_WEB_IDENTITY_TOKEN_FILE</code> + 토큰 볼륨(aud <code>sts.amazonaws.com</code>)<br>둘 다 있음 → Pod Identity만, 아무것도 없음 → 그대로</div></li>
-  <li><strong>Validating admission → etcd 저장</strong> <span class="wid-muted">Pod Security 등 검사 후 저장. 이때 Pod 스펙은 이미 바뀌어 있음</span></li>
-  <li><strong>kubelet</strong> <span class="wid-muted">projected 토큰을 해당 audience로 발급받아 파일로 마운트하고 만료 전에 갱신</span></li>
-  <li><strong>컨테이너 시작</strong> <span class="wid-muted">SDK가 환경 변수를 읽고 앞 슬라이드의 체인을 탑니다</span></li>
-</ol>
-</div>
-<div>
-<pre class="wid-term"><span class="wid-dim"># 데모 클러스터에서 확인한 웹훅 설정</span>
-$ kubectl get mutatingwebhookconfiguration \
-    pod-identity-webhook -o yaml
-name: iam-for-pods.amazonaws.com
-clientConfig.url: https://127.0.0.1:23443/mutate
-rules: CREATE pods
-failurePolicy: Ignore
-objectSelector: eks.amazonaws.com/skip-pod-identity-webhook 없음</pre>
-<div class="callout callout-warning"><strong class="wid-t-warning">CREATE에서만 동작</strong>: 실행 중인 Pod는 바뀌지 않습니다. 설정 뒤에는 rollout.</div>
-<div class="callout callout-danger"><strong>failurePolicy: Ignore</strong>: 웹훅이 응답하지 못하면 변수 없이 Pod가 만들어져 조용히 노드 역할로 동작합니다. 그래서 호출자 ARN으로 확인합니다.</div>
-<div class="callout callout-info"><strong class="wid-t-info">미리 확인</strong>: <code>kubectl create --dry-run=server</code>로 Pod 템플릿을 보내면 웹훅을 거친 결과를 Pod를 만들지 않고 볼 수 있습니다.</div>
-</div>
-</div>
-<div class="wid-src">출처: 데모 클러스터(EKS 1.36)의 MutatingWebhookConfiguration, <a href="https://github.com/aws/amazon-eks-pod-identity-webhook">amazon-eks-pod-identity-webhook</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-id-how-it-works.html">Understand how EKS Pod Identity works</a></div>
-:::
-
-:::notes
-{timing: 2min}
-[요약]
-- 변수를 넣는 주체: API 서버의 mutating admission 단계에서 EKS가 컨트롤 플레인에 운영하는 웹훅(iam-for-pods.amazonaws.com, amazon-eks-pod-identity-webhook). 노드에는 웹훅 Pod가 없음
-- 시점: Pod CREATE 때만. ServiceAccount의 주석(IRSA)과 association(Pod Identity)을 보고 env와 토큰 볼륨을 패치
-- 둘 다 있으면 Pod Identity만. kubelet은 토큰을 audience별로 발급하고 갱신
-- failurePolicy Ignore라 웹훅 실패 시 변수 없이 생성 → 노드 역할. 호출자 ARN과 dry-run으로 확인
-
-그럼 이 변수는 누가 언제 넣을까요?
-Pod를 만들면 요청이 API 서버로 갑니다. rollout이면 ReplicaSet 컨트롤러가 Pod CREATE를 보냅니다. API 서버는 먼저 인증과 인가를 합니다.
-그다음이 핵심인 mutating admission 단계입니다. EKS가 컨트롤 플레인 안에서 운영하는 웹훅이 있고, 이름이 iam-for-pods.amazonaws.com입니다. 이 웹훅이 Pod의 ServiceAccount를 보고, association이 있으면 Pod Identity 변수 두 개와 토큰 볼륨을, 주석만 있으면 IRSA 변수와 토큰 볼륨을 Pod 스펙에 끼워 넣습니다. 둘 다 있으면 Pod Identity만 넣습니다.
-그 뒤 검증을 거쳐 저장되고, kubelet이 Pod를 띄우면서 토큰을 해당 audience로 발급받아 파일로 마운트합니다. 컨테이너가 시작되면 SDK가 그 변수를 읽고 앞에서 본 체인을 탑니다.
-실제 데모 클러스터에서 웹훅 설정을 꺼내 보면 주소가 127.0.0.1, 즉 컨트롤 플레인 안입니다. 그래서 노드에서 kubectl get pods로 찾아도 보이지 않습니다.
-여기서 두 가지를 기억하면 됩니다. 규칙이 Pod CREATE뿐이라 이미 떠 있는 Pod는 rollout 전까지 바뀌지 않습니다. 그리고 failurePolicy가 Ignore라서, 웹훅이 응답하지 못하면 Pod는 변수 없이 그냥 만들어지고 조용히 노드 역할을 씁니다. 그래서 확인은 항상 호출자 ARN으로 합니다.
-미리 확인하고 싶으면 kubectl create --dry-run=server로 Pod 템플릿을 보내 보세요. 웹훅을 거친 결과가 돌아오니 Pod를 만들지 않고도 무엇이 주입될지 볼 수 있습니다. 데모 스크립트도 이 방법으로 association 반영을 기다립니다.
-{cue: transition}
-이제 두 방식의 내부를 한 단계씩 보겠습니다. IRSA부터입니다.
-:::
-
----
-<!-- Slide 6: IRSA 흐름 -->
+<!-- Slide 5: IRSA 흐름 -->
 @type: content
 @fit: off
 @title: IRSA: Pod가 토큰을 들고 STS로 간다
@@ -602,7 +553,7 @@ EKS 클러스터마다 OIDC issuer URL이 있습니다. 이 issuer를 계정의 
 :::
 
 ---
-<!-- Slide 7: IRSA 단계별 캔버스 -->
+<!-- Slide 6: IRSA 단계별 캔버스 -->
 @type: content
 @title: IRSA 다섯 단계, aud와 sub가 열쇠
 
@@ -850,7 +801,7 @@ STS는 토큰의 issuer가 계정에 등록된 OIDC provider인지 보고, 그 i
 :::
 
 ---
-<!-- Slide 8: Pod Identity 흐름 -->
+<!-- Slide 7: Pod Identity 흐름 -->
 @type: content
 @fit: off
 @title: Pod Identity: Agent가 대신 묻는다
@@ -894,7 +845,7 @@ Agent가 EKS Auth를 부르고, EKS가 세션 태그를 붙여 역할을 맡은 
 :::
 
 ---
-<!-- Slide 9: Pod Identity 단계별 캔버스 -->
+<!-- Slide 8: Pod Identity 단계별 캔버스 -->
 @type: content
 @title: Pod Identity 다섯 단계, 노드는 창구
 
@@ -1138,7 +1089,7 @@ EKS Auth가 토큰과 association을 확인하고, 세션 태그 6개를 붙여 
 :::
 
 ---
-<!-- Slide 10: Agent와 노드 역할 -->
+<!-- Slide 9: Agent와 노드 역할 -->
 @type: content
 @title: Agent는 노드마다, 권한은 노드 역할에
 
@@ -1175,8 +1126,63 @@ EKS Auth가 토큰과 association을 확인하고, 세션 태그 6개를 붙여 
 - 프록시를 쓰면 두 주소를 NO_PROXY에
 
 Agent는 애드온 하나입니다. 노드 네트워크에서 링크 로컬 주소로 듣는 DaemonSet이고, Auto Mode라면 따로 설치할 것이 없습니다.
-노드 역할에는 Agent가 EKS Auth를 부를 권한이 있어야 합니다. 이미 AmazonEKSWorkerNodePolicy에 들어 있으니 보통은 따로 붙일 게 없습니다. Agent는 이 자격 증명을 hostNetwork에서 IMDS로 받는다는 점도 기억해 두세요. 2부 IMDS 차단 장표에서 IMDS 자체를 끄지 말라고 한 이유입니다.
+노드 역할에는 Agent가 EKS Auth를 부를 권한이 있어야 합니다. 이미 AmazonEKSWorkerNodePolicy에 들어 있으니 보통은 따로 붙일 게 없습니다. Agent는 이 자격 증명을 hostNetwork에서 IMDS로 받는다는 점도 기억해 두세요. IMDS 자체를 끄지 말라고 하는 이유이고, 다음 장에서 다시 나옵니다.
 실무에서 자주 막히는 곳은 프록시입니다. HTTP 프록시를 쓰는 앱이라면 두 Agent 주소를 NO_PROXY에 넣어야 합니다.
+{cue: transition}
+마지막으로 노드 종류별 IMDS 설정입니다.
+:::
+
+---
+<!-- Slide 10: IMDS 차단 -->
+@type: content
+@title: 마지막에 Pod의 IMDS 길을 닫는다
+
+## 마지막에 Pod의 IMDS 길을 닫는다
+
+:::html
+<div class="wid-grid-3">
+  <div class="wid-card">
+    <h4>관리형 노드 그룹</h4>
+    <div class="wid-muted">launch template 새 버전에 지정하고 롤링 교체</div>
+<pre class="wid-term wid-gap-top">HttpTokens=required
+HttpPutResponseHopLimit=1</pre>
+  </div>
+  <div class="wid-card">
+    <h4>Karpenter</h4>
+    <div class="wid-muted">EC2NodeClass 기본값이 이미 required, hop limit 1. 2로 바꿔 둔 NodeClass만 되돌림</div>
+<pre class="wid-term wid-gap-top">spec:
+  metadataOptions:
+    httpTokens: required
+    httpPutResponseHopLimit: 1</pre>
+  </div>
+  <div class="wid-card">
+    <h4>EKS Auto Mode</h4>
+    <div class="wid-muted">IMDSv2와 hop limit 1이 기본 적용</div>
+    <div class="wid-cap wid-gap-top">별도 설정 없이 일반 Pod의 IMDS 경로가 닫혀 있습니다.</div>
+  </div>
+</div>
+<div class="wid-grid-2 wid-gap-top">
+  <div class="callout callout-warning"><strong class="wid-t-warning">hostNetwork Pod는 예외</strong>: 노드 네트워크를 그대로 쓰므로 hop limit과 관계없이 IMDS에 닿습니다. 별도로 통제합니다.</div>
+  <div class="callout callout-warning"><strong class="wid-t-warning">IMDS 자체는 끄지 않기</strong>: Pod Identity Agent도 hostNetwork에서 IMDS로 노드 역할을 받습니다. <code>HttpEndpoint=disabled</code>면 Pod Identity가 멈춥니다.</div>
+</div>
+<div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html">EKS managed node group launch templates</a>, <a href="https://docs.aws.amazon.com/eks/latest/best-practices/identity-and-access-management.html">EKS Best Practices, Identity and Access Management</a>, <a href="https://karpenter.sh/docs/concepts/nodeclasses/">Karpenter EC2NodeClass</a></div>
+:::
+
+:::notes
+{timing: 1.5min}
+[요약]
+- 관리형 노드 그룹: launch template 새 버전에 HttpTokens=required, HttpPutResponseHopLimit=1, 롤링 교체
+- Karpenter: EC2NodeClass.spec.metadataOptions, 기본값이 이미 required와 hop limit 1. 2로 바꾼 NodeClass만 되돌림
+- Auto Mode: IMDSv2와 hop limit 1 기본
+- hostNetwork Pod는 hop limit과 무관하게 IMDS 접근, 별도 통제
+- hop limit 1로 일반 Pod의 경로만 닫고 IMDS 자체는 켜 둠. Agent가 hostNetwork에서 IMDS로 노드 역할을 받기 때문(HttpEndpoint=disabled면 Pod Identity 중단)
+- 호환성을 검증한 노드 그룹부터 적용
+
+관리형 노드 그룹은 launch template 새 버전에 HttpTokens required와 hop limit 1을 넣고 롤링 교체합니다. 노드가 바뀌어야 적용되니 시간이 걸립니다. 리허설에서는 노드 한 대 교체에 878초, 15분 가까이 걸렸습니다.
+Karpenter는 EC2NodeClass의 metadataOptions에서 정하는데, 기본값이 이미 httpTokens required, hop limit 1입니다. 2로 바꿔 둔 NodeClass가 있는지만 확인해서 되돌리면 됩니다.
+Auto Mode는 이미 IMDSv2와 hop limit 1이 기본입니다.
+예외가 하나 있습니다. hostNetwork Pod는 노드 네트워크를 그대로 쓰니 hop limit을 1로 내려도 IMDS에 닿습니다. 이런 Pod는 별도로 관리해야 합니다.
+그리고 "닫는다"는 말을 IMDS를 끈다는 뜻으로 받아들이시면 안 됩니다. Pod Identity Agent도 hostNetwork에서 IMDS로 노드 역할을 받아서 EKS Auth를 부릅니다. hop limit 1에서 Agent가 살아 있는 것도 hostNetwork이기 때문이고, HttpEndpoint를 disabled로 하면 Pod Identity 전체가 멈춥니다.
 {cue: transition}
 부록은 여기까지입니다. 질문으로 돌아가겠습니다.
 :::

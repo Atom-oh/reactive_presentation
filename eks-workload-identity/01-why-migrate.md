@@ -17,9 +17,11 @@ block: 01-why-migrate
 // 발표자 창 노트 순서: 대본 먼저, [요약]/[출처]/[약어]는 아래 (assets/presenter-notes.js)
 if (!window.__widNotesLoader) {
   window.__widNotesLoader = true;
-  var s = document.createElement('script');
-  s.src = './assets/presenter-notes.js';
-  document.head.appendChild(s);
+  ['./assets/presenter-notes.js', './assets/appendix-links.js'].forEach(function (src) {
+    var s = document.createElement('script');
+    s.src = src;
+    document.head.appendChild(s);
+  });
 }
 :::
 
@@ -46,8 +48,8 @@ if (!window.__widNotesLoader) {
 
 :::html
 <div class="wid-grid-4">
-  <div class="wid-card"><span class="wid-chip">1부, 14분</span><h4 class="wid-gap-top">차이와 선택</h4><div class="wid-muted">출발점, 두 방식의 차이와 장단점, 보안과 운영 비용, 선택 기준</div></div>
-  <div class="wid-card"><span class="wid-chip">2부, 13분</span><h4 class="wid-gap-top">이전 절차</h4><div class="wid-muted">공통 다섯 단계, IRSA와 Pod Identity 명령, 교차 계정, 공존, hop limit과 IMDS 차단</div></div>
+  <div class="wid-card"><span class="wid-chip">1부, 15분</span><h4 class="wid-gap-top">차이와 선택</h4><div class="wid-muted">출발점, 두 방식의 차이와 장단점, 보안과 운영 비용, 선택 기준</div></div>
+  <div class="wid-card"><span class="wid-chip">2부, 12분</span><h4 class="wid-gap-top">이전 절차</h4><div class="wid-muted">공통 다섯 단계, IRSA와 Pod Identity 명령, 교차 계정, 공존, hop limit</div></div>
   <div class="wid-card"><span class="wid-chip">3부, 13분</span><h4 class="wid-gap-top">라이브 데모</h4><div class="wid-muted">같은 앱 세 벌을 옮기고 노드 역할 권한을 회수</div></div>
   <div class="wid-card"><span class="wid-chip">마무리, 4분</span><h4 class="wid-gap-top">문제 해결, 퀴즈</h4><div class="wid-muted">막혔을 때 보는 순서와 정리</div></div>
 </div>
@@ -61,8 +63,8 @@ if (!window.__widNotesLoader) {
 :::notes
 {timing: 1min}
 [요약]
-- 1부 14분: 출발점 한 장, 두 방식의 차이, 주입 변수와 SDK, 장단점, 보안과 운영 비용 이점, 선택 기준
-- 2부 13분: 공통 다섯 단계, IRSA와 Pod Identity의 이전 명령, 교차 계정, 공존, hop limit 원리와 IMDS 차단
+- 1부 15분: 출발점 한 장, 두 방식의 차이, 주입 변수와 웹훅, 장단점, 보안과 운영 비용 이점, 선택 기준
+- 2부 12분: 공통 다섯 단계, IRSA와 Pod Identity의 이전 명령, 교차 계정, 공존, hop limit 원리
 - 3부 데모 13분과 마무리 4분, 남는 시간은 Q&A. 동작 원리는 부록에 있어 질문이 나오면 사용
 
 순서는 이렇습니다. 노드 역할의 문제는 한 장으로 짚고, 바로 IRSA와 Pod Identity의 차이와 장단점, 그리고 옮기면 보안과 운영 비용에서 무엇이 좋아지는지 봅니다.
@@ -102,7 +104,7 @@ if (!window.__widNotesLoader) {
 :::
 
 :::notes
-{timing: 1.5min}
+{timing: 1min}
 [요약]
 - 노드 역할 공유의 문제(권한 범위, 감사, hop limit 2)는 이미 아는 내용이라 한 장으로 정리
 - 목표 세 단계: 워크로드 역할로 이전, 노드 역할에서 앱 정책 회수, Pod의 IMDS 경로 차단
@@ -299,8 +301,8 @@ IAM 정책 조건에서 `aws:PrincipalTag/kubernetes-namespace` 같은 세션 �
   <thead><tr><th>경로</th><th>Pod에 주입되는 것</th><th>SDK가 호출하는 곳</th><th>결과 역할</th></tr></thead>
   <tbody>
     <tr><td><span class="wid-chip wid-node">node (IMDS)</span></td><td>없음</td><td>IMDSv2 <code>169.254.169.254</code></td><td>노드 IAM 역할 (노드의 모든 Pod가 공유)</td></tr>
-    <tr><td><span class="wid-chip wid-irsa">IRSA (STS)</span></td><td><code>AWS_ROLE_ARN</code>, <code>AWS_WEB_IDENTITY_TOKEN_FILE</code>, 토큰 볼륨</td><td>리전 STS <code>AssumeRoleWithWebIdentity</code></td><td>ServiceAccount 주석의 역할</td></tr>
-    <tr><td><span class="wid-chip wid-podid">Pod Identity</span></td><td><code>AWS_CONTAINER_CREDENTIALS_FULL_URI</code>, <code>AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE</code>, 토큰 볼륨</td><td>같은 노드의 Agent <code>169.254.170.23</code></td><td>association에 지정한 역할</td></tr>
+    <tr><td><span class="wid-chip wid-irsa">IRSA (STS)</span></td><td><code>AWS_ROLE_ARN</code><div class="wid-cap">맡을 역할의 ARN</div><code>AWS_WEB_IDENTITY_TOKEN_FILE</code><div class="wid-cap">STS에 낼 SA 토큰 파일 (aud <code>sts.amazonaws.com</code>)</div></td><td>리전 STS <code>AssumeRoleWithWebIdentity</code></td><td>ServiceAccount 주석의 역할</td></tr>
+    <tr><td><span class="wid-chip wid-podid">Pod Identity</span></td><td><code>AWS_CONTAINER_CREDENTIALS_FULL_URI</code><div class="wid-cap">자격 증명을 받을 Agent 주소</div><code>AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE</code><div class="wid-cap">Agent에 낼 SA 토큰 파일 (aud <code>pods.eks.amazonaws.com</code>)</div></td><td>같은 노드의 Agent <code>169.254.170.23</code></td><td>association에 지정한 역할</td></tr>
   </tbody>
 </table>
 <div class="wid-grid-3 wid-gap-top">
@@ -308,6 +310,7 @@ IAM 정책 조건에서 `aws:PrincipalTag/kubernetes-namespace` 같은 세션 �
   <div class="callout callout-warning"><strong class="wid-t-warning">변수를 모르는 SDK는 IMDS로</strong>: 오래된 SDK는 변수를 무시하고 체인 끝 IMDS에서 노드 역할을 씁니다. 오류 없이 지나가니 최소 버전을 확인합니다.</div>
   <div class="callout callout-warning"><strong class="wid-t-warning">주입은 Pod 생성 시점에만</strong>: 이미 떠 있는 Pod는 그대로라 rollout이 필요하고, 확인은 호출자 ARN으로 합니다.</div>
 </div>
+<div class="wid-applinks"><a class="wid-applink" data-wid-goto="04-appendix:4" href="./04-appendix.html#4">부록: SDK 자격 증명 체인</a></div>
 <div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-id-minimum-sdk.html">EKS User Guide, Use pod identity with the AWS SDK</a>, <a href="https://docs.aws.amazon.com/sdkref/latest/guide/standardized-credentials.html">AWS SDKs and Tools, standardized credential providers</a></div>
 :::
 
@@ -321,17 +324,75 @@ IAM 정책 조건에서 `aws:PrincipalTag/kubernetes-namespace` 같은 세션 �
 - 변수를 모르는 오래된 SDK는 무시하고 체인 끝 IMDS로 내려가 노드 역할 사용. 오류가 없어 놓치기 쉬움. Pod Identity의 토큰 파일 변수와 169.254.170.23 주소는 비교적 최근에 SDK에 들어감
 - 주입은 Pod 생성 때만 일어나므로 rollout 필요, 검증은 호출자 ARN으로
 
-표로 정리하면 이렇습니다. 노드 경로는 아무것도 주입되지 않고, IRSA와 Pod Identity는 서로 다른 환경 변수 두 개와 토큰 볼륨이 들어갑니다. 데모의 diff 단계에서 이 변수 이름을 실제 Pod에서 그대로 확인합니다.
+표로 정리하면 이렇습니다. 노드 경로는 아무것도 주입되지 않습니다. IRSA는 맡을 역할의 ARN과, STS에 낼 ServiceAccount 토큰 파일의 경로가 들어갑니다. Pod Identity는 자격 증명을 받을 Agent의 주소와, Agent에 낼 토큰 파일의 경로가 들어갑니다. 두 토큰은 같은 클러스터가 서명하지만 audience가 STS냐 EKS냐로 다릅니다. 데모의 diff 단계에서 이 변수 이름을 실제 Pod에서 그대로 확인합니다.
 여기서 꼭 짚을 점이 있습니다. EKS가 Pod에 넣어 주는 건 이 변수와 토큰 파일뿐이고, 자격 증명 자체는 아닙니다. 앱 프로세스 안의 SDK가 이 변수를 읽고, IRSA라면 STS에, Pod Identity라면 같은 노드의 Agent 주소로 직접 요청해서 자격 증명을 받아 옵니다. 노드의 Agent나 EKS Auth는 그 요청이 와야 움직입니다.
 그래서 SDK가 이 변수를 모르면 아무 일도 일어나지 않습니다. 오래된 SDK는 변수를 무시하고 체인 끝의 IMDS로 내려가 노드 역할을 씁니다. 오류가 나지 않으니 노드 역할에 권한이 남아 있는 동안에는 이전이 된 것처럼 보입니다. 특히 Pod Identity의 토큰 파일 변수와 Agent 주소는 비교적 최근에 SDK에 들어갔기 때문에 최소 버전을 꼭 확인합니다.
 또 하나, 주입은 Pod를 만들 때만 일어납니다. 주석을 달거나 association을 만들어도 이미 떠 있는 Pod는 그대로라 rollout이 필요합니다.
 그리고 확인할 때는 API 호출이 성공했는지가 아니라 호출자 ARN이 무엇인지 봐야 합니다. 노드 역할에 권한이 남아 있으면 이전이 안 됐어도 성공하기 때문입니다.
 {cue: transition}
+그럼 이 변수는 누가, 언제 넣을까요.
+:::
+
+---
+<!-- Slide 7: 누가 언제 주입하나 -->
+@type: content
+@title: 변수를 넣는 것은 API 서버의 웹훅
+
+## 변수를 넣는 것은 API 서버의 웹훅
+
+:::html
+<div class="wid-grid-2">
+<div>
+<ol class="wid-flow">
+  <li><strong>Pod 생성 요청</strong> <span class="wid-muted">rollout하면 ReplicaSet 컨트롤러가 API 서버에 Pod CREATE</span></li>
+  <li><strong>인증과 인가</strong> <span class="wid-muted">API 서버가 요청자를 확인</span></li>
+  <li class="wid-hl"><strong>Mutating admission: <code>iam-for-pods.amazonaws.com</code></strong><br><span class="wid-muted">EKS가 컨트롤 플레인에서 운영하는 웹훅(amazon-eks-pod-identity-webhook)이 Pod의 ServiceAccount를 봅니다.</span>
+    <div class="wid-cap">association 있음 → <code>AWS_CONTAINER_*</code> 두 개 + 토큰 볼륨(aud <code>pods.eks.amazonaws.com</code>)<br>주석만 있음 → <code>AWS_ROLE_ARN</code>, <code>AWS_WEB_IDENTITY_TOKEN_FILE</code> + 토큰 볼륨(aud <code>sts.amazonaws.com</code>)<br>둘 다 있음 → Pod Identity만, 아무것도 없음 → 그대로</div></li>
+  <li><strong>Validating admission, etcd 저장</strong> <span class="wid-muted">Pod Security 등 검사 후 저장. 이때 Pod 스펙은 이미 바뀌어 있음</span></li>
+  <li><strong>kubelet</strong> <span class="wid-muted">projected 토큰을 해당 audience로 발급받아 파일로 마운트하고 만료 전에 갱신</span></li>
+  <li><strong>컨테이너 시작</strong> <span class="wid-muted">SDK가 체인 순서(정적 키, 웹 ID 토큰, 컨테이너 공급자, IMDS)대로 찾아 처음 것을 씁니다. 웹훅이 한 세트만 넣으니 체인 순서로 다툴 일이 없습니다.</span></li>
+</ol>
+</div>
+<div>
+<pre class="wid-term"><span class="wid-dim"># 데모 클러스터에서 확인한 웹훅 설정</span>
+$ kubectl get mutatingwebhookconfiguration \
+    pod-identity-webhook -o yaml
+name: iam-for-pods.amazonaws.com
+clientConfig.url: https://127.0.0.1:23443/mutate
+rules: CREATE pods
+failurePolicy: Ignore
+objectSelector: eks.amazonaws.com/skip-pod-identity-webhook 없음</pre>
+<div class="callout callout-warning"><strong class="wid-t-warning">CREATE에서만 동작</strong>: 실행 중인 Pod는 바뀌지 않습니다. 설정 뒤에는 rollout.</div>
+<div class="callout callout-danger"><strong>failurePolicy: Ignore</strong>: 웹훅이 응답하지 못하면 변수 없이 Pod가 만들어져 조용히 노드 역할로 동작합니다. 그래서 호출자 ARN으로 확인합니다.</div>
+<div class="callout callout-info"><strong class="wid-t-info">미리 확인</strong>: <code>kubectl create --dry-run=server</code>로 Pod 템플릿을 보내면 웹훅을 거친 결과를 Pod를 만들지 않고 볼 수 있습니다.</div>
+<div class="wid-applinks"><a class="wid-applink" data-wid-goto="04-appendix:4" href="./04-appendix.html#4">부록: SDK 자격 증명 체인</a><a class="wid-applink" data-wid-goto="04-appendix:5" href="./04-appendix.html#5">부록: IRSA 흐름</a><a class="wid-applink" data-wid-goto="04-appendix:7" href="./04-appendix.html#7">부록: Pod Identity 흐름</a></div>
+</div>
+</div>
+<div class="wid-src">출처: 데모 클러스터(EKS 1.36)의 MutatingWebhookConfiguration, <a href="https://github.com/aws/amazon-eks-pod-identity-webhook">amazon-eks-pod-identity-webhook</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-id-how-it-works.html">Understand how EKS Pod Identity works</a></div>
+:::
+
+:::notes
+{timing: 1.5min}
+[요약]
+- 변수를 넣는 주체: API 서버의 mutating admission 단계에서 EKS가 컨트롤 플레인에 운영하는 웹훅(iam-for-pods.amazonaws.com, amazon-eks-pod-identity-webhook). 노드에는 웹훅 Pod가 없음
+- 시점: Pod CREATE 때만. ServiceAccount의 주석(IRSA)과 association(Pod Identity)을 보고 env와 토큰 볼륨을 패치
+- 둘 다 있으면 Pod Identity만. kubelet은 토큰을 audience별로 발급하고 갱신
+- SDK 체인 순서(정적 키, 웹 ID 토큰, 컨테이너 공급자, IMDS)는 그다음 이야기. 웹훅이 한 세트만 넣으므로 체인에서 IRSA가 앞이라는 사실은 결과를 바꾸지 않음
+- failurePolicy Ignore라 웹훅 실패 시 변수 없이 생성 → 노드 역할. 호출자 ARN과 dry-run으로 확인
+
+그럼 이 변수는 누가 언제 넣을까요?
+Pod를 만들면 요청이 API 서버로 갑니다. rollout이면 ReplicaSet 컨트롤러가 Pod CREATE를 보냅니다. API 서버는 먼저 인증과 인가를 합니다.
+그다음이 핵심인 mutating admission 단계입니다. EKS가 컨트롤 플레인 안에서 운영하는 웹훅이 있고, 이름이 iam-for-pods.amazonaws.com입니다. 이 웹훅이 Pod의 ServiceAccount를 보고, association이 있으면 Pod Identity 변수 두 개와 토큰 볼륨을, 주석만 있으면 IRSA 변수와 토큰 볼륨을 Pod 스펙에 끼워 넣습니다. 둘 다 있으면 Pod Identity만 넣습니다.
+그 뒤 검증을 거쳐 저장되고, kubelet이 Pod를 띄우면서 토큰을 해당 audience로 발급받아 파일로 마운트합니다. 컨테이너가 시작되면 SDK가 그 변수를 읽고 자격 증명 체인을 탑니다. 체인은 정적 키, 웹 ID 토큰, 컨테이너 공급자, IMDS 순서라서 IRSA가 앞에 있습니다. 하지만 웹훅이 처음부터 한 세트만 넣기 때문에, 주석과 association이 둘 다 걸린 ServiceAccount라도 체인 순서로 다툴 일이 없습니다. 이 점은 2부의 공존 장표에서 다시 봅니다.
+실제 데모 클러스터에서 웹훅 설정을 꺼내 보면 주소가 127.0.0.1, 즉 컨트롤 플레인 안입니다. 그래서 노드에서 kubectl get pods로 찾아도 보이지 않습니다.
+여기서 두 가지를 기억하면 됩니다. 규칙이 Pod CREATE뿐이라 이미 떠 있는 Pod는 rollout 전까지 바뀌지 않습니다. 그리고 failurePolicy가 Ignore라서, 웹훅이 응답하지 못하면 Pod는 변수 없이 그냥 만들어지고 조용히 노드 역할을 씁니다. 그래서 확인은 항상 호출자 ARN으로 합니다.
+미리 확인하고 싶으면 kubectl create --dry-run=server로 Pod 템플릿을 보내 보세요. 웹훅을 거친 결과가 돌아오니 Pod를 만들지 않고도 무엇이 주입될지 볼 수 있습니다. 데모 스크립트도 이 방법으로 association 반영을 기다립니다.
+{cue: transition}
 이 차이를 장점과 단점으로 정리하겠습니다.
 :::
 
 ---
-<!-- Slide 7: 장단점 -->
+<!-- Slide 8: 장단점 -->
 @type: content
 @title: 장단점: IRSA와 Pod Identity
 
@@ -395,7 +456,7 @@ Pod Identity는 정반대입니다. 신뢰 정책은 서비스 principal 하나�
 :::
 
 ---
-<!-- Slide 8: 보안과 운영 비용 -->
+<!-- Slide 9: 보안과 운영 비용 -->
 @type: content
 @title: 옮기면 얻는 것: 보안과 운영 비용
 
@@ -448,7 +509,7 @@ Pod Identity는 정반대입니다. 신뢰 정책은 서비스 principal 하나�
 :::
 
 ---
-<!-- Slide 9: 선택 기준 -->
+<!-- Slide 10: 선택 기준 -->
 @type: content
 @title: 기본은 Pod Identity, 예외는 IRSA
 

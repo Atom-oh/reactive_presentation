@@ -10,6 +10,9 @@
  *
  *   import('./common/line-art-scene/flowscene.js').then(m => m.mount('#scene', SPEC));
  *
+ * Set camera: false in the spec to keep the full picture on every step; the focus parts are
+ * still highlighted and the packet still travels, only the pan and zoom are off.
+ *
  * Colours are deck role tokens only, so light and dark decks both work. Written for this
  * plugin; the idea of a stepped, hand-drawn cutaway was inspired by public line-art work.
  */
@@ -254,7 +257,8 @@ export function mount(sel, S) {
   function computeFrames() {
     OVER = frameOf(null);
     PH.forEach(ph => {
-      if (ph.all) { ph.frame = OVER; return; }
+      // camera: false keeps every step on the full picture (no pan or zoom between steps)
+      if (ph.all || S.camera === false) { ph.frame = OVER; return; }
       const base = frameOf(ph.cam || ph.focus, ph.zoom), seg = segmentPoints(ph);
       if (!seg || ph.segment === false) { ph.frame = base; return; }
       let [x0, y0, w, h] = base, x1 = x0 + w, y1 = y0 + h; const pad = 40;   // grow so the whole packet path fits

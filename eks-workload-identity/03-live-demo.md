@@ -451,7 +451,7 @@ orders-podid    Pod Identity   wid-d1124-podid                <span class="wid-o
 가장 흔한 건 첫 번째, 여전히 노드 역할이 보이는 경우입니다. 대부분 Pod를 새로 만들지 않았거나 ServiceAccount 이름이 다릅니다. 두 번째는 2부에서 본 공존 상황으로, 새 Pod는 Pod Identity를 쓰니 재생성하면 해결됩니다.
 마지막 항목은 꼭 구분해 주세요. 역할이 맞게 나오는데 S3에서 거부된다면 신원 문제가 아니라 리소스 쪽 정책 문제입니다.
 {cue: transition}
-퀴즈로 정리해 보겠습니다.
+오늘 내용을 정리하겠습니다.
 
 [약어]
 - SCP: Service Control Policy
@@ -459,85 +459,7 @@ orders-podid    Pod Identity   wid-d1124-podid                <span class="wid-o
 :::
 
 ---
-<!-- Slide 12: 퀴즈 1 -->
-@type: quiz
-@title: 퀴즈 1: 옮길 때 헷갈리는 것
-
-## 퀴즈 1: 옮길 때 헷갈리는 것
-
-**Q1: 이미 실행 중인 Deployment의 ServiceAccount에 IRSA role-arn 주석을 달았습니다. 다음으로 필요한 것은?**
-[ ] 아무것도 필요 없다, 수 초 안에 반영된다
-[x] rollout으로 Pod를 새로 만든다
-[ ] 노드를 재부팅한다
-[ ] 앱 코드에 역할 ARN을 넣는다
-
-**Q2: IRSA Pod와 Pod Identity Pod의 토큰에서 서로 다른 claim은?**
-[ ] iss (issuer)
-[x] aud (audience)
-[ ] 토큰 형식 (서명된 JWT)
-[ ] 서명한 키
-
-**Q3: IRSA 주석이 남아 있는 ServiceAccount에 Pod Identity association을 추가하고 rollout했습니다. 새 Pod가 쓰는 역할은?**
-[ ] IRSA 역할 (체인에서 웹 ID 토큰이 앞이므로)
-[x] Pod Identity 역할
-[ ] 노드 역할
-[ ] 두 변수가 함께 주입되어 오류
-
-:::notes
-{timing: 1min}
-[요약]
-- Q1 정답: rollout. 주입은 Pod 생성 시점에만 일어남
-- Q2 정답: aud. 같은 클러스터 issuer, aud만 sts.amazonaws.com 대 pods.eks.amazonaws.com
-- Q3 정답: Pod Identity 역할. EKS 웹훅이 새 Pod에 Pod Identity 변수만 넣음. 체인 순서와 혼동하기 쉬운 문제
-
-세 문제입니다. 보기를 클릭하면 바로 채점됩니다. 잠깐 시간을 드리겠습니다.
-{cue: pause}
-첫 문제는 rollout입니다. 주입은 Pod를 만들 때만 일어납니다. 두 번째는 diff에서 본 audience입니다. 세 번째는 함정 문제입니다. 체인만 보면 IRSA 같지만, 새 Pod에는 EKS 웹훅이 Pod Identity 변수만 넣으니 Pod Identity 역할입니다.
-{cue: transition}
-운영 쪽 문제 세 개가 더 있습니다.
-:::
-
----
-<!-- Slide 13: 퀴즈 2 -->
-@type: quiz
-@title: 퀴즈 2: 운영과 차단
-
-## 퀴즈 2: 운영과 차단
-
-**Q4: Pod Identity를 쓸 때 노드 역할에 남아 있어야 하는 권한은?**
-[ ] 앱의 s3:GetObject
-[ ] sts:AssumeRoleWithWebIdentity
-[x] eks-auth:AssumeRoleForPodIdentity
-[ ] iam:PassRole
-
-**Q5: EKS Pod Identity를 쓸 수 없어 IRSA를 써야 하는 곳은?**
-[ ] 관리형 노드 그룹의 Linux EC2 노드
-[ ] Karpenter가 띄운 Linux 노드
-[ ] EKS Auto Mode 노드
-[x] EKS의 Fargate Pod
-
-**Q6: hop limit을 1로 내린 뒤에도 IMDS에 닿는 Pod는?**
-[ ] IRSA를 쓰는 Pod
-[x] hostNetwork를 쓰는 Pod
-[ ] Pod Identity를 쓰는 Pod
-[ ] 모든 일반 Pod
-
-:::notes
-{timing: 1min}
-[요약]
-- Q4 정답: eks-auth:AssumeRoleForPodIdentity (AmazonEKSWorkerNodePolicy에 포함), 업무 권한은 Pod Identity 역할
-- Q5 정답: Fargate. Pod Identity는 EKS Linux EC2 노드와 Hybrid Nodes(추가 설정)에서만
-- Q6 정답: hostNetwork Pod. 노드 네트워크를 그대로 써서 hop limit과 무관
-
-운영 문제입니다.
-{cue: pause}
-네 번째는 eks-auth 권한입니다. Agent가 EKS Auth를 부르는 창구 권한이고, 앱 권한은 노드 역할에 남기지 않습니다. 다섯 번째는 Fargate로, Pod Identity는 EKS의 Linux EC2 노드와 추가 설정을 한 Hybrid Nodes에서만 됩니다. 여섯 번째는 hostNetwork Pod라서 따로 통제해야 합니다.
-{cue: transition}
-오늘 내용을 정리하겠습니다.
-:::
-
----
-<!-- Slide 14: 정리 -->
+<!-- Slide 12: 정리 -->
 @type: content
 @title: 정리: 옮기고, 확인하고, 닫는다
 
@@ -560,20 +482,20 @@ orders-podid    Pod Identity   wid-d1124-podid                <span class="wid-o
 - 기본은 Pod Identity, 예외는 IRSA
 - 확인은 호출자 ARN, 회수는 전파를 기다린 뒤 정책 문장만
 - 마지막에 Pod의 IMDS 경로 차단(hop limit 1). IMDS 자체는 켜 둠(Agent가 사용), hostNetwork는 별도
-- harden은 이 시점에 보통 교체 중(약 40%). 리허설 결과로 설명
+- harden은 이 시점에 보통 교체 중(약 30%). 리허설 결과로 설명
 
 네 줄로 정리합니다. 앱 코드는 그대로 두고, IRSA는 주석, Pod Identity는 association 하나로 연결한 뒤 Pod를 새로 만듭니다.
 새 워크로드는 Pod Identity가 기본이고, Pod Identity가 닿지 않는 곳에 IRSA를 씁니다.
 옮긴 뒤에는 호출자 ARN으로 확인하고, 전파를 기다렸다가 정책 문장만 회수합니다.
 마지막으로 Pod의 IMDS 경로를 닫습니다. IMDS 자체는 Agent가 쓰니 켜 둡니다. 문서와 데모 코드는 공개 저장소에 있으니 그대로 돌려 보셔도 됩니다.
 {cue: demo}
-harden 결과 확인: 이 시점에는 노드 교체가 보통 40% 정도라 결과가 아직 없습니다. 5단계 슬라이드의 리허설 결과로 이미 설명했으니 watch로 전환하지 않고 넘어갑니다.
+harden 결과 확인: 이 시점에는 노드 교체가 보통 30% 정도라 결과가 아직 없습니다. 5단계 슬라이드의 리허설 결과로 이미 설명했으니 watch로 전환하지 않고 넘어갑니다.
 {cue: transition}
 질문 받겠습니다.
 :::
 
 ---
-<!-- Slide 15: Thank You -->
+<!-- Slide 13: Thank You -->
 @type: thankyou
 @toc: toc.html
 @message: EKS 워크로드 IAM 이전, 감사합니다

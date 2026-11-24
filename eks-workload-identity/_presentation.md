@@ -16,6 +16,7 @@ speaker:
   company: "AWS Korea"
 
 theme:
+  mode: dark
   footer: "© 2026, Amazon Web Services, Inc. or its affiliates. All rights reserved."
   logo: "./common/pptx-theme/images/logo_dark.png"
   logoDark: "./common/pptx-theme/images/logo_1.png"

@@ -38,19 +38,25 @@ if (!window.__widNotesLoader) {
 
 ---
 <!-- Slide 2: 아젠다 -->
-@type: agenda
+@type: content
 @timing: 50min
 @title: 오늘 세션 구성
 
 ## 오늘 세션 구성
 
-1. 출발점, 두 방식의 차이와 장단점, 선택 기준 (13분)
-2. 방식별 이전 절차와 IMDS 차단 (11분)
-3. 라이브 데모 (13분)
-4. 문제 해결, 퀴즈 (4분)
-5. Q&A, 필요하면 부록의 동작 원리 (9분)
-
-> 데모가 막히면 슬라이드에 같은 단계의 실측 화면이 있습니다.
+:::html
+<div class="wid-grid-4">
+  <div class="wid-card"><span class="wid-chip">1부, 13분</span><h4 class="wid-gap-top">차이와 선택</h4><div class="wid-muted">출발점, 두 방식의 차이와 장단점, 보안과 운영 비용, 선택 기준</div></div>
+  <div class="wid-card"><span class="wid-chip">2부, 11분</span><h4 class="wid-gap-top">이전 절차</h4><div class="wid-muted">공통 다섯 단계, IRSA와 Pod Identity 명령, 공존, IMDS 차단</div></div>
+  <div class="wid-card"><span class="wid-chip">3부, 13분</span><h4 class="wid-gap-top">라이브 데모</h4><div class="wid-muted">같은 앱 세 벌을 옮기고 노드 역할 권한을 회수</div></div>
+  <div class="wid-card"><span class="wid-chip">마무리, 4분</span><h4 class="wid-gap-top">문제 해결, 퀴즈</h4><div class="wid-muted">막혔을 때 보는 순서와 정리</div></div>
+</div>
+<div class="wid-grid-2 wid-gap-top">
+  <div class="wid-panel"><strong>Q&amp;A, 9분</strong> <span class="wid-muted">남는 시간은 질문으로</span></div>
+  <div class="wid-panel"><strong>부록: 동작 원리</strong> <span class="wid-muted">자격 증명 경로, SDK 체인, 주입, 두 방식의 단계별 흐름. 질문이 나오면 사용</span></div>
+</div>
+<div class="callout callout-info wid-gap-top">데모가 막히면 슬라이드에 같은 단계의 실측 화면이 있습니다.</div>
+:::
 
 :::notes
 {timing: 1min}
@@ -75,7 +81,7 @@ if (!window.__widNotesLoader) {
 
 :::html
 <div class="wid-grid-2">
-  <div class="wid-card wid-node wid-edge fragment fade-up" data-fragment-index="1">
+  <div class="wid-card wid-node wid-edge">
     <span class="wid-chip wid-node">지금: 앱 권한이 노드 역할에</span>
     <ul class="wid-gap-top">
       <li>같은 노드의 모든 Pod가 같은 권한을 씁니다.</li>
@@ -83,7 +89,7 @@ if (!window.__widNotesLoader) {
       <li>hop limit 2면 일반 Pod도 IMDS에서 노드 역할을 받습니다.</li>
     </ul>
   </div>
-  <div class="wid-card fragment fade-up" data-fragment-index="2">
+  <div class="wid-card">
     <span class="wid-chip">목표: 세 단계</span>
     <ol class="wid-gap-top">
       <li>앱 권한을 워크로드 역할로 옮긴다 (IRSA 또는 Pod Identity)</li>
@@ -92,7 +98,7 @@ if (!window.__widNotesLoader) {
     </ol>
   </div>
 </div>
-<div class="callout callout-info wid-gap-top fragment fade-up" data-fragment-index="3"><strong class="wid-t-info">오늘 답할 질문</strong>: 둘 중 무엇으로, 어떤 순서로 옮기고, 옮기면 무엇이 좋아지는가</div>
+<div class="callout callout-info wid-gap-top"><strong class="wid-t-info">오늘 답할 질문</strong>: 둘 중 무엇으로, 어떤 순서로 옮기고, 옮기면 무엇이 좋아지는가</div>
 :::
 
 :::notes
@@ -102,11 +108,8 @@ if (!window.__widNotesLoader) {
 - 목표 세 단계: 워크로드 역할로 이전, 노드 역할에서 앱 정책 회수, Pod의 IMDS 경로 차단
 - 오늘의 질문: 어느 방식으로, 어떤 순서로, 무엇이 좋아지는가
 
-{cue: click}
 출발점은 다들 알고 계신 상태입니다. 앱이 쓰는 S3 같은 권한이 노드 역할에 붙어 있어서 같은 노드의 Pod가 모두 같은 권한을 씁니다. CloudTrail에도 노드 세션으로만 남고, hop limit이 2면 평범한 Pod도 IMDS에서 노드 역할을 받아 갑니다.
-{cue: click}
 그래서 목표는 세 단계입니다. 앱 권한을 워크로드 역할로 옮기고, 노드 역할에서 앱 정책만 회수하고, 마지막에 Pod의 IMDS 경로를 닫습니다.
-{cue: click}
 오늘은 이 가운데 "어떻게 옮기나"에 집중합니다. 두 방식이 어떻게 다르고, 무엇을 고르고, 어떤 순서로 옮기는지입니다.
 {cue: transition}
 먼저 두 방식이 설정을 어디에 거는지부터 보겠습니다.
@@ -287,7 +290,7 @@ IAM 정책 조건에서 `aws:PrincipalTag/kubernetes-namespace` 같은 세션 �
 
 :::html
 <div class="wid-grid-2">
-  <div class="wid-card wid-irsa wid-edge fragment fade-up" data-fragment-index="1">
+  <div class="wid-card wid-irsa wid-edge">
     <span class="wid-chip wid-irsa">IRSA</span>
     <h4 class="wid-gap-top wid-t-success">장점</h4>
     <ul>
@@ -302,7 +305,7 @@ IAM 정책 조건에서 `aws:PrincipalTag/kubernetes-namespace` 같은 세션 �
       <li>세션 태그 없음, Pod가 STS를 직접 호출해 STS 할당량 사용</li>
     </ul>
   </div>
-  <div class="wid-card wid-podid wid-edge fragment fade-up" data-fragment-index="2">
+  <div class="wid-card wid-podid wid-edge">
     <span class="wid-chip wid-podid">Pod Identity</span>
     <h4 class="wid-gap-top wid-t-success">장점</h4>
     <ul>
@@ -329,10 +332,8 @@ IAM 정책 조건에서 `aws:PrincipalTag/kubernetes-namespace` 같은 세션 �
 - Pod Identity 장점: 신뢰 정책 고정, 세션 태그 ABAC, EKS와 IAM의 책임 분리
 - Pod Identity 단점: Agent 애드온과 노드 역할 권한, EKS Linux EC2와 Hybrid Nodes만, SDK 최소 버전
 
-{cue: click}
 IRSA부터입니다. 가장 큰 장점은 범용성입니다. Fargate, Windows 노드, EKS Anywhere나 ROSA 같은 EKS 밖의 Kubernetes에서도 같은 방식으로 씁니다. 애드온 없이 IAM의 OIDC provider와 STS만으로 동작합니다.
 단점은 클러스터 수에 비례해 커집니다. 클러스터마다 OIDC provider를 등록해야 하고, 계정당 기본 한도가 100개입니다. 역할을 새 클러스터에서 쓰려면 신뢰 정책에 문장을 추가해야 하는데, 기본 2,048자라 보통 네 개 안팎이면 찹니다. 세션 태그가 없고, Pod가 STS를 직접 부르니 STS 할당량도 씁니다.
-{cue: click}
 Pod Identity는 정반대입니다. 신뢰 정책은 서비스 principal 하나라 클러스터가 늘어도 고칠 게 없고, 세션 태그가 붙어 한 역할을 태그 조건으로 여러 ServiceAccount에 나눠 쓸 수 있습니다. 연결은 EKS API, 권한은 IAM이라 플랫폼 팀과 보안 팀의 경계도 깔끔합니다.
 대신 Agent 애드온이 필요하고, 노드 역할에 EKS Auth 호출 권한이 있어야 합니다. 관리형 정책 AmazonEKSWorkerNodePolicy를 쓰면 들어 있고, Auto Mode는 Agent가 내장입니다. 실행 환경은 EKS Linux EC2와 Hybrid Nodes만이라 Fargate와 Windows는 IRSA로 남습니다.
 {cue: transition}
@@ -353,7 +354,7 @@ Pod Identity는 정반대입니다. 신뢰 정책은 서비스 principal 하나�
 
 :::html
 <div class="wid-grid-2">
-  <div class="wid-card fragment fade-up" data-fragment-index="1">
+  <div class="wid-card">
     <span class="wid-chip">보안 (두 방식 공통)</span>
     <ul class="wid-gap-top">
       <li>권한 범위가 노드에서 ServiceAccount로: 그 SA를 쓰는 Pod만 권한을 받음</li>
@@ -363,7 +364,7 @@ Pod Identity는 정반대입니다. 신뢰 정책은 서비스 principal 하나�
     </ul>
     <div class="wid-cap wid-gap-top"><span class="wid-chip wid-podid">Pod Identity</span> 세션 태그로 클러스터, namespace, ServiceAccount 조건을 정책에 걸 수 있음</div>
   </div>
-  <div class="wid-card fragment fade-up" data-fragment-index="2">
+  <div class="wid-card">
     <span class="wid-chip">운영 비용 (클러스터가 늘수록 차이가 큼)</span>
     <table class="data-table wid-table wid-gap-top">
       <thead><tr><th>작업</th><th>IRSA</th><th>Pod Identity</th></tr></thead>
@@ -376,7 +377,7 @@ Pod Identity는 정반대입니다. 신뢰 정책은 서비스 principal 하나�
     </table>
   </div>
 </div>
-<div class="callout callout-info wid-gap-top fragment fade-up" data-fragment-index="3"><strong class="wid-t-info">따져 볼 비용</strong>: Pod Identity는 노드마다 Agent DaemonSet이 하나씩 돕니다. 클러스터가 하나뿐이고 교체가 드물면 운영 비용 차이는 작습니다.</div>
+<div class="callout callout-info wid-gap-top"><strong class="wid-t-info">따져 볼 비용</strong>: Pod Identity는 노드마다 Agent DaemonSet이 하나씩 돕니다. 클러스터가 하나뿐이고 교체가 드물면 운영 비용 차이는 작습니다.</div>
 <div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html">EKS Pod Identity benefits</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html">Comparing EKS Pod Identity and IRSA</a></div>
 :::
 
@@ -388,11 +389,8 @@ Pod Identity는 정반대입니다. 신뢰 정책은 서비스 principal 하나�
 - 운영 비용: 클러스터 추가와 교체 때 IRSA는 provider 등록과 신뢰 정책 수정, Pod Identity는 association만. 역할 재사용, 한도, STS 호출 횟수에서도 차이
 - 따져 볼 것: 노드마다 Agent DaemonSet. 클러스터가 적으면 차이가 작음
 
-{cue: click}
 보안 쪽은 두 방식 모두 같은 걸 얻습니다. 권한이 노드가 아니라 ServiceAccount 단위가 되고, 노드 역할을 회수하고 IMDS를 닫으면 다른 Pod의 역할에 닿을 길이 없어집니다. CloudTrail에도 워크로드 역할 세션으로 남으니, 사고가 났을 때 무엇을 회수할지 바로 보입니다. Pod Identity는 여기에 세션 태그가 더해져서 namespace나 ServiceAccount를 정책 조건으로 쓸 수 있습니다.
-{cue: click}
 경제적인 차이는 요금보다 운영 작업량에서 납니다. 클러스터를 추가하거나 blue/green으로 교체할 때 IRSA는 새 클러스터의 OIDC provider를 등록하고 그 클러스터를 쓰는 역할마다 신뢰 정책을 고칩니다. Pod Identity는 association만 다시 만들면 됩니다. 역할도 태그 조건으로 재사용할 수 있고, 한도와 STS 호출 횟수에서도 여유가 있습니다.
-{cue: click}
 반대로 따져 볼 것도 있습니다. Pod Identity는 노드마다 Agent가 하나씩 돕니다. 클러스터가 하나뿐이고 교체도 드물다면 이 차이는 크지 않습니다.
 {cue: transition}
 그래서 고르는 기준은 이렇게 정리됩니다.
@@ -407,23 +405,23 @@ Pod Identity는 정반대입니다. 신뢰 정책은 서비스 principal 하나�
 
 :::html
 <div class="wid-grid-3">
-  <div class="wid-card wid-podid wid-edge fragment fade-up" data-fragment-index="1">
+  <div class="wid-card wid-podid wid-edge">
     <span class="wid-chip wid-podid">Pod Identity</span>
     <h4 class="wid-gap-top">신규 EKS Linux EC2·Hybrid Nodes 워크로드</h4>
     <div class="wid-muted">여러 클러스터에서 같은 역할, 세션 태그 ABAC, 팀 간 책임 분리</div>
   </div>
-  <div class="wid-card wid-irsa wid-edge fragment fade-up" data-fragment-index="2">
+  <div class="wid-card wid-irsa wid-edge">
     <span class="wid-chip wid-irsa">IRSA</span>
     <h4 class="wid-gap-top">Pod Identity가 닿지 않는 곳</h4>
     <div class="wid-muted">Fargate, Windows 노드, EKS 밖의 Kubernetes와 구성을 공유하는 워크로드</div>
   </div>
-  <div class="wid-card fragment fade-up" data-fragment-index="3">
+  <div class="wid-card">
     <span class="wid-chip">함께 쓰기</span>
     <h4 class="wid-gap-top">한 클러스터에 공존 가능</h4>
     <div class="wid-muted">워크로드마다 고르고, 전환이 끝난 SA에는 한 방식만 남깁니다.</div>
   </div>
 </div>
-<div class="callout callout-info wid-gap-top fragment fade-up" data-fragment-index="4"><strong class="wid-t-info">AWS 권장</strong>: 가능한 경우 EKS Pod Identity를 씁니다. 실행 환경과 조직 구조에 따라 IRSA가 맞는 경우가 있습니다.</div>
+<div class="callout callout-info wid-gap-top"><strong class="wid-t-info">AWS 권장</strong>: 가능한 경우 EKS Pod Identity를 씁니다. 실행 환경과 조직 구조에 따라 IRSA가 맞는 경우가 있습니다.</div>
 <div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html">Amazon EKS User Guide, Grant Kubernetes workloads access to AWS</a></div>
 :::
 
@@ -435,13 +433,9 @@ Pod Identity는 정반대입니다. 신뢰 정책은 서비스 principal 하나�
 - 두 방식은 한 클러스터에서 공존 가능, 전환이 끝나면 한 ServiceAccount에는 한 방식만
 - AWS는 가능한 경우 Pod Identity를 권장
 
-{cue: click}
 기본값은 Pod Identity입니다. 클러스터가 늘어도 신뢰 정책을 건드리지 않고, 세션 태그가 붙고, 팀 경계가 깔끔합니다.
-{cue: click}
 IRSA는 Pod Identity가 지원하지 않는 곳에서 씁니다. Fargate, Windows 노드, 그리고 EKS 밖의 Kubernetes와 같은 매니페스트를 공유해야 하는 경우입니다.
-{cue: click}
 둘은 한 클러스터에서 같이 써도 됩니다. 한 ServiceAccount에 둘을 함께 걸면 어떻게 되는지는 다음 장에서 보겠습니다.
-{cue: click}
 AWS 문서도 가능한 경우 Pod Identity를 권장하고, 환경에 따라 IRSA가 맞을 수 있다고 적고 있습니다.
 {cue: transition}
 이제 2부, 실제로 옮기는 절차입니다.

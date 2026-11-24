@@ -42,7 +42,7 @@ if (!window.__widNotesLoader) {
 
 :::html
 <div class="wid-grid-2">
-  <div class="wid-card fragment fade-up" data-fragment-index="1">
+  <div class="wid-card">
     <span class="wid-chip">클러스터 API</span>
     <h4 class="wid-gap-top">사람과 노드가 Kubernetes API로</h4>
     <div class="wid-muted">kubectl, kubelet이 클러스터에 들어갈 때</div>
@@ -53,7 +53,7 @@ if (!window.__widNotesLoader) {
       <div class="wid-row"><strong>권한</strong><span>access policy + Kubernetes RBAC</span></div>
     </div>
   </div>
-  <div class="wid-card fragment fade-up" data-fragment-index="2">
+  <div class="wid-card">
     <span class="wid-chip">오늘 주제</span>
     <h4 class="wid-gap-top">Pod가 AWS API로</h4>
     <div class="wid-muted">앱이 S3 같은 AWS 서비스를 부를 때</div>
@@ -65,7 +65,7 @@ if (!window.__widNotesLoader) {
     </div>
   </div>
 </div>
-<div class="callout callout-info wid-gap-top fragment fade-up" data-fragment-index="3"><span class="wid-chip wid-node">노드 역할</span> 두 길에 모두 나옵니다. access entry(<span class="wid-mono">EC2_LINUX</span>, Hybrid Nodes는 <span class="wid-mono">HYBRID_LINUX</span>)로 노드가 클러스터에 가입하고, 같은 역할로 Pod Identity Agent가 EKS Auth를 부릅니다. 그래서 이전 마지막에 지우는 것은 앱 권한뿐이고, 노드 역할과 access entry는 그대로 둡니다.</div>
+<div class="callout callout-info wid-gap-top"><span class="wid-chip wid-node">노드 역할</span> 두 길에 모두 나옵니다. access entry(<span class="wid-mono">EC2_LINUX</span>, Hybrid Nodes는 <span class="wid-mono">HYBRID_LINUX</span>)로 노드가 클러스터에 가입하고, 같은 역할로 Pod Identity Agent가 EKS Auth를 부릅니다. 그래서 이전 마지막에 지우는 것은 앱 권한뿐이고, 노드 역할과 access entry는 그대로 둡니다.</div>
 <div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/grant-k8s-access.html">Amazon EKS User Guide, Grant IAM users and roles access to Kubernetes APIs</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/creating-access-entries.html">Create access entries</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/migrating-access-entries.html">Migrating aws-auth entries to access entries</a>, <a href="https://docs.aws.amazon.com/eks/latest/best-practices/identity-and-access-management.html">EKS Best Practices, Identity and Access Management</a></div>
 :::
 
@@ -86,11 +86,8 @@ kubeconfig의 exec 설정이 요청 때 `aws eks get-token`을 불러 토큰을 
 - 노드 역할은 양쪽에 다 나옴: access entry로 노드 가입, Agent가 같은 역할로 EKS Auth 호출. 그래서 지우는 건 앱 권한뿐
 
 EKS에서 IAM이 쓰이는 길은 두 개입니다.
-{cue: click}
 하나는 사람과 노드가 Kubernetes API로 들어가는 길입니다. kubectl이 aws eks get-token으로 STS 서명 토큰을 만들고, control plane이 STS로 누구인지 확인한 다음 access entry로 Kubernetes 사용자와 그룹에 매핑합니다. 권한은 access policy와 RBAC이 정합니다.
-{cue: click}
 오늘 본편에서 다룬 건 다른 하나, Pod가 S3 같은 AWS API를 부를 때입니다. IRSA와 Pod Identity가 여기 속하고, access entry는 관여하지 않습니다. 그래서 Pod 권한 문제를 access entry에서 찾으면 안 되고, 반대로 kubectl Unauthorized는 Pod 자격 증명이 아니라 매핑을 봐야 합니다.
-{cue: click}
 헷갈리는 지점이 노드 역할입니다. 노드는 이 역할로 access entry를 통해 클러스터에 가입하고, Pod Identity Agent도 같은 역할로 EKS Auth를 부릅니다. 그래서 이전 마지막에 노드 역할 자체를 지우는 게 아니라, 거기 붙어 있던 앱 권한만 지웁니다.
 {cue: transition}
 이제 Pod 쪽, 자격 증명이 오는 세 경로를 보겠습니다.
@@ -507,7 +504,7 @@ Pod Identity Pod는 3단계, 컨테이너 공급자에서 멈춥니다.
 ## 바뀌는 것은 코드가 아니라 주입된 변수
 
 :::html
-<table class="data-table wid-table fragment fade-up" data-fragment-index="1">
+<table class="data-table wid-table">
   <thead><tr><th>경로</th><th>Pod에 주입되는 것</th><th>SDK가 호출하는 곳</th><th>결과 역할</th></tr></thead>
   <tbody>
     <tr><td><span class="wid-chip wid-node">node (IMDS)</span></td><td>없음</td><td>IMDSv2 <code>169.254.169.254</code></td><td>노드 IAM 역할 (노드의 모든 Pod가 공유)</td></tr>
@@ -516,8 +513,8 @@ Pod Identity Pod는 3단계, 컨테이너 공급자에서 멈춥니다.
   </tbody>
 </table>
 <div class="wid-grid-2 wid-gap-top">
-  <div class="callout callout-warning fragment fade-up" data-fragment-index="2"><strong class="wid-t-warning">주입은 Pod 생성 시점에만</strong>: 이미 실행 중인 Pod는 바뀌지 않으므로 설정 후 rollout으로 Pod를 새로 만듭니다.</div>
-  <div class="callout callout-info fragment fade-up" data-fragment-index="3"><strong class="wid-t-info">확인은 호출자 ARN으로</strong>: 호출 성공만으로는 부족합니다. 노드 역할로 성공했을 수도 있습니다.</div>
+  <div class="callout callout-warning"><strong class="wid-t-warning">주입은 Pod 생성 시점에만</strong>: 이미 실행 중인 Pod는 바뀌지 않으므로 설정 후 rollout으로 Pod를 새로 만듭니다.</div>
+  <div class="callout callout-info"><strong class="wid-t-info">확인은 호출자 ARN으로</strong>: 호출 성공만으로는 부족합니다. 노드 역할로 성공했을 수도 있습니다.</div>
 </div>
 :::
 
@@ -529,11 +526,8 @@ Pod Identity Pod는 3단계, 컨테이너 공급자에서 멈춥니다.
 - Pod Identity: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE, 토큰 볼륨
 - 주입은 Pod 생성 때만 일어나므로 rollout 필요, 검증은 호출자 ARN으로
 
-{cue: click}
 표로 정리하면 이렇습니다. 노드 경로는 아무것도 주입되지 않고, IRSA와 Pod Identity는 서로 다른 환경 변수 두 개와 토큰 볼륨이 들어갑니다. 데모의 diff 단계에서 이 변수 이름을 실제 Pod에서 그대로 확인합니다.
-{cue: click}
 중요한 점은 주입이 Pod를 만들 때만 일어난다는 겁니다. 주석을 달거나 association을 만들어도 이미 떠 있는 Pod는 그대로라 rollout이 필요합니다.
-{cue: click}
 그리고 확인할 때는 API 호출이 성공했는지가 아니라 호출자 ARN이 무엇인지 봐야 합니다. 노드 역할에 권한이 남아 있으면 이전이 안 됐어도 성공하기 때문입니다.
 {cue: transition}
 그럼 이 변수를 누가, 언제 넣는지 보겠습니다.
@@ -550,17 +544,17 @@ Pod Identity Pod는 3단계, 컨테이너 공급자에서 멈춥니다.
 <div class="wid-grid-2">
 <div>
 <ol class="wid-flow">
-  <li class="fragment fade-up" data-fragment-index="1"><strong>Pod 생성 요청</strong> <span class="wid-muted">rollout → ReplicaSet 컨트롤러가 API 서버에 Pod CREATE</span></li>
-  <li class="fragment fade-up" data-fragment-index="1"><strong>인증·인가</strong> <span class="wid-muted">API 서버가 요청자를 확인</span></li>
-  <li class="fragment fade-up wid-hl" data-fragment-index="2"><strong>Mutating admission: <code>iam-for-pods.amazonaws.com</code></strong><br><span class="wid-muted">EKS가 컨트롤 플레인에서 운영하는 웹훅(amazon-eks-pod-identity-webhook)이 Pod의 ServiceAccount를 봅니다.</span>
+  <li><strong>Pod 생성 요청</strong> <span class="wid-muted">rollout → ReplicaSet 컨트롤러가 API 서버에 Pod CREATE</span></li>
+  <li><strong>인증·인가</strong> <span class="wid-muted">API 서버가 요청자를 확인</span></li>
+  <li class="wid-hl"><strong>Mutating admission: <code>iam-for-pods.amazonaws.com</code></strong><br><span class="wid-muted">EKS가 컨트롤 플레인에서 운영하는 웹훅(amazon-eks-pod-identity-webhook)이 Pod의 ServiceAccount를 봅니다.</span>
     <div class="wid-cap">association 있음 → <code>AWS_CONTAINER_*</code> 두 개 + 토큰 볼륨(aud <code>pods.eks.amazonaws.com</code>)<br>주석만 있음 → <code>AWS_ROLE_ARN</code>, <code>AWS_WEB_IDENTITY_TOKEN_FILE</code> + 토큰 볼륨(aud <code>sts.amazonaws.com</code>)<br>둘 다 있음 → Pod Identity만 · 아무것도 없음 → 그대로</div></li>
-  <li class="fragment fade-up" data-fragment-index="3"><strong>Validating admission → etcd 저장</strong> <span class="wid-muted">Pod Security 등 검사 후 저장. 이때 Pod 스펙은 이미 바뀌어 있음</span></li>
-  <li class="fragment fade-up" data-fragment-index="3"><strong>kubelet</strong> <span class="wid-muted">projected 토큰을 해당 audience로 발급받아 파일로 마운트하고 만료 전에 갱신</span></li>
-  <li class="fragment fade-up" data-fragment-index="3"><strong>컨테이너 시작</strong> <span class="wid-muted">SDK가 환경 변수를 읽고 앞 슬라이드의 체인을 탑니다</span></li>
+  <li><strong>Validating admission → etcd 저장</strong> <span class="wid-muted">Pod Security 등 검사 후 저장. 이때 Pod 스펙은 이미 바뀌어 있음</span></li>
+  <li><strong>kubelet</strong> <span class="wid-muted">projected 토큰을 해당 audience로 발급받아 파일로 마운트하고 만료 전에 갱신</span></li>
+  <li><strong>컨테이너 시작</strong> <span class="wid-muted">SDK가 환경 변수를 읽고 앞 슬라이드의 체인을 탑니다</span></li>
 </ol>
 </div>
 <div>
-<pre class="wid-term fragment fade-up" data-fragment-index="4"><span class="wid-dim"># 데모 클러스터에서 확인한 웹훅 설정</span>
+<pre class="wid-term"><span class="wid-dim"># 데모 클러스터에서 확인한 웹훅 설정</span>
 $ kubectl get mutatingwebhookconfiguration \
     pod-identity-webhook -o yaml
 name: iam-for-pods.amazonaws.com
@@ -568,9 +562,9 @@ clientConfig.url: https://127.0.0.1:23443/mutate
 rules: CREATE pods
 failurePolicy: Ignore
 objectSelector: eks.amazonaws.com/skip-pod-identity-webhook 없음</pre>
-<div class="callout callout-warning fragment fade-up" data-fragment-index="5"><strong class="wid-t-warning">CREATE에서만 동작</strong>: 실행 중인 Pod는 바뀌지 않습니다. 설정 뒤에는 rollout.</div>
-<div class="callout callout-danger fragment fade-up" data-fragment-index="5"><strong>failurePolicy: Ignore</strong>: 웹훅이 응답하지 못하면 변수 없이 Pod가 만들어져 조용히 노드 역할로 동작합니다. 그래서 호출자 ARN으로 확인합니다.</div>
-<div class="callout callout-info fragment fade-up" data-fragment-index="6"><strong class="wid-t-info">미리 확인</strong>: <code>kubectl create --dry-run=server</code>로 Pod 템플릿을 보내면 웹훅을 거친 결과를 Pod를 만들지 않고 볼 수 있습니다.</div>
+<div class="callout callout-warning"><strong class="wid-t-warning">CREATE에서만 동작</strong>: 실행 중인 Pod는 바뀌지 않습니다. 설정 뒤에는 rollout.</div>
+<div class="callout callout-danger"><strong>failurePolicy: Ignore</strong>: 웹훅이 응답하지 못하면 변수 없이 Pod가 만들어져 조용히 노드 역할로 동작합니다. 그래서 호출자 ARN으로 확인합니다.</div>
+<div class="callout callout-info"><strong class="wid-t-info">미리 확인</strong>: <code>kubectl create --dry-run=server</code>로 Pod 템플릿을 보내면 웹훅을 거친 결과를 Pod를 만들지 않고 볼 수 있습니다.</div>
 </div>
 </div>
 <div class="wid-src">출처: 데모 클러스터(EKS 1.36)의 MutatingWebhookConfiguration, <a href="https://github.com/aws/amazon-eks-pod-identity-webhook">amazon-eks-pod-identity-webhook</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-id-how-it-works.html">Understand how EKS Pod Identity works</a></div>
@@ -585,17 +579,11 @@ objectSelector: eks.amazonaws.com/skip-pod-identity-webhook 없음</pre>
 - failurePolicy Ignore라 웹훅 실패 시 변수 없이 생성 → 노드 역할. 호출자 ARN과 dry-run으로 확인
 
 그럼 이 변수는 누가 언제 넣을까요?
-{cue: click}
 Pod를 만들면 요청이 API 서버로 갑니다. rollout이면 ReplicaSet 컨트롤러가 Pod CREATE를 보냅니다. API 서버는 먼저 인증과 인가를 합니다.
-{cue: click}
 그다음이 핵심인 mutating admission 단계입니다. EKS가 컨트롤 플레인 안에서 운영하는 웹훅이 있고, 이름이 iam-for-pods.amazonaws.com입니다. 이 웹훅이 Pod의 ServiceAccount를 보고, association이 있으면 Pod Identity 변수 두 개와 토큰 볼륨을, 주석만 있으면 IRSA 변수와 토큰 볼륨을 Pod 스펙에 끼워 넣습니다. 둘 다 있으면 Pod Identity만 넣습니다.
-{cue: click}
 그 뒤 검증을 거쳐 저장되고, kubelet이 Pod를 띄우면서 토큰을 해당 audience로 발급받아 파일로 마운트합니다. 컨테이너가 시작되면 SDK가 그 변수를 읽고 앞에서 본 체인을 탑니다.
-{cue: click}
 실제 데모 클러스터에서 웹훅 설정을 꺼내 보면 주소가 127.0.0.1, 즉 컨트롤 플레인 안입니다. 그래서 노드에서 kubectl get pods로 찾아도 보이지 않습니다.
-{cue: click}
 여기서 두 가지를 기억하면 됩니다. 규칙이 Pod CREATE뿐이라 이미 떠 있는 Pod는 rollout 전까지 바뀌지 않습니다. 그리고 failurePolicy가 Ignore라서, 웹훅이 응답하지 못하면 Pod는 변수 없이 그냥 만들어지고 조용히 노드 역할을 씁니다. 그래서 확인은 항상 호출자 ARN으로 합니다.
-{cue: click}
 미리 확인하고 싶으면 kubectl create --dry-run=server로 Pod 템플릿을 보내 보세요. 웹훅을 거친 결과가 돌아오니 Pod를 만들지 않고도 무엇이 주입될지 볼 수 있습니다. 데모 스크립트도 이 방법으로 association 반영을 기다립니다.
 {cue: transition}
 이제 두 방식의 내부를 한 단계씩 보겠습니다. IRSA부터입니다.
@@ -616,9 +604,9 @@ Pod를 만들면 요청이 API 서버로 갑니다. rollout이면 ReplicaSet 컨
     <figcaption>IRSA 전체 흐름 (16초 반복)</figcaption>
   </figure>
   <div class="wid-stack">
-    <div class="wid-card wid-irsa wid-edge fragment fade-up" data-fragment-index="1"><strong class="wid-t-path">신뢰 준비</strong><div class="wid-muted">클러스터 issuer를 <span class="rp-detail" data-detail="oidc">IAM OIDC(OpenID Connect) provider</span>로 한 번 등록</div></div>
-    <div class="wid-card wid-irsa wid-edge fragment fade-up" data-fragment-index="2"><strong class="wid-t-path">주입</strong><div class="wid-muted">SA 주석을 본 EKS mutating webhook(amazon-eks-pod-identity-webhook)이 env와 토큰 볼륨 추가</div></div>
-    <div class="wid-card wid-irsa wid-edge fragment fade-up" data-fragment-index="3"><strong class="wid-t-path">교환</strong><div class="wid-muted">Pod가 리전 STS(Security Token Service)와 직접 통신</div></div>
+    <div class="wid-card wid-irsa wid-edge"><strong class="wid-t-path">신뢰 준비</strong><div class="wid-muted">클러스터 issuer를 <span class="rp-detail" data-detail="oidc">IAM OIDC(OpenID Connect) provider</span>로 한 번 등록</div></div>
+    <div class="wid-card wid-irsa wid-edge"><strong class="wid-t-path">주입</strong><div class="wid-muted">SA 주석을 본 EKS mutating webhook(amazon-eks-pod-identity-webhook)이 env와 토큰 볼륨 추가</div></div>
+    <div class="wid-card wid-irsa wid-edge"><strong class="wid-t-path">교환</strong><div class="wid-muted">Pod가 리전 STS(Security Token Service)와 직접 통신</div></div>
   </div>
 </div>
 <div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html">Amazon EKS User Guide, IAM roles for service accounts</a></div>
@@ -641,9 +629,6 @@ EKS 클러스터마다 OIDC issuer URL이 있습니다. 이 issuer를 계정의 
 애니메이션 한 바퀴가 16초입니다. ServiceAccount 주석에서 시작해서, 토큰이 STS까지 갔다가 열쇠가 돌아오는 흐름입니다.
 {cue: pause}
 그림의 웹훅 카드에 "EKS Pod Identity webhook"이라고 적혀 있는데, EKS Pod Identity 기능을 말하는 게 아닙니다. IRSA 변수를 넣는 EKS mutating webhook의 이름이 원래 amazon-eks-pod-identity-webhook이라 생긴 혼동입니다. 저는 오늘 이것을 "EKS mutating webhook"이라고 부르겠습니다.
-{cue: click}
-{cue: click}
-{cue: click}
 핵심은 세 줄입니다. IAM이 클러스터를 믿도록 OIDC provider를 등록하고, Pod 생성 때 EKS mutating webhook이 토큰을 넣고, Pod가 직접 STS에 가서 토큰을 자격 증명으로 바꿉니다.
 {cue: transition}
 캔버스에서 한 단계씩 멈춰 보겠습니다.
@@ -916,9 +901,9 @@ STS는 토큰의 issuer가 계정에 등록된 OIDC provider인지 보고, 그 i
     <figcaption>Pod Identity 전체 흐름 (18초 반복)</figcaption>
   </figure>
   <div class="wid-stack">
-    <div class="wid-card wid-podid wid-edge fragment fade-up" data-fragment-index="1"><strong class="wid-t-path">연결</strong><div class="wid-muted">EKS API의 <span class="rp-detail" data-detail="assoc">association</span>, 주석 없음</div></div>
-    <div class="wid-card wid-podid wid-edge fragment fade-up" data-fragment-index="2"><strong class="wid-t-path">조회</strong><div class="wid-muted">SDK는 같은 노드의 Agent만 호출</div></div>
-    <div class="wid-card wid-podid wid-edge fragment fade-up" data-fragment-index="3"><strong class="wid-t-path">위임</strong><div class="wid-muted">EKS Auth가 역할을 맡고 세션 태그 부착</div></div>
+    <div class="wid-card wid-podid wid-edge"><strong class="wid-t-path">연결</strong><div class="wid-muted">EKS API의 <span class="rp-detail" data-detail="assoc">association</span>, 주석 없음</div></div>
+    <div class="wid-card wid-podid wid-edge"><strong class="wid-t-path">조회</strong><div class="wid-muted">SDK는 같은 노드의 Agent만 호출</div></div>
+    <div class="wid-card wid-podid wid-edge"><strong class="wid-t-path">위임</strong><div class="wid-muted">EKS Auth가 역할을 맡고 세션 태그 부착</div></div>
   </div>
 </div>
 <div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-id-how-it-works.html">Amazon EKS User Guide, How EKS Pod Identity works</a></div>
@@ -938,11 +923,8 @@ tip: EKS API에 저장하는 연결: 클러스터, namespace, ServiceAccount를 
 - 위임: Agent가 EKS Auth AssumeRoleForPodIdentity 호출, EKS가 세션 태그를 붙여 역할을 맡음
 
 Pod Identity 애니메이션입니다. IRSA와 가장 다른 점은 Pod가 AWS 쪽 엔드포인트를 직접 부르지 않는다는 겁니다.
-{cue: click}
 연결 정보는 ServiceAccount 주석이 아니라 EKS API의 association에 있습니다.
-{cue: click}
 Pod 안의 SDK는 같은 노드의 Agent에만 요청합니다.
-{cue: click}
 Agent가 EKS Auth를 부르고, EKS가 세션 태그를 붙여 역할을 맡은 자격 증명을 돌려줍니다.
 {cue: transition}
 역시 캔버스로 한 단계씩 보겠습니다.
@@ -1201,14 +1183,14 @@ EKS Auth가 토큰과 association을 확인하고, 세션 태그 6개를 붙여 
 
 :::html
 <div class="wid-grid-2">
-  <div class="wid-card fragment fade-up" data-fragment-index="1">
+  <div class="wid-card">
     <h4>eks-pod-identity-agent 애드온</h4>
     <div class="wid-muted">클러스터마다 한 번 설치하는 hostNetwork DaemonSet</div>
     <div class="wid-mono wid-gap-top">169.254.170.23, [fd00:ec2::23]</div>
     <div class="wid-mono">포트 80, 2703</div>
     <div class="wid-cap wid-gap-top">EKS Auto Mode에는 같은 기능이 내장되어 있습니다.</div>
   </div>
-  <div class="wid-card wid-node wid-edge fragment fade-up" data-fragment-index="2">
+  <div class="wid-card wid-node wid-edge">
     <h4>노드 역할에 남는 권한</h4>
     <div class="wid-mono">eks-auth:AssumeRoleForPodIdentity</div>
     <div class="wid-muted">AmazonEKSWorkerNodePolicy에 포함. Agent가 EKS Auth를 부르는 데만 씁니다.</div>
@@ -1216,7 +1198,7 @@ EKS Auth가 토큰과 association을 확인하고, 세션 태그 6개를 붙여 
     <div class="wid-cap wid-gap-top">앱의 업무 권한은 Pod Identity 역할에 둡니다.</div>
   </div>
 </div>
-<div class="callout callout-info wid-gap-top fragment fade-up" data-fragment-index="3"><strong class="wid-t-info">프록시 환경</strong>: <code>169.254.170.23</code>과 <code>[fd00:ec2::23]</code>을 <code>NO_PROXY</code>에 넣어야 SDK 요청이 Agent에 닿습니다.</div>
+<div class="callout callout-info wid-gap-top"><strong class="wid-t-info">프록시 환경</strong>: <code>169.254.170.23</code>과 <code>[fd00:ec2::23]</code>을 <code>NO_PROXY</code>에 넣어야 SDK 요청이 Agent에 닿습니다.</div>
 <div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html">Amazon EKS User Guide, EKS Pod Identity considerations</a></div>
 :::
 
@@ -1229,11 +1211,8 @@ EKS Auth가 토큰과 association을 확인하고, 세션 태그 6개를 붙여 
 - Agent 자신은 hostNetwork에서 IMDS로 노드 역할을 받음. 그래서 hop limit 1에서도 동작하고, IMDS 자체를 끄면 Pod Identity가 멈춤
 - 프록시를 쓰면 두 주소를 NO_PROXY에
 
-{cue: click}
 Agent는 애드온 하나입니다. 노드 네트워크에서 링크 로컬 주소로 듣는 DaemonSet이고, Auto Mode라면 따로 설치할 것이 없습니다.
-{cue: click}
 노드 역할에는 Agent가 EKS Auth를 부를 권한이 있어야 합니다. 이미 AmazonEKSWorkerNodePolicy에 들어 있으니 보통은 따로 붙일 게 없습니다. Agent는 이 자격 증명을 hostNetwork에서 IMDS로 받는다는 점도 기억해 두세요. 뒤에서 Pod의 IMDS 경로를 닫을 때 다시 나옵니다.
-{cue: click}
 실무에서 자주 막히는 곳은 프록시입니다. HTTP 프록시를 쓰는 앱이라면 두 Agent 주소를 NO_PROXY에 넣어야 합니다.
 {cue: transition}
 부록은 여기까지입니다. 질문으로 돌아가겠습니다.

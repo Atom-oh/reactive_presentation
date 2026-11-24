@@ -34,30 +34,20 @@ if (!window.__widNotesLoader) {
 
 ---
 <!-- Slide 2: 운영 이전 순서 -->
-@type: timeline
+@type: content
 @title: 운영 이전은 다섯 단계, 회수는 맨 뒤
 
 ## 운영 이전은 다섯 단계, 회수는 맨 뒤
 
-### 의존성 조사
-노드 역할 정책과 CloudTrail의 실제 세션 비교
-워커 노드, ECR pull 권한은 유지
-
-### 역할과 전용 SA 준비
-리소스 단위로 제한한 워크로드 역할
-SDK 최소 버전 확인
-
-### 카나리 Pod 새로 생성
-주입된 env 이름, 호출자 ARN, API 성공 확인
-토큰과 키는 로그에 출력하지 않기
-
-### 순차 전환 후 회수
-AccessDenied, 갱신, 크론까지 관찰
-노드 역할의 해당 정책 문장만 회수
-
-### 노드 접근 제한
-IMDSv2 강제, hop limit 1
-hostNetwork Pod는 별도 통제
+:::html
+<ol class="wid-flow">
+  <li><strong>의존성 조사</strong><div class="wid-cap">노드 역할 정책과 CloudTrail의 실제 세션 비교. 워커 노드, ECR pull 권한은 유지</div></li>
+  <li><strong>역할과 전용 SA 준비</strong><div class="wid-cap">리소스 단위로 제한한 워크로드 역할. SDK 최소 버전 확인</div></li>
+  <li><strong>카나리 Pod 새로 생성</strong><div class="wid-cap">주입된 env 이름, 호출자 ARN, API 성공 확인. 토큰과 키는 로그에 출력하지 않기</div></li>
+  <li><strong>순차 전환 후 회수</strong><div class="wid-cap">AccessDenied, 갱신, 크론까지 관찰. 노드 역할의 해당 정책 문장만 회수</div></li>
+  <li><strong>노드 접근 제한</strong><div class="wid-cap">IMDSv2 강제, hop limit 1. hostNetwork Pod는 별도 통제</div></li>
+</ol>
+:::
 
 :::notes
 {timing: 2.5min}
@@ -68,14 +58,10 @@ hostNetwork Pod는 별도 통제
 - 4 전환과 회수: AccessDenied, 자격 증명 갱신, 크론까지 본 뒤 정책 문장만 회수. 롤백은 최소 정책 복구, 전파 확인, 이전 Pod 배포 순
 - 5 제한: IMDSv2 강제와 hop limit 1, hostNetwork Pod는 따로
 
-위아래 방향키로 한 단계씩 넘깁니다. 첫 단계는 조사입니다. 노드 역할에 붙은 정책과 CloudTrail에 실제로 찍힌 세션을 비교해서, 어떤 워크로드가 무엇을 쓰는지 봅니다. 노드 등록과 ECR pull 권한은 남겨야 하고, CNI 정책은 aws-node 전용 역할로 옮길 수 있습니다.
-(아래 방향키)
+다섯 단계를 한 장에 놓았습니다. 첫 단계는 조사입니다. 노드 역할에 붙은 정책과 CloudTrail에 실제로 찍힌 세션을 비교해서, 어떤 워크로드가 무엇을 쓰는지 봅니다. 노드 등록과 ECR pull 권한은 남겨야 하고, CNI 정책은 aws-node 전용 역할로 옮길 수 있습니다.
 둘째, 워크로드마다 역할과 전용 ServiceAccount를 만듭니다. 앱의 SDK가 IRSA나 Pod Identity를 지원하는 최소 버전인지도 여기서 봅니다.
-(아래 방향키)
 셋째, 카나리입니다. 핵심은 Pod를 새로 만드는 것과, 호출 성공이 아니라 호출자 ARN을 확인하는 것입니다.
-(아래 방향키)
 넷째, 나머지를 순서대로 옮기고 크론 실행까지 지켜본 뒤에야 노드 역할에서 그 정책 문장만 뺍니다. 되돌릴 때는 정책을 먼저 복구하고 전파를 확인한 다음 이전 Pod를 배포합니다.
-(아래 방향키)
 다섯째가 Pod의 IMDS 경로 차단입니다. 2부 마지막 장에서 보겠습니다.
 {cue: transition}
 둘째부터 넷째 단계를 방식별 명령으로 보겠습니다. IRSA부터입니다.
@@ -95,7 +81,7 @@ hostNetwork Pod는 별도 통제
 
 :::html
 <div class="wid-grid-2">
-  <div class="wid-card wid-irsa wid-edge fragment fade-up" data-fragment-index="1">
+  <div class="wid-card wid-irsa wid-edge">
     <span class="wid-chip wid-irsa">준비 (클러스터와 역할마다)</span>
     <div class="wid-row wid-gap-top"><span class="wid-stepbadge">1</span><h4>클러스터의 IAM OIDC provider 등록</h4></div>
 <pre class="wid-term">eksctl utils associate-iam-oidc-provider \
@@ -107,7 +93,7 @@ aws iam put-role-policy --role-name orders-irsa \
   --policy-name orders-s3 --policy-document file://orders-s3.json</pre>
     <div class="wid-cap wid-gap-top">신뢰 정책 JSON은 1부 비교 1. 새 클러스터에서 쓰려면 1과 신뢰 정책 문장을 다시 추가합니다.</div>
   </div>
-  <div class="wid-card fragment fade-up" data-fragment-index="2">
+  <div class="wid-card">
     <span class="wid-chip">워크로드마다</span>
     <div class="wid-row wid-gap-top"><span class="wid-stepbadge">3</span><h4>ServiceAccount에 주석</h4></div>
 <pre class="wid-term">kubectl -n orders annotate serviceaccount orders \
@@ -118,7 +104,7 @@ aws iam put-role-policy --role-name orders-irsa \
     <div class="wid-row wid-gap-top"><span class="wid-stepbadge">5</span><h4>노드 역할에서 그 앱의 정책 문장만 회수</h4></div>
   </div>
 </div>
-<div class="callout callout-info wid-gap-top fragment fade-up" data-fragment-index="3"><strong class="wid-t-info">줄여 쓰기</strong>: <code>eksctl create iamserviceaccount</code>가 2와 3을 한 번에 합니다. 이미 떠 있는 Pod에는 주입되지 않으니 4의 재생성이 꼭 필요합니다.</div>
+<div class="callout callout-info wid-gap-top"><strong class="wid-t-info">줄여 쓰기</strong>: <code>eksctl create iamserviceaccount</code>가 2와 3을 한 번에 합니다. 이미 떠 있는 Pod에는 주입되지 않으니 4의 재생성이 꼭 필요합니다.</div>
 <div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html">Amazon EKS User Guide, IAM roles for service accounts</a></div>
 :::
 
@@ -129,11 +115,8 @@ aws iam put-role-policy --role-name orders-irsa \
 - 워크로드마다: SA 주석, rollout으로 Pod 재생성, 카나리에서 env와 호출자 ARN 확인, 노드 역할에서 정책 문장 회수
 - eksctl create iamserviceaccount가 역할 생성과 주석을 한 번에. 새 클러스터는 provider와 신뢰 정책을 다시
 
-{cue: click}
 IRSA는 준비가 두 가지입니다. 먼저 클러스터의 OIDC issuer를 IAM에 provider로 등록합니다. 클러스터마다 한 번입니다. 그다음 역할을 만드는데, 신뢰 정책에 이 provider를 Federated로 넣고 aud와 sub 조건으로 namespace와 ServiceAccount를 정확히 묶습니다. 1부 비교 1에서 본 그 JSON입니다.
-{cue: click}
 워크로드 쪽은 ServiceAccount에 role-arn 주석 하나입니다. 중요한 건 다음 단계입니다. 주입은 Pod를 만들 때만 일어나니 rollout으로 Pod를 새로 만들고, 카나리 Pod에서 AWS_ROLE_ARN이 들어왔는지, 호출자 ARN이 새 역할인지 확인합니다. 확인이 끝난 다음에야 노드 역할에서 그 앱의 정책 문장을 뺍니다.
-{cue: click}
 eksctl을 쓰면 create iamserviceaccount 한 번으로 역할과 주석을 같이 만들 수 있습니다. 다만 새 클러스터로 옮길 때는 provider 등록과 신뢰 정책 수정이 다시 필요합니다.
 {cue: transition}
 같은 일을 Pod Identity로 하면 이렇습니다.
@@ -148,7 +131,7 @@ eksctl을 쓰면 create iamserviceaccount 한 번으로 역할과 주석을 같�
 
 :::html
 <div class="wid-grid-2">
-  <div class="wid-card wid-podid wid-edge fragment fade-up" data-fragment-index="1">
+  <div class="wid-card wid-podid wid-edge">
     <span class="wid-chip wid-podid">준비 (클러스터마다 한 번, 역할은 재사용)</span>
     <div class="wid-row wid-gap-top"><span class="wid-stepbadge">1</span><h4>Agent 애드온 (Auto Mode는 생략)</h4></div>
 <pre class="wid-term">aws eks create-addon --cluster-name $CLUSTER \
@@ -159,7 +142,7 @@ eksctl을 쓰면 create iamserviceaccount 한 번으로 역할과 주석을 같�
   --assume-role-policy-document file://trust-podid.json
 <span class="wid-dim"># pods.eks.amazonaws.com, sts:AssumeRole + sts:TagSession</span></pre>
   </div>
-  <div class="wid-card fragment fade-up" data-fragment-index="2">
+  <div class="wid-card">
     <span class="wid-chip">워크로드마다</span>
     <div class="wid-row wid-gap-top"><span class="wid-stepbadge">3</span><h4>association 생성 (Kubernetes 객체 변경 없음)</h4></div>
 <pre class="wid-term">aws eks create-pod-identity-association \
@@ -172,7 +155,7 @@ eksctl을 쓰면 create iamserviceaccount 한 번으로 역할과 주석을 같�
     <div class="wid-row wid-gap-top"><span class="wid-stepbadge">5</span><h4>노드 역할에서 그 앱의 정책 문장만 회수</h4></div>
   </div>
 </div>
-<div class="callout callout-info wid-gap-top fragment fade-up" data-fragment-index="3"><strong class="wid-t-info">IRSA에서 옮길 때</strong>: 신뢰 정책에 서비스 principal 추가, association, rollout, 확인 뒤 OIDC 신뢰와 SA 주석 정리. <code>eksctl utils migrate-to-pod-identity --cluster $CLUSTER</code>는 <code>--approve</code> 없이 실행하면 계획만 출력합니다.</div>
+<div class="callout callout-info wid-gap-top"><strong class="wid-t-info">IRSA에서 옮길 때</strong>: 신뢰 정책에 서비스 principal 추가, association, rollout, 확인 뒤 OIDC 신뢰와 SA 주석 정리. <code>eksctl utils migrate-to-pod-identity --cluster $CLUSTER</code>는 <code>--approve</code> 없이 실행하면 계획만 출력합니다.</div>
 <div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html">EKS Pod Identity setup overview</a>, <a href="https://docs.aws.amazon.com/eks/latest/eksctl/pod-identity-associations.html">eksctl, EKS Pod Identity Associations</a></div>
 :::
 
@@ -183,11 +166,8 @@ eksctl을 쓰면 create iamserviceaccount 한 번으로 역할과 주석을 같�
 - 워크로드마다: association 생성(Kubernetes 객체 변경 없음), rollout, 확인, 정책 문장 회수
 - IRSA에서 옮길 때: 신뢰 정책에 서비스 principal 추가, association, rollout, 확인 뒤 OIDC 신뢰와 주석 정리. eksctl utils migrate-to-pod-identity가 자동화(--approve 없으면 계획만)
 
-{cue: click}
 Pod Identity는 클러스터마다 Agent 애드온 하나를 깝니다. Auto Mode라면 이미 들어 있습니다. Agent는 노드 역할로 EKS Auth를 부르니, 노드 역할에 그 권한이 있어야 합니다. AmazonEKSWorkerNodePolicy에 들어 있습니다. 역할의 신뢰 정책은 pods.eks.amazonaws.com 서비스 principal 하나라서, 한 번 만들면 다른 클러스터에서도 그대로 씁니다.
-{cue: click}
 워크로드 쪽은 EKS API 호출 하나, association입니다. Kubernetes 객체는 건드리지 않습니다. 나머지는 IRSA와 같습니다. rollout으로 Pod를 새로 만들고, 컨테이너 자격 증명 변수와 호출자 ARN을 확인한 뒤 노드 역할에서 정책 문장을 뺍니다.
-{cue: click}
 이미 IRSA를 쓰고 있다면 신뢰 정책에 서비스 principal을 추가한 다음 association을 만들고 rollout합니다. 확인이 끝나면 OIDC 쪽 신뢰와 주석을 정리합니다. eksctl utils migrate-to-pod-identity가 이 순서를 자동으로 해 주는데, --approve 없이 돌리면 계획만 보여 주니 먼저 계획부터 보시길 권합니다.
 {cue: transition}
 옮기는 도중에 주석과 association이 함께 걸려 있으면 어떻게 되는지 보겠습니다.
@@ -202,7 +182,7 @@ Pod Identity는 클러스터마다 Agent 애드온 하나를 깝니다. Auto Mod
 
 :::html
 <div class="wid-grid-2">
-  <div class="wid-card fragment fade-up" data-fragment-index="1">
+  <div class="wid-card">
     <h4>IRSA에서 Pod Identity로 옮기는 도중</h4>
 <pre class="wid-term">ServiceAccount orders   <span class="wid-dim"># role-arn 주석이 남아 있음</span>
 association    orders   ...:role/new-podid
@@ -215,8 +195,8 @@ AWS_ROLE_ARN, AWS_WEB_IDENTITY_TOKEN_FILE</pre>
     <div class="wid-muted wid-gap-top">결정은 SDK 체인이 아니라 주입 단계에서 납니다. 기존 Pod는 재생성 전까지 IRSA입니다.</div>
   </div>
   <div class="wid-stack">
-    <div class="callout callout-warning fragment fade-up" data-fragment-index="2"><strong class="wid-t-warning">체인 순서와 헷갈리지 않기</strong>: 체인에서는 웹 ID 토큰이 앞이지만, EKS는 한 Pod에 두 변수 세트를 함께 넣지 않습니다.</div>
-    <div class="wid-card fragment fade-up" data-fragment-index="3">
+    <div class="callout callout-warning"><strong class="wid-t-warning">체인 순서와 헷갈리지 않기</strong>: 체인에서는 웹 ID 토큰이 앞이지만, EKS는 한 Pod에 두 변수 세트를 함께 넣지 않습니다.</div>
+    <div class="wid-card">
       <h4>프라이빗 클러스터에서 열어 둘 경로</h4>
       <div class="wid-row wid-gap-top"><span class="wid-chip wid-irsa">IRSA</span><span class="wid-muted">Pod에서 리전 STS</span></div>
       <div class="wid-row wid-gap-top"><span class="wid-chip wid-podid">Pod Identity</span><span class="wid-muted">Agent에서 EKS Auth (<code>eks-auth</code>)</span></div>
@@ -236,12 +216,9 @@ AWS_ROLE_ARN, AWS_WEB_IDENTITY_TOKEN_FILE</pre>
 - 전환이 끝나면 주석을 지워 설정을 하나로 정리
 - 프라이빗 클러스터: IRSA는 STS, Pod Identity는 eks-auth 엔드포인트 경로를 각각 확보
 
-{cue: click}
 IRSA를 쓰던 앱을 Pod Identity로 옮기는 도중이라고 해 보겠습니다. ServiceAccount에는 role-arn 주석이 남아 있고, association을 새로 만들었습니다. 이때 새로 만든 Pod에는 EKS 웹훅이 Pod Identity 변수만 넣고 IRSA 변수는 넣지 않습니다. 데모 클러스터에서 server-side dry run으로 직접 확인했습니다.
 association을 만들기 전에 떠 있던 Pod는 IRSA 변수를 그대로 갖고 있으니, rollout이 끝날 때까지는 두 역할이 섞여 보일 수 있습니다. 전환이 끝나면 주석을 지워 설정을 하나로 정리합니다.
-{cue: click}
 1부 체인 그림만 생각하면 IRSA가 이길 것 같지만, 결정은 그보다 앞의 주입 단계에서 납니다. 이 부분은 헷갈리기 쉬우니 꼭 구분해 주세요.
-{cue: click}
 프라이빗 클러스터라면 필요한 경로가 다릅니다. IRSA는 Pod에서 STS로, Pod Identity는 Agent에서 EKS Auth로 가는 길이 필요합니다.
 {cue: transition}
 마지막으로 Pod의 IMDS 경로를 닫습니다.
@@ -256,13 +233,13 @@ association을 만들기 전에 떠 있던 Pod는 IRSA 변수를 그대로 갖�
 
 :::html
 <div class="wid-grid-3">
-  <div class="wid-card fragment fade-up" data-fragment-index="1">
+  <div class="wid-card">
     <h4>관리형 노드 그룹</h4>
     <div class="wid-muted">launch template 새 버전에 지정하고 롤링 교체</div>
 <pre class="wid-term wid-gap-top">HttpTokens=required
 HttpPutResponseHopLimit=1</pre>
   </div>
-  <div class="wid-card fragment fade-up" data-fragment-index="2">
+  <div class="wid-card">
     <h4>Karpenter</h4>
     <div class="wid-muted">EC2NodeClass 기본값이 이미 required, hop limit 1. 2로 바꿔 둔 NodeClass만 되돌림</div>
 <pre class="wid-term wid-gap-top">spec:
@@ -270,15 +247,15 @@ HttpPutResponseHopLimit=1</pre>
     httpTokens: required
     httpPutResponseHopLimit: 1</pre>
   </div>
-  <div class="wid-card fragment fade-up" data-fragment-index="3">
+  <div class="wid-card">
     <h4>EKS Auto Mode</h4>
     <div class="wid-muted">IMDSv2와 hop limit 1이 기본 적용</div>
     <div class="wid-cap wid-gap-top">별도 설정 없이 일반 Pod의 IMDS 경로가 닫혀 있습니다.</div>
   </div>
 </div>
 <div class="wid-grid-2 wid-gap-top">
-  <div class="callout callout-warning fragment fade-up" data-fragment-index="4"><strong class="wid-t-warning">hostNetwork Pod는 예외</strong>: 노드 네트워크를 그대로 쓰므로 hop limit과 관계없이 IMDS에 닿습니다. 별도로 통제합니다.</div>
-  <div class="callout callout-warning fragment fade-up" data-fragment-index="5"><strong class="wid-t-warning">IMDS 자체는 끄지 않기</strong>: Pod Identity Agent도 hostNetwork에서 IMDS로 노드 역할을 받습니다. <code>HttpEndpoint=disabled</code>면 Pod Identity가 멈춥니다.</div>
+  <div class="callout callout-warning"><strong class="wid-t-warning">hostNetwork Pod는 예외</strong>: 노드 네트워크를 그대로 쓰므로 hop limit과 관계없이 IMDS에 닿습니다. 별도로 통제합니다.</div>
+  <div class="callout callout-warning"><strong class="wid-t-warning">IMDS 자체는 끄지 않기</strong>: Pod Identity Agent도 hostNetwork에서 IMDS로 노드 역할을 받습니다. <code>HttpEndpoint=disabled</code>면 Pod Identity가 멈춥니다.</div>
 </div>
 <div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html">EKS managed node group launch templates</a>, <a href="https://docs.aws.amazon.com/eks/latest/best-practices/identity-and-access-management.html">EKS Best Practices, Identity and Access Management</a>, <a href="https://karpenter.sh/docs/concepts/nodeclasses/">Karpenter EC2NodeClass</a></div>
 :::
@@ -293,15 +270,10 @@ HttpPutResponseHopLimit=1</pre>
 - hop limit 1로 일반 Pod의 경로만 닫고 IMDS 자체는 켜 둠. Agent가 hostNetwork에서 IMDS로 노드 역할을 받기 때문(HttpEndpoint=disabled면 Pod Identity 중단)
 - 호환성을 검증한 노드 그룹부터 적용
 
-{cue: click}
 관리형 노드 그룹은 launch template 새 버전을 만들고 롤링 교체합니다. 노드가 바뀌어야 적용되니 시간이 걸립니다. 오늘 데모 환경에서는 노드 한 대 교체에 15분 가까이 걸렸습니다.
-{cue: click}
 Karpenter는 EC2NodeClass의 metadataOptions에서 정하는데, 기본값이 이미 httpTokens required, hop limit 1입니다. 2로 바꿔 둔 NodeClass가 있는지만 확인해서 되돌리면 됩니다.
-{cue: click}
 Auto Mode는 이미 IMDSv2와 hop limit 1이 기본입니다.
-{cue: click}
 예외가 하나 있습니다. hostNetwork Pod는 노드 네트워크를 그대로 쓰니 hop limit을 1로 내려도 IMDS에 닿습니다. 이런 Pod는 별도로 관리해야 합니다.
-{cue: click}
 그리고 "닫는다"는 말을 IMDS를 끈다는 뜻으로 받아들이시면 안 됩니다. Pod Identity Agent도 hostNetwork에서 IMDS로 노드 역할을 받아서 EKS Auth를 부릅니다. hop limit 1에서 Agent가 살아 있는 것도 hostNetwork이기 때문이고, HttpEndpoint를 disabled로 하면 Pod Identity 전체가 멈춥니다.
 {cue: transition}
 여기까지가 절차입니다. 이제 실제 클러스터에서 확인하겠습니다.

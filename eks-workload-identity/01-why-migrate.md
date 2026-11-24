@@ -419,7 +419,8 @@ Pod Identity는 정반대입니다. 신뢰 정책은 서비스 principal 하나�
   <div class="wid-card wid-irsa wid-edge">
     <span class="wid-chip wid-irsa">IRSA</span>
     <h4 class="wid-gap-top">Pod Identity가 닿지 않는 곳</h4>
-    <div class="wid-muted">Fargate, Windows 노드, EKS 밖의 Kubernetes와 구성을 공유하는 워크로드</div>
+    <div class="wid-muted"><strong>실행 환경</strong>: Fargate, Windows 노드, Outposts, EKS Anywhere, EKS 밖과 매니페스트를 공유하는 워크로드, SDK를 올릴 수 없는 앱</div>
+    <div class="wid-muted wid-gap-top"><strong>조직</strong>: 역할 연결 권한을 플랫폼 팀에 넘기지 않고 IAM 팀이 신뢰 정책으로 직접 쥐려는 경우</div>
   </div>
   <div class="wid-card">
     <span class="wid-chip">함께 쓰기</span>
@@ -435,12 +436,15 @@ Pod Identity는 정반대입니다. 신뢰 정책은 서비스 principal 하나�
 {timing: 1.5min}
 [요약]
 - 신규 EKS Linux EC2 워크로드: Pod Identity가 단순하고 확장에 유리
-- Fargate, Windows, EKS 밖 Kubernetes와 구성 공유: IRSA
+- IRSA(실행 환경): Fargate, Windows, Outposts, EKS Anywhere, EKS 밖과 구성 공유, SDK를 올릴 수 없는 앱(벤더 이미지, 오래된 런타임)
+- IRSA(조직): 어느 클러스터의 어느 SA가 역할을 쓰는지 IAM 팀이 신뢰 정책으로 직접 승인하려는 경우. Pod Identity는 eks:CreatePodIdentityAssociation과 iam:PassRole을 가진 쪽이 연결을 만듦
+- 클러스터가 한두 개로 고정되고 IRSA 자동화가 정착된 팀은 옮기는 이점이 작음
 - 두 방식은 한 클러스터에서 공존 가능, 전환이 끝나면 한 ServiceAccount에는 한 방식만
 - AWS는 가능한 경우 Pod Identity를 권장
 
 기본값은 Pod Identity입니다. 클러스터가 늘어도 신뢰 정책을 건드리지 않고, 세션 태그가 붙고, 팀 경계가 깔끔합니다.
-IRSA는 Pod Identity가 지원하지 않는 곳에서 씁니다. Fargate, Windows 노드, 그리고 EKS 밖의 Kubernetes와 같은 매니페스트를 공유해야 하는 경우입니다.
+IRSA가 맞는 경우는 두 갈래입니다. 먼저 실행 환경입니다. Fargate로 돌리는 배치 Job, Windows 노드의 .NET 앱, Outposts나 EKS Anywhere처럼 Pod Identity가 지원하지 않는 곳입니다. EKS와 ROSA, 자체 관리 Kubernetes에 같은 매니페스트를 배포하는 경우나, 벤더 이미지처럼 SDK를 올릴 수 없는 앱도 IRSA가 편합니다.
+다음은 조직입니다. IRSA는 어느 클러스터의 어느 ServiceAccount가 역할을 쓰는지가 신뢰 정책 안에 들어 있어서, IAM 팀이 정책만 보고 승인하고 감사할 수 있습니다. Pod Identity에서는 association을 만드는 플랫폼 팀이 그 연결을 정합니다. 이 권한을 넘기고 싶지 않은 조직이라면 IRSA가 맞습니다. 클러스터가 한두 개로 고정되어 있고 IRSA 자동화가 이미 정착된 팀도 굳이 옮길 이유가 크지 않습니다.
 둘은 한 클러스터에서 같이 써도 됩니다. 한 ServiceAccount에 둘을 함께 걸면 어떻게 되는지는 2부 이전 절차에서 보겠습니다.
 AWS 문서도 가능한 경우 Pod Identity를 권장하고, 환경에 따라 IRSA가 맞을 수 있다고 적고 있습니다.
 {cue: transition}

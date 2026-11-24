@@ -24,14 +24,14 @@ theme:
 blocks:
   - name: 01-why-migrate
     title: "출발점, 두 방식의 차이와 선택"
-    duration: 13
+    duration: 15
   - name: 02-how-it-works
-    title: "방식별 이전 절차와 IMDS 차단"
+    title: "방식별 이전 절차와 hop limit"
     duration: 12
   - name: 03-live-demo
     title: "라이브 데모와 마무리"
     duration: 17
   - name: 04-appendix
     title: "부록: 동작 원리"
-    duration: 8
+    duration: 6
 ---

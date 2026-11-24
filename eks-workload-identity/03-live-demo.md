@@ -259,7 +259,7 @@ orders-podid 행이 Pod Identity, wid-<run>-podid로 바뀝니다. 리허설 2�
 
 ./demo.sh diff "$RUN_ID"를 실행합니다. 두 Pod에 무엇이 들어갔는지 다섯 항목으로 나란히 찍습니다.
 {cue: click}
-환경 변수는 1부 표에서 본 그대로입니다. 흥미로운 건 토큰입니다. 둘 다 같은 클러스터 issuer가 서명한 ServiceAccount 토큰인데 audience만 다릅니다. IRSA 토큰은 STS가, Pod Identity 토큰은 EKS가 받는 쪽입니다.
+환경 변수는 1, 2단계에서 본 그대로입니다. 흥미로운 건 토큰입니다. 둘 다 같은 클러스터 issuer가 서명한 ServiceAccount 토큰인데 audience만 다릅니다. IRSA 토큰은 STS가, Pod Identity 토큰은 EKS가 받는 쪽입니다.
 신뢰 정책도 한쪽은 클러스터의 OIDC provider, 다른 쪽은 EKS 서비스 principal을 믿습니다. 결과는 같고 배선이 다르다는 것이 이 화면의 요점입니다.
 화면이 바뀌지 않으면: "app pods are not running"이 나오면 직전 rollout이 아직 진행 중이니 몇 초 뒤 다시 실행하고, 출력이 늦으면 이 표로 설명합니다.
 {cue: transition}
@@ -480,9 +480,9 @@ orders-podid    Pod Identity   wid-d1124-podid                <span class="wid-o
 ---
 <!-- Slide 12: 퀴즈 1 -->
 @type: quiz
-@title: 퀴즈 1: 동작 원리
+@title: 퀴즈 1: 옮길 때 헷갈리는 것
 
-## 퀴즈 1: 동작 원리
+## 퀴즈 1: 옮길 때 헷갈리는 것
 
 **Q1: 이미 실행 중인 Deployment의 ServiceAccount에 IRSA role-arn 주석을 달았습니다. 다음으로 필요한 것은?**
 [ ] 아무것도 필요 없다, 수 초 안에 반영된다
@@ -564,7 +564,7 @@ orders-podid    Pod Identity   wid-d1124-podid                <span class="wid-o
 
 :::html
 <div class="wid-grid-2">
-  <div class="wid-card fragment fade-up" data-fragment-index="1"><h4>출처는 주입이 정한다</h4><div class="wid-muted">SDK 체인은 웹 ID 토큰, 컨테이너 공급자, IMDS 순. 코드 변경 없이 rollout으로 바뀝니다.</div></div>
+  <div class="wid-card fragment fade-up" data-fragment-index="1"><h4>코드는 그대로, 연결 하나와 rollout</h4><div class="wid-muted">IRSA는 SA 주석, Pod Identity는 association. 이미 떠 있는 Pod는 재생성해야 바뀝니다.</div></div>
   <div class="wid-card fragment fade-up" data-fragment-index="2"><h4>기본은 Pod Identity</h4><div class="wid-muted">신뢰 정책 하나, 세션 태그, 5,000개 association. Fargate, Windows, EKS 밖은 IRSA</div></div>
   <div class="wid-card fragment fade-up" data-fragment-index="3"><h4>확인은 호출자 ARN으로</h4><div class="wid-muted">카나리에서 env 이름과 호출자 ARN을 보고, 전파를 기다린 뒤 정책 문장만 회수</div></div>
   <div class="wid-card fragment fade-up" data-fragment-index="4"><h4>마지막에 Pod의 IMDS 경로를 닫는다</h4><div class="wid-muted">IMDSv2 필수, hop limit 1. IMDS 자체는 켜 두고 hostNetwork Pod는 따로 통제</div></div>
@@ -575,14 +575,14 @@ orders-podid    Pod Identity   wid-d1124-podid                <span class="wid-o
 :::notes
 {timing: 0.5min}
 [요약]
-- 출처는 주입이 정한다: 체인 순서, rollout으로 전환
+- 코드는 그대로: IRSA는 주석, Pod Identity는 association, 그리고 rollout
 - 기본은 Pod Identity, 예외는 IRSA
 - 확인은 호출자 ARN, 회수는 전파를 기다린 뒤 정책 문장만
 - 마지막에 Pod의 IMDS 경로 차단(hop limit 1). IMDS 자체는 켜 둠(Agent가 사용), hostNetwork는 별도
 - harden은 이 시점에 보통 교체 중(약 40%). 리허설 결과로 설명
 
 {cue: click}
-네 줄로 정리합니다. 자격 증명의 출처는 EKS가 주입한 변수가 정합니다.
+네 줄로 정리합니다. 앱 코드는 그대로 두고, IRSA는 주석, Pod Identity는 association 하나로 연결한 뒤 Pod를 새로 만듭니다.
 {cue: click}
 새 워크로드는 Pod Identity가 기본이고, Pod Identity가 닿지 않는 곳에 IRSA를 씁니다.
 {cue: click}

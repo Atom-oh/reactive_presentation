@@ -222,7 +222,7 @@ import('./common/line-art-scene/flowscene.js').then(function (m) {
 - 경로 3: Pod Identity, Pod는 같은 노드의 Agent에만 묻고 Agent가 EKS Auth를 호출
 - 세 경로 모두 결과는 임시 자격 증명이고, Pod는 그것으로 S3 요청에 서명
 
-한 노드에 같은 orders 앱이 세 벌 떠 있습니다. 오늘 데모에 그대로 나오는 세 벌입니다. 색은 본편과 같이 노드 역할은 노란색, IRSA는 파란색, Pod Identity는 분홍색입니다. 한 경로씩 따라가 보겠습니다.
+한 노드에 같은 orders 앱이 세 벌 떠 있습니다. 데모에서 본 그 세 벌입니다. 색은 본편과 같이 노드 역할은 노란색, IRSA는 파란색, Pod Identity는 분홍색입니다. 한 경로씩 따라가 보겠습니다.
 먼저 지금 상태입니다. orders-legacy에는 AWS 변수가 하나도 없어서, SDK가 체인 끝의 IMDS까지 내려가 노드 역할을 받습니다.↓
 두 번째가 IRSA, IAM Roles for Service Accounts입니다. Pod가 자기 토큰을 들고 리전 STS에 직접 가서 역할을 맡습니다.↓
 세 번째 Pod Identity는 두 단계로 봅니다. Pod는 같은 노드의 Agent에만 말을 겁니다.↓
@@ -545,9 +545,9 @@ Pod Identity Pod는 3단계, 컨테이너 공급자에서 멈춥니다.
 <div>
 <ol class="wid-flow">
   <li><strong>Pod 생성 요청</strong> <span class="wid-muted">rollout → ReplicaSet 컨트롤러가 API 서버에 Pod CREATE</span></li>
-  <li><strong>인증·인가</strong> <span class="wid-muted">API 서버가 요청자를 확인</span></li>
+  <li><strong>인증과 인가</strong> <span class="wid-muted">API 서버가 요청자를 확인</span></li>
   <li class="wid-hl"><strong>Mutating admission: <code>iam-for-pods.amazonaws.com</code></strong><br><span class="wid-muted">EKS가 컨트롤 플레인에서 운영하는 웹훅(amazon-eks-pod-identity-webhook)이 Pod의 ServiceAccount를 봅니다.</span>
-    <div class="wid-cap">association 있음 → <code>AWS_CONTAINER_*</code> 두 개 + 토큰 볼륨(aud <code>pods.eks.amazonaws.com</code>)<br>주석만 있음 → <code>AWS_ROLE_ARN</code>, <code>AWS_WEB_IDENTITY_TOKEN_FILE</code> + 토큰 볼륨(aud <code>sts.amazonaws.com</code>)<br>둘 다 있음 → Pod Identity만 · 아무것도 없음 → 그대로</div></li>
+    <div class="wid-cap">association 있음 → <code>AWS_CONTAINER_*</code> 두 개 + 토큰 볼륨(aud <code>pods.eks.amazonaws.com</code>)<br>주석만 있음 → <code>AWS_ROLE_ARN</code>, <code>AWS_WEB_IDENTITY_TOKEN_FILE</code> + 토큰 볼륨(aud <code>sts.amazonaws.com</code>)<br>둘 다 있음 → Pod Identity만, 아무것도 없음 → 그대로</div></li>
   <li><strong>Validating admission → etcd 저장</strong> <span class="wid-muted">Pod Security 등 검사 후 저장. 이때 Pod 스펙은 이미 바뀌어 있음</span></li>
   <li><strong>kubelet</strong> <span class="wid-muted">projected 토큰을 해당 audience로 발급받아 파일로 마운트하고 만료 전에 갱신</span></li>
   <li><strong>컨테이너 시작</strong> <span class="wid-muted">SDK가 환경 변수를 읽고 앞 슬라이드의 체인을 탑니다</span></li>
@@ -575,7 +575,7 @@ objectSelector: eks.amazonaws.com/skip-pod-identity-webhook 없음</pre>
 [요약]
 - 변수를 넣는 주체: API 서버의 mutating admission 단계에서 EKS가 컨트롤 플레인에 운영하는 웹훅(iam-for-pods.amazonaws.com, amazon-eks-pod-identity-webhook). 노드에는 웹훅 Pod가 없음
 - 시점: Pod CREATE 때만. ServiceAccount의 주석(IRSA)과 association(Pod Identity)을 보고 env와 토큰 볼륨을 패치
-- 둘 다 있으면 Pod Identity만. kubelet은 토큰을 audience별로 발급·갱신
+- 둘 다 있으면 Pod Identity만. kubelet은 토큰을 audience별로 발급하고 갱신
 - failurePolicy Ignore라 웹훅 실패 시 변수 없이 생성 → 노드 역할. 호출자 ARN과 dry-run으로 확인
 
 그럼 이 변수는 누가 언제 넣을까요?
@@ -1212,7 +1212,7 @@ EKS Auth가 토큰과 association을 확인하고, 세션 태그 6개를 붙여 
 - 프록시를 쓰면 두 주소를 NO_PROXY에
 
 Agent는 애드온 하나입니다. 노드 네트워크에서 링크 로컬 주소로 듣는 DaemonSet이고, Auto Mode라면 따로 설치할 것이 없습니다.
-노드 역할에는 Agent가 EKS Auth를 부를 권한이 있어야 합니다. 이미 AmazonEKSWorkerNodePolicy에 들어 있으니 보통은 따로 붙일 게 없습니다. Agent는 이 자격 증명을 hostNetwork에서 IMDS로 받는다는 점도 기억해 두세요. 뒤에서 Pod의 IMDS 경로를 닫을 때 다시 나옵니다.
+노드 역할에는 Agent가 EKS Auth를 부를 권한이 있어야 합니다. 이미 AmazonEKSWorkerNodePolicy에 들어 있으니 보통은 따로 붙일 게 없습니다. Agent는 이 자격 증명을 hostNetwork에서 IMDS로 받는다는 점도 기억해 두세요. 2부 IMDS 차단 장표에서 IMDS 자체를 끄지 말라고 한 이유입니다.
 실무에서 자주 막히는 곳은 프록시입니다. HTTP 프록시를 쓰는 앱이라면 두 Agent 주소를 NO_PROXY에 넣어야 합니다.
 {cue: transition}
 부록은 여기까지입니다. 질문으로 돌아가겠습니다.

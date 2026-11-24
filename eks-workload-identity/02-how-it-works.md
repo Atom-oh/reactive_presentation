@@ -104,7 +104,7 @@ aws iam put-role-policy --role-name orders-irsa \
     <div class="wid-row wid-gap-top"><span class="wid-stepbadge">5</span><h4>노드 역할에서 그 앱의 정책 문장만 회수</h4></div>
   </div>
 </div>
-<div class="callout callout-info wid-gap-top"><strong class="wid-t-info">줄여 쓰기</strong>: <code>eksctl create iamserviceaccount</code>가 2와 3을 한 번에 합니다. 이미 떠 있는 Pod에는 주입되지 않으니 4의 재생성이 꼭 필요합니다.</div>
+<div class="callout callout-info wid-gap-top"><strong class="wid-t-info">줄여 쓰기</strong>: <code>eksctl create iamserviceaccount</code>가 2와 3을 한 번에 합니다(이미 있는 SA는 <code>--override-existing-serviceaccounts</code>). 이미 떠 있는 Pod에는 주입되지 않으니 4의 재생성이 꼭 필요합니다.</div>
 <div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html">Amazon EKS User Guide, IAM roles for service accounts</a></div>
 :::
 
@@ -140,7 +140,9 @@ eksctl을 쓰면 create iamserviceaccount 한 번으로 역할과 주석을 같�
     <div class="wid-row wid-gap-top"><span class="wid-stepbadge">2</span><h4>역할: 서비스 principal 신뢰</h4></div>
 <pre class="wid-term">aws iam create-role --role-name orders-podid \
   --assume-role-policy-document file://trust-podid.json
-<span class="wid-dim"># pods.eks.amazonaws.com, sts:AssumeRole + sts:TagSession</span></pre>
+aws iam put-role-policy --role-name orders-podid \
+  --policy-name orders-s3 --policy-document file://orders-s3.json
+<span class="wid-dim"># 신뢰: pods.eks.amazonaws.com, sts:AssumeRole + sts:TagSession</span></pre>
   </div>
   <div class="wid-card">
     <span class="wid-chip">워크로드마다</span>
@@ -155,7 +157,7 @@ eksctl을 쓰면 create iamserviceaccount 한 번으로 역할과 주석을 같�
     <div class="wid-row wid-gap-top"><span class="wid-stepbadge">5</span><h4>노드 역할에서 그 앱의 정책 문장만 회수</h4></div>
   </div>
 </div>
-<div class="callout callout-info wid-gap-top"><strong class="wid-t-info">IRSA에서 옮길 때</strong>: 신뢰 정책에 서비스 principal 추가, association, rollout, 확인 뒤 OIDC 신뢰와 SA 주석 정리. <code>eksctl utils migrate-to-pod-identity --cluster $CLUSTER</code>는 <code>--approve</code> 없이 실행하면 계획만 출력합니다.</div>
+<div class="callout callout-info wid-gap-top"><strong class="wid-t-info">IRSA에서 옮길 때</strong>: 신뢰 정책에 서비스 principal 추가, association, rollout, 확인 뒤 OIDC 신뢰와 SA 주석 정리. <code>eksctl utils migrate-to-pod-identity --cluster $CLUSTER</code>는 Agent, 신뢰 정책, association을 클러스터 전체에 일괄 처리합니다. <code>--approve</code> 없이 실행하면 계획만 출력합니다.</div>
 <div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html">EKS Pod Identity setup overview</a>, <a href="https://docs.aws.amazon.com/eks/latest/eksctl/pod-identity-associations.html">eksctl, EKS Pod Identity Associations</a></div>
 :::
 
@@ -164,11 +166,11 @@ eksctl을 쓰면 create iamserviceaccount 한 번으로 역할과 주석을 같�
 [요약]
 - 준비: 클러스터마다 Agent 애드온(Auto Mode는 내장), 노드 역할의 eks-auth 권한, 역할은 pods.eks.amazonaws.com 신뢰로 한 번 만들고 재사용
 - 워크로드마다: association 생성(Kubernetes 객체 변경 없음), rollout, 확인, 정책 문장 회수
-- IRSA에서 옮길 때: 신뢰 정책에 서비스 principal 추가, association, rollout, 확인 뒤 OIDC 신뢰와 주석 정리. eksctl utils migrate-to-pod-identity가 자동화(--approve 없으면 계획만)
+- IRSA에서 옮길 때: 신뢰 정책에 서비스 principal 추가, association, rollout, 확인 뒤 OIDC 신뢰와 주석 정리. eksctl utils migrate-to-pod-identity는 Agent 설치, 신뢰 정책, association까지 클러스터 전체에 일괄 처리. rollout, 확인, 주석 정리는 직접. --approve 없으면 계획만
 
 Pod Identity는 클러스터마다 Agent 애드온 하나를 깝니다. Auto Mode라면 이미 들어 있습니다. Agent는 노드 역할로 EKS Auth를 부르니, 노드 역할에 그 권한이 있어야 합니다. AmazonEKSWorkerNodePolicy에 들어 있습니다. 역할의 신뢰 정책은 pods.eks.amazonaws.com 서비스 principal 하나라서, 한 번 만들면 다른 클러스터에서도 그대로 씁니다.
 워크로드 쪽은 EKS API 호출 하나, association입니다. Kubernetes 객체는 건드리지 않습니다. 나머지는 IRSA와 같습니다. rollout으로 Pod를 새로 만들고, 컨테이너 자격 증명 변수와 호출자 ARN을 확인한 뒤 노드 역할에서 정책 문장을 뺍니다.
-이미 IRSA를 쓰고 있다면 신뢰 정책에 서비스 principal을 추가한 다음 association을 만들고 rollout합니다. 확인이 끝나면 OIDC 쪽 신뢰와 주석을 정리합니다. eksctl utils migrate-to-pod-identity가 이 순서를 자동으로 해 주는데, --approve 없이 돌리면 계획만 보여 주니 먼저 계획부터 보시길 권합니다.
+이미 IRSA를 쓰고 있다면 신뢰 정책에 서비스 principal을 추가한 다음 association을 만들고 rollout합니다. 확인이 끝나면 OIDC 쪽 신뢰와 주석을 정리합니다. eksctl utils migrate-to-pod-identity는 Agent 설치, 신뢰 정책 추가, association 생성을 클러스터 전체에 한 번에 해 줍니다. rollout, 확인, 주석 정리는 직접 해야 하고, OIDC 신뢰는 --remove-oidc-provider-trust-relationship을 줄 때만 지웁니다. 애드온 역할은 항상 지웁니다. --approve 없이 돌리면 계획만 보여 주니 계획부터 보시길 권합니다.
 {cue: transition}
 옮기는 도중에 주석과 association이 함께 걸려 있으면 어떻게 되는지 보겠습니다.
 :::
@@ -218,7 +220,7 @@ AWS_ROLE_ARN, AWS_WEB_IDENTITY_TOKEN_FILE</pre>
 
 IRSA를 쓰던 앱을 Pod Identity로 옮기는 도중이라고 해 보겠습니다. ServiceAccount에는 role-arn 주석이 남아 있고, association을 새로 만들었습니다. 이때 새로 만든 Pod에는 EKS 웹훅이 Pod Identity 변수만 넣고 IRSA 변수는 넣지 않습니다. 데모 클러스터에서 server-side dry run으로 직접 확인했습니다.
 association을 만들기 전에 떠 있던 Pod는 IRSA 변수를 그대로 갖고 있으니, rollout이 끝날 때까지는 두 역할이 섞여 보일 수 있습니다. 전환이 끝나면 주석을 지워 설정을 하나로 정리합니다.
-1부 체인 그림만 생각하면 IRSA가 이길 것 같지만, 결정은 그보다 앞의 주입 단계에서 납니다. 이 부분은 헷갈리기 쉬우니 꼭 구분해 주세요.
+SDK 자격 증명 체인은 웹 ID 토큰을 먼저 보니 IRSA가 이길 것 같지만(체인 그림은 부록에 있습니다), 결정은 그보다 앞의 주입 단계에서 납니다. 이 부분은 헷갈리기 쉬우니 꼭 구분해 주세요.
 프라이빗 클러스터라면 필요한 경로가 다릅니다. IRSA는 Pod에서 STS로, Pod Identity는 Agent에서 EKS Auth로 가는 길이 필요합니다.
 {cue: transition}
 마지막으로 Pod의 IMDS 경로를 닫습니다.
@@ -270,7 +272,7 @@ HttpPutResponseHopLimit=1</pre>
 - hop limit 1로 일반 Pod의 경로만 닫고 IMDS 자체는 켜 둠. Agent가 hostNetwork에서 IMDS로 노드 역할을 받기 때문(HttpEndpoint=disabled면 Pod Identity 중단)
 - 호환성을 검증한 노드 그룹부터 적용
 
-관리형 노드 그룹은 launch template 새 버전을 만들고 롤링 교체합니다. 노드가 바뀌어야 적용되니 시간이 걸립니다. 오늘 데모 환경에서는 노드 한 대 교체에 15분 가까이 걸렸습니다.
+관리형 노드 그룹은 launch template 새 버전을 만들고 롤링 교체합니다. 노드가 바뀌어야 적용되니 시간이 걸립니다. 리허설에서는 노드 한 대 교체에 878초, 15분 가까이 걸렸습니다.
 Karpenter는 EC2NodeClass의 metadataOptions에서 정하는데, 기본값이 이미 httpTokens required, hop limit 1입니다. 2로 바꿔 둔 NodeClass가 있는지만 확인해서 되돌리면 됩니다.
 Auto Mode는 이미 IMDSv2와 hop limit 1이 기본입니다.
 예외가 하나 있습니다. hostNetwork Pod는 노드 네트워크를 그대로 쓰니 hop limit을 1로 내려도 IMDS에 닿습니다. 이런 Pod는 별도로 관리해야 합니다.

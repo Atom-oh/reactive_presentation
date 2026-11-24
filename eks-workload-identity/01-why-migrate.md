@@ -67,7 +67,7 @@ if (!window.__widNotesLoader) {
 
 순서는 이렇습니다. 노드 역할의 문제는 한 장으로 짚고, 바로 IRSA와 Pod Identity의 차이와 장단점, 그리고 옮기면 보안과 운영 비용에서 무엇이 좋아지는지 봅니다.
 {cue: pause}
-2부는 실제로 옮기는 절차입니다. 공통 순서와 방식별 명령을 보고, 3부에서 그 절차를 라이브로 실행합니다. 내부 동작 원리는 부록으로 옮겨 두었으니, 질문이 나오면 그 장을 열겠습니다.
+2부는 실제로 옮기는 절차입니다. 공통 순서와 방식별 명령을 보고, 3부에서 그 절차를 라이브로 실행합니다. 내부 동작 원리는 부록에 두었으니, 질문이 나오면 그 장을 열겠습니다.
 {cue: transition}
 출발점부터 보겠습니다.
 :::
@@ -113,6 +113,9 @@ if (!window.__widNotesLoader) {
 오늘은 이 가운데 "어떻게 옮기나"에 집중합니다. 두 방식이 어떻게 다르고, 무엇을 고르고, 어떤 순서로 옮기는지입니다.
 {cue: transition}
 먼저 두 방식이 설정을 어디에 거는지부터 보겠습니다.
+
+[약어]
+- IMDS: Instance Metadata Service, EC2 인스턴스 메타데이터 서비스
 :::
 
 ---
@@ -199,6 +202,9 @@ if (!window.__widNotesLoader) {
 세 번째, 그래서 조직 측면에서는 Pod Identity가 IAM 팀과 클러스터 팀의 경계를 더 깔끔하게 나눕니다.
 {cue: transition}
 두 번째 비교는 실행 경로와 한도입니다.
+
+[약어]
+- OIDC: OpenID Connect
 :::
 
 ---
@@ -360,7 +366,7 @@ Pod Identity는 정반대입니다. 신뢰 정책은 서비스 principal 하나�
       <li>권한 범위가 노드에서 ServiceAccount로: 그 SA를 쓰는 Pod만 권한을 받음</li>
       <li>노드 역할 회수와 IMDS 차단 뒤에는 다른 Pod의 역할에 닿지 않음</li>
       <li>CloudTrail에 워크로드 역할 세션으로 남아 추적과 회수 범위가 좁아짐</li>
-      <li>정적 키 없이 임시 자격 증명, SDK가 자동 갱신</li>
+      <li>임시 자격 증명과 자동 갱신은 그대로, 단위만 노드에서 워크로드로</li>
     </ul>
     <div class="wid-cap wid-gap-top"><span class="wid-chip wid-podid">Pod Identity</span> 세션 태그로 클러스터, namespace, ServiceAccount 조건을 정책에 걸 수 있음</div>
   </div>
@@ -371,13 +377,13 @@ Pod Identity는 정반대입니다. 신뢰 정책은 서비스 principal 하나�
       <tbody>
         <tr><td>클러스터 추가, blue/green 교체</td><td>provider 등록, 역할마다 신뢰 정책 수정</td><td>association만 다시 생성</td></tr>
         <tr><td>역할 수</td><td>권한 조합마다 역할</td><td>태그 조건으로 역할 재사용</td></tr>
-        <tr><td>한도</td><td>provider 100개, 역할당 연결 4~8개</td><td>클러스터당 association 5,000개</td></tr>
+        <tr><td>한도</td><td>provider 100개, 역할당 연결 4개 안팎(상향 시 8개)</td><td>클러스터당 association 5,000개</td></tr>
         <tr><td>STS 호출</td><td>Pod마다, STS 할당량 사용</td><td>노드마다 한 번, Pod는 STS를 부르지 않음</td></tr>
       </tbody>
     </table>
   </div>
 </div>
-<div class="callout callout-info wid-gap-top"><strong class="wid-t-info">따져 볼 비용</strong>: Pod Identity는 노드마다 Agent DaemonSet이 하나씩 돕니다. 클러스터가 하나뿐이고 교체가 드물면 운영 비용 차이는 작습니다.</div>
+<div class="callout callout-info wid-gap-top"><strong class="wid-t-info">따져 볼 비용</strong>: Pod Identity는 노드마다 Agent Pod가 하나씩 돕니다(DaemonSet). 클러스터가 하나뿐이고 교체가 드물면 운영 비용 차이는 작습니다.</div>
 <div class="wid-src">출처: <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html">EKS Pod Identity benefits</a>, <a href="https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html">Comparing EKS Pod Identity and IRSA</a></div>
 :::
 
@@ -407,7 +413,7 @@ Pod Identity는 정반대입니다. 신뢰 정책은 서비스 principal 하나�
 <div class="wid-grid-3">
   <div class="wid-card wid-podid wid-edge">
     <span class="wid-chip wid-podid">Pod Identity</span>
-    <h4 class="wid-gap-top">신규 EKS Linux EC2·Hybrid Nodes 워크로드</h4>
+    <h4 class="wid-gap-top">신규 EKS Linux EC2, Hybrid Nodes 워크로드</h4>
     <div class="wid-muted">여러 클러스터에서 같은 역할, 세션 태그 ABAC, 팀 간 책임 분리</div>
   </div>
   <div class="wid-card wid-irsa wid-edge">
@@ -435,7 +441,7 @@ Pod Identity는 정반대입니다. 신뢰 정책은 서비스 principal 하나�
 
 기본값은 Pod Identity입니다. 클러스터가 늘어도 신뢰 정책을 건드리지 않고, 세션 태그가 붙고, 팀 경계가 깔끔합니다.
 IRSA는 Pod Identity가 지원하지 않는 곳에서 씁니다. Fargate, Windows 노드, 그리고 EKS 밖의 Kubernetes와 같은 매니페스트를 공유해야 하는 경우입니다.
-둘은 한 클러스터에서 같이 써도 됩니다. 한 ServiceAccount에 둘을 함께 걸면 어떻게 되는지는 다음 장에서 보겠습니다.
+둘은 한 클러스터에서 같이 써도 됩니다. 한 ServiceAccount에 둘을 함께 걸면 어떻게 되는지는 2부 이전 절차에서 보겠습니다.
 AWS 문서도 가능한 경우 Pod Identity를 권장하고, 환경에 따라 IRSA가 맞을 수 있다고 적고 있습니다.
 {cue: transition}
 이제 2부, 실제로 옮기는 절차입니다.

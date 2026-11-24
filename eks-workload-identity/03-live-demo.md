@@ -84,7 +84,7 @@ up은 발표 전에 돌려 두었고, 왼쪽 터미널에서 watch가 2초마다
 여러분도 휴대폰이나 노트북으로 이 주소를 열어 보세요. 같은 상태를 카드로 보여 주는 읽기 전용 페이지입니다. CloudFront에서 VPC origin을 거쳐 internal ALB로만 들어오고, 대시보드 Pod에는 AWS 권한이 없습니다. 페이지가 안 열리면 터미널 watch로 진행합니다.
 {cue: demo}
 화면을 터미널로 전환합니다. watch가 떠 있지 않으면 ./demo.sh watch "$RUN_ID"를 먼저 실행합니다.
-발표자 참고: 클리커의 오른쪽, Space, PageDown 키는 캔버스, 탭, 타임라인의 단계를 건너뛰고 다음 슬라이드로 넘어갑니다. 단계는 아래 방향키나 Play로 넘깁니다.
+발표자 참고: 클리커의 오른쪽, Space, PageDown 키는 캔버스와 탭의 단계를 건너뛰고 다음 슬라이드로 넘어갑니다. 단계는 아래 방향키나 Play로 넘깁니다.
 {cue: transition}
 0단계, 지금 상태부터 보겠습니다.
 :::
@@ -339,7 +339,7 @@ orders-podid    Pod Identity   wid-d1124-podid                <span class="wid-o
 - 발표 후: ./demo.sh restore "$RUN_ID"(harden 뒤 약 10분, 실측 578초) 또는 ./demo.sh down "$RUN_ID"
 
 마지막 단계는 옵션입니다. 오른쪽 터미널에서 ./demo.sh harden "$RUN_ID"를 실행합니다. hop limit을 1로 바꾼 노드로 교체하는데, 리허설에서 878초, 15분 가까이 걸렸습니다. 그래서 실행만 시작해 두겠습니다. ./demo.sh status "$RUN_ID"를 실행하면 노드 그룹이 UPDATING으로 바뀐 것이 보입니다. 결과는 발표 시간 안에 끝나지 않을 수 있어 리허설 결과로 설명드리겠습니다.
-리허설에서 교체가 끝난 뒤에는 레거시 Pod가 권한 거부가 아니라 자격 증명 자체를 받지 못했습니다. 앱 로그가 {"src":"imds","role":"no-credentials","s3":"no-creds"}였습니다. 옮긴 두 벌은 IMDS를 쓰지 않으니 영향이 없습니다. 이게 1부에서 말씀드린 "마지막에 길을 닫는다"의 결과입니다.
+리허설에서 교체가 끝난 뒤에는 레거시 Pod가 권한 거부가 아니라 자격 증명 자체를 받지 못했습니다. 앱 로그가 {"src":"imds","role":"no-credentials","s3":"no-creds"}였습니다. 옮긴 두 벌은 IMDS를 쓰지 않으니 영향이 없습니다. 이게 2부 마지막 장에서 말씀드린 "마지막에 길을 닫는다"의 결과입니다.
 발표 전에 같은 RUN_ID로 미리 harden하지는 않습니다. 0단계부터 레거시 행이 no-credentials가 되어 데모 흐름이 맞지 않습니다.
 화면이 바뀌지 않으면: 명령이 "rolling the node group to hop limit 1"과 점을 찍고 있으면 정상 진행 중이니 그대로 다음 슬라이드로 갑니다. 교체 중에는 Pod가 옮겨지느라 watch의 irsa, podid 행이 잠시 starting이나 - 로 보일 수 있습니다. 결과는 이 슬라이드의 리허설 값(레거시는 no-credentials와 no-creds, 나머지 allowed, 878초)으로 설명합니다.
 {cue: transition}

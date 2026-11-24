@@ -992,6 +992,17 @@ orders-podid    Pod Identity   wid-d1124-podid                <span class="wid-o
 <script src="./common/presenter-view.js"></script>
 <script>
 (function(){
+// 발표자 창 노트 순서: 대본 먼저, [요약]/[출처]/[약어]는 아래 (assets/presenter-notes.js)
+if (!window.__widNotesLoader) {
+  window.__widNotesLoader = true;
+  var s = document.createElement('script');
+  s.src = './assets/presenter-notes.js';
+  document.head.appendChild(s);
+}
+})();
+</script>
+<script>
+(function(){
 import('./common/line-art-scene/flowscene.js').then(function (m) {
   m.mount('#wid-paths', {
     aria: '같은 노드의 orders 앱 세 벌 중 노드 역할 Pod는 IMDSv2에서, IRSA Pod는 리전 STS에서, Pod Identity Pod는 같은 노드의 Agent와 EKS Auth를 거쳐 임시 자격 증명을 받고, 세 Pod 모두 그것으로 S3 요청에 서명하는 흐름',
@@ -1308,6 +1319,17 @@ import('./common/line-art-scene/flowscene.js').then(function (m) {
   document.addEventListener('remarp:theme-colors', function () { draw(); });
   new ResizeObserver(function () { draw(); }).observe(box);
   draw();
+})();
+</script>
+<script>
+(function(){
+// 발표자 창 노트 순서: 대본 먼저, [요약]/[출처]/[약어]는 아래 (assets/presenter-notes.js)
+if (!window.__widNotesLoader) {
+  window.__widNotesLoader = true;
+  var s = document.createElement('script');
+  s.src = './assets/presenter-notes.js';
+  document.head.appendChild(s);
+}
 })();
 </script>
 <script>
@@ -1722,6 +1744,17 @@ import('./common/line-art-scene/flowscene.js').then(function (m) {
   document.addEventListener('remarp:theme-colors', function () { draw(); });
   new ResizeObserver(function () { draw(); }).observe(box);
   draw();
+})();
+</script>
+<script>
+(function(){
+// 발표자 창 노트 순서: 대본 먼저, [요약]/[출처]/[약어]는 아래 (assets/presenter-notes.js)
+if (!window.__widNotesLoader) {
+  window.__widNotesLoader = true;
+  var s = document.createElement('script');
+  s.src = './assets/presenter-notes.js';
+  document.head.appendChild(s);
+}
 })();
 </script>
 <script>

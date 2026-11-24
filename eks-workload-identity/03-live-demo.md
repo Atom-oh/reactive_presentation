@@ -11,6 +11,16 @@ block: 03-live-demo
 
 같은 앱 세 벌을 노드 역할에서 IRSA와 Pod Identity로
 
+:::script
+// 발표자 창 노트 순서: 대본 먼저, [요약]/[출처]/[약어]는 아래 (assets/presenter-notes.js)
+if (!window.__widNotesLoader) {
+  window.__widNotesLoader = true;
+  var s = document.createElement('script');
+  s.src = './assets/presenter-notes.js';
+  document.head.appendChild(s);
+}
+:::
+
 :::notes
 {timing: 0.5min}
 [요약]
